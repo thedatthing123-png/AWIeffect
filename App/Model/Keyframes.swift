@@ -106,6 +106,9 @@ enum BezierTiming {
     }
 }
 
+/// Two keyframe times closer than this are the same keyframe.
+let keyframeTimeEpsilon = 1e-4
+
 /// A property that is either static or keyframed (AE stopwatch semantics).
 struct Animated<Value: Interpolatable>: Codable, Equatable {
     var staticValue: Value
@@ -137,10 +140,8 @@ struct Animated<Value: Interpolatable>: Codable, Equatable {
         }
     }
 
-    static let timeEpsilon = 1e-4
-
     func keyframeIndex(at time: Double) -> Int? {
-        keyframes.firstIndex { abs($0.time - time) < Self.timeEpsilon }
+        keyframes.firstIndex { abs($0.time - time) < keyframeTimeEpsilon }
     }
 
     func hasKeyframe(at time: Double) -> Bool { keyframeIndex(at: time) != nil }
