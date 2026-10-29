@@ -84,7 +84,7 @@ final class Exporter {
         var cache: CVMetalTextureCache?
         CVMetalTextureCacheCreate(nil, nil, r.device, nil, &cache)
         guard let cache, let comp = r.makeCompTexture(width: w, height: h) else { throw ExportError.writer("texture") }
-        let pool = r.makePool()
+        let texPool = r.makePool()
 
         let start = max(0, settings.start)
         let end = min(project.duration, settings.end ?? project.duration)
@@ -107,8 +107,8 @@ final class Exporter {
                 throw ExportError.writer("metal texture")
             }
             let t = start + Double(i) / project.fps
-            pool.recycle()
-            r.encode(project: project, time: t, renderScale: renderScale, into: comp, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
+            texPool.recycle()
+            r.encode(project: project, time: t, renderScale: renderScale, into: comp, commandBuffer: cb, pool: texPool, mediaURL: mediaURL)
             r.encodeToBGRA(comp: comp, out: outTex, commandBuffer: cb)
             cb.commit()
             cb.waitUntilCompleted()
