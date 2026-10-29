@@ -474,8 +474,10 @@ enum AEPImporter {
         var text: String?, font: String?
         for b in blobs {
             for raw in utf16Strings(b) {
+                let cleaned = raw.replacingOccurrences(of: "\r", with: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
                 if text == nil, raw.hasSuffix("\r") {
-                    text = raw.replacingOccurrences(of: "\r", with: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+                    // Skip empty paragraph markers; the real text is non-empty.
+                    if !cleaned.isEmpty { text = cleaned }
                 } else if font == nil, !raw.contains(" "), !raw.contains("\r"), raw.count > 2 {
                     font = raw
                 }

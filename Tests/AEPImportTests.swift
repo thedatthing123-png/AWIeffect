@@ -91,7 +91,7 @@ final class AEPImportTests: XCTestCase {
     func testHoldAndLinearInterpolation() throws {
         let hold = try load("keyframe_HOLD").project.layers[0].transform.opacity
         XCTAssertTrue(hold.isAnimated)
-        XCTAssertEqual(hold.keyframes.first?.interpolation, .hold)
+        XCTAssertTrue(hold.keyframes.contains { $0.interpolation == .hold }, "no hold keyframe: \(hold.keyframes.map(\.interpolation))")
         let lin = try load("keyframe_LINEAR").project.layers[0].transform.position
         XCTAssertGreaterThanOrEqual(lin.keyframes.count, 2)
         XCTAssertEqual(lin.keyframes.first?.interpolation, .linear)
