@@ -186,15 +186,27 @@ struct PropertyRow<Content: View>: View {
     @ObservedObject var state: EditorState
     let key: PropertyKey
     @ViewBuilder let content: () -> Content
+    @State private var showExpression = false
 
     var body: some View {
-        HStack(spacing: 8) {
+        let hasExpr = state.expression(key) != nil
+        HStack(spacing: 6) {
             KeyframeDiamond(filled: state.hasKeyframe(key), animated: state.isAnimated(key)) { state.toggleKeyframe(key) }
+            Button { showExpression = true } label: {
+                Text("={}").font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundStyle(hasExpr ? (state.expressionError(key) == nil ? Theme.ok : Theme.danger) : Theme.textDim)
+                    .frame(width: 30, height: 30)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Expression")
             Text(key.title).font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.text)
-                .frame(width: 84, alignment: .leading)
+                .frame(width: 76, alignment: .leading)
             content()
         }
         .padding(.vertical, 2)
+        .sheet(isPresented: $showExpression) {
+            ExpressionSheet(state: state, key: key).presentationDetents([.medium, .large])
+        }
     }
 }
 

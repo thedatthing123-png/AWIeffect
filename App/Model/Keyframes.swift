@@ -113,8 +113,23 @@ let keyframeTimeEpsilon = 1e-4
 struct Animated<Value: Interpolatable>: Codable, Equatable {
     var staticValue: Value
     var keyframes: [Keyframe<Value>] = []
+    /// AE-style expression (JavaScript). Evaluated by ExpressionEngine before rendering; nil = none.
+    var expression: String? = nil
+    var expressionEnabled = true
 
     init(_ value: Value) { staticValue = value }
+
+    private enum CodingKeys: String, CodingKey { case staticValue, keyframes, expression, expressionEnabled }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        staticValue = try c.decode(Value.self, forKey: .staticValue)
+        keyframes = try c.decodeIfPresent([Keyframe<Value>].self, forKey: .keyframes) ?? []
+        expression = try c.decodeIfPresent(String.self, forKey: .expression)
+        expressionEnabled = try c.decodeIfPresent(Bool.self, forKey: .expressionEnabled) ?? true
+    }
+
+    var hasActiveExpression: Bool { expressionEnabled && !(expression ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
     var isAnimated: Bool { !keyframes.isEmpty }
 

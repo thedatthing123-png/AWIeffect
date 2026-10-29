@@ -457,3 +457,50 @@ final class DisplayLinkProxy: NSObject {
     init(_ action: @escaping () -> Void) { self.action = action }
     @objc func fire() { action() }
 }
+
+// MARK: - Expressions
+
+extension EditorState {
+    func expression(_ key: PropertyKey) -> String? {
+        guard let l = selectedLayer else { return nil }
+        switch key {
+        case .position: return l.transform.position.expression
+        case .scale: return l.transform.scale.expression
+        case .rotation: return l.transform.rotation.expression
+        case .opacity: return l.transform.opacity.expression
+        case .anchor: return l.transform.anchor.expression
+        case .size: return l.size.expression
+        case .fill: return l.fill.expression
+        case .cornerRadius: return l.cornerRadius.expression
+        }
+    }
+
+    func setExpression(_ key: PropertyKey, _ src: String?) {
+        guard let i = selectedIndex else { return }
+        let e = (src?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true) ? nil : src
+        mutate(e == nil ? "Remove Expression" : "Expression") { p in
+            switch key {
+            case .position: p.layers[i].transform.position.expression = e
+            case .scale: p.layers[i].transform.scale.expression = e
+            case .rotation: p.layers[i].transform.rotation.expression = e
+            case .opacity: p.layers[i].transform.opacity.expression = e
+            case .anchor: p.layers[i].transform.anchor.expression = e
+            case .size: p.layers[i].size.expression = e
+            case .fill: p.layers[i].fill.expression = e
+            case .cornerRadius: p.layers[i].cornerRadius.expression = e
+            }
+        }
+    }
+
+    func expressionError(_ key: PropertyKey) -> String? {
+        guard let l = selectedLayer else { return nil }
+        let name: String
+        switch key {
+        case .position, .scale, .rotation, .opacity, .anchor: name = key.rawValue
+        case .size: name = "size"
+        case .fill: name = "fill"
+        case .cornerRadius: name = "cornerRadius"
+        }
+        return ExpressionEngine.shared.error(for: "\(l.id)/\(name)")
+    }
+}

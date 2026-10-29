@@ -136,8 +136,10 @@ final class Renderer {
     /// Encodes the full composition at `time` into `comp` (size = project size * renderScale).
     /// `pool` supplies scratch textures; the caller recycles it once the command buffer has finished
     /// (or rotates pools for in-flight frames).
-    func encode(project: Project, time: Double, renderScale: Double, into comp: MTLTexture,
+    func encode(project rawProject: Project, time: Double, renderScale: Double, into comp: MTLTexture,
                 commandBuffer cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL) {
+        // Expressions are baked into plain values for this frame first.
+        let project = ExpressionResolver.resolve(rawProject, time: time)
         var bg = project.background.simd
         if let enc = cb.makeComputeCommandEncoder() {
             enc.setComputePipelineState(clearPSO)
