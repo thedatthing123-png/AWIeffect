@@ -136,6 +136,12 @@ final class EffectThumbnails {
         case "ae.invert": break
         case "ae.levels": inst.params["inBlack"] = .number(Animated(50)); inst.params["inWhite"] = .number(Animated(200))
         case "awi.shake": inst.params["amplitude"] = .number(Animated(40))
+        case "ae.curves": inst.params["mids"] = .number(Animated(78))
+        case "awi.looks": inst.params["contrast"] = .number(Animated(50)); inst.params["temp"] = .number(Animated(60))
+        case "ae.offset": inst.params["shift"] = .point(Animated(Vec2(0.75, 0.5)))
+        case "ae.motionTile": inst.params["tileW"] = .number(Animated(40)); inst.params["tileH"] = .number(Animated(40))
+        case "ae.turbulentDisplace": inst.params["amount"] = .number(Animated(40)); inst.params["size"] = .number(Animated(60))
+        case "awi.saber": inst.params["spread"] = .number(Animated(30))
         default: break
         }
         return inst

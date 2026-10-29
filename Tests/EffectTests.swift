@@ -54,6 +54,11 @@ final class EffectTests: XCTestCase {
         case "ae.fractalNoise": n("scale", 20)
         case "awi.chromaKey": e.params["key"] = .color(Animated(RGBA(0.1, 0.9, 0.2)))
         case "awi.shake": n("amplitude", 30)
+        case "ae.curves": n("mids", 75)
+        case "awi.looks": n("contrast", 60); n("temp", 50)
+        case "ae.offset": e.params["shift"] = .point(Animated(Vec2(0.7, 0.6)))
+        case "ae.motionTile": n("tileW", 50); n("tileH", 50)
+        case "ae.polarCoordinates": n("interp", 100)
         default: break
         }
         return e
