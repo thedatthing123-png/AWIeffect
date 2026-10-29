@@ -281,7 +281,8 @@ enum ExpressionResolver {
         for i in p.layers.indices {
             let l = p.layers[i]
             func scope(_ salt: String) -> ExpressionScope {
-                ExpressionScope(time: time, fps: p.fps, compWidth: p.width, compHeight: p.height, compDuration: p.duration,
+                // Read comp settings from the untouched input: `p` is being mutated through inout while this runs.
+                ExpressionScope(time: time, fps: project.fps, compWidth: project.width, compHeight: project.height, compDuration: project.duration,
                                 layerIndex: i + 1, layerName: l.name, inPoint: l.inPoint, outPoint: l.outPoint,
                                 seed: stableSeed(l.id, salt))
             }
