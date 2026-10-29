@@ -340,38 +340,38 @@ struct AnimatorCard: View {
                     Picker("Shape", selection: Binding(get: { animator.selector.shape }, set: { s in edit("Shape") { $0.selector.shape = s } })) {
                         ForEach(SelectorShape.allCases) { Text($0.title).tag($0) }
                     }
-                    slider("Start", animator.selector.start.value(at: state.currentTime), 0...100) { v, t in $0.selector.start.set(v, at: t) }
-                    slider("End", animator.selector.end.value(at: state.currentTime), 0...100) { v, t in $0.selector.end.set(v, at: t) }
-                    slider("Offset", animator.selector.offset.value(at: state.currentTime), -100...100) { v, t in $0.selector.offset.set(v, at: t) }
+                    slider("Start", animator.selector.start.value(at: state.currentTime), 0...100) { a, v, t in a.selector.start.set(v, at: t) }
+                    slider("End", animator.selector.end.value(at: state.currentTime), 0...100) { a, v, t in a.selector.end.set(v, at: t) }
+                    slider("Offset", animator.selector.offset.value(at: state.currentTime), -100...100) { a, v, t in a.selector.offset.set(v, at: t) }
                     Toggle("Randomize Order", isOn: Binding(get: { animator.selector.randomize }, set: { b in edit("Randomize") { $0.selector.randomize = b } }))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
                 } else {
-                    slider(animator.selector.kind == .wave ? "Waves/sec" : "Wiggles/sec", animator.selector.frequency.value(at: state.currentTime), 0...30) { v, t in
-                        $0.selector.frequency.set(v, at: t)
+                    slider(animator.selector.kind == .wave ? "Waves/sec" : "Wiggles/sec", animator.selector.frequency.value(at: state.currentTime), 0...30) { a, v, t in
+                        a.selector.frequency.set(v, at: t)
                     }
                     if animator.selector.kind == .wave {
-                        slider("Letters/wave", animator.selector.spread.value(at: state.currentTime), 1...30) { v, t in $0.selector.spread.set(v, at: t) }
+                        slider("Letters/wave", animator.selector.spread.value(at: state.currentTime), 1...30) { a, v, t in a.selector.spread.set(v, at: t) }
                     }
                 }
-                slider("Amount", animator.selector.amount.value(at: state.currentTime), -100...100) { v, t in $0.selector.amount.set(v, at: t) }
+                slider("Amount", animator.selector.amount.value(at: state.currentTime), -100...100) { a, v, t in a.selector.amount.set(v, at: t) }
                 if let pos = animator.properties.position?.value(at: state.currentTime) {
-                    slider("Position X", pos.x, -1000...1000) { v, t in $0.properties.position?.set(Vec2(v, pos.y), at: t) }
-                    slider("Position Y", pos.y, -1000...1000) { v, t in $0.properties.position?.set(Vec2(pos.x, v), at: t) }
+                    slider("Position X", pos.x, -1000...1000) { a, v, t in a.properties.position?.set(Vec2(v, pos.y), at: t) }
+                    slider("Position Y", pos.y, -1000...1000) { a, v, t in a.properties.position?.set(Vec2(pos.x, v), at: t) }
                 }
                 if let sc = animator.properties.scale?.value(at: state.currentTime) {
-                    slider("Scale", sc.x, 0...400) { v, t in $0.properties.scale?.set(Vec2(v, v), at: t) }
+                    slider("Scale", sc.x, 0...400) { a, v, t in a.properties.scale?.set(Vec2(v, v), at: t) }
                 }
                 if let r = animator.properties.rotation?.value(at: state.currentTime) {
-                    slider("Rotation", r, -720...720) { v, t in $0.properties.rotation?.set(v, at: t) }
+                    slider("Rotation", r, -720...720) { a, v, t in a.properties.rotation?.set(v, at: t) }
                 }
                 if let o = animator.properties.opacity?.value(at: state.currentTime) {
-                    slider("Opacity", o, 0...100) { v, t in $0.properties.opacity?.set(v, at: t) }
+                    slider("Opacity", o, 0...100) { a, v, t in a.properties.opacity?.set(v, at: t) }
                 }
                 if let tr = animator.properties.tracking?.value(at: state.currentTime) {
-                    slider("Tracking", tr, -100...400) { v, t in $0.properties.tracking?.set(v, at: t) }
+                    slider("Tracking", tr, -100...400) { a, v, t in a.properties.tracking?.set(v, at: t) }
                 }
                 if let sk = animator.properties.skew?.value(at: state.currentTime) {
-                    slider("Skew", sk, -70...70) { v, t in $0.properties.skew?.set(v, at: t) }
+                    slider("Skew", sk, -70...70) { a, v, t in a.properties.skew?.set(v, at: t) }
                 }
                 if let c = animator.properties.fill?.value(at: state.currentTime) {
                     ColorPicker("Fill Color", selection: Binding(get: { Color(c) }, set: { col in
