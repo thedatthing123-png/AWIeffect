@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 // MARK: - Generic AE property tree
 
@@ -166,7 +167,8 @@ enum AEPImporter {
                 let t = String(decoding: opti.data.prefix(4), as: UTF8.self)
                 if t == "Soli" {
                     f.kind = "Soli"
-                    let a = Double(opti.f32(6)), r = Double(opti.f32(10)), g = Double(opti.f32(14)), b = Double(opti.f32(18))
+                    // "Soli" + 6 bytes, then float32 A, R, G, B (verified against AE sample solids).
+                    let a = Double(opti.f32(10)), r = Double(opti.f32(14)), g = Double(opti.f32(18)), b = Double(opti.f32(22))
                     if [a, r, g, b].allSatisfy({ $0.isFinite && $0 >= 0 && $0 <= 1.0001 }) {
                         f.solidColor = RGBA(r, g, b, a)
                     }
@@ -283,16 +285,17 @@ enum AEPImporter {
 
     // MARK: Layers
 
+    /// ldta stores AE's internal transfer-mode index (AE SDK PF_Xfer order: 2 = normal, 4 = add...).
     private static func blendMode(_ raw: UInt8) -> (BlendMode, Bool) {
-        switch Int(raw) + 5210 {
-        case 5212: return (.normal, true)
-        case 5220, 5223: return (.add, true)
-        case 5222: return (.screen, true)
-        case 5216: return (.multiply, true)
-        case 5226: return (.overlay, true)
-        case 5221: return (.lighten, true)
-        case 5215: return (.darken, true)
-        case 5233, 5234: return (.difference, true)
+        switch raw {
+        case 0, 2: return (.normal, true)
+        case 4: return (.add, true)
+        case 5: return (.multiply, true)
+        case 6: return (.screen, true)
+        case 7: return (.overlay, true)
+        case 10: return (.darken, true)
+        case 11: return (.lighten, true)
+        case 12: return (.difference, true)
         default: return (.normal, false)
         }
     }
@@ -300,7 +303,9 @@ enum AEPImporter {
     private static func importLayer(_ lc: RIFXChunk, comp: Comp, footage: [UInt32: Footage], comps: [UInt32: Comp],
                                     report: inout ImportReport) -> Layer? {
         guard let ldta = lc.child("ldta") else { return nil }
-        let name = lc.children.first { $0.id == "Utf8" }?.string ?? "Layer"
+        let rawName = lc.children.first { $0.id == "Utf8" }?.string ?? ""
+        let sourceName = footage[ldta.u32(40)]?.name ?? comps[ldta.u32(40)]?.name ?? ""
+        let name = !rawName.isEmpty ? rawName : (!sourceName.isEmpty ? sourceName : "Layer")
         let start = ldta.ratio(12)
         let inPoint = ldta.ratio(20) + start
         let outPoint = ldta.ratio(28) + start
@@ -316,11 +321,14 @@ enum AEPImporter {
         var content: LayerContent = .solid
         var fill = RGBA(0.5, 0.5, 0.5)
         var textString: String?
+        var textFont: String?
 
         switch layerType {
         case 3:
             content = .text
-            textString = extractText(tree) ?? name
+            let extracted = extractText(tree)
+            textString = extracted.text ?? name
+            textFont = extracted.font
             report.add(name, "Text layer", .approximate, "Text, font size and fill imported; per-character styling and text animators are approximated.")
         case 4:
             if let shape = importShape(tree) {
@@ -369,6 +377,8 @@ enum AEPImporter {
         if !bm.1 { report.add(name, "Blend mode", .approximate, "Blend mode #\(ldta.u8(99)) mapped to Normal.") }
         if content == .text {
             var t = TextData(string: textString ?? name, fontSize: 100)
+            // Use the project's font when iOS has it (Arial, Helvetica, Futura...), else keep the default.
+            if let f = textFont, UIFont(name: f, size: 12) != nil { t.fontName = f }
             t.fill = Animated(.white)
             layer.text = t
         }
@@ -395,9 +405,10 @@ enum AEPImporter {
                 }
                 layer.transform.position = a
             }
-            if let v = val("ADBE Scale") { layer.transform.scale = animated(v, fallback: Vec2(100, 100)) }
+            // Scale and opacity are stored as 0-1 fractions (py-aep `_PERCENT_MATCH_NAMES`).
+            if let v = val("ADBE Scale") { layer.transform.scale = animated(v, fallback: Vec2(100, 100)) { $0.map { $0 * 100 } } }
             if let v = val("ADBE Rotate Z") { layer.transform.rotation = animated(v, fallback: 0) }
-            if let v = val("ADBE Opacity") { layer.transform.opacity = animated(v, fallback: 100) }
+            if let v = val("ADBE Opacity") { layer.transform.opacity = animated(v, fallback: 100) { $0.map { $0 * 100 } } }
             for p in [layer.transform.position.expression, layer.transform.scale.expression, layer.transform.rotation.expression,
                       layer.transform.opacity.expression].compactMap({ $0 }) {
                 report.add(name, "Expression", .native, String(p.prefix(60)))
@@ -420,9 +431,8 @@ enum AEPImporter {
                         case .color:
                             inst.params[pd.id] = .color(animated(v, fallback: .white))
                         case .point:
-                            inst.params[pd.id] = .point(animated(v, fallback: Vec2(0.5, 0.5)) { c in
-                                [(c[safe: 0] ?? 0) / max(1, size.x), (c[safe: 1] ?? 0) / max(1, size.y)]
-                            })
+                            // Effect points are stored as 0-1 fractions of the layer, same as AWIeffect.
+                            inst.params[pd.id] = .point(animated(v, fallback: Vec2(0.5, 0.5)))
                         case .toggle:
                             inst.params[pd.id] = .toggle((v.staticValue.first ?? 0) != 0)
                         case .choice(let opts):
@@ -444,47 +454,63 @@ enum AEPImporter {
 
     // MARK: Text & shapes (best effort)
 
-    /// Finds the text string inside the text document (`btdk` COS data): first UTF-16BE string with a BOM.
-    private static func extractText(_ tree: [AEProp]) -> String? {
-        guard let textProps = tree.first(where: { $0.matchName == "ADBE Text Properties" }) else { return nil }
-        func search(_ props: [AEProp]) -> String? {
+    /// Text + font from the text document (`btdk`, COS data). AE terminates the text itself with a CR,
+    /// which tells it apart from font names stored in the same blob.
+    private static func extractText(_ tree: [AEProp]) -> (text: String?, font: String?) {
+        guard let textProps = tree.first(where: { $0.matchName == "ADBE Text Properties" }) else { return (nil, nil) }
+        var blobs: [Data] = []
+        func collect(_ props: [AEProp]) {
             for p in props {
                 switch p.kind {
                 case .other(let c):
-                    if let btdk = c.child("btdk") ?? (c.key == "btdk" ? c : nil), let s = firstUTF16String(btdk.data) { return s }
-                    if let s = firstUTF16String(c.data) { return s }
-                case .group(let kids): if let s = search(kids) { return s }
+                    if let b = c.child("btdk") { blobs.append(b.data) }
+                    if c.key == "btdk" { blobs.append(c.data) }
+                case .group(let kids): collect(kids)
                 default: break
                 }
             }
-            return nil
         }
-        return search(textProps.children)
+        collect(textProps.children)
+        var text: String?, font: String?
+        for b in blobs {
+            for raw in utf16Strings(b) {
+                if text == nil, raw.hasSuffix("\r") {
+                    text = raw.replacingOccurrences(of: "\r", with: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+                } else if font == nil, !raw.contains(" "), !raw.contains("\r"), raw.count > 2 {
+                    font = raw
+                }
+            }
+        }
+        return (text, font)
     }
 
-    /// COS strings look like `(<FE FF> utf16be... )`; a ')' that starts a UTF-16 unit closes the string.
-    static func firstUTF16String(_ data: Data) -> String? {
+    /// Every COS UTF-16BE string `(<FE FF> ...)` in a blob; a ')' that starts a UTF-16 unit closes it.
+    static func utf16Strings(_ data: Data) -> [String] {
         let b = [UInt8](data)
-        guard b.count > 4 else { return nil }
-        for i in 0..<(b.count - 3) where b[i] == 0x28 && b[i + 1] == 0xFE && b[i + 2] == 0xFF {
+        var out: [String] = []
+        var i = 0
+        while i + 3 < b.count {
+            guard b[i] == 0x28, b[i + 1] == 0xFE, b[i + 2] == 0xFF else { i += 1; continue }
             var j = i + 3
             var units: [UInt16] = []
             while j + 1 < b.count {
                 var hi = b[j]
                 if hi == 0x29 { break }
-                if hi == 0x5C, j + 1 < b.count { j += 1; hi = b[j] }   // backslash-escaped byte
+                if hi == 0x5C, j + 1 < b.count { j += 1; hi = b[j] }
                 guard j + 1 < b.count else { break }
                 var lo = b[j + 1]
                 if lo == 0x5C, j + 2 < b.count { j += 1; lo = b[j + 1] }
                 units.append(UInt16(hi) << 8 | UInt16(lo))
                 j += 2
             }
-            let s = String(decoding: units, as: UTF16.self).replacingOccurrences(of: "\r", with: "\n")
-                .trimmingCharacters(in: .controlCharacters)
-            if !s.isEmpty { return s }
+            let str = String(decoding: units, as: UTF16.self)
+            if !str.isEmpty { out.append(str) }
+            i = j + 1
         }
-        return nil
+        return out
     }
+
+    static func firstUTF16String(_ data: Data) -> String? { utf16Strings(data).first }
 
     private static func importShape(_ tree: [AEProp]) -> (kind: ShapeKind, size: Vec2, fill: RGBA)? {
         guard let root = tree.first(where: { $0.matchName == "ADBE Root Vectors Group" }) else { return nil }
