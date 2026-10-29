@@ -27,11 +27,11 @@ final class Renderer {
     let queue: MTLCommandQueue
     let fx: EffectGPU
     private let clearPSO: MTLComputePipelineState
-    private let drawPSO: MTLComputePipelineState
+    let drawPSO: MTLComputePipelineState
     private let toBGRAPSO: MTLComputePipelineState
     let displayPSO: MTLRenderPipelineState
     private let loader: MTKTextureLoader
-    private let dummy: MTLTexture
+    let dummy: MTLTexture
     private var imageCache: [String: MTLTexture] = [:]
     private let cacheLock = NSLock()
 
@@ -124,6 +124,9 @@ final class Renderer {
     }
 
     static func layerHalfSize(_ layer: Layer, time: Double) -> Vec2 {
+        if case .text = layer.content, let b = textBounds(layer, time: time) {
+            return Vec2(max(abs(Double(b.minX)), abs(Double(b.maxX))), max(abs(Double(b.minY)), abs(Double(b.maxY))))
+        }
         let s = layer.size.value(at: time)
         return Vec2(abs(s.x) / 2, abs(s.y) / 2)
     }
@@ -167,6 +170,11 @@ final class Renderer {
             let sc = layer.transform.scale.value(at: time)
             let pxPerLocal = max(1e-4, min(abs(sc.x), abs(sc.y)) / 100 * renderScale)
 
+            if pixelFX.isEmpty, case .text = layer.content {
+                drawText(cb: cb, target: comp, matrix: M, density: pxPerLocal, layer: layer, time: time,
+                         opacity: opacity, blend: layer.blendMode)
+                continue
+            }
             if pixelFX.isEmpty {
                 guard let source = sourceTexture(layer, mediaURL: mediaURL) else { continue }
                 drawQuad(cb: cb, target: comp, matrix: M, halfSize: hs, aa: 1 / pxPerLocal, opacity: opacity,
@@ -183,11 +191,16 @@ final class Renderer {
             let tw = max(1, Int(ceil(ext.x * 2 * density))), th = max(1, Int(ceil(ext.y * 2 * density)))
             let local = pool.acquire(width: tw, height: th)
             fx.run("fxClear", cb, textures: [local], grid: local)
-            guard let source = sourceTexture(layer, mediaURL: mediaURL) else { continue }
             // texture px -> layer local px
             let toLocal = simd_double3x3(columns: (SIMD3(1 / density, 0, 0), SIMD3(0, 1 / density, 0), SIMD3(-ext.x, -ext.y, 1)))
-            drawQuad(cb: cb, target: local, matrix: toLocal.inverse, halfSize: hs, aa: 1 / density, opacity: 1,
-                     layer: layer, time: time, source: source, premultipliedImage: false, blendOverride: .normal)
+            if case .text = layer.content {
+                drawText(cb: cb, target: local, matrix: toLocal.inverse, density: density, layer: layer, time: time,
+                         opacity: 1, blend: .normal)
+            } else {
+                guard let source = sourceTexture(layer, mediaURL: mediaURL) else { continue }
+                drawQuad(cb: cb, target: local, matrix: toLocal.inverse, halfSize: hs, aa: 1 / density, opacity: 1,
+                         layer: layer, time: time, source: source, premultipliedImage: false, blendOverride: .normal)
+            }
 
             var current = local
             for e in pixelFX {
@@ -209,7 +222,7 @@ final class Renderer {
         case .shape: return .shape
         case .solid: return .solid
         case .image(let file, _, _): return imageTexture(url: mediaURL(file)).map { .image($0) }
-        case .adjustment: return nil
+        case .adjustment, .text: return nil
         }
     }
 
@@ -288,7 +301,7 @@ final class Renderer {
         enc.endEncoding()
     }
 
-    private func dispatch(_ enc: MTLComputeCommandEncoder, pso: MTLComputePipelineState, width: Int, height: Int) {
+    func dispatch(_ enc: MTLComputeCommandEncoder, pso: MTLComputePipelineState, width: Int, height: Int) {
         let tw = pso.threadExecutionWidth
         let th = max(1, pso.maxTotalThreadsPerThreadgroup / tw)
         let tg = MTLSize(width: tw, height: th, depth: 1)

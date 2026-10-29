@@ -29,6 +29,7 @@ enum ToolPanel: Equatable {
     case shape
     case layerMenu
     case effects
+    case text
 }
 
 @MainActor

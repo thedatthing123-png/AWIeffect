@@ -17,6 +17,7 @@ struct BottomPanel: View {
                 case .shape: ShapePanel(state: state)
                 case .layerMenu: LayerMenuPanel(state: state)
                 case .effects: EffectsPanel(state: state)
+                case .text: TextPanel(state: state)
                 case .none: idle
                 }
             }
@@ -87,6 +88,7 @@ struct AddPanel: View {
             .padding(.horizontal, 14).frame(height: 40)
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
+                    ToolTile(icon: "textformat", title: "Text") { state.addText() }
                     ForEach(ShapeKind.allCases) { k in
                         ToolTile(icon: k.symbol, title: k.title) { state.addShape(k) }
                     }
@@ -95,7 +97,7 @@ struct AddPanel: View {
                     ToolTile(icon: "slider.horizontal.below.rectangle", title: "Adjustment") { state.addAdjustmentLayer() }
                 }
                 .padding(.horizontal, 12)
-                Text("Video, audio, text, drawing and 3D layers are coming in later stages.")
+                Text("Video, audio, drawing and 3D layers are coming in later stages.")
                     .font(.caption).foregroundStyle(Theme.textDim).padding(.top, 10)
             }
         }
@@ -143,6 +145,9 @@ struct TransformPanel: View {
 
     private var tileRow: some View {
         HStack(spacing: 8) {
+            if case .text = state.selectedLayer?.content {
+                ToolTile(icon: "textformat", title: "Text Studio") { state.panel = .text }
+            }
             ToolTile(icon: "sparkles", title: "Effects") { state.panel = .effects }
             ToolTile(icon: "paintpalette", title: "Color & Fill") { state.panel = .fill }
             ToolTile(icon: "square.stack.3d.down.right", title: "Blending") { state.panel = .blending }

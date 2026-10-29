@@ -117,7 +117,16 @@ kernel void drawLayer(texture2d<half, access::read_write> comp [[texture(0)]],
     float coverage = 0.0;
 
     uint content = p.modes.z;
-    if (content == 2) {
+    if (content == 3) {
+        // glyph: tinted alpha mask
+        float d = sdRoundBox(q, hs, 0.0);
+        coverage = clamp(0.5 - d / aa, 0.0, 1.0);
+        if (coverage <= 0.0) return;
+        constexpr sampler gs(address::clamp_to_zero, filter::linear);
+        float2 uv = q / (2.0 * hs) + 0.5;
+        coverage *= float(image.sample(gs, uv).r);
+        if (coverage <= 0.0) return;
+    } else if (content == 2) {
         // image: bilinear sample, edge AA against the box
         float d = sdRoundBox(q, hs, 0.0);
         coverage = clamp(0.5 - d / aa, 0.0, 1.0);

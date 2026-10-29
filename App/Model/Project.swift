@@ -48,6 +48,8 @@ enum LayerContent: Codable, Equatable {
     case image(fileName: String, pixelWidth: Int, pixelHeight: Int)
     /// Adjustment layer: its effects apply to everything below, inside its bounds.
     case adjustment
+    /// Text layer; content lives in `Layer.text`.
+    case text
 
     var symbol: String {
         switch self {
@@ -55,6 +57,7 @@ enum LayerContent: Codable, Equatable {
         case .solid: return "rectangle.fill"
         case .image: return "photo"
         case .adjustment: return "slider.horizontal.below.rectangle"
+        case .text: return "textformat"
         }
     }
 }
@@ -96,6 +99,8 @@ struct Layer: Codable, Equatable, Identifiable {
     var blendMode: BlendMode = .normal
     /// Effect stack, applied top to bottom (AE order).
     var effects: [EffectInstance] = []
+    /// Text content and animators (text layers only).
+    var text: TextData? = nil
 
     init(id: UUID = UUID(), name: String, content: LayerContent, tag: LayerTag = .purple, outPoint: Double,
          transform: LayerTransform, size: Animated<Vec2>) {
@@ -126,6 +131,7 @@ struct Layer: Codable, Equatable, Identifiable {
         innerRatio = try c.decodeIfPresent(Animated<Double>.self, forKey: .innerRatio) ?? Animated(0.45)
         blendMode = try c.decodeIfPresent(BlendMode.self, forKey: .blendMode) ?? .normal
         effects = try c.decodeIfPresent([EffectInstance].self, forKey: .effects) ?? []
+        text = try c.decodeIfPresent(TextData.self, forKey: .text)
     }
 
     func isActive(at time: Double) -> Bool { isVisible && time >= inPoint && time < outPoint }
@@ -142,6 +148,15 @@ struct Layer: Codable, Equatable, Identifiable {
         t += fill.keyframeTimes
         t += cornerRadius.keyframeTimes
         for e in effects { t += e.keyframeTimes }
+        if let tx = text {
+            t += tx.fill.keyframeTimes + tx.tracking.keyframeTimes
+            for a in tx.animators {
+                t += a.selector.start.keyframeTimes + a.selector.end.keyframeTimes + a.selector.offset.keyframeTimes + a.selector.amount.keyframeTimes
+                let pr = a.properties
+                t += (pr.position?.keyframeTimes ?? []) + (pr.scale?.keyframeTimes ?? []) + (pr.rotation?.keyframeTimes ?? [])
+                t += (pr.opacity?.keyframeTimes ?? []) + (pr.fill?.keyframeTimes ?? []) + (pr.tracking?.keyframeTimes ?? [])
+            }
+        }
         return Array(Set(t.map { ($0 * 10000).rounded() / 10000 })).sorted()
     }
 }
