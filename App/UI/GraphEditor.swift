@@ -184,11 +184,6 @@ struct CurveEditor: View {
             let box = CGRect(x: inset, y: geo.size.height * 0.2, width: geo.size.width - inset * 2, height: geo.size.height * 0.6)
             let out = dragOut ?? (segment.interpolation == .bezier ? segment.out : .linearOut)
             let into = dragIn ?? (segment.interpolation == .bezier ? segment.into : .linearIn)
-            func pt(_ h: EaseHandle) -> CGPoint { CGPoint(x: box.minX + CGFloat(h.x) * box.width, y: box.maxY - CGFloat(h.y) * box.height) }
-            func handle(from p: CGPoint) -> EaseHandle {
-                EaseHandle(x: Double(min(max((p.x - box.minX) / box.width, 0), 1)),
-                           y: Double(min(max((box.maxY - p.y) / box.height, -0.8), 1.8)))
-            }
             ZStack {
                 RoundedRectangle(cornerRadius: 14).fill(Theme.surface)
                 Path { p in
@@ -209,25 +204,34 @@ struct CurveEditor: View {
                 .stroke(Theme.accentGlow, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                 .shadow(color: Theme.accent.opacity(0.6), radius: 6)
                 Path { p in
-                    p.move(to: CGPoint(x: box.minX, y: box.maxY)); p.addLine(to: pt(out))
-                    p.move(to: CGPoint(x: box.maxX, y: box.minY)); p.addLine(to: pt(into))
+                    p.move(to: CGPoint(x: box.minX, y: box.maxY)); p.addLine(to: Self.pt(out, box))
+                    p.move(to: CGPoint(x: box.maxX, y: box.minY)); p.addLine(to: Self.pt(into, box))
                 }
                 .stroke(Theme.textDim, lineWidth: 1)
-                knob(pt(out)).gesture(DragGesture(minimumDistance: 0).onChanged { v in
-                    let h = handle(from: v.location); dragOut = h; onChange(h, into, false)
+                knob(Self.pt(out, box)).gesture(DragGesture(minimumDistance: 0).onChanged { v in
+                    let h = Self.handle(from: v.location, box); dragOut = h; onChange(h, into, false)
                 }.onEnded { v in
-                    let h = handle(from: v.location); dragOut = nil; onChange(h, into, true)
+                    let h = Self.handle(from: v.location, box); dragOut = nil; onChange(h, into, true)
                 })
-                knob(pt(into)).gesture(DragGesture(minimumDistance: 0).onChanged { v in
-                    let h = handle(from: v.location); dragIn = h; onChange(out, h, false)
+                knob(Self.pt(into, box)).gesture(DragGesture(minimumDistance: 0).onChanged { v in
+                    let h = Self.handle(from: v.location, box); dragIn = h; onChange(out, h, false)
                 }.onEnded { v in
-                    let h = handle(from: v.location); dragIn = nil; onChange(out, h, true)
+                    let h = Self.handle(from: v.location, box); dragIn = nil; onChange(out, h, true)
                 })
                 Text(String(format: "out %.2f, %.2f   in %.2f, %.2f", out.x, out.y, into.x, into.y))
                     .font(.system(size: 10, design: .monospaced)).foregroundStyle(Theme.textDim)
                     .position(x: geo.size.width / 2, y: geo.size.height - 12)
             }
         }
+    }
+
+    static func pt(_ h: EaseHandle, _ box: CGRect) -> CGPoint {
+        CGPoint(x: box.minX + CGFloat(h.x) * box.width, y: box.maxY - CGFloat(h.y) * box.height)
+    }
+
+    static func handle(from p: CGPoint, _ box: CGRect) -> EaseHandle {
+        EaseHandle(x: Double(min(max((p.x - box.minX) / box.width, 0), 1)),
+                   y: Double(min(max((box.maxY - p.y) / box.height, -0.8), 1.8)))
     }
 
     private func knob(_ p: CGPoint) -> some View {
