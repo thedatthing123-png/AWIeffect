@@ -1,0 +1,17 @@
+# Local-only
+research/
+*.aep
+*.aepx
+*.ffx
+*.mov
+*.mp4
+# Xcode
+*.xcodeproj/
+build/
+DerivedData/
+*.xcuserstate
+.DS_Store
+.build/
+
+# Local-only assets (bundled only after repo goes private)
+local-assets/

@@ -1,0 +1,70 @@
+name: AWIeffect
+options:
+  bundleIdPrefix: com.awieffect
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Manual
+    DEVELOPMENT_TEAM: ""
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    MTL_FAST_MATH: YES
+targets:
+  AWIeffect:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+    resources:
+      - path: Resources
+        optional: true
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: AWIeffect
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIRequiresFullScreen: true
+        UIStatusBarStyle: UIStatusBarStyleLightContent
+        UIUserInterfaceStyle: Dark
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        NSPhotoLibraryUsageDescription: AWIeffect imports your photos and videos into projects.
+        NSPhotoLibraryAddUsageDescription: AWIeffect saves exported videos to your library.
+        NSCameraUsageDescription: AWIeffect can capture media for your projects.
+        NSMicrophoneUsageDescription: AWIeffect can record audio for your projects.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.awieffect.app
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+  AWIeffectTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: AWIeffect
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.awieffect.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/AWIeffect.app/AWIeffect
+        BUNDLE_LOADER: $(TEST_HOST)
+schemes:
+  AWIeffect:
+    build:
+      targets:
+        AWIeffect: all
+        AWIeffectTests: [test]
+    test:
+      targets:
+        - AWIeffectTests

@@ -1,0 +1,87 @@
+name: Build IPA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          ls /Applications | grep -i xcode || true
+          XC=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          echo "Using $XC"
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        run: xcodegen generate
+
+      - name: Report Metal device
+        run: |
+          cat > /tmp/metal.swift <<'EOF'
+          import Metal
+          print("Metal device:", MTLCreateSystemDefaultDevice()?.name ?? "NONE")
+          EOF
+          swift /tmp/metal.swift || echo "Metal probe failed"
+
+      - name: Run tests (simulator)
+        run: |
+          SIM=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];c=[x for r,v in d.items() if 'iOS' in r for x in v if x['name'].startswith('iPhone')];print(c[-1]['udid'] if c else '')")
+          echo "Simulator: $SIM"
+          set -o pipefail
+          xcodebuild test \
+            -project AWIeffect.xcodeproj -scheme AWIeffect \
+            -destination "id=$SIM" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO | tee test.log | grep -E "error:|warning: .*AWI|Test Case|Executed|SKIP|FAIL" || true
+          grep -q "TEST SUCCEEDED" test.log || grep -q "** TEST SUCCEEDED **" test.log
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            test.log
+            TestResults.xcresult
+          if-no-files-found: ignore
+
+      - name: Archive (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project AWIeffect.xcodeproj -scheme AWIeffect \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath build/AWIeffect.xcarchive \
+            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            | tee archive.log | grep -E "error:|ARCHIVE" || true
+          test -d build/AWIeffect.xcarchive/Products/Applications/AWIeffect.app
+
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -R build/AWIeffect.xcarchive/Products/Applications/AWIeffect.app Payload/
+          zip -qry AWIeffect.ipa Payload
+          ls -lh AWIeffect.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: AWIeffect-ipa
+          path: AWIeffect.ipa
