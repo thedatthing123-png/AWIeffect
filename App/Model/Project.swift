@@ -46,12 +46,15 @@ enum LayerContent: Codable, Equatable {
     case solid
     /// Image stored in the project's media folder, referenced by file name.
     case image(fileName: String, pixelWidth: Int, pixelHeight: Int)
+    /// Adjustment layer: its effects apply to everything below, inside its bounds.
+    case adjustment
 
     var symbol: String {
         switch self {
         case .shape(let k): return k.symbol
         case .solid: return "rectangle.fill"
         case .image: return "photo"
+        case .adjustment: return "slider.horizontal.below.rectangle"
         }
     }
 }
@@ -91,6 +94,39 @@ struct Layer: Codable, Equatable, Identifiable {
     /// Star inner radius as a fraction of the outer radius.
     var innerRatio = Animated(0.45)
     var blendMode: BlendMode = .normal
+    /// Effect stack, applied top to bottom (AE order).
+    var effects: [EffectInstance] = []
+
+    init(id: UUID = UUID(), name: String, content: LayerContent, tag: LayerTag = .purple, outPoint: Double,
+         transform: LayerTransform, size: Animated<Vec2>) {
+        self.id = id
+        self.name = name
+        self.content = content
+        self.tag = tag
+        self.outPoint = outPoint
+        self.transform = transform
+        self.size = size
+    }
+
+    // Tolerant decoding: fields added in later versions get defaults, so old projects keep opening.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        content = try c.decode(LayerContent.self, forKey: .content)
+        tag = try c.decodeIfPresent(LayerTag.self, forKey: .tag) ?? .purple
+        isVisible = try c.decodeIfPresent(Bool.self, forKey: .isVisible) ?? true
+        inPoint = try c.decodeIfPresent(Double.self, forKey: .inPoint) ?? 0
+        outPoint = try c.decode(Double.self, forKey: .outPoint)
+        transform = try c.decode(LayerTransform.self, forKey: .transform)
+        size = try c.decode(Animated<Vec2>.self, forKey: .size)
+        fill = try c.decodeIfPresent(Animated<RGBA>.self, forKey: .fill) ?? Animated(RGBA(hex: 0x9B5CFF))
+        cornerRadius = try c.decodeIfPresent(Animated<Double>.self, forKey: .cornerRadius) ?? Animated(0)
+        sides = try c.decodeIfPresent(Animated<Double>.self, forKey: .sides) ?? Animated(6)
+        innerRatio = try c.decodeIfPresent(Animated<Double>.self, forKey: .innerRatio) ?? Animated(0.45)
+        blendMode = try c.decodeIfPresent(BlendMode.self, forKey: .blendMode) ?? .normal
+        effects = try c.decodeIfPresent([EffectInstance].self, forKey: .effects) ?? []
+    }
 
     func isActive(at time: Double) -> Bool { isVisible && time >= inPoint && time < outPoint }
 
@@ -105,6 +141,7 @@ struct Layer: Codable, Equatable, Identifiable {
         t += size.keyframeTimes
         t += fill.keyframeTimes
         t += cornerRadius.keyframeTimes
+        for e in effects { t += e.keyframeTimes }
         return Array(Set(t.map { ($0 * 10000).rounded() / 10000 })).sorted()
     }
 }

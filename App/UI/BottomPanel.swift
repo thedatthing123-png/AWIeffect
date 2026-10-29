@@ -16,6 +16,7 @@ struct BottomPanel: View {
                 case .blending: BlendingPanel(state: state)
                 case .shape: ShapePanel(state: state)
                 case .layerMenu: LayerMenuPanel(state: state)
+                case .effects: EffectsPanel(state: state)
                 case .none: idle
                 }
             }
@@ -91,9 +92,10 @@ struct AddPanel: View {
                     }
                     ToolTile(icon: "rectangle.fill", title: "Solid") { state.addSolid() }
                     ToolTile(icon: "photo.on.rectangle", title: "Image") { showPhotoPicker = true }
+                    ToolTile(icon: "slider.horizontal.below.rectangle", title: "Adjustment") { state.addAdjustmentLayer() }
                 }
                 .padding(.horizontal, 12)
-                Text("Video, audio, text, drawing and 3D layers arrive in later stages.")
+                Text("Video, audio, text, drawing and 3D layers are coming in later stages.")
                     .font(.caption).foregroundStyle(Theme.textDim).padding(.top, 10)
             }
         }
@@ -141,6 +143,7 @@ struct TransformPanel: View {
 
     private var tileRow: some View {
         HStack(spacing: 8) {
+            ToolTile(icon: "sparkles", title: "Effects") { state.panel = .effects }
             ToolTile(icon: "paintpalette", title: "Color & Fill") { state.panel = .fill }
             ToolTile(icon: "square.stack.3d.down.right", title: "Blending") { state.panel = .blending }
             if case .shape = state.selectedLayer?.content {

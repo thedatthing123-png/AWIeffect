@@ -5,6 +5,7 @@ struct HomeView: View {
     @State private var projects: [ProjectSummary] = []
     @State private var showCreate = false
     @State private var pendingDelete: ProjectSummary?
+    @State private var showSettings = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -52,9 +53,15 @@ struct HomeView: View {
                 .font(.system(size: 24, weight: .bold, design: .rounded))
                 .foregroundStyle(LinearGradient(colors: [Theme.text, Theme.accentGlow], startPoint: .leading, endPoint: .trailing))
             Spacer()
+            Button { showSettings = true } label: {
+                Image(systemName: "gearshape").font(.system(size: 18, weight: .semibold)).foregroundStyle(Theme.text)
+                    .frame(width: 36, height: 36)
+            }
+            .accessibilityLabel("Settings")
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+        .sheet(isPresented: $showSettings) { SettingsSheet() }
     }
 
     private var createCard: some View {

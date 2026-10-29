@@ -125,6 +125,8 @@ kernel void drawLayer(texture2d<half, access::read_write> comp [[texture(0)]],
         constexpr sampler s(address::clamp_to_edge, filter::linear);
         float2 uv = q / (2.0 * hs) + 0.5;
         float4 tex = float4(image.sample(s, uv));
+        // geom2.w == 1: source is a premultiplied effect buffer -> convert to straight.
+        if (p.geom2.w > 0.5) tex.rgb = tex.a > 1e-6 ? tex.rgb / tex.a : float3(0.0);
         color = tex;
     } else {
         float d;

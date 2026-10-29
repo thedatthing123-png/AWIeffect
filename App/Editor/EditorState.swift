@@ -28,6 +28,7 @@ enum ToolPanel: Equatable {
     case blending
     case shape
     case layerMenu
+    case effects
 }
 
 @MainActor
@@ -215,6 +216,86 @@ final class EditorState: ObservableObject {
             p.layers.insert(second, at: i)
             selectedLayerID = second.id
         }
+    }
+
+    // MARK: Effects
+
+    func addEffect(_ def: EffectDefinition) {
+        guard let i = selectedIndex else { return }
+        mutate("Add \(def.name)") { $0.layers[i].effects.append(def.makeInstance()) }
+        panel = .effects
+    }
+
+    func removeEffect(_ id: UUID) {
+        guard let i = selectedIndex else { return }
+        mutate("Remove Effect") { $0.layers[i].effects.removeAll { $0.id == id } }
+    }
+
+    func toggleEffect(_ id: UUID) {
+        guard let i = selectedIndex, let j = project.layers[i].effects.firstIndex(where: { $0.id == id }) else { return }
+        mutate("Toggle Effect") { $0.layers[i].effects[j].isEnabled.toggle() }
+    }
+
+    func moveEffect(_ id: UUID, up: Bool) {
+        guard let i = selectedIndex, let j = project.layers[i].effects.firstIndex(where: { $0.id == id }) else { return }
+        let k = up ? j - 1 : j + 1
+        guard project.layers[i].effects.indices.contains(k) else { return }
+        mutate("Reorder Effect") { $0.layers[i].effects.swapAt(j, k) }
+    }
+
+    func duplicateEffect(_ id: UUID) {
+        guard let i = selectedIndex, let j = project.layers[i].effects.firstIndex(where: { $0.id == id }) else { return }
+        mutate("Duplicate Effect") { p in
+            var e = p.layers[i].effects[j]
+            e.id = UUID()
+            p.layers[i].effects.insert(e, at: j + 1)
+        }
+    }
+
+    /// Continuous param edit (slider drag): wrap with beginEdit/endEdit.
+    func setEffectParam(_ effectID: UUID, _ key: String, _ change: (inout ParamValue, Double) -> Void) {
+        guard let i = selectedIndex, let j = project.layers[i].effects.firstIndex(where: { $0.id == effectID }),
+              var v = project.layers[i].effects[j].params[key] else { return }
+        change(&v, currentTime)
+        var p = project
+        p.layers[i].effects[j].params[key] = v
+        p.modifiedAt = Date()
+        project = p
+    }
+
+    func effectParamHasKeyframe(_ effectID: UUID, _ key: String) -> (filled: Bool, animated: Bool) {
+        guard let e = selectedLayer?.effects.first(where: { $0.id == effectID }), let v = e.params[key] else { return (false, false) }
+        switch v {
+        case .number(let a): return (a.hasKeyframe(at: currentTime), a.isAnimated)
+        case .point(let a): return (a.hasKeyframe(at: currentTime), a.isAnimated)
+        case .color(let a): return (a.hasKeyframe(at: currentTime), a.isAnimated)
+        default: return (false, false)
+        }
+    }
+
+    func toggleEffectKeyframe(_ effectID: UUID, _ key: String) {
+        beginEdit("Keyframe")
+        setEffectParam(effectID, key) { v, t in
+            switch v {
+            case .number(var a): a.toggleKeyframe(at: t); v = .number(a)
+            case .point(var a): a.toggleKeyframe(at: t); v = .point(a)
+            case .color(var a): a.toggleKeyframe(at: t); v = .color(a)
+            default: break
+            }
+        }
+        endEdit()
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    }
+
+    func addAdjustmentLayer() {
+        mutate("Add Adjustment Layer") { p in
+            var l = p.makeLayer(name: "Adjustment \(p.layers.count + 1)", content: .adjustment,
+                                size: Vec2(Double(p.width), Double(p.height)))
+            l.fill = Animated(RGBA(1, 1, 1, 0))
+            p.layers.insert(l, at: 0)
+            selectedLayerID = l.id
+        }
+        panel = .effects
     }
 
     // MARK: Keyframes

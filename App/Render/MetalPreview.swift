@@ -44,6 +44,10 @@ struct MetalPreview: UIViewRepresentable {
         var time: Double = 0
         var mediaURL: ((String) -> URL)?
         private var comp: MTLTexture?
+        /// Triple-buffered scratch pools so frames in flight never share textures.
+        private lazy var pools: [TexturePool] = (0..<3).compactMap { _ in Renderer.shared?.makePool() }
+        private var frame = 0
+        private let inFlight = DispatchSemaphore(value: 3)
 
         func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) { view.setNeedsDisplay() }
 
@@ -60,8 +64,14 @@ struct MetalPreview: UIViewRepresentable {
             if comp == nil || comp!.width != w || comp!.height != h {
                 comp = r.makeCompTexture(width: w, height: h)
             }
-            guard let comp else { return }
-            r.encode(project: project, time: time, renderScale: scale, into: comp, commandBuffer: cb, mediaURL: mediaURL)
+            guard let comp, pools.count == 3 else { return }
+            inFlight.wait()
+            let pool = pools[frame % 3]
+            frame += 1
+            pool.recycle()
+            let sem = inFlight
+            cb.addCompletedHandler { _ in sem.signal() }
+            r.encode(project: project, time: time, renderScale: scale, into: comp, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
 
             rpd.colorAttachments[0].loadAction = .clear
             guard let enc = cb.makeRenderCommandEncoder(descriptor: rpd) else { return }
