@@ -1,4 +1,5 @@
 import SwiftUI
+import simd
 
 /// What a pen session creates.
 enum PenTarget: Equatable {
