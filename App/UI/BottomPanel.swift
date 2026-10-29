@@ -79,6 +79,7 @@ struct AddPanel: View {
     @ObservedObject var state: EditorState
     @Binding var showPhotoPicker: Bool
     var startPen: (PenTarget, PenStyle) -> Void = { _, _ in }
+    @EnvironmentObject private var drawLauncher: DrawLauncher
 
     var body: some View {
         VStack(spacing: 0) {
@@ -92,6 +93,7 @@ struct AddPanel: View {
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
                     ToolTile(icon: "textformat", title: "Text") { state.addText() }
+                    ToolTile(icon: "paintbrush.pointed.fill", title: "Draw Studio") { drawLauncher.open(nil) }
                     ToolTile(icon: "pencil.tip", title: "Pen Path") { startPen(.newShape, .points) }
                     ToolTile(icon: "scribble", title: "Draw Path") { startPen(.newShape, .freehand) }
                     ForEach(ShapeKind.allCases.filter { $0 != .path }) { k in
@@ -114,6 +116,7 @@ struct AddPanel: View {
 struct TransformPanel: View {
     @ObservedObject var state: EditorState
     @State private var showGraph = false
+    @EnvironmentObject private var drawLauncher: DrawLauncher
 
     var body: some View {
         VStack(spacing: 0) {
@@ -153,6 +156,9 @@ struct TransformPanel: View {
         HStack(spacing: 8) {
             if case .text = state.selectedLayer?.content {
                 ToolTile(icon: "textformat", title: "Text Studio") { state.panel = .text }
+            }
+            if state.selectedLayer?.drawingID != nil {
+                ToolTile(icon: "paintbrush.pointed.fill", title: "Edit Drawing") { drawLauncher.open(state.selectedLayerID) }
             }
             ToolTile(icon: "sparkles", title: "Effects") { state.panel = .effects }
             ToolTile(icon: "theatermask.and.paintbrush", title: "Masks") { state.panel = .masks }

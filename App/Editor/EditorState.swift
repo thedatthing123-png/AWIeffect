@@ -536,3 +536,39 @@ extension EditorState {
         return r.report
     }
 }
+
+
+// MARK: - Draw Studio
+
+extension EditorState {
+    /// Engine for a new drawing (canvas = composition size) or the selected drawing layer.
+    func makeDrawEngine(editing layer: Layer?) -> DrawEngine? {
+        if let id = layer?.drawingID, let e = DrawEngine.load(doc: id, folder: store.mediaFolder(for: project.id)) { return e }
+        return DrawEngine(width: project.width, height: project.height)
+    }
+
+    /// Saves the drawing and adds (or live-updates) its image layer so it sits exactly where it was drawn.
+    func finishDrawing(_ engine: DrawEngine, editing existing: UUID?) {
+        let docID = existing.flatMap { id in project.layers.first { $0.id == id }?.drawingID } ?? UUID()
+        let folder = store.mediaFolder(for: project.id)
+        guard (try? engine.save(doc: docID, folder: folder)) != nil, let png = engine.flattenedPNG() else { return }
+        let file = "draw-\(docID.uuidString)-flat-\(UUID().uuidString.prefix(6)).png"
+        guard (try? png.write(to: folder.appendingPathComponent(file), options: .atomic)) != nil else { return }
+        Renderer.shared?.clearImageCache()
+        let w = engine.width, h = engine.height
+        if let id = existing, let i = project.layers.firstIndex(where: { $0.id == id }) {
+            mutate("Edit Drawing") { $0.layers[i].content = .image(fileName: file, pixelWidth: w, pixelHeight: h) }
+        } else {
+            mutate("Add Drawing") { p in
+                var l = p.makeLayer(name: "Drawing \(p.layers.count + 1)", content: .image(fileName: file, pixelWidth: w, pixelHeight: h),
+                                    size: Vec2(Double(w), Double(h)))
+                // Canvas == comp size, so 100% scale at the comp center lands exactly where it was drawn.
+                l.drawingID = docID
+                l.fill = Animated(.white)
+                p.layers.insert(l, at: 0)
+                selectedLayerID = l.id
+            }
+        }
+        redrawToken += 1
+    }
+}

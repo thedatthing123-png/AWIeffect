@@ -108,6 +108,8 @@ struct Layer: Codable, Equatable, Identifiable {
     /// Bezier path for `.shape(.path)` layers (layer-local px, origin at center).
     var path: Animated<BezierPath>? = nil
     var stroke = ShapeStroke()
+    /// Draw Studio document behind this image layer (live link for re-editing).
+    var drawingID: UUID? = nil
 
     init(id: UUID = UUID(), name: String, content: LayerContent, tag: LayerTag = .purple, outPoint: Double,
          transform: LayerTransform, size: Animated<Vec2>) {
@@ -142,6 +144,7 @@ struct Layer: Codable, Equatable, Identifiable {
         masks = try c.decodeIfPresent([LayerMask].self, forKey: .masks) ?? []
         path = try c.decodeIfPresent(Animated<BezierPath>.self, forKey: .path)
         stroke = try c.decodeIfPresent(ShapeStroke.self, forKey: .stroke) ?? ShapeStroke()
+        drawingID = try c.decodeIfPresent(UUID.self, forKey: .drawingID)
     }
 
     func isActive(at time: Double) -> Bool { isVisible && time >= inPoint && time < outPoint }

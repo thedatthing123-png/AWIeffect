@@ -10,6 +10,7 @@ struct EditorView: View {
     @State private var showPhotoPicker = false
     @State private var dragStartPosition: Vec2?
     @State private var pen: (target: PenTarget, style: PenStyle)?
+    @StateObject private var drawLauncher = DrawLauncher()
 
     init(state: EditorState, close: @escaping () -> Void) {
         _state = StateObject(wrappedValue: state)
@@ -31,6 +32,22 @@ struct EditorView: View {
             }
         }
         .background(Theme.background.ignoresSafeArea())
+        .environmentObject(drawLauncher)
+        .fullScreenCover(item: $drawLauncher.session) { s in
+            DrawStudioView(engine: s.engine, onDone: { engine in
+                state.finishDrawing(engine, editing: s.layerID)
+                drawLauncher.session = nil
+            }, onCancel: { drawLauncher.session = nil })
+        }
+        .onChange(of: drawLauncher.request) { _, req in
+            guard let req else { return }
+            state.pause()
+            let layer = req.layerID.flatMap { id in state.project.layers.first { $0.id == id } }
+            if let e = state.makeDrawEngine(editing: layer) {
+                drawLauncher.session = DrawLauncher.Session(engine: e, layerID: req.layerID)
+            }
+            drawLauncher.request = nil
+        }
         .sheet(isPresented: $showExport) {
             ExportSheet(state: state).presentationDetents([.medium, .large])
         }
