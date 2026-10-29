@@ -8,6 +8,7 @@ import UIKit
 struct LayerParams {
     var invRow0: SIMD4<Float>
     var invRow1: SIMD4<Float>
+    var invRow2: SIMD4<Float>
     var color: SIMD4<Float>
     var geom: SIMD4<Float>
     var geom2: SIMD4<Float>
@@ -167,9 +168,12 @@ final class Renderer {
             enc.endEncoding()
         }
 
-        // layers[0] is the top layer, so draw bottom-up.
-        for layer in project.layers.reversed() where layer.isActive(at: time) {
+        // Bottom-up, with runs of 3D layers depth-sorted through the active camera (AE behaviour).
+        let camera = Self.activeCamera(project, time: time)
+        let active = project.layers.filter { $0.isActive(at: time) }
+        for layer in Self.drawOrder(active, camera: camera, time: time) {
             if case .audio = layer.content { continue }
+            if case .camera = layer.content { continue }
             let opacity = layer.transform.opacity.value(at: time) / 100
             if opacity <= 0 { continue }
             let pixelFX = layer.effects.filter { e in
@@ -184,15 +188,16 @@ final class Renderer {
                 continue
             }
 
-            let M = Self.layerMatrix(layer, time: time, renderScale: renderScale)
-            let det = M[0][0] * M[1][1] - M[1][0] * M[0][1]
-            if abs(det) < 1e-12 { continue }
+            let M = Self.placementMatrix(layer, camera: camera, time: time, renderScale: renderScale)
+            if abs(M.determinant) < 1e-12 { continue }
             let hs = Self.layerHalfSize(layer, time: time)
             let sc = layer.transform.scale.value(at: time)
-            let pxPerLocal = max(1e-4, min(abs(sc.x), abs(sc.y)) / 100 * renderScale)
+            let pxPerLocal = layer.is3D ? Self.pixelsPerLocal(M, at: layer.transform.anchor.value(at: time))
+                                        : max(1e-4, min(abs(sc.x), abs(sc.y)) / 100 * renderScale)
+            let dof = Self.dofSigma(layer, camera: camera, time: time) * renderScale
 
             let masks = layer.masks.filter { $0.mode != .none }
-            let needsLocal = !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil
+            let needsLocal = !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil || dof > 0.5
             if !needsLocal, let path = Self.shapePath(layer, time: time) {
                 drawShapePath(cb: cb, target: comp, matrix: M, layer: layer, path: path, time: time,
                               opacity: opacity, blend: layer.blendMode, aa: 1 / pxPerLocal)
@@ -212,6 +217,7 @@ final class Renderer {
 
             // Effects path: render the layer in its own (local, unrotated) buffer, run the stack, then place it.
             let margin = pixelFX.reduce(0.0) { acc, e in acc + (EffectRegistry.definition(e.typeID)?.margin(e, time) ?? 0) }
+                + (dof > 0.5 ? dof * 3 / max(pxPerLocal, 1e-4) : 0)
             let ext = Vec2(hs.x + margin, hs.y + margin)
             var density = min(1.5, max(0.05, pxPerLocal))
             let maxSide = max(ext.x, ext.y) * 2 * density
@@ -246,6 +252,12 @@ final class Renderer {
             for e in pixelFX {
                 guard let def = EffectRegistry.definition(e.typeID), case .pixels(let run) = def.stage else { continue }
                 current = run(EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: time, unit: density, pool: pool))
+            }
+            // Depth of field (3D layers through a camera with DOF on).
+            if dof > 0.5 {
+                let ctx = EffectContext(gpu: fx, cb: cb, input: current, effect: EffectInstance(typeID: "dof", params: [:]),
+                                        time: time, unit: density, pool: pool)
+                current = fx.gaussian(ctx, input: current, sigma: dof * density / max(pxPerLocal, 1e-4))
             }
 
             // Place the processed buffer like an image layer covering `ext`.
@@ -289,8 +301,10 @@ final class Renderer {
         for cx in [-hs.x - m, hs.x + m] {
             for cy in [-hs.y - m, hs.y + m] {
                 let p = M * SIMD3(cx, cy, 1)
-                minX = min(minX, p.x); maxX = max(maxX, p.x)
-                minY = min(minY, p.y); maxY = max(maxY, p.y)
+                // Corners behind the camera: fall back to the whole target.
+                guard p.z > 1e-6 else { minX = 0; minY = 0; maxX = Double(target.width); maxY = Double(target.height); continue }
+                minX = min(minX, p.x / p.z); maxX = max(maxX, p.x / p.z)
+                minY = min(minY, p.y / p.z); maxY = max(maxY, p.y / p.z)
             }
         }
         let x0 = max(0, Int(floor(minX))), y0 = max(0, Int(floor(minY)))
@@ -310,6 +324,7 @@ final class Renderer {
         var params = LayerParams(
             invRow0: SIMD4(Float(inv[0][0]), Float(inv[1][0]), Float(inv[2][0]), 0),
             invRow1: SIMD4(Float(inv[0][1]), Float(inv[1][1]), Float(inv[2][1]), 0),
+            invRow2: SIMD4(Float(inv[0][2]), Float(inv[1][2]), Float(inv[2][2]), 0),
             color: color,
             geom: SIMD4(Float(hs.x), Float(hs.y), Float(opacity), Float(layer.cornerRadius.value(at: time))),
             geom2: SIMD4(Float(layer.sides.value(at: time)), Float(layer.innerRatio.value(at: time)), Float(aa), premultipliedImage ? 1 : 0),

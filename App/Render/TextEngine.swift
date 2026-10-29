@@ -285,7 +285,8 @@ extension Renderer {
             var minX = Double.infinity, minY = Double.infinity, maxX = -Double.infinity, maxY = -Double.infinity
             for cx in [-hs.x - 2, hs.x + 2] { for cy in [-hs.y - 2, hs.y + 2] {
                 let p = G * SIMD3(cx, cy, 1)
-                minX = min(minX, p.x); maxX = max(maxX, p.x); minY = min(minY, p.y); maxY = max(maxY, p.y)
+                let z = max(p.z, 1e-6)
+                minX = min(minX, p.x / z); maxX = max(maxX, p.x / z); minY = min(minY, p.y / z); maxY = max(maxY, p.y / z)
             } }
             let x0 = max(0, Int(floor(minX))), y0 = max(0, Int(floor(minY)))
             let x1 = min(target.width, Int(ceil(maxX))), y1 = min(target.height, Int(ceil(maxY)))
@@ -293,6 +294,7 @@ extension Renderer {
             var params = LayerParams(
                 invRow0: SIMD4(Float(inv[0][0]), Float(inv[1][0]), Float(inv[2][0]), 0),
                 invRow1: SIMD4(Float(inv[0][1]), Float(inv[1][1]), Float(inv[2][1]), 0),
+                invRow2: SIMD4(Float(inv[0][2]), Float(inv[1][2]), Float(inv[2][2]), 0),
                 color: st.color.simd,
                 geom: SIMD4(Float(hs.x), Float(hs.y), Float(opacity * st.opacity), 0),
                 geom2: SIMD4(0, 0, Float(1 / pxPerLocal), 0),

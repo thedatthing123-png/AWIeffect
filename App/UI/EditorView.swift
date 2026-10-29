@@ -132,7 +132,7 @@ struct EditorView: View {
                 }
                 if pen == nil, let layer = state.selectedLayer, layer.isActive(at: state.currentTime) {
                     SelectionOverlay(layer: layer, time: state.currentTime, fit: fit,
-                                     compWidth: state.project.width)
+                                     compWidth: state.project.width, project: state.project)
                         .allowsHitTesting(false)
                 }
             }
@@ -174,8 +174,10 @@ struct EditorView: View {
     private func tapSelect(at point: CGPoint, fit: CGRect) {
         let c = toComp(point, fit: fit)
         for layer in state.project.layers where layer.isActive(at: state.currentTime) {
-            let M = Renderer.layerMatrix(layer, time: state.currentTime, renderScale: 1)
-            let local = M.inverse * SIMD3(c.x, c.y, 1)
+            let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(state.project, time: state.currentTime),
+                                             time: state.currentTime, renderScale: 1)
+            let h = M.inverse * SIMD3(c.x, c.y, 1)
+            let local = SIMD3(h.x / h.z, h.y / h.z, 1)
             let hs = Renderer.layerHalfSize(layer, time: state.currentTime)
             if abs(local.x) <= hs.x && abs(local.y) <= hs.y {
                 state.select(layer.id)
@@ -192,17 +194,20 @@ struct SelectionOverlay: View {
     let time: Double
     let fit: CGRect
     let compWidth: Int
+    let project: Project
 
     var body: some View {
         let s = Double(fit.width) / Double(compWidth)
-        let M = Renderer.layerMatrix(layer, time: time, renderScale: s)
+        let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(project, time: time), time: time, renderScale: s)
         let hs = Renderer.layerHalfSize(layer, time: time)
         let corners = [(-hs.x, -hs.y), (hs.x, -hs.y), (hs.x, hs.y), (-hs.x, hs.y)].map { c -> CGPoint in
             let p = M * SIMD3(c.0, c.1, 1)
-            return CGPoint(x: fit.minX + p.x, y: fit.minY + p.y)
+            let z = max(p.z, 1e-6)
+            return CGPoint(x: fit.minX + p.x / z, y: fit.minY + p.y / z)
         }
         let anchor = layer.transform.anchor.value(at: time)
-        let ap = M * SIMD3(anchor.x, anchor.y, 1)
+        let ap0 = M * SIMD3(anchor.x, anchor.y, 1)
+        let ap = SIMD3(ap0.x / max(ap0.z, 1e-6), ap0.y / max(ap0.z, 1e-6), 1)
         ZStack {
             Path { path in
                 path.addLines(corners)

@@ -50,6 +50,8 @@ enum LayerContent: Codable, Equatable {
     case image(fileName: String, pixelWidth: Int, pixelHeight: Int)
     /// Adjustment layer: its effects apply to everything below, inside its bounds.
     case adjustment
+    /// AE-style 3D camera; its transform + `Layer.camera` options drive every 3D layer.
+    case camera
     /// Text layer; content lives in `Layer.text`.
     case text
     /// Video clip in the project's media folder.
@@ -63,6 +65,7 @@ enum LayerContent: Codable, Equatable {
         case .solid: return "rectangle.fill"
         case .image: return "photo"
         case .adjustment: return "slider.horizontal.below.rectangle"
+        case .camera: return "video"
         case .text: return "textformat"
         case .video: return "film"
         case .audio: return "waveform"
@@ -81,6 +84,35 @@ struct LayerTransform: Codable, Equatable {
     var rotation = Animated(0.0)
     /// Opacity 0...100.
     var opacity = Animated(100.0)
+    // 3D (used when the layer is 3D): Z position (px, + = away from camera) and X/Y rotation (degrees).
+    var positionZ = Animated(0.0)
+    var rotationX = Animated(0.0)
+    var rotationY = Animated(0.0)
+
+    init(position: Animated<Vec2>) { self.position = position }
+
+    private enum CodingKeys: String, CodingKey { case anchor, position, scale, rotation, opacity, positionZ, rotationX, rotationY }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        anchor = try c.decodeIfPresent(Animated<Vec2>.self, forKey: .anchor) ?? Animated(.zero)
+        position = try c.decode(Animated<Vec2>.self, forKey: .position)
+        scale = try c.decodeIfPresent(Animated<Vec2>.self, forKey: .scale) ?? Animated(Vec2(100, 100))
+        rotation = try c.decodeIfPresent(Animated<Double>.self, forKey: .rotation) ?? Animated(0)
+        opacity = try c.decodeIfPresent(Animated<Double>.self, forKey: .opacity) ?? Animated(100)
+        positionZ = try c.decodeIfPresent(Animated<Double>.self, forKey: .positionZ) ?? Animated(0)
+        rotationX = try c.decodeIfPresent(Animated<Double>.self, forKey: .rotationX) ?? Animated(0)
+        rotationY = try c.decodeIfPresent(Animated<Double>.self, forKey: .rotationY) ?? Animated(0)
+    }
+}
+
+/// AE camera options (Zoom = focal length in comp pixels; depth of field like AE's camera).
+struct CameraOptions: Codable, Equatable {
+    var zoom = Animated(1000.0)
+    var depthOfField = false
+    var focusDistance = Animated(1000.0)
+    var aperture = Animated(25.0)       // px
+    var blurLevel = Animated(100.0)     // %
 }
 
 /// Layer color tags for the timeline (user-changeable).
@@ -125,6 +157,10 @@ struct Layer: Codable, Equatable, Identifiable {
     var frameBlending = false
     /// AI background cutout (image/video layers).
     var cutout: CutoutSettings? = nil
+    /// AE 3D layer switch.
+    var is3D = false
+    /// Options for `.camera` layers.
+    var camera: CameraOptions? = nil
 
     init(id: UUID = UUID(), name: String, content: LayerContent, tag: LayerTag = .purple, outPoint: Double,
          transform: LayerTransform, size: Animated<Vec2>) {
@@ -166,6 +202,8 @@ struct Layer: Codable, Equatable, Identifiable {
         volume = try c.decodeIfPresent(Animated<Double>.self, forKey: .volume) ?? Animated(100)
         frameBlending = try c.decodeIfPresent(Bool.self, forKey: .frameBlending) ?? false
         cutout = try c.decodeIfPresent(CutoutSettings.self, forKey: .cutout)
+        is3D = try c.decodeIfPresent(Bool.self, forKey: .is3D) ?? false
+        camera = try c.decodeIfPresent(CameraOptions.self, forKey: .camera)
     }
 
     func isActive(at time: Double) -> Bool { isVisible && time >= inPoint && time < outPoint }

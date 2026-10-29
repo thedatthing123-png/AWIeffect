@@ -8,6 +8,7 @@ using namespace metal;
 struct LayerParams {
     float4 invRow0;   // inverse affine row 0: (a, b, tx, _)  comp px -> layer local px
     float4 invRow1;   // inverse affine row 1: (c, d, ty, _)
+    float4 invRow2;   // inverse homography row 2 (0, 0, 1 for 2D layers)
     float4 color;     // straight RGBA fill
     float4 geom;      // halfSize.x, halfSize.y, opacity(0-1), cornerRadius
     float4 geom2;     // sides, innerRatio, aa (local px per comp px), _
@@ -109,8 +110,10 @@ kernel void drawLayer(texture2d<half, access::read_write> comp [[texture(0)]],
     if (gid.x >= comp.get_width() || gid.y >= comp.get_height()) return;
 
     float2 c = float2(gid) + 0.5;
-    float2 q = float2(dot(p.invRow0.xy, c) + p.invRow0.z,
-                      dot(p.invRow1.xy, c) + p.invRow1.z);
+    float3 hc = float3(c, 1.0);
+    float w = dot(p.invRow2.xyz, hc);
+    if (w <= 1e-6) return;   // behind the camera
+    float2 q = float2(dot(p.invRow0.xyz, hc), dot(p.invRow1.xyz, hc)) / w;
     float2 hs = p.geom.xy;
     float aa = max(p.geom2.z, 1e-4);
     float4 color = p.color;
