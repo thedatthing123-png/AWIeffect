@@ -19,9 +19,7 @@ final class ContactSheetTests: XCTestCase {
             title.draw(at: CGPoint(x: 10, y: 10), withAttributes: [.font: UIFont.boldSystemFont(ofSize: 18), .foregroundColor: UIColor.white])
             for (i, d) in defs.enumerated() {
                 let x = CGFloat(i % cols) * cell, y = 40 + CGFloat(i / cols) * (cell + label)
-                var inst = d.makeInstance()
-                if d.id == "awi.shake" { inst.params["amplitude"] = .number(Animated(40)) }
-                let p = EffectThumbnails.previewProject(effect: inst)
+                let p = EffectThumbnails.previewProject(effect: EffectThumbnails.showcase(d))
                 if let img = r.renderImage(project: p, time: 0.37, maxDimension: cell - 8, mediaURL: { _ in url }) {
                     img.draw(in: CGRect(x: x + 4, y: y + 4, width: cell - 8, height: cell - 8))
                 }

@@ -119,6 +119,12 @@ final class EffectThumbnails {
     private static func render(_ def: EffectDefinition) -> UIImage? {
         guard let r = Renderer.shared else { return nil }
         let url = PreviewImage.url()
+        let p = previewProject(effect: showcase(def))
+        return r.renderImage(project: p, time: 0.37, maxDimension: 180, mediaURL: { _ in url })
+    }
+
+    /// Default instance with settings pushed far enough that a still thumbnail shows what the effect does.
+    static func showcase(_ def: EffectDefinition) -> EffectInstance {
         var inst = def.makeInstance()
         // Make subtle defaults visible in a thumbnail.
         switch def.id {
@@ -129,10 +135,10 @@ final class EffectThumbnails {
         case "ae.glow": inst.params["threshold"] = .number(Animated(45)); inst.params["radius"] = .number(Animated(30))
         case "ae.invert": break
         case "ae.levels": inst.params["inBlack"] = .number(Animated(50)); inst.params["inWhite"] = .number(Animated(200))
+        case "awi.shake": inst.params["amplitude"] = .number(Animated(40))
         default: break
         }
-        let p = previewProject(effect: inst)
-        return r.renderImage(project: p, time: 0.37, maxDimension: 180, mediaURL: { _ in url })
+        return inst
     }
 }
 
