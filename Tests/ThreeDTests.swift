@@ -81,7 +81,7 @@ final class ThreeDTests: XCTestCase {
         var p = project()
         var cam = p.makeLayer(name: "cam", content: .camera, size: Vec2(1, 1))
         let zoom = CameraState.defaultZoom(p)
-        cam.camera = CameraOptions(zoom: Animated(zoom), depthOfField: true, focusDistance: Animated(zoom), aperture: Animated(200))
+        cam.camera = CameraOptions(zoom: Animated(zoom), depthOfField: true, focusDistance: Animated(zoom), aperture: Animated(20))
         cam.transform.positionZ = Animated(-zoom)
         p.layers.insert(cam, at: 0)
         let sharp = try render(p)
