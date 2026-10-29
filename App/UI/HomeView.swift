@@ -6,6 +6,10 @@ struct HomeView: View {
     @State private var showCreate = false
     @State private var pendingDelete: ProjectSummary?
     @State private var showSettings = false
+    @State private var showImporter = false
+    @State private var importURL: URL?
+    @State private var importResult: AEPImportResult?
+    @State private var importError: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -13,6 +17,21 @@ struct HomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     createCard
+                    Button { showImporter = true } label: {
+                        HStack(spacing: 12) {
+                            Text("Ae").font(.system(size: 15, weight: .black, design: .rounded))
+                                .frame(width: 34, height: 34)
+                                .background(RoundedRectangle(cornerRadius: 8).fill(Color(hex: 0x1F0F3D)))
+                                .foregroundStyle(Theme.accentGlow)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Import After Effects Project").font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.text)
+                                Text(".aep files from Files, iCloud or AirDrop").font(.caption).foregroundStyle(Theme.textDim)
+                            }
+                            Spacer()
+                        }
+                        .padding(14).glass()
+                    }
+                    .buttonStyle(.plain)
                     if projects.isEmpty {
                         emptyState
                     } else {
@@ -26,6 +45,23 @@ struct HomeView: View {
             }
         }
         .onAppear(perform: reload)
+        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.aep, .data]) { result in
+            guard case .success(let url) = result else { return }
+            importURL = url
+            runImport(compName: nil)
+        }
+        .sheet(isPresented: Binding(get: { importResult != nil }, set: { if !$0 { importResult = nil } })) {
+            if let r = importResult {
+                ImportReportSheet(result: r, open: { p in
+                    try? ProjectStore.shared.save(p)
+                    importResult = nil
+                    open(p)
+                }, reimport: { runImport(compName: $0) })
+            }
+        }
+        .alert("Import failed", isPresented: Binding(get: { importError != nil }, set: { if !$0 { importError = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: { Text(importError ?? "") }
         .sheet(isPresented: $showCreate) {
             CreateProjectSheet { p in
                 try? ProjectStore.shared.save(p)
@@ -133,6 +169,17 @@ struct HomeView: View {
     }
 
     private func reload() { projects = ProjectStore.shared.list() }
+
+    private func runImport(compName: String?) {
+        guard let url = importURL else { return }
+        let access = url.startAccessingSecurityScopedResource()
+        defer { if access { url.stopAccessingSecurityScopedResource() } }
+        do {
+            importResult = try AEPImporter.load(url: url, compName: compName)
+        } catch {
+            importError = error.localizedDescription
+        }
+    }
 }
 
 struct CreateProjectSheet: View {
