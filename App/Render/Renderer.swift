@@ -287,7 +287,7 @@ final class Renderer {
         case .image(let file, _, _): return imageTexture(url: mediaURL(file)).map { .image($0) }
         case .video(let file, _, _, _):
             return VideoSources.shared.texture(url: mediaURL(file), time: sourceTime, device: device).map { .image($0) }
-        case .adjustment, .text, .audio: return nil
+        case .adjustment, .text, .audio, .camera: return nil
         }
     }
 

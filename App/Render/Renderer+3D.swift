@@ -66,16 +66,18 @@ extension Renderer {
 
     /// Homography mapping the layer plane (local x, y) to comp pixels at `renderScale`.
     static func layerHomography(_ layer: Layer, camera: CameraState, time: Double, renderScale: Double) -> simd_double3x3 {
-        let MV = camera.view * layerWorld(layer, time: time)
-        // Pinhole projection: [zoom*x + cx*z, zoom*y + cy*z, z].
-        let P = simd_double3x4(rows: [
-            SIMD4(camera.zoom * renderScale, 0, camera.center.x * renderScale, 0),
-            SIMD4(0, camera.zoom * renderScale, camera.center.y * renderScale, 0),
-            SIMD4(0, 0, 1, 0),
-        ])
-        let full = P * MV   // 3x4: maps (x, y, z, 1)
-        // Local z = 0: keep columns for x, y and the translation.
-        return simd_double3x3(columns: (full.columns.0, full.columns.1, full.columns.3))
+        let MV: simd_double4x4 = camera.view * layerWorld(layer, time: time)
+        // Pinhole projection: [zoom*x + cx*z, zoom*y + cy*z, z], applied to the columns for local x, y and origin
+        // (local z = 0 drops the third column).
+        let f: Double = camera.zoom * renderScale
+        let cx: Double = camera.center.x * renderScale
+        let cy: Double = camera.center.y * renderScale
+        func project(_ c: SIMD4<Double>) -> SIMD3<Double> {
+            let x: Double = f * c.x + cx * c.z
+            let y: Double = f * c.y + cy * c.z
+            return SIMD3(x, y, c.z)
+        }
+        return simd_double3x3(columns: (project(MV.columns.0), project(MV.columns.1), project(MV.columns.3)))
     }
 
     /// Camera-space depth of the layer's anchor (for back-to-front sorting and depth of field).
