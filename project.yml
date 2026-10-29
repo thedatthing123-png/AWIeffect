@@ -51,6 +51,10 @@ targets:
     platform: iOS
     sources:
       - path: Tests
+        excludes:
+          - "Fixtures/**"
+      - path: Tests/Fixtures/aep
+        buildPhase: resources
     dependencies:
       - target: AWIeffect
     settings:
