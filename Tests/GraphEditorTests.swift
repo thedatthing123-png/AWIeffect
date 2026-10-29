@@ -30,8 +30,11 @@ final class GraphEditorTests: XCTestCase {
         XCTAssertEqual(segs[0].interpolation, .bezier)
         XCTAssertEqual(segs[0].out, snap.out)
         XCTAssertEqual(segs[1].interpolation, .linear)
-        // Snap = barely moves early, then rushes.
-        XCTAssertLessThan(s.project.layers[0].transform.rotation.value(at: 0.5), 30)
+        // Snap = extreme ease in-out: nearly still at 20%, nearly done at 80%, halfway at the midpoint.
+        let rot = s.project.layers[0].transform.rotation
+        XCTAssertLessThan(rot.value(at: 0.2), 10)
+        XCTAssertGreaterThan(rot.value(at: 0.8), 80)
+        XCTAssertEqual(rot.value(at: 0.5), 45, accuracy: 1)
     }
 
     func testOvershootPresetOvershoots() {
