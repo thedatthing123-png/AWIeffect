@@ -20,7 +20,7 @@ enum BlendMode: String, Codable, CaseIterable, Identifiable {
 }
 
 enum ShapeKind: String, Codable, CaseIterable, Identifiable {
-    case rectangle, ellipse, polygon, star
+    case rectangle, ellipse, polygon, star, path
     var id: String { rawValue }
     var title: String { rawValue.capitalized }
     var symbol: String {
@@ -29,6 +29,7 @@ enum ShapeKind: String, Codable, CaseIterable, Identifiable {
         case .ellipse: return "circle.fill"
         case .polygon: return "hexagon.fill"
         case .star: return "star.fill"
+        case .path: return "scribble.variable"
         }
     }
     var shaderIndex: UInt32 {
@@ -37,6 +38,7 @@ enum ShapeKind: String, Codable, CaseIterable, Identifiable {
         case .ellipse: return 1
         case .polygon: return 2
         case .star: return 3
+        case .path: return 0
         }
     }
 }
@@ -101,6 +103,11 @@ struct Layer: Codable, Equatable, Identifiable {
     var effects: [EffectInstance] = []
     /// Text content and animators (text layers only).
     var text: TextData? = nil
+    /// AE-style masks (applied before effects).
+    var masks: [LayerMask] = []
+    /// Bezier path for `.shape(.path)` layers (layer-local px, origin at center).
+    var path: Animated<BezierPath>? = nil
+    var stroke = ShapeStroke()
 
     init(id: UUID = UUID(), name: String, content: LayerContent, tag: LayerTag = .purple, outPoint: Double,
          transform: LayerTransform, size: Animated<Vec2>) {
@@ -132,6 +139,9 @@ struct Layer: Codable, Equatable, Identifiable {
         blendMode = try c.decodeIfPresent(BlendMode.self, forKey: .blendMode) ?? .normal
         effects = try c.decodeIfPresent([EffectInstance].self, forKey: .effects) ?? []
         text = try c.decodeIfPresent(TextData.self, forKey: .text)
+        masks = try c.decodeIfPresent([LayerMask].self, forKey: .masks) ?? []
+        path = try c.decodeIfPresent(Animated<BezierPath>.self, forKey: .path)
+        stroke = try c.decodeIfPresent(ShapeStroke.self, forKey: .stroke) ?? ShapeStroke()
     }
 
     func isActive(at time: Double) -> Bool { isVisible && time >= inPoint && time < outPoint }

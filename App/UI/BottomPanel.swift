@@ -4,13 +4,14 @@ import SwiftUI
 struct BottomPanel: View {
     @ObservedObject var state: EditorState
     @Binding var showPhotoPicker: Bool
+    var startPen: (PenTarget, PenStyle) -> Void = { _, _ in }
 
     var body: some View {
         VStack(spacing: 0) {
             Divider().overlay(Theme.stroke)
             Group {
                 switch state.panel {
-                case .add: AddPanel(state: state, showPhotoPicker: $showPhotoPicker)
+                case .add: AddPanel(state: state, showPhotoPicker: $showPhotoPicker, startPen: startPen)
                 case .transform: TransformPanel(state: state)
                 case .fill: FillPanel(state: state)
                 case .blending: BlendingPanel(state: state)
@@ -18,6 +19,7 @@ struct BottomPanel: View {
                 case .layerMenu: LayerMenuPanel(state: state)
                 case .effects: EffectsPanel(state: state)
                 case .text: TextPanel(state: state)
+                case .masks: MasksPanel(state: state, startPen: startPen)
                 case .none: idle
                 }
             }
@@ -76,6 +78,7 @@ struct PanelHeader: View {
 struct AddPanel: View {
     @ObservedObject var state: EditorState
     @Binding var showPhotoPicker: Bool
+    var startPen: (PenTarget, PenStyle) -> Void = { _, _ in }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -89,7 +92,9 @@ struct AddPanel: View {
             ScrollView {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
                     ToolTile(icon: "textformat", title: "Text") { state.addText() }
-                    ForEach(ShapeKind.allCases) { k in
+                    ToolTile(icon: "pencil.tip", title: "Pen Path") { startPen(.newShape, .points) }
+                    ToolTile(icon: "scribble", title: "Draw Path") { startPen(.newShape, .freehand) }
+                    ForEach(ShapeKind.allCases.filter { $0 != .path }) { k in
                         ToolTile(icon: k.symbol, title: k.title) { state.addShape(k) }
                     }
                     ToolTile(icon: "rectangle.fill", title: "Solid") { state.addSolid() }
@@ -150,6 +155,7 @@ struct TransformPanel: View {
                 ToolTile(icon: "textformat", title: "Text Studio") { state.panel = .text }
             }
             ToolTile(icon: "sparkles", title: "Effects") { state.panel = .effects }
+            ToolTile(icon: "theatermask.and.paintbrush", title: "Masks") { state.panel = .masks }
             ToolTile(icon: "paintpalette", title: "Color & Fill") { state.panel = .fill }
             ToolTile(icon: "square.stack.3d.down.right", title: "Blending") { state.panel = .blending }
             if case .shape = state.selectedLayer?.content {
@@ -401,6 +407,7 @@ struct ShapePanel: View {
                                 set: { v in edit { $0.sides.set(Double(v), at: t) } }), in: 3...24)
                             .foregroundStyle(Theme.text)
                         }
+                        StrokeSection(state: state)
                         if kind == .star {
                             HStack {
                                 Text("Inner radius").font(.system(size: 13)).foregroundStyle(Theme.text)

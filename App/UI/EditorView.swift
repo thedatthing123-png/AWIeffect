@@ -9,6 +9,7 @@ struct EditorView: View {
     @State private var photoItem: PhotosPickerItem?
     @State private var showPhotoPicker = false
     @State private var dragStartPosition: Vec2?
+    @State private var pen: (target: PenTarget, style: PenStyle)?
 
     init(state: EditorState, close: @escaping () -> Void) {
         _state = StateObject(wrappedValue: state)
@@ -24,7 +25,10 @@ struct EditorView: View {
             TransportBar(state: state, showHistory: $showHistory)
             TimelineView(state: state)
                 .frame(height: timelineHeight)
-            BottomPanel(state: state, showPhotoPicker: $showPhotoPicker)
+            BottomPanel(state: state, showPhotoPicker: $showPhotoPicker) { target, style in
+                state.pause()
+                pen = (target, style)
+            }
         }
         .background(Theme.background.ignoresSafeArea())
         .sheet(isPresented: $showExport) {
@@ -85,15 +89,18 @@ struct EditorView: View {
             ZStack(alignment: .topLeading) {
                 MetalPreview(project: state.project, time: state.currentTime, redrawToken: state.redrawToken,
                              mediaURL: { state.mediaURL($0) })
-                if let layer = state.selectedLayer, layer.isActive(at: state.currentTime) {
+                if let pen {
+                    PenOverlay(state: state, target: pen.target, style: pen.style, fit: fit) { self.pen = nil }
+                }
+                if pen == nil, let layer = state.selectedLayer, layer.isActive(at: state.currentTime) {
                     SelectionOverlay(layer: layer, time: state.currentTime, fit: fit,
                                      compWidth: state.project.width)
                         .allowsHitTesting(false)
                 }
             }
             .contentShape(Rectangle())
-            .gesture(canvasDrag(fit: fit))
-            .simultaneousGesture(SpatialTapGesture().onEnded { v in tapSelect(at: v.location, fit: fit) })
+            .gesture(canvasDrag(fit: fit), including: pen == nil ? .all : .subviews)
+            .simultaneousGesture(SpatialTapGesture().onEnded { v in if pen == nil { tapSelect(at: v.location, fit: fit) } })
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)

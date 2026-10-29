@@ -123,7 +123,25 @@ final class Renderer {
         return RS * T * R * S * A
     }
 
+    /// Path drawn for a shape layer: its own bezier, or the primitive converted when a stroke is on.
+    static func shapePath(_ layer: Layer, time: Double) -> BezierPath? {
+        guard case .shape(let k) = layer.content else { return nil }
+        if k == .path { return layer.path?.value(at: time) }
+        guard layer.stroke.enabled else { return nil }
+        let s = layer.size.value(at: time)
+        switch k {
+        case .ellipse: return .ellipse(size: s)
+        case .rectangle: return .rectangle(size: s)
+        default: return nil
+        }
+    }
+
     static func layerHalfSize(_ layer: Layer, time: Double) -> Vec2 {
+        if case .shape(.path) = layer.content, let path = layer.path?.value(at: time) {
+            let b = path.bounds
+            let sw = layer.stroke.enabled ? layer.stroke.width.value(at: time) / 2 : 0
+            return Vec2(max(abs(b.min.x), abs(b.max.x)) + sw, max(abs(b.min.y), abs(b.max.y)) + sw)
+        }
         if case .text = layer.content, let b = textBounds(layer, time: time) {
             return Vec2(max(abs(Double(b.minX)), abs(Double(b.maxX))), max(abs(Double(b.minY)), abs(Double(b.maxY))))
         }
@@ -172,12 +190,18 @@ final class Renderer {
             let sc = layer.transform.scale.value(at: time)
             let pxPerLocal = max(1e-4, min(abs(sc.x), abs(sc.y)) / 100 * renderScale)
 
-            if pixelFX.isEmpty, case .text = layer.content {
+            let masks = layer.masks.filter { $0.mode != .none }
+            if pixelFX.isEmpty, masks.isEmpty, let path = Self.shapePath(layer, time: time) {
+                drawShapePath(cb: cb, target: comp, matrix: M, layer: layer, path: path, time: time,
+                              opacity: opacity, blend: layer.blendMode, aa: 1 / pxPerLocal)
+                continue
+            }
+            if pixelFX.isEmpty, masks.isEmpty, case .text = layer.content {
                 drawText(cb: cb, target: comp, matrix: M, density: pxPerLocal, layer: layer, time: time,
                          opacity: opacity, blend: layer.blendMode)
                 continue
             }
-            if pixelFX.isEmpty {
+            if pixelFX.isEmpty && masks.isEmpty {
                 guard let source = sourceTexture(layer, mediaURL: mediaURL) else { continue }
                 drawQuad(cb: cb, target: comp, matrix: M, halfSize: hs, aa: 1 / pxPerLocal, opacity: opacity,
                          layer: layer, time: time, source: source, premultipliedImage: false)
@@ -195,7 +219,10 @@ final class Renderer {
             fx.run("fxClear", cb, textures: [local], grid: local)
             // texture px -> layer local px
             let toLocal = simd_double3x3(columns: (SIMD3(1 / density, 0, 0), SIMD3(0, 1 / density, 0), SIMD3(-ext.x, -ext.y, 1)))
-            if case .text = layer.content {
+            if let path = Self.shapePath(layer, time: time) {
+                drawShapePath(cb: cb, target: local, matrix: toLocal.inverse, layer: layer, path: path, time: time,
+                              opacity: 1, blend: .normal, aa: 1 / density)
+            } else if case .text = layer.content {
                 drawText(cb: cb, target: local, matrix: toLocal.inverse, density: density, layer: layer, time: time,
                          opacity: 1, blend: .normal)
             } else {
@@ -204,6 +231,11 @@ final class Renderer {
                          layer: layer, time: time, source: source, premultipliedImage: false, blendOverride: .normal)
             }
 
+            // AE order: masks first, then effects.
+            if !masks.isEmpty {
+                PathGPU.shared?.applyMasks(cb: cb, layer: local, masks: masks, time: time, matrix: toLocal.inverse,
+                                           aa: 1 / density, pool: pool)
+            }
             var current = local
             for e in pixelFX {
                 guard let def = EffectRegistry.definition(e.typeID), case .pixels(let run) = def.stage else { continue }
@@ -218,6 +250,16 @@ final class Renderer {
     }
 
     private enum Source { case shape, solid, image(MTLTexture) }
+
+    private func drawShapePath(cb: MTLCommandBuffer, target: MTLTexture, matrix: simd_double3x3, layer: Layer, path: BezierPath,
+                               time: Double, opacity: Double, blend: BlendMode, aa: Double) {
+        let st = layer.stroke
+        let stroke = st.enabled ? (color: st.color.value(at: time), width: st.width.value(at: time),
+                                   trim: (st.trimStart.value(at: time), st.trimEnd.value(at: time), st.trimOffset.value(at: time))) : nil
+        let fill = layer.fill.value(at: time)
+        PathGPU.shared?.drawPath(cb: cb, target: target, matrix: matrix, path: path, fill: fill.a > 0 ? fill : nil,
+                                 stroke: stroke, opacity: opacity, blend: blend, aa: aa)
+    }
 
     private func sourceTexture(_ layer: Layer, mediaURL: (String) -> URL) -> Source? {
         switch layer.content {
