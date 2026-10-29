@@ -310,7 +310,17 @@ kernel void fxFractalNoise(texture2d<half, access::sample> src [[texture(0)]],
 
 // ---------- Keying / stylize ----------
 
-// Chroma key. b.rgb key color, a.x tolerance (0..1), a.y softness, a.z spill suppression (0..1), i.x view matte
+// Chroma key, Keylight-style screen-balance matte.
+// b.rgb key color; a.x tolerance (0..1), a.y softness (0..1), a.z spill (0..1), a.w screen balance (0..1); i.x view matte
+// Saturation of the screen channel = dominant - mix(max(others), min(others), balance). Pixels whose saturation
+// reaches (1 - tolerance) of the key's become transparent; below that they fade over `softness`.
+static float screenSat(float3 c, int dom, float balance) {
+    float d = dom == 1 ? c.g : (dom == 2 ? c.b : c.r);
+    float o1 = dom == 0 ? c.g : c.r;
+    float o2 = dom == 2 ? c.g : c.b;
+    return d - mix(max(o1, o2), min(o1, o2), balance);
+}
+
 kernel void fxChromaKey(texture2d<half, access::sample> src [[texture(0)]],
                         texture2d<half, access::write> dst [[texture(1)]],
                         constant EffectParams& p [[buffer(0)]],
@@ -319,21 +329,21 @@ kernel void fxChromaKey(texture2d<half, access::sample> src [[texture(0)]],
     float4 s = float4(src.sample(sZero, float2(gid) + 0.5));
     if (s.a <= 0.0) { dst.write(half4(0.0h), gid); return; }
     float3 c = unpremul(s);
-    // Compare in YCbCr chroma plane (lighting-robust), like Keylight's screen-colour comparison.
-    float3x3 m = float3x3(float3(0.299, -0.168736, 0.5), float3(0.587, -0.331264, -0.418688), float3(0.114, 0.5, -0.081312));
-    float2 cc = (m * c).yz, kc = (m * p.b.rgb).yz;
-    float d = distance(cc, kc);
-    float matte = smoothstep(p.a.x, p.a.x + max(p.a.y, 1e-3), d);
-    // Spill: clamp the key's dominant channel to the average of the other two.
     float3 k = p.b.rgb;
     int dom = (k.g >= k.r && k.g >= k.b) ? 1 : ((k.b >= k.r) ? 2 : 0);
+    float balance = p.a.w;
+    float ks = max(screenSat(k, dom, balance), 1e-3);
+    float ratio = screenSat(c, dom, balance) / ks;
+    float hi = 1.0 - p.a.x;
+    float lo = hi - max(p.a.y, 1e-3);
+    float matte = 1.0 - smoothstep(lo, hi, ratio);
+    // Despill: pull the screen channel down to the balanced mix of the others.
     float3 o = c;
-    if (dom == 1) o.g = mix(c.g, min(c.g, (c.r + c.b) * 0.5), p.a.z);
-    else if (dom == 2) o.b = mix(c.b, min(c.b, (c.r + c.g) * 0.5), p.a.z);
-    else o.r = mix(c.r, min(c.r, (c.g + c.b) * 0.5), p.a.z);
+    float sat = max(screenSat(c, dom, balance), 0.0) * p.a.z;
+    if (dom == 1) o.g -= sat; else if (dom == 2) o.b -= sat; else o.r -= sat;
     float a = s.a * matte;
     if (p.i.x != 0) { dst.write(half4(half3(a), 1.0h), gid); return; }
-    dst.write(half4(half3(o * a), half(a)), gid);
+    dst.write(half4(half3(max(o, 0.0) * a), half(a)), gid);
 }
 
 // RGB split / chromatic aberration. a.xy = offset vector (px) for red; blue gets the opposite.

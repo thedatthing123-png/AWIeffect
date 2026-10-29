@@ -424,19 +424,21 @@ enum EffectRegistry {
 
     static let chromaKey = EffectDefinition(
         id: "awi.chromaKey", name: "Chroma Key", category: .keying,
-        aeMatchNames: ["ADBE Color Key"],
-        summary: "Removes a green/blue screen with spill suppression.",
+        aeMatchNames: ["Keylight 906", "ADBE Color Key"],
+        summary: "Keylight-style green/blue screen removal with despill.",
         params: [
-            .color("key", "Key Color", RGBA(0, 1, 0)),
-            .number("tolerance", "Tolerance", 12, 0, 100, unit: "%"),
-            .number("softness", "Edge Softness", 8, 0, 100, unit: "%"),
-            .number("spill", "Spill Suppression", 80, 0, 100, unit: "%"),
+            .color("key", "Screen Color", RGBA(0.13, 0.78, 0.22)),
+            .number("tolerance", "Screen Gain", 25, 0, 90, unit: "%"),
+            .number("softness", "Edge Softness", 20, 1, 100, unit: "%"),
+            .number("spill", "Despill", 100, 0, 100, unit: "%"),
+            .number("balance", "Screen Balance", 50, 0, 100, unit: "%"),
             .toggle("viewMatte", "View Matte", false),
         ],
         stage: .pixels { ctx in
             let out = ctx.temp()
             var p = EffectParams()
-            p.a = SIMD4(Float(ctx.num("tolerance") / 100 * 0.5), Float(ctx.num("softness") / 100 * 0.5), Float(ctx.num("spill") / 100), 0)
+            p.a = SIMD4(Float(ctx.num("tolerance") / 100), Float(ctx.num("softness") / 100), Float(ctx.num("spill") / 100),
+                        Float(ctx.num("balance") / 100))
             p.b = ctx.effect.color("key", ctx.time).simd
             p.i.x = ctx.effect.bool("viewMatte") ? 1 : 0
             ctx.gpu.run("fxChromaKey", ctx.cb, textures: [ctx.input, out], params: p, grid: out)

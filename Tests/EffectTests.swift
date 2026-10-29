@@ -52,7 +52,7 @@ final class EffectTests: XCTestCase {
         case "ae.glow": n("threshold", 40); n("radius", 15); n("intensity", 2)
         case "awi.rgbSplit": n("amount", 6)
         case "ae.fractalNoise": n("scale", 20)
-        case "awi.chromaKey": break
+        case "awi.chromaKey": e.params["key"] = .color(Animated(RGBA(0.1, 0.9, 0.2)))
         case "awi.shake": n("amplitude", 30)
         default: break
         }
@@ -85,7 +85,7 @@ final class EffectTests: XCTestCase {
         let r = try renderer()
         let base = try render(r, scene(effect: nil))
         for d in EffectRegistry.all {
-            let out = try render(r, scene(effect: visible(d)))
+            let out = try render(r, scene(effect: visible(d), onAdjustment: !d.isTransformEffect))
             XCTAssertGreaterThan(diff(base, out), 0.5, "\(d.name) did not visibly change the image")
             XCTAssertTrue(out.contains { $0 > 10 }, "\(d.name) rendered black")
         }
@@ -114,14 +114,16 @@ final class EffectTests: XCTestCase {
     func testEveryNumericControlIsWired() throws {
         let r = try renderer()
         // Params that only matter in a mode not active in this test (documented, not silent).
-        let modal: Set<String> = ["ae.hueSaturation/colorizeSat", "ae.fractalNoise/subScaling", "ae.exposure/offset"]
+        let modal: Set<String> = ["ae.hueSaturation/colorizeSat"]
         for d in EffectRegistry.all {
             for pd in d.params {
                 guard case .number(let lo, let hi, _, _) = pd.kind, !modal.contains("\(d.id)/\(pd.id)") else { continue }
                 var a = visible(d), b = visible(d)
                 a.params[pd.id] = .number(Animated(lo + (hi - lo) * 0.02))
                 b.params[pd.id] = .number(Animated(lo + (hi - lo) * 0.6))
-                let ra = try render(r, scene(effect: a)), rb = try render(r, scene(effect: b))
+                // Adjustment layer = effect sees the whole varied scene, not just one flat shape.
+                let adj = !d.isTransformEffect
+                let ra = try render(r, scene(effect: a, onAdjustment: adj)), rb = try render(r, scene(effect: b, onAdjustment: adj))
                 XCTAssertGreaterThan(diff(ra, rb), 0.05, "\(d.name) › \(pd.name) does nothing")
             }
         }
