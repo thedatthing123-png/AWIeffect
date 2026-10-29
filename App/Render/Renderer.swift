@@ -192,17 +192,18 @@ final class Renderer {
             let pxPerLocal = max(1e-4, min(abs(sc.x), abs(sc.y)) / 100 * renderScale)
 
             let masks = layer.masks.filter { $0.mode != .none }
-            if pixelFX.isEmpty, masks.isEmpty, let path = Self.shapePath(layer, time: time) {
+            let needsLocal = !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil
+            if !needsLocal, let path = Self.shapePath(layer, time: time) {
                 drawShapePath(cb: cb, target: comp, matrix: M, layer: layer, path: path, time: time,
                               opacity: opacity, blend: layer.blendMode, aa: 1 / pxPerLocal)
                 continue
             }
-            if pixelFX.isEmpty, masks.isEmpty, case .text = layer.content {
+            if !needsLocal, case .text = layer.content {
                 drawText(cb: cb, target: comp, matrix: M, density: pxPerLocal, layer: layer, time: time,
                          opacity: opacity, blend: layer.blendMode)
                 continue
             }
-            if pixelFX.isEmpty && masks.isEmpty {
+            if !needsLocal {
                 guard let source = sourceTexture(layer, sourceTime: layer.sourceTime(at: time), mediaURL: mediaURL) else { continue }
                 drawQuad(cb: cb, target: comp, matrix: M, halfSize: hs, aa: 1 / pxPerLocal, opacity: opacity,
                          layer: layer, time: time, source: source, premultipliedImage: false)
@@ -236,6 +237,10 @@ final class Renderer {
             if !masks.isEmpty {
                 PathGPU.shared?.applyMasks(cb: cb, layer: local, masks: masks, time: time, matrix: toLocal.inverse,
                                            aa: 1 / density, pool: pool)
+            }
+            if layer.cutout != nil {
+                applyCutout(cb: cb, layer: local, layerModel: layer, sourceTime: layer.sourceTime(at: time),
+                            matrix: toLocal.inverse, halfSize: hs, mediaURL: mediaURL)
             }
             var current = local
             for e in pixelFX {

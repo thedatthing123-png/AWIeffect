@@ -3,6 +3,7 @@ import SwiftUI
 /// Speed, trim, time remap, volume and beat tools for video/audio layers.
 struct ClipPanel: View {
     @ObservedObject var state: EditorState
+    @EnvironmentObject private var trackLauncher: TrackLauncher
     @State private var sensitivity = 0.5
 
     var body: some View {
@@ -42,6 +43,13 @@ struct ClipPanel: View {
                             if let i = state.selectedIndex { p.layers[i].frameBlending = b }
                         } }))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
+                        if case .video = l.content {
+                            Button { trackLauncher.active = true } label: {
+                                Label("Track Motion", systemImage: "scope")
+                                    .frame(maxWidth: .infinity).padding(.vertical, 10).glass(radius: 12).foregroundStyle(Theme.text)
+                            }
+                        }
+                        CutoutSection(state: state)
                         Divider().overlay(Theme.stroke)
                         Text("Beat Sync").font(.system(size: 13, weight: .bold)).foregroundStyle(Theme.text)
                         if l.hasAudio {

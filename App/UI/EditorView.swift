@@ -12,6 +12,7 @@ struct EditorView: View {
     @State private var pen: (target: PenTarget, style: PenStyle)?
     @StateObject private var drawLauncher = DrawLauncher()
     @StateObject private var mediaLauncher = MediaLauncher()
+    @StateObject private var trackLauncher = TrackLauncher()
     @State private var videoItem: PhotosPickerItem?
 
     init(state: EditorState, close: @escaping () -> Void) {
@@ -36,6 +37,7 @@ struct EditorView: View {
         .background(Theme.background.ignoresSafeArea())
         .environmentObject(drawLauncher)
         .environmentObject(mediaLauncher)
+        .environmentObject(trackLauncher)
         .photosPicker(isPresented: $mediaLauncher.pickVideo, selection: $videoItem, matching: .videos)
         .onChange(of: videoItem) { _, item in
             guard let item else { return }
@@ -124,6 +126,9 @@ struct EditorView: View {
                              mediaURL: { state.mediaURL($0) })
                 if let pen {
                     PenOverlay(state: state, target: pen.target, style: pen.style, fit: fit) { self.pen = nil }
+                }
+                if trackLauncher.active {
+                    TrackOverlay(state: state, fit: fit) { trackLauncher.active = false }
                 }
                 if pen == nil, let layer = state.selectedLayer, layer.isActive(at: state.currentTime) {
                     SelectionOverlay(layer: layer, time: state.currentTime, fit: fit,

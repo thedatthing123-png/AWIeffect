@@ -123,6 +123,8 @@ struct Layer: Codable, Equatable, Identifiable {
     var timeRemap: Animated<Double>? = nil
     var volume = Animated(100.0)
     var frameBlending = false
+    /// AI background cutout (image/video layers).
+    var cutout: CutoutSettings? = nil
 
     init(id: UUID = UUID(), name: String, content: LayerContent, tag: LayerTag = .purple, outPoint: Double,
          transform: LayerTransform, size: Animated<Vec2>) {
@@ -163,6 +165,7 @@ struct Layer: Codable, Equatable, Identifiable {
         timeRemap = try c.decodeIfPresent(Animated<Double>.self, forKey: .timeRemap)
         volume = try c.decodeIfPresent(Animated<Double>.self, forKey: .volume) ?? Animated(100)
         frameBlending = try c.decodeIfPresent(Bool.self, forKey: .frameBlending) ?? false
+        cutout = try c.decodeIfPresent(CutoutSettings.self, forKey: .cutout)
     }
 
     func isActive(at time: Double) -> Bool { isVisible && time >= inPoint && time < outPoint }

@@ -132,3 +132,29 @@ kernel void maskApply(texture2d<half, access::read_write> layer [[texture(0)]],
     float m = float(acc.read(gid).r);
     layer.write(layer.read(gid) * half(m), gid);
 }
+
+// ---------- AI cutout matte ----------
+// Must match CutoutParams in Renderer+Cutout.swift.
+struct CutoutParams {
+    float4 invRow0;   // buffer px -> layer local px
+    float4 invRow1;
+    float4 geom;      // halfSize.x, halfSize.y, edgeShift (-0.5..0.5), edgeSoftness (0.01..0.5)
+    uint4  flags;     // invert, _, _, _
+};
+
+kernel void cutoutApply(texture2d<half, access::read_write> layer [[texture(0)]],
+                        texture2d<half, access::sample> matte [[texture(1)]],
+                        constant CutoutParams& p [[buffer(0)]],
+                        uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= layer.get_width() || gid.y >= layer.get_height()) return;
+    float2 c = float2(gid) + 0.5;
+    float2 q = float2(dot(p.invRow0.xy, c) + p.invRow0.z, dot(p.invRow1.xy, c) + p.invRow1.z);
+    float2 uv = q / (2.0 * max(p.geom.xy, float2(1e-3))) + 0.5;
+    constexpr sampler s(address::clamp_to_zero, filter::linear);
+    float m = float(matte.sample(s, uv).r);
+    // Choke/grow + soften the matte edge.
+    float soft = max(p.geom.w, 0.01);
+    m = clamp((m - 0.5 + p.geom.z) / (2.0 * soft) + 0.5, 0.0, 1.0);
+    if (p.flags.x != 0) m = 1.0 - m;
+    layer.write(layer.read(gid) * half(m), gid);
+}

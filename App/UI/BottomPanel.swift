@@ -163,6 +163,8 @@ struct TransformPanel: View {
             }
             if state.selectedLayer?.isMedia == true {
                 ToolTile(icon: "film.stack", title: "Clip") { state.panel = .clip }
+            } else if case .image = state.selectedLayer?.content {
+                ToolTile(icon: "person.crop.rectangle", title: "AI Cutout") { state.panel = .clip }
             }
             if state.selectedLayer?.drawingID != nil {
                 ToolTile(icon: "paintbrush.pointed.fill", title: "Edit Drawing") { drawLauncher.open(state.selectedLayerID) }
