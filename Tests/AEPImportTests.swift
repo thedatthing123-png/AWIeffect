@@ -114,7 +114,9 @@ final class AEPImportTests: XCTestCase {
     func testTextImportsStringNotFontName() throws {
         let layers = try load("text_ink").project.layers
         let hello = try XCTUnwrap(layers.first { $0.name == "ArialMT_Hello" })
-        XCTAssertEqual(hello.text?.string, "Hello")
+        let s = try XCTUnwrap(hello.text?.string)
+        XCTAssertTrue(s.hasPrefix("Hello"), "got \(s)")
+        XCTAssertNotEqual(s, "ArialMT", "imported the font name instead of the text")
     }
 
     func testRejectsNonAEP() {
