@@ -15,3 +15,6 @@ DerivedData/
 
 # Local-only assets (bundled only after repo goes private)
 local-assets/
+
+# Public MIT test fixtures are allowed
+!Tests/Fixtures/aep/*.aep
