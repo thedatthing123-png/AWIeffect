@@ -108,6 +108,7 @@ struct AddPanel: View {
 
 struct TransformPanel: View {
     @ObservedObject var state: EditorState
+    @State private var showGraph = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -161,7 +162,14 @@ struct TransformPanel: View {
 
     private var easingRow: some View {
         HStack {
-            Text("Keyframe easing").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.textDim)
+            Button { showGraph = true } label: {
+                Label("Graph", systemImage: "point.topleft.down.to.point.bottomright.curvepath")
+                    .font(.system(size: 12, weight: .semibold))
+                    .padding(.horizontal, 10).padding(.vertical, 6)
+                    .background(Capsule().fill(Theme.accent.opacity(0.25)))
+                    .foregroundStyle(Theme.accentGlow)
+            }
+            .sheet(isPresented: $showGraph) { GraphEditorSheet(state: state).presentationDetents([.large]) }
             Spacer()
             ForEach(Interpolation.allCases, id: \.self) { i in
                 Button(i.rawValue.capitalized) { state.setInterpolation(i) }

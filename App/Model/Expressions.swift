@@ -124,8 +124,10 @@ final class ExpressionEngine {
 
     /// JS prelude implementing AE's expression API on top of the native hooks.
     static let prelude = #"""
-    var __seedOverride = null, __timeless = false;
+    var __seedOverride = null, __timeless = false, __rng = null, __rngKey = null;
     function __run() {
+        // Same frame + same property = same random numbers, like AE: restart the stream every evaluation.
+        __rng = null; __rngKey = null; __seedOverride = null; __timeless = false;
         // Fresh scope per evaluation; `eval` returns the value of the last statement, like AE.
         return (function () { return eval(__src); })();
     }
@@ -185,7 +187,6 @@ final class ExpressionEngine {
     function easeOut(t, a, b, c, d) { return __interp(t, a, b, c, d, function (u) { return 1 - (1 - u) * (1 - u); }); }
 
     function __mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-    var __rng = null, __rngKey = null;
     function seedRandom(seed, timeless) { __seedOverride = seed; __timeless = !!timeless; __rng = null; }
     function __rand01() {
         var key = (__seedOverride === null ? __seed : __seedOverride * 7919 + __seed) + (__timeless ? 0 : Math.floor(time * __fps + 1e-6) * 104729);
