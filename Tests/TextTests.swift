@@ -55,7 +55,7 @@ final class TextTests: XCTestCase {
     func testLayoutHasGlyphPerCharacterAndUnitCounts() {
         let t = TextData(string: "Hi you\nAW", fontSize: 50)
         let l = TextEngine.shared.layout(t, time: 0)
-        XCTAssertEqual(l.glyphs.count, 9)   // includes space glyph(s) and none for "\n"
+        XCTAssertEqual(l.glyphs.count, 8)   // H i space y o u A W (no glyph for the line break)
         XCTAssertEqual(l.wordCount, 3)
         XCTAssertEqual(l.lineCount, 2)
         XCTAssertGreaterThan(l.bounds.width, 50)
