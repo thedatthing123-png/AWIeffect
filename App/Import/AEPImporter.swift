@@ -479,8 +479,7 @@ enum AEPImporter {
                 units.append(UInt16(hi) << 8 | UInt16(lo))
                 j += 2
             }
-            let s = String(decoding: units, as: UTF16.self).replacingOccurrences(of: "", with: "
-")
+            let s = String(decoding: units, as: UTF16.self).replacingOccurrences(of: "\r", with: "\n")
                 .trimmingCharacters(in: .controlCharacters)
             if !s.isEmpty { return s }
         }
