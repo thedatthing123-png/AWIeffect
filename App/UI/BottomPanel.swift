@@ -22,6 +22,8 @@ struct BottomPanel: View {
                 case .masks: MasksPanel(state: state, startPen: startPen)
                 case .clip: ClipPanel(state: state)
                 case .threeD: ThreeDPanel(state: state)
+                case .model: ModelPanel(state: state)
+                case .physics: PhysicsPanel(state: state)
                 case .none: idle
                 }
             }
@@ -108,6 +110,8 @@ struct AddPanel: View {
                     ToolTile(icon: "music.note", title: "Audio") { mediaLauncher.pickAudio = true }
                     ToolTile(icon: "slider.horizontal.below.rectangle", title: "Adjustment") { state.addAdjustmentLayer() }
                     ToolTile(icon: "video", title: "Camera") { state.addCamera() }
+                    ToolTile(icon: "cube.transparent", title: "3D Text") { state.addModelLayer(text: "AWI", fileURL: nil) }
+                    ToolTile(icon: "shippingbox", title: "3D Model") { mediaLauncher.pickModel = true }
                 }
                 .padding(.horizontal, 12)
                 Text("Tip: add a Camera to fly through 3D layers.")
@@ -174,6 +178,10 @@ struct TransformPanel: View {
             ToolTile(icon: "sparkles", title: "Effects") { state.panel = .effects }
             ToolTile(icon: "theatermask.and.paintbrush", title: "Masks") { state.panel = .masks }
             ToolTile(icon: "cube", title: state.selectedLayer?.content == .camera ? "Camera" : "3D") { state.panel = .threeD }
+            if state.selectedLayer?.content == .model {
+                ToolTile(icon: "cube.transparent", title: "Model") { state.panel = .model }
+            }
+            ToolTile(icon: "atom", title: "Physics") { state.panel = .physics }
             ToolTile(icon: "paintpalette", title: "Color & Fill") { state.panel = .fill }
             ToolTile(icon: "square.stack.3d.down.right", title: "Blending") { state.panel = .blending }
             if case .shape = state.selectedLayer?.content {

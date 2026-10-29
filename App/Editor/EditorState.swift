@@ -33,6 +33,8 @@ enum ToolPanel: Equatable {
     case masks
     case clip
     case threeD
+    case model
+    case physics
 }
 
 @MainActor

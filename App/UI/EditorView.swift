@@ -51,6 +51,9 @@ struct EditorView: View {
         .fileImporter(isPresented: $mediaLauncher.pickAudio, allowedContentTypes: [.audio]) { r in
             if case .success(let url) = r { state.addAudio(from: url) }
         }
+        .fileImporter(isPresented: $mediaLauncher.pickModel, allowedContentTypes: [.usdz, .usdzModel, .objModel, .data]) { r in
+            if case .success(let url) = r { state.addModelLayer(text: nil, fileURL: url) }
+        }
         .fullScreenCover(item: $drawLauncher.session) { s in
             DrawStudioView(engine: s.engine, onDone: { engine in
                 state.finishDrawing(engine, editing: s.layerID)

@@ -4,4 +4,5 @@ import SwiftUI
 final class MediaLauncher: ObservableObject {
     @Published var pickVideo = false
     @Published var pickAudio = false
+    @Published var pickModel = false
 }

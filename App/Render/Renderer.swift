@@ -209,7 +209,7 @@ final class Renderer {
                 continue
             }
             if !needsLocal {
-                guard let source = sourceTexture(layer, sourceTime: layer.sourceTime(at: time), mediaURL: mediaURL) else { continue }
+                guard let source = sourceTexture(layer, sourceTime: layer.sourceTime(at: time), time: time, density: pxPerLocal, cb: cb, mediaURL: mediaURL) else { continue }
                 drawQuad(cb: cb, target: comp, matrix: M, halfSize: hs, aa: 1 / pxPerLocal, opacity: opacity,
                          layer: layer, time: time, source: source, premultipliedImage: false)
                 continue
@@ -234,7 +234,7 @@ final class Renderer {
                 drawText(cb: cb, target: local, matrix: toLocal.inverse, density: density, layer: layer, time: time,
                          opacity: 1, blend: .normal)
             } else {
-                guard let source = sourceTexture(layer, sourceTime: layer.sourceTime(at: time), mediaURL: mediaURL) else { continue }
+                guard let source = sourceTexture(layer, sourceTime: layer.sourceTime(at: time), time: time, density: pxPerLocal, cb: cb, mediaURL: mediaURL) else { continue }
                 drawQuad(cb: cb, target: local, matrix: toLocal.inverse, halfSize: hs, aa: 1 / density, opacity: 1,
                          layer: layer, time: time, source: source, premultipliedImage: false, blendOverride: .normal)
             }
@@ -267,7 +267,7 @@ final class Renderer {
         }
     }
 
-    private enum Source { case shape, solid, image(MTLTexture) }
+    private enum Source { case shape, solid, image(MTLTexture), model(MTLTexture) }
 
 
     private func drawShapePath(cb: MTLCommandBuffer, target: MTLTexture, matrix: simd_double3x3, layer: Layer, path: BezierPath,
@@ -280,13 +280,19 @@ final class Renderer {
                                  stroke: stroke, opacity: opacity, blend: blend, aa: aa)
     }
 
-    private func sourceTexture(_ layer: Layer, sourceTime: Double, mediaURL: (String) -> URL) -> Source? {
+    private func sourceTexture(_ layer: Layer, sourceTime: Double, time: Double, density: Double, cb: MTLCommandBuffer,
+                               mediaURL: (String) -> URL) -> Source? {
         switch layer.content {
         case .shape: return .shape
         case .solid: return .solid
         case .image(let file, _, _): return imageTexture(url: mediaURL(file)).map { .image($0) }
         case .video(let file, _, _, _):
             return VideoSources.shared.texture(url: mediaURL(file), time: sourceTime, device: device).map { .image($0) }
+        case .model:
+            guard let o = layer.model3D else { return nil }
+            let size = layer.size.value(at: time)
+            let w = min(2048, max(16, Int(size.x * density))), h = min(2048, max(16, Int(size.y * density)))
+            return ModelRenderer.shared?.render(o, time: time, width: w, height: h, cb: cb, mediaURL: mediaURL).map { .model($0) }
         case .adjustment, .text, .audio, .camera: return nil
         }
     }
@@ -315,10 +321,13 @@ final class Renderer {
         var shape: UInt32 = 0
         var tex: MTLTexture = dummy
         var color = layer.fill.value(at: time).simd
+        // SceneKit renders premultiplied alpha.
+        var premul = premultipliedImage
         switch source {
         case .shape: if case .shape(let k) = layer.content { shape = k.shaderIndex }
         case .solid: contentKind = 1
         case .image(let t): contentKind = 2; tex = t; color = SIMD4(1, 1, 1, 1)
+        case .model(let t): contentKind = 2; tex = t; color = SIMD4(1, 1, 1, 1); premul = true
         }
 
         var params = LayerParams(
@@ -327,7 +336,7 @@ final class Renderer {
             invRow2: SIMD4(Float(inv[0][2]), Float(inv[1][2]), Float(inv[2][2]), 0),
             color: color,
             geom: SIMD4(Float(hs.x), Float(hs.y), Float(opacity), Float(layer.cornerRadius.value(at: time))),
-            geom2: SIMD4(Float(layer.sides.value(at: time)), Float(layer.innerRatio.value(at: time)), Float(aa), premultipliedImage ? 1 : 0),
+            geom2: SIMD4(Float(layer.sides.value(at: time)), Float(layer.innerRatio.value(at: time)), Float(aa), premul ? 1 : 0),
             modes: SIMD4(shape, (blendOverride ?? layer.blendMode).shaderIndex, contentKind, 0),
             region: SIMD4(UInt32(x0), UInt32(y0), UInt32(x1 - x0), UInt32(y1 - y0))
         )

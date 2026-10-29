@@ -52,6 +52,8 @@ enum LayerContent: Codable, Equatable {
     case adjustment
     /// AE-style 3D camera; its transform + `Layer.camera` options drive every 3D layer.
     case camera
+    /// Real 3D: imported model (usdz/obj) or extruded 3D text, rendered with lights; settings in `Layer.model3D`.
+    case model
     /// Text layer; content lives in `Layer.text`.
     case text
     /// Video clip in the project's media folder.
@@ -66,6 +68,7 @@ enum LayerContent: Codable, Equatable {
         case .image: return "photo"
         case .adjustment: return "slider.horizontal.below.rectangle"
         case .camera: return "video"
+        case .model: return "cube.transparent"
         case .text: return "textformat"
         case .video: return "film"
         case .audio: return "waveform"
@@ -161,6 +164,8 @@ struct Layer: Codable, Equatable, Identifiable {
     var is3D = false
     /// Options for `.camera` layers.
     var camera: CameraOptions? = nil
+    /// Options for `.model` layers.
+    var model3D: Model3DOptions? = nil
 
     init(id: UUID = UUID(), name: String, content: LayerContent, tag: LayerTag = .purple, outPoint: Double,
          transform: LayerTransform, size: Animated<Vec2>) {
@@ -204,6 +209,7 @@ struct Layer: Codable, Equatable, Identifiable {
         cutout = try c.decodeIfPresent(CutoutSettings.self, forKey: .cutout)
         is3D = try c.decodeIfPresent(Bool.self, forKey: .is3D) ?? false
         camera = try c.decodeIfPresent(CameraOptions.self, forKey: .camera)
+        model3D = try c.decodeIfPresent(Model3DOptions.self, forKey: .model3D)
     }
 
     func isActive(at time: Double) -> Bool { isVisible && time >= inPoint && time < outPoint }
