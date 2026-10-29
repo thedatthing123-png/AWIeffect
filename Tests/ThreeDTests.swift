@@ -70,7 +70,10 @@ final class ThreeDTests: XCTestCase {
         cam.transform.position = Animated(Vec2(140, 100))   // pan right -> layer appears left
         p.layers.insert(cam, at: 0)
         let moved = try render(p)
-        let leftEdge = { (b: [UInt8]) in (0..<200).first { b[(100 * 200 + $0) * 4] > 128 } ?? 999 }
+        func leftEdge(_ b: [UInt8]) -> Int {
+            for x in 0..<200 where b[(100 * 200 + x) * 4] > 128 { return x }
+            return 999
+        }
         XCTAssertLessThan(leftEdge(moved), leftEdge(base) - 20)
     }
 
