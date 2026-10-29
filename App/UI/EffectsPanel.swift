@@ -147,6 +147,8 @@ final class EffectThumbnails {
 struct EffectsPanel: View {
     @ObservedObject var state: EditorState
     @State private var showBrowser = false
+    @State private var showFFX = false
+    @State private var ffxMessage: String?
     @State private var expanded: Set<UUID> = []
 
     var body: some View {
@@ -161,6 +163,14 @@ struct EffectsPanel: View {
                             .background(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.accent.opacity(0.7), style: StrokeStyle(lineWidth: 1.2, dash: [5, 4])))
                             .foregroundStyle(Theme.accentGlow)
                     }
+                    Button { showFFX = true } label: {
+                        Label("Apply AE Preset (.ffx)", systemImage: "square.and.arrow.down")
+                            .font(.system(size: 13, weight: .semibold))
+                            .frame(maxWidth: .infinity).padding(.vertical, 9)
+                            .glass(radius: 12)
+                            .foregroundStyle(Theme.text)
+                    }
+                    if let m = ffxMessage { Text(m).font(.caption).foregroundStyle(Theme.textDim) }
                     if let layer = state.selectedLayer {
                         if layer.effects.isEmpty {
                             Text(layer.content == .adjustment ? "Effects on an adjustment layer apply to every layer below it."
@@ -172,6 +182,14 @@ struct EffectsPanel: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.bottom, 16)
+            }
+        }
+        .fileImporter(isPresented: $showFFX, allowedContentTypes: [.ffx, .data]) { result in
+            guard case .success(let url) = result else { return }
+            if let r = state.applyFFX(url: url) {
+                ffxMessage = "Preset: \(r.nativeCount + r.approximateCount) effects applied, \(r.missingCount) not built yet."
+            } else {
+                ffxMessage = "That file isn't an After Effects preset."
             }
         }
         .sheet(isPresented: $showBrowser) {

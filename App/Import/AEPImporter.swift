@@ -419,28 +419,7 @@ enum AEPImporter {
         if let parade = tree.first(where: { $0.matchName == "ADBE Effect Parade" }) {
             for e in parade.children {
                 if let def = EffectRegistry.definition(aeMatchName: e.matchName) {
-                    var inst = def.makeInstance()
-                    for pd in def.params {
-                        guard let idx = pd.aeIndex else { continue }
-                        let pname = "\(e.matchName)-\(String(format: "%04d", idx))"
-                        guard case .value(let c)? = e.find(pname)?.kind else { continue }
-                        let v = readValue(c, timebase: comp.timebase, layerStart: start)
-                        switch pd.kind {
-                        case .number, .angle:
-                            inst.params[pd.id] = .number(animated(v, fallback: inst.number(pd.id, 0)))
-                        case .color:
-                            inst.params[pd.id] = .color(animated(v, fallback: .white))
-                        case .point:
-                            // Effect points are stored as 0-1 fractions of the layer, same as AWIeffect.
-                            inst.params[pd.id] = .point(animated(v, fallback: Vec2(0.5, 0.5)))
-                        case .toggle:
-                            inst.params[pd.id] = .toggle((v.staticValue.first ?? 0) != 0)
-                        case .choice(let opts):
-                            // AE popups are 1-based.
-                            let i = Int((v.staticValue.first ?? 1).rounded()) - 1
-                            inst.params[pd.id] = .choice(min(max(i, 0), opts.count - 1))
-                        }
-                    }
+                    let inst = effectInstance(def, from: e, timebase: comp.timebase, layerStart: start)
                     layer.effects.append(inst)
                     let approx = def.id.hasPrefix("awi.") || e.matchName.hasPrefix("CC ")
                     report.add(name, def.name, approx ? .approximate : .native, e.matchName)
@@ -450,6 +429,33 @@ enum AEPImporter {
             }
         }
         return layer
+    }
+
+    /// Builds an AWIeffect effect from an AE effect group, mapping params by their `-000N` index.
+    static func effectInstance(_ def: EffectDefinition, from e: AEProp, timebase: Double, layerStart: Double) -> EffectInstance {
+        var inst = def.makeInstance()
+        for pd in def.params {
+            guard let idx = pd.aeIndex else { continue }
+            let pname = "\(e.matchName)-\(String(format: "%04d", idx))"
+            guard case .value(let c)? = e.find(pname)?.kind else { continue }
+            let v = readValue(c, timebase: timebase, layerStart: layerStart)
+            switch pd.kind {
+            case .number, .angle:
+                inst.params[pd.id] = .number(animated(v, fallback: inst.number(pd.id, 0)))
+            case .color:
+                inst.params[pd.id] = .color(animated(v, fallback: .white))
+            case .point:
+                // Effect points are stored as 0-1 fractions of the layer, same as AWIeffect.
+                inst.params[pd.id] = .point(animated(v, fallback: Vec2(0.5, 0.5)))
+            case .toggle:
+                inst.params[pd.id] = .toggle((v.staticValue.first ?? 0) != 0)
+            case .choice(let opts):
+                // AE popups are 1-based.
+                let i = Int((v.staticValue.first ?? 1).rounded()) - 1
+                inst.params[pd.id] = .choice(min(max(i, 0), opts.count - 1))
+            }
+        }
+        return inst
     }
 
     // MARK: Text & shapes (best effort)

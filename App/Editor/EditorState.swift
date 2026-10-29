@@ -504,3 +504,34 @@ extension EditorState {
         return ExpressionEngine.shared.error(for: "\(l.id)/\(name)")
     }
 }
+
+// MARK: - AE presets (.ffx)
+
+extension EditorState {
+    /// Applies the effects inside an After Effects preset to the selected layer. Returns the import report.
+    @discardableResult
+    func applyFFX(url: URL) -> ImportReport? {
+        guard let i = selectedIndex else { return nil }
+        let access = url.startAccessingSecurityScopedResource()
+        defer { if access { url.stopAccessingSecurityScopedResource() } }
+        let size = project.layers[i].size.staticValue
+        guard let r = try? FFXImporter.load(url: url, layerSize: size) else { return nil }
+        if !r.effects.isEmpty {
+            let start = project.layers[i].inPoint
+            mutate("Apply Preset \(url.deletingPathExtension().lastPathComponent)") { p in
+                // Shift preset keyframes so they start at the layer's in point.
+                var fx = r.effects
+                for k in fx.indices {
+                    for (key, v) in fx[k].params {
+                        if case .number(var a) = v, a.isAnimated {
+                            for j in a.keyframes.indices { a.keyframes[j].time += start }
+                            fx[k].params[key] = .number(a)
+                        }
+                    }
+                }
+                p.layers[i].effects += fx
+            }
+        }
+        return r.report
+    }
+}

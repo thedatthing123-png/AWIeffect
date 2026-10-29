@@ -63,14 +63,15 @@ enum RIFXParser {
     /// LIST types that are NOT real RIFF and must be kept raw.
     private static let rawLists: Set<String> = ["btdk"]
 
-    static func parse(_ data: Data) throws -> RIFXChunk {
+    /// `form` = expected RIFX form type ("Egg!" for .aep); nil accepts any (e.g. .ffx presets).
+    static func parse(_ data: Data, form expected: String? = "Egg!") throws -> RIFXChunk {
         guard data.count >= 12, String(decoding: data.prefix(4), as: UTF8.self) == "RIFX" else { throw RIFXError.notAEP }
         let form = String(decoding: data[data.startIndex + 8 ..< data.startIndex + 12], as: UTF8.self)
-        guard form == "Egg!" else { throw RIFXError.notAEP }
+        if let expected { guard form == expected else { throw RIFXError.notAEP } }
         let size = Int(data.withUnsafeBytes { UInt32(bigEndian: $0.loadUnaligned(fromByteOffset: 4, as: UInt32.self)) })
         let end = min(data.count, 8 + size)
         let kids = parseChunks(data, from: 12, to: end, depth: 0)
-        return RIFXChunk(id: "RIFX", listType: "Egg!", data: Data(), children: kids)
+        return RIFXChunk(id: "RIFX", listType: form, data: Data(), children: kids)
     }
 
     private static func parseChunks(_ data: Data, from start: Int, to end: Int, depth: Int) -> [RIFXChunk] {
