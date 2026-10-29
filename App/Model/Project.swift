@@ -52,6 +52,10 @@ enum LayerContent: Codable, Equatable {
     case adjustment
     /// Text layer; content lives in `Layer.text`.
     case text
+    /// Video clip in the project's media folder.
+    case video(fileName: String, pixelWidth: Int, pixelHeight: Int, hasAudio: Bool)
+    /// Audio-only clip.
+    case audio(fileName: String, duration: Double)
 
     var symbol: String {
         switch self {
@@ -60,6 +64,8 @@ enum LayerContent: Codable, Equatable {
         case .image: return "photo"
         case .adjustment: return "slider.horizontal.below.rectangle"
         case .text: return "textformat"
+        case .video: return "film"
+        case .audio: return "waveform"
         }
     }
 }
@@ -110,6 +116,13 @@ struct Layer: Codable, Equatable, Identifiable {
     var stroke = ShapeStroke()
     /// Draw Studio document behind this image layer (live link for re-editing).
     var drawingID: UUID? = nil
+    /// Media timing: playback speed (1 = normal, 0.5 = slow-mo), trim offset into the source (s), optional AE-style
+    /// Time Remap (source seconds as a function of comp time), volume (0-200 %).
+    var speed: Double = 1
+    var sourceStart: Double = 0
+    var timeRemap: Animated<Double>? = nil
+    var volume = Animated(100.0)
+    var frameBlending = false
 
     init(id: UUID = UUID(), name: String, content: LayerContent, tag: LayerTag = .purple, outPoint: Double,
          transform: LayerTransform, size: Animated<Vec2>) {
@@ -145,6 +158,11 @@ struct Layer: Codable, Equatable, Identifiable {
         path = try c.decodeIfPresent(Animated<BezierPath>.self, forKey: .path)
         stroke = try c.decodeIfPresent(ShapeStroke.self, forKey: .stroke) ?? ShapeStroke()
         drawingID = try c.decodeIfPresent(UUID.self, forKey: .drawingID)
+        speed = try c.decodeIfPresent(Double.self, forKey: .speed) ?? 1
+        sourceStart = try c.decodeIfPresent(Double.self, forKey: .sourceStart) ?? 0
+        timeRemap = try c.decodeIfPresent(Animated<Double>.self, forKey: .timeRemap)
+        volume = try c.decodeIfPresent(Animated<Double>.self, forKey: .volume) ?? Animated(100)
+        frameBlending = try c.decodeIfPresent(Bool.self, forKey: .frameBlending) ?? false
     }
 
     func isActive(at time: Double) -> Bool { isVisible && time >= inPoint && time < outPoint }
@@ -184,6 +202,12 @@ struct Project: Codable, Equatable, Identifiable {
     var background: RGBA
     /// Index 0 is the TOP layer (AE order).
     var layers: [Layer] = []
+    /// Beat / comp markers in seconds (optional so older saves still decode).
+    var markerTimes: [Double]? = nil
+    var markers: [Double] {
+        get { markerTimes ?? [] }
+        set { markerTimes = newValue.sorted() }
+    }
     var createdAt = Date()
     var modifiedAt = Date()
 

@@ -78,6 +78,29 @@ final class Exporter {
         ])
         guard writer.canAdd(input) else { throw ExportError.writer("cannot add video input") }
         writer.add(input)
+        // Audio: mix every audible layer through the same composition the preview plays.
+        var audioReader: AVAssetReader?
+        var audioOut: AVAssetReaderAudioMixOutput?
+        var audioIn: AVAssetWriterInput?
+        if let (comp, mix) = AudioPreview.composition(project, mediaURL: mediaURL) {
+            let reader = try AVAssetReader(asset: comp)
+            let start = CMTime(seconds: max(0, settings.start), preferredTimescale: 48000)
+            let end = CMTime(seconds: min(project.duration, settings.end ?? project.duration), preferredTimescale: 48000)
+            reader.timeRange = CMTimeRange(start: start, end: end)
+            let out = AVAssetReaderAudioMixOutput(audioTracks: comp.tracks(withMediaType: .audio), audioSettings: [
+                AVFormatIDKey: kAudioFormatLinearPCM, AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false,
+                AVLinearPCMIsNonInterleaved: false, AVLinearPCMIsBigEndianKey: false, AVSampleRateKey: 48000, AVNumberOfChannelsKey: 2,
+            ])
+            out.audioMix = mix
+            if reader.canAdd(out) {
+                reader.add(out)
+                let ain = AVAssetWriterInput(mediaType: .audio, outputSettings: [
+                    AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: 48000, AVNumberOfChannelsKey: 2, AVEncoderBitRateKey: 256_000,
+                ])
+                ain.expectsMediaDataInRealTime = false
+                if writer.canAdd(ain) { writer.add(ain); audioReader = reader; audioOut = out; audioIn = ain }
+            }
+        }
         guard writer.startWriting() else { throw ExportError.writer(writer.error?.localizedDescription ?? "start") }
         writer.startSession(atSourceTime: .zero)
 
@@ -119,6 +142,23 @@ final class Exporter {
             progress(Double(i + 1) / Double(frames))
         }
         input.markAsFinished()
+        if let reader = audioReader, let out = audioOut, let ain = audioIn, reader.startReading() {
+            // Shift audio so the export range starts at zero, like the video.
+            let offset = CMTime(seconds: max(0, settings.start), preferredTimescale: 48000)
+            while let sb = out.copyNextSampleBuffer() {
+                while !ain.isReadyForMoreMediaData { try await Task.sleep(nanoseconds: 2_000_000) }
+                var timing = CMSampleTimingInfo()
+                CMSampleBufferGetSampleTimingInfo(sb, at: 0, timingInfoOut: &timing)
+                timing.presentationTimeStamp = CMTimeSubtract(timing.presentationTimeStamp, offset)
+                var shifted: CMSampleBuffer?
+                CMSampleBufferCreateCopyWithNewTiming(allocator: nil, sampleBuffer: sb, sampleTimingEntryCount: 1,
+                                                      sampleTimingArray: &timing, sampleBufferOut: &shifted)
+                if let s = shifted { ain.append(s) }
+            }
+            ain.markAsFinished()
+        } else {
+            audioIn?.markAsFinished()
+        }
         await writer.finishWriting()
         if writer.status != .completed { throw ExportError.writer(writer.error?.localizedDescription ?? "finish") }
         return url

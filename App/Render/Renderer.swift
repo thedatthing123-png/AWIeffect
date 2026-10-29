@@ -169,6 +169,7 @@ final class Renderer {
 
         // layers[0] is the top layer, so draw bottom-up.
         for layer in project.layers.reversed() where layer.isActive(at: time) {
+            if case .audio = layer.content { continue }
             let opacity = layer.transform.opacity.value(at: time) / 100
             if opacity <= 0 { continue }
             let pixelFX = layer.effects.filter { e in
@@ -202,7 +203,7 @@ final class Renderer {
                 continue
             }
             if pixelFX.isEmpty && masks.isEmpty {
-                guard let source = sourceTexture(layer, mediaURL: mediaURL) else { continue }
+                guard let source = sourceTexture(layer, sourceTime: layer.sourceTime(at: time), mediaURL: mediaURL) else { continue }
                 drawQuad(cb: cb, target: comp, matrix: M, halfSize: hs, aa: 1 / pxPerLocal, opacity: opacity,
                          layer: layer, time: time, source: source, premultipliedImage: false)
                 continue
@@ -226,7 +227,7 @@ final class Renderer {
                 drawText(cb: cb, target: local, matrix: toLocal.inverse, density: density, layer: layer, time: time,
                          opacity: 1, blend: .normal)
             } else {
-                guard let source = sourceTexture(layer, mediaURL: mediaURL) else { continue }
+                guard let source = sourceTexture(layer, sourceTime: layer.sourceTime(at: time), mediaURL: mediaURL) else { continue }
                 drawQuad(cb: cb, target: local, matrix: toLocal.inverse, halfSize: hs, aa: 1 / density, opacity: 1,
                          layer: layer, time: time, source: source, premultipliedImage: false, blendOverride: .normal)
             }
@@ -251,6 +252,7 @@ final class Renderer {
 
     private enum Source { case shape, solid, image(MTLTexture) }
 
+
     private func drawShapePath(cb: MTLCommandBuffer, target: MTLTexture, matrix: simd_double3x3, layer: Layer, path: BezierPath,
                                time: Double, opacity: Double, blend: BlendMode, aa: Double) {
         let st = layer.stroke
@@ -261,12 +263,14 @@ final class Renderer {
                                  stroke: stroke, opacity: opacity, blend: blend, aa: aa)
     }
 
-    private func sourceTexture(_ layer: Layer, mediaURL: (String) -> URL) -> Source? {
+    private func sourceTexture(_ layer: Layer, sourceTime: Double, mediaURL: (String) -> URL) -> Source? {
         switch layer.content {
         case .shape: return .shape
         case .solid: return .solid
         case .image(let file, _, _): return imageTexture(url: mediaURL(file)).map { .image($0) }
-        case .adjustment, .text: return nil
+        case .video(let file, _, _, _):
+            return VideoSources.shared.texture(url: mediaURL(file), time: sourceTime, device: device).map { .image($0) }
+        case .adjustment, .text, .audio: return nil
         }
     }
 

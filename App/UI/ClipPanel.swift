@@ -1,0 +1,87 @@
+import SwiftUI
+
+/// Speed, trim, time remap, volume and beat tools for video/audio layers.
+struct ClipPanel: View {
+    @ObservedObject var state: EditorState
+    @State private var sensitivity = 0.5
+
+    var body: some View {
+        VStack(spacing: 0) {
+            PanelHeader(state: state, title: "Clip")
+            if let l = state.selectedLayer {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 10) {
+                        if l.timeRemap == nil {
+                            row("Speed", value: l.speed, range: 0.1...4, fmt: "%.2fx") { v in state.mutateLayer { $0.speed = v } }
+                        } else {
+                            HStack {
+                                Label("Time Remap is on", systemImage: "timer").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ok)
+                                Spacer()
+                                Button("Turn Off", role: .destructive) { state.mutate("Disable Time Remap") { p in
+                                    if let i = state.selectedIndex { p.layers[i].timeRemap = nil }
+                                } }
+                            }
+                        }
+                        row("Trim Start", value: l.sourceStart, range: 0...max(1, mediaDuration(l)), fmt: "%.2fs") { v in state.mutateLayer { $0.sourceStart = v } }
+                        if l.hasAudio {
+                            row("Volume", value: l.volume.value(at: state.currentTime), range: 0...200, fmt: "%.0f%%") { v in
+                                let t = state.currentTime
+                                state.mutateLayer { $0.volume.set(v, at: t) }
+                            }
+                        }
+                        HStack(spacing: 8) {
+                            ToolTile(icon: "speedometer", title: "Velocity Ramp") { state.applySpeedRamp() }
+                            ToolTile(icon: "timer", title: "Time Remap") { state.enableTimeRemap() }
+                            ToolTile(icon: "scissors", title: "Split") { state.splitSelected() }
+                        }
+                        if l.timeRemap != nil {
+                            Text("Time Remap keyframes are on the timeline; edit their easing in the Graph Editor for smooth velocity edits.")
+                                .font(.caption).foregroundStyle(Theme.textDim)
+                        }
+                        Toggle("Frame Blending", isOn: Binding(get: { l.frameBlending }, set: { b in state.mutate("Frame Blending") { p in
+                            if let i = state.selectedIndex { p.layers[i].frameBlending = b }
+                        } }))
+                        .tint(Theme.accent).foregroundStyle(Theme.text)
+                        Divider().overlay(Theme.stroke)
+                        Text("Beat Sync").font(.system(size: 13, weight: .bold)).foregroundStyle(Theme.text)
+                        if l.hasAudio {
+                            HStack {
+                                Text("Sensitivity").font(.system(size: 12)).foregroundStyle(Theme.textDim)
+                                Slider(value: $sensitivity, in: 0...1)
+                            }
+                            Button { state.detectBeats(sensitivity: sensitivity) } label: {
+                                Label("Detect Beats", systemImage: "waveform.badge.magnifyingglass")
+                            }.buttonStyle(PrimaryButtonStyle())
+                        }
+                        HStack(spacing: 8) {
+                            ToolTile(icon: "hand.tap", title: "Tap Beat") { state.tapMarker() }
+                            ToolTile(icon: "bolt.fill", title: "Punch on Beats") { state.punchOnBeats() }
+                            ToolTile(icon: "xmark.circle", title: "Clear Beats") { state.clearMarkers() }
+                        }
+                        Text("\(state.project.markers.count) beat markers").font(.caption).foregroundStyle(Theme.textDim)
+                    }
+                    .padding(.horizontal, 12).padding(.bottom, 14)
+                }
+            }
+        }
+    }
+
+    private func mediaDuration(_ l: Layer) -> Double {
+        switch l.content {
+        case .video(let f, _, _, _): return VideoSources.shared.duration(state.mediaURL(f))
+        case .audio(_, let d): return d
+        default: return 1
+        }
+    }
+
+    private func row(_ title: String, value: Double, range: ClosedRange<Double>, fmt: String, _ set: @escaping (Double) -> Void) -> some View {
+        HStack {
+            Text(title).font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 84, alignment: .leading)
+            Slider(value: Binding(get: { min(max(value, range.lowerBound), range.upperBound) }, set: { v in
+                state.beginEdit(title); set(v)
+            }), in: range) { e in if !e { state.endEdit(); AudioPreview.shared.invalidate() } }
+            Text(String(format: fmt, value)).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.accentGlow)
+                .frame(width: 56, alignment: .trailing)
+        }
+    }
+}

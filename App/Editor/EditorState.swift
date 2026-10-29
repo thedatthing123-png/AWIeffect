@@ -31,6 +31,7 @@ enum ToolPanel: Equatable {
     case effects
     case text
     case masks
+    case clip
 }
 
 @MainActor
@@ -391,6 +392,8 @@ final class EditorState: ObservableObject {
         isPlaying = true
         playStartWall = CACurrentMediaTime()
         playStartTime = currentTime
+        let pid = project.id, st = store
+        AudioPreview.shared.play(project, from: currentTime, mediaURL: { st.mediaURL($0, projectID: pid) })
         let link = CADisplayLink(target: DisplayLinkProxy { [weak self] in self?.tick() }, selector: #selector(DisplayLinkProxy.fire))
         link.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 120, preferred: Float(min(120, max(30, project.fps))))
         link.add(to: .main, forMode: .common)
@@ -398,6 +401,7 @@ final class EditorState: ObservableObject {
     }
 
     func pause() {
+        AudioPreview.shared.pause()
         isPlaying = false
         displayLink?.invalidate()
         displayLink = nil
@@ -570,5 +574,51 @@ extension EditorState {
             }
         }
         redrawToken += 1
+    }
+}
+
+
+// MARK: - Beats & markers
+
+extension EditorState {
+    /// Detects beats in the selected audio/video layer and adds them as markers (comp time).
+    func detectBeats(sensitivity: Double = 0.5) {
+        guard let l = selectedLayer, l.hasAudio, let file = l.mediaFile else { return }
+        let url = mediaURL(file)
+        let beats = BeatDetector.beats(url: url, sensitivity: sensitivity)
+            .map { l.inPoint + ($0 - l.sourceStart) / max(l.speed, 0.01) }
+            .filter { $0 >= l.inPoint && $0 <= l.outPoint }
+        mutate("Detect Beats") { $0.markers = Array(Set($0.markers + beats.map { ($0 * 1000).rounded() / 1000 })) }
+    }
+
+    /// Manual beat tap (works while playing).
+    func tapMarker() {
+        let t = currentTime
+        project.markers = project.markers + [t]
+        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+    }
+
+    func clearMarkers() { mutate("Clear Markers") { $0.markers = [] } }
+
+    /// Beat-sync script: a punch-in scale + shake hit on the selected layer at every marker.
+    func punchOnBeats(scaleAmount: Double = 12, decay: Double = 0.18) {
+        guard let i = selectedIndex, !project.markers.isEmpty else { return }
+        mutate("Punch on Beats") { p in
+            var s = p.layers[i].transform.scale
+            let base = s.value(at: p.layers[i].inPoint)
+            for m in p.markers where m >= p.layers[i].inPoint && m < p.layers[i].outPoint {
+                s.insertKeyframe(Keyframe(time: max(0, m - 0.001), value: base, interpolation: .linear))
+                s.insertKeyframe(Keyframe(time: m, value: base * (1 + scaleAmount / 100), interpolation: .bezier,
+                                          easeOut: EaseHandle(x: 0.1, y: 0.9), easeIn: .easyIn))
+                s.insertKeyframe(Keyframe(time: m + decay, value: base, interpolation: .linear))
+            }
+            p.layers[i].transform.scale = s
+        }
+    }
+
+    /// Nearest marker to `t` within `tolerance` seconds (timeline snapping).
+    func snapToMarker(_ t: Double, tolerance: Double) -> Double {
+        guard let m = project.markers.min(by: { abs($0 - t) < abs($1 - t) }), abs(m - t) <= tolerance else { return t }
+        return m
     }
 }

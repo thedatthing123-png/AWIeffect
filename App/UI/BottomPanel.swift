@@ -20,6 +20,7 @@ struct BottomPanel: View {
                 case .effects: EffectsPanel(state: state)
                 case .text: TextPanel(state: state)
                 case .masks: MasksPanel(state: state, startPen: startPen)
+                case .clip: ClipPanel(state: state)
                 case .none: idle
                 }
             }
@@ -80,6 +81,7 @@ struct AddPanel: View {
     @Binding var showPhotoPicker: Bool
     var startPen: (PenTarget, PenStyle) -> Void = { _, _ in }
     @EnvironmentObject private var drawLauncher: DrawLauncher
+    @EnvironmentObject private var mediaLauncher: MediaLauncher
 
     var body: some View {
         VStack(spacing: 0) {
@@ -101,10 +103,12 @@ struct AddPanel: View {
                     }
                     ToolTile(icon: "rectangle.fill", title: "Solid") { state.addSolid() }
                     ToolTile(icon: "photo.on.rectangle", title: "Image") { showPhotoPicker = true }
+                    ToolTile(icon: "film", title: "Video") { mediaLauncher.pickVideo = true }
+                    ToolTile(icon: "music.note", title: "Audio") { mediaLauncher.pickAudio = true }
                     ToolTile(icon: "slider.horizontal.below.rectangle", title: "Adjustment") { state.addAdjustmentLayer() }
                 }
                 .padding(.horizontal, 12)
-                Text("Video, audio, drawing and 3D layers are coming in later stages.")
+                Text("3D layers are coming in a later stage.")
                     .font(.caption).foregroundStyle(Theme.textDim).padding(.top, 10)
             }
         }
@@ -156,6 +160,9 @@ struct TransformPanel: View {
         HStack(spacing: 8) {
             if case .text = state.selectedLayer?.content {
                 ToolTile(icon: "textformat", title: "Text Studio") { state.panel = .text }
+            }
+            if state.selectedLayer?.isMedia == true {
+                ToolTile(icon: "film.stack", title: "Clip") { state.panel = .clip }
             }
             if state.selectedLayer?.drawingID != nil {
                 ToolTile(icon: "paintbrush.pointed.fill", title: "Edit Drawing") { drawLauncher.open(state.selectedLayerID) }

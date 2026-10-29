@@ -11,6 +11,8 @@ struct EditorView: View {
     @State private var dragStartPosition: Vec2?
     @State private var pen: (target: PenTarget, style: PenStyle)?
     @StateObject private var drawLauncher = DrawLauncher()
+    @StateObject private var mediaLauncher = MediaLauncher()
+    @State private var videoItem: PhotosPickerItem?
 
     init(state: EditorState, close: @escaping () -> Void) {
         _state = StateObject(wrappedValue: state)
@@ -33,6 +35,20 @@ struct EditorView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .environmentObject(drawLauncher)
+        .environmentObject(mediaLauncher)
+        .photosPicker(isPresented: $mediaLauncher.pickVideo, selection: $videoItem, matching: .videos)
+        .onChange(of: videoItem) { _, item in
+            guard let item else { return }
+            Task {
+                if let movie = try? await item.loadTransferable(type: PickedMovie.self) {
+                    await MainActor.run { state.addVideo(from: movie.url) }
+                }
+                videoItem = nil
+            }
+        }
+        .fileImporter(isPresented: $mediaLauncher.pickAudio, allowedContentTypes: [.audio]) { r in
+            if case .success(let url) = r { state.addAudio(from: url) }
+        }
         .fullScreenCover(item: $drawLauncher.session) { s in
             DrawStudioView(engine: s.engine, onDone: { engine in
                 state.finishDrawing(engine, editing: s.layerID)

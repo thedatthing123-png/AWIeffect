@@ -83,7 +83,9 @@ struct TimelineView: View {
             .onChanged { v in
                 if scrubStart == nil { state.pause(); scrubStart = state.currentTime }
                 let t = (scrubStart ?? 0) - Double(v.translation.width / zoom)
-                let snapped = state.project.snapToFrame(min(max(t, 0), state.project.duration))
+                // Snap to beat markers within ~6 pt.
+                let clamped = min(max(t, 0), state.project.duration)
+                let snapped = state.project.snapToFrame(state.snapToMarker(clamped, tolerance: Double(6 / zoom)))
                 if snapped != state.currentTime {
                     state.currentTime = snapped
                     if state.selectedLayer?.keyframeTimes.contains(where: { abs($0 - snapped) < 1e-4 }) == true {
@@ -119,6 +121,15 @@ struct TimelineView: View {
                 }
                 t += step
             }
+            // Beat markers.
+            for m in state.project.markers {
+                let x = offset + CGFloat(m) * zoom
+                guard x >= -6, x <= size.width + 6 else { continue }
+                var tri = Path()
+                tri.move(to: CGPoint(x: x - 4, y: size.height - 9)); tri.addLine(to: CGPoint(x: x + 4, y: size.height - 9))
+                tri.addLine(to: CGPoint(x: x, y: size.height - 2)); tri.closeSubpath()
+                ctx.fill(tri, with: .color(Theme.warning))
+            }
             // Comp end marker.
             let endX = offset + CGFloat(dur) * zoom
             ctx.fill(Path(CGRect(x: endX, y: 0, width: 2, height: size.height)), with: .color(Theme.danger.opacity(0.7)))
@@ -139,6 +150,13 @@ struct TimelineView: View {
                     Text(layer.name).font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
                         .lineLimit(1).padding(.leading, 8)
                         .offset(x: max(0, -x0))
+                }
+                .overlay {
+                    if layer.hasAudio, let file = layer.mediaFile {
+                        WaveformStrip(url: state.mediaURL(file), speed: layer.speed, sourceStart: layer.sourceStart,
+                                      pointsPerSecond: zoom)
+                            .allowsHitTesting(false)
+                    }
                 }
                 .frame(width: w, height: rowHeight - 8)
                 .offset(x: x0, y: 4)
