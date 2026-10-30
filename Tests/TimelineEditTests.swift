@@ -72,4 +72,34 @@ final class TimelineEditTests: XCTestCase {
         XCTAssertTrue(s.project.layers[1].transform.position.hasKeyframe(at: 4))
         XCTAssertEqual(s.project.layers[1].transform.position.value(at: 4), Vec2(10, 20))
     }
+
+    // MARK: Parenting
+
+    func testParentingKeepsPlaceAndFollows() {
+        let s = state()
+        s.mutate("place") { p in
+            p.layers[0].transform.position = Animated(Vec2(30, 30))
+            p.layers[1].transform.position = Animated(Vec2(60, 50))
+        }
+        let child = s.project.layers[0].id, parent = s.project.layers[1].id
+        s.select(child)
+        s.setParent(parent)
+        let world = { Renderer.resolveParenting(s.project, time: s.currentTime).layers.first { $0.id == child }!.transform.position.value(at: s.currentTime) }
+        XCTAssertEqual(world().x, 30, accuracy: 0.01); XCTAssertEqual(world().y, 30, accuracy: 0.01)
+        // Move + rotate the parent: the child follows.
+        s.mutate("move parent") { p in p.layers[1].transform.position = Animated(Vec2(70, 50)); p.layers[1].transform.rotation = Animated(90) }
+        // Child was at (-30, -20) from the parent; rotated 90° clockwise (y down) -> (20, -30).
+        XCTAssertEqual(world().x, 90, accuracy: 0.01); XCTAssertEqual(world().y, 20, accuracy: 0.01)
+        // Unparent keeps the current world position.
+        s.setParent(nil)
+        XCTAssertEqual(s.project.layers[0].transform.position.value(at: s.currentTime).x, 90, accuracy: 0.01)
+    }
+
+    func testParentCycleRejected() {
+        let s = state()
+        let a = s.project.layers[0].id, b = s.project.layers[1].id
+        s.select(a); s.setParent(b)
+        s.select(b); s.setParent(a)
+        XCTAssertNil(s.project.layers[1].parentID)
+    }
 }

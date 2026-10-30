@@ -4,7 +4,7 @@ import XCTest
 /// Anti-stub tests: every registered effect must visibly change the image, and every control must do something.
 final class EffectTests: XCTestCase {
     /// Effects that work from the layer's alpha shape (no visible change on an opaque adjustment layer, like in AE).
-    static let alphaShaped: Set<String> = ["ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow"]
+    static let alphaShaped: Set<String> = ["ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow", "awi11.featherEdges", "awi11.matteChoker", "awi11.alphaLevels", "awi11.edgeRefine", "awi10.bevelAlpha", "awi10.smoothBevel", "awi10.glass", "awi10.edgeAO", "awi10.innerShadow", "awi10.fresnel"]
 
     private func renderer() throws -> Renderer {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU: no Metal device available; effect tests not run") }

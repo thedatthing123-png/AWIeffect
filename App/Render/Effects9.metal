@@ -118,7 +118,7 @@ kernel void fxTrans9(texture2d<half, access::sample> src [[texture(0)]],
             } else {
                 int n = clamp(int(round(p.a.w)), 3, 24);
                 float m = clamp(p.b.x, 2.0, float(n));
-                S = max((1.0 - comp) * 3.0 * (R + f), 1e-3);
+                S = max((1.0 - comp) * 2.6 * (R + f), 1e-3);
                 sd = sdStar9(q / S, 1.0, n, m);
             }
             float vis = smoothstep(-f, f, -sd * S) * (1.0 - step(0.9995, comp));

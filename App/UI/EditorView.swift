@@ -179,7 +179,8 @@ struct EditorView: View {
                 if trackLauncher.active {
                     TrackOverlay(state: state, fit: fit) { trackLauncher.active = false }
                 }
-                if pen == nil, state.viewMode == .comp, let layer = state.selectedLayer {
+                if pen == nil, state.viewMode == .comp, let id = state.selectedLayerID,
+                   let layer = state.displayProject.layers.first(where: { $0.id == id }) {
                     ClockReader(clock: state.clock) { t in
                         if layer.isActive(at: t) {
                             SelectionOverlay(layer: layer, time: t, fit: fit,
@@ -285,7 +286,7 @@ struct EditorView: View {
     /// Selects the top-most layer whose bounds contain the tap.
     private func tapSelect(at point: CGPoint, fit: CGRect) {
         let c = toComp(point, fit: fit)
-        for layer in state.project.layers where layer.isActive(at: state.currentTime) && !layer.isLocked {
+        for layer in state.displayProject.layers where layer.isActive(at: state.currentTime) && !layer.isLocked {
             let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(state.project, time: state.currentTime),
                                              time: state.currentTime, renderScale: 1)
             let h = M.inverse * SIMD3(c.x, c.y, 1)

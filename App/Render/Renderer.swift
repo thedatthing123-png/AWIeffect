@@ -234,7 +234,7 @@ final class Renderer {
     func encode(project rawProject: Project, time: Double, renderScale: Double, into comp: MTLTexture,
                 commandBuffer cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL) {
         // Expressions are baked into plain values for this frame first.
-        let project = Self.expandEchoes(ExpressionResolver.resolve(rawProject, time: time))
+        let project = Self.resolveParenting(Self.expandEchoes(ExpressionResolver.resolve(rawProject, time: time)), time: time)
         precompLibrary = project.precomps.isEmpty ? precompLibrary : project.precomps
         currentPool = pool
         currentDepth = project.precompDepth ?? 0

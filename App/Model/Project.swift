@@ -207,6 +207,8 @@ struct Layer: Codable, Equatable, Identifiable {
     var trackMatte: TrackMatte = .none
     /// Time effects: echo trails, posterize time (choppy frame rate), freeze frame.
     var timeFX: LayerTimeFX? = nil
+    /// Parent layer (position lives in the parent's space; rotation and scale follow it).
+    var parentID: UUID? = nil
     /// Thickness (px) given to a 3D layer: the picture is extruded into a solid slab.
     var extrude = Animated(0.0)
     /// Options for `.camera` layers.
@@ -260,6 +262,7 @@ struct Layer: Codable, Equatable, Identifiable {
         motionBlur = try c.decodeIfPresent(Bool.self, forKey: .motionBlur) ?? false
         trackMatte = try c.decodeIfPresent(TrackMatte.self, forKey: .trackMatte) ?? .none
         timeFX = try c.decodeIfPresent(LayerTimeFX.self, forKey: .timeFX)
+        parentID = try c.decodeIfPresent(UUID.self, forKey: .parentID)
         extrude = try c.decodeIfPresent(Animated<Double>.self, forKey: .extrude) ?? Animated(0)
         camera = try c.decodeIfPresent(CameraOptions.self, forKey: .camera)
         model3D = try c.decodeIfPresent(Model3DOptions.self, forKey: .model3D)

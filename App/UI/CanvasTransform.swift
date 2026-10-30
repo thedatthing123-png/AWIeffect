@@ -53,8 +53,10 @@ enum CanvasHandles {
 extension EditorState {
     /// Starts a canvas drag: handles win over the tool mode (corner = scale, edge = stretch, knob = rotate).
     func beginCanvasDrag(at screen: CGPoint, comp: Vec2, fit: CGRect) -> CanvasDrag? {
-        guard let l = selectedLayer, !l.isLocked else { return nil }
+        guard let raw = selectedLayer, !raw.isLocked else { return nil }
         let t = currentTime
+        // Handles are where the layer is drawn (parenting baked); edits still go to its own values.
+        let l = displayProject.layers.first { $0.id == raw.id } ?? raw
         let h = CanvasHandles.handles(l, project: project, time: t, fit: fit)
         // Nearest handle within reach wins (small layers have handles close together).
         func dist(_ p: CGPoint) -> CGFloat { hypot(p.x - screen.x, p.y - screen.y) }
@@ -93,7 +95,16 @@ extension EditorState {
         let t = currentTime
         switch d.kind {
         case .move:
-            var p = d.position + (c - d.startComp)
+            var delta = c - d.startComp
+            if let pid = selectedLayer?.parentID, let a = Renderer.parentAffine(pid, in: project, time: t) {
+                // Finger moves in comp space; the child's position lives in its parent's space.
+                let inv = a.m.inverse
+                delta = Vec2(inv[0][0] * delta.x + inv[1][0] * delta.y, inv[0][1] * delta.x + inv[1][1] * delta.y)
+                let p = d.position + delta
+                mutateLayer { $0.transform.position.set(Vec2((p.x * 10).rounded() / 10, (p.y * 10).rounded() / 10), at: t) }
+                return
+            }
+            var p = d.position + delta
             // Snap to the frame center / edges and to other layers' positions (guides show while snapped).
             let tol = Double(project.width) * 0.012
             var gx: Double?, gy: Double?

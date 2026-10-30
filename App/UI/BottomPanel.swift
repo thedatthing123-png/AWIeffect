@@ -499,6 +499,7 @@ struct LayerMenuPanel: View {
     @EnvironmentObject private var mediaLauncher: MediaLauncher
     @State private var showRename = false
     @State private var renaming = ""
+    @State private var showParent = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -514,6 +515,7 @@ struct LayerMenuPanel: View {
                     state.mutate("Solo Layer") { p in if let i = state.selectedIndex { p.layers[i].isSolo.toggle() } }
                 }
                 ToolTile(icon: "plus.square.on.square", title: "Duplicate") { state.duplicateSelected() }
+                ToolTile(icon: "link", title: state.selectedLayer?.parentID == nil ? "Parent" : "Parented", active: state.selectedLayer?.parentID != nil) { showParent = true }
                 ToolTile(icon: "doc.on.doc", title: "Copy Keys") { state.copyKeyframes() }
                 ToolTile(icon: "doc.on.clipboard", title: "Paste Keys") { state.pasteKeyframes() }
                 ToolTile(icon: "checklist", title: "Select Many") { if let id = state.selectedLayerID { state.beginMultiSelect(id) } }
@@ -542,6 +544,7 @@ struct LayerMenuPanel: View {
             .padding(.horizontal, 12).padding(.bottom, 12)
             }
         }
+        .sheet(isPresented: $showParent) { ParentPicker(state: state) }
         .alert("Rename Layer", isPresented: $showRename) {
             TextField("Name", text: $renaming)
             Button("Rename") {
