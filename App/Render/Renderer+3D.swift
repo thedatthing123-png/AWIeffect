@@ -65,8 +65,10 @@ extension Renderer {
     }
 
     /// Homography mapping the layer plane (local x, y) to comp pixels at `renderScale`.
-    static func layerHomography(_ layer: Layer, camera: CameraState, time: Double, renderScale: Double) -> simd_double3x3 {
-        let MV: simd_double4x4 = camera.view * layerWorld(layer, time: time)
+    static func layerHomography(_ layer: Layer, camera: CameraState, time: Double, renderScale: Double, localZ: Double = 0) -> simd_double3x3 {
+        var MV: simd_double4x4 = camera.view * layerWorld(layer, time: time)
+        // A plane pushed `localZ` along the layer's own normal (extrusion slices).
+        if localZ != 0 { MV.columns.3 += MV.columns.2 * localZ }
         // Pinhole projection: [zoom*x + cx*z, zoom*y + cy*z, z], applied to the columns for local x, y and origin
         // (local z = 0 drops the third column).
         let f: Double = camera.zoom * renderScale

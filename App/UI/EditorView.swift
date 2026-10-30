@@ -8,7 +8,7 @@ struct EditorView: View {
     @State private var showHistory = false
     @State private var photoItem: PhotosPickerItem?
     @State private var showPhotoPicker = false
-    @State private var dragStartPosition: Vec2?
+    @State private var canvasDragState: CanvasDrag?
     @State private var pen: (target: PenTarget, style: PenStyle)?
     @StateObject private var drawLauncher = DrawLauncher()
     @StateObject private var mediaLauncher = MediaLauncher()
@@ -161,7 +161,7 @@ struct EditorView: View {
                 }
                 if pen == nil, let layer = state.selectedLayer, layer.isActive(at: state.currentTime) {
                     SelectionOverlay(layer: layer, time: state.currentTime, fit: fit,
-                                     compWidth: state.project.width, project: state.project)
+                                     compWidth: state.project.width, project: state.project, tool: state.transformTool)
                         .allowsHitTesting(false)
                 }
             }
@@ -182,20 +182,15 @@ struct EditorView: View {
         DragGesture(minimumDistance: 4)
             .onChanged { v in
                 guard state.selectedLayer != nil else { return }
-                if dragStartPosition == nil {
-                    state.pause()
-                    state.beginEdit("Move Layer")
-                    dragStartPosition = state.selectedLayer?.transform.position.value(at: state.currentTime)
+                if canvasDragState == nil {
+                    canvasDragState = state.beginCanvasDrag(at: v.startLocation, comp: toComp(v.startLocation, fit: fit), fit: fit)
                 }
-                guard let start = dragStartPosition else { return }
-                let s = Double(fit.width) / Double(state.project.width)
-                let p = start + Vec2(Double(v.translation.width) / s, Double(v.translation.height) / s)
-                let t = state.currentTime
-                state.mutateLayer { $0.transform.position.set(Vec2(p.x.rounded(), p.y.rounded()), at: t) }
+                guard let d = canvasDragState else { return }
+                state.updateCanvasDrag(d, comp: toComp(v.location, fit: fit))
             }
             .onEnded { _ in
-                dragStartPosition = nil
-                state.endEdit()
+                if canvasDragState != nil { state.endCanvasDrag() }
+                canvasDragState = nil
             }
     }
 
@@ -224,6 +219,7 @@ struct SelectionOverlay: View {
     let fit: CGRect
     let compWidth: Int
     let project: Project
+    var tool: TransformTool = .move
 
     var body: some View {
         let s = Double(fit.width) / Double(compWidth)
@@ -237,20 +233,28 @@ struct SelectionOverlay: View {
         let anchor = layer.transform.anchor.value(at: time)
         let ap0 = M * SIMD3(anchor.x, anchor.y, 1)
         let ap = SIMD3(ap0.x / max(ap0.z, 1e-6), ap0.y / max(ap0.z, 1e-6), 1)
+        let h = CanvasHandles.handles(layer, project: project, time: time, fit: fit)
         ZStack {
             Path { path in
                 path.addLines(corners)
                 path.closeSubpath()
             }
             .stroke(Theme.accentGlow, style: StrokeStyle(lineWidth: 1.2, dash: [5, 3]))
+            Path { p in p.move(to: h.edges[0]); p.addLine(to: h.rotate) }.stroke(Theme.accentGlow.opacity(0.7), lineWidth: 1)
             ForEach(0..<4, id: \.self) { i in
-                Circle().fill(.white).frame(width: 9, height: 9)
+                Circle().fill(.white).frame(width: 11, height: 11)
                     .overlay(Circle().stroke(Theme.accent, lineWidth: 1.5))
                     .position(corners[i])
+                RoundedRectangle(cornerRadius: 2).fill(.white).frame(width: 9, height: 9)
+                    .overlay(RoundedRectangle(cornerRadius: 2).stroke(Theme.accent, lineWidth: 1.5))
+                    .position(h.edges[i])
             }
-            Image(systemName: "plus.circle")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(Theme.accentGlow)
+            Image(systemName: "arrow.clockwise.circle.fill").font(.system(size: 18, weight: .bold))
+                .foregroundStyle(.white, Theme.accent)
+                .position(h.rotate)
+            Image(systemName: tool == .pivot ? "scope" : "plus.circle")
+                .font(.system(size: tool == .pivot ? 22 : 14, weight: .bold))
+                .foregroundStyle(tool == .pivot ? Theme.warning : Theme.accentGlow)
                 .position(x: fit.minX + ap.x, y: fit.minY + ap.y)
         }
     }

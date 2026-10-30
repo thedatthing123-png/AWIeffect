@@ -14,12 +14,14 @@ struct ModelPanel: View {
                 ScrollView {
                     VStack(spacing: 8) {
                         if o.fileName == nil {
-                            HStack {
-                                TextField("3D text", text: $draft).padding(8).glass(radius: 10).foregroundStyle(Theme.text)
-                                Button("Apply") { edit("3D Text") { $0.text = draft } }.buttonStyle(.borderedProminent).tint(Theme.accent)
+                            if o.shapePath == nil && o.imageFile == nil {
+                                HStack {
+                                    TextField("3D text", text: $draft).padding(8).glass(radius: 10).foregroundStyle(Theme.text)
+                                    Button("Apply") { edit("3D Text") { $0.text = draft } }.buttonStyle(.borderedProminent).tint(Theme.accent)
+                                }
                             }
-                            slider("Depth", o.extrusion, 1...120) { v in cont { $0.extrusion = v } }
-                            slider("Bevel", o.chamfer, 0...20) { v in cont { $0.chamfer = v } }
+                            slider("Extrude", o.extrusion, 1...400) { v in cont { $0.extrusion = v } }
+                            slider("Bevel", o.chamfer, 0...60) { v in cont { $0.chamfer = v } }
                             ColorPicker("Color", selection: Binding(get: { Color(o.color.value(at: t)) }, set: { c in
                                 edit("3D Color") { $0.color.set(c.rgba, at: t) }
                             })).foregroundStyle(Theme.text)

@@ -165,6 +165,8 @@ struct Layer: Codable, Equatable, Identifiable {
     var cutout: CutoutSettings? = nil
     /// AE 3D layer switch.
     var is3D = false
+    /// Thickness (px) given to a 3D layer: the picture is extruded into a solid slab.
+    var extrude = Animated(0.0)
     /// Options for `.camera` layers.
     var camera: CameraOptions? = nil
     /// Options for `.model` layers.
@@ -211,6 +213,7 @@ struct Layer: Codable, Equatable, Identifiable {
         frameBlending = try c.decodeIfPresent(Bool.self, forKey: .frameBlending) ?? false
         cutout = try c.decodeIfPresent(CutoutSettings.self, forKey: .cutout)
         is3D = try c.decodeIfPresent(Bool.self, forKey: .is3D) ?? false
+        extrude = try c.decodeIfPresent(Animated<Double>.self, forKey: .extrude) ?? Animated(0)
         camera = try c.decodeIfPresent(CameraOptions.self, forKey: .camera)
         model3D = try c.decodeIfPresent(Model3DOptions.self, forKey: .model3D)
     }

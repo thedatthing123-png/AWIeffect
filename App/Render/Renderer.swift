@@ -225,7 +225,8 @@ final class Renderer {
             let dof = Self.dofSigma(layer, camera: camera, time: time) * renderScale
 
             let masks = layer.masks.filter { $0.mode != .none }
-            let needsLocal = !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil || dof > 0.5
+            let extrude = layer.is3D && layer.content != .model ? max(0, layer.extrude.value(at: time)) : 0
+            let needsLocal = !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil || dof > 0.5 || extrude > 0.5
             if !needsLocal, let path = Self.shapePath(layer, time: time) {
                 drawShapePath(cb: cb, target: comp, matrix: M, layer: layer, path: path, time: time,
                               opacity: opacity, blend: layer.blendMode, aa: 1 / pxPerLocal)
@@ -290,6 +291,27 @@ final class Renderer {
 
             // Place the processed buffer like an image layer covering `ext`.
             let compAA = 1 / pxPerLocal
+            if extrude > 0.5 {
+                // Solid thickness: darker slices stacked along the layer normal, drawn far-to-near, caps on both ends.
+                let ctx = EffectContext(gpu: fx, cb: cb, input: current, effect: EffectInstance(typeID: "ae.exposure", params: ["exposure": .number(Animated(-1.4)), "offset": .number(Animated(0)), "gamma": .number(Animated(1))]),
+                                        time: time, unit: density, pool: pool)
+                let side: MTLTexture
+                if let d = EffectRegistry.definition("ae.exposure"), case .pixels(let run) = d.stage { side = run(ctx) } else { side = current }
+                let n = max(3, min(72, Int(extrude * pxPerLocal / 1.2)))
+                let front = Self.layerDepth(layer, camera: camera, time: time)
+                var backLayer = layer
+                backLayer.transform.positionZ = Animated(layer.transform.positionZ.value(at: time) + 1)
+                let backFarther = Self.layerDepth(backLayer, camera: camera, time: time) > front
+                let steps = Array(0...n)
+                for k in (backFarther ? steps : steps.reversed()) {
+                    let z = extrude * Double(n - k) / Double(n)
+                    let Mk = Self.layerHomography(layer, camera: camera, time: time, renderScale: renderScale, localZ: z)
+                    let cap = k == 0 || k == n
+                    drawQuad(cb: cb, target: comp, matrix: Mk, halfSize: ext, aa: compAA, opacity: opacity,
+                             layer: layer, time: time, source: .image(cap ? current : side), premultipliedImage: true)
+                }
+                continue
+            }
             drawQuad(cb: cb, target: comp, matrix: M, halfSize: ext, aa: compAA, opacity: opacity,
                      layer: layer, time: time, source: .image(current), premultipliedImage: true)
         }

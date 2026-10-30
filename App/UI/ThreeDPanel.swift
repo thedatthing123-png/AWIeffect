@@ -37,6 +37,18 @@ struct ThreeDPanel: View {
                             }))
                             .tint(Theme.accent).foregroundStyle(Theme.text)
                         }
+                        if l.content != .camera && l.content != .model {
+                            Button { state.makeSelected3DObject() } label: {
+                                Label(Self.convertTitle(l), systemImage: "cube.transparent.fill").frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.borderedProminent).tint(Theme.accent)
+                            .accessibilityLabel("Make 3D Object")
+                        }
+                        if l.is3D && l.content != .camera && l.content != .model {
+                            row("Extrude", l.extrude.value(at: t), 0...600,
+                                set: { v in state.mutateLayer { $0.extrude.set(v, at: t) } },
+                                keyed: { state.mutateLayer { $0.extrude.toggleKeyframe(at: t) } })
+                        }
                         if l.is3D || l.content == .camera {
                             row("Position Z", l.transform.positionZ.value(at: t), -6000...6000,
                                 set: { v in state.mutateLayer { $0.transform.positionZ.set(v, at: t) } },
@@ -74,6 +86,15 @@ struct ThreeDPanel: View {
                     .padding(.horizontal, 12).padding(.bottom, 14)
                 }
             }
+        }
+    }
+
+    static func convertTitle(_ l: Layer) -> String {
+        switch l.content {
+        case .shape: return "Make 3D Object (extrude shape)"
+        case .text: return "Make 3D Text Object"
+        case .image: return l.drawingID != nil ? "Make Drawing 3D (extrude)" : "Make Image 3D (cut-out extrude)"
+        default: return "Make 3D (thick card)"
         }
     }
 

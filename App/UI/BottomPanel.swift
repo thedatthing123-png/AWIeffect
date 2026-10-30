@@ -138,6 +138,7 @@ struct TransformPanel: View {
             ScrollView {
                 VStack(spacing: 6) {
                     tileRow
+                    if state.selectedLayer != nil { TransformToolBar(state: state) }
                     if let layer = state.selectedLayer {
                         let t = state.currentTime
                         let pos = layer.transform.position.value(at: t)
@@ -147,9 +148,19 @@ struct TransformPanel: View {
                             NumberField(value: pos.y, label: "Y") { v in set { $0.transform.position.set(Vec2(pos.x, v), at: t) } }
                         }
                         PropertyRow(state: state, key: .scale) {
-                            NumberField(value: sc.x, label: "%", step: 1) { v in
-                                set { $0.transform.scale.set(Vec2(v, v * (sc.x == 0 ? 1 : sc.y / sc.x)), at: t) }
+                            if state.scaleLinked {
+                                NumberField(value: sc.x, label: "%", step: 1) { v in
+                                    set { $0.transform.scale.set(Vec2(v, v * (sc.x == 0 ? 1 : sc.y / sc.x)), at: t) }
+                                }
+                            } else {
+                                NumberField(value: sc.x, label: "W%", step: 1) { v in set { $0.transform.scale.set(Vec2(v, sc.y), at: t) } }
+                                NumberField(value: sc.y, label: "H%", step: 1) { v in set { $0.transform.scale.set(Vec2(sc.x, v), at: t) } }
                             }
+                        }
+                        PropertyRow(state: state, key: .anchor) {
+                            let a = layer.transform.anchor.value(at: t)
+                            NumberField(value: a.x, label: "X") { v in set { $0.transform.anchor.set(Vec2(v, a.y), at: t) } }
+                            NumberField(value: a.y, label: "Y") { v in set { $0.transform.anchor.set(Vec2(a.x, v), at: t) } }
                         }
                         SliderRow(state: state, key: .rotation, value: layer.transform.rotation.value(at: t), range: -360...360, unit: "°") { v in
                             state.mutateLayer { $0.transform.rotation.set(v, at: t) }

@@ -7,6 +7,10 @@ import UIKit
 struct Model3DOptions: Codable, Equatable {
     /// Imported model file (usdz/obj/scn/dae) in the project media folder; nil = 3D text.
     var fileName: String? = nil
+    /// Extruded 2D shape outline (layer-local px, y down) — "Make 3D Object" on shape layers.
+    var shapePath: BezierPath? = nil
+    /// Image / drawing whose alpha silhouette is extruded, with the picture on the front face.
+    var imageFile: String? = nil
     var text: String = "AWI"
     var fontName: String = "Helvetica-Bold"
     var extrusion = 30.0
@@ -41,10 +45,19 @@ final class ModelRenderer {
 
     /// Model content node (cached per file / per text settings).
     private func content(_ o: Model3DOptions, mediaURL: (String) -> URL) -> SCNNode? {
-        let key = o.fileName ?? "text|\(o.text)|\(o.fontName)|\(o.extrusion)|\(o.chamfer)"
+        let key: String
+        if let f = o.fileName { key = f }
+        else if let p = o.shapePath { key = "shape|\(p.vertices.map { "\($0.point.x),\($0.point.y),\($0.inTangent.x),\($0.inTangent.y),\($0.outTangent.x),\($0.outTangent.y)" }.joined(separator: ";"))|\(o.extrusion)|\(o.chamfer)" }
+        else if let f = o.imageFile { key = "image|\(f)|\(o.extrusion)|\(o.chamfer)|\(o.roughness)" }
+        else { key = "text|\(o.text)|\(o.fontName)|\(o.extrusion)|\(o.chamfer)" }
         if let n = scenes[key] { return n }
         let node: SCNNode
-        if let f = o.fileName {
+        if o.shapePath != nil || o.imageFile != nil {
+            guard let g = Extrude3D.geometry(o, mediaURL: mediaURL) else { return nil }
+            node = SCNNode(geometry: g.geometry)
+            if let front = g.front { node.setValue(front, forKey: "awiFront") }
+            node.name = g.front == nil ? "awiShape" : "awiImage"
+        } else if let f = o.fileName {
             guard let scene = try? SCNScene(url: mediaURL(f), options: [.checkConsistency: true]) else { return nil }
             node = SCNNode()
             for c in scene.rootNode.childNodes { node.addChildNode(c) }
@@ -92,7 +105,12 @@ final class ModelRenderer {
             m.diffuse.contents = UIColor(red: col.r, green: col.g, blue: col.b, alpha: 1)
             m.metalness.contents = o.metalness
             m.roughness.contents = o.roughness
-            g.materials = [m]
+            if o.imageFile != nil, let front = n.value(forKey: "awiFront") as? SCNMaterial {
+                // SCNShape elements: front, back, sides, front chamfer, back chamfer.
+                g.materials = [front, front, m, m, m]
+            } else {
+                g.materials = [m]
+            }
         }
         let yaw = o.yaw.value(at: time) + o.spin * time
         model.eulerAngles = SCNVector3(Float(o.pitch.value(at: time) * .pi / 180), Float(yaw * .pi / 180), Float(o.roll.value(at: time) * .pi / 180))

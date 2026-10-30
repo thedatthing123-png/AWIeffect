@@ -52,6 +52,9 @@ final class EditorState: ObservableObject {
     @Published private(set) var undoStack: [(label: String, project: Project)] = []
     @Published private(set) var redoStack: [(label: String, project: Project)] = []
     @Published var redrawToken = 0
+    /// Canvas drag mode (Move / Scale / Rotate / Pivot) and whether scale keeps proportions.
+    @Published var transformTool: TransformTool = .move
+    @Published var scaleLinked = true
     /// Parents of the currently open pre-comp (empty at the top level).
     @Published var compStack: [(project: Project, time: Double, selected: UUID?)] = []
 
