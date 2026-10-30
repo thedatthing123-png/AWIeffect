@@ -295,7 +295,11 @@ kernel void fxSaberCore(texture2d<half, access::sample> src [[texture(0)]],
                         uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
     float2 c = float2(gid) + 0.5;
-    float al = float(src.sample(s2Zero, c).a);
+    float4 sv = float4(src.sample(s2Zero, c));
+    float3 sc = unpm(sv);
+    // Beam shape = the layer's coverage, limited to its bright/saturated parts so it also works on
+    // footage and adjustment layers (which are opaque everywhere).
+    float al = sv.a * smoothstep(0.12, 0.6, max(sc.r, max(sc.g, sc.b)));
     // Core: hot white where the layer is solid, thinned by core size.
     float core = smoothstep(1.0 - clamp(p.a.x, 0.05, 1.0), 1.0, al);
     float flick = 1.0 - p.a.z * h21(float2(floor(p.a.w * 24.0), 3.0)) * 0.5;
