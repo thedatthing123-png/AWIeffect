@@ -13,11 +13,24 @@ extension EditorState {
         var child = project
         for entry in compStack.dropFirst().reversed() {
             var parent = entry.project
-            parent.precomps = Self.replacing(child, in: parent.precomps)
+            parent.precomps = Self.closing(child, into: parent.precomps)
             child = parent
         }
-        root.precomps = Self.replacing(child, in: root.precomps)
+        root.precomps = Self.closing(child, into: root.precomps)
         return root
+    }
+
+    /// Writes an edited nested comp back into a library: strips its working copy of the library and keeps any
+    /// comps that were created while it was open (pre-composing inside a pre-comp).
+    private static func closing(_ comp: Project, into list: [Project]) -> [Project] {
+        var edited = comp
+        let extras = edited.precomps
+        edited.precompList = nil
+        var l = replacing(edited, in: list)
+        for e in extras where e.id != edited.id && !l.contains(where: { $0.id == e.id }) {
+            var c = e; c.precompList = nil; l.append(c)
+        }
+        return l
     }
 
     private static func replacing(_ comp: Project, in list: [Project]) -> [Project] {
@@ -50,13 +63,12 @@ extension EditorState {
     /// Opens the pre-comp behind the selected layer for editing.
     func openPrecomp() {
         guard let l = selectedLayer, case .precomp(let id) = l.content,
-              var comp = (compStack.first?.project.precomps ?? project.precomps).first(where: { $0.id == id })
-                ?? project.precomps.first(where: { $0.id == id }) else { return }
+              var comp = rootProject.precomps.first(where: { $0.id == id }) ?? project.precomps.first(where: { $0.id == id }) else { return }
         pause()
         let library = rootProject.precomps
         compStack.append((project: project, time: currentTime, selected: selectedLayerID))
         comp.precompList = library.filter { $0.id != comp.id }
-        undoBarrier()
+        pushUndoContext()
         project = comp
         currentTime = 0
         select(nil)
@@ -66,11 +78,9 @@ extension EditorState {
     func closePrecomp() {
         guard let entry = compStack.popLast() else { return }
         pause()
-        var edited = project
-        edited.precompList = nil
         var parent = entry.project
-        parent.precomps = Self.replacing(edited, in: parent.precomps)
-        undoBarrier()
+        parent.precomps = Self.closing(project, into: parent.precomps)
+        popUndoContext()
         project = parent
         currentTime = entry.time
         selectedLayerID = entry.selected

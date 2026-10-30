@@ -151,7 +151,7 @@ enum PresetLibrary {
             key(&l.transform.position, t + 0.35, pos - Vec2(0, 30)); key(&l.transform.position, t + 0.5, pos)
         },
         .init(id: "flickerIn", name: "Flicker In", kind: .transitionIn, symbol: "lightbulb.led") { l, _, t in
-            for (k, v) in [(0.0, 0.0), (0.05, 100), (0.1, 0), (0.16, 100), (0.22, 20), (0.3, 100)] {
+            for (k, v) in [(0.0, 0.0), (0.06, 100), (0.1, 0), (0.16, 100), (0.22, 20), (0.3, 100)] {
                 key(&l.transform.opacity, t + k, v, .hold)
             }
         },
@@ -217,9 +217,9 @@ enum PresetLibrary {
         // MARK: Velocity (speed-ramp style motion)
         .init(id: "velocityPunch", name: "Velocity Punch", kind: .velocity, symbol: "hare.fill") { l, _, t in
             let s = l.transform.scale.value(at: t)
-            key(&l.transform.scale, t, s, .bezier, out: EaseHandle(x: 0.9, y: 0.0))
-            key(&l.transform.scale, t + 0.25, s * 1.25, .bezier, out: EaseHandle(x: 0.1, y: 1)); key(&l.transform.scale, t + 0.6, s)
-            let i = effect(EffectRegistry.chromaticZoom, &l); keyEffect(&l, i, "amount", [(t, 0), (t + 0.25, 50), (t + 0.6, 0)])
+            // Hits hard on the beat, then eases back.
+            key(&l.transform.scale, t, s * 1.3, .bezier, out: EaseHandle(x: 0.05, y: 0.95)); key(&l.transform.scale, t + 0.5, s)
+            let i = effect(EffectRegistry.chromaticZoom, &l); keyEffect(&l, i, "amount", [(t, 50), (t + 0.5, 0)])
         },
         .init(id: "zoomShake", name: "Zoom Shake", kind: .velocity, symbol: "plus.magnifyingglass") { l, _, t in
             let s = l.transform.scale.value(at: t)
@@ -228,8 +228,8 @@ enum PresetLibrary {
         },
         .init(id: "whipSpin", name: "Whip Spin", kind: .velocity, symbol: "tornado") { l, _, t in
             let r = l.transform.rotation.value(at: t)
-            key(&l.transform.rotation, t, r, .bezier, out: EaseHandle(x: 0.8, y: 0)); key(&l.transform.rotation, t + 0.35, r + 360, .bezier, out: .easyOut)
-            let i = effect(EffectRegistry.radialBlur, &l, ["type": .choice(0)]); keyEffect(&l, i, "amount", [(t, 0), (t + 0.17, 50), (t + 0.35, 0)])
+            key(&l.transform.rotation, t, r - 360, .bezier, out: EaseHandle(x: 0.05, y: 0.95)); key(&l.transform.rotation, t + 0.4, r)
+            let i = effect(EffectRegistry.radialBlur, &l, ["type": .choice(0)]); keyEffect(&l, i, "amount", [(t, 50), (t + 0.4, 0)])
         },
         .init(id: "impactFlash", name: "Impact Flash", kind: .velocity, symbol: "burst.fill") { l, _, t in
             let i = effect(EffectRegistry.exposure, &l); keyEffect(&l, i, "exposure", [(t, 3), (t + 0.12, 0)])

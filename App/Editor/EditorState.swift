@@ -39,6 +39,7 @@ enum ToolPanel: Equatable {
     case overlays
     case multi
     case beats
+    case cutout
 }
 
 /// Playback time on its own publisher: while playing only the preview and timeline redraw each frame,
@@ -85,6 +86,8 @@ final class EditorState: ObservableObject {
     private var lastVersionSnapshot = Date.distantPast
     /// Coalesces continuous edits (slider drags) into one undo step.
     private var editGroupOpen = false
+    private var coalesceWork: DispatchWorkItem?
+    private var savedUndo: [(undo: [(label: String, project: Project)], redo: [(label: String, project: Project)])] = []
 
     init(project: Project, store: ProjectStore = .shared) {
         self.project = project
@@ -162,6 +165,10 @@ final class EditorState: ObservableObject {
 
     private func validateSelection() {
         if let id = selectedLayerID, !project.layers.contains(where: { $0.id == id }) { select(nil) }
+        if let m = multiSelection {
+            let alive = m.filter { id in project.layers.contains { $0.id == id } }
+            if alive.isEmpty { endMultiSelect() } else if alive != m { multiSelection = alive }
+        }
     }
 
     // MARK: Layers
@@ -243,6 +250,7 @@ final class EditorState: ObservableObject {
         mutate("Split Layer") { p in
             var second = p.layers[i]
             second.id = UUID()
+            if second.timeRemap == nil { second.sourceStart += (t - second.inPoint) * second.speed }
             second.inPoint = t
             p.layers[i].outPoint = t
             p.layers.insert(second, at: i)
@@ -482,6 +490,27 @@ final class EditorState: ObservableObject {
         redoStack.removeAll()
     }
 
+    /// Entering a pre-comp parks the parent's history; leaving it brings the history back.
+    func pushUndoContext() {
+        savedUndo.append((undoStack, redoStack))
+        undoStack.removeAll(); redoStack.removeAll()
+    }
+
+    func popUndoContext() {
+        guard let s = savedUndo.popLast() else { undoBarrier(); return }
+        undoStack = s.undo; redoStack = s.redo
+    }
+
+    /// Value scrubbing / color dragging: one undo step per gesture (closes after a short pause), not one per event.
+    func coalescedEdit(_ label: String, _ change: (inout Layer) -> Void) {
+        beginEdit(label)
+        mutateLayer(change)
+        coalesceWork?.cancel()
+        let w = DispatchWorkItem { [weak self] in self?.endEdit() }
+        coalesceWork = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6, execute: w)
+    }
+
     func saveNow(thumbnail: Bool = false) {
         let snapshot = Date().timeIntervalSince(lastVersionSnapshot) > 120
         let project = rootProject
@@ -642,11 +671,7 @@ extension EditorState {
     }
 
     /// Manual beat tap (works while playing).
-    func tapMarker() {
-        let t = currentTime
-        project.markers = project.markers + [t]
-        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
-    }
+    func tapMarker() { toggleBeatMarker() }
 
     func clearMarkers() { mutate("Clear Markers") { $0.markers = [] } }
 

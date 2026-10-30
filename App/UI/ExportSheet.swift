@@ -145,7 +145,7 @@ struct ExportSheet: View {
         progress = 0
         message = nil
         resultURL = nil
-        let project = state.project
+        let project = state.rootProject
         let pid = project.id
         let store = state.store
         let s = settings

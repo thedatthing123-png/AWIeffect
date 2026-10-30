@@ -13,7 +13,17 @@ struct ClipPanel: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
                         if l.timeRemap == nil {
-                            row("Speed", value: l.speed, range: 0.1...4, fmt: "%.2fx") { v in state.mutateLayer { $0.speed = v } }
+                            row("Speed", value: l.speed, range: 0.1...4, fmt: "%.2fx") { v in
+                                let srcLen = mediaDuration(l)
+                                state.mutateLayer { layer in
+                                    let oldLen = layer.outPoint - layer.inPoint
+                                    layer.speed = v
+                                    if srcLen > 0.05 {
+                                        let fits = max(0.1, (srcLen - layer.sourceStart) / v)
+                                        layer.outPoint = layer.inPoint + min(fits, max(oldLen * 4, fits))
+                                    }
+                                }
+                            }
                         } else {
                             HStack {
                                 Label("Time Remap is on", systemImage: "timer").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ok)

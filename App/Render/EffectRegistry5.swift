@@ -170,11 +170,13 @@ extension EffectRegistry {
     static let pulse = EffectDefinition(
         id: "awi.pulse", name: "Pulse", category: .motion, aeMatchNames: [],
         summary: "Rhythmic scale throb (set the BPM to match the music).",
-        params: [.number("amount", "Amount", 10, 0, 100, unit: "%"), .number("bpm", "BPM", 100, 20, 300, step: 1),
+        params: [.number("amount", "Amount", 15, 0, 100, unit: "%"), .number("bpm", "BPM", 128, 20, 300, step: 1),
                  .number("sharpness", "Sharpness", 3, 1, 12, step: 0.1)],
         stage: .transform { e, t in
+            // Peaks on every beat, easing out on both sides.
             let beat = (t * e.number("bpm", t) / 60).truncatingRemainder(dividingBy: 1)
-            let k = pow(1 - beat, e.number("sharpness", t))
+            let d = min(beat, 1 - beat)
+            let k = pow(max(0, 1 - 2 * d), e.number("sharpness", t))
             return (0, 0, 0, 1 + e.number("amount", t) / 100 * k) })
 
     static let spin = EffectDefinition(

@@ -168,7 +168,19 @@ extension Layer {
         transform.position.shift(by: dt); transform.scale.shift(by: dt); transform.rotation.shift(by: dt)
         transform.opacity.shift(by: dt); transform.anchor.shift(by: dt)
         transform.rotationX.shift(by: dt); transform.rotationY.shift(by: dt); transform.positionZ.shift(by: dt)
-        if case .video = content { sourceStart -= dt * speed; sourceStart = max(0, sourceStart) }
+        size.shift(by: dt); fill.shift(by: dt); cornerRadius.shift(by: dt); sides.shift(by: dt); innerRatio.shift(by: dt)
+        volume.shift(by: dt); extrude.shift(by: dt); timeRemap?.shift(by: dt); path?.shift(by: dt)
+        for i in effects.indices {
+            for (k, v) in effects[i].params {
+                switch v {
+                case .number(var a): a.shift(by: dt); effects[i].params[k] = .number(a)
+                case .point(var a): a.shift(by: dt); effects[i].params[k] = .point(a)
+                case .color(var a): a.shift(by: dt); effects[i].params[k] = .color(a)
+                default: break
+                }
+            }
+        }
+        for i in masks.indices { masks[i].path.shift(by: dt) }
     }
 }
 

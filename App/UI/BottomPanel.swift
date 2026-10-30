@@ -28,6 +28,11 @@ struct BottomPanel: View {
                 case .overlays: OverlaysPanel(state: state)
                 case .multi: MultiSelectPanel(state: state)
                 case .beats: BeatsPanel(state: state)
+                case .cutout:
+                    VStack(spacing: 0) {
+                        PanelHeader(state: state, title: "AI Cutout", showKeyNav: false)
+                        ScrollView { CutoutSection(state: state).padding(.horizontal, 12).padding(.bottom, 12) }
+                    }
                 case .none: idle
                 }
             }
@@ -48,7 +53,8 @@ struct BottomPanel: View {
             }
             .buttonStyle(PrimaryButtonStyle())
             .padding(.horizontal, 12).padding(.top, 8)
-            StudioHub(state: state, showPhotoPicker: $showPhotoPicker, drawLauncher: drawLauncher, mediaLauncher: mediaLauncher, compact: true)
+            StudioHub(state: state, showPhotoPicker: $showPhotoPicker, drawLauncher: drawLauncher, mediaLauncher: mediaLauncher, compact: true,
+                      startPen: startPen)
         }
     }
 }
@@ -207,6 +213,13 @@ struct TransformPanel: View {
 
     @ViewBuilder private func tiles(_ g: ToolGroup) -> some View {
         let l = state.selectedLayer
+        // What each layer type can actually use (cameras/audio don't draw pixels; media fills come from the picture).
+        let visual = l.map { $0.content != .camera && !$0.isAudioOnly } ?? false
+        let fillable: Bool = {
+            guard let c = l?.content else { return false }
+            switch c { case .shape, .solid, .text: return true; default: return false }
+        }()
+        let notAdjustment = l?.content != .adjustment
         switch g {
         case .edit:
             if case .text = l?.content { ToolTile(icon: "textformat", title: "Text Studio") { state.panel = .text } }
@@ -214,15 +227,20 @@ struct TransformPanel: View {
             if l?.isMedia == true {
                 ToolTile(icon: "film.stack", title: "Clip") { state.panel = .clip }
             } else if case .image = l?.content {
-                ToolTile(icon: "person.crop.rectangle", title: "AI Cutout") { state.panel = .clip }
+                ToolTile(icon: "person.crop.rectangle", title: "AI Cutout") { state.panel = .cutout }
             }
             if l?.drawingID != nil { ToolTile(icon: "paintbrush.pointed.fill", title: "Edit Drawing") { drawLauncher.open(state.selectedLayerID) } }
-            ToolTile(icon: "paintpalette", title: "Color & Fill") { state.panel = .fill }
-            ToolTile(icon: "square.stack.3d.down.right", title: "Blending") { state.panel = .blending }
-            ToolTile(icon: "theatermask.and.paintbrush", title: "Masks") { state.panel = .masks }
+            if fillable { ToolTile(icon: "paintpalette", title: "Color & Fill") { state.panel = .fill } }
+            if visual && notAdjustment {
+                ToolTile(icon: "square.stack.3d.down.right", title: "Blending") { state.panel = .blending }
+                ToolTile(icon: "theatermask.and.paintbrush", title: "Masks") { state.panel = .masks }
+            }
+            if l?.isAudioOnly == true || l?.isMedia == true { ToolTile(icon: "slider.horizontal.3", title: "Speed & Volume") { state.panel = .clip } }
         case .effects:
-            ToolTile(icon: "sparkles", title: "Effects") { state.panel = .effects }
-            ToolTile(icon: "wand.and.rays", title: "Presets") { state.panel = .presets }
+            if visual {
+                ToolTile(icon: "sparkles", title: "Effects") { state.panel = .effects }
+                ToolTile(icon: "wand.and.rays", title: "Presets") { state.panel = .presets }
+            }
             ToolTile(icon: "sparkle.magnifyingglass", title: "Overlays") { state.panel = .overlays }
         case .animate:
             ToolTile(icon: "point.topleft.down.to.point.bottomright.curvepath", title: "Graph") { showGraph = true }
@@ -273,9 +291,7 @@ struct TransformPanel: View {
     }
 
     private func set(_ change: (inout Layer) -> Void) {
-        state.beginEdit("Edit Transform")
-        state.mutateLayer(change)
-        state.endEdit()
+        state.coalescedEdit("Edit Transform", change)
     }
 }
 
@@ -386,9 +402,9 @@ struct FillPanel: View {
                 VStack(spacing: 12) {
                     PropertyRow(state: state, key: .fill) {
                         ColorPicker("", selection: Binding(get: { Color(c) }, set: { col in
-                            state.beginEdit("Edit Fill")
-                            state.mutateLayer { $0.fill.set(col.rgba, at: t) }
-                            state.endEdit()
+                            state.coalescedEdit("Edit Fill") { l in
+                                if l.text != nil { l.text?.fill.set(col.rgba, at: t) } else { l.fill.set(col.rgba, at: t) }
+                            }
                         }), supportsOpacity: true)
                         .labelsHidden()
                         Spacer()
@@ -509,9 +525,7 @@ struct ShapePanel: View {
     }
 
     private func edit(_ change: (inout Layer) -> Void) {
-        state.beginEdit("Edit Shape")
-        state.mutateLayer(change)
-        state.endEdit()
+        state.coalescedEdit("Edit Shape", change)
     }
 }
 
@@ -520,18 +534,31 @@ struct ShapePanel: View {
 struct LayerMenuPanel: View {
     @ObservedObject var state: EditorState
     @EnvironmentObject private var mediaLauncher: MediaLauncher
+    @State private var showRename = false
+    @State private var renaming = ""
 
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: "Layer", showKeyNav: false)
+            ScrollView {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
+                ToolTile(icon: "character.cursor.ibeam", title: "Rename") { renaming = state.selectedLayer?.name ?? ""; showRename = true }
+                ToolTile(icon: state.selectedLayer?.isLocked == true ? "lock.fill" : "lock.open", title: state.selectedLayer?.isLocked == true ? "Unlock" : "Lock",
+                         active: state.selectedLayer?.isLocked == true) {
+                    state.mutate("Lock Layer") { p in if let i = state.selectedIndex { p.layers[i].isLocked.toggle() } }
+                }
+                ToolTile(icon: "s.circle", title: "Solo", active: state.selectedLayer?.isSolo == true) {
+                    state.mutate("Solo Layer") { p in if let i = state.selectedIndex { p.layers[i].isSolo.toggle() } }
+                }
                 ToolTile(icon: "plus.square.on.square", title: "Duplicate") { state.duplicateSelected() }
                 if case .precomp = state.selectedLayer?.content {
                     ToolTile(icon: "arrow.down.right.and.arrow.up.left", title: "Open Pre-comp") { state.openPrecomp() }
                 } else {
                     ToolTile(icon: "square.stack.3d.up", title: "Pre-compose") { state.precomposeSelected() }
                 }
-                ToolTile(icon: "arrow.triangle.2.circlepath", title: "Replace Media") { mediaLauncher.replaceTarget = state.selectedLayerID }
+                if state.selectedLayer?.isMedia == true || state.selectedLayer?.isImage == true {
+                    ToolTile(icon: "arrow.triangle.2.circlepath", title: "Replace Media") { mediaLauncher.replaceTarget = state.selectedLayerID }
+                }
                 ToolTile(icon: "arrow.up", title: "Move Up") { state.moveSelected(up: true) }
                 ToolTile(icon: "arrow.down", title: "Move Down") { state.moveSelected(up: false) }
                 ToolTile(icon: "scissors", title: "Split") { state.splitSelected() }
@@ -546,8 +573,16 @@ struct LayerMenuPanel: View {
                 }
                 ToolTile(icon: "trash", title: "Delete") { state.deleteSelected() }
             }
-            .padding(.horizontal, 12)
-            Spacer()
+            .padding(.horizontal, 12).padding(.bottom, 12)
+            }
+        }
+        .alert("Rename Layer", isPresented: $showRename) {
+            TextField("Name", text: $renaming)
+            Button("Rename") {
+                let n = renaming.trimmingCharacters(in: .whitespaces)
+                if !n.isEmpty { state.mutate("Rename Layer") { p in if let i = state.selectedIndex { p.layers[i].name = n } } }
+            }
+            Button("Cancel", role: .cancel) {}
         }
     }
 }

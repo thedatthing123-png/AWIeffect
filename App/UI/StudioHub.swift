@@ -7,7 +7,9 @@ struct StudioHub: View {
     @ObservedObject var drawLauncher: DrawLauncher
     @ObservedObject var mediaLauncher: MediaLauncher
     var compact = false
+    var startPen: ((PenTarget, PenStyle) -> Void)? = nil
     var done: () -> Void = {}
+    @State private var needsLayerHint = false
 
     private struct Item: Identifiable {
         let id: String
@@ -23,11 +25,11 @@ struct StudioHub: View {
                     Item(id: "Draw Studio", icon: "paintbrush.pointed.fill", color: .pink) { go { drawLauncher.open(nil) } },
                     Item(id: "Text Studio", icon: "textformat", color: .orange) { go { openText() } },
                     Item(id: "3D Text", icon: "cube.transparent", color: .cyan) { go { state.addModelLayer(text: "AWI", fileURL: nil) } },
-                    Item(id: "Pen Path", icon: "pencil.tip", color: .mint) { go { state.panel = .add } },
+                    Item(id: "Pen Path", icon: "pencil.tip", color: .mint) { go { if let startPen { startPen(.newShape, .points) } else { state.panel = .add } } },
                 ])
                 section("Libraries", [
-                    Item(id: "Effects", icon: "sparkles", color: .purple) { go { needLayer(); state.panel = .effects } },
-                    Item(id: "Presets", icon: "wand.and.rays", color: .indigo) { go { needLayer(); state.panel = .presets } },
+                    Item(id: "Effects", icon: "sparkles", color: .purple) { go { needLayer(.effects) } },
+                    Item(id: "Presets", icon: "wand.and.rays", color: .indigo) { go { needLayer(.presets) } },
                     Item(id: "Overlays", icon: "sun.haze", color: .yellow) { go { state.panel = .overlays } },
                     Item(id: "Text Presets", icon: "character.textbox", color: .orange) { go { openText() } },
                 ])
@@ -38,7 +40,7 @@ struct StudioHub: View {
                     Item(id: "3D Model", icon: "shippingbox", color: .teal) { go { mediaLauncher.pickModel = true } },
                 ])
                 section("Labs", [
-                    Item(id: "Physics Lab", icon: "atom", color: .cyan) { go { needLayer(); state.panel = .physics } },
+                    Item(id: "Physics Lab", icon: "atom", color: .cyan) { go { needLayer(.physics, adjustment: false) } },
                     Item(id: "3D View", icon: "rotate.3d", color: .purple) { go { state.viewMode = .orbit } },
                     Item(id: "Camera", icon: "video", color: .orange) { go { state.addCamera() } },
                     Item(id: "Beat Sync", icon: "metronome", color: .pink) { go { state.panel = .beats } },
@@ -57,8 +59,16 @@ struct StudioHub: View {
     }
 
     /// Effects / presets / physics act on a layer: use the selection, or add an adjustment layer to work on.
-    private func needLayer() {
-        if state.selectedLayer == nil { state.addAdjustmentLayer() }
+    private func needLayer(_ panel: ToolPanel, adjustment: Bool = true) {
+        if state.selectedLayer != nil { state.panel = panel; return }
+        if adjustment && !state.project.layers.isEmpty {
+            // Effects on everything below: an adjustment layer is exactly what AE / Alight Motion users reach for.
+            state.addAdjustmentLayer(); state.panel = panel
+        } else if let first = state.project.layers.first(where: { $0.content != .camera }) {
+            state.select(first.id); state.panel = panel
+        } else {
+            state.panel = .add
+        }
     }
 
     private func openText() {

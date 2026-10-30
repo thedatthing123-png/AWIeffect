@@ -53,7 +53,7 @@ enum CanvasHandles {
 extension EditorState {
     /// Starts a canvas drag: handles win over the tool mode (corner = scale, edge = stretch, knob = rotate).
     func beginCanvasDrag(at screen: CGPoint, comp: Vec2, fit: CGRect) -> CanvasDrag? {
-        guard let l = selectedLayer else { return nil }
+        guard let l = selectedLayer, !l.isLocked else { return nil }
         let t = currentTime
         let h = CanvasHandles.handles(l, project: project, time: t, fit: fit)
         // Nearest handle within reach wins (small layers have handles close together).

@@ -198,7 +198,8 @@ final class Renderer {
 
         // Bottom-up, with runs of 3D layers depth-sorted through the active camera (AE behaviour).
         let camera = Self.activeCamera(project, time: time)
-        let active = project.layers.filter { $0.isActive(at: time) }
+        let anySolo = project.layers.contains { $0.isSolo }
+        let active = project.layers.filter { $0.isActive(at: time) && (!anySolo || $0.isSolo || $0.content == .camera) }
         for layer in Self.drawOrder(active, camera: camera, time: time) {
             if case .audio = layer.content { continue }
             if case .camera = layer.content { continue }

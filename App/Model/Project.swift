@@ -165,6 +165,9 @@ struct Layer: Codable, Equatable, Identifiable {
     var cutout: CutoutSettings? = nil
     /// AE 3D layer switch.
     var is3D = false
+    /// Locked layers can't be picked or dragged on the canvas. Solo hides every non-solo layer.
+    var isLocked = false
+    var isSolo = false
     /// Thickness (px) given to a 3D layer: the picture is extruded into a solid slab.
     var extrude = Animated(0.0)
     /// Options for `.camera` layers.
@@ -213,12 +216,17 @@ struct Layer: Codable, Equatable, Identifiable {
         frameBlending = try c.decodeIfPresent(Bool.self, forKey: .frameBlending) ?? false
         cutout = try c.decodeIfPresent(CutoutSettings.self, forKey: .cutout)
         is3D = try c.decodeIfPresent(Bool.self, forKey: .is3D) ?? false
+        isLocked = try c.decodeIfPresent(Bool.self, forKey: .isLocked) ?? false
+        isSolo = try c.decodeIfPresent(Bool.self, forKey: .isSolo) ?? false
         extrude = try c.decodeIfPresent(Animated<Double>.self, forKey: .extrude) ?? Animated(0)
         camera = try c.decodeIfPresent(CameraOptions.self, forKey: .camera)
         model3D = try c.decodeIfPresent(Model3DOptions.self, forKey: .model3D)
     }
 
     func isActive(at time: Double) -> Bool { isVisible && time >= inPoint && time < outPoint }
+
+    var isAudioOnly: Bool { if case .audio = content { return true }; return false }
+    var isImage: Bool { if case .image = content { return true }; return false }
 
     /// All keyframe times on this layer (for timeline markers).
     var keyframeTimes: [Double] {
@@ -231,6 +239,12 @@ struct Layer: Codable, Equatable, Identifiable {
         t += size.keyframeTimes
         t += fill.keyframeTimes
         t += cornerRadius.keyframeTimes
+        t += transform.rotationX.keyframeTimes + transform.rotationY.keyframeTimes + transform.positionZ.keyframeTimes
+        t += extrude.keyframeTimes + volume.keyframeTimes + sides.keyframeTimes + innerRatio.keyframeTimes
+        t += (timeRemap?.keyframeTimes ?? []) + (path?.keyframeTimes ?? [])
+        for m in masks { t += m.path.keyframeTimes }
+        if let c = camera { t += c.zoom.keyframeTimes + c.focusDistance.keyframeTimes + c.aperture.keyframeTimes + c.blurLevel.keyframeTimes }
+        if let m = model3D { t += m.yaw.keyframeTimes + m.pitch.keyframeTimes + m.roll.keyframeTimes + m.color.keyframeTimes }
         for e in effects { t += e.keyframeTimes }
         if let tx = text {
             t += tx.fill.keyframeTimes + tx.tracking.keyframeTimes

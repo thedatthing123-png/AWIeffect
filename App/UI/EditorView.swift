@@ -253,7 +253,7 @@ struct EditorView: View {
     /// Selects the top-most layer whose bounds contain the tap.
     private func tapSelect(at point: CGPoint, fit: CGRect) {
         let c = toComp(point, fit: fit)
-        for layer in state.project.layers where layer.isActive(at: state.currentTime) {
+        for layer in state.project.layers where layer.isActive(at: state.currentTime) && !layer.isLocked {
             let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(state.project, time: state.currentTime),
                                              time: state.currentTime, renderScale: 1)
             let h = M.inverse * SIMD3(c.x, c.y, 1)

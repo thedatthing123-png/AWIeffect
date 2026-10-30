@@ -45,23 +45,23 @@ struct ThreeDPanel: View {
                             .accessibilityLabel("Make 3D Object")
                         }
                         if l.is3D && l.content != .camera && l.content != .model {
-                            row("Extrude", l.extrude.value(at: t), 0...600,
+                            row("Extrude", l.extrude.value(at: t), 0...600, anim: l.extrude,
                                 set: { v in state.mutateLayer { $0.extrude.set(v, at: t) } },
                                 keyed: { state.mutateLayer { $0.extrude.toggleKeyframe(at: t) } })
                         }
                         if l.is3D || l.content == .camera {
-                            row("Position Z", l.transform.positionZ.value(at: t), -6000...6000,
+                            row("Position Z", l.transform.positionZ.value(at: t), -6000...6000, anim: l.transform.positionZ,
                                 set: { v in state.mutateLayer { $0.transform.positionZ.set(v, at: t) } },
                                 keyed: { state.mutateLayer { $0.transform.positionZ.toggleKeyframe(at: t) } })
-                            row("X Rotation", l.transform.rotationX.value(at: t), -360...360,
+                            row("X Rotation", l.transform.rotationX.value(at: t), -360...360, anim: l.transform.rotationX,
                                 set: { v in state.mutateLayer { $0.transform.rotationX.set(v, at: t) } },
                                 keyed: { state.mutateLayer { $0.transform.rotationX.toggleKeyframe(at: t) } })
-                            row("Y Rotation", l.transform.rotationY.value(at: t), -360...360,
+                            row("Y Rotation", l.transform.rotationY.value(at: t), -360...360, anim: l.transform.rotationY,
                                 set: { v in state.mutateLayer { $0.transform.rotationY.set(v, at: t) } },
                                 keyed: { state.mutateLayer { $0.transform.rotationY.toggleKeyframe(at: t) } })
                         }
                         if l.content == .camera, let c = l.camera {
-                            row("Zoom", c.zoom.value(at: t), 100...8000,
+                            row("Zoom", c.zoom.value(at: t), 100...8000, anim: c.zoom,
                                 set: { v in state.mutateLayer { $0.camera?.zoom.set(v, at: t) } },
                                 keyed: { state.mutateLayer { $0.camera?.zoom.toggleKeyframe(at: t) } })
                             Toggle("Depth of Field", isOn: Binding(get: { c.depthOfField }, set: { b in
@@ -69,13 +69,13 @@ struct ThreeDPanel: View {
                             }))
                             .tint(Theme.accent).foregroundStyle(Theme.text)
                             if c.depthOfField {
-                                row("Focus Distance", c.focusDistance.value(at: t), 10...10000,
+                                row("Focus Distance", c.focusDistance.value(at: t), 10...10000, anim: c.focusDistance,
                                     set: { v in state.mutateLayer { $0.camera?.focusDistance.set(v, at: t) } },
                                     keyed: { state.mutateLayer { $0.camera?.focusDistance.toggleKeyframe(at: t) } })
-                                row("Aperture", c.aperture.value(at: t), 0...400,
+                                row("Aperture", c.aperture.value(at: t), 0...400, anim: c.aperture,
                                     set: { v in state.mutateLayer { $0.camera?.aperture.set(v, at: t) } },
                                     keyed: { state.mutateLayer { $0.camera?.aperture.toggleKeyframe(at: t) } })
-                                row("Blur Level", c.blurLevel.value(at: t), 0...300,
+                                row("Blur Level", c.blurLevel.value(at: t), 0...300, anim: c.blurLevel,
                                     set: { v in state.mutateLayer { $0.camera?.blurLevel.set(v, at: t) } },
                                     keyed: { state.mutateLayer { $0.camera?.blurLevel.toggleKeyframe(at: t) } })
                             }
@@ -98,11 +98,12 @@ struct ThreeDPanel: View {
         }
     }
 
-    private func row(_ title: String, _ v: Double, _ r: ClosedRange<Double>, set: @escaping (Double) -> Void,
+    private func row(_ title: String, _ v: Double, _ r: ClosedRange<Double>, anim: Animated<Double>? = nil, set: @escaping (Double) -> Void,
                      keyed: @escaping () -> Void) -> some View {
         HStack(spacing: 6) {
-            Button(action: { state.beginEdit("Keyframe \(title)"); keyed(); state.endEdit() }) {
-                Image(systemName: "diamond").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.keyframe).frame(width: 30, height: 30)
+            let t = state.currentTime
+            KeyframeDiamond(filled: anim?.keyframes.contains { abs($0.time - t) < 1e-4 } ?? false, animated: anim?.isAnimated ?? false) {
+                state.beginEdit("Keyframe \(title)"); keyed(); state.endEdit()
             }
             Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 92, alignment: .leading)
             Slider(value: Binding(get: { min(max(v, r.lowerBound), r.upperBound) }, set: { x in state.beginEdit(title); set(x) }), in: r) { e in
