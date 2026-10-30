@@ -301,9 +301,13 @@ kernel void fxSaberCore(texture2d<half, access::sample> src [[texture(0)]],
     // footage and adjustment layers (which are opaque everywhere).
     float al = sv.a * smoothstep(0.12, 0.6, max(sc.r, max(sc.g, sc.b)));
     // Core: hot white where the layer is solid, thinned by core size.
-    float core = smoothstep(1.0 - clamp(p.a.x, 0.05, 1.0), 1.0, al);
-    float flick = 1.0 - p.a.z * h21(float2(floor(p.a.w * 24.0), 3.0)) * 0.5;
-    float3 col = mix(p.b.rgb, float3(1.0), core) * flick;
+    // Core size: how much of the shape burns white-hot (and how hot).
+    float cs = clamp(p.a.x, 0.02, 1.0);
+    float core = smoothstep(1.0 - cs, 1.0 - cs * 0.3, al);
+    // Flicker: strong energy pulse (continuous noise so it never freezes on one value).
+    float pulse = 0.5 + 0.5 * sin(p.a.w * 53.0) * cos(p.a.w * 17.0 + 1.3);
+    float flick = 1.0 - p.a.z * 0.8 * pulse;
+    float3 col = mix(p.b.rgb * (0.6 + cs), float3(1.0 + cs), core) * flick;
     dst.write(half4(half3(col * al), half(al)), gid);
 }
 
