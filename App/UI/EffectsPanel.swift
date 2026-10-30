@@ -142,6 +142,11 @@ final class EffectThumbnails {
         case "ae.motionTile": inst.params["tileW"] = .number(Animated(40)); inst.params["tileH"] = .number(Animated(40))
         case "ae.turbulentDisplace": inst.params["amount"] = .number(Animated(40)); inst.params["size"] = .number(Animated(60))
         case "awi.saber": inst.params["spread"] = .number(Animated(30))
+        case "ae.linearWipe", "ae.radialWipe", "ae.irisWipe", "ae.blockDissolve", "ae.venetianBlinds", "ae.gradientWipe":
+            inst.params["completion"] = .number(Animated(45))
+        case "ae.cornerPin": inst.params["ul"] = .point(Animated(Vec2(0.15, 0.12))); inst.params["lr"] = .point(Animated(Vec2(0.92, 0.85)))
+        case "ae.colorBalance": inst.params["mr"] = .number(Animated(60)); inst.params["sb"] = .number(Animated(50))
+        case "ae.strobe": inst.params["duration"] = .number(Animated(0.3))
         default: break
         }
         return inst

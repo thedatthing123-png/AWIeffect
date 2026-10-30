@@ -3,6 +3,9 @@ import XCTest
 
 /// Anti-stub tests: every registered effect must visibly change the image, and every control must do something.
 final class EffectTests: XCTestCase {
+    /// Effects that work from the layer's alpha shape (no visible change on an opaque adjustment layer, like in AE).
+    static let alphaShaped: Set<String> = ["ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges"]
+
     private func renderer() throws -> Renderer {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU: no Metal device available; effect tests not run") }
         return r
@@ -59,6 +62,11 @@ final class EffectTests: XCTestCase {
         case "ae.offset": e.params["shift"] = .point(Animated(Vec2(0.7, 0.6)))
         case "ae.motionTile": n("tileW", 50); n("tileH", 50)
         case "ae.polarCoordinates": n("interp", 100)
+        case "ae.linearWipe", "ae.radialWipe", "ae.irisWipe", "ae.blockDissolve", "ae.venetianBlinds", "ae.gradientWipe": n("completion", 50)
+        case "ae.cornerPin": e.params["ul"] = .point(Animated(Vec2(0.2, 0.1)))
+        case "ae.colorBalance": n("mr", 60); n("sb", 50)
+        case "ae.changeToColor": e.params["from"] = .color(Animated(RGBA(0.6, 0.2, 0.9))); n("tolerance", 20)
+        case "ae.strobe": n("duration", 0.2)
         default: break
         }
         return e
@@ -90,7 +98,7 @@ final class EffectTests: XCTestCase {
         let r = try renderer()
         let base = try render(r, scene(effect: nil))
         for d in EffectRegistry.all {
-            let out = try render(r, scene(effect: visible(d), onAdjustment: !d.isTransformEffect))
+            let out = try render(r, scene(effect: visible(d), onAdjustment: !d.isTransformEffect && !Self.alphaShaped.contains(d.id)))
             XCTAssertGreaterThan(diff(base, out), 0.5, "\(d.name) did not visibly change the image")
             XCTAssertTrue(out.contains { $0 > 10 }, "\(d.name) rendered black")
         }
@@ -99,7 +107,7 @@ final class EffectTests: XCTestCase {
     func testEveryEffectWorksOnAdjustmentLayer() throws {
         let r = try renderer()
         let base = try render(r, scene(effect: nil))
-        for d in EffectRegistry.all where !d.isTransformEffect {
+        for d in EffectRegistry.all where !d.isTransformEffect && !Self.alphaShaped.contains(d.id) {
             let out = try render(r, scene(effect: visible(d), onAdjustment: true))
             XCTAssertGreaterThan(diff(base, out), 0.5, "\(d.name) did nothing on an adjustment layer")
         }
@@ -127,7 +135,7 @@ final class EffectTests: XCTestCase {
                 a.params[pd.id] = .number(Animated(lo + (hi - lo) * 0.02))
                 b.params[pd.id] = .number(Animated(lo + (hi - lo) * 0.6))
                 // Adjustment layer = effect sees the whole varied scene, not just one flat shape.
-                let adj = !d.isTransformEffect
+                let adj = !d.isTransformEffect && !Self.alphaShaped.contains(d.id)
                 let ra = try render(r, scene(effect: a, onAdjustment: adj)), rb = try render(r, scene(effect: b, onAdjustment: adj))
                 XCTAssertGreaterThan(diff(ra, rb), 0.05, "\(d.name) › \(pd.name) does nothing")
             }

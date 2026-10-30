@@ -200,6 +200,8 @@ enum AEPImporter {
                 continue
             }
             guard let name = pendingName else { continue }
+            // Masks put an `mkif` info chunk between the match name and the mask's property group: step over it.
+            if c.id == "mkif" { continue }
             switch c.key {
             case "tdgp": out.append(AEProp(matchName: name, kind: .group(walkGroup(c))))
             case "tdbs": out.append(AEProp(matchName: name, kind: .value(c)))
