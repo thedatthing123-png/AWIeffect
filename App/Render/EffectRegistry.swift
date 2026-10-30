@@ -95,7 +95,7 @@ final class EffectGPU {
         for name in ["fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
                      "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix",
                      "fxWarp", "fxStylize", "fxGlitch", "fxColor2", "fxSaberCore", "fxShine", "fxParticles", "fxPixelSort",
-                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11"] {
+                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxRetro13", "fxWarp14"] {
             guard let f = library.makeFunction(name: name) else { throw RenderError.pipeline(name) }
             psos[name] = try device.makeComputePipelineState(function: f)
         }
@@ -139,7 +139,7 @@ enum EffectRegistry {
         gaussianBlur, directionalBlur, radialBlur,
         exposure, brightnessContrast, hueSaturation, tint, levels, invert, fill, vignette,
         glow, rgbSplit, fractalNoise, chromaKey, shake,
-    ] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11
+    ] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch13 + batch14
 
     private static let byID: [String: EffectDefinition] = Dictionary(uniqueKeysWithValues: all.map { ($0.id, $0) })
     private static let byMatchName: [String: EffectDefinition] = {
