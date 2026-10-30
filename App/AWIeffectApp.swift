@@ -2,6 +2,8 @@ import SwiftUI
 
 @main
 struct AWIeffectApp: App {
+    init() { FontLibrary.shared.registerAll() }
+
     var body: some Scene {
         WindowGroup {
             RootView()

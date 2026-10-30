@@ -130,6 +130,9 @@ struct EditorView: View {
                 if let pen {
                     PenOverlay(state: state, target: pen.target, style: pen.style, fit: fit) { self.pen = nil }
                 }
+                if pen == nil && !trackLauncher.active {
+                    QuickActionButton(state: state).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing).padding(10)
+                }
                 if trackLauncher.active {
                     TrackOverlay(state: state, fit: fit) { trackLauncher.active = false }
                 }

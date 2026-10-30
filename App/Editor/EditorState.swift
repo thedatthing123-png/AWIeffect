@@ -35,6 +35,8 @@ enum ToolPanel: Equatable {
     case threeD
     case model
     case physics
+    case presets
+    case overlays
 }
 
 @MainActor

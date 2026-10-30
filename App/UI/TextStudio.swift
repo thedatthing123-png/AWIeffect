@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 extension EditorState {
     func addText() {
@@ -411,22 +412,64 @@ struct FontPicker: View {
     let current: String
     let pick: (String) -> Void
     @State private var query = ""
-    private let fonts = TextEngine.availableFonts()
+    @State private var tab = 0
+    @State private var showImport = false
+    @ObservedObject private var library = FontLibrary.shared
 
     var body: some View {
         NavigationStack {
-            List(fonts.filter { query.isEmpty || $0.localizedCaseInsensitiveContains(query) }, id: \.self) { f in
-                Button { pick(f) } label: {
-                    HStack {
-                        Text(f).font(.custom(f, size: 18)).foregroundStyle(Theme.text)
-                        Spacer()
-                        if f == current { Image(systemName: "checkmark").foregroundStyle(Theme.accent) }
+            VStack(spacing: 0) {
+                Picker("", selection: $tab) {
+                    Text("Library").tag(0); Text("On Device").tag(1)
+                }
+                .pickerStyle(.segmented).padding(12)
+                List {
+                    if tab == 0 {
+                        ForEach(FontLibrary.catalog.filter { query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) }) { fam in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    let ps = library.installed[fam.name]?.first
+                                    Text(fam.name).font(ps.map { .custom($0, size: 20) } ?? .system(size: 17, weight: .semibold))
+                                        .foregroundStyle(Theme.text)
+                                    Text(fam.style).font(.caption).foregroundStyle(Theme.textDim)
+                                }
+                                Spacer()
+                                if let ps = library.installed[fam.name]?.first {
+                                    Button("Use") { pick(ps) }.buttonStyle(.borderedProminent).tint(Theme.accent)
+                                } else if library.downloading.contains(fam.name) {
+                                    ProgressView()
+                                } else {
+                                    Button { library.download(fam.name) } label: { Image(systemName: "arrow.down.circle.fill").font(.title3) }
+                                        .foregroundStyle(Theme.accentGlow)
+                                }
+                            }
+                        }
+                    } else {
+                        ForEach(TextEngine.availableFonts().filter { query.isEmpty || $0.localizedCaseInsensitiveContains(query) }, id: \.self) { f in
+                            Button { pick(f) } label: {
+                                HStack {
+                                    Text(f).font(.custom(f, size: 18)).foregroundStyle(Theme.text)
+                                    Spacer()
+                                    if f == current { Image(systemName: "checkmark").foregroundStyle(Theme.accent) }
+                                }
+                            }
+                        }
                     }
                 }
+                .scrollContentBackground(.hidden)
             }
+            .background(Theme.background)
             .searchable(text: $query)
             .navigationTitle("Fonts")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button { showImport = true } label: { Label("Import", systemImage: "square.and.arrow.down") }
+                }
+            }
+            .fileImporter(isPresented: $showImport, allowedContentTypes: [.font]) { r in
+                if case .success(let u) = r, library.importFont(from: u) { tab = 1 }
+            }
         }
     }
 }

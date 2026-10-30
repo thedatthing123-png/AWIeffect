@@ -24,6 +24,8 @@ struct BottomPanel: View {
                 case .threeD: ThreeDPanel(state: state)
                 case .model: ModelPanel(state: state)
                 case .physics: PhysicsPanel(state: state)
+                case .presets: PresetsPanel(state: state)
+                case .overlays: OverlaysPanel(state: state)
                 case .none: idle
                 }
             }
@@ -110,6 +112,7 @@ struct AddPanel: View {
                     ToolTile(icon: "music.note", title: "Audio") { mediaLauncher.pickAudio = true }
                     ToolTile(icon: "slider.horizontal.below.rectangle", title: "Adjustment") { state.addAdjustmentLayer() }
                     ToolTile(icon: "video", title: "Camera") { state.addCamera() }
+                    ToolTile(icon: "sun.haze", title: "Overlays") { state.panel = .overlays }
                     ToolTile(icon: "cube.transparent", title: "3D Text") { state.addModelLayer(text: "AWI", fileURL: nil) }
                     ToolTile(icon: "shippingbox", title: "3D Model") { mediaLauncher.pickModel = true }
                 }
@@ -176,6 +179,7 @@ struct TransformPanel: View {
                 ToolTile(icon: "paintbrush.pointed.fill", title: "Edit Drawing") { drawLauncher.open(state.selectedLayerID) }
             }
             ToolTile(icon: "sparkles", title: "Effects") { state.panel = .effects }
+            ToolTile(icon: "wand.and.rays", title: "Presets") { state.panel = .presets }
             ToolTile(icon: "theatermask.and.paintbrush", title: "Masks") { state.panel = .masks }
             ToolTile(icon: "cube", title: state.selectedLayer?.content == .camera ? "Camera" : "3D") { state.panel = .threeD }
             if state.selectedLayer?.content == .model {

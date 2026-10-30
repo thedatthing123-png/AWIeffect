@@ -260,7 +260,7 @@ extension EffectRegistry {
         id: "awi.shine", name: "AWI Shine", category: .color, aeMatchNames: ["tc Shine", "TCShine"],
         summary: "Volumetric light rays bursting from a point.",
         params: [.point("source", "Source Point", Vec2(0.5, 0.35)), .number("length", "Ray Length", 50, 0, 100, unit: "%"),
-                 .number("intensity", "Boost Light", 2, 0, 10, step: 0.1), .color("color", "Ray Color", RGBA(1, 0.9, 0.7))],
+                 .number("intensity", "Boost Light", 0.6, 0, 10, step: 0.1), .color("color", "Ray Color", RGBA(1, 0.9, 0.7))],
         stage: .pixels { ctx in run("fxShine", ctx) { p in
             let s = ctx.effect.point("source", ctx.time)
             p.a = SIMD4(f(s.x * Double(ctx.width)), f(s.y * Double(ctx.height)), f(ctx.num("length") / 100), f(ctx.num("intensity")))
