@@ -357,14 +357,26 @@ extension Array {
 struct EffectBrowser: View {
     let pick: (EffectDefinition) -> Void
     @State private var query = ""
-    @State private var category: EffectCategory?
+    @State private var tab: Tab = .all
+    @AppStorage("awi.favEffects") private var favRaw = ""
+    @AppStorage("awi.recentEffects") private var recentRaw = ""
     @Environment(\.dismiss) private var dismiss
 
+    enum Tab: Hashable { case all, favorites, recent, category(EffectCategory) }
+
+    private var favorites: [String] { favRaw.split(separator: ",").map(String.init) }
+    private var recents: [String] { recentRaw.split(separator: ",").map(String.init) }
+
     private var filtered: [EffectDefinition] {
-        EffectRegistry.all.filter { d in
-            (category == nil || d.category == category) &&
-            (query.isEmpty || d.name.localizedCaseInsensitiveContains(query) || d.summary.localizedCaseInsensitiveContains(query))
+        let base: [EffectDefinition]
+        switch tab {
+        case .all: base = EffectRegistry.all
+        case .favorites: base = favorites.compactMap { EffectRegistry.definition($0) }
+        case .recent: base = recents.compactMap { EffectRegistry.definition($0) }
+        case .category(let c): base = EffectRegistry.all.filter { $0.category == c }
         }
+        guard !query.isEmpty else { return base }
+        return base.filter { $0.name.localizedCaseInsensitiveContains(query) || $0.summary.localizedCaseInsensitiveContains(query) }
     }
 
     var body: some View {
@@ -373,34 +385,67 @@ struct EffectBrowser: View {
                 VStack(alignment: .leading, spacing: 14) {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            chip("All", nil)
+                            chip("All", .all)
+                            chip("★ Favorites", .favorites)
+                            chip("Recent", .recent)
                             ForEach(EffectCategory.allCases) { c in
-                                if EffectRegistry.all.contains(where: { $0.category == c }) { chip(c.rawValue, c) }
+                                if EffectRegistry.all.contains(where: { $0.category == c }) { chip(c.rawValue, .category(c)) }
                             }
                         }
                     }
+                    Text("\(filtered.count) effects · hold one to favorite it").font(.caption).foregroundStyle(Theme.textDim)
+                    if filtered.isEmpty {
+                        Text(tab == .favorites ? "No favorites yet — hold any effect and tap Favorite." : "Nothing here yet.")
+                            .font(.footnote).foregroundStyle(Theme.textDim).padding(.top, 20)
+                    }
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 14) {
                         ForEach(filtered) { d in
-                            Button { pick(d) } label: { EffectTile(def: d) }.buttonStyle(.plain)
+                            Button { remember(d.id); pick(d) } label: {
+                                EffectTile(def: d)
+                                    .overlay(alignment: .topTrailing) {
+                                        if favorites.contains(d.id) {
+                                            Image(systemName: "star.fill").font(.system(size: 10)).foregroundStyle(Theme.warning).padding(5)
+                                        }
+                                    }
+                            }
+                            .buttonStyle(.plain)
+                            .contextMenu {
+                                Button { toggleFavorite(d.id) } label: {
+                                    Label(favorites.contains(d.id) ? "Unfavorite" : "Favorite", systemImage: favorites.contains(d.id) ? "star.slash" : "star")
+                                }
+                                Text(d.summary)
+                            }
                         }
                     }
                 }
                 .padding(16)
             }
             .background(Theme.background)
-            .searchable(text: $query, prompt: "Search effects")
+            .searchable(text: $query, prompt: "Search \(EffectRegistry.all.count) effects")
             .navigationTitle("Add Effect")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } } }
         }
     }
 
-    private func chip(_ title: String, _ c: EffectCategory?) -> some View {
-        Button { category = c } label: {
+    private func toggleFavorite(_ id: String) {
+        var f = favorites
+        if let i = f.firstIndex(of: id) { f.remove(at: i) } else { f.insert(id, at: 0) }
+        favRaw = f.joined(separator: ",")
+    }
+
+    private func remember(_ id: String) {
+        var r = recents.filter { $0 != id }
+        r.insert(id, at: 0)
+        recentRaw = r.prefix(24).joined(separator: ",")
+    }
+
+    private func chip(_ title: String, _ t: Tab) -> some View {
+        Button { tab = t } label: {
             Text(title).font(.system(size: 13, weight: .semibold))
                 .padding(.horizontal, 12).padding(.vertical, 7)
-                .background(Capsule().fill(category == c ? Theme.accent : Theme.raised))
-                .foregroundStyle(category == c ? .white : Theme.text)
+                .background(Capsule().fill(tab == t ? Theme.accent : Theme.raised))
+                .foregroundStyle(tab == t ? .white : Theme.text)
         }
         .buttonStyle(.plain)
     }

@@ -36,7 +36,7 @@ extension EffectRegistry {
 
     private static func trans9(_ id: String, _ name: String, _ summary: String, _ params: [ParamDef],
                                _ mode: UInt32, _ fill: @escaping (EffectContext, inout EffectParams) -> Void) -> EffectDefinition {
-        EffectDefinition(id: "awi9." + id, name: name, category: .keying, aeMatchNames: [],
+        EffectDefinition(id: "awi9." + id, name: name, category: .transition, aeMatchNames: [],
                          summary: summary + " Completion 0% = fully visible, 100% = fully hidden.",
                          params: [completion9] + params,
                          stage: .pixels { ctx in tr9(ctx, mode) { p in fill(ctx, &p) } })

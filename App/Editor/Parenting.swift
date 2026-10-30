@@ -55,11 +55,12 @@ extension EditorState {
             walk = project.layers.first { $0.id == w }?.parentID
             guardCount += 1
         }
+        let now = currentTime
         mutate(parent == nil ? "Unparent" : "Parent Layer") { p in
             var tr = p.layers[i].transform
             func convert<V: Interpolatable>(_ a: Animated<V>, _ f: (V, Double) -> V) -> Animated<V> {
                 var out = a
-                out.staticValue = f(a.staticValue, currentTime)
+                out.staticValue = f(a.staticValue, now)
                 out.keyframes = a.keyframes.map { var k = $0; k.value = f(k.value, k.time); return k }
                 return out
             }

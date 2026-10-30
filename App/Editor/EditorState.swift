@@ -223,10 +223,11 @@ final class EditorState: ObservableObject {
     func deleteSelected() {
         guard let i = selectedIndex else { return }
         let id = project.layers[i].id
-        let baked = Renderer.resolveParenting(project, time: currentTime)
+        let now = currentTime
+        let baked = Renderer.resolveParenting(project, time: now)
         mutate("Delete Layer") { p in
             for j in p.layers.indices where p.layers[j].parentID == id {
-                p.layers[j].transform.position = Animated(baked.layers[j].transform.position.value(at: currentTime))
+                p.layers[j].transform.position = Animated(baked.layers[j].transform.position.value(at: now))
                 p.layers[j].parentID = nil
             }
             p.layers.remove(at: i)
