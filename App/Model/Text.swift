@@ -316,5 +316,156 @@ enum TextPresets {
             a.properties.scale = Animated(Vec2(118, 118))
             return [a]
         },
+        // MARK: More ins
+        TextPreset(id: "elasticPop", name: "Elastic Pop") { s, d in
+            var a = TextAnimator(name: "Elastic")
+            a.selector = sweep(s, d, shape: .rampUp, soft: 25)
+            a.properties.scale = Animated(Vec2(0, 0))
+            var b = TextAnimator(name: "Overshoot")
+            b.selector = sweep(s + d * 0.1, d, shape: .triangle, soft: 25)
+            b.properties.scale = Animated(Vec2(150, 60))
+            return [a, b]
+        },
+        TextPreset(id: "riseLines", name: "Rise Up (Lines)") { s, d in
+            var a = TextAnimator(name: "Rise")
+            a.selector = sweep(s, d, shape: .rampUp, basedOn: .lines, soft: 60, easeHigh: 70)
+            a.properties.position = Animated(Vec2(0, 140))
+            a.properties.opacity = Animated(0)
+            return [a]
+        },
+        TextPreset(id: "zoomBig", name: "Zoom From Big") { s, d in
+            var a = TextAnimator(name: "Zoom")
+            a.selector = sweep(s, d, shape: .rampUp, soft: 50)
+            a.properties.scale = Animated(Vec2(420, 420))
+            a.properties.opacity = Animated(0)
+            return [a]
+        },
+        TextPreset(id: "rotateDrop", name: "Rotate Drop") { s, d in
+            var a = TextAnimator(name: "Rotate Drop")
+            a.selector = sweep(s, d, shape: .rampUp, soft: 35)
+            a.properties.rotation = Animated(90)
+            a.properties.position = Animated(Vec2(0, -120))
+            a.properties.opacity = Animated(0)
+            return [a]
+        },
+        TextPreset(id: "skewSlide", name: "Skew Slide") { s, d in
+            var a = TextAnimator(name: "Skew Slide")
+            a.selector = sweep(s, d, shape: .rampUp, soft: 40)
+            a.properties.skew = Animated(45)
+            a.properties.position = Animated(Vec2(-140, 0))
+            a.properties.opacity = Animated(0)
+            return [a]
+        },
+        TextPreset(id: "randomPop", name: "Random Pop") { s, d in
+            var a = TextAnimator(name: "Random Pop")
+            a.selector = sweep(s, d, shape: .rampUp, soft: 20)
+            a.selector.randomize = true
+            a.selector.seed = 3
+            a.properties.scale = Animated(Vec2(0, 0))
+            return [a]
+        },
+        TextPreset(id: "scatterIn", name: "Scatter In") { s, d in
+            var a = TextAnimator(name: "Scatter")
+            a.selector.kind = .wiggly
+            a.selector.frequency = Animated(0.01)
+            a.selector.amount = kf([(s, 100.0), (s + d, 0.0)])
+            a.properties.position = Animated(Vec2(260, 200))
+            a.properties.rotation = Animated(180)
+            a.properties.opacity = Animated(0)
+            return [a]
+        },
+        TextPreset(id: "wordPop", name: "Word Pop") { s, d in
+            var a = TextAnimator(name: "Word Pop")
+            a.selector = sweep(s, d, shape: .rampUp, basedOn: .words, soft: 20)
+            a.properties.scale = Animated(Vec2(0, 0))
+            var b = TextAnimator(name: "Word Overshoot")
+            b.selector = sweep(s + d * 0.1, d, shape: .triangle, basedOn: .words, soft: 25)
+            b.properties.scale = Animated(Vec2(135, 135))
+            b.properties.fill = Animated(RGBA(hex: 0xFFD25C))
+            return [a, b]
+        },
+        TextPreset(id: "smoothFade", name: "Smooth Fade") { s, d in
+            var a = TextAnimator(name: "Smooth Fade")
+            a.selector = sweep(s, d, shape: .smooth, soft: 80)
+            a.properties.opacity = Animated(0)
+            return [a]
+        },
+        // MARK: Outs
+        TextPreset(id: "fadeOut", name: "Fade Out") { s, d in
+            var a = TextAnimator(name: "Fade Out")
+            a.selector = sweep(s, d, shape: .rampDown, soft: 40)
+            a.properties.opacity = Animated(0)
+            a.properties.position = Animated(Vec2(0, -60))
+            return [a]
+        },
+        TextPreset(id: "fallOut", name: "Fall Out") { s, d in
+            var a = TextAnimator(name: "Fall Out")
+            a.selector = sweep(s, d, shape: .rampDown, soft: 30)
+            a.properties.position = Animated(Vec2(0, 320))
+            a.properties.rotation = Animated(60)
+            a.properties.opacity = Animated(0)
+            return [a]
+        },
+        TextPreset(id: "shrinkOut", name: "Shrink Out") { s, d in
+            var a = TextAnimator(name: "Shrink Out")
+            a.selector = sweep(s, d, shape: .rampDown, soft: 30)
+            a.properties.scale = Animated(Vec2(0, 0))
+            return [a]
+        },
+        TextPreset(id: "typeOut", name: "Typewriter Out") { s, d in
+            var a = TextAnimator(name: "Type Out")
+            a.selector.start = Animated(0)
+            a.selector.end = kf([(s, 0.0), (s + d, 100.0)], interp: .linear)
+            a.selector.shape = .square
+            a.properties.opacity = Animated(0)
+            return [a]
+        },
+        // MARK: Loops
+        TextPreset(id: "jelly", name: "Jelly") { _, _ in
+            var a = TextAnimator(name: "Jelly")
+            a.selector.kind = .wave
+            a.selector.frequency = Animated(1.6)
+            a.selector.spread = Animated(4)
+            a.properties.scale = Animated(Vec2(130, 75))
+            return [a]
+        },
+        TextPreset(id: "swingLetters", name: "Swing") { _, _ in
+            var a = TextAnimator(name: "Swing")
+            a.selector.kind = .wave
+            a.selector.frequency = Animated(0.9)
+            a.selector.spread = Animated(8)
+            a.properties.rotation = Animated(22)
+            return [a]
+        },
+        TextPreset(id: "shakeLetters", name: "Shake") { _, _ in
+            var a = TextAnimator(name: "Shake")
+            a.selector.kind = .wiggly
+            a.selector.frequency = Animated(16)
+            a.properties.position = Animated(Vec2(10, 10))
+            a.properties.rotation = Animated(8)
+            return [a]
+        },
+        TextPreset(id: "rainbow", name: "Rainbow Wave") { _, _ in
+            var a = TextAnimator(name: "Rainbow A")
+            a.selector.kind = .wave
+            a.selector.frequency = Animated(0.8)
+            a.selector.spread = Animated(5)
+            a.selector.minAmount = 0
+            a.properties.fill = Animated(RGBA(hex: 0xFF5CA8))
+            var b = TextAnimator(name: "Rainbow B")
+            b.selector.kind = .wave
+            b.selector.frequency = Animated(0.8)
+            b.selector.spread = Animated(5)
+            b.selector.offset = Animated(50)
+            b.selector.minAmount = 0
+            b.properties.fill = Animated(RGBA(hex: 0x5CC8FF))
+            return [a, b]
+        },
+        TextPreset(id: "karaoke", name: "Karaoke Highlight") { s, d in
+            var a = TextAnimator(name: "Karaoke")
+            a.selector = sweep(s, d, shape: .rampDown, basedOn: .characters, soft: 5)
+            a.properties.fill = Animated(RGBA(hex: 0xFFD25C))
+            return [a]
+        },
     ]
 }
