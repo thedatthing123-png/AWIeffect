@@ -56,11 +56,15 @@ extension EditorState {
         guard let l = selectedLayer else { return nil }
         let t = currentTime
         let h = CanvasHandles.handles(l, project: project, time: t, fit: fit)
-        func near(_ p: CGPoint) -> Bool { hypot(p.x - screen.x, p.y - screen.y) < 24 }
+        // Nearest handle within reach wins (small layers have handles close together).
+        func dist(_ p: CGPoint) -> CGFloat { hypot(p.x - screen.x, p.y - screen.y) }
+        var best: (d: CGFloat, kind: CanvasDrag.Kind)?
+        func consider(_ p: CGPoint, _ k: CanvasDrag.Kind) { let d = dist(p); if d < 24, d < (best?.d ?? .infinity) { best = (d, k) } }
+        consider(h.rotate, .rotate)
+        for c in h.corners { consider(c, scaleLinked ? .scale : .stretch(x: true, y: true)) }
+        for (i, e) in h.edges.enumerated() { consider(e, .stretch(x: i % 2 == 1, y: i % 2 == 0)) }
         var kind: CanvasDrag.Kind
-        if near(h.rotate) { kind = .rotate }
-        else if h.corners.contains(where: near) { kind = scaleLinked ? .scale : .stretch(x: true, y: true) }
-        else if let i = h.edges.firstIndex(where: near) { kind = .stretch(x: i % 2 == 1, y: i % 2 == 0) }
+        if let b = best { kind = b.kind }
         else {
             switch transformTool {
             case .move: kind = .move

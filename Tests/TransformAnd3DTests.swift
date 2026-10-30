@@ -6,7 +6,7 @@ import simd
 final class TransformAnd3DTests: XCTestCase {
     private func state(_ content: LayerContent = .shape(.rectangle)) -> EditorState {
         var p = Project.new(name: "t", width: 200, height: 200, fps: 30, duration: 2, background: .black)
-        var l = p.makeLayer(name: "box", content: content, size: Vec2(80, 40))
+        var l = p.makeLayer(name: "box", content: content, size: Vec2(160, 100))
         l.fill = Animated(.white)
         p.layers = [l]
         let s = EditorState(project: p, store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
@@ -23,7 +23,7 @@ final class TransformAnd3DTests: XCTestCase {
         s.updateCanvasDrag(d, comp: Vec2(right.x + 40, right.y))
         s.endCanvasDrag()
         let sc = s.selectedLayer!.transform.scale.value(at: 0)
-        XCTAssertEqual(sc.x, 200, accuracy: 1)
+        XCTAssertEqual(sc.x, 150, accuracy: 1)
         XCTAssertEqual(sc.y, 100, accuracy: 0.01, "edge stretch must not touch height")
     }
 
@@ -31,14 +31,14 @@ final class TransformAnd3DTests: XCTestCase {
         let s = state()
         s.transformTool = .scale
         s.scaleLinked = true
-        var d = try XCTUnwrap(s.beginCanvasDrag(at: CGPoint(x: 175, y: 100), comp: Vec2(175, 100), fit: fit))
-        s.updateCanvasDrag(d, comp: Vec2(190, 100)); s.endCanvasDrag()
+        var d = try XCTUnwrap(s.beginCanvasDrag(at: CGPoint(x: 120, y: 100), comp: Vec2(120, 100), fit: fit))
+        s.updateCanvasDrag(d, comp: Vec2(130, 100)); s.endCanvasDrag()
         var sc = s.selectedLayer!.transform.scale.value(at: 0)
         XCTAssertEqual(sc.x, sc.y, accuracy: 0.01, "linked scale stays uniform")
         XCTAssertGreaterThan(sc.x, 110)
         s.scaleLinked = false
-        d = try XCTUnwrap(s.beginCanvasDrag(at: CGPoint(x: 170, y: 100), comp: Vec2(170, 100), fit: fit))
-        s.updateCanvasDrag(d, comp: Vec2(170, 100)); s.updateCanvasDrag(d, comp: Vec2(185, 100)); s.endCanvasDrag()
+        d = try XCTUnwrap(s.beginCanvasDrag(at: CGPoint(x: 125, y: 110), comp: Vec2(125, 110), fit: fit))
+        s.updateCanvasDrag(d, comp: Vec2(125, 110)); s.updateCanvasDrag(d, comp: Vec2(140, 110)); s.endCanvasDrag()
         let before = sc
         sc = s.selectedLayer!.transform.scale.value(at: 0)
         XCTAssertGreaterThan(sc.x, before.x)
@@ -49,13 +49,13 @@ final class TransformAnd3DTests: XCTestCase {
         let s = state()
         s.mutateLayer { $0.transform.rotation.set(30, at: 0) }
         let l0 = s.selectedLayer!
-        let corner0 = Renderer.layerMatrix(l0, time: 0, renderScale: 1, includeEffects: false) * SIMD3(40, 20, 1)
+        let corner0 = Renderer.layerMatrix(l0, time: 0, renderScale: 1, includeEffects: false) * SIMD3(80, 50, 1)
         s.transformTool = .pivot
         let d = try XCTUnwrap(s.beginCanvasDrag(at: CGPoint(x: 100, y: 100), comp: Vec2(100, 100), fit: fit))
         s.updateCanvasDrag(d, comp: Vec2(120, 95)); s.endCanvasDrag()
         let l1 = s.selectedLayer!
         XCTAssertNotEqual(l1.transform.anchor.value(at: 0), l0.transform.anchor.value(at: 0), "anchor should move")
-        let corner1 = Renderer.layerMatrix(l1, time: 0, renderScale: 1, includeEffects: false) * SIMD3(40, 20, 1)
+        let corner1 = Renderer.layerMatrix(l1, time: 0, renderScale: 1, includeEffects: false) * SIMD3(80, 50, 1)
         XCTAssertEqual(corner1.x, corner0.x, accuracy: 1.5)
         XCTAssertEqual(corner1.y, corner0.y, accuracy: 1.5)
     }
@@ -63,8 +63,8 @@ final class TransformAnd3DTests: XCTestCase {
     func testRotateToolTurnsLayer() throws {
         let s = state()
         s.transformTool = .rotate
-        let d = try XCTUnwrap(s.beginCanvasDrag(at: CGPoint(x: 150, y: 100), comp: Vec2(150, 100), fit: fit))
-        s.updateCanvasDrag(d, comp: Vec2(100, 150)); s.endCanvasDrag()
+        let d = try XCTUnwrap(s.beginCanvasDrag(at: CGPoint(x: 130, y: 100), comp: Vec2(130, 100), fit: fit))
+        s.updateCanvasDrag(d, comp: Vec2(100, 130)); s.endCanvasDrag()
         XCTAssertEqual(s.selectedLayer!.transform.rotation.value(at: 0), 90, accuracy: 0.5)
     }
 
