@@ -1,5 +1,39 @@
 import Foundation
 
+struct LayerTimeFX: Codable, Equatable {
+    /// Echo: number of trailing copies, seconds between them, opacity kept per copy (0-1).
+    var echoCount = 0
+    var echoDelay = 0.05
+    var echoDecay = 0.6
+    /// Posterize time: the layer only updates this many times per second (0 = off).
+    var posterizeFPS = 0.0
+    /// Freeze frame: the layer holds this moment (nil = off).
+    var freezeAt: Double? = nil
+
+    /// Time at which the layer's content and animation are evaluated.
+    func localTime(_ t: Double) -> Double {
+        if let f = freezeAt { return f }
+        if posterizeFPS > 0 { return (t * posterizeFPS).rounded(.down) / posterizeFPS }
+        return t
+    }
+    var isEmpty: Bool { echoCount == 0 && posterizeFPS == 0 && freezeAt == nil }
+}
+
+/// AE track matte: the layer directly above cuts this one out (and hides itself).
+enum TrackMatte: String, Codable, CaseIterable, Identifiable {
+    case none, alpha, alphaInverted, luma, lumaInverted
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .none: return "None"
+        case .alpha: return "Alpha"
+        case .alphaInverted: return "Alpha Inverted"
+        case .luma: return "Luma"
+        case .lumaInverted: return "Luma Inverted"
+        }
+    }
+}
+
 enum BlendMode: String, Codable, CaseIterable, Identifiable {
     case normal, add, screen, multiply, overlay, lighten, darken, difference
     var id: String { rawValue }
@@ -170,6 +204,9 @@ struct Layer: Codable, Equatable, Identifiable {
     var isSolo = false
     /// AE motion-blur switch (only renders when the scene's motion blur is enabled too).
     var motionBlur = false
+    var trackMatte: TrackMatte = .none
+    /// Time effects: echo trails, posterize time (choppy frame rate), freeze frame.
+    var timeFX: LayerTimeFX? = nil
     /// Thickness (px) given to a 3D layer: the picture is extruded into a solid slab.
     var extrude = Animated(0.0)
     /// Options for `.camera` layers.
@@ -221,6 +258,8 @@ struct Layer: Codable, Equatable, Identifiable {
         isLocked = try c.decodeIfPresent(Bool.self, forKey: .isLocked) ?? false
         isSolo = try c.decodeIfPresent(Bool.self, forKey: .isSolo) ?? false
         motionBlur = try c.decodeIfPresent(Bool.self, forKey: .motionBlur) ?? false
+        trackMatte = try c.decodeIfPresent(TrackMatte.self, forKey: .trackMatte) ?? .none
+        timeFX = try c.decodeIfPresent(LayerTimeFX.self, forKey: .timeFX)
         extrude = try c.decodeIfPresent(Animated<Double>.self, forKey: .extrude) ?? Animated(0)
         camera = try c.decodeIfPresent(CameraOptions.self, forKey: .camera)
         model3D = try c.decodeIfPresent(Model3DOptions.self, forKey: .model3D)

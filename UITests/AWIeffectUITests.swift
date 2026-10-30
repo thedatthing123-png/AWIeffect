@@ -133,6 +133,7 @@ final class AWIeffectUITests: XCTestCase {
         tap("Create from scratch")
         tap("Add")
         tap("Star")
+        sleep(2)   // let the panel finish sliding in
         let window = app.windows.firstMatch.frame
         // Fixed chrome (top bar + transport) must sit fully inside the window and must not overlap each other.
         let chrome = ["Export", "Scene Settings", "2D view", "3D view", "Play", "Key All", "Panel Back"]

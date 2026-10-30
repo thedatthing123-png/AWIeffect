@@ -43,6 +43,7 @@ enum ToolPanel: Equatable {
     case style
     case motionBlur
     case scene
+    case time
 }
 
 /// Playback time on its own publisher: while playing only the preview and timeline redraw each frame,

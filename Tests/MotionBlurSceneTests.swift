@@ -58,4 +58,52 @@ final class MotionBlurSceneTests: XCTestCase {
         XCTAssertFalse(back.motionBlurEnabled)
         XCTAssertEqual(back.shutterAngle, 180)
     }
+
+    func testAlphaTrackMatteCutsLayerAndHidesMatte() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        var p = Project.new(name: "tm", width: 100, height: 100, fps: 30, duration: 2, background: .black)
+        var matte = p.makeLayer(name: "matte", content: .solid, size: Vec2(40, 100))
+        matte.fill = Animated(RGBA(0, 0, 1)); matte.transform.position = Animated(Vec2(30, 50))
+        var fill = p.makeLayer(name: "fill", content: .solid, size: Vec2(100, 100))
+        fill.fill = Animated(RGBA(1, 0, 0)); fill.trackMatte = .alpha
+        p.layers = [matte, fill]
+        let px = try XCTUnwrap(r.renderPixels(project: p, time: 0.5, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        func at(_ x: Int) -> (Int, Int) { let i = (50 * 100 + x) * 4; return (Int(px[i]), Int(px[i + 2])) }
+        XCTAssertGreaterThan(at(30).0, 200, "red should show inside the matte")
+        XCTAssertLessThan(at(80).0, 20, "red must be cut outside the matte")
+        XCTAssertLessThan(at(30).1, 20, "the matte layer itself must be hidden")
+        // Inverted
+        p.layers[1].trackMatte = .alphaInverted
+        let inv = try XCTUnwrap(r.renderPixels(project: p, time: 0.5, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        XCTAssertLessThan(Int(inv[(50 * 100 + 30) * 4]), 20)
+        XCTAssertGreaterThan(Int(inv[(50 * 100 + 80) * 4]), 200)
+    }
+
+    func testPosterizeTimeHoldsFrames() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        var p = movingBox(blur: false)
+        p.layers[0].timeFX = LayerTimeFX(posterizeFPS: 4)
+        let a = try XCTUnwrap(r.renderPixels(project: p, time: 0.51, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        let b = try XCTUnwrap(r.renderPixels(project: p, time: 0.70, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        XCTAssertEqual(a, b, "posterized layer must not move between steps")
+    }
+
+    func testEchoAddsTrailingCopies() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        var p = movingBox(blur: false)
+        let plain = try XCTUnwrap(r.renderPixels(project: p, time: 0.6, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        p.layers[0].timeFX = LayerTimeFX(echoCount: 4, echoDelay: 0.08, echoDecay: 0.7)
+        let echo = try XCTUnwrap(r.renderPixels(project: p, time: 0.6, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        let lit = { (a: [UInt8]) in stride(from: 0, to: a.count, by: 4).filter { a[$0] > 30 }.count }
+        XCTAssertGreaterThan(lit(echo), lit(plain) * 2, "echo copies should trail behind the moving box")
+    }
+
+    func testFreezeFrame() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        var p = movingBox(blur: false)
+        p.layers[0].timeFX = LayerTimeFX(freezeAt: 0.2)
+        let a = try XCTUnwrap(r.renderPixels(project: p, time: 0.3, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        let b = try XCTUnwrap(r.renderPixels(project: p, time: 0.9, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        XCTAssertEqual(a, b)
+    }
 }

@@ -62,6 +62,57 @@ final class Renderer {
         currentDepth = depth
         return tex
     }
+    /// Track matte: renders the layer and its matte separately at comp size, multiplies, then composites with the layer's blend mode.
+    private func encodeMatted(_ layer: Layer, matte: Layer, project: Project, time: Double, renderScale: Double, comp: MTLTexture,
+                              cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL) {
+        let library = precompLibrary, depth = currentDepth
+        let cameras = project.layers.filter { $0.content == .camera }
+        func renderOnly(_ l: Layer) -> MTLTexture {
+            var sub = project
+            var one = l; one.trackMatte = .none; one.isSolo = false; one.isVisible = true
+            sub.layers = cameras + [one]
+            sub.background.a = 0
+            sub.background = RGBA(0, 0, 0, 0)
+            let tex = pool.acquire(width: comp.width, height: comp.height)
+            encode(project: sub, time: time, renderScale: renderScale, into: tex, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
+            precompLibrary = library; currentPool = pool; currentDepth = depth
+            return tex
+        }
+        let content = renderOnly(layer)
+        let m = renderOnly(matte)
+        let out = pool.acquire(width: comp.width, height: comp.height)
+        var p = EffectParams()
+        p.i.x = 6
+        p.i.y = UInt32(TrackMatte.allCases.firstIndex(of: layer.trackMatte) ?? 1) - 1
+        fx.run("fxGlow4", cb, textures: [content, out, m], params: p, grid: out)
+        let I = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(comp.width) / 2, Double(comp.height) / 2, 1)))
+        drawQuad(cb: cb, target: comp, matrix: I, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 0.5,
+                 opacity: 1, layer: layer, time: time, source: .image(out), premultipliedImage: true)
+    }
+
+    /// Echo trails: each echoing layer gets delayed, fading copies stacked underneath it (all keyframes and media delayed).
+    static func expandEchoes(_ p: Project) -> Project {
+        guard p.layers.contains(where: { ($0.timeFX?.echoCount ?? 0) > 0 }) else { return p }
+        var q = p
+        var out: [Layer] = []
+        for l in p.layers {
+            out.append(l)
+            guard let fx = l.timeFX, fx.echoCount > 0 else { continue }
+            for k in 1...min(fx.echoCount, 24) {
+                var c = l
+                c.id = UUID()
+                c.timeFX?.echoCount = 0
+                c.trackMatte = .none
+                c.shiftTiming(by: Double(k) * fx.echoDelay, duration: p.duration)
+                c.inPoint = l.inPoint
+                c.transform.opacity = c.transform.opacity.mapped { $0 * pow(max(0, min(1, fx.echoDecay)), Double(k)) }
+                out.append(c)
+            }
+        }
+        q.layers = out
+        return q
+    }
+
     /// Max side of an offscreen layer buffer.
     static let maxLayerTexture = 4096
 
@@ -183,7 +234,7 @@ final class Renderer {
     func encode(project rawProject: Project, time: Double, renderScale: Double, into comp: MTLTexture,
                 commandBuffer cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL) {
         // Expressions are baked into plain values for this frame first.
-        let project = ExpressionResolver.resolve(rawProject, time: time)
+        let project = Self.expandEchoes(ExpressionResolver.resolve(rawProject, time: time))
         precompLibrary = project.precomps.isEmpty ? precompLibrary : project.precomps
         currentPool = pool
         currentDepth = project.precompDepth ?? 0
@@ -199,12 +250,24 @@ final class Renderer {
         // Bottom-up, with runs of 3D layers depth-sorted through the active camera (AE behaviour).
         let camera = Self.activeCamera(project, time: time)
         let anySolo = project.layers.contains { $0.isSolo }
-        let active = project.layers.filter { $0.isActive(at: time) && (!anySolo || $0.isSolo || $0.content == .camera) }
+        // Layers used as a track matte by the layer below them don't draw themselves.
+        var matteSources: [UUID: Layer] = [:], hiddenMattes = Set<UUID>()
+        for (i, l) in project.layers.enumerated() where l.trackMatte != .none && i > 0 {
+            matteSources[l.id] = project.layers[i - 1]; hiddenMattes.insert(project.layers[i - 1].id)
+        }
+        let active = project.layers.filter { $0.isActive(at: time) && !hiddenMattes.contains($0.id) && (!anySolo || $0.isSolo || $0.content == .camera) }
+        let globalTime = time
         for layer in Self.drawOrder(active, camera: camera, time: time) {
+            // Posterize time / freeze frame evaluate this layer at its own clock.
+            let time = layer.timeFX?.localTime(globalTime) ?? globalTime
             if case .audio = layer.content { continue }
             if case .camera = layer.content { continue }
             let opacity = layer.transform.opacity.value(at: time) / 100
             if opacity <= 0 { continue }
+            if let matte = matteSources[layer.id] {
+                encodeMatted(layer, matte: matte, project: project, time: time, renderScale: renderScale, comp: comp, cb: cb, pool: pool, mediaURL: mediaURL)
+                continue
+            }
             let pixelFX = layer.effects.filter { e in
                 guard e.isEnabled, let d = EffectRegistry.definition(e.typeID) else { return false }
                 return !d.isTransformEffect

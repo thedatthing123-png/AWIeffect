@@ -183,3 +183,66 @@ struct MotionBlurPanel: View {
         }
     }
 }
+
+// MARK: - Time effects
+
+struct TimePanel: View {
+    @ObservedObject var state: EditorState
+
+    var body: some View {
+        VStack(spacing: 0) {
+            PanelHeader(state: state, title: "Time", showKeyNav: false)
+            if let l = state.selectedLayer {
+                let fx = l.timeFX ?? LayerTimeFX()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("ECHO / TRAILS").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+                        slider("Copies", Double(fx.echoCount), 0...16, "%.0f") { v in set { $0.echoCount = Int(v) } }
+                        slider("Delay", fx.echoDelay, 0.01...0.5, "%.2fs") { v in set { $0.echoDelay = v } }
+                        slider("Keep", fx.echoDecay * 100, 5...100, "%.0f%%") { v in set { $0.echoDecay = v / 100 } }
+                        Divider().overlay(Theme.stroke)
+                        Text("POSTERIZE TIME (choppy anime look)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+                        HStack(spacing: 6) {
+                            ForEach([0.0, 6, 8, 12, 15, 24], id: \.self) { f in
+                                Button { set { $0.posterizeFPS = f } } label: {
+                                    Text(f == 0 ? "Off" : "\(Int(f))").font(.system(size: 12, weight: .bold))
+                                        .frame(maxWidth: .infinity, minHeight: 32)
+                                        .background(Capsule().fill(fx.posterizeFPS == f ? Theme.accent : Theme.surface))
+                                        .foregroundStyle(fx.posterizeFPS == f ? Color.white : Theme.text)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        Divider().overlay(Theme.stroke)
+                        HStack {
+                            Button { let t = state.currentTime; set { $0.freezeAt = fx.freezeAt == nil ? t : nil } } label: {
+                                Label(fx.freezeAt == nil ? "Freeze Frame at Playhead" : "Unfreeze", systemImage: fx.freezeAt == nil ? "pause.rectangle" : "play.rectangle")
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                        }
+                        if let f = fx.freezeAt {
+                            Text(String(format: "Holding %.2fs", f)).font(.caption).foregroundStyle(Theme.textDim)
+                        }
+                    }
+                    .padding(.horizontal, 12).padding(.bottom, 14)
+                }
+            }
+        }
+    }
+
+    private func set(_ change: (inout LayerTimeFX) -> Void) {
+        state.coalescedEdit("Time Effects") { l in
+            var fx = l.timeFX ?? LayerTimeFX()
+            change(&fx)
+            l.timeFX = fx.isEmpty ? nil : fx
+        }
+    }
+
+    private func slider(_ t: String, _ v: Double, _ r: ClosedRange<Double>, _ fmt: String, _ set: @escaping (Double) -> Void) -> some View {
+        HStack {
+            Text(t).font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 70, alignment: .leading)
+            Slider(value: Binding(get: { min(max(v, r.lowerBound), r.upperBound) }, set: set), in: r).tint(Theme.accent)
+            Text(String(format: fmt, v)).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.accentGlow).frame(width: 48)
+        }
+    }
+}

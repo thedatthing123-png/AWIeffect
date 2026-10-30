@@ -116,7 +116,7 @@ struct EditorView: View {
     }
 
     private var topBar: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 10) {
             Button {
                 state.pause()
                 state.saveNow(thumbnail: true)
@@ -127,7 +127,7 @@ struct EditorView: View {
             if state.isInPrecomp {
                 Button { state.closePrecomp() } label: {
                     Label(state.compStack.last?.project.name ?? "Back", systemImage: "arrow.turn.left.up")
-                        .font(.system(size: 12, weight: .semibold)).lineLimit(1)
+                        .font(.system(size: 12, weight: .semibold)).lineLimit(1).frame(maxWidth: 110)
                         .padding(.horizontal, 8).padding(.vertical, 5).background(Capsule().fill(Theme.accent.opacity(0.3)))
                 }
                 .accessibilityLabel("Close Pre-comp")
@@ -140,9 +140,10 @@ struct EditorView: View {
             }
             }
             .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(-1)
             .accessibilityLabel("Scene Settings")
-            Spacer()
-            ViewModeSwitch(state: state)
+            ViewModeSwitch(state: state).fixedSize()
 
             Button { showExport = true } label: {
                 Image(systemName: "square.and.arrow.up").font(.system(size: 16, weight: .bold))

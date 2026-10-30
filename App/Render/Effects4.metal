@@ -71,6 +71,14 @@ kernel void fxGlow4(texture2d<half, access::sample> src [[texture(0)]],
             o = s * (p.i.y == 0 ? m : 1.0 - m);
             break;
         }
+        case 6: {
+            // Track matte: aux is the matte layer render. i.y: 0 alpha, 1 alpha inv, 2 luma, 3 luma inv.
+            float4 m = float4(aux.sample(s4Zero, c));
+            float lum = m.a > 1e-5 ? dot(m.rgb / m.a, float3(0.2126, 0.7152, 0.0722)) * m.a : 0.0;
+            float k = p.i.y == 0 ? m.a : (p.i.y == 1 ? 1.0 - m.a : (p.i.y == 2 ? lum : 1.0 - lum));
+            o = s * clamp(k, 0.0, 1.0);
+            break;
+        }
         case 5: {
             float r = max(p.a.x, 0.5);
             float mx = s.a, mn = s.a;

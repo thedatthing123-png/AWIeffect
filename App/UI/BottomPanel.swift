@@ -68,6 +68,7 @@ struct BottomPanel: View {
                 case .style: StylePanel(state: state)
                 case .motionBlur: MotionBlurPanel(state: state)
                 case .scene: ScenePanel(state: state)
+                case .time: TimePanel(state: state)
                 case .none: EmptyView()
                 }
             }
@@ -408,8 +409,32 @@ struct BlendingPanel: View {
                                 .buttonStyle(.plain)
                             }
                         }
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("TRACK MATTE (uses the layer above)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 6) {
+                                    ForEach(TrackMatte.allCases) { m in
+                                        Button {
+                                            state.mutate("Track Matte") { p in if let i = state.selectedIndex { p.layers[i].trackMatte = m } }
+                                        } label: {
+                                            Text(m.title).font(.system(size: 12, weight: .semibold))
+                                                .padding(.horizontal, 10).padding(.vertical, 7)
+                                                .background(Capsule().fill(layer.trackMatte == m ? Theme.accent : Theme.surface))
+                                                .foregroundStyle(layer.trackMatte == m ? Color.white : Theme.text)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .disabled(m != .none && state.selectedIndex == 0)
+                                    }
+                                }
+                            }
+                            if state.selectedIndex == 0 && layer.trackMatte == .none {
+                                Text("Move a matte layer (text, shape, image…) above this one to use it as a track matte.")
+                                    .font(.caption).foregroundStyle(Theme.textDim)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 12).padding(.bottom, 12)
                 }
             }
         }

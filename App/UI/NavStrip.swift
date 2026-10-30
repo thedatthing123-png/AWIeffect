@@ -78,6 +78,7 @@ struct NavStrip: View {
         if l.isMedia || l.isAudioOnly { out.append(Item(id: "Speed & Volume", icon: "speedometer", panel: .clip)) }
         if l.isImage { out.append(Item(id: "AI Cutout", icon: "person.crop.rectangle", panel: .cutout)) }
         if visual { out.append(Item(id: "Motion Blur", icon: "wind", panel: .motionBlur)) }
+        if visual { out.append(Item(id: "Time", icon: "timer", panel: .time)) }
         if !l.isAudioOnly { out.append(Item(id: c == .camera ? "Lens" : "3D", icon: c == .camera ? "camera.aperture" : "cube", panel: .threeD)) }
         out.append(Item(id: "Easing", icon: "point.topleft.down.to.point.bottomright.curvepath") { showGraph = true })
         if visual && c != .adjustment { out.append(Item(id: "Physics", icon: "atom", panel: .physics)) }
