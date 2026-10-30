@@ -62,6 +62,7 @@ struct PanelHeader: View {
             Button { state.panel = state.selectedLayer == nil ? .none : .transform } label: {
                 Image(systemName: "chevron.left").font(.system(size: 15, weight: .semibold)).frame(width: 34, height: 34)
             }
+            .accessibilityLabel("Back")
             .opacity(state.panel == .transform || state.panel == .add ? 0 : 1)
             .disabled(state.panel == .transform || state.panel == .add)
             Text(title).font(.system(size: 14, weight: .semibold))
@@ -166,6 +167,7 @@ struct TransformPanel: View {
     }
 
     private var tileRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: 8) {
             if case .text = state.selectedLayer?.content {
                 ToolTile(icon: "textformat", title: "Text Studio") { state.panel = .text }
@@ -194,6 +196,8 @@ struct TransformPanel: View {
             ToolTile(icon: "scissors", title: "Split") { state.splitSelected() }
             ToolTile(icon: "ellipsis", title: "More") { state.panel = .layerMenu }
         }
+    }
+        .frame(height: 62)
     }
 
     private var easingRow: some View {

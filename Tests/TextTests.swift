@@ -88,6 +88,22 @@ final class TextTests: XCTestCase {
         XCTAssertEqual(px[0], 0, "text leaked into the corner")
     }
 
+    /// "A" is narrow at the top and wide at the bottom: catches upside-down glyphs.
+    func testGlyphsAreUpright() throws {
+        var p = Project.new(name: "a", width: 200, height: 200, fps: 30, duration: 1, background: .black)
+        var l = p.makeLayer(name: "t", content: .text, size: Vec2(1, 1))
+        l.text = TextData(string: "A", fontSize: 160)
+        p.layers = [l]
+        let px = try render(p, t: 0)
+        // Find the glyph's vertical extent, then compare widths near its top and bottom.
+        let rows = (0..<200).filter { y in (0..<200).contains { px[(y * 200 + $0) * 4] > 128 } }
+        let top = try XCTUnwrap(rows.first), bottom = try XCTUnwrap(rows.last)
+        func width(_ y: Int) -> Int { (0..<200).filter { px[(y * 200 + $0) * 4] > 128 }.count }
+        let hgt = bottom - top
+        let nearTop = width(top + hgt / 8), nearBottom = width(bottom - hgt / 8)
+        XCTAssertLessThan(nearTop, nearBottom, "glyph is upside-down (top \(nearTop) px vs bottom \(nearBottom) px)")
+    }
+
     func testPerWordColor() throws {
         var p = textProject("RED GREEN")
         p.layers[0].text?.fill = Animated(RGBA(1, 0, 0))

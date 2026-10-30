@@ -169,9 +169,9 @@ final class TextEngine {
         ctx.scaleBy(x: CGFloat(b), y: CGFloat(b))
         var pos = CGPoint(x: -rect.minX + CGFloat(pad / b), y: -rect.minY + CGFloat(pad / b))
         CTFontDrawGlyphs(g.font, &glyph, &pos, 1, ctx)
-        // CGContext origin is bottom-left; flip rows so the texture is top-left origin.
-        var flipped = [UInt8](repeating: 0, count: w * h)
-        for y in 0..<h { for x in 0..<w { flipped[y * w + x] = pixels[(h - 1 - y) * w + x] } }
+        // A bitmap context's first memory row is already the TOP of the image (user space is y-up, but
+        // memory is stored top-down), so the bytes are in texture order as-is. Flipping here turned letters upside-down.
+        let flipped = pixels
 
         let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r8Unorm, width: w, height: h, mipmapped: false)
         d.usage = [.shaderRead]

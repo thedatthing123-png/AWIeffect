@@ -98,7 +98,7 @@ struct ToolTile: View {
                 Text(title).font(.system(size: 10, weight: .medium)).lineLimit(1).minimumScaleFactor(0.7)
             }
             .foregroundStyle(active ? Theme.accentGlow : Theme.text)
-            .frame(maxWidth: .infinity, minHeight: 58)
+            .frame(minWidth: 66, maxWidth: .infinity, minHeight: 58)
             .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(active ? Theme.accent.opacity(0.18) : Theme.surface))
         }
