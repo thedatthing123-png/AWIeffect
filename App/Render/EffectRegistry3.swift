@@ -251,14 +251,14 @@ extension EffectRegistry {
         let c = px(ctx, ctx.effect.point("center", ctx.time)); p.a.z = f(ctx.num("start")); p.b = SIMD4(c.x, c.y, 0, 0); p.i.y = UInt32(ctx.effect.choice("direction")) }
     static let irisWipe = wipe("ae.irisWipe", "Iris Wipe", ["ADBE Iris Wipe"], "Circle closes in on a point.", 2,
                                extra: [.point("center", "Iris Center", Vec2(0.5, 0.5), ae: 1)]) { ctx, p in
-        let c = px(ctx, ctx.effect.point("center", ctx.time)); p.b = SIMD4(c.x, c.y, 0, 0); p.a.z = f(hypot(Double(ctx.width), Double(ctx.height))) }
+        let c = px(ctx, ctx.effect.point("center", ctx.time)); p.b = SIMD4(c.x, c.y, 0, 0); p.a.z = f(hypot(Double(ctx.width), Double(ctx.height)) / 2) }
     static let blockDissolve = wipe("ae.blockDissolve", "Block Dissolve", ["ADBE Block Dissolve"], "Random blocks vanish.", 3,
                                     extra: [.number("block", "Block Size", 16, 1, 400, unit: "px", ae: 2)]) { ctx, p in p.a.z = f(ctx.num("block") * ctx.unit) }
     static let venetianBlinds = wipe("ae.venetianBlinds", "Venetian Blinds", ["ADBE Venetian Blinds"], "Stripes close like blinds.", 4,
                                      extra: [.angle("direction", "Direction", 0, ae: 2), .number("width", "Width", 40, 2, 1000, unit: "px", ae: 3)]) { ctx, p in
         p.a.z = f(ctx.num("direction")); p.a.w = f(ctx.num("width") * ctx.unit) }
     static let gradientWipe = wipe("ae.gradientWipe", "Gradient Wipe", ["ADBE Gradient Wipe"], "Dark areas vanish first (luma wipe).", 5,
-                                   extra: [.number("softness", "Transition Softness", 20, 0, 100, unit: "%", ae: 2)]) { ctx, p in p.a.y = f(ctx.num("softness") / 100) }
+                                   extra: [.number("softness", "Transition Softness", 20, 0, 100, unit: "%", ae: 2)]) { ctx, p in p.a.z = f(ctx.num("softness") / 100) }
 
     // MARK: Color
 

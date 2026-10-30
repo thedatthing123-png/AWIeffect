@@ -30,7 +30,10 @@ final class PrecompMaskImportTests: XCTestCase {
     }
 
     func testMaskModeImports() throws {
-        let modes = try load("mask_intersect").project.layers.flatMap { $0.masks.map(\.mode) }
+        // The sample file holds several comps; check them all.
+        guard let u = Bundle(for: Self.self).url(forResource: "mask_intersect", withExtension: "aep") else { throw XCTSkip("fixture missing") }
+        let comps = try AEPImporter.load(url: u).report.comps
+        let modes = try comps.flatMap { name in try AEPImporter.load(url: u, compName: name).project.layers.flatMap { $0.masks.map(\.mode) } }
         XCTAssertTrue(modes.contains(.intersect), "expected an Intersect mask, got \(modes)")
     }
 

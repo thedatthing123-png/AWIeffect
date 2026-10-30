@@ -280,7 +280,8 @@ kernel void fxTransition(texture2d<half, access::sample> src [[texture(0)]],
         }
         case 3: {
             float2 cell = floor(c / max(p.a.z, 1.0));
-            keep = step(t, hh(cell * 1.37 + 0.5));
+            float fw = f / 500.0;    // feather softens which blocks are mid-dissolve
+            keep = smoothstep(t - fw, t + fw, hh(cell * 1.37 + 0.5));
             break;
         }
         case 4: {
@@ -291,7 +292,7 @@ kernel void fxTransition(texture2d<half, access::sample> src [[texture(0)]],
         }
         case 5: {
             float l = lm(um(s));
-            float soft = max(p.a.y, 0.001);
+            float soft = max(max(p.a.z, f / 300.0), 0.001);
             keep = smoothstep(t * (1.0 + soft) - soft, t * (1.0 + soft), l);
             break;
         }
