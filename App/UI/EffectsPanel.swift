@@ -13,6 +13,8 @@ enum PreviewImage {
     /// The URL to use, generating the built-in test image on first use.
     static func url() -> URL {
         if FileManager.default.fileExists(atPath: userURL.path) { return userURL }
+        // The owner's default preview picture ships inside the app.
+        if let b = Bundle.main.url(forResource: "default-preview", withExtension: "jpg") { return b }
         if !FileManager.default.fileExists(atPath: builtinURL.path) { generateBuiltin() }
         return builtinURL
     }
