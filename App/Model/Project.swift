@@ -86,6 +86,8 @@ enum LayerContent: Codable, Equatable {
     case adjustment
     /// AE-style 3D camera; its transform + `Layer.camera` options drive every 3D layer.
     case camera
+    /// AE-style light (point / spot / parallel / ambient); lights every 3D layer, settings in `Layer.light`.
+    case light
     /// Real 3D: imported model (usdz/obj) or extruded 3D text, rendered with lights; settings in `Layer.model3D`.
     case model
     /// Nested composition (AE pre-comp), stored in `Project.precomps`.
@@ -104,6 +106,7 @@ enum LayerContent: Codable, Equatable {
         case .image: return "photo"
         case .adjustment: return "slider.horizontal.below.rectangle"
         case .camera: return "video"
+        case .light: return "lightbulb.fill"
         case .model: return "cube.transparent"
         case .precomp: return "square.stack.3d.up"
         case .text: return "textformat"
@@ -147,6 +150,21 @@ struct LayerTransform: Codable, Equatable {
 }
 
 /// AE camera options (Zoom = focal length in comp pixels; depth of field like AE's camera).
+enum LightType: String, Codable, CaseIterable, Identifiable {
+    case point, spot, parallel, ambient
+    var id: String { rawValue }
+    var title: String { rawValue.capitalized }
+}
+
+struct LightOptions: Codable, Equatable {
+    var type: LightType = .spot
+    var color = Animated(RGBA(1, 0.96, 0.9))
+    var intensity = Animated(100.0)       // %
+    var coneAngle = Animated(70.0)        // degrees (spot)
+    var coneFeather = Animated(50.0)      // %
+    var falloffRadius = Animated(0.0)     // px, 0 = no falloff
+}
+
 struct CameraOptions: Codable, Equatable {
     var zoom = Animated(1000.0)
     var depthOfField = false
@@ -209,6 +227,8 @@ struct Layer: Codable, Equatable, Identifiable {
     var timeFX: LayerTimeFX? = nil
     /// Parent layer (position lives in the parent's space; rotation and scale follow it).
     var parentID: UUID? = nil
+    /// Options for `.light` layers.
+    var light: LightOptions? = nil
     /// Thickness (px) given to a 3D layer: the picture is extruded into a solid slab.
     var extrude = Animated(0.0)
     /// Options for `.camera` layers.
@@ -263,6 +283,7 @@ struct Layer: Codable, Equatable, Identifiable {
         trackMatte = try c.decodeIfPresent(TrackMatte.self, forKey: .trackMatte) ?? .none
         timeFX = try c.decodeIfPresent(LayerTimeFX.self, forKey: .timeFX)
         parentID = try c.decodeIfPresent(UUID.self, forKey: .parentID)
+        light = try c.decodeIfPresent(LightOptions.self, forKey: .light)
         extrude = try c.decodeIfPresent(Animated<Double>.self, forKey: .extrude) ?? Animated(0)
         camera = try c.decodeIfPresent(CameraOptions.self, forKey: .camera)
         model3D = try c.decodeIfPresent(Model3DOptions.self, forKey: .model3D)

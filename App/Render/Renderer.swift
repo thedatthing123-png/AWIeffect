@@ -29,6 +29,7 @@ final class Renderer {
     let fx: EffectGPU
     private let clearPSO: MTLComputePipelineState
     let drawPSO: MTLComputePipelineState
+    private let lightPSO: MTLComputePipelineState
     private let toBGRAPSO: MTLComputePipelineState
     let displayPSO: MTLRenderPipelineState
     private let loader: MTKTextureLoader
@@ -113,6 +114,51 @@ final class Renderer {
         return q
     }
 
+    struct LightGPU { var posType: SIMD4<Float>; var dirCone: SIMD4<Float>; var color: SIMD4<Float>; var falloff: SIMD4<Float> }
+    struct LightPass {
+        var w0: SIMD4<Float>; var w1: SIMD4<Float>; var w2: SIMD4<Float>; var normal: SIMD4<Float>
+        var camPos: SIMD4<Float>; var tex: SIMD4<Float>; var count: SIMD4<UInt32>
+    }
+
+    /// Active lights in world space for this frame.
+    static func lightsGPU(_ p: Project, time: Double) -> [LightGPU] {
+        p.layers.compactMap { l -> LightGPU? in
+            guard l.content == .light, l.isActive(at: time), let o = l.light else { return nil }
+            let t = l.transform
+            let pos = t.position.value(at: time)
+            let R = CameraState.rotation(x: t.rotationX.value(at: time), y: t.rotationY.value(at: time), z: t.rotation.value(at: time))
+            let dir = R * SIMD4(0, 0, 1, 0)         // lights point down +z (into the scene) before rotation
+            let c = o.color.value(at: time), k = o.intensity.value(at: time) / 100
+            let type: Float = [LightType.point: 0, .spot: 1, .parallel: 2, .ambient: 3][o.type] ?? 0
+            return LightGPU(posType: SIMD4(Float(pos.x), Float(pos.y), Float(t.positionZ.value(at: time)), type),
+                            dirCone: SIMD4(Float(dir.x), Float(dir.y), Float(dir.z), Float(cos(o.coneAngle.value(at: time) / 2 * .pi / 180))),
+                            color: SIMD4(Float(c.r * k), Float(c.g * k), Float(c.b * k), Float(o.coneFeather.value(at: time) / 100)),
+                            falloff: SIMD4(Float(o.falloffRadius.value(at: time)), 0, 0, 0))
+        }
+    }
+
+    private func encodeLights(cb: MTLCommandBuffer, src: MTLTexture, dst: MTLTexture, layer: Layer, time: Double, camera: CameraState,
+                              lights: [LightGPU], density: Double, ext: Vec2) {
+        let W = Self.layerWorld(layer, time: time)
+        let camPos = camera.world * SIMD4(0, 0, 0, 1)
+        var n = W * SIMD4(0, 0, -1, 0)
+        let len = max(simd_length(SIMD3(n.x, n.y, n.z)), 1e-9)
+        n /= len
+        func f4(_ v: SIMD4<Double>) -> SIMD4<Float> { SIMD4(Float(v.x), Float(v.y), Float(v.z), Float(v.w)) }
+        var pass = LightPass(w0: f4(W.columns.0), w1: f4(W.columns.1), w2: f4(W.columns.3), normal: f4(n), camPos: f4(camPos),
+                             tex: SIMD4(Float(1 / density), 0, Float(-ext.x + 0.5 / density), Float(-ext.y + 0.5 / density)),
+                             count: SIMD4(UInt32(min(lights.count, 8)), 0, 0, 0))
+        var ls = Array(lights.prefix(8))
+        guard let enc = cb.makeComputeCommandEncoder() else { return }
+        enc.setComputePipelineState(lightPSO)
+        enc.setTexture(src, index: 0)
+        enc.setTexture(dst, index: 1)
+        enc.setBytes(&pass, length: MemoryLayout<LightPass>.stride, index: 0)
+        enc.setBytes(&ls, length: MemoryLayout<LightGPU>.stride * max(ls.count, 1), index: 1)
+        dispatch(enc, pso: lightPSO, width: dst.width, height: dst.height)
+        enc.endEncoding()
+    }
+
     /// Max side of an offscreen layer buffer.
     static let maxLayerTexture = 4096
 
@@ -127,6 +173,7 @@ final class Renderer {
         }
         clearPSO = try compute("clearComp")
         drawPSO = try compute("drawLayer")
+        lightPSO = try compute("applyLights")
         toBGRAPSO = try compute("compToBGRA")
         fx = try EffectGPU(device: device, library: lib)
         let rp = MTLRenderPipelineDescriptor()
@@ -249,6 +296,7 @@ final class Renderer {
 
         // Bottom-up, with runs of 3D layers depth-sorted through the active camera (AE behaviour).
         let camera = Self.activeCamera(project, time: time)
+        let lights = Self.lightsGPU(project, time: time)
         let anySolo = project.layers.contains { $0.isSolo }
         // Layers used as a track matte by the layer below them don't draw themselves.
         var matteSources: [UUID: Layer] = [:], hiddenMattes = Set<UUID>()
@@ -262,6 +310,7 @@ final class Renderer {
             let time = layer.timeFX?.localTime(globalTime) ?? globalTime
             if case .audio = layer.content { continue }
             if case .camera = layer.content { continue }
+            if case .light = layer.content { continue }
             let opacity = layer.transform.opacity.value(at: time) / 100
             if opacity <= 0 { continue }
             if let matte = matteSources[layer.id] {
@@ -306,7 +355,8 @@ final class Renderer {
                 }
                 if moved { blurMatrices = ms }
             }
-            let needsLocal = !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil || dof > 0.5 || extrude > 0.5 || !blurMatrices.isEmpty
+            let lit = layer.is3D && !lights.isEmpty && layer.content != .model
+            let needsLocal = !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil || dof > 0.5 || extrude > 0.5 || !blurMatrices.isEmpty || lit
             if !needsLocal, let path = Self.shapePath(layer, time: time) {
                 drawShapePath(cb: cb, target: comp, matrix: M, layer: layer, path: path, time: time,
                               opacity: opacity, blend: layer.blendMode, aa: 1 / pxPerLocal)
@@ -361,6 +411,13 @@ final class Renderer {
             for e in pixelFX {
                 guard let def = EffectRegistry.definition(e.typeID), case .pixels(let run) = def.stage else { continue }
                 current = run(EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: time, unit: density, pool: pool))
+            }
+            // 3D lights shade the layer per pixel (AE: 3D layers accept lights once the comp has any).
+            if lit {
+                let litTex = pool.acquire(width: current.width, height: current.height)
+                encodeLights(cb: cb, src: current, dst: litTex, layer: layer, time: time, camera: camera, lights: lights,
+                             density: density, ext: ext)
+                current = litTex
             }
             // Depth of field (3D layers through a camera with DOF on).
             if dof > 0.5 {
@@ -440,7 +497,7 @@ final class Renderer {
         case .precomp(let id):
             guard let tex = renderPrecomp(id, layer: layer, time: time, density: density, cb: cb, mediaURL: mediaURL) else { return nil }
             return .model(tex)
-        case .adjustment, .text, .audio, .camera: return nil
+        case .adjustment, .text, .audio, .camera, .light: return nil
         }
     }
 

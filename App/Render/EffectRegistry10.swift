@@ -56,8 +56,8 @@ extension EffectRegistry {
         summary: "Rounded, glossy bevel with soft shadow and a specular hot spot.",
         params: [.number("size", "Size", 12, 2, 60, unit: "px"), .number("depth", "Depth", 10, 0, 30, step: 0.1),
                  .number("highlight", "Highlight", 1, 0, 2, step: 0.01), .number("shadow", "Shadow", 1, 0, 2, step: 0.01),
-                 .number("shininess", "Shininess", 16, 1, 64, step: 0.5), .number("elevation", "Light Elevation", 40, 5, 85, unit: "°"),
-                 .angle("angle", "Light Angle", 135), .color("color", "Highlight Color", .white)],
+                 .number("shininess", "Shininess", 16, 1, 200, step: 0.5), .number("elevation", "Light Elevation", 40, 5, 85, unit: "°"),
+                 .angle("angle", "Light Angle", 135), .color("color", "Highlight Color", RGBA(1, 0.82, 0.45))],
         stage: .pixels { ctx in
             let h = height10(ctx, luma: 0, soft: ctx.num("size"))
             return r10(ctx, 2, aux: h) { p in

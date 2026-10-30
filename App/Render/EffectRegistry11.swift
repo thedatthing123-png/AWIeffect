@@ -10,7 +10,7 @@ extension EffectRegistry {
     static let batch11: [EffectDefinition] = [
         repeatGrid11, repeatLine11, repeatRadial11, scatterField11, mirrorTile11, zoomTunnel11, echoOffset11,
         blink11, pulseOpacity11, randomDissolve11, featherEdges11, vignetteAlpha11, linearAlphaFade11, opacityFlicker11,
-        advancedChromaKey11, spillCleaner11, matteChoker11, unmultiply11, colorRangeKey11, lumaMatteSoft11,
+        advancedChromaKey11, spillCleaner11, matteChoker11, colorRangeKey11, lumaMatteSoft11,
         alphaLevels11, edgeRefine11, removeColorMatting11,
     ]
 

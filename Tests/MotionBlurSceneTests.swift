@@ -106,4 +106,28 @@ final class MotionBlurSceneTests: XCTestCase {
         let b = try XCTUnwrap(r.renderPixels(project: p, time: 0.9, mediaURL: { URL(fileURLWithPath: $0) })).rgba
         XCTAssertEqual(a, b)
     }
+
+    func testLightsShade3DLayers() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        var p = Project.new(name: "l", width: 200, height: 200, fps: 30, duration: 2, background: .black)
+        var card = p.makeLayer(name: "card", content: .solid, size: Vec2(200, 200))
+        card.fill = Animated(.white); card.is3D = true
+        p.layers = [card]
+        let unlit = try XCTUnwrap(r.renderPixels(project: p, time: 0, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        // Ambient at 50%: everything uniformly darker.
+        var amb = p.makeLayer(name: "amb", content: .light, size: Vec2(1, 1))
+        amb.light = LightOptions(type: .ambient, intensity: Animated(50))
+        var q = p; q.layers.insert(amb, at: 0)
+        let ambPx = try XCTUnwrap(r.renderPixels(project: q, time: 0, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        func px(_ a: [UInt8], _ x: Int, _ y: Int) -> Int { Int(a[(y * 200 + x) * 4]) }
+        XCTAssertGreaterThan(px(unlit, 100, 100), 240)
+        XCTAssertLessThan(px(ambPx, 100, 100), 200, "ambient 50% should darken")
+        // A spot pointed straight at the middle: bright pool in the center, dark corners.
+        var spot = p.makeLayer(name: "spot", content: .light, size: Vec2(1, 1))
+        spot.transform.position = Animated(Vec2(100, 100)); spot.transform.positionZ = Animated(-300)
+        spot.light = LightOptions(type: .spot, coneAngle: Animated(40), coneFeather: Animated(20))
+        var s2 = p; s2.layers.insert(spot, at: 0)
+        let spotPx = try XCTUnwrap(r.renderPixels(project: s2, time: 0, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        XCTAssertGreaterThan(px(spotPx, 100, 100), px(spotPx, 5, 5) + 80, "spot light should pool in the center")
+    }
 }

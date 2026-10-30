@@ -141,6 +141,7 @@ struct AddPanel: View {
                         ToolTile(icon: "cube.transparent", title: "3D Text") { state.addModelLayer(text: "AWI", fileURL: nil) }
                         ToolTile(icon: "shippingbox", title: "3D Model") { mediaLauncher.pickModel = true }
                         ToolTile(icon: "video", title: "Camera") { state.addCamera() }
+                        ToolTile(icon: "lightbulb.fill", title: "Light") { state.addLight() }
                     }
                 }
                 .padding(.horizontal, 12).padding(.bottom, 14)

@@ -54,7 +54,7 @@ struct NavStrip: View {
         guard let l = state.selectedLayer else { return addItems }
         var out: [Item] = []
         let c = l.content
-        let visual = c != .camera && !l.isAudioOnly
+        let visual = c != .camera && c != .light && !l.isAudioOnly
         out.append(Item(id: c == .camera ? "Camera" : "Transform", icon: "arrow.up.and.down.and.arrow.left.and.right", panel: .transform))
         switch c {
         case .text: out.append(Item(id: "Text", icon: "textformat", panel: .text))
@@ -79,7 +79,7 @@ struct NavStrip: View {
         if l.isImage { out.append(Item(id: "AI Cutout", icon: "person.crop.rectangle", panel: .cutout)) }
         if visual { out.append(Item(id: "Motion Blur", icon: "wind", panel: .motionBlur)) }
         if visual { out.append(Item(id: "Time", icon: "timer", panel: .time)) }
-        if !l.isAudioOnly { out.append(Item(id: c == .camera ? "Lens" : "3D", icon: c == .camera ? "camera.aperture" : "cube", panel: .threeD)) }
+        if !l.isAudioOnly { out.append(Item(id: c == .camera ? "Lens" : (c == .light ? "Light" : "3D"), icon: c == .camera ? "camera.aperture" : (c == .light ? "lightbulb.fill" : "cube"), panel: .threeD)) }
         out.append(Item(id: "Easing", icon: "point.topleft.down.to.point.bottomright.curvepath") { showGraph = true })
         if visual && c != .adjustment { out.append(Item(id: "Physics", icon: "atom", panel: .physics)) }
         out.append(Item(id: "Layer", icon: "square.3.layers.3d", panel: .layerMenu))
