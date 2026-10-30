@@ -51,25 +51,25 @@ final class AWIeffectUITests: XCTestCase {
         snap("effect-browser")
         tap("Close")
 
-        tap("Back")
+        tap("Panel Back")
         tap("Presets")
         snap("presets")
         tap("Zoom Blur In")
 
-        tap("Back")
+        tap("Panel Back")
         tap("Masks")
         snap("masks")
 
-        tap("Back")
+        tap("Panel Back")
         app.scrollViews.firstMatch.swipeLeft()
         tap("3D")
         snap("3d-panel")
 
-        tap("Back")
+        tap("Panel Back")
         app.scrollViews.firstMatch.swipeLeft()
         tap("Physics")
         snap("physics-lab")
-        tap("Back")
+        tap("Panel Back")
 
         tap("Quick actions")
         sleep(1)

@@ -62,7 +62,7 @@ struct PanelHeader: View {
             Button { state.panel = state.selectedLayer == nil ? .none : .transform } label: {
                 Image(systemName: "chevron.left").font(.system(size: 15, weight: .semibold)).frame(width: 34, height: 34)
             }
-            .accessibilityLabel("Back")
+            .accessibilityLabel("Panel Back")
             .opacity(state.panel == .transform || state.panel == .add ? 0 : 1)
             .disabled(state.panel == .transform || state.panel == .add)
             Text(title).font(.system(size: 14, weight: .semibold))
