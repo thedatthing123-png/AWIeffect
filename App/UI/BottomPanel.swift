@@ -26,6 +26,8 @@ struct BottomPanel: View {
                 case .physics: PhysicsPanel(state: state)
                 case .presets: PresetsPanel(state: state)
                 case .overlays: OverlaysPanel(state: state)
+                case .multi: MultiSelectPanel(state: state)
+                case .beats: BeatsPanel(state: state)
                 case .none: idle
                 }
             }
@@ -35,18 +37,18 @@ struct BottomPanel: View {
         .background(Theme.background)
     }
 
+    @EnvironmentObject private var drawLauncher: DrawLauncher
+    @EnvironmentObject private var mediaLauncher: MediaLauncher
+
+    /// Nothing selected: add a layer, or jump straight into a studio / library.
     private var idle: some View {
-        VStack(spacing: 14) {
-            Spacer()
+        VStack(spacing: 4) {
             Button { state.panel = .add } label: {
-                Label("Add Layer", systemImage: "plus")
-                    .font(.system(size: 16, weight: .semibold))
+                Label("Add Layer", systemImage: "plus").font(.system(size: 15, weight: .semibold))
             }
             .buttonStyle(PrimaryButtonStyle())
-            .padding(.horizontal, 60)
-            Text("Tap a layer in the timeline or on the canvas to edit it.")
-                .font(.footnote).foregroundStyle(Theme.textDim)
-            Spacer()
+            .padding(.horizontal, 12).padding(.top, 8)
+            StudioHub(state: state, showPhotoPicker: $showPhotoPicker, drawLauncher: drawLauncher, mediaLauncher: mediaLauncher, compact: true)
         }
     }
 }
@@ -177,38 +179,75 @@ struct TransformPanel: View {
         }
     }
 
+    @State private var group: ToolGroup = .edit
+
+    /// Tools sorted into a few tabs so nothing hides in one long row.
+    enum ToolGroup: String, CaseIterable { case edit = "Edit", effects = "Effects", animate = "Animate", threeD = "3D", layer = "Layer" }
+
     private var tileRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-        HStack(spacing: 8) {
-            if case .text = state.selectedLayer?.content {
-                ToolTile(icon: "textformat", title: "Text Studio") { state.panel = .text }
+        VStack(spacing: 6) {
+            HStack(spacing: 4) {
+                ForEach(ToolGroup.allCases, id: \.self) { g in
+                    Button { withAnimation(.easeOut(duration: 0.15)) { group = g } } label: {
+                        Text(g.rawValue).font(.system(size: 12, weight: .bold))
+                            .frame(maxWidth: .infinity, minHeight: 28)
+                            .background(Capsule().fill(group == g ? Theme.accent : Theme.surface))
+                            .foregroundStyle(group == g ? Color.white : Theme.textDim)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(g.rawValue) tools")
+                }
             }
-            if state.selectedLayer?.isMedia == true {
-                ToolTile(icon: "film.stack", title: "Clip") { state.panel = .clip }
-            } else if case .image = state.selectedLayer?.content {
-                ToolTile(icon: "person.crop.rectangle", title: "AI Cutout") { state.panel = .clip }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) { tiles(group) }
             }
-            if state.selectedLayer?.drawingID != nil {
-                ToolTile(icon: "paintbrush.pointed.fill", title: "Edit Drawing") { drawLauncher.open(state.selectedLayerID) }
-            }
-            ToolTile(icon: "sparkles", title: "Effects") { state.panel = .effects }
-            ToolTile(icon: "wand.and.rays", title: "Presets") { state.panel = .presets }
-            ToolTile(icon: "theatermask.and.paintbrush", title: "Masks") { state.panel = .masks }
-            ToolTile(icon: "cube", title: state.selectedLayer?.content == .camera ? "Camera" : "3D") { state.panel = .threeD }
-            if state.selectedLayer?.content == .model {
-                ToolTile(icon: "cube.transparent", title: "Model") { state.panel = .model }
-            }
-            ToolTile(icon: "atom", title: "Physics") { state.panel = .physics }
-            ToolTile(icon: "paintpalette", title: "Color & Fill") { state.panel = .fill }
-            ToolTile(icon: "square.stack.3d.down.right", title: "Blending") { state.panel = .blending }
-            if case .shape = state.selectedLayer?.content {
-                ToolTile(icon: "skew", title: "Edit Shape") { state.panel = .shape }
-            }
-            ToolTile(icon: "scissors", title: "Split") { state.splitSelected() }
-            ToolTile(icon: "ellipsis", title: "More") { state.panel = .layerMenu }
+            .frame(height: 62)
         }
     }
-        .frame(height: 62)
+
+    @ViewBuilder private func tiles(_ g: ToolGroup) -> some View {
+        let l = state.selectedLayer
+        switch g {
+        case .edit:
+            if case .text = l?.content { ToolTile(icon: "textformat", title: "Text Studio") { state.panel = .text } }
+            if case .shape = l?.content { ToolTile(icon: "skew", title: "Edit Shape") { state.panel = .shape } }
+            if l?.isMedia == true {
+                ToolTile(icon: "film.stack", title: "Clip") { state.panel = .clip }
+            } else if case .image = l?.content {
+                ToolTile(icon: "person.crop.rectangle", title: "AI Cutout") { state.panel = .clip }
+            }
+            if l?.drawingID != nil { ToolTile(icon: "paintbrush.pointed.fill", title: "Edit Drawing") { drawLauncher.open(state.selectedLayerID) } }
+            ToolTile(icon: "paintpalette", title: "Color & Fill") { state.panel = .fill }
+            ToolTile(icon: "square.stack.3d.down.right", title: "Blending") { state.panel = .blending }
+            ToolTile(icon: "theatermask.and.paintbrush", title: "Masks") { state.panel = .masks }
+        case .effects:
+            ToolTile(icon: "sparkles", title: "Effects") { state.panel = .effects }
+            ToolTile(icon: "wand.and.rays", title: "Presets") { state.panel = .presets }
+            ToolTile(icon: "sparkle.magnifyingglass", title: "Overlays") { state.panel = .overlays }
+        case .animate:
+            ToolTile(icon: "point.topleft.down.to.point.bottomright.curvepath", title: "Graph") { showGraph = true }
+            ToolTile(icon: "atom", title: "Physics") { state.panel = .physics }
+            ToolTile(icon: "metronome", title: "Beats") { state.panel = .beats }
+            ToolTile(icon: "chevron.left.to.line", title: "Prev Key") { state.jumpKeyframe(forward: false) }
+            ToolTile(icon: "chevron.right.to.line", title: "Next Key") { state.jumpKeyframe(forward: true) }
+        case .threeD:
+            ToolTile(icon: "cube", title: l?.content == .camera ? "Camera" : "3D Layer") { state.panel = .threeD }
+            if l?.content == .model { ToolTile(icon: "cube.transparent", title: "Model") { state.panel = .model } }
+            if l?.content != .model && l?.content != .camera {
+                ToolTile(icon: "cube.transparent.fill", title: "Make 3D") { state.makeSelected3DObject() }
+            }
+            ToolTile(icon: "camera", title: "Add Camera") { state.addCamera() }
+            ToolTile(icon: "rotate.3d", title: "3D View") { state.viewMode = .orbit }
+        case .layer:
+            ToolTile(icon: "scissors", title: "Split") { state.splitSelected() }
+            ToolTile(icon: "plus.square.on.square", title: "Duplicate") { state.duplicateSelected() }
+            ToolTile(icon: "checklist", title: "Select") { if let id = state.selectedLayerID { state.beginMultiSelect(id) } }
+            ToolTile(icon: "square.stack.3d.up", title: "Pre-compose") { state.precomposeSelected() }
+            ToolTile(icon: "arrow.up", title: "Move Up") { state.moveSelected(up: true) }
+            ToolTile(icon: "arrow.down", title: "Move Down") { state.moveSelected(up: false) }
+            ToolTile(icon: "ellipsis", title: "More") { state.panel = .layerMenu }
+            ToolTile(icon: "trash", title: "Delete") { state.deleteSelected() }
+        }
     }
 
     private var easingRow: some View {

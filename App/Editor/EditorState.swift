@@ -12,7 +12,7 @@ enum PropertyKey: String, CaseIterable, Identifiable {
         case .scale: return "Scale"
         case .rotation: return "Rotation"
         case .opacity: return "Opacity"
-        case .anchor: return "Anchor Point"
+        case .anchor: return "Anchor"
         case .size: return "Size"
         case .fill: return "Fill"
         case .cornerRadius: return "Roundness"
@@ -37,6 +37,8 @@ enum ToolPanel: Equatable {
     case physics
     case presets
     case overlays
+    case multi
+    case beats
 }
 
 /// Playback time on its own publisher: while playing only the preview and timeline redraw each frame,
@@ -68,6 +70,9 @@ final class EditorState: ObservableObject {
     @Published var scaleLinked = true
     /// Viewport: comp view or free 3D orbit view.
     @Published var viewMode: ViewMode = .comp
+    /// Multi-select set (nil = normal single selection) and the row the range drag started from.
+    @Published var multiSelection: Set<UUID>?
+    var multiAnchor: UUID?
     @Published var orbit = OrbitCamera.home
     /// Parents of the currently open pre-comp (empty at the top level).
     @Published var compStack: [(project: Project, time: Double, selected: UUID?)] = []
@@ -626,7 +631,9 @@ extension EditorState {
 extension EditorState {
     /// Detects beats in the selected audio/video layer and adds them as markers (comp time).
     func detectBeats(sensitivity: Double = 0.5) {
-        guard let l = selectedLayer, l.hasAudio, let file = l.mediaFile else { return }
+        // The selected clip, or else the first music/video track in the comp.
+        guard let l = (selectedLayer?.hasAudio == true ? selectedLayer : nil) ?? project.layers.first(where: { $0.hasAudio }),
+              let file = l.mediaFile else { return }
         let url = mediaURL(file)
         let beats = BeatDetector.beats(url: url, sensitivity: sensitivity)
             .map { l.inPoint + ($0 - l.sourceStart) / max(l.speed, 0.01) }

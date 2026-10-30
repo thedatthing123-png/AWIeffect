@@ -5,6 +5,7 @@ struct EditorView: View {
     @StateObject var state: EditorState
     let close: () -> Void
     @State private var showExport = false
+    @State private var showStudios = false
     @State private var showHistory = false
     @State private var photoItem: PhotosPickerItem?
     @State private var showPhotoPicker = false
@@ -84,6 +85,16 @@ struct EditorView: View {
             }
             drawLauncher.request = nil
         }
+        .sheet(isPresented: $showStudios) {
+            NavigationStack {
+                StudioHub(state: state, showPhotoPicker: $showPhotoPicker, drawLauncher: drawLauncher, mediaLauncher: mediaLauncher) {
+                    showStudios = false
+                }
+                .background(Theme.background)
+                .navigationTitle("Studios & Libraries").navigationBarTitleDisplayMode(.inline)
+            }
+            .presentationDetents([.medium, .large])
+        }
         .sheet(isPresented: $showExport) {
             ExportSheet(state: state).presentationDetents([.medium, .large])
         }
@@ -127,11 +138,19 @@ struct EditorView: View {
                 }
                 .accessibilityLabel("Close Pre-comp")
             }
-            Text(state.project.name).font(.system(size: 16, weight: .semibold)).lineLimit(1)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(state.project.name).font(.system(size: 15, weight: .semibold)).lineLimit(1)
+                Text("\(state.project.width)×\(state.project.height) · \(Int(state.project.fps))fps")
+                    .font(.system(size: 10, weight: .medium, design: .monospaced)).foregroundStyle(Theme.textDim).lineLimit(1)
+            }
             Spacer()
             ViewModeSwitch(state: state)
-            Text("\(state.project.width)×\(state.project.height) · \(Int(state.project.fps))fps")
-                .font(.system(size: 11, weight: .medium, design: .monospaced)).foregroundStyle(Theme.textDim)
+            Button { showStudios = true } label: {
+                Image(systemName: "square.grid.2x2.fill").font(.system(size: 16, weight: .bold))
+                    .frame(width: 36, height: 36)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Theme.raised))
+            }
+            .accessibilityLabel("Studios")
             Button { showExport = true } label: {
                 Image(systemName: "square.and.arrow.up").font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.white)

@@ -13,6 +13,7 @@ struct TimelineView: View {
     @State private var zoom: CGFloat = 90
     @State private var zoomBase: CGFloat = 90
     @State private var scrubStart: Double?
+    @State private var multiDragStart: CGPoint?
 
     private let rowHeight: CGFloat = 34
     private let headerWidth: CGFloat = 52
@@ -20,85 +21,104 @@ struct TimelineView: View {
 
     var body: some View {
         GeometryReader { geo in
-            let trackWidth = geo.size.width - headerWidth
+            let trackWidth = max(1, geo.size.width - headerWidth)
+            // Playhead sits at the screen's horizontal center (track coordinates).
             let playheadX = geo.size.width / 2 - headerWidth
-            HStack(spacing: 0) {
-                // Layer header column (visibility + icon), stays fixed.
+            let offset = playheadX - CGFloat(clock.time) * zoom
+            ZStack(alignment: .topLeading) {
                 VStack(spacing: 0) {
-                    Text(formatTimecode(clock.time, fps: state.project.fps))
-                        .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(Theme.accentGlow)
-                        .frame(height: rulerHeight)
+                    HStack(spacing: 0) {
+                        Text(formatTimecode(clock.time, fps: state.project.fps))
+                            .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(Theme.accentGlow)
+                            .frame(width: headerWidth, height: rulerHeight)
+                        ruler(width: trackWidth, offset: offset)
+                            .frame(width: trackWidth, height: rulerHeight)
+                            .clipped()
+                    }
+                    // Header cells and track rows live in ONE scroll view so they always line up.
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack(spacing: 0) {
                             ForEach(state.project.layers) { layer in
-                                HStack(spacing: 6) {
-                                    Button { state.toggleVisibility(layer.id) } label: {
-                                        Image(systemName: layer.isVisible ? "eye" : "eye.slash")
-                                            .font(.system(size: 11))
-                                            .foregroundStyle(layer.isVisible ? Theme.textDim : Theme.textDim.opacity(0.4))
-                                    }
-                                    .buttonStyle(.plain)
-                                    Image(systemName: layer.content.symbol)
-                                        .font(.system(size: 11))
-                                        .foregroundStyle(Theme.tagColor(layer.tag))
-                                }
-                                .frame(width: headerWidth, height: rowHeight)
-                            }
-                        }
-                    }
-                }
-                .frame(width: headerWidth)
-
-                // Scrolling track area.
-                ZStack(alignment: .topLeading) {
-                    let offset = playheadX - CGFloat(clock.time) * zoom
-                    VStack(spacing: 0) {
-                        ruler(width: trackWidth, offset: offset)
-                            .frame(height: rulerHeight)
-                        ScrollView(.vertical, showsIndicators: false) {
-                            VStack(spacing: 0) {
-                                ForEach(state.project.layers) { layer in
+                                HStack(spacing: 0) {
+                                    header(layer)
                                     layerRow(layer, offset: offset)
-                                        .frame(height: rowHeight)
+                                        .frame(width: trackWidth, height: rowHeight)
+                                        .clipped()
                                 }
+                                .frame(height: rowHeight)
                             }
                         }
+                        // Hold a row, then (without lifting) drag up/down to select a range.
+                        .simultaneousGesture(
+                            LongPressGesture(minimumDuration: 0.35)
+                                .sequenced(before: DragGesture(minimumDistance: 0))
+                                .onChanged { v in
+                                    guard case .second(true, let drag) = v, let drag else { return }
+                                    if multiDragStart == nil {
+                                        let row = Int(drag.startLocation.y / rowHeight)
+                                        if state.project.layers.indices.contains(row) {
+                                            if !state.isMultiSelecting { state.beginMultiSelect(state.project.layers[row].id) }
+                                            else { state.multiAnchor = state.project.layers[row].id }
+                                        }
+                                        multiDragStart = drag.startLocation
+                                    }
+                                    state.extendMultiSelect(toRow: Int(drag.location.y / rowHeight))
+                                }
+                                .onEnded { _ in multiDragStart = nil }
+                        )
                     }
-                    // Playhead.
-                    Rectangle().fill(.white).frame(width: 1.5)
-                        .offset(x: playheadX - 0.75)
-                        .allowsHitTesting(false)
-                    // Tap the playhead head to drop / remove a beat marker (works while playing: tap along to the music).
-                    Button { state.toggleBeatMarker() } label: {
-                        let onBeat = state.project.markers.contains { abs($0 - clock.time) < state.project.frameDuration * 1.5 }
-                        Image(systemName: onBeat ? "diamond.fill" : "plus.diamond.fill")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(onBeat ? Theme.warning : .white)
-                            .frame(width: 34, height: rulerHeight)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .offset(x: playheadX - 17)
-                    .accessibilityLabel("Add beat marker")
+                    .scrollDisabled(multiDragStart != nil)
                 }
-                .frame(width: trackWidth)
-                .clipped()
-                .contentShape(Rectangle())
-                .gesture(scrub)
-                .simultaneousGesture(
-                    MagnificationGesture()
-                        .onChanged { zoom = min(600, max(15, zoomBase * $0)) }
-                        .onEnded { _ in zoomBase = zoom }
-                )
+                // Playhead.
+                Rectangle().fill(.white).frame(width: 1.5)
+                    .offset(x: headerWidth + playheadX - 0.75)
+                    .allowsHitTesting(false)
+                // Tap the playhead head to drop / remove a beat marker (works while playing: tap along to the music).
+                Button { state.toggleBeatMarker() } label: {
+                    let onBeat = state.project.markers.contains { abs($0 - clock.time) < state.project.frameDuration * 1.5 }
+                    Image(systemName: onBeat ? "diamond.fill" : "plus.diamond.fill")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(onBeat ? Theme.warning : .white)
+                        .frame(width: 34, height: rulerHeight)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .offset(x: headerWidth + playheadX - 17)
+                .accessibilityLabel("Add beat marker")
             }
+            .contentShape(Rectangle())
+            .gesture(scrub)
+            .simultaneousGesture(
+                MagnificationGesture()
+                    .onChanged { zoom = min(600, max(15, zoomBase * $0)) }
+                    .onEnded { _ in zoomBase = zoom }
+            )
         }
+        .background(Theme.surface)
+    }
+
+    private func header(_ layer: Layer) -> some View {
+        HStack(spacing: 6) {
+            Button { state.toggleVisibility(layer.id) } label: {
+                Image(systemName: layer.isVisible ? "eye" : "eye.slash")
+                    .font(.system(size: 11))
+                    .foregroundStyle(layer.isVisible ? Theme.textDim : Theme.textDim.opacity(0.4))
+                    .frame(width: 20, height: rowHeight)
+            }
+            .buttonStyle(.plain)
+            Image(systemName: state.multiSelection?.contains(layer.id) == true ? "checkmark.circle.fill" : layer.content.symbol)
+                .font(.system(size: 11))
+                .foregroundStyle(state.multiSelection?.contains(layer.id) == true ? Theme.accentGlow : Theme.tagColor(layer.tag))
+        }
+        .frame(width: headerWidth, height: rowHeight)
         .background(Theme.surface)
     }
 
     private var scrub: some Gesture {
         DragGesture(minimumDistance: 2)
             .onChanged { v in
+                if multiDragStart != nil || state.isMultiSelecting { return }
                 if scrubStart == nil { state.pause(); scrubStart = state.currentTime }
                 let t = (scrubStart ?? 0) - Double(v.translation.width / zoom)
                 // Snap to beat markers within ~6 pt.
@@ -155,7 +175,7 @@ struct TimelineView: View {
     }
 
     private func layerRow(_ layer: Layer, offset: CGFloat) -> some View {
-        let selected = layer.id == state.selectedLayerID
+        let selected = state.multiSelection.map { $0.contains(layer.id) } ?? (layer.id == state.selectedLayerID)
         let color = Theme.tagColor(layer.tag)
         let x0 = offset + CGFloat(layer.inPoint) * zoom
         let w = max(4, CGFloat(layer.outPoint - layer.inPoint) * zoom)
@@ -187,11 +207,8 @@ struct TimelineView: View {
             }
         }
         .contentShape(Rectangle())
-        .onTapGesture { state.select(selected ? nil : layer.id) }
-        .onLongPressGesture {
-            state.select(layer.id)
-            state.panel = .layerMenu
-            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        .onTapGesture {
+            if state.isMultiSelecting { state.toggleInMulti(layer.id) } else { state.select(selected ? nil : layer.id) }
         }
     }
 }

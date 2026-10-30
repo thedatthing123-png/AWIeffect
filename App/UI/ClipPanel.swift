@@ -93,3 +93,39 @@ struct ClipPanel: View {
         }
     }
 }
+
+/// Beat markers for any layer: auto-detect from the music, tap along, or punch the selected layer on every beat.
+struct BeatsPanel: View {
+    @ObservedObject var state: EditorState
+    @State private var sensitivity = 0.5
+
+    var body: some View {
+        VStack(spacing: 0) {
+            PanelHeader(state: state, title: "Beats", showKeyNav: false)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    let hasMusic = state.project.layers.contains { $0.hasAudio }
+                    if hasMusic {
+                        HStack {
+                            Text("Sensitivity").font(.system(size: 12)).foregroundStyle(Theme.textDim)
+                            Slider(value: $sensitivity, in: 0...1).tint(Theme.accent)
+                        }
+                        Button { state.detectBeats(sensitivity: sensitivity) } label: {
+                            Label("Detect Beats from Music", systemImage: "waveform.badge.magnifyingglass")
+                        }.buttonStyle(PrimaryButtonStyle())
+                    } else {
+                        Text("Add music or a video with sound to auto-detect beats — or tap the ◆ on the playhead while it plays.")
+                            .font(.caption).foregroundStyle(Theme.textDim)
+                    }
+                    HStack(spacing: 8) {
+                        ToolTile(icon: "diamond", title: "Beat Here") { state.toggleBeatMarker() }
+                        ToolTile(icon: "bolt.fill", title: "Punch on Beats") { state.punchOnBeats() }
+                        ToolTile(icon: "xmark.circle", title: "Clear Beats") { state.clearMarkers() }
+                    }
+                    Text("\(state.project.markers.count) beat markers · scrubbing snaps to them").font(.caption).foregroundStyle(Theme.textDim)
+                }
+                .padding(.horizontal, 12).padding(.bottom, 14)
+            }
+        }
+    }
+}

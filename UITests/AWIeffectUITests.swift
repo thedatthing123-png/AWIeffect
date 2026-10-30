@@ -44,6 +44,7 @@ final class AWIeffectUITests: XCTestCase {
         sleep(1)
         snap("transform-panel")
 
+        tap("Effects tools")
         tap("Effects")
         snap("effects-panel")
         tap("Add Effect")
@@ -52,24 +53,45 @@ final class AWIeffectUITests: XCTestCase {
         tap("Close")
 
         tap("Panel Back")
+        tap("Effects tools")
         tap("Presets")
         snap("presets")
         tap("Zoom Blur In")
 
         tap("Panel Back")
+        tap("Edit tools")
         tap("Masks")
         snap("masks")
 
         tap("Panel Back")
-        app.scrollViews.firstMatch.swipeLeft()
-        tap("3D")
+        tap("3D tools")
+        snap("3d-tools")
+        tap("3D Layer")
         snap("3d-panel")
 
         tap("Panel Back")
-        app.scrollViews.firstMatch.swipeLeft()
+        tap("Animate tools")
         tap("Physics")
         snap("physics-lab")
         tap("Panel Back")
+
+        tap("Layer tools")
+        snap("layer-tools")
+        tap("Select")
+        sleep(1)
+        snap("multi-select")
+        tap("Done")
+
+        tap("3D view")
+        sleep(1)
+        snap("orbit-view")
+        tap("2D view")
+
+        tap("Studios")
+        sleep(1)
+        snap("studios")
+        app.swipeDown()
+        sleep(1)
 
         tap("Quick actions")
         sleep(1)
@@ -97,6 +119,9 @@ final class AWIeffectUITests: XCTestCase {
         tap("Export")
         sleep(1)
         snap("export")
+        app.swipeUp()
+        sleep(1)
+        snap("export-more")
 
         XCTAssertTrue(app.state == .runningForeground, "app crashed during the tour")
     }
