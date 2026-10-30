@@ -250,7 +250,10 @@ extension EffectRegistry {
             let sum = ctx.temp(); var add = EffectParams(); add.a = SIMD4(1, 0, 0, 0)
             ctx.gpu.run("fxGlowCombine", ctx.cb, textures: [g1, g2, sum], params: add, grid: sum)
             let out = ctx.temp()
-            var cp = EffectParams(); cp.a = SIMD4(f(ctx.num("intensity") / 100 * 2), 0, 0, 0); cp.i = SIMD4(0, 0, 1, 0)
+            // Flicker pulses the whole beam (glow included), not just the core.
+            let pulse = 0.5 + 0.5 * sin(ctx.time * 53) * cos(ctx.time * 17 + 1.3)
+            let flick = 1 - ctx.num("flicker") / 100 * 0.8 * pulse
+            var cp = EffectParams(); cp.a = SIMD4(f(ctx.num("intensity") / 100 * 2 * flick), 0, 0, 0); cp.i = SIMD4(0, 0, 1, 0)
             cp.b = col.simd; cp.c = col.simd
             ctx.gpu.run("fxGlowCombine", ctx.cb, textures: [core, sum, out], params: cp, grid: out)
             return out

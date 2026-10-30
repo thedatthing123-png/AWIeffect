@@ -63,12 +63,26 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         TEST_HOST: $(BUILT_PRODUCTS_DIR)/AWIeffect.app/AWIeffect
         BUNDLE_LOADER: $(TEST_HOST)
+  AWIeffectUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: AWIeffect
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.awieffect.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: AWIeffect
 schemes:
   AWIeffect:
     build:
       targets:
         AWIeffect: all
         AWIeffectTests: [test]
+        AWIeffectUITests: [test]
     test:
       targets:
         - AWIeffectTests
+        - AWIeffectUITests
