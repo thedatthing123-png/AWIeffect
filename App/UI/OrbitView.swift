@@ -43,6 +43,16 @@ enum OrbitView {
             default: s.layers[i].is3D = true
             }
         }
+        // The comp's background becomes a card in space instead of a flat screen fill.
+        if s.background.a > 0 {
+            var bg = s.makeLayer(name: "Background", content: .solid, size: Vec2(Double(p.width), Double(p.height)))
+            bg.fill = Animated(s.background)
+            bg.is3D = true
+            bg.transform.positionZ = Animated(1)
+            bg.inPoint = 0; bg.outPoint = max(p.duration, 1) + 1
+            s.layers.append(bg)
+        }
+        s.background = RGBA(0, 0, 0, 0)
         let e = eye(p, orbit: o)
         var cam = s.makeLayer(name: "Orbit View", content: .camera, size: Vec2(1, 1))
         cam.inPoint = 0; cam.outPoint = max(p.duration, 1) + 1

@@ -25,7 +25,7 @@ struct NavStrip: View {
                     let active = it.panel != nil && it.panel == state.panel
                     Button {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        if let p = it.panel { withAnimation(.spring(response: 0.28, dampingFraction: 0.9)) { state.panel = active ? .none : p } }
+                        if let p = it.panel { state.panel = active ? .none : p }
                         it.action?()
                     } label: {
                         VStack(spacing: 4) {

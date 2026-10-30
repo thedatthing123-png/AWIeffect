@@ -46,7 +46,7 @@ struct TimelineView: View {
                                 HStack(spacing: 0) {
                                     header(layer)
                                     layerRow(layer, offset: offset)
-                                        .frame(width: trackWidth, height: rowHeight)
+                                        .frame(width: trackWidth, height: rowHeight, alignment: .topLeading)
                                         .clipped()
                                 }
                                 .frame(height: rowHeight)

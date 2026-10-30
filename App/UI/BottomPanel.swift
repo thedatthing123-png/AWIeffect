@@ -16,15 +16,16 @@ struct BottomPanel: View {
             if state.panel != .none {
                 grabber
                 panelContent
-                    .frame(height: CGFloat(panelHeight))
+                    .id(state.panel)                       // swap panels instantly: no overlapping cross-fade
+                    .transaction { $0.animation = nil }
+                    .frame(height: CGFloat(panelHeight), alignment: .top)
                     .clipped()
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 Divider().overlay(Theme.stroke)
             }
             NavStrip(state: state, showPhotoPicker: $showPhotoPicker, startPen: startPen)
         }
         .background(Theme.background)
-        .animation(.spring(response: 0.3, dampingFraction: 0.88), value: state.panel)
+        .animation(.spring(response: 0.3, dampingFraction: 0.88), value: state.panel == .none)
     }
 
     private var grabber: some View {
