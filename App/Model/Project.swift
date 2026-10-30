@@ -54,6 +54,8 @@ enum LayerContent: Codable, Equatable {
     case camera
     /// Real 3D: imported model (usdz/obj) or extruded 3D text, rendered with lights; settings in `Layer.model3D`.
     case model
+    /// Nested composition (AE pre-comp), stored in `Project.precomps`.
+    case precomp(id: UUID)
     /// Text layer; content lives in `Layer.text`.
     case text
     /// Video clip in the project's media folder.
@@ -69,6 +71,7 @@ enum LayerContent: Codable, Equatable {
         case .adjustment: return "slider.horizontal.below.rectangle"
         case .camera: return "video"
         case .model: return "cube.transparent"
+        case .precomp: return "square.stack.3d.up"
         case .text: return "textformat"
         case .video: return "film"
         case .audio: return "waveform"
@@ -249,6 +252,14 @@ struct Project: Codable, Equatable, Identifiable {
     var background: RGBA
     /// Index 0 is the TOP layer (AE order).
     var layers: [Layer] = []
+    /// Nested compositions used by `.precomp` layers (optional so older saves still decode).
+    var precompList: [Project]? = nil
+    var precomps: [Project] {
+        get { precompList ?? [] }
+        set { precompList = newValue.isEmpty ? nil : newValue }
+    }
+    /// Render-time nesting depth (guards against a comp containing itself).
+    var precompDepth: Int? = nil
     /// Beat / comp markers in seconds (optional so older saves still decode).
     var markerTimes: [Double]? = nil
     var markers: [Double] {

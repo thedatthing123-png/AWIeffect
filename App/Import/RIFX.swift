@@ -22,6 +22,14 @@ final class RIFXChunk {
     var key: String { listType ?? id }
 
     func child(_ key: String) -> RIFXChunk? { children.first { $0.key == key } }
+
+    /// Mask info chunks (`mkif`) sit beside each mask's property group; returns them in order of appearance.
+    var allMkif: [RIFXChunk] {
+        var out: [RIFXChunk] = []
+        func walk(_ c: RIFXChunk) { if c.id == "mkif" { out.append(c) }; c.children.forEach(walk) }
+        walk(self)
+        return out
+    }
     func children(_ key: String) -> [RIFXChunk] { children.filter { $0.key == key } }
 
     /// NUL-terminated ASCII/UTF-8 string payload (tdmn, Utf8...).

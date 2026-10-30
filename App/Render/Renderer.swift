@@ -37,6 +37,31 @@ final class Renderer {
     private let cacheLock = NSLock()
 
     static let compFormat: MTLPixelFormat = .rgba16Float
+    /// Nested comps available while encoding (root project's library), the pool and nesting depth in use.
+    private var precompLibrary: [Project] = []
+    private var currentPool: TexturePool?
+    private var currentDepth = 0
+
+    /// Renders a nested comp at `time` (layer time -> comp time via the layer's timing), transparent background.
+    private func renderPrecomp(_ id: UUID, layer: Layer, time: Double, density: Double, cb: MTLCommandBuffer,
+                               mediaURL: (String) -> URL) -> MTLTexture? {
+        guard currentDepth < 6, let pool = currentPool, var comp = precompLibrary.first(where: { $0.id == id }) else { return nil }
+        let library = precompLibrary, depth = currentDepth
+        let scale = min(2, max(0.05, density))
+        let maxSide = Double(max(comp.width, comp.height)) * scale
+        let s = maxSide > 4096 ? scale * 4096 / maxSide : scale
+        let w = max(1, Int((Double(comp.width) * s).rounded())), h = max(1, Int((Double(comp.height) * s).rounded()))
+        let tex = pool.acquire(width: w, height: h)
+        comp.background.a = 0
+        comp.precompList = library
+        comp.precompDepth = depth + 1
+        encode(project: comp, time: layer.sourceTime(at: time), renderScale: s, into: tex, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
+        // Restore the parent's encode context.
+        precompLibrary = library
+        currentPool = pool
+        currentDepth = depth
+        return tex
+    }
     /// Max side of an offscreen layer buffer.
     static let maxLayerTexture = 4096
 
@@ -159,6 +184,9 @@ final class Renderer {
                 commandBuffer cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL) {
         // Expressions are baked into plain values for this frame first.
         let project = ExpressionResolver.resolve(rawProject, time: time)
+        precompLibrary = project.precomps.isEmpty ? precompLibrary : project.precomps
+        currentPool = pool
+        currentDepth = project.precompDepth ?? 0
         var bg = project.background.simd
         if let enc = cb.makeComputeCommandEncoder() {
             enc.setComputePipelineState(clearPSO)
@@ -293,6 +321,9 @@ final class Renderer {
             let size = layer.size.value(at: time)
             let w = min(2048, max(16, Int(size.x * density))), h = min(2048, max(16, Int(size.y * density)))
             return ModelRenderer.shared?.render(o, time: time, width: w, height: h, cb: cb, mediaURL: mediaURL).map { .model($0) }
+        case .precomp(let id):
+            guard let tex = renderPrecomp(id, layer: layer, time: time, density: density, cb: cb, mediaURL: mediaURL) else { return nil }
+            return .model(tex)
         case .adjustment, .text, .audio, .camera: return nil
         }
     }

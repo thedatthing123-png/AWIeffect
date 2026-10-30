@@ -115,13 +115,22 @@ enum AEPImporter {
             }
         }
 
+        var cache: [UInt32: Project] = [:]
+        project.layers = buildLayers(comp, footage: footage, comps: compByID, report: &report, cache: &cache, depth: 0)
+        project.precomps = Array(cache.values)
+        return AEPImportResult(project: project, report: report)
+    }
+
+    /// Imports a comp's layers (AE order = top to bottom, same as AWIeffect), importing nested comps into `cache`.
+    private static func buildLayers(_ comp: Comp, footage: [UInt32: Footage], comps: [UInt32: Comp], report: inout ImportReport,
+                                    cache: inout [UInt32: Project], depth: Int) -> [Layer] {
         var layers: [Layer] = []
         for lc in comp.chunk.children("Layr") {
-            if let l = importLayer(lc, comp: comp, footage: footage, comps: compByID, report: &report) { layers.append(l) }
+            if let l = importLayer(lc, comp: comp, footage: footage, comps: comps, report: &report, cache: &cache, depth: depth) {
+                layers.append(l)
+            }
         }
-        // AE stores layers top to bottom, same as AWIeffect.
-        project.layers = layers
-        return AEPImportResult(project: project, report: report)
+        return layers
     }
 
     // MARK: Items
@@ -301,7 +310,7 @@ enum AEPImporter {
     }
 
     private static func importLayer(_ lc: RIFXChunk, comp: Comp, footage: [UInt32: Footage], comps: [UInt32: Comp],
-                                    report: inout ImportReport) -> Layer? {
+                                    report: inout ImportReport, cache: inout [UInt32: Project], depth: Int) -> Layer? {
         guard let ldta = lc.child("ldta") else { return nil }
         let rawName = lc.children.first { $0.id == "Utf8" }?.string ?? ""
         let sourceName = footage[ldta.u32(40)]?.name ?? comps[ldta.u32(40)]?.name ?? ""
@@ -322,6 +331,9 @@ enum AEPImporter {
         var fill = RGBA(0.5, 0.5, 0.5)
         var textString: String?
         var textFont: String?
+        var importedPath: BezierPath?
+        var importedStroke: (RGBA, Double)?
+        var precompStart: Double?
 
         switch layerType {
         case 3:
@@ -335,7 +347,16 @@ enum AEPImporter {
                 content = .shape(shape.kind)
                 size = shape.size
                 fill = shape.fill
-                report.add(name, "Shape layer", .approximate, "First \(shape.kind.title.lowercased()) with its fill imported.")
+                importedPath = shape.path.map { p in
+                    // AE shape coordinates are relative to the layer origin; AWIeffect paths are relative to the layer center.
+                    var q = p
+                    for i in q.vertices.indices { q.vertices[i].point = q.vertices[i].point - Vec2(Double(comp.width) / 2, Double(comp.height) / 2) }
+                    return q
+                }
+                importedStroke = shape.stroke
+                if shape.path != nil { content = .shape(.path) }
+                report.add(name, "Shape layer", shape.path != nil ? .native : .approximate,
+                           shape.path != nil ? "Bezier path, fill and stroke imported." : "First \(shape.kind.title.lowercased()) with its fill imported.")
             } else {
                 content = .shape(.rectangle)
                 report.add(name, "Shape layer", .missing, "Custom paths are not supported yet; placeholder shape created.")
@@ -361,8 +382,25 @@ enum AEPImporter {
                 }
             } else if let c = comps[sourceID] {
                 size = Vec2(Double(c.width), Double(c.height))
-                fill = RGBA(0.2, 0.15, 0.3)
-                report.add(name, "Pre-comp “\(c.name)”", .missing, "Pre-comps are imported as placeholders until nested comps land.")
+                if depth < 5 {
+                    let nested: Project
+                    if let cached = cache[sourceID] {
+                        nested = cached
+                    } else {
+                        var np = Project.new(name: c.name, width: c.width, height: c.height, fps: c.fps,
+                                             duration: max(c.duration, 1 / c.fps), background: RGBA(0, 0, 0, 0))
+                        cache[sourceID] = np   // placeholder first, guards against cycles
+                        np.layers = buildLayers(c, footage: footage, comps: comps, report: &report, cache: &cache, depth: depth + 1)
+                        cache[sourceID] = np
+                        nested = np
+                    }
+                    content = .precomp(id: nested.id)
+                    precompStart = start
+                    report.add(name, "Pre-comp “\(c.name)”", .native, "\(nested.layers.count) layers imported as a nested comp.")
+                } else {
+                    fill = RGBA(0.2, 0.15, 0.3)
+                    report.add(name, "Pre-comp “\(c.name)”", .missing, "Nested too deep (more than 5 levels).")
+                }
             }
         }
 
@@ -370,6 +408,14 @@ enum AEPImporter {
                           transform: LayerTransform(position: Animated(Vec2(Double(comp.width) / 2, Double(comp.height) / 2))),
                           size: Animated(size))
         layer.inPoint = max(0, inPoint)
+        if let ps = precompStart { layer.sourceStart = layer.inPoint - ps }   // nested time = comp time - layer start
+        if let p = importedPath { layer.path = Animated(p) }
+        if let st = importedStroke {
+            layer.stroke.enabled = true
+            layer.stroke.color = Animated(st.0)
+            layer.stroke.width = Animated(st.1)
+        }
+        if importedPath != nil, importedStroke != nil, fill.a == 0 { layer.fill = Animated(RGBA(0, 0, 0, 0)) }
         layer.isVisible = visible && !isNull
         layer.fill = Animated(fill)
         let bm = blendMode(ldta.u8(99))
@@ -426,6 +472,34 @@ enum AEPImporter {
                 } else {
                     report.add(name, e.matchName, .missing, "Not built yet; settings are kept and it will light up once added.")
                 }
+            }
+        }
+        // Masks (AE "ADBE Mask Parade"): path, mode, inverted, feather, opacity, expansion.
+        if let parade = tree.first(where: { $0.matchName == "ADBE Mask Parade" }) {
+            let half = Vec2(size.x / 2, size.y / 2)
+            let infos = lc.allMkif   // one per mask, in order
+            for (mi, atom) in parade.children.filter({ $0.matchName == "ADBE Mask Atom" }).enumerated() {
+                guard case .other(let shapeChunk)? = atom.find("ADBE Mask Shape")?.kind,
+                      var path = parseShapePath(shapeChunk, scale: size) else { continue }
+                for i in path.vertices.indices { path.vertices[i].point = path.vertices[i].point - half }
+                path.closed = true
+                var m = LayerMask(name: "Mask \(layer.masks.count + 1)", path: Animated(path))
+                func num(_ mn: String) -> AEValue? {
+                    if case .value(let c)? = atom.find(mn)?.kind { return readValue(c, timebase: comp.timebase, layerStart: start) }
+                    return nil
+                }
+                if let f = num("ADBE Mask Feather") { m.feather = animated(f, fallback: 0) { [$0.first ?? 0] } }
+                if let o = num("ADBE Mask Opacity") { m.opacity = animated(o, fallback: 100) { $0.map { $0 * 100 } } }
+                if let e = num("ADBE Mask Offset") { m.expansion = animated(e, fallback: 0) }
+                if mi < infos.count {
+                    let info = infos[mi]
+                    m.inverted = info.u8(0) != 0
+                    let modes: [MaskMode] = [.none, .add, .subtract, .intersect, .lighten, .darken, .difference]
+                    let raw = Int(info.u16(6))
+                    if raw < modes.count { m.mode = modes[raw] }
+                }
+                layer.masks.append(m)
+                report.add(name, m.name, .native, "\(path.vertices.count)-point mask, \(m.mode.title)")
             }
         }
         return layer
@@ -520,21 +594,38 @@ enum AEPImporter {
 
     static func firstUTF16String(_ data: Data) -> String? { utf16Strings(data).first }
 
-    private static func importShape(_ tree: [AEProp]) -> (kind: ShapeKind, size: Vec2, fill: RGBA)? {
+    private static func importShape(_ tree: [AEProp]) -> (kind: ShapeKind, size: Vec2, fill: RGBA, path: BezierPath?, stroke: (RGBA, Double)?)? {
         guard let root = tree.first(where: { $0.matchName == "ADBE Root Vectors Group" }) else { return nil }
         var kind: ShapeKind?
         var size = Vec2(200, 200)
-        var fill = RGBA(1, 1, 1)
+        var fill = RGBA(0, 0, 0, 0)
+        var hasFill = false
+        var path: BezierPath?
+        var stroke: (RGBA, Double)?
+        func color(_ p: AEProp, _ m: String) -> RGBA? {
+            if case .value(let c)? = p.find(m)?.kind {
+                let v = readValue(c, timebase: 24576, layerStart: 0)
+                if v.staticValue.count >= 3 { return RGBA(v.staticValue[0], v.staticValue[1], v.staticValue[2], 1) }
+            }
+            return nil
+        }
         func visit(_ props: [AEProp]) {
             for p in props {
                 switch p.matchName {
                 case "ADBE Vector Shape - Rect": kind = kind ?? .rectangle; sizeFrom(p, "ADBE Vector Rect Size")
                 case "ADBE Vector Shape - Ellipse": kind = kind ?? .ellipse; sizeFrom(p, "ADBE Vector Ellipse Size")
                 case "ADBE Vector Shape - Star": kind = kind ?? .star
+                case "ADBE Vector Shape - Group":
+                    if path == nil, case .other(let c)? = p.find("ADBE Vector Shape")?.kind { path = parseShapePath(c) }
                 case "ADBE Vector Graphic - Fill":
-                    if case .value(let c)? = p.find("ADBE Vector Fill Color")?.kind {
-                        let v = readValue(c, timebase: 24576, layerStart: 0)
-                        if v.staticValue.count >= 3 { fill = RGBA(v.staticValue[0], v.staticValue[1], v.staticValue[2], 1) }
+                    if let c = color(p, "ADBE Vector Fill Color") { fill = c; hasFill = true }
+                case "ADBE Vector Graphic - Stroke":
+                    if stroke == nil, let c = color(p, "ADBE Vector Stroke Color") {
+                        var w = 4.0
+                        if case .value(let ch)? = p.find("ADBE Vector Stroke Width")?.kind {
+                            w = readValue(ch, timebase: 24576, layerStart: 0).staticValue.first ?? 4
+                        }
+                        stroke = (c, w)
                     }
                 default: break
                 }
@@ -548,6 +639,41 @@ enum AEPImporter {
             }
         }
         visit(root.children)
-        return kind.map { ($0, size, fill) }
+        if !hasFill && path == nil { fill = RGBA(1, 1, 1) }
+        guard kind != nil || path != nil else { return nil }
+        return (kind ?? .path, size, fill, path, stroke)
+    }
+
+    /// Decodes a static AE bezier path (`om-s` > `omks` > `shap`): `shph` holds the closed flag and a float32 bounding box;
+    /// the point list stores float32 (x, y) triplets of vertex, out-tangent, in-tangent, normalized to that box and absolute.
+    /// `scale`: masks store their box normalized to the layer size, so pass the layer size for masks.
+    static func parseShapePath(_ chunk: RIFXChunk, scale: Vec2? = nil) -> BezierPath? {
+        func findShap(_ c: RIFXChunk) -> RIFXChunk? {
+            if c.key == "shap" { return c }
+            for k in c.children { if let f = findShap(k) { return f } }
+            return nil
+        }
+        guard let shap = findShap(chunk), let shph = shap.child("shph"),
+              let list = shap.child("list"), let ldat = list.child("ldat") else { return nil }
+        let open = (shph.u8(3) & 0x08) != 0
+        let x0 = Double(shph.f32(4)), y0 = Double(shph.f32(8)), x1 = Double(shph.f32(12)), y1 = Double(shph.f32(16))
+        let w = x1 - x0, h = y1 - y0
+        guard w.isFinite, h.isFinite else { return nil }
+        let floats = ldat.data.count / 4
+        let n = floats / 6
+        guard n >= 2 else { return nil }
+        let sx = scale?.x ?? 1, sy = scale?.y ?? 1
+        func pt(_ i: Int) -> Vec2 {
+            let j = (i + n * 3) % (n * 3)
+            return Vec2((x0 + Double(ldat.f32(j * 8)) * w) * sx, (y0 + Double(ldat.f32(j * 8 + 4)) * h) * sy)
+        }
+        // Per vertex k: [3k] = vertex, [3k+1] = its out-handle, and its in-handle sits just before it at [3k-1]
+        // (handles are absolute points; AWIeffect stores them relative to the vertex).
+        var verts: [PathVertex] = []
+        for k in 0..<n {
+            let v = pt(k * 3), outT = pt(k * 3 + 1), inT = pt(k * 3 - 1)
+            verts.append(PathVertex(point: v, inTangent: inT - v, outTangent: outT - v))
+        }
+        return BezierPath(vertices: verts, closed: !open)
     }
 }

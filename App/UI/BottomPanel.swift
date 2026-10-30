@@ -469,12 +469,19 @@ struct ShapePanel: View {
 
 struct LayerMenuPanel: View {
     @ObservedObject var state: EditorState
+    @EnvironmentObject private var mediaLauncher: MediaLauncher
 
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: "Layer", showKeyNav: false)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
                 ToolTile(icon: "plus.square.on.square", title: "Duplicate") { state.duplicateSelected() }
+                if case .precomp = state.selectedLayer?.content {
+                    ToolTile(icon: "arrow.down.right.and.arrow.up.left", title: "Open Pre-comp") { state.openPrecomp() }
+                } else {
+                    ToolTile(icon: "square.stack.3d.up", title: "Pre-compose") { state.precomposeSelected() }
+                }
+                ToolTile(icon: "arrow.triangle.2.circlepath", title: "Replace Media") { mediaLauncher.replaceTarget = state.selectedLayerID }
                 ToolTile(icon: "arrow.up", title: "Move Up") { state.moveSelected(up: true) }
                 ToolTile(icon: "arrow.down", title: "Move Down") { state.moveSelected(up: false) }
                 ToolTile(icon: "scissors", title: "Split") { state.splitSelected() }

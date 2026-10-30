@@ -14,6 +14,7 @@ struct EditorView: View {
     @StateObject private var mediaLauncher = MediaLauncher()
     @StateObject private var trackLauncher = TrackLauncher()
     @State private var videoItem: PhotosPickerItem?
+    @State private var replaceItem: PhotosPickerItem?
 
     init(state: EditorState, close: @escaping () -> Void) {
         _state = StateObject(wrappedValue: state)
@@ -46,6 +47,20 @@ struct EditorView: View {
                     await MainActor.run { state.addVideo(from: movie.url) }
                 }
                 videoItem = nil
+            }
+        }
+        .photosPicker(isPresented: Binding(get: { mediaLauncher.replaceTarget != nil },
+                                           set: { if !$0 && replaceItem == nil { mediaLauncher.replaceTarget = nil } }),
+                      selection: $replaceItem, matching: .any(of: [.images, .videos]))
+        .onChange(of: replaceItem) { _, item in
+            guard let item, let target = mediaLauncher.replaceTarget else { return }
+            Task {
+                if let movie = try? await item.loadTransferable(type: PickedMovie.self) {
+                    await MainActor.run { state.replaceMedia(layerID: target, url: movie.url, imageData: nil) }
+                } else if let data = try? await item.loadTransferable(type: Data.self) {
+                    await MainActor.run { state.replaceMedia(layerID: target, url: nil, imageData: data) }
+                }
+                await MainActor.run { replaceItem = nil; mediaLauncher.replaceTarget = nil }
             }
         }
         .fileImporter(isPresented: $mediaLauncher.pickAudio, allowedContentTypes: [.audio]) { r in
@@ -103,6 +118,14 @@ struct EditorView: View {
                 close()
             } label: {
                 Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold)).frame(width: 36, height: 36)
+            }
+            if state.isInPrecomp {
+                Button { state.closePrecomp() } label: {
+                    Label(state.compStack.last?.project.name ?? "Back", systemImage: "arrow.turn.left.up")
+                        .font(.system(size: 12, weight: .semibold)).lineLimit(1)
+                        .padding(.horizontal, 8).padding(.vertical, 5).background(Capsule().fill(Theme.accent.opacity(0.3)))
+                }
+                .accessibilityLabel("Close Pre-comp")
             }
             Text(state.project.name).font(.system(size: 16, weight: .semibold)).lineLimit(1)
             Spacer()

@@ -52,6 +52,8 @@ final class EditorState: ObservableObject {
     @Published private(set) var undoStack: [(label: String, project: Project)] = []
     @Published private(set) var redoStack: [(label: String, project: Project)] = []
     @Published var redrawToken = 0
+    /// Parents of the currently open pre-comp (empty at the top level).
+    @Published var compStack: [(project: Project, time: Double, selected: UUID?)] = []
 
     let store: ProjectStore
     private var displayLink: CADisplayLink?
@@ -440,8 +442,15 @@ final class EditorState: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: work)
     }
 
+    /// Undo history belongs to one comp; switching comps starts a fresh history.
+    func undoBarrier() {
+        undoStack.removeAll()
+        redoStack.removeAll()
+    }
+
     func saveNow(thumbnail: Bool = false) {
         let snapshot = Date().timeIntervalSince(lastVersionSnapshot) > 120
+        let project = rootProject
         do {
             try store.save(project, snapshotVersion: snapshot)
             if snapshot { lastVersionSnapshot = Date() }
