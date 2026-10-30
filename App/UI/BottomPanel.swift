@@ -489,6 +489,8 @@ struct LayerMenuPanel: View {
                     state.mutate("Solo Layer") { p in if let i = state.selectedIndex { p.layers[i].isSolo.toggle() } }
                 }
                 ToolTile(icon: "plus.square.on.square", title: "Duplicate") { state.duplicateSelected() }
+                ToolTile(icon: "doc.on.doc", title: "Copy Keys") { state.copyKeyframes() }
+                ToolTile(icon: "doc.on.clipboard", title: "Paste Keys") { state.pasteKeyframes() }
                 ToolTile(icon: "checklist", title: "Select Many") { if let id = state.selectedLayerID { state.beginMultiSelect(id) } }
                 if case .precomp = state.selectedLayer?.content {
                     ToolTile(icon: "arrow.down.right.and.arrow.up.left", title: "Open Pre-comp") { state.openPrecomp() }

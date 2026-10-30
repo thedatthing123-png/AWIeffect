@@ -15,6 +15,8 @@ struct MetalPreview: UIViewRepresentable {
     let time: Double
     let redrawToken: Int
     let mediaURL: (String) -> URL
+    var viewZoom: CGFloat = 1
+    var viewPan: CGSize = .zero
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
@@ -38,6 +40,8 @@ struct MetalPreview: UIViewRepresentable {
         context.coordinator.project = project
         context.coordinator.time = time
         context.coordinator.mediaURL = mediaURL
+        context.coordinator.viewZoom = viewZoom
+        context.coordinator.viewPan = CGSize(width: viewPan.width * v.contentScaleFactor, height: viewPan.height * v.contentScaleFactor)
         v.setNeedsDisplay()
     }
 
@@ -45,6 +49,8 @@ struct MetalPreview: UIViewRepresentable {
         var project: Project?
         var time: Double = 0
         var mediaURL: ((String) -> URL)?
+        var viewZoom: CGFloat = 1
+        var viewPan: CGSize = .zero
         private var comp: MTLTexture?
         /// Triple-buffered scratch pools so frames in flight never share textures.
         private lazy var pools: [TexturePool] = (0..<3).compactMap { _ in Renderer.shared?.makePool() }
@@ -61,7 +67,9 @@ struct MetalPreview: UIViewRepresentable {
                   let drawable = view.currentDrawable, let rpd = view.currentRenderPassDescriptor,
                   let cb = r.queue.makeCommandBuffer() else { return }
             let ds = view.drawableSize
-            let fit = fitRect(compWidth: project.width, compHeight: project.height, in: ds)
+            let base = fitRect(compWidth: project.width, compHeight: project.height, in: ds)
+            let fit = CGRect(x: base.midX - base.width * viewZoom / 2 + viewPan.width, y: base.midY - base.height * viewZoom / 2 + viewPan.height,
+                             width: base.width * viewZoom, height: base.height * viewZoom)
             // Proxy: never render more pixels than are displayed.
             let scale = min(1, Double(fit.width) / Double(project.width)) * quality
             let w = max(1, Int((Double(project.width) * scale).rounded()))

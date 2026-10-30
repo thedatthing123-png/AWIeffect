@@ -93,7 +93,20 @@ extension EditorState {
         let t = currentTime
         switch d.kind {
         case .move:
-            let p = d.position + (c - d.startComp)
+            var p = d.position + (c - d.startComp)
+            // Snap to the frame center / edges and to other layers' positions (guides show while snapped).
+            let tol = Double(project.width) * 0.012
+            var gx: Double?, gy: Double?
+            var xs = [Double(project.width) / 2, 0, Double(project.width)], ys = [Double(project.height) / 2, 0, Double(project.height)]
+            for o in project.layers where o.id != selectedLayerID && o.isActive(at: t) && o.content != .camera && !o.isAudioOnly {
+                let op = o.transform.position.value(at: t); xs.append(op.x); ys.append(op.y)
+            }
+            if let x = xs.min(by: { abs($0 - p.x) < abs($1 - p.x) }), abs(x - p.x) < tol { p.x = x; gx = x }
+            if let y = ys.min(by: { abs($0 - p.y) < abs($1 - p.y) }), abs(y - p.y) < tol { p.y = y; gy = y }
+            if (gx, gy) != (snapGuides.x, snapGuides.y) {
+                if gx != nil || gy != nil { UISelectionFeedbackGenerator().selectionChanged() }
+                snapGuides = SnapGuides(x: gx, y: gy)
+            }
             mutateLayer { $0.transform.position.set(Vec2(p.x.rounded(), p.y.rounded()), at: t) }
         case .scale:
             let r0 = hypot(d.startComp.x - d.pivot.x, d.startComp.y - d.pivot.y)
@@ -127,7 +140,7 @@ extension EditorState {
         }
     }
 
-    func endCanvasDrag() { endEdit() }
+    func endCanvasDrag() { endEdit(); snapGuides = SnapGuides() }
 }
 
 /// Mode buttons + scale link toggle shown above the transform properties.
@@ -162,3 +175,6 @@ struct TransformToolBar: View {
         }
     }
 }
+
+/// Guide lines (comp px) shown while a move snaps.
+struct SnapGuides: Equatable { var x: Double? = nil; var y: Double? = nil }

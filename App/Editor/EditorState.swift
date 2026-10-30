@@ -77,6 +77,9 @@ final class EditorState: ObservableObject {
     /// Multi-select set (nil = normal single selection) and the row the range drag started from.
     @Published var multiSelection: Set<UUID>?
     var multiAnchor: UUID?
+    /// Transform values copied with "Copy Keys".
+    @Published var keyClipboard: KeyClipboard?
+    @Published var snapGuides = SnapGuides()
     @Published var orbit = OrbitCamera.home
     /// Parents of the currently open pre-comp (empty at the top level).
     @Published var compStack: [(project: Project, time: Double, selected: UUID?)] = []

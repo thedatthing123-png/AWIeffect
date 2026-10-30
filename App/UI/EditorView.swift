@@ -9,6 +9,11 @@ struct EditorView: View {
     @State private var photoItem: PhotosPickerItem?
     @State private var showPhotoPicker = false
     @State private var canvasDragState: CanvasDrag?
+    /// Viewport zoom / pan (view only — doesn't change the comp). Pinch to zoom, drag empty canvas to pan, double-tap to reset.
+    @State private var viewZoom: CGFloat = 1
+    @State private var zoomBase: CGFloat = 1
+    @State private var viewPan: CGSize = .zero
+    @State private var panBase: CGSize?
     @State private var pen: (target: PenTarget, style: PenStyle)?
     @StateObject private var drawLauncher = DrawLauncher()
     @StateObject private var mediaLauncher = MediaLauncher()
@@ -154,11 +159,14 @@ struct EditorView: View {
 
     private var preview: some View {
         GeometryReader { geo in
-            let fit = fitRect(compWidth: state.project.width, compHeight: state.project.height, in: geo.size)
+            let base = fitRect(compWidth: state.project.width, compHeight: state.project.height, in: geo.size)
+            let fit = CGRect(x: base.midX - base.width * viewZoom / 2 + viewPan.width, y: base.midY - base.height * viewZoom / 2 + viewPan.height,
+                             width: base.width * viewZoom, height: base.height * viewZoom)
             ZStack(alignment: .topLeading) {
                 ClockReader(clock: state.clock) { t in
                     MetalPreview(project: state.viewMode == .orbit ? OrbitView.scene(state.project, orbit: state.orbit, time: t) : state.project,
-                                 time: t, redrawToken: state.redrawToken, mediaURL: { state.mediaURL($0) })
+                                 time: t, redrawToken: state.redrawToken, mediaURL: { state.mediaURL($0) },
+                                 viewZoom: state.viewMode == .comp ? viewZoom : 1, viewPan: state.viewMode == .comp ? viewPan : .zero)
                 }
                 if state.viewMode == .orbit {
                     ClockReader(clock: state.clock) { t in OrbitGrid(project: state.project, orbit: state.orbit, time: t, fit: fit) }
@@ -180,8 +188,41 @@ struct EditorView: View {
                     .allowsHitTesting(false)
                 }
             }
+            .overlay {
+                // Snap guides.
+                let g = state.snapGuides
+                Canvas { ctx, _ in
+                    let s = fit.width / CGFloat(state.project.width)
+                    if let x = g.x {
+                        var p = Path(); p.move(to: CGPoint(x: fit.minX + CGFloat(x) * s, y: fit.minY)); p.addLine(to: CGPoint(x: fit.minX + CGFloat(x) * s, y: fit.maxY))
+                        ctx.stroke(p, with: .color(Theme.warning), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                    }
+                    if let y = g.y {
+                        var p = Path(); p.move(to: CGPoint(x: fit.minX, y: fit.minY + CGFloat(y) * s)); p.addLine(to: CGPoint(x: fit.maxX, y: fit.minY + CGFloat(y) * s))
+                        ctx.stroke(p, with: .color(Theme.warning), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                    }
+                }
+                .allowsHitTesting(false)
+            }
+            .overlay(alignment: .topLeading) {
+                if viewZoom != 1 || viewPan != .zero {
+                    Button { withAnimation(.easeOut(duration: 0.2)) { viewZoom = 1; zoomBase = 1; viewPan = .zero } } label: {
+                        Text("\(Int(viewZoom * 100))%").font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .padding(.horizontal, 8).padding(.vertical, 4).background(Capsule().fill(Theme.raised.opacity(0.9)))
+                    }
+                    .foregroundStyle(Theme.text).padding(8)
+                    .accessibilityLabel("Reset canvas zoom")
+                }
+            }
+            .clipped()
             .contentShape(Rectangle())
             .gesture(canvasDrag(fit: fit), including: pen == nil && state.viewMode == .comp ? .all : .subviews)
+            .simultaneousGesture(MagnificationGesture()
+                .onChanged { m in if state.viewMode == .comp && canvasDragState == nil { viewZoom = min(8, max(0.4, zoomBase * m)) } }
+                .onEnded { _ in zoomBase = viewZoom }, including: pen == nil ? .all : .subviews)
+            .simultaneousGesture(TapGesture(count: 2).onEnded {
+                withAnimation(.easeOut(duration: 0.2)) { viewZoom = 1; zoomBase = 1; viewPan = .zero }
+            }, including: pen == nil && state.viewMode == .comp ? .all : .subviews)
             .simultaneousGesture(orbitDrag, including: state.viewMode == .orbit ? .all : .subviews)
             .simultaneousGesture(orbitZoom, including: state.viewMode == .orbit ? .all : .subviews)
             .simultaneousGesture(SpatialTapGesture().onEnded { v in if pen == nil && state.viewMode == .comp { tapSelect(at: v.location, fit: fit) } })
@@ -222,9 +263,13 @@ struct EditorView: View {
     private func canvasDrag(fit: CGRect) -> some Gesture {
         DragGesture(minimumDistance: 4)
             .onChanged { v in
-                guard state.selectedLayer != nil else { return }
-                if canvasDragState == nil {
+                if canvasDragState == nil && panBase == nil {
                     canvasDragState = state.beginCanvasDrag(at: v.startLocation, comp: toComp(v.startLocation, fit: fit), fit: fit)
+                    if canvasDragState == nil { panBase = viewPan }
+                }
+                if let b = panBase {
+                    viewPan = CGSize(width: b.width + v.translation.width, height: b.height + v.translation.height)
+                    return
                 }
                 guard let d = canvasDragState else { return }
                 state.updateCanvasDrag(d, comp: toComp(v.location, fit: fit))
@@ -232,6 +277,7 @@ struct EditorView: View {
             .onEnded { _ in
                 if canvasDragState != nil { state.endCanvasDrag() }
                 canvasDragState = nil
+                panBase = nil
             }
     }
 

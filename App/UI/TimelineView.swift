@@ -14,6 +14,9 @@ struct TimelineView: View {
     @State private var zoomBase: CGFloat = 90
     @State private var scrubStart: Double?
     @State private var multiDragStart: CGPoint?
+    /// Layer as it was when a clip / trim / keyframe drag began.
+    @State private var dragOriginal: Layer?
+    @State private var reorderFrom: Int?
 
     private let rowHeight: CGFloat = 34
     private let headerWidth: CGFloat = 52
@@ -110,6 +113,17 @@ struct TimelineView: View {
             Image(systemName: state.multiSelection?.contains(layer.id) == true ? "checkmark.circle.fill" : layer.content.symbol)
                 .font(.system(size: 11))
                 .foregroundStyle(state.multiSelection?.contains(layer.id) == true ? Theme.accentGlow : Theme.tagColor(layer.tag))
+                .frame(width: 22, height: rowHeight)
+                .contentShape(Rectangle())
+                // Drag the layer icon up/down to reorder layers.
+                .highPriorityGesture(DragGesture(minimumDistance: 4)
+                    .onChanged { _ in
+                        if reorderFrom == nil { reorderFrom = state.project.layers.firstIndex { $0.id == layer.id } }
+                    }
+                    .onEnded { g in
+                        if let from = reorderFrom { state.reorderLayer(from: from, to: from + Int((g.translation.height / rowHeight).rounded())) }
+                        reorderFrom = nil
+                    })
         }
         .frame(width: headerWidth, height: rowHeight)
         .background(Theme.surface)
@@ -176,6 +190,7 @@ struct TimelineView: View {
 
     private func layerRow(_ layer: Layer, offset: CGFloat) -> some View {
         let selected = state.multiSelection.map { $0.contains(layer.id) } ?? (layer.id == state.selectedLayerID)
+        let editable = selected && !state.isMultiSelecting && !layer.isLocked
         let color = Theme.tagColor(layer.tag)
         let x0 = offset + CGFloat(layer.inPoint) * zoom
         let w = max(4, CGFloat(layer.outPoint - layer.inPoint) * zoom)
@@ -185,9 +200,15 @@ struct TimelineView: View {
                 .fill(color.opacity(layer.isVisible ? (selected ? 0.95 : 0.6) : 0.25))
                 .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(selected ? Color.white : .clear, lineWidth: 1.5))
                 .overlay(alignment: .leading) {
-                    Text(layer.name).font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
-                        .lineLimit(1).padding(.leading, 8)
-                        .offset(x: max(0, -x0))
+                    HStack(spacing: 4) {
+                        if layer.isLocked { Image(systemName: "lock.fill").font(.system(size: 8)) }
+                        if layer.isSolo { Text("S").font(.system(size: 9, weight: .black)) }
+                        if layer.motionBlur { Image(systemName: "wind").font(.system(size: 8)) }
+                        Text(layer.name).font(.system(size: 11, weight: .semibold)).lineLimit(1)
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.leading, editable ? 16 : 8)
+                    .offset(x: max(0, -x0))
                 }
                 .overlay {
                     if layer.hasAudio, let file = layer.mediaFile {
@@ -197,18 +218,67 @@ struct TimelineView: View {
                     }
                 }
                 .frame(width: w, height: rowHeight - 8)
+                // Drag a selected clip to move it in time (snaps to frames, beats and the playhead).
+                .highPriorityGesture(clipDrag(layer), including: editable ? .all : .subviews)
                 .offset(x: x0, y: 4)
+            if editable {
+                trimHandle(layer, start: true).offset(x: x0 - 2, y: 4)
+                trimHandle(layer, start: false).offset(x: x0 + w - 14, y: 4)
+            }
             ForEach(layer.keyframeTimes, id: \.self) { t in
                 Image(systemName: "diamond.fill")
-                    .font(.system(size: 9))
-                    .foregroundStyle(.white)
+                    .font(.system(size: editable ? 12 : 9))
+                    .foregroundStyle(editable && abs(t - clock.time) < 1e-3 ? Theme.keyframe : .white)
                     .shadow(color: .black.opacity(0.5), radius: 1)
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
                     .position(x: offset + CGFloat(t) * zoom, y: rowHeight / 2)
+                    // Drag keyframes (every property keyed at that time moves together); tap jumps to it.
+                    .highPriorityGesture(keyDrag(layer, t), including: editable ? .all : .subviews)
+                    .onTapGesture { if editable { state.seek(t) } else { state.select(layer.id) } }
             }
         }
         .contentShape(Rectangle())
         .onTapGesture {
             if state.isMultiSelecting { state.toggleInMulti(layer.id) } else { state.select(selected ? nil : layer.id) }
         }
+    }
+
+    private func clipDrag(_ layer: Layer) -> some Gesture {
+        DragGesture(minimumDistance: 6)
+            .onChanged { g in
+                if dragOriginal == nil { dragOriginal = layer; state.pause(); state.beginEdit("Move Clip") }
+                guard let o = dragOriginal else { return }
+                let raw = o.inPoint + Double(g.translation.width / zoom)
+                state.moveClip(o, by: state.snapTime(raw, tolerance: Double(8 / zoom)) - o.inPoint)
+            }
+            .onEnded { _ in dragOriginal = nil; state.endEdit() }
+    }
+
+    private func keyDrag(_ layer: Layer, _ t: Double) -> some Gesture {
+        DragGesture(minimumDistance: 3)
+            .onChanged { g in
+                if dragOriginal == nil { dragOriginal = layer; state.pause(); state.beginEdit("Move Keyframes") }
+                guard let o = dragOriginal else { return }
+                state.moveKeyframes(of: o, from: t, to: state.snapTime(t + Double(g.translation.width / zoom), tolerance: Double(8 / zoom)))
+            }
+            .onEnded { _ in dragOriginal = nil; state.endEdit() }
+    }
+
+    private func trimHandle(_ layer: Layer, start: Bool) -> some View {
+        RoundedRectangle(cornerRadius: 3).fill(.white)
+            .frame(width: 8, height: rowHeight - 14)
+            .frame(width: 16, height: rowHeight - 8)
+            .contentShape(Rectangle())
+            .highPriorityGesture(DragGesture(minimumDistance: 2)
+                .onChanged { g in
+                    if dragOriginal == nil { dragOriginal = layer; state.pause(); state.beginEdit("Trim Clip") }
+                    guard let o = dragOriginal else { return }
+                    let edge = start ? o.inPoint : o.outPoint
+                    let snapped = state.snapTime(edge + Double(g.translation.width / zoom), tolerance: Double(8 / zoom))
+                    state.trimClip(o, start: start, by: snapped - edge)
+                }
+                .onEnded { _ in dragOriginal = nil; state.endEdit() })
+            .accessibilityLabel(start ? "Trim start" : "Trim end")
     }
 }

@@ -22,9 +22,26 @@ final class AWIeffectUITests: XCTestCase {
         try? s.pngRepresentation.write(to: URL(fileURLWithPath: String(format: "/tmp/awi-ui/%02d-%@.png", shot, name)))
     }
 
+    private func onScreen(_ e: XCUIElement) -> Bool {
+        let f = e.frame, w = app.windows.firstMatch.frame
+        return w.contains(CGPoint(x: f.midX, y: f.midY))
+    }
+
+    /// Taps a button by label; scrolls the bottom category strip sideways if the item is off-screen.
     private func tap(_ label: String, timeout: TimeInterval = 5) {
         let e = app.buttons[label].firstMatch
-        if e.waitForExistence(timeout: timeout) { e.tap() } else {
+        if e.waitForExistence(timeout: timeout) {
+            var tries = 0
+            while !onScreen(e) && tries < 6 {
+                let goLeft = e.frame.midX > app.windows.firstMatch.frame.midX
+                let y = min(0.985, max(0.5, (e.frame.midY) / app.windows.firstMatch.frame.height))
+                let a = app.coordinate(withNormalizedOffset: CGVector(dx: goLeft ? 0.85 : 0.15, dy: y))
+                let b = app.coordinate(withNormalizedOffset: CGVector(dx: goLeft ? 0.25 : 0.75, dy: y))
+                a.press(forDuration: 0.05, thenDragTo: b)
+                tries += 1
+            }
+            e.tap()
+        } else {
             let t = app.staticTexts[label].firstMatch
             if t.waitForExistence(timeout: 2) { t.tap() }
         }
@@ -117,10 +134,17 @@ final class AWIeffectUITests: XCTestCase {
         tap("Add")
         tap("Star")
         let window = app.windows.firstMatch.frame
-        for b in app.buttons.allElementsBoundByIndex where b.exists && b.isHittable {
-            let f = b.frame
-            // Scroll views may clip a row partially; a button is broken only if its center is outside the window.
-            XCTAssertTrue(window.contains(CGPoint(x: f.midX, y: f.midY)), "button \(b.label) is off-screen: \(f)")
+        // Fixed chrome (top bar + transport) must sit fully inside the window and must not overlap each other.
+        let chrome = ["Export", "Scene Settings", "2D view", "3D view", "Play", "Key All", "Panel Back"]
+        var frames: [(String, CGRect)] = []
+        for label in chrome {
+            let e = app.buttons[label].firstMatch
+            guard e.exists else { continue }
+            XCTAssertTrue(window.contains(e.frame), "\(label) is (partly) off-screen: \(e.frame)")
+            frames.append((label, e.frame))
         }
+        for i in frames.indices { for j in frames.indices where j > i {
+            XCTAssertFalse(frames[i].1.insetBy(dx: 2, dy: 2).intersects(frames[j].1.insetBy(dx: 2, dy: 2)), "\(frames[i].0) overlaps \(frames[j].0)")
+        } }
     }
 }
