@@ -68,4 +68,35 @@ final class PhysicsModelTests: XCTestCase {
         guard lit > 0 else { throw XCTSkip("SceneKit offscreen rendering unavailable in this simulator") }
         XCTAssertGreaterThan(lit, 500, "3D text barely visible")
     }
+
+    // MARK: Box physics
+
+    private func box(_ x: Double, _ y: Double, w: Double = 40, h: Double = 40, angle: Double = 0, isStatic: Bool = false) -> PhysicsLab.Body {
+        .init(id: UUID(), p: Vec2(x, y), v: .zero, angle: angle, w: 0, r: min(w, h) / 2, invMass: isStatic ? 0 : 1, isStatic: isStatic,
+              shape: [Vec2(-w / 2, -h / 2), Vec2(w / 2, -h / 2), Vec2(w / 2, h / 2), Vec2(-w / 2, h / 2)])
+    }
+
+    func testBoxLandsFlatOnItsSide() {
+        let b = box(200, 60, w: 80, h: 30)
+        var s = PhysicsSettings(); s.duration = 4
+        let last = PhysicsLab.simulate([b], width: 400, height: 400, settings: s, fps: 30)[b.id]!.last!
+        XCTAssertEqual(last.position.y, 385, accuracy: 3, "box should rest with its bottom on the floor")
+    }
+
+    func testTiltedBoxTopplesFlat() {
+        let b = box(200, 100, w: 60, h: 60, angle: 30)
+        var s = PhysicsSettings(); s.duration = 5; s.bounciness = 0.1
+        let last = PhysicsLab.simulate([b], width: 400, height: 400, settings: s, fps: 30)[b.id]!.last!
+        let r = last.rotation.truncatingRemainder(dividingBy: 90)
+        XCTAssertLessThan(min(abs(r), 90 - abs(r)), 4, "box should settle on a face, got \(last.rotation)°")
+        XCTAssertEqual(last.position.y, 370, accuracy: 4)
+    }
+
+    func testBoxesStack() {
+        let a = box(200, 300), b = box(205, 200)
+        var s = PhysicsSettings(); s.duration = 4; s.bounciness = 0.1
+        let out = PhysicsLab.simulate([a, b], width: 400, height: 400, settings: s, fps: 30)
+        let pa = out[a.id]!.last!.position, pb = out[b.id]!.last!.position
+        XCTAssertGreaterThan(pa.y - pb.y, 34, "top box sank into the bottom one")
+    }
 }

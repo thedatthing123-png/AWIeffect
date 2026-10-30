@@ -129,6 +129,7 @@ struct EditorView: View {
             }
             Text(state.project.name).font(.system(size: 16, weight: .semibold)).lineLimit(1)
             Spacer()
+            ViewModeSwitch(state: state)
             Text("\(state.project.width)×\(state.project.height) · \(Int(state.project.fps))fps")
                 .font(.system(size: 11, weight: .medium, design: .monospaced)).foregroundStyle(Theme.textDim)
             Button { showExport = true } label: {
@@ -148,8 +149,14 @@ struct EditorView: View {
         GeometryReader { geo in
             let fit = fitRect(compWidth: state.project.width, compHeight: state.project.height, in: geo.size)
             ZStack(alignment: .topLeading) {
-                MetalPreview(project: state.project, time: state.currentTime, redrawToken: state.redrawToken,
-                             mediaURL: { state.mediaURL($0) })
+                ClockReader(clock: state.clock) { t in
+                    MetalPreview(project: state.viewMode == .orbit ? OrbitView.scene(state.project, orbit: state.orbit, time: t) : state.project,
+                                 time: t, redrawToken: state.redrawToken, mediaURL: { state.mediaURL($0) })
+                }
+                if state.viewMode == .orbit {
+                    ClockReader(clock: state.clock) { t in OrbitGrid(project: state.project, orbit: state.orbit, time: t, fit: fit) }
+                        .allowsHitTesting(false)
+                }
                 if let pen {
                     PenOverlay(state: state, target: pen.target, style: pen.style, fit: fit) { self.pen = nil }
                 }
@@ -159,15 +166,21 @@ struct EditorView: View {
                 if trackLauncher.active {
                     TrackOverlay(state: state, fit: fit) { trackLauncher.active = false }
                 }
-                if pen == nil, let layer = state.selectedLayer, layer.isActive(at: state.currentTime) {
-                    SelectionOverlay(layer: layer, time: state.currentTime, fit: fit,
-                                     compWidth: state.project.width, project: state.project, tool: state.transformTool)
-                        .allowsHitTesting(false)
+                if pen == nil, state.viewMode == .comp, let layer = state.selectedLayer {
+                    ClockReader(clock: state.clock) { t in
+                        if layer.isActive(at: t) {
+                            SelectionOverlay(layer: layer, time: t, fit: fit,
+                                             compWidth: state.project.width, project: state.project, tool: state.transformTool)
+                        }
+                    }
+                    .allowsHitTesting(false)
                 }
             }
             .contentShape(Rectangle())
-            .gesture(canvasDrag(fit: fit), including: pen == nil ? .all : .subviews)
-            .simultaneousGesture(SpatialTapGesture().onEnded { v in if pen == nil { tapSelect(at: v.location, fit: fit) } })
+            .gesture(canvasDrag(fit: fit), including: pen == nil && state.viewMode == .comp ? .all : .subviews)
+            .simultaneousGesture(orbitDrag, including: state.viewMode == .orbit ? .all : .subviews)
+            .simultaneousGesture(orbitZoom, including: state.viewMode == .orbit ? .all : .subviews)
+            .simultaneousGesture(SpatialTapGesture().onEnded { v in if pen == nil && state.viewMode == .comp { tapSelect(at: v.location, fit: fit) } })
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -176,6 +189,30 @@ struct EditorView: View {
     private func toComp(_ p: CGPoint, fit: CGRect) -> Vec2 {
         let s = Double(fit.width) / Double(state.project.width)
         return Vec2(Double(p.x - fit.minX) / s, Double(p.y - fit.minY) / s)
+    }
+
+    @State private var orbitStart: OrbitCamera?
+
+    /// 3D view: one finger orbits (two fingers pan via the pinch's drift), pinch dollies.
+    private var orbitDrag: some Gesture {
+        DragGesture(minimumDistance: 2)
+            .onChanged { v in
+                if orbitStart == nil { orbitStart = state.orbit }
+                guard let o = orbitStart else { return }
+                state.orbit.yaw = o.yaw - Double(v.translation.width) * 0.4
+                state.orbit.pitch = max(-89, min(89, o.pitch - Double(v.translation.height) * 0.4))
+            }
+            .onEnded { _ in orbitStart = nil }
+    }
+
+    private var orbitZoom: some Gesture {
+        MagnificationGesture()
+            .onChanged { m in
+                if orbitStart == nil { orbitStart = state.orbit }
+                guard let o = orbitStart else { return }
+                state.orbit.distance = max(0.15, min(8, o.distance / Double(m)))
+            }
+            .onEnded { _ in orbitStart = nil }
     }
 
     private func canvasDrag(fit: CGRect) -> some Gesture {

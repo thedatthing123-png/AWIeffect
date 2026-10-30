@@ -39,12 +39,23 @@ enum ToolPanel: Equatable {
     case overlays
 }
 
+/// Playback time on its own publisher: while playing only the preview and timeline redraw each frame,
+/// not every panel in the editor.
+@MainActor
+final class PlayClock: ObservableObject {
+    @Published var time: Double = 0
+}
+
 @MainActor
 final class EditorState: ObservableObject {
     @Published var project: Project {
         didSet { scheduleAutosave() }
     }
-    @Published var currentTime: Double = 0
+    let clock = PlayClock()
+    var currentTime: Double = 0 {
+        willSet { if !isPlaying && newValue != currentTime { objectWillChange.send() } }
+        didSet { if clock.time != currentTime { clock.time = currentTime } }
+    }
     @Published var isPlaying = false
     @Published var loop = true
     @Published var selectedLayerID: UUID?
@@ -55,6 +66,9 @@ final class EditorState: ObservableObject {
     /// Canvas drag mode (Move / Scale / Rotate / Pivot) and whether scale keeps proportions.
     @Published var transformTool: TransformTool = .move
     @Published var scaleLinked = true
+    /// Viewport: comp view or free 3D orbit view.
+    @Published var viewMode: ViewMode = .comp
+    @Published var orbit = OrbitCamera.home
     /// Parents of the currently open pre-comp (empty at the top level).
     @Published var compStack: [(project: Project, time: Double, selected: UUID?)] = []
 
@@ -412,6 +426,7 @@ final class EditorState: ObservableObject {
 
     func pause() {
         AudioPreview.shared.pause()
+        if isPlaying { objectWillChange.send() }
         isPlaying = false
         displayLink?.invalidate()
         displayLink = nil
@@ -438,9 +453,20 @@ final class EditorState: ObservableObject {
 
     // MARK: Saving
 
+    private static let saveQueue = DispatchQueue(label: "awi.autosave", qos: .utility)
+
     private func scheduleAutosave() {
         autosaveWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in self?.saveNow() }
+        // Encode + write off the main thread so edits never hitch.
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            let project = self.rootProject, store = self.store
+            let snapshot = Date().timeIntervalSince(self.lastVersionSnapshot) > 120
+            if snapshot { self.lastVersionSnapshot = Date() }
+            Self.saveQueue.async {
+                do { try store.save(project, snapshotVersion: snapshot) } catch { NSLog("AWIeffect autosave failed: \(error)") }
+            }
+        }
         autosaveWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: work)
     }
@@ -630,6 +656,17 @@ extension EditorState {
                 s.insertKeyframe(Keyframe(time: m + decay, value: base, interpolation: .linear))
             }
             p.layers[i].transform.scale = s
+        }
+    }
+
+    /// Adds a beat marker at the playhead, or removes the one already there. While playing it never pauses,
+    /// so you can tap along with the music.
+    func toggleBeatMarker() {
+        let t = isPlaying ? currentTime : project.snapToFrame(currentTime)
+        let tol = project.frameDuration * 1.5
+        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+        mutate("Beat Marker") { p in
+            if let i = p.markers.firstIndex(where: { abs($0 - t) < tol }) { p.markers.remove(at: i) } else { p.markers.append(t) }
         }
     }
 

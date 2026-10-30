@@ -25,6 +25,8 @@ struct MetalPreview: UIViewRepresentable {
         v.enableSetNeedsDisplay = true
         v.isPaused = true
         v.preferredFramesPerSecond = 120
+        // 2x backing store: indistinguishable on a phone preview, ~45% fewer pixels than 3x.
+        v.contentScaleFactor = min(UIScreen.main.scale, 2)
         v.clearColor = MTLClearColor(red: 0.055, green: 0.043, blue: 0.078, alpha: 1)
         v.backgroundColor = .clear
         v.isOpaque = false
@@ -47,7 +49,10 @@ struct MetalPreview: UIViewRepresentable {
         /// Triple-buffered scratch pools so frames in flight never share textures.
         private lazy var pools: [TexturePool] = (0..<3).compactMap { _ in Renderer.shared?.makePool() }
         private var frame = 0
-        private let inFlight = DispatchSemaphore(value: 3)
+        private let inFlight = DispatchSemaphore(value: 2)
+        /// Adaptive preview resolution: drops when frames take too long on the GPU, recovers when there's headroom.
+        private var quality: Double = 1
+        private var pendingRedraw = false
 
         func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) { view.setNeedsDisplay() }
 
@@ -58,19 +63,32 @@ struct MetalPreview: UIViewRepresentable {
             let ds = view.drawableSize
             let fit = fitRect(compWidth: project.width, compHeight: project.height, in: ds)
             // Proxy: never render more pixels than are displayed.
-            let scale = min(1, Double(fit.width) / Double(project.width))
+            let scale = min(1, Double(fit.width) / Double(project.width)) * quality
             let w = max(1, Int((Double(project.width) * scale).rounded()))
             let h = max(1, Int((Double(project.height) * scale).rounded()))
             if comp == nil || comp!.width != w || comp!.height != h {
                 comp = r.makeCompTexture(width: w, height: h)
             }
             guard let comp, pools.count == 3 else { return }
-            inFlight.wait()
+            // Never block the main thread waiting on the GPU: skip this frame and redraw when one finishes.
+            if inFlight.wait(timeout: .now()) == .timedOut {
+                pendingRedraw = true
+                return
+            }
             let pool = pools[frame % 3]
             frame += 1
             pool.recycle()
             let sem = inFlight
-            cb.addCompletedHandler { _ in sem.signal() }
+            cb.addCompletedHandler { [weak self, weak view] buffer in
+                sem.signal()
+                let gpu = buffer.gpuEndTime - buffer.gpuStartTime
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    if gpu > 0.020 { self.quality = max(0.5, self.quality * 0.85) }
+                    else if gpu < 0.009 { self.quality = min(1, self.quality * 1.05) }
+                    if self.pendingRedraw { self.pendingRedraw = false; view?.setNeedsDisplay() }
+                }
+            }
             r.encode(project: project, time: time, renderScale: scale, into: comp, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
 
             rpd.colorAttachments[0].loadAction = .clear

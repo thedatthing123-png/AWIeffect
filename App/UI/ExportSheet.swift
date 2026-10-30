@@ -10,6 +10,7 @@ struct ExportSheet: View {
     @State private var resultURL: URL?
     @State private var message: String?
     @State private var showShare = false
+    @State private var rangeMode = "All"
 
     var body: some View {
         NavigationStack {
@@ -18,21 +19,51 @@ struct ExportSheet: View {
                     let (w, h) = Exporter.outputSize(state.project, scale: settings.scale)
                     HStack {
                         stat("Output", "\(w)×\(h)")
-                        stat("Frame rate", "\(Int(state.project.fps)) fps")
+                        stat("Frame rate", "\(Int(settings.fps ?? state.project.fps)) fps")
                         stat("Est. size", estimatedSize)
                     }
+                    section("Format") {
+                        chips(ExportFormat.allCases, selected: settings.format, title: { $0.rawValue }) { settings.format = $0 }
+                    }
                     section("Resolution") {
-                        Picker("", selection: $settings.scale) {
-                            Text("100%").tag(1.0); Text("75%").tag(0.75); Text("50%").tag(0.5)
-                        }.pickerStyle(.segmented)
+                        let shortSide = Double(min(state.project.width, state.project.height))
+                        chips([480.0, 720, 1080, 1440, 2160], selected: (shortSide * settings.scale).rounded(),
+                              title: { [480: "480p", 720: "720p", 1080: "1080p", 1440: "2K", 2160: "4K"][$0] ?? "" }) { v in
+                            settings.scale = v / shortSide
+                        }
                     }
-                    section("Codec") {
-                        Picker("", selection: $settings.codec) {
-                            ForEach(VideoCodec.allCases) { Text($0.rawValue).tag($0) }
-                        }.pickerStyle(.segmented)
+                    section("Frame Rate") {
+                        chips([0.0, 24, 25, 30, 50, 60], selected: settings.fps ?? 0, title: { $0 == 0 ? "Project" : "\(Int($0))" }) { v in
+                            settings.fps = v == 0 ? nil : v
+                        }
                     }
-                    section("Bitrate \(Int(settings.bitrateMbps)) Mbps") {
-                        Slider(value: $settings.bitrateMbps, in: 4...80, step: 1)
+                    section("Range") {
+                        chips(["All", "From Playhead", "Selected Layer"], selected: rangeMode, title: { $0 }) { m in
+                            rangeMode = m
+                            switch m {
+                            case "From Playhead": settings.start = state.currentTime; settings.end = nil
+                            case "Selected Layer":
+                                if let l = state.selectedLayer { settings.start = max(0, l.inPoint); settings.end = min(state.project.duration, l.outPoint) }
+                            default: settings.start = 0; settings.end = nil
+                            }
+                        }
+                        Text(String(format: "%.2fs → %.2fs", settings.start, settings.end ?? state.project.duration))
+                            .font(.caption.monospaced()).foregroundStyle(Theme.textDim)
+                    }
+                    if settings.format == .mp4 {
+                        section("Codec") {
+                            Picker("", selection: $settings.codec) {
+                                ForEach(VideoCodec.allCases) { Text($0.rawValue).tag($0) }
+                            }.pickerStyle(.segmented)
+                        }
+                    }
+                    if settings.format != .gif {
+                        section("Quality \(Int(settings.bitrateMbps)) Mbps") {
+                            chips([8.0, 20, 40, 80], selected: settings.bitrateMbps, title: { [8: "Low", 20: "Good", 40: "High", 80: "Max"][$0] ?? "" }) {
+                                settings.bitrateMbps = $0
+                            }
+                            Slider(value: $settings.bitrateMbps, in: 4...120, step: 1).tint(Theme.accent)
+                        }
                     }
 
                     if exporting {
@@ -42,7 +73,7 @@ struct ExportSheet: View {
                             Button("Cancel", role: .destructive) { exporter?.cancel() }
                         }
                     } else {
-                        Button("Export Video (MP4)") { start() }.buttonStyle(PrimaryButtonStyle())
+                        Button(settings.format == .gif ? "Export GIF" : "Export Video (\(settings.format.rawValue))") { start() }.buttonStyle(PrimaryButtonStyle())
                         Button("Save Current Frame as PNG") { saveFrame() }
                             .frame(maxWidth: .infinity).padding(.vertical, 12).glass(radius: 12)
                             .foregroundStyle(Theme.text)
@@ -69,8 +100,26 @@ struct ExportSheet: View {
     }
 
     private var estimatedSize: String {
-        let mb = settings.bitrateMbps * state.project.duration / 8
+        let dur = (settings.end ?? state.project.duration) - settings.start
+        if settings.format == .gif { return "~\(max(1, Int(dur * 1.5))) MB" }
+        let mb = settings.bitrateMbps * dur / 8
         return mb < 1 ? "<1 MB" : "~\(Int(mb.rounded())) MB"
+    }
+
+    private func chips<T: Hashable>(_ items: [T], selected: T, title: @escaping (T) -> String, pick: @escaping (T) -> Void) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(items, id: \.self) { it in
+                    Button { pick(it) } label: {
+                        Text(title(it)).font(.system(size: 13, weight: .semibold))
+                            .padding(.horizontal, 12).padding(.vertical, 8)
+                            .background(Capsule().fill(it == selected ? Theme.accent : Theme.raised))
+                            .foregroundStyle(it == selected ? Color.white : Theme.text)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
     }
 
     private func stat(_ t: String, _ v: String) -> some View {
@@ -130,7 +179,11 @@ struct ExportSheet: View {
                 return
             }
             PHPhotoLibrary.shared().performChanges {
-                PHAssetCreationRequest.creationRequestForAssetFromVideo(atFileURL: url)
+                if url.pathExtension == "gif" {
+                    PHAssetCreationRequest.forAsset().addResource(with: .photo, fileURL: url, options: nil)
+                } else {
+                    PHAssetCreationRequest.creationRequestForAssetFromVideo(atFileURL: url)
+                }
             } completionHandler: { ok, err in
                 Task { @MainActor in message = ok ? "Saved to Photos." : (err?.localizedDescription ?? "Save failed.") }
             }

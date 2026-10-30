@@ -3,6 +3,12 @@ import SwiftUI
 /// Alight Motion-style layer timeline: fixed playhead in the center, content scrolls under it.
 struct TimelineView: View {
     @ObservedObject var state: EditorState
+    @ObservedObject private var clock: PlayClock
+
+    init(state: EditorState) {
+        self.state = state
+        _clock = ObservedObject(wrappedValue: state.clock)
+    }
     /// Points per second.
     @State private var zoom: CGFloat = 90
     @State private var zoomBase: CGFloat = 90
@@ -15,11 +21,11 @@ struct TimelineView: View {
     var body: some View {
         GeometryReader { geo in
             let trackWidth = geo.size.width - headerWidth
-            let playheadX = trackWidth / 2
+            let playheadX = geo.size.width / 2 - headerWidth
             HStack(spacing: 0) {
                 // Layer header column (visibility + icon), stays fixed.
                 VStack(spacing: 0) {
-                    Text(formatTimecode(state.currentTime, fps: state.project.fps))
+                    Text(formatTimecode(clock.time, fps: state.project.fps))
                         .font(.system(size: 9, weight: .semibold, design: .monospaced))
                         .foregroundStyle(Theme.accentGlow)
                         .frame(height: rulerHeight)
@@ -46,7 +52,7 @@ struct TimelineView: View {
 
                 // Scrolling track area.
                 ZStack(alignment: .topLeading) {
-                    let offset = playheadX - CGFloat(state.currentTime) * zoom
+                    let offset = playheadX - CGFloat(clock.time) * zoom
                     VStack(spacing: 0) {
                         ruler(width: trackWidth, offset: offset)
                             .frame(height: rulerHeight)
@@ -63,6 +69,18 @@ struct TimelineView: View {
                     Rectangle().fill(.white).frame(width: 1.5)
                         .offset(x: playheadX - 0.75)
                         .allowsHitTesting(false)
+                    // Tap the playhead head to drop / remove a beat marker (works while playing: tap along to the music).
+                    Button { state.toggleBeatMarker() } label: {
+                        let onBeat = state.project.markers.contains { abs($0 - clock.time) < state.project.frameDuration * 1.5 }
+                        Image(systemName: onBeat ? "diamond.fill" : "plus.diamond.fill")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(onBeat ? Theme.warning : .white)
+                            .frame(width: 34, height: rulerHeight)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .offset(x: playheadX - 17)
+                    .accessibilityLabel("Add beat marker")
                 }
                 .frame(width: trackWidth)
                 .clipped()
