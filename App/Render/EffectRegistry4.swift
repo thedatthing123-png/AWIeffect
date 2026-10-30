@@ -6,7 +6,7 @@ import simd
 /// rim light, Photoshop-style outer / inner glow and a glowing stroke. All read the layer's alpha, so they shine on
 /// cut-out characters and text.
 extension EffectRegistry {
-    static let batch4: [EffectDefinition] = [outlineGlow, energyAura, rimLight, outerGlow, innerGlow, neonStroke]
+    static let batch4: [EffectDefinition] = [outlineGlow, energyAura, rimLight, outerGlow, innerGlow, neonStroke, border]
 
     private static func g4(_ ctx: EffectContext, _ mode: UInt32, src: MTLTexture, aux: MTLTexture? = nil, side: UInt32 = 0,
                            _ fill: (inout EffectParams) -> Void = { _ in }) -> MTLTexture {
@@ -124,6 +124,19 @@ extension EffectRegistry {
             let blur = ctx.gpu.gaussian(ctx, input: outside, sigma: max(0.5, ctx.num("size") * ctx.unit / 2))
             let inner = g4(ctx, 4, src: blur, aux: ctx.input)
             return g4(ctx, 1, src: ctx.input, aux: inner) { $0.a.x = Float(ctx.num("intensity")) }
+        })
+
+    static let border = EffectDefinition(
+        id: "awi.border", name: "Border", category: .stylize, aeMatchNames: ["ADBE Stroke"],
+        summary: "Solid outline around the layer's shape (outside, inside or centered).",
+        params: [.color("color", "Color", .white), .number("width", "Width", 8, 0.5, 120, unit: "px"),
+                 .number("opacity", "Opacity", 100, 0, 100, unit: "%"), .choice("position", "Position", ["Outside", "Inside", "Center"], 0)],
+        margin: { e, t in e.number("width", t) + 2 },
+        stage: .pixels { ctx in
+            g4(ctx, 5, src: ctx.input, side: UInt32(max(0, ctx.effect.choice("position")))) { p in
+                p.a = SIMD4(Float(ctx.num("width") * ctx.unit), Float(ctx.num("opacity") / 100), 0, 0)
+                p.b = ctx.effect.color("color", ctx.time).simd
+            }
         })
 
     static let neonStroke = EffectDefinition(

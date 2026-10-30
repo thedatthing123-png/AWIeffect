@@ -208,7 +208,7 @@ enum PresetLibrary {
         .init(id: "floatLoop", name: "Float", kind: .loop, symbol: "cloud") { l, _, _ in
             _ = effect(EffectRegistry.oscillate, &l, ["distance": .number(Animated(18)), "direction": .number(Animated(90)), "frequency": .number(Animated(0.5))])
         },
-        .init(id: "pulseLoop", name: "Beat Pulse", kind: .loop, symbol: "heart.fill") { l, _, _ in _ = effect(EffectRegistry.pulse, &l) },
+        .init(id: "pulseLoop", name: "Beat Pulse", kind: .loop, symbol: "heart.fill") { l, _, _ in _ = effect(EffectRegistry.pulse, &l, ["bpm": .number(Animated(100))]) },
         .init(id: "spinLoop", name: "Spin", kind: .loop, symbol: "arrow.clockwise.circle") { l, _, _ in _ = effect(EffectRegistry.spin, &l) },
         .init(id: "bounceLoop", name: "Bounce", kind: .loop, symbol: "figure.jumprope") { l, _, _ in _ = effect(EffectRegistry.bounce, &l) },
         .init(id: "jitterLoop", name: "Stop Motion", kind: .loop, symbol: "film.stack") { l, _, _ in _ = effect(EffectRegistry.jitter, &l) },

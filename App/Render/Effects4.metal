@@ -21,6 +21,8 @@ static float n4(float3 x) {
 //  2 color by alpha: dst = b.rgb * src.a * a.x (i.y = 1 uses 1 - alpha).
 //  3 rim: src alpha minus alpha shifted by a.xy, times a.z, colored b.
 //  4 mask: dst = src * aux.a (i.y = 0) or src * (1 - aux.a) (i.y = 1).
+//  5 border: a.x = width px, b = color, a.y = opacity; i.y = 0 outside (dilate, under the layer),
+//    1 inside (erode, over the layer), 2 centered.
 kernel void fxGlow4(texture2d<half, access::sample> src [[texture(0)]],
                     texture2d<half, access::write> dst [[texture(1)]],
                     texture2d<half, access::sample> aux [[texture(2)]],
@@ -67,6 +69,23 @@ kernel void fxGlow4(texture2d<half, access::sample> src [[texture(0)]],
         case 4: {
             float m = float(aux.sample(s4Zero, c).a);
             o = s * (p.i.y == 0 ? m : 1.0 - m);
+            break;
+        }
+        case 5: {
+            float r = max(p.a.x, 0.5);
+            float mx = s.a, mn = s.a;
+            for (int ring = 1; ring <= 3; ring++) {
+                float rr = r * float(ring) / 3.0;
+                for (int k = 0; k < 16; k++) {
+                    float ang = float(k) * 0.3926991 + float(ring) * 0.2;
+                    float a = float(src.sample(s4Zero, c + float2(cos(ang), sin(ang)) * rr).a);
+                    mx = max(mx, a); mn = min(mn, a);
+                }
+            }
+            float band = p.i.y == 0 ? mx * (1.0 - s.a) : (p.i.y == 1 ? s.a * (1.0 - mn) : clamp(mx - mn, 0.0, 1.0));
+            band *= p.a.y;
+            float4 b = float4(p.b.rgb * band, band);
+            o = p.i.y == 0 ? s + b * (1.0 - s.a) : b + s * (1.0 - b.a);
             break;
         }
     }

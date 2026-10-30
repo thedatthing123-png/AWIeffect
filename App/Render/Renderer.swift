@@ -227,7 +227,23 @@ final class Renderer {
 
             let masks = layer.masks.filter { $0.mode != .none }
             let extrude = layer.is3D && layer.content != .model ? max(0, layer.extrude.value(at: time)) : 0
-            let needsLocal = !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil || dof > 0.5 || extrude > 0.5
+            // Motion blur: placements across the shutter interval (empty when the layer doesn't move).
+            var blurMatrices: [simd_double3x3] = []
+            if project.motionBlurEnabled && layer.motionBlur && extrude <= 0.5 {
+                let shutter = project.shutterAngle / 360 / max(project.fps, 1)
+                let n = project.blurSamples
+                let ms = (0..<n).map { k in
+                    Self.placementMatrix(layer, camera: camera, time: time + (Double(k) / Double(max(n - 1, 1)) - 0.5) * shutter, renderScale: renderScale)
+                }
+                func corner(_ m: simd_double3x3, _ x: Double, _ y: Double) -> SIMD2<Double> {
+                    let p = m * SIMD3(x, y, 1); return SIMD2(p.x, p.y) / max(p.z, 1e-6)
+                }
+                let moved = ms.contains { m in
+                    [(-hs.x, -hs.y), (hs.x, hs.y), (hs.x, -hs.y)].contains { c in simd_length(corner(m, c.0, c.1) - corner(M, c.0, c.1)) > 0.35 }
+                }
+                if moved { blurMatrices = ms }
+            }
+            let needsLocal = !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil || dof > 0.5 || extrude > 0.5 || !blurMatrices.isEmpty
             if !needsLocal, let path = Self.shapePath(layer, time: time) {
                 drawShapePath(cb: cb, target: comp, matrix: M, layer: layer, path: path, time: time,
                               opacity: opacity, blend: layer.blendMode, aa: 1 / pxPerLocal)
@@ -292,6 +308,20 @@ final class Renderer {
 
             // Place the processed buffer like an image layer covering `ext`.
             let compAA = 1 / pxPerLocal
+            if !blurMatrices.isEmpty {
+                // Average the layer over the shutter: additive samples at 1/n opacity, then composite once.
+                let acc = pool.acquire(width: comp.width, height: comp.height)
+                fx.run("fxClear", cb, textures: [acc], grid: acc)
+                let w = 1 / Double(blurMatrices.count)
+                for Mk in blurMatrices {
+                    drawQuad(cb: cb, target: acc, matrix: Mk, halfSize: ext, aa: compAA, opacity: w,
+                             layer: layer, time: time, source: .image(current), premultipliedImage: true, blendOverride: .add)
+                }
+                let I = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(comp.width) / 2, Double(comp.height) / 2, 1)))
+                drawQuad(cb: cb, target: comp, matrix: I, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 0.5,
+                         opacity: opacity, layer: layer, time: time, source: .image(acc), premultipliedImage: true)
+                continue
+            }
             if extrude > 0.5 {
                 // Solid thickness: darker slices stacked along the layer normal, drawn far-to-near, caps on both ends.
                 let ctx = EffectContext(gpu: fx, cb: cb, input: current, effect: EffectInstance(typeID: "ae.exposure", params: ["exposure": .number(Animated(-1.4)), "offset": .number(Animated(0)), "gamma": .number(Animated(1))]),

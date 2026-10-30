@@ -5,6 +5,9 @@ struct HomeView: View {
     @State private var projects: [ProjectSummary] = []
     @State private var showCreate = false
     @State private var pendingDelete: ProjectSummary?
+    @State private var renameTarget: ProjectSummary?
+    @State private var renameText = ""
+    @State private var versionsTarget: ProjectSummary?
     @State private var showSettings = false
     @State private var showImporter = false
     @State private var importURL: URL?
@@ -58,6 +61,35 @@ struct HomeView: View {
                     open(p)
                 }, reimport: { runImport(compName: $0) })
             }
+        }
+        .alert("Rename Project", isPresented: Binding(get: { renameTarget != nil }, set: { if !$0 { renameTarget = nil } })) {
+            TextField("Name", text: $renameText)
+            Button("Rename") {
+                let n = renameText.trimmingCharacters(in: .whitespaces)
+                if let t = renameTarget, !n.isEmpty, var proj = try? ProjectStore.shared.load(t.id) {
+                    proj.name = n; try? ProjectStore.shared.save(proj); reload()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .sheet(item: $versionsTarget) { t in
+            NavigationStack {
+                List {
+                    let urls = ProjectStore.shared.versions(for: t.id)
+                    if urls.isEmpty { Text("No saved versions yet — they're made automatically every couple of minutes while you edit.").foregroundStyle(Theme.textDim) }
+                    ForEach(urls, id: \.self) { u in
+                        Button {
+                            if var v = try? ProjectStore.shared.loadVersion(u) {
+                                v.id = t.id; try? ProjectStore.shared.save(v, snapshotVersion: true); reload(); versionsTarget = nil
+                            }
+                        } label: {
+                            Text(((try? u.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()).formatted(date: .abbreviated, time: .shortened))
+                        }
+                    }
+                }
+                .navigationTitle("Restore \(t.name)").navigationBarTitleDisplayMode(.inline)
+            }
+            .presentationDetents([.medium])
         }
         .alert("Import failed", isPresented: Binding(get: { importError != nil }, set: { if !$0 { importError = nil } })) {
             Button("OK", role: .cancel) {}
@@ -163,7 +195,9 @@ struct HomeView: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
+            Button { renameText = p.name; renameTarget = p } label: { Label("Rename", systemImage: "character.cursor.ibeam") }
             Button { _ = try? ProjectStore.shared.duplicate(p.id); reload() } label: { Label("Duplicate", systemImage: "plus.square.on.square") }
+            Button { versionsTarget = p } label: { Label("Restore Version", systemImage: "clock.arrow.circlepath") }
             Button(role: .destructive) { pendingDelete = p } label: { Label("Delete", systemImage: "trash") }
         }
     }

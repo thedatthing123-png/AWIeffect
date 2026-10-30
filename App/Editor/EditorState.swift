@@ -40,6 +40,9 @@ enum ToolPanel: Equatable {
     case multi
     case beats
     case cutout
+    case style
+    case motionBlur
+    case scene
 }
 
 /// Playback time on its own publisher: while playing only the preview and timeline redraw each frame,

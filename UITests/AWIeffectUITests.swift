@@ -38,13 +38,12 @@ final class AWIeffectUITests: XCTestCase {
         sleep(1)
         snap("editor-empty")
 
-        tap("Add Layer")
+        tap("Add")
         snap("add-panel")
         tap("Star")
         sleep(1)
         snap("transform-panel")
 
-        tap("Effects tools")
         tap("Effects")
         snap("effects-panel")
         tap("Add Effect")
@@ -52,32 +51,23 @@ final class AWIeffectUITests: XCTestCase {
         snap("effect-browser")
         tap("Close")
 
-        tap("Panel Back")
-        tap("Effects tools")
         tap("Presets")
         snap("presets")
         tap("Zoom Blur In")
 
-        tap("Panel Back")
-        tap("Edit tools")
         tap("Masks")
         snap("masks")
-
-        tap("Panel Back")
-        tap("3D tools")
-        snap("3d-tools")
-        tap("3D Layer")
+        tap("Border & Shadow")
+        snap("border-shadow")
+        tap("Motion Blur")
+        snap("motion-blur")
+        tap("3D")
         snap("3d-panel")
-
-        tap("Panel Back")
-        tap("Animate tools")
         tap("Physics")
         snap("physics-lab")
-        tap("Panel Back")
-
-        tap("Layer tools")
-        snap("layer-tools")
-        tap("Select")
+        tap("Layer")
+        snap("layer-menu")
+        tap("Select Many")
         sleep(1)
         snap("multi-select")
         tap("Done")
@@ -87,20 +77,14 @@ final class AWIeffectUITests: XCTestCase {
         snap("orbit-view")
         tap("2D view")
 
-        tap("Studios")
+        tap("Scene Settings")
         sleep(1)
-        snap("studios")
-        app.swipeDown()
-        sleep(1)
-
-        tap("Quick actions")
-        sleep(1)
-        snap("quick-actions")
-        tap("Quick actions")
+        snap("scene-settings")
 
         // Text Studio
-        app.swipeUp()
-        tap("Add Layer")
+        tap("Deselect")
+        sleep(1)
+        snap("nav-empty")
         tap("Text")
         sleep(1)
         snap("text-studio")
@@ -109,8 +93,8 @@ final class AWIeffectUITests: XCTestCase {
         snap("text-presets")
 
         // Draw Studio
-        tap("Add Layer")
-        tap("Draw Studio")
+        tap("Deselect")
+        tap("Draw")
         sleep(2)
         snap("draw-studio")
         tap("Cancel")
@@ -130,7 +114,7 @@ final class AWIeffectUITests: XCTestCase {
     func testNoButtonsOffscreen() {
         tap("Create New Project")
         tap("Create from scratch")
-        tap("Add Layer")
+        tap("Add")
         tap("Star")
         let window = app.windows.firstMatch.frame
         for b in app.buttons.allElementsBoundByIndex where b.exists && b.isHittable {

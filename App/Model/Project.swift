@@ -168,6 +168,8 @@ struct Layer: Codable, Equatable, Identifiable {
     /// Locked layers can't be picked or dragged on the canvas. Solo hides every non-solo layer.
     var isLocked = false
     var isSolo = false
+    /// AE motion-blur switch (only renders when the scene's motion blur is enabled too).
+    var motionBlur = false
     /// Thickness (px) given to a 3D layer: the picture is extruded into a solid slab.
     var extrude = Animated(0.0)
     /// Options for `.camera` layers.
@@ -218,6 +220,7 @@ struct Layer: Codable, Equatable, Identifiable {
         is3D = try c.decodeIfPresent(Bool.self, forKey: .is3D) ?? false
         isLocked = try c.decodeIfPresent(Bool.self, forKey: .isLocked) ?? false
         isSolo = try c.decodeIfPresent(Bool.self, forKey: .isSolo) ?? false
+        motionBlur = try c.decodeIfPresent(Bool.self, forKey: .motionBlur) ?? false
         extrude = try c.decodeIfPresent(Animated<Double>.self, forKey: .extrude) ?? Animated(0)
         camera = try c.decodeIfPresent(CameraOptions.self, forKey: .camera)
         model3D = try c.decodeIfPresent(Model3DOptions.self, forKey: .model3D)
@@ -279,6 +282,13 @@ struct Project: Codable, Equatable, Identifiable {
     var precompDepth: Int? = nil
     /// Beat / comp markers in seconds (optional so older saves still decode).
     var markerTimes: [Double]? = nil
+    /// Scene motion blur (optional storage so older saves decode).
+    var motionBlurOn: Bool? = nil
+    var shutterAngleStore: Double? = nil
+    var blurSamplesStore: Int? = nil
+    var motionBlurEnabled: Bool { get { motionBlurOn ?? false } set { motionBlurOn = newValue } }
+    var shutterAngle: Double { get { shutterAngleStore ?? 180 } set { shutterAngleStore = newValue } }
+    var blurSamples: Int { get { blurSamplesStore ?? 12 } set { blurSamplesStore = max(2, min(64, newValue)) } }
     var markers: [Double] {
         get { markerTimes ?? [] }
         set { markerTimes = newValue.sorted() }
