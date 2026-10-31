@@ -1,4 +1,5 @@
 import XCTest
+import QuartzCore
 @testable import AWIeffect
 
 /// Real Alight Motion project exports (Tests/Fixtures/am) must import with their layers, timing, keyframes and effects.
@@ -67,5 +68,41 @@ final class AMImportTests: XCTestCase {
         XCTAssertEqual(PluginSwap.lookup("VIDEOCOPILOT OpticalFlares")?.id, "ae.lensFlare")
         XCTAssertEqual(PluginSwap.lookup("S_Glow")?.id, "awi.deepGlow")
         for (_, sub) in PluginSwap.table { XCTAssertNotNil(EffectRegistry.definition(sub.id), "\(sub.plugin) → missing \(sub.id)") }
+    }
+}
+
+/// Frame-time budget for real imported edits (CI GPU is slower than an iPhone 16 Pro Max, so this is a ceiling).
+final class RenderSpeedTests: XCTestCase {
+    func testHeavyAMEditRendersFast() throws {
+        guard let renderer = Renderer.shared,
+              let u = Bundle(for: Self.self).url(forResource: "am_effects", withExtension: "xml") else { throw XCTSkip("SKIP-GPU") }
+        let p = try AMImporter.load(data: Data(contentsOf: u), fallbackName: "speed").project
+        // Preview-sized frames (the phone preview renders ~0.35-0.5 of a 1080p comp).
+        _ = renderer.renderPixels(project: p, time: 1, renderScale: 0.4, mediaURL: { URL(fileURLWithPath: $0) })
+        let t0 = CACurrentMediaTime()
+        let frames = 12
+        for i in 0..<frames {
+            _ = renderer.renderPixels(project: p, time: 0.5 + Double(i) * (p.duration - 1) / Double(frames), renderScale: 0.4,
+                                      mediaURL: { URL(fileURLWithPath: $0) })
+        }
+        let ms = (CACurrentMediaTime() - t0) / Double(frames) * 1000
+        print("RENDER-SPEED am_effects \(String(format: "%.1f", ms)) ms/frame (\(p.layers.count) layers)")
+        XCTAssertLessThan(ms, 400, "preview frames are far too slow")
+    }
+}
+
+/// A real community AE edit full of third-party plugins (Twitch, Optical Flares, BCC, Sapphire, Universe…).
+final class RealAEPTests: XCTestCase {
+    func testPluginHeavyEditImports() throws {
+        guard let u = Bundle(for: Self.self).url(forResource: "yuta_edit", withExtension: "aep") else { throw XCTSkip("fixture missing") }
+        let base = try AEPImporter.load(url: u)
+        print("YUTA comps: \(base.report.comps.prefix(12)) layers=\(base.project.layers.count)")
+        let swapped = base.report.entries.filter { $0.detail.contains("replaced by the built-in") }
+        print("YUTA swapped \(swapped.count): \(Set(swapped.map(\.item)).sorted())")
+        print("YUTA missing: \(Set(base.report.entries.filter { $0.status == .missing }.map(\.item)).sorted().prefix(30))")
+        XCTAssertGreaterThan(base.project.layers.count, 0)
+        if let r = Renderer.shared {
+            XCTAssertNotNil(r.renderPixels(project: base.project, time: min(2, base.project.duration / 2), renderScale: 0.2, mediaURL: { URL(fileURLWithPath: $0) }))
+        }
     }
 }
