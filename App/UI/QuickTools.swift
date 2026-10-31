@@ -73,6 +73,7 @@ enum EffectSection: String, CaseIterable, Identifiable {
         case .motion: return .shake
         case .stylize: return .stylize
         case .transition: return .transition
+        case .glitch: return .glitch
         }
     }
 

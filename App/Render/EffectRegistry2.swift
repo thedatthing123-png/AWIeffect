@@ -199,20 +199,27 @@ extension EffectRegistry {
 
     static let deepGlow = EffectDefinition(
         id: "awi.deepGlow", name: "AWI Deep Glow", category: .color, aeMatchNames: ["PEDeepGlow", "PEDG2"],
-        summary: "Physically-inspired glow: wide multi-level falloff, exposure, tint and chromatic aberration.",
+        summary: "Deep, wide glow from the whole subject that keeps its own colors: halos glow in the subject's hue and never wash out to white. Threshold limits it to the brighter parts if you want.",
         params: [.number("radius", "Radius", 120, 1, 2000, unit: "px"), .number("exposure", "Exposure", 0, -4, 4, step: 0.01),
-                 .number("threshold", "Threshold", 40, 0, 100, unit: "%"), .color("tint", "Tint", RGBA(1, 1, 1)),
-                 .number("aberration", "Chromatic Aberration", 0, 0, 40, unit: "px")],
+                 .number("threshold", "Threshold", 0, 0, 100, unit: "%"), .color("tint", "Tint", RGBA(1, 1, 1)),
+                 .number("aberration", "Chromatic Aberration", 0, 0, 40, unit: "px"),
+                 .number("saturation", "Glow Saturation", 30, 0, 200, unit: "%")],
         margin: { e, t in e.number("radius", t) * 1.5 },
         stage: .pixels { ctx in
-            var tp = EffectParams(); tp.a = SIMD4(f(ctx.num("threshold") / 100), 0.08, 0, 0)
-            let bright = ctx.temp()
-            ctx.gpu.run("fxGlowThreshold", ctx.cb, textures: [ctx.input, bright], params: tp, grid: bright)
-            // Six octaves of blur summed with 1/√n weights: tight hot core + very wide soft halo.
+            // Glow source: the whole subject (threshold 0), or only its brighter parts.
+            var source = ctx.input
+            let th = ctx.num("threshold") / 100
+            if th > 0.001 {
+                var tp = EffectParams(); tp.a = SIMD4(f(th), 0.08, 0, 0)
+                let bright = ctx.temp()
+                ctx.gpu.run("fxGlowThreshold", ctx.cb, textures: [ctx.input, bright], params: tp, grid: bright)
+                source = bright
+            }
+            // Six octaves of blur summed: tight core + very wide, deep halo.
             let r = ctx.num("radius") * ctx.unit
             var acc: MTLTexture? = nil
             for k in 0..<6 {
-                let g = ctx.gpu.gaussian(ctx, input: bright, sigma: max(0.6, r / pow(2, Double(5 - k)) / 2))
+                let g = ctx.gpu.gaussian(ctx, input: source, sigma: max(0.6, r / pow(2, Double(5 - k)) / 2))
                 if let a = acc {
                     let o = ctx.temp(); var add = EffectParams(); add.a = SIMD4(1, 0, 0, 0)
                     ctx.gpu.run("fxGlowCombine", ctx.cb, textures: [a, g, o], params: add, grid: o); acc = o
@@ -224,13 +231,13 @@ extension EffectRegistry {
                 let o = ctx.temp(); var p = EffectParams(); p.a = SIMD4(f(ca), 0, 0, 0)
                 ctx.gpu.run("fxRGBSplit", ctx.cb, textures: [glow, o], params: p, grid: o); glow = o
             }
+            // Color-keeping combine: adds light in the subject's hue; anything past full brightness is scaled as
+            // a whole instead of clipping to white.
             let out = ctx.temp()
             var cp = EffectParams()
-            cp.a = SIMD4(f(pow(2, ctx.num("exposure")) / 3), 0, 0, 0)
-            cp.i = SIMD4(0, 0, 1, 0)
-            let tint = ctx.effect.color("tint", ctx.time)
-            cp.b = tint.simd; cp.c = SIMD4(f(tint.r * 0.6), f(tint.g * 0.6), f(tint.b * 0.6), 1)
-            ctx.gpu.run("fxGlowCombine", ctx.cb, textures: [ctx.input, glow, out], params: cp, grid: out)
+            cp.a = SIMD4(f(pow(2, ctx.num("exposure")) / 4), f(ctx.num("saturation") / 100), 0, 0)
+            cp.b = ctx.effect.color("tint", ctx.time).simd
+            ctx.gpu.run("fx19GlowKeep", ctx.cb, textures: [ctx.input, out, glow], params: cp, grid: out)
             return out
         })
 

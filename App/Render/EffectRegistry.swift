@@ -231,7 +231,7 @@ enum EffectRegistry {
         gaussianBlur, directionalBlur, radialBlur,
         exposure, brightnessContrast, hueSaturation, tint, levels, invert, fill, vignette,
         glow, rgbSplit, fractalNoise, chromaKey, shake,
-    ] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18
+    ] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19
 
     private static let byID: [String: EffectDefinition] = Dictionary(uniqueKeysWithValues: all.map { ($0.id, $0) })
     private static let byMatchName: [String: EffectDefinition] = {
@@ -527,6 +527,7 @@ enum EffectRegistry {
             .number("spill", "Despill", 100, 0, 100, unit: "%"),
             .number("balance", "Screen Balance", 50, 0, 100, unit: "%"),
             .toggle("viewMatte", "View Matte", false),
+            .toggle("invert", "Invert (keep the screen color)", false),
         ],
         stage: .pixels { ctx in
             let out = ctx.temp()
@@ -536,6 +537,12 @@ enum EffectRegistry {
             p.b = ctx.effect.color("key", ctx.time).simd
             p.i.x = ctx.effect.bool("viewMatte") ? 1 : 0
             ctx.gpu.run("fxChromaKey", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
+            // Invert: keep only what the key removed (cut out the green thing itself).
+            if ctx.effect.bool("invert") && !ctx.effect.bool("viewMatte") {
+                let inv = ctx.temp()
+                ctx.gpu.run("fx19KeyInvert", ctx.cb, textures: [ctx.input, inv, out], params: EffectParams(), grid: inv)
+                return inv
+            }
             return out
         })
 

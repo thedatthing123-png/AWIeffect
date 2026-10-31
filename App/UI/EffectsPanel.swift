@@ -236,7 +236,7 @@ struct EffectsPanel: View {
                 ffxMessage = "That file isn't an After Effects preset."
             }
         }
-        .sheet(isPresented: $showBrowser) {
+        .awiSheet(isPresented: $showBrowser) {
             EffectBrowser { def in
                 state.addEffect(def)
                 showBrowser = false
@@ -444,6 +444,10 @@ struct EffectBrowser: View {
                         }
                     }
                     if tab == .all && query.isEmpty {
+                        // Featured: what's new and what you used last, playing their previews.
+                        featuredRow("New", EffectRegistry.batch19 + [EffectRegistry.deepGlow])
+                        let rec = recents.compactMap { EffectRegistry.definition($0) }
+                        if !rec.isEmpty { featuredRow("Recent", Array(rec.prefix(12))) }
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
                             ForEach(EffectSection.allCases) { sec in
                                 if let n = EffectSection.counts[sec], n > 0 {
@@ -494,6 +498,20 @@ struct EffectBrowser: View {
             .navigationTitle("Add Effect")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } } }
+        }
+    }
+
+    private func featuredRow(_ title: String, _ defs: [EffectDefinition]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title.uppercased()).font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 10) {
+                    ForEach(defs) { d in
+                        Button { remember(d.id); pick(d) } label: { EffectTile(def: d).frame(width: 92) }
+                            .buttonStyle(.plain)
+                    }
+                }
+            }
         }
     }
 

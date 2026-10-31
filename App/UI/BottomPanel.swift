@@ -191,7 +191,7 @@ struct PropertyRow<Content: View>: View {
             content()
         }
         .padding(.vertical, 2)
-        .sheet(isPresented: $showExpression) {
+        .awiSheet(isPresented: $showExpression) {
             ExpressionSheet(state: state, key: key).presentationDetents([.medium, .large])
         }
     }
@@ -482,7 +482,7 @@ struct LayerMenuPanel: View {
             .padding(.horizontal, 12).padding(.bottom, 12)
             }
         }
-        .sheet(isPresented: $showParent) { ParentPicker(state: state) }
+        .awiSheet(isPresented: $showParent) { ParentPicker(state: state) }
         .alert("Rename Layer", isPresented: $showRename) {
             TextField("Name", text: $renaming)
             Button("Rename") {

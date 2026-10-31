@@ -38,6 +38,7 @@ enum ParamValue: Codable, Equatable {
 enum EffectCategory: String, CaseIterable, Identifiable {
     case blur = "Blur", color = "Color & Light", stylize = "Stylize", distort = "Distortion/Warp"
     case generate = "Procedural", motion = "Move/Transform", keying = "Matte/Mask/Key", transition = "Transitions"
+    case glitch = "Glitch"
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -49,6 +50,7 @@ enum EffectCategory: String, CaseIterable, Identifiable {
         case .motion: return "move.3d"
         case .keying: return "person.crop.rectangle"
         case .transition: return "square.split.diagonal.2x2"
+        case .glitch: return "waveform.path.ecg.rectangle"
         }
     }
 }

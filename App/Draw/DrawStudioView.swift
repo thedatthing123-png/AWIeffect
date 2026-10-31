@@ -262,7 +262,7 @@ struct DrawStudioView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .animation(.spring(response: 0.3, dampingFraction: 0.85), value: showLayers)
-        .sheet(isPresented: $showBrushes) { BrushPicker(session: session).presentationDetents([.medium]) }
+        .awiSheet(isPresented: $showBrushes) { BrushPicker(session: session).presentationDetents([.medium]) }
         .photosPicker(isPresented: $showPhotos, selection: $photo, matching: .images)
         .onChange(of: photo) { _, item in
             guard let item else { return }

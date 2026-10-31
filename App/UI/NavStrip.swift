@@ -44,7 +44,7 @@ struct NavStrip: View {
         }
         .frame(height: 60)
         .background(Theme.surface)
-        .sheet(isPresented: $showGraph) { GraphEditorSheet(state: state).presentationDetents([.large]) }
+        .awiSheet(isPresented: $showGraph) { GraphEditorSheet(state: state).presentationDetents([.large]) }
     }
 
     private var items: [Item] {

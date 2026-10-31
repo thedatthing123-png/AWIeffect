@@ -97,10 +97,10 @@ struct EditorView: View {
             }
             drawLauncher.request = nil
         }
-        .sheet(isPresented: $showExport) {
+        .awiSheet(isPresented: $showExport) {
             ExportSheet(state: state).presentationDetents([.medium, .large])
         }
-        .sheet(isPresented: $showHistory) {
+        .awiSheet(isPresented: $showHistory) {
             HistorySheet(state: state).presentationDetents([.medium])
         }
         .photosPicker(isPresented: $showPhotoPicker, selection: $photoItem, matching: .images)

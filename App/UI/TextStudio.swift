@@ -70,7 +70,7 @@ struct TextPanel: View {
         }
         .onAppear { draft = state.selectedLayer?.text?.string ?? "" }
         .onChange(of: state.selectedLayerID) { _, _ in draft = state.selectedLayer?.text?.string ?? "" }
-        .sheet(isPresented: $showFonts) {
+        .awiSheet(isPresented: $showFonts) {
             FontPicker(current: state.selectedLayer?.text?.fontName ?? "") { name in
                 state.editText("Font") { $0.fontName = name }
                 showFonts = false

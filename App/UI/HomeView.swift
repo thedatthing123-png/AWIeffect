@@ -56,7 +56,7 @@ struct HomeView: View {
             importURL = url
             runImport(compName: nil)
         }
-        .sheet(isPresented: Binding(get: { importResult != nil }, set: { if !$0 { importResult = nil } })) {
+        .awiSheet(isPresented: Binding(get: { importResult != nil }, set: { if !$0 { importResult = nil } })) {
             if let r = importResult {
                 ImportReportSheet(result: r, open: { p in
                     try? ProjectStore.shared.save(p)
@@ -97,7 +97,7 @@ struct HomeView: View {
         .alert("Import failed", isPresented: Binding(get: { importError != nil }, set: { if !$0 { importError = nil } })) {
             Button("OK", role: .cancel) {}
         } message: { Text(importError ?? "") }
-        .sheet(isPresented: $showCreate) {
+        .awiSheet(isPresented: $showCreate) {
             CreateProjectSheet { p in
                 try? ProjectStore.shared.save(p)
                 showCreate = false
@@ -132,7 +132,7 @@ struct HomeView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .sheet(isPresented: $showSettings) { SettingsSheet() }
+        .awiSheet(isPresented: $showSettings) { SettingsSheet() }
     }
 
     private var createCard: some View {

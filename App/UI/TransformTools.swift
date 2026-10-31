@@ -62,7 +62,7 @@ struct TransformPanel: View {
             }
         }
         .onAppear { state.transformTool = tool.canvasTool }
-        .sheet(isPresented: $showVelocity) { KeyframeVelocitySheet(state: state).presentationDetents([.medium, .large]) }
+        .awiSheet(isPresented: $showVelocity) { KeyframeVelocitySheet(state: state).presentationDetents([.medium, .large]) }
     }
 
     /// Keyframe + graph, always in the same spot.
