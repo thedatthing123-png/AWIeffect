@@ -23,6 +23,21 @@ struct Scene3DPanel: View {
             PanelHeader(state: state, title: "3D Scene", showKeyNav: false)
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
+                    Text("ADD TO THE SCENE").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.accentGlow)
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
+                        tile("Camera", "video.fill") { state.addCamera() }
+                        tile("Spot Light", "light.cylindrical.ceiling") { state.addLight(.spot) }
+                        tile("Point Light", "lightbulb.fill") { state.addLight(.point) }
+                        tile("Sun Light", "sun.max.fill") { state.addLight(.parallel) }
+                        tile("Ambient", "circle.hexagongrid.fill") { state.addLight(.ambient) }
+                        tile("All Layers 3D", "cube.fill") {
+                            state.mutate("All 3D") { p in
+                                for i in p.layers.indices where !p.layers[i].isAudioOnly && p.layers[i].content != .camera
+                                    && p.layers[i].content != .light && p.layers[i].content != .adjustment { p.layers[i].is3D = true }
+                            }
+                        }
+                    }
+                    Text("LAYOUT").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.accentGlow).padding(.top, 4)
                     Text(state.isMultiSelecting ? "Uses the \(targets.count) selected layers (top layer = closest)." : "Uses every visual layer (top layer = closest). Select layers first to pick only some.")
                         .font(.caption).foregroundStyle(Theme.textDim)
                     row("Depth Between Layers", depth, 0...3000, "px") { depth = $0 }
@@ -74,5 +89,19 @@ struct Scene3DPanel: View {
             Text(title).font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 110, alignment: .leading)
             ValueScrubber(value: v, range: r, unit: unit, onChange: set)
         }
+    }
+
+    private func tile(_ title: String, _ icon: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon).font(.system(size: 17, weight: .semibold))
+                Text(title).font(.system(size: 10.5, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
+            }
+            .frame(maxWidth: .infinity, minHeight: 54)
+            .background(RoundedRectangle(cornerRadius: 11).fill(Theme.raised))
+            .foregroundStyle(Theme.text)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
     }
 }

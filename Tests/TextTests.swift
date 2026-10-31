@@ -144,6 +144,18 @@ final class TextTests: XCTestCase {
         XCTAssertEqual(Set(TextPreset.library.map(\.id)).count, TextPreset.library.count, "duplicate preset ids")
     }
 
+    /// Built-in LUT pack installs as valid .cube files.
+    func testBuiltInLUTPackParses() throws {
+        UserDefaults.standard.removeObject(forKey: "awi.lutPackVersion")
+        LUTLibrary.shared.installBuiltIns()
+        let names = LUTLibrary.shared.names().filter { $0.hasPrefix("AWI ") }
+        XCTAssertGreaterThanOrEqual(names.count, 20)
+        for n in names {
+            let (size, values) = try LUTLibrary.parse(String(contentsOf: LUTLibrary.folder.appendingPathComponent(n), encoding: .utf8))
+            XCTAssertEqual(values.count, size * size * size * 3, n)
+        }
+    }
+
     /// Counter mode: the shown text follows the keyframed number.
     func testCounterCountsAndFormats() {
         var c = TextCounter()

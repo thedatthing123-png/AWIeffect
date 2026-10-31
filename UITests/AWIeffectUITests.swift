@@ -238,4 +238,71 @@ final class AWIeffectUITests: XCTestCase {
             XCTAssertFalse(frames[i].1.insetBy(dx: 2, dy: 2).intersects(frames[j].1.insetBy(dx: 2, dy: 2)), "\(frames[i].0) overlaps \(frames[j].0)")
         } }
     }
+
+    /// The overhaul: transform tools, Graph (Flow curves), tap-a-clip tiles, typing on the canvas, the new Text
+    /// Studio sections, camera view / free view and the glitch pack. Screenshots each, and must never crash.
+    func testOverhaulTour() {
+        tap("Create New Project")
+        tap("Create from scratch")
+        sleep(1)
+        tap("Add")
+        tap("Star")
+        sleep(1)
+        snap("ov-transform-position")
+        for t in ["Z tool", "Rotate tool", "Scale tool", "Opacity tool", "Link tool"] {
+            tap(t)
+            sleep(1)
+            snap("ov-" + t.replacingOccurrences(of: " ", with: "-").lowercased())
+        }
+        tap("Position tool")
+        // Swipe pad drag.
+        let pad = app.coordinate(withNormalizedOffset: CGVector(dx: 0.45, dy: 0.86))
+        pad.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.6, dy: 0.84)))
+        sleep(1)
+        snap("ov-after-swipe")
+
+        tap("Key All")
+        tap("Graph")
+        sleep(1)
+        snap("ov-graph")
+        tap("Bounce")
+        sleep(1)
+        snap("ov-graph-bounce")
+
+        tap("Effects")
+        tap("Add Effect")
+        sleep(2)
+        snap("ov-effect-browser")
+        tap("Slice Glitch")
+        sleep(1)
+        snap("ov-slice-glitch")
+
+        // Text: typing on the canvas, then the one-panel studio.
+        tap("Deselect")
+        sleep(1)
+        tap("Text")
+        sleep(2)
+        snap("ov-typing")
+        tap("Done Typing")
+        sleep(1)
+        snap("ov-text-studio")
+        for s in ["Letters", "Animate", "Counter", "3D"] {
+            tap(s)
+            sleep(1)
+            snap("ov-text-" + s.lowercased())
+        }
+
+        // Camera: add one, switch to free view.
+        tap("Deselect")
+        sleep(1)
+        tap("Add")
+        tap("Camera")
+        sleep(1)
+        snap("ov-camera")
+        tap("Camera view (tap for free view)")
+        sleep(1)
+        snap("ov-free-view")
+
+        XCTAssertTrue(app.state == .runningForeground, "app crashed during the overhaul tour")
+    }
 }

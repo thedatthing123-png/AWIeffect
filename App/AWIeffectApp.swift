@@ -8,6 +8,8 @@ struct AWIeffectApp: App {
     init() {
         CrashReporter.install()
         FontLibrary.shared.registerAll()
+        // Built-in LUT looks for CC Studio (written once, in the background).
+        DispatchQueue.global(qos: .utility).async { LUTLibrary.shared.installBuiltIns() }
         // Number fields select their whole value when you start typing, so a new number replaces the old one
         // (no deleting digits first).
         NotificationCenter.default.addObserver(forName: UITextField.textDidBeginEditingNotification, object: nil, queue: .main) { n in

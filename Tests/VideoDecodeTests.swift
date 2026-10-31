@@ -131,4 +131,30 @@ final class VideoDecodeTests: XCTestCase {
         print("SKIP-INFO video decode \(String(format: "%.2f", per)) ms/frame")
         XCTAssertLessThan(per, 30)
     }
+
+    /// Two copies of the same clip playing at different source times (a duplicated clip offset in time) must each
+    /// get their own correct frame every time: no stealing each other's reader, no wrong / twitching frames.
+    func testDuplicatedClipsAtDifferentTimesGetTheirOwnFrames() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        let url = try makeVideo(rotated: false)
+        VideoSources.shared.clear()
+        for f in 0..<18 {
+            let a = try XCTUnwrap(VideoSources.shared.texture(url: url, time: (Double(f) + 0.1) / 30, device: r.device, channel: 1))
+            let b = try XCTUnwrap(VideoSources.shared.texture(url: url, time: (Double(f + 20) + 0.1) / 30, device: r.device, channel: 2))
+            XCTAssertEqual(Double(stripe(a, rotated: false)), Double(f * 6), accuracy: 10, "copy A frame \(f) wrong")
+            XCTAssertEqual(Double(stripe(b, rotated: false)), Double((f + 20) * 6), accuracy: 10, "copy B frame \(f + 20) wrong")
+        }
+    }
+
+    /// Two identical clips at the same time render pixel-identical frames (duplicate = same picture).
+    func testIdenticalDuplicatesRenderTheSame() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        let url = try makeVideo(rotated: false)
+        VideoSources.shared.clear()
+        for f in [3, 4, 5, 6] {
+            let a = pixels(try XCTUnwrap(VideoSources.shared.texture(url: url, time: (Double(f) + 0.1) / 30, device: r.device, channel: 11)))
+            let b = pixels(try XCTUnwrap(VideoSources.shared.texture(url: url, time: (Double(f) + 0.1) / 30, device: r.device, channel: 12)))
+            XCTAssertEqual(a, b, "duplicates differ at frame \(f)")
+        }
+    }
 }

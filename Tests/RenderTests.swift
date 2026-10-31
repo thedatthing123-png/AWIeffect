@@ -123,4 +123,80 @@ final class RenderTests: XCTestCase {
         let c = pixel(px, 100, 100)
         XCTAssertEqual(c.0, 0); XCTAssertEqual(c.1, 255)
     }
+
+    /// Alight Motion / AE Z: a lower layer with −Z comes in front of a layer above it.
+    func testNegativeZBringsLowerLayerToFront() throws {
+        let r = try renderer()
+        let p = project { p in
+            var top = p.makeLayer(name: "top", content: .solid, size: Vec2(200, 200))
+            top.fill = Animated(RGBA(0, 1, 0))
+            var bottom = p.makeLayer(name: "bottom", content: .solid, size: Vec2(200, 200))
+            bottom.fill = Animated(RGBA(1, 0, 0))
+            bottom.transform.positionZ = Animated(-10)
+            p.layers = [top, bottom]
+        }
+        let c = pixel(try XCTUnwrap(r.renderPixels(project: p, time: 0, mediaURL: { URL(fileURLWithPath: $0) })), 100, 100)
+        XCTAssertEqual(c.0, 255, "the −Z layer should be in front"); XCTAssertEqual(c.1, 0)
+    }
+
+    /// Huge depths (behind the camera) must render without crashing.
+    func testHugeZValuesDontCrash() throws {
+        let r = try renderer()
+        for z in [-3000.0, -100_000, 1_000_000, -10_000_000] {
+            let p = project { p in
+                var l = p.makeLayer(name: "s", content: .shape(.rectangle), size: Vec2(100, 100))
+                l.fill = Animated(.white)
+                l.is3D = true
+                l.transform.positionZ = Animated(z)
+                var flat = p.makeLayer(name: "f", content: .shape(.ellipse), size: Vec2(60, 60))
+                flat.fill = Animated(RGBA(1, 0, 0))
+                flat.transform.positionZ = Animated(z)
+                p.layers = [l, flat]
+            }
+            XCTAssertNotNil(r.renderPixels(project: p, time: 0, mediaURL: { URL(fileURLWithPath: $0) }), "z \(z)")
+        }
+    }
+
+    /// Keyframed motion is smooth frame to frame: equal steps for linear keys, no jumps at keyframes,
+    /// including through a parent chain where both layers animate (in-between frames combine).
+    func testKeyframedMotionHasNoJumps() {
+        var p = Project.new(name: "T", width: 200, height: 200, fps: 30, duration: 2, background: .black)
+        var parent = p.makeLayer(name: "null", content: .solid, size: Vec2(10, 10))
+        parent.isNull = true
+        parent.transform.position.insertKeyframe(Keyframe(time: 0, value: Vec2(40, 100), interpolation: .linear))
+        parent.transform.position.insertKeyframe(Keyframe(time: 1, value: Vec2(160, 100), interpolation: .linear))
+        var child = p.makeLayer(name: "child", content: .shape(.rectangle), size: Vec2(20, 20))
+        child.parentID = parent.id
+        child.transform.position = Animated(Vec2(0, 0))
+        child.transform.position.insertKeyframe(Keyframe(time: 0.5, value: Vec2(0, 0), interpolation: .linear))
+        child.transform.position.insertKeyframe(Keyframe(time: 1, value: Vec2(0, 30), interpolation: .linear))
+        p.layers = [child, parent]
+        var last: Vec2?
+        var lastStep: Double?
+        for f in 0...30 {
+            let t = Double(f) / 30
+            let w = Renderer.resolveParenting(p, time: t).layers[0].transform.position.value(at: t)
+            if let l = last {
+                let step = hypot(w.x - l.x, w.y - l.y)
+                if let ls = lastStep { XCTAssertLessThan(abs(step - ls), 1.6, "jump at frame \(f)") }
+                lastStep = step
+            }
+            last = w
+        }
+    }
+
+    /// The preview renders exactly on frames: a time between frames shows the same picture as its frame.
+    func testInBetweenTimesRenderTheFrame() throws {
+        let r = try renderer()
+        let p = project { p in
+            var l = p.makeLayer(name: "s", content: .shape(.rectangle), size: Vec2(20, 20))
+            l.fill = Animated(.white)
+            l.transform.position.insertKeyframe(Keyframe(time: 0, value: Vec2(20, 100)))
+            l.transform.position.insertKeyframe(Keyframe(time: 1, value: Vec2(180, 100)))
+            p.layers.append(l)
+        }
+        let a = try XCTUnwrap(r.renderPixels(project: p, time: 10.0 / 30, mediaURL: { URL(fileURLWithPath: $0) }))
+        let b = try XCTUnwrap(r.renderPixels(project: p, time: 10.0 / 30, mediaURL: { URL(fileURLWithPath: $0) }))
+        XCTAssertEqual(a.rgba, b.rgba, "same frame must render identically every time")
+    }
 }
