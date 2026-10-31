@@ -96,7 +96,6 @@ struct NavStrip: View {
          Item(id: "Text", icon: "textformat") { state.addText() },
          Item(id: "Shapes", icon: "star.fill", panel: .add),
          Item(id: "Media", icon: "photo.on.rectangle") { showPhotoPicker = true },
-         Item(id: "Video", icon: "film") { mediaLauncher.pickVideo = true },
          Item(id: "Draw", icon: "paintbrush.pointed.fill") { drawLauncher.open(nil) },
          Item(id: "Music", icon: "music.note") { mediaLauncher.pickAudio = true },
          Item(id: "Library", icon: "books.vertical.fill", panel: .overlays),

@@ -141,8 +141,7 @@ struct AddPanel: View {
                         ToolTile(icon: "scribble", title: "Draw Path") { startPen(.newShape, .freehand) }
                     }
                     section("Media") {
-                        ToolTile(icon: "photo.on.rectangle", title: "Image") { showPhotoPicker = true }
-                        ToolTile(icon: "film", title: "Video") { mediaLauncher.pickVideo = true }
+                        ToolTile(icon: "photo.on.rectangle", title: "Media") { showPhotoPicker = true }
                         ToolTile(icon: "music.note", title: "Audio") { mediaLauncher.pickAudio = true }
                         ToolTile(icon: "sun.haze", title: "Overlays") { state.panel = .overlays }
                     }
