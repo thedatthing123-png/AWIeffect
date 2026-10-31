@@ -59,10 +59,18 @@ final class TexturePool {
     private let device: MTLDevice
     private var free: [String: [MTLTexture]] = [:]
     private var used: [MTLTexture] = []
+    /// Recycle count when each size was last handed out (sizes nobody asks for any more are released).
+    private var lastUse: [String: Int] = [:]
+    private var generation = 0
+    /// Spare-texture budget per pool; beyond it the least recently used sizes are released.
+    static var budgetBytes = 96 * 1024 * 1024
     init(device: MTLDevice) { self.device = device }
+
+    private static func bytes(_ t: MTLTexture) -> Int { t.width * t.height * 8 }
 
     func acquire(width: Int, height: Int) -> MTLTexture {
         let key = "\(width)x\(height)"
+        lastUse[key] = generation
         if var list = free[key], let t = list.popLast() {
             free[key] = list
             used.append(t)
@@ -71,18 +79,42 @@ final class TexturePool {
         let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba16Float, width: max(1, width), height: max(1, height), mipmapped: false)
         d.usage = [.shaderRead, .shaderWrite]
         d.storageMode = .private
-        let t = device.makeTexture(descriptor: d)!
+        guard let t = device.makeTexture(descriptor: d) else {
+            // Out of GPU memory: drop every spare and try once more rather than crashing.
+            purge()
+            let t2 = device.makeTexture(descriptor: d)!
+            used.append(t2)
+            return t2
+        }
         used.append(t)
         return t
     }
 
-    /// Returns all textures handed out since the last recycle to the free list.
+    /// Returns all textures handed out since the last recycle to the free list, then trims memory:
+    /// sizes unused for a few frames are released and the spare total stays under the budget.
     func recycle() {
+        generation += 1
         for t in used { free["\(t.width)x\(t.height)", default: []].append(t) }
         used.removeAll()
-        // Bound memory: drop sizes that pile up.
-        for (k, v) in free where v.count > 6 { free[k] = Array(v.suffix(6)) }
+        for (k, v) in free {
+            if generation - (lastUse[k] ?? 0) > 3 { free[k] = nil; lastUse[k] = nil; continue }
+            if v.count > 6 { free[k] = Array(v.suffix(6)) }
+        }
+        var total = free.values.reduce(0) { $0 + $1.reduce(0) { $0 + Self.bytes($1) } }
+        if total > Self.budgetBytes {
+            for k in free.keys.sorted(by: { (lastUse[$0] ?? 0) < (lastUse[$1] ?? 0) }) {
+                total -= free[k]?.reduce(0) { $0 + Self.bytes($1) } ?? 0
+                free[k] = nil
+                if total <= Self.budgetBytes { break }
+            }
+        }
     }
+
+    /// Bytes held as spares (tests / diagnostics).
+    var spareBytes: Int { free.values.reduce(0) { $0 + $1.reduce(0) { $0 + Self.bytes($1) } } }
+
+    /// Releases every spare texture (memory warning).
+    func purge() { free.removeAll(); lastUse.removeAll() }
 }
 
 /// Compute pipelines for effects.

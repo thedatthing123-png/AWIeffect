@@ -170,7 +170,8 @@ struct EditorView: View {
                     MetalPreview(project: state.viewMode == .orbit ? OrbitView.scene(state.project, orbit: state.orbit, time: t) : state.project,
                                  time: t, redrawToken: state.redrawToken, mediaURL: { state.mediaURL($0) },
                                  viewZoom: state.viewMode == .comp ? viewZoom : 1, viewPan: state.viewMode == .comp ? viewPan : .zero,
-                                 qualityCap: state.previewQuality.rawValue)
+                                 qualityCap: state.previewQuality.rawValue, isPlaying: state.isPlaying,
+                                 cacheEnabled: state.viewMode == .comp)
                 }
                 if state.viewMode == .orbit {
                     ClockReader(clock: state.clock) { t in OrbitGrid(project: state.project, orbit: state.orbit, time: t, fit: fit) }

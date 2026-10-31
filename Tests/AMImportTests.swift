@@ -111,10 +111,10 @@ final class RealAEPTests: XCTestCase {
     func testPluginHeavyEditImports() throws {
         guard let u = Bundle(for: Self.self).url(forResource: "yuta_edit", withExtension: "aep") else { throw XCTSkip("fixture missing") }
         let base = try AEPImporter.load(url: u)
-        print("YUTA comps: \(base.report.comps.prefix(12)) layers=\(base.project.layers.count)")
+        print("SKIP-INFO YUTA comps: \(base.report.comps.prefix(12)) layers=\(base.project.layers.count)")
         let swapped = base.report.entries.filter { $0.detail.contains("replaced by the built-in") }
-        print("YUTA swapped \(swapped.count): \(Set(swapped.map(\.item)).sorted())")
-        print("YUTA missing: \(Set(base.report.entries.filter { $0.status == .missing }.map(\.item)).sorted().prefix(30))")
+        print("SKIP-INFO YUTA swapped \(swapped.count): \(Set(swapped.map(\.item)).sorted())")
+        print("SKIP-INFO YUTA missing: \(Set(base.report.entries.filter { $0.status == .missing }.map(\.item)).sorted().prefix(30))")
         XCTAssertGreaterThan(base.project.layers.count, 0)
         if let r = Renderer.shared {
             XCTAssertNotNil(r.renderPixels(project: base.project, time: min(2, base.project.duration / 2), renderScale: 0.2, mediaURL: { URL(fileURLWithPath: $0) }))
@@ -153,5 +153,29 @@ final class EffectSpeedTests: XCTestCase {
         for (id, ms) in results.prefix(25) { print(String(format: "SKIP-INFO EFFECT-SPEED %@ +%.1f ms", id, ms)) }
         let lookup = ["ae.exposure", "ae.glow", "ae.motionTile", "ae.ripple", "ae.bulge", "ae.findEdges", "ae.gaussianBlur", "awi.flicker", "awi.chromaKey", "ae.fill", "ae.invert", "awi15.innerBlur", "ae.directionalBlur", "awi.shake"]
         for id in lookup { if let m = results.first(where: { $0.0 == id }) { print(String(format: "SKIP-INFO EFFECT-SPEED (am) %@ +%.1f ms", id, m.1)) } }
+    }
+}
+
+/// Long playback of a heavy import with constantly changing preview size must not grow GPU memory without bound.
+final class MemoryTests: XCTestCase {
+    func testPoolMemoryStaysBoundedDuringPlayback() throws {
+        guard let r = Renderer.shared,
+              let u = Bundle(for: Self.self).url(forResource: "am_effects", withExtension: "xml") else { throw XCTSkip("SKIP-GPU") }
+        let p = try AMImporter.load(data: Data(contentsOf: u), fallbackName: "mem").project
+        guard let comp = r.makeCompTexture(width: 432, height: 540) else { return }
+        let pool = r.makePool()
+        var peak = 0
+        for i in 0..<160 {
+            // Simulate adaptive preview resolution changing frame to frame.
+            let scale = [0.4, 0.3, 0.2, 0.35, 0.25][i % 5]
+            guard let cb = r.queue.makeCommandBuffer() else { break }
+            pool.recycle()
+            r.encode(project: p, time: Double(i) / 30, renderScale: scale, into: comp, commandBuffer: cb, pool: pool,
+                     mediaURL: { URL(fileURLWithPath: $0) })
+            cb.commit(); cb.waitUntilCompleted()
+            peak = max(peak, pool.spareBytes)
+        }
+        print(String(format: "SKIP-INFO MEMORY peak spare %.1f MB", Double(peak) / 1_048_576))
+        XCTAssertLessThanOrEqual(peak, TexturePool.budgetBytes + 64 * 1024 * 1024, "texture pool keeps growing")
     }
 }
