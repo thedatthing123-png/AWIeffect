@@ -518,7 +518,7 @@ struct EffectTile: View {
             if image == nil, !def.isTransformEffect { EffectThumbnails.shared.thumbnail(for: def) { image = $0 } }
             // Animate once the tile has been on screen for a moment (scrolling past stays cheap).
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                guard visible, frames.isEmpty else { return }
+                guard visible, frames.isEmpty, !isUITesting else { return }
                 EffectThumbnails.shared.frames(for: def) { f in if visible { frames = f } }
             }
         }

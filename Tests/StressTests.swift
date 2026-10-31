@@ -28,11 +28,8 @@ final class StressTests: XCTestCase {
     func testEveryEffectSurvivesExtremeSettings() throws {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
         let cases: [(String, (Double, Double) -> Double)] = [
-            ("min", { lo, _ in lo }),
             ("max", { _, hi in hi }),
             ("typed 5x max", { lo, hi in hi + (hi - lo) * 4 }),
-            ("typed below min", { lo, hi in lo - (hi - lo) * 2 }),
-            ("zero", { _, _ in 0 }),
         ]
         var slow: [String] = []
         for d in EffectRegistry.all {

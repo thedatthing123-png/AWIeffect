@@ -1,5 +1,8 @@
 import SwiftUI
 
+/// True under UI tests: looping preview animations stay still so the app can go idle.
+let isUITesting = ProcessInfo.processInfo.arguments.contains("-uiTesting")
+
 @main
 struct AWIeffectApp: App {
     init() {

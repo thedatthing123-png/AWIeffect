@@ -8,6 +8,8 @@ final class AWIeffectUITests: XCTestCase {
     override func setUp() {
         continueAfterFailure = true
         app = XCUIApplication()
+        // Looping previews never let the app go idle, which stalls UI testing: run them as stills.
+        app.launchArguments = ["-uiTesting"]
         app.launch()
     }
 

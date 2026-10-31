@@ -288,7 +288,7 @@ struct TextPresetTile: View {
             .clipShape(RoundedRectangle(cornerRadius: 10))
             Text(preset.name).font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.text).lineLimit(1)
         }
-        .onReceive(timer) { _ in if !frames.isEmpty { frameIndex += 1 } }
+        .onReceive(timer) { _ in if !frames.isEmpty && !isUITesting { frameIndex += 1 } }
         .onAppear { if frames.isEmpty { TextPresetPreviews.frames(for: preset) { frames = $0 } } }
     }
 }
