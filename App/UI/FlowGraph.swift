@@ -280,7 +280,7 @@ struct ReplayDot: View {
         if isUITesting {
             EmptyView()
         } else {
-            TimelineView(.animation) { tl in
+            SwiftUI.TimelineView(.animation) { tl in
                 let cycle = 1.4
                 let t = tl.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: cycle) / cycle
                 let x = min(1, t / 0.75)

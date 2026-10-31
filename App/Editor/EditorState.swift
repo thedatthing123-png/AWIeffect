@@ -85,6 +85,7 @@ final class EditorState: ObservableObject {
     /// True while a canvas drag writes to `live` instead of `project`.
     private(set) var liveGesture = false
     var isLiveGesture: Bool { liveGesture }
+    private var scrubbing = false
     /// Scale / rotation when a two-finger pinch began.
     var pinchStart: (scale: Vec2, rotation: Double)?
     /// Start positions of every selected layer while a multi-selection is dragged on the canvas.
@@ -180,6 +181,13 @@ final class EditorState: ObservableObject {
     /// One-shot mutation with its own undo step.
     func mutate(_ label: String, _ change: (inout Project) -> Void) {
         if !editGroupOpen { pushUndo(label) }
+        // Mid-gesture (slider / pad / canvas drag): edit the live copy so only the preview redraws.
+        if liveGesture, var lp = live.project {
+            change(&lp)
+            lp.modifiedAt = Date()
+            live.project = lp
+            return
+        }
         var p = project
         change(&p)
         p.fitAutoLength()
@@ -205,6 +213,32 @@ final class EditorState: ObservableObject {
 
     var canUndo: Bool { !undoStack.isEmpty }
     var canRedo: Bool { !redoStack.isEmpty }
+
+    /// Panel controls (swipe pad, dial, rulers): one undo step, live edits until the finger lifts.
+    func beginPanelGesture(_ label: String) {
+        pause()
+        beginEdit(label)
+        if !liveGesture { beginLiveGesture() }
+    }
+
+    func endPanelGesture() {
+        endLiveGesture()
+        endEdit()
+    }
+
+    /// Slider drags anywhere in the app: edits stay in the live copy while the finger is down, so the rest of the
+    /// editor doesn't rebuild on every tiny move (that made sliders lag).
+    func beginScrub() {
+        guard !liveGesture else { return }
+        scrubbing = true
+        beginLiveGesture()
+    }
+
+    func endScrub() {
+        guard scrubbing else { return }
+        scrubbing = false
+        endLiveGesture()
+    }
 
     /// Canvas drags: edits go to the lightweight live copy until `endLiveGesture`.
     func beginLiveGesture() {

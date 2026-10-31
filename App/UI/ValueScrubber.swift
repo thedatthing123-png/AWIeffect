@@ -1,5 +1,19 @@
 import SwiftUI
 
+/// Lets every slider tell the editor when a drag starts / ends (the editor then keeps edits live until the end).
+struct ScrubSession {
+    var begin: () -> Void = {}
+    var end: () -> Void = {}
+}
+
+private struct ScrubSessionKey: EnvironmentKey { static let defaultValue = ScrubSession() }
+extension EnvironmentValues {
+    var scrubSession: ScrubSession {
+        get { self[ScrubSessionKey.self] }
+        set { self[ScrubSessionKey.self] = newValue }
+    }
+}
+
 /// Alight Motion-style value control: a bar showing where the value sits in its range.
 /// Drag sideways to change it (the bar's width covers the whole range; drag slowly for fine steps),
 /// tap to type an exact number. Typed numbers may go past the bar's ends, like After Effects.
@@ -20,6 +34,9 @@ struct ValueScrubber: View {
     @State private var editing = false
     @State private var text = ""
     @FocusState private var focused: Bool
+    @Environment(\.scrubSession) private var session
+    /// Value shown: the dragged one while the finger is down (the project only updates when it lifts).
+    private var shown: Double { dragBase.map(quantize) ?? value }
 
     private var span: Double { max(range.upperBound - range.lowerBound, 1e-9) }
     /// How far typed values may go past the bar (keeps renders sane).
@@ -39,7 +56,7 @@ struct ValueScrubber: View {
 
     var body: some View {
         GeometryReader { geo in
-            let frac = CGFloat(min(max((value - range.lowerBound) / span, 0), 1))
+            let frac = CGFloat(min(max((shown - range.lowerBound) / span, 0), 1))
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 9).fill(Theme.surface)
                 RoundedRectangle(cornerRadius: 9).fill(Theme.accent.opacity(dragBase == nil ? 0.32 : 0.5))
@@ -56,7 +73,7 @@ struct ValueScrubber: View {
                         .onChange(of: focused) { _, f in if !f { commitText() } }
                         .padding(.horizontal, 8)
                 } else {
-                    Text(Self.format(value, step: step, span: span) + unit)
+                    Text(Self.format(shown, step: step, span: span) + unit)
                         .font(.system(size: 13, weight: .semibold, design: .monospaced))
                         .foregroundStyle(Theme.text)
                         .frame(maxWidth: .infinity)
@@ -73,6 +90,7 @@ struct ValueScrubber: View {
                 .onChanged { g in
                     if dragBase == nil {
                         dragBase = value; lastX = g.translation.width
+                        session.begin()
                         onBegin()
                         UISelectionFeedbackGenerator().selectionChanged()
                     }
@@ -85,7 +103,7 @@ struct ValueScrubber: View {
                     dragBase = min(max(next, range.lowerBound), range.upperBound)
                     onChange(quantize(dragBase ?? value))
                 }
-                .onEnded { _ in dragBase = nil; onEnd() }, including: editing ? .none : .all)
+                .onEnded { _ in dragBase = nil; onEnd(); session.end() }, including: editing ? .none : .all)
         }
         .frame(height: 32)
         .accessibilityElement()

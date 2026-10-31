@@ -46,6 +46,8 @@ struct EditorView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .environmentObject(drawLauncher)
+        // Every slider in the editor keeps its edits live while dragging (smooth, no full-editor rebuilds).
+        .environment(\.scrubSession, ScrubSession(begin: { [weak state] in state?.beginScrub() }, end: { [weak state] in state?.endScrub() }))
         .onAppear { AILink.shared.editor = state }
         .onDisappear { if AILink.shared.editor === state { AILink.shared.editor = nil } }
         .environmentObject(mediaLauncher)
