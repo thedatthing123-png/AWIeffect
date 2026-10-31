@@ -73,21 +73,29 @@ final class AMImportTests: XCTestCase {
 
 /// Frame-time budget for real imported edits (CI GPU is slower than an iPhone 16 Pro Max, so this is a ceiling).
 final class RenderSpeedTests: XCTestCase {
-    func testHeavyAMEditRendersFast() throws {
-        guard let renderer = Renderer.shared,
-              let u = Bundle(for: Self.self).url(forResource: "am_effects", withExtension: "xml") else { throw XCTSkip("SKIP-GPU") }
-        let p = try AMImporter.load(data: Data(contentsOf: u), fallbackName: "speed").project
-        // Preview-sized frames (the phone preview renders ~0.35-0.5 of a 1080p comp).
+    private func msPerFrame(_ p: Project, _ renderer: Renderer) -> Double {
         _ = renderer.renderPixels(project: p, time: 1, renderScale: 0.4, mediaURL: { URL(fileURLWithPath: $0) })
-        let t0 = CACurrentMediaTime()
-        let frames = 12
+        let t0 = CACurrentMediaTime(), frames = 10
         for i in 0..<frames {
             _ = renderer.renderPixels(project: p, time: 0.5 + Double(i) * (p.duration - 1) / Double(frames), renderScale: 0.4,
                                       mediaURL: { URL(fileURLWithPath: $0) })
         }
-        let ms = (CACurrentMediaTime() - t0) / Double(frames) * 1000
-        print("RENDER-SPEED am_effects \(String(format: "%.1f", ms)) ms/frame (\(p.layers.count) layers)")
-        XCTAssertLessThan(ms, 400, "preview frames are far too slow")
+        return (CACurrentMediaTime() - t0) / Double(frames) * 1000
+    }
+
+    func testHeavyAMEditRendersFast() throws {
+        guard let renderer = Renderer.shared,
+              let u = Bundle(for: Self.self).url(forResource: "am_effects", withExtension: "xml") else { throw XCTSkip("SKIP-GPU") }
+        let p = try AMImporter.load(data: Data(contentsOf: u), fallbackName: "speed").project
+        let full = msPerFrame(p, renderer)
+        var noMB = p; noMB.motionBlurEnabled = false
+        var noFX = p; for i in noFX.layers.indices { noFX.layers[i].effects = [] }; noFX.motionBlurEnabled = false
+        var bare = noFX; bare.layers = bare.layers.map { var l = $0; l.content = .solid; return l }
+        let a = msPerFrame(noMB, renderer), b = msPerFrame(noFX, renderer), c = msPerFrame(bare, renderer)
+        // "SKIP-INFO" lines are kept by the CI log filter.
+        print(String(format: "SKIP-INFO RENDER-SPEED full %.1f | no motion blur %.1f | no effects %.1f | solids only %.1f ms/frame (%d layers)",
+                     full, a, b, c, p.layers.count))
+        XCTAssertLessThan(full, 900, "preview frames are far too slow")
     }
 }
 

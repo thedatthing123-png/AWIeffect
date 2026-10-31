@@ -352,17 +352,20 @@ final class Renderer {
             var blurMatrices: [simd_double3x3] = []
             if project.motionBlurEnabled && layer.motionBlur && extrude <= 0.5 {
                 let shutter = project.shutterAngle / 360 / max(project.fps, 1)
-                let n = project.blurSamples
-                let ms = (0..<n).map { k in
-                    Self.placementMatrix(layer, camera: camera, time: time + (Double(k) / Double(max(n - 1, 1)) - 0.5) * shutter, renderScale: renderScale)
-                }
                 func corner(_ m: simd_double3x3, _ x: Double, _ y: Double) -> SIMD2<Double> {
                     let p = m * SIMD3(x, y, 1); return SIMD2(p.x, p.y) / max(p.z, 1e-6)
                 }
-                let moved = ms.contains { m in
-                    [(-hs.x, -hs.y), (hs.x, hs.y), (hs.x, -hs.y)].contains { c in simd_length(corner(m, c.0, c.1) - corner(M, c.0, c.1)) > 0.35 }
+                // Adaptive: as many samples as the motion needs (≈1 per 1.5 px of travel), capped by the quality setting.
+                let m0 = Self.placementMatrix(layer, camera: camera, time: time - shutter / 2, renderScale: renderScale)
+                let m1 = Self.placementMatrix(layer, camera: camera, time: time + shutter / 2, renderScale: renderScale)
+                let travel = [(-hs.x, -hs.y), (hs.x, hs.y), (hs.x, -hs.y), (-hs.x, hs.y)]
+                    .map { c in simd_length(corner(m1, c.0, c.1) - corner(m0, c.0, c.1)) }.max() ?? 0
+                if travel > 0.5 {
+                    let n = max(3, min(project.blurSamples, Int((travel / 1.5).rounded(.up)) + 1))
+                    blurMatrices = (0..<n).map { k in
+                        Self.placementMatrix(layer, camera: camera, time: time + (Double(k) / Double(n - 1) - 0.5) * shutter, renderScale: renderScale)
+                    }
                 }
-                if moved { blurMatrices = ms }
             }
             let lit = layer.is3D && !lights.isEmpty && layer.content != .model
             let needsLocal = !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil || dof > 0.5 || extrude > 0.5 || !blurMatrices.isEmpty || lit
