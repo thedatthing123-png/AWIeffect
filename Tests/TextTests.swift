@@ -133,6 +133,34 @@ final class TextTests: XCTestCase {
         } }
     }
 
+    /// The big pack: every preset must animate (no dead presets in the library).
+    func testEveryPackPresetAnimates() throws {
+        for preset in TextPresetPack.all {
+            let p = textProject(animators: preset.make(0, 1))
+            let a = try render(p, t: 0.05), b = try render(p, t: 0.5), c = try render(p, t: 1.4)
+            XCTAssertGreaterThan(diff(a, b) + diff(b, c), 0.3, "\(preset.name) does not animate")
+        }
+        XCTAssertGreaterThanOrEqual(TextPreset.library.count, 120)
+        XCTAssertEqual(Set(TextPreset.library.map(\.id)).count, TextPreset.library.count, "duplicate preset ids")
+    }
+
+    /// Counter mode: the shown text follows the keyframed number.
+    func testCounterCountsAndFormats() {
+        var c = TextCounter()
+        c.value = Animated(0)
+        c.value.insertKeyframe(Keyframe(time: 0, value: 0))
+        c.value.insertKeyframe(Keyframe(time: 1, value: 1500))
+        c.suffix = "%"
+        XCTAssertEqual(c.string(at: 0), "0%")
+        XCTAssertEqual(c.string(at: 1), "1,500%")
+        c.mode = .timer
+        c.suffix = ""
+        c.value = Animated(75)
+        XCTAssertEqual(c.string(at: 0), "01:15")
+        c.timerStyle = 1
+        XCTAssertEqual(c.string(at: 0), "00:01:15")
+    }
+
     func testRevealPresetsEndFullyVisible() throws {
         let plain = try render(textProject(), t: 1.5)
         for id in ["typewriter", "fadeUp", "bounceIn", "slideStagger", "spinIn", "dropIn", "trackingIn", "flicker", "glitch"] {

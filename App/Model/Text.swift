@@ -24,6 +24,16 @@ struct TextData: Codable, Equatable {
     /// AE text on path: letters follow the text layer's first mask; offset slides them along it (% of length).
     var onPath: Bool? = nil
     var pathOffset: Animated<Double>? = nil
+    /// Counter / timer mode: the shown text comes from an animated number (keyframe it, shape it with the graph).
+    var counter: TextCounter? = nil
+
+    /// The text as drawn at `time` (the counter's value when counting).
+    func resolved(at time: Double) -> TextData {
+        guard let c = counter else { return self }
+        var x = self
+        x.string = c.string(at: time)
+        return x
+    }
 
     func baseColor(forCharacter i: Int, time: Double) -> RGBA {
         if let span = colorSpans.last(where: { i >= $0.start && i < $0.end }) { return span.color }
@@ -196,7 +206,65 @@ enum SelectorMath {
 struct TextPreset: Identifiable {
     let id: String
     let name: String
+    var category: String = "In"
     let make: (_ start: Double, _ duration: Double) -> [TextAnimator]
+
+    /// Category shown in the library (older built-ins are filed by what they do).
+    var shownCategory: String {
+        let legacy: [String: String] = [
+            "typewriter": "Typewriter", "typeOut": "Out", "decode": "Typewriter", "scramble": "Typewriter", "glitchDecode": "Glitch",
+            "wave": "Loop", "jelly": "Loop", "swingLetters": "Loop", "shakeLetters": "Loop", "rainbow": "Loop", "dreamy": "Loop", "karaoke": "Loop",
+            "glitch": "Glitch", "flicker": "Neon", "fadeOut": "Out", "fallOut": "Out", "shrinkOut": "Out",
+            "impactSlam": "Kinetic", "scalePop": "Kinetic", "zoomBig": "Kinetic", "wordPop": "Kinetic", "colorSweep": "Neon",
+        ]
+        return legacy[id] ?? category
+    }
+
+    /// Everything in the library: the built-ins plus the big pack.
+    static var library: [TextPreset] { TextPresets.all + TextPresetPack.all }
+}
+
+/// Counter / timer text (Alight Motion-style): a number that counts, or a clock that ticks.
+struct TextCounter: Codable, Equatable {
+    enum Mode: String, Codable, CaseIterable { case number, timer }
+    var mode: Mode = .number
+    /// The number shown (seconds in timer mode). Keyframe it; the graph shapes its speed.
+    var value = Animated(0.0)
+    var decimals = 0
+    var prefix = ""
+    var suffix = ""
+    /// 1,000 style thousands separator.
+    var separator = true
+    /// Timer layout: 0 = 00:00, 1 = 00:00:00, 2 = 00:00.00
+    var timerStyle = 0
+
+    func string(at t: Double) -> String {
+        let v = value.value(at: t)
+        guard v.isFinite else { return prefix + "0" + suffix }
+        switch mode {
+        case .number:
+            let f = NumberFormatter()
+            f.locale = Locale(identifier: "en_US")
+            f.numberStyle = .decimal
+            f.usesGroupingSeparator = separator
+            f.minimumFractionDigits = max(0, decimals)
+            f.maximumFractionDigits = max(0, decimals)
+            let clamped = min(max(v, -1e15), 1e15)
+            return prefix + (f.string(from: NSNumber(value: clamped)) ?? "0") + suffix
+        case .timer:
+            let neg = v < 0
+            let s = min(abs(v), 359_999)
+            let h = Int(s) / 3600, m = (Int(s) % 3600) / 60, sec = Int(s) % 60
+            let cs = Int((s - floor(s)) * 100)
+            let body: String
+            switch timerStyle {
+            case 1: body = String(format: "%02d:%02d:%02d", h, m, sec)
+            case 2: body = String(format: "%02d:%02d.%02d", h * 60 + m, sec, cs)
+            default: body = String(format: "%02d:%02d", h * 60 + m, sec)
+            }
+            return prefix + (neg ? "-" : "") + body + suffix
+        }
+    }
 }
 
 enum TextPresets {

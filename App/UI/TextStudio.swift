@@ -6,11 +6,13 @@ extension EditorState {
         mutate("Add Text") { p in
             var l = p.makeLayer(name: "Text \(p.layers.count + 1)", content: .text, size: Vec2(10, 10))
             let size = Double(min(p.width, p.height)) * 0.12
-            l.text = TextData(string: "AWIeffect", fontSize: size)
+            l.text = TextData(string: "Text", fontSize: size)
             p.layers.insert(l, at: 0)
             selectedLayerID = l.id
         }
         panel = .text
+        // Like Alight Motion: a new text starts in typing mode.
+        beginTyping()
     }
 
     func editText(_ label: String, _ change: (inout TextData) -> Void) {
@@ -25,9 +27,7 @@ extension EditorState {
     /// Continuous text edit (sliders): wrap with beginEdit/endEdit.
     func editTextContinuous(_ change: (inout TextData) -> Void) {
         guard let i = selectedIndex, project.layers[i].text != nil else { return }
-        var p = project
-        change(&p.layers[i].text!)
-        project = p
+        mutateLayer { l in if l.text != nil { change(&l.text!) } }
     }
 
     func applyTextPreset(_ preset: TextPreset) {
@@ -35,253 +35,6 @@ extension EditorState {
         let start = max(l.inPoint, currentTime)
         editText("Text Preset \(preset.name)") { t in
             t.animators = preset.make(start, 1.0)
-        }
-    }
-}
-
-/// Text Studio panel: content, style, per-word colors, premade animations and animators.
-struct TextPanel: View {
-    @ObservedObject var state: EditorState
-    @State private var tab = 0
-    @State private var draft = ""
-    @State private var showFonts = false
-
-    var body: some View {
-        VStack(spacing: 0) {
-            PanelHeader(state: state, title: "Text Studio")
-            Picker("", selection: $tab) {
-                Text("Text").tag(0); Text("Style").tag(1); Text("Animate").tag(2); Text("Animators").tag(3)
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, 12).padding(.bottom, 6)
-            if let text = state.selectedLayer?.text {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 10) {
-                        switch tab {
-                        case 0: contentTab(text)
-                        case 1: styleTab(text)
-                        case 2: presetsTab
-                        default: animatorsTab(text)
-                        }
-                    }
-                    .padding(.horizontal, 12).padding(.bottom, 14)
-                }
-            }
-        }
-        .onAppear { draft = state.selectedLayer?.text?.string ?? "" }
-        .onChange(of: state.selectedLayerID) { _, _ in draft = state.selectedLayer?.text?.string ?? "" }
-        .awiSheet(isPresented: $showFonts) {
-            FontPicker(current: state.selectedLayer?.text?.fontName ?? "") { name in
-                state.editText("Font") { $0.fontName = name }
-                showFonts = false
-            }
-        }
-    }
-
-    // MARK: Text
-
-    private func contentTab(_ text: TextData) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            TextField("Type something", text: $draft, axis: .vertical)
-                .lineLimit(1...4)
-                .padding(10).glass(radius: 10)
-                .foregroundStyle(Theme.text)
-                .onSubmit(commit)
-            HStack {
-                Button("Apply Text", action: commit).buttonStyle(PrimaryButtonStyle())
-            }
-            Text("Tap a word to color just that word:").font(.caption).foregroundStyle(Theme.textDim)
-            WordColorChips(state: state, text: text)
-        }
-    }
-
-    private func commit() {
-        let s = draft
-        state.editText("Edit Text") { t in
-            t.string = s
-            let n = s.count
-            t.colorSpans = t.colorSpans.filter { $0.start < n }.map { var c = $0; c.end = min(c.end, n); return c }
-        }
-    }
-
-    // MARK: Style
-
-    private func styleTab(_ text: TextData) -> some View {
-        let t = state.currentTime
-        return VStack(alignment: .leading, spacing: 10) {
-            Button { showFonts = true } label: {
-                HStack {
-                    Text("Font").foregroundStyle(Theme.textDim)
-                    Spacer()
-                    Text(text.fontName).font(.custom(text.fontName, size: 16)).foregroundStyle(Theme.text).lineLimit(1)
-                    Image(systemName: "chevron.right").foregroundStyle(Theme.textDim)
-                }
-                .padding(10).glass(radius: 10)
-            }
-            labeledSlider("Size", value: text.fontSize, range: 8...600) { v in state.editTextContinuous { $0.fontSize = v } }
-            labeledSlider("Tracking", value: text.tracking.value(at: t), range: -50...200) { v in
-                state.editTextContinuous { $0.tracking.set(v, at: t) }
-            }
-            labeledSlider("Line Spacing", value: text.lineSpacing.value(at: t), range: 0.6...3) { v in
-                state.editTextContinuous { $0.lineSpacing.set(v, at: t) }
-            }
-            Toggle("Text on Path (follows this layer's first mask)", isOn: Binding(get: { text.onPath ?? false }, set: { b in
-                state.editText("Text on Path") { $0.onPath = b ? true : nil; if b && $0.pathOffset == nil { $0.pathOffset = Animated(0) } }
-            }))
-            .tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13))
-            if text.onPath == true {
-                if state.selectedLayer?.masks.isEmpty ?? true {
-                    Text("Draw a mask (Pen or Ellipse) on this text layer: its outline becomes the path.").font(.caption).foregroundStyle(Theme.textDim)
-                }
-                labeledSlider("Path Offset %", value: text.pathOffset?.value(at: t) ?? 0, range: -100...100) { v in
-                    state.editTextContinuous { $0.pathOffset = ($0.pathOffset ?? Animated(0)); $0.pathOffset?.set(v, at: t) }
-                }
-            }
-            HStack {
-                Text("Color").foregroundStyle(Theme.textDim)
-                AWIColorWell("", selection: Binding(get: { Color(text.fill.value(at: t)) }, set: { c in
-                    state.editText("Text Color") { $0.fill.set(c.rgba, at: t) }
-                })).labelsHidden()
-                Spacer()
-                Picker("", selection: Binding(get: { text.alignment }, set: { a in state.editText("Align") { $0.alignment = a } })) {
-                    Image(systemName: "text.alignleft").tag(TextAlignment.left)
-                    Image(systemName: "text.aligncenter").tag(TextAlignment.center)
-                    Image(systemName: "text.alignright").tag(TextAlignment.right)
-                }
-                .pickerStyle(.segmented).frame(width: 150)
-            }
-        }
-    }
-
-    private func labeledSlider(_ title: String, value: Double, range: ClosedRange<Double>, _ set: @escaping (Double) -> Void) -> some View {
-        HStack {
-            Text(title).font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 90, alignment: .leading)
-            ValueScrubber(value: value, range: range, onBegin: { state.beginEdit(title) }, onChange: set, onEnd: { state.endEdit() })
-        }
-    }
-
-    // MARK: Presets
-
-    private var presetsTab: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("TITLE STYLES").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
-            Text("A full design in one tap: font, colors, stroke, glow and animation. Everything stays editable.")
-                .font(.caption).foregroundStyle(Theme.textDim)
-            ForEach(TitleStyles.categories, id: \.self) { cat in
-                Text(cat).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.text).padding(.top, 4)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(TitleStyles.all.filter { $0.category == cat }) { style in
-                            Button { state.applyTitleStyle(style) } label: { TitleStyleTile(style: style).frame(width: 118) }
-                                .buttonStyle(.plain)
-                        }
-                    }
-                }
-            }
-            Divider().overlay(Theme.stroke).padding(.vertical, 4)
-            Text("ANIMATIONS").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
-            Text("Premade animations start at the playhead. Every one is built from editable animators.")
-                .font(.caption).foregroundStyle(Theme.textDim)
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
-                ForEach(TextPresets.all) { preset in
-                    Button { state.applyTextPreset(preset) } label: { TextPresetTile(preset: preset) }
-                        .buttonStyle(.plain)
-                }
-            }
-        }
-    }
-
-    // MARK: Animators
-
-    private func animatorsTab(_ text: TextData) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if text.animators.isEmpty {
-                Text("No animators. Pick a premade animation or add one.").font(.caption).foregroundStyle(Theme.textDim)
-            }
-            ForEach(text.animators) { a in AnimatorCard(state: state, animator: a) }
-            Menu {
-                Button("Position") { addAnimator { $0.position = Animated(Vec2(0, -60)) } }
-                Button("Scale") { addAnimator { $0.scale = Animated(Vec2(0, 0)) } }
-                Button("Rotation") { addAnimator { $0.rotation = Animated(90) } }
-                Button("Opacity") { addAnimator { $0.opacity = Animated(0) } }
-                Button("Fill Color") { addAnimator { $0.fill = Animated(RGBA(hex: 0x9B5CFF)) } }
-                Button("Tracking") { addAnimator { $0.tracking = Animated(40) } }
-                Button("Skew") { addAnimator { $0.skew = Animated(20) } }
-                Button("Blur") { addAnimator { $0.blur = Animated(12) } }
-                Button("Character Offset (Scramble)") { addAnimator { $0.characterOffset = Animated(10) } }
-                Button("3D Rotation X (flip)") { addAnimator { $0.rotationX = Animated(90) } }
-                Button("3D Rotation Y (turn)") { addAnimator { $0.rotationY = Animated(90) } }
-                Button("3D Position Z (depth)") { addAnimator { $0.positionZ = Animated(800) } }
-            } label: {
-                Label("Add Animator", systemImage: "plus").frame(maxWidth: .infinity).padding(.vertical, 10)
-                    .background(RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.accent.opacity(0.7), style: StrokeStyle(lineWidth: 1.2, dash: [5, 4])))
-                    .foregroundStyle(Theme.accentGlow)
-            }
-        }
-    }
-
-    private func addAnimator(_ props: (inout TextAnimatorProperties) -> Void) {
-        state.editText("Add Animator") { t in
-            var a = TextAnimator(name: "Animator \(t.animators.count + 1)")
-            props(&a.properties)
-            t.animators.append(a)
-        }
-    }
-}
-
-/// Word chips; tapping one opens a color picker that colors just that word.
-struct WordColorChips: View {
-    @ObservedObject var state: EditorState
-    let text: TextData
-    @State private var picked: (start: Int, end: Int)?
-    @State private var color = Color(hex: 0x9B5CFF)
-
-    private var words: [(word: String, start: Int, end: Int)] {
-        var out: [(String, Int, Int)] = []
-        let chars = Array(text.string)
-        var i = 0
-        while i < chars.count {
-            if chars[i].isWhitespace { i += 1; continue }
-            var j = i
-            while j < chars.count, !chars[j].isWhitespace { j += 1 }
-            out.append((String(chars[i..<j]), i, j))
-            i = j
-        }
-        return out
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(Array(words.enumerated()), id: \.offset) { _, w in
-                        let span = text.colorSpans.first { $0.start == w.start && $0.end == w.end }
-                        Button { picked = (w.start, w.end); color = span.map { Color($0.color) } ?? Color(text.fill.staticValue) } label: {
-                            Text(w.word).font(.system(size: 13, weight: .semibold))
-                                .padding(.horizontal, 10).padding(.vertical, 6)
-                                .background(Capsule().fill(picked?.start == w.start ? Theme.accent.opacity(0.35) : Theme.raised))
-                                .foregroundStyle(span.map { Color($0.color) } ?? Theme.text)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-            if let p = picked {
-                HStack {
-                    AWIColorWell("Word color", selection: $color).foregroundStyle(Theme.text)
-                    Button("Apply") {
-                        let c = color.rgba
-                        state.editText("Word Color") { t in
-                            t.colorSpans.removeAll { $0.start == p.start && $0.end == p.end }
-                            t.colorSpans.append(TextColorSpan(start: p.start, end: p.end, color: c))
-                        }
-                    }
-                    Button("Reset", role: .destructive) {
-                        state.editText("Word Color") { t in t.colorSpans.removeAll { $0.start == p.start && $0.end == p.end } }
-                    }
-                }
-                .font(.system(size: 13, weight: .semibold))
-            }
         }
     }
 }

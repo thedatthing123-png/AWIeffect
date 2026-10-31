@@ -34,14 +34,21 @@ struct EditorView: View {
             preview
                 .frame(maxWidth: .infinity)
                 .layoutPriority(1)
-            TransportBar(state: state, showHistory: $showHistory)
-            timelineGrip
-            TimelineView(state: state)
-                .frame(height: timelineHeight)
-            TrimStrip(state: state, clock: state.clock)
-            BottomPanel(state: state, showPhotoPicker: $showPhotoPicker) { target, style in
-                state.pause()
-                pen = (target, style)
+            if state.textTyping {
+                // Typing: the timeline and panels step aside so the canvas (your text) stays above the keyboard.
+                TypeBar(state: state)
+            } else {
+                TransportBar(state: state, showHistory: $showHistory)
+                    // Tap the empty bar to get out of a selection.
+                    .background(Color.black.opacity(0.001).onTapGesture { if state.isMultiSelecting { state.endMultiSelect() } else { state.select(nil) } })
+                timelineGrip
+                TimelineView(state: state)
+                    .frame(height: timelineHeight)
+                TrimStrip(state: state, clock: state.clock)
+                BottomPanel(state: state, showPhotoPicker: $showPhotoPicker) { target, style in
+                    state.pause()
+                    pen = (target, style)
+                }
             }
         }
         .background(Theme.background.ignoresSafeArea())
@@ -296,6 +303,12 @@ struct EditorView: View {
                 if state.panel == .puppet, state.viewMode == .comp {
                     ClockReader(clock: state.clock) { _ in PuppetOverlay(state: state, fit: fit) }
                 }
+                if state.textTyping, let id = state.selectedLayerID {
+                    LiveReader(live: state.live) { lp in
+                        FocusDim(project: lp ?? state.project, layerID: id, time: state.currentTime, fit: fit)
+                    }
+                    .allowsHitTesting(false)
+                }
                 if state.linkPicking {
                     LinkPickOverlay(state: state, fit: fit)
                     VStack {
@@ -522,6 +535,34 @@ struct EditorView: View {
             }
         }
         state.select(nil)
+    }
+}
+
+/// Darkens everything except the layer being edited (typing focus).
+struct FocusDim: View {
+    let project: Project
+    let layerID: UUID
+    let time: Double
+    let fit: CGRect
+
+    var body: some View {
+        Canvas { ctx, size in
+            var path = Path(CGRect(origin: .zero, size: size))
+            if let l = Renderer.resolveParenting(project, time: time).layers.first(where: { $0.id == layerID }) {
+                let s = Double(fit.width) / Double(max(project.width, 1))
+                let M = Renderer.placementMatrix(l, camera: Renderer.activeCamera(project, time: time), time: time, renderScale: s)
+                let hs = Renderer.layerHalfSize(l, time: time)
+                let pad = 14.0
+                let pts = [(-hs.x - pad, -hs.y - pad), (hs.x + pad, -hs.y - pad), (hs.x + pad, hs.y + pad), (-hs.x - pad, hs.y + pad)].map { c -> CGPoint in
+                    let q = M * SIMD3(c.0, c.1, 1)
+                    return CGPoint(x: fit.minX + CGFloat(q.x / max(q.z, 1e-6)), y: fit.minY + CGFloat(q.y / max(q.z, 1e-6)))
+                }
+                var hole = Path(); hole.addLines(pts); hole.closeSubpath()
+                path.addPath(hole)
+                ctx.stroke(hole, with: .color(Theme.accentGlow.opacity(0.8)), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            }
+            ctx.fill(path, with: .color(.black.opacity(0.55)), style: FillStyle(eoFill: true))
+        }
     }
 }
 

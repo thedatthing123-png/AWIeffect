@@ -180,7 +180,7 @@ final class AILink: ObservableObject {
             "shapeKinds": ShapeKind.allCases.map(\.rawValue),
             "presets": PresetLibrary.all.map { ["id": $0.id, "name": $0.name, "kind": $0.kind.rawValue] },
             "titleStyles": TitleStyles.all.map { ["id": $0.id, "name": $0.name, "category": $0.category] },
-            "textAnimations": TextPresets.all.map { ["id": $0.id, "name": $0.name] },
+            "textAnimations": TextPreset.library.map { ["id": $0.id, "name": $0.name] },
             "notes": "Edit by GET /project, change the JSON, PUT /project. Effects are {typeID, params}; params follow the catalog ranges.",
         ]
     }

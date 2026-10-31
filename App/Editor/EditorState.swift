@@ -82,6 +82,8 @@ final class EditorState: ObservableObject {
     @Published var puppetAnimate = true
     /// Link mode: the panel steps aside and the next tap on a layer makes it this layer's parent.
     @Published var linkPicking = false
+    /// Typing on the canvas: the timeline and panels step aside for the keyboard, the rest is dimmed.
+    @Published var textTyping = false
     /// True while a canvas drag writes to `live` instead of `project`.
     private(set) var liveGesture = false
     var isLiveGesture: Bool { liveGesture }
@@ -413,15 +415,15 @@ final class EditorState: ObservableObject {
 
     /// Continuous param edit (slider drag): wrap with beginEdit/endEdit.
     func setEffectParam(_ effectID: UUID, _ key: String, _ change: (inout ParamValue, Double) -> Void) {
-        guard let i = selectedIndex, let j = project.layers[i].effects.firstIndex(where: { $0.id == effectID }) else { return }
+        // Reads / writes the live copy mid-drag, so the preview follows the slider without rebuilding the editor.
+        let src = canvasProject
+        guard let i = selectedIndex, src.layers.indices.contains(i),
+              let j = src.layers[i].effects.firstIndex(where: { $0.id == effectID }) else { return }
         // Imported / older effects may lack a control: start it from the effect's default instead of ignoring the edit.
-        let e = project.layers[i].effects[j]
+        let e = src.layers[i].effects[j]
         guard var v = e.params[key] ?? EffectRegistry.definition(e.typeID)?.params.first(where: { $0.id == key })?.defaultValue else { return }
         change(&v, currentTime)
-        var p = project
-        p.layers[i].effects[j].params[key] = v
-        p.modifiedAt = Date()
-        project = p
+        mutateLayer { l in if l.effects.indices.contains(j) { l.effects[j].params[key] = v } }
     }
 
     func effectParamHasKeyframe(_ effectID: UUID, _ key: String) -> (filled: Bool, animated: Bool) {

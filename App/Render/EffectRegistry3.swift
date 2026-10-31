@@ -27,6 +27,14 @@ extension EffectRegistry {
         return out
     }
 
+    /// "Only inside the layer": the generated pixels take the layer's own alpha (gradient letters, not a box).
+    private static func keepShape(_ ctx: EffectContext, _ g: MTLTexture) -> MTLTexture {
+        guard ctx.effect.bool("keepShape") else { return g }
+        let out = ctx.temp()
+        ctx.gpu.run("fx19AlphaOf", ctx.cb, textures: [ctx.input, out, g], params: EffectParams(), grid: out)
+        return out
+    }
+
     // MARK: Generate
 
     static let gradientRamp = EffectDefinition(
@@ -35,11 +43,14 @@ extension EffectRegistry {
         params: [.point("start", "Start of Ramp", Vec2(0.5, 0), ae: 1), .color("startColor", "Start Color", .black, ae: 2),
                  .point("end", "End of Ramp", Vec2(0.5, 1), ae: 3), .color("endColor", "End Color", .white, ae: 4),
                  .choice("shape", "Ramp Shape", ["Linear Ramp", "Radial Ramp"], 0, ae: 5),
-                 .number("blend", "Blend With Original", 0, 0, 100, unit: "%", ae: 7)],
-        stage: .pixels { ctx in k("fxGenerate", 0, ctx) { p in
-            let s = px(ctx, ctx.effect.point("start", ctx.time)), e = px(ctx, ctx.effect.point("end", ctx.time))
-            p.a = SIMD4(s.x, s.y, e.x, e.y); p.b = ctx.effect.color("startColor", ctx.time).simd; p.c = ctx.effect.color("endColor", ctx.time).simd
-            p.d.w = f(ctx.num("blend") / 100); p.i.y = UInt32(ctx.effect.choice("shape")) } })
+                 .number("blend", "Blend With Original", 0, 0, 100, unit: "%", ae: 7),
+                 .toggle("keepShape", "Only Inside the Layer (text / shape)", false)],
+        stage: .pixels { ctx in
+            let g = k("fxGenerate", 0, ctx) { p in
+                let s = px(ctx, ctx.effect.point("start", ctx.time)), e = px(ctx, ctx.effect.point("end", ctx.time))
+                p.a = SIMD4(s.x, s.y, e.x, e.y); p.b = ctx.effect.color("startColor", ctx.time).simd; p.c = ctx.effect.color("endColor", ctx.time).simd
+                p.d.w = f(ctx.num("blend") / 100); p.i.y = UInt32(ctx.effect.choice("shape")) }
+            return keepShape(ctx, g) })
 
     static let fourColorGradient = EffectDefinition(
         id: "ae.fourColorGradient", name: "4-Color Gradient", category: .generate, aeMatchNames: ["ADBE 4ColorGradient"],

@@ -142,7 +142,7 @@ extension EditorState {
             o.extrusion = max(10, min(l.size.value(at: t).x, l.size.value(at: t).y) * 0.25)
             o.chamfer = o.extrusion * 0.12
         case .text:
-            guard let d = l.text else { return }
+            guard let d = l.text?.resolved(at: t) else { return }
             o.text = d.string; o.fontName = d.fontName
             o.color = Animated(d.fill.value(at: t))
         case .image(let file, _, _):

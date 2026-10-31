@@ -267,3 +267,16 @@ kernel void fx19KeyInvert(texture2d<half, access::sample> src [[texture(0)]],
     float keep = s.a > 1e-4 ? clamp(1.0 - k.a / s.a, 0.0, 1.0) : 0.0;
     dst.write(half4(s * keep), gid);
 }
+
+/// Keeps a generated image only inside the layer's own shape. textures: 0 original, 1 dst, 2 generated.
+kernel void fx19AlphaOf(texture2d<half, access::sample> src [[texture(0)]],
+                        texture2d<half, access::write> dst [[texture(1)]],
+                        texture2d<half, access::sample> gen [[texture(2)]],
+                        constant EffectParams& p [[buffer(0)]],
+                        uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    float2 c = float2(gid) + 0.5;
+    float4 g = S(gen, c);
+    float a = S(src, c).a;
+    dst.write(half4(g * a), gid);
+}
