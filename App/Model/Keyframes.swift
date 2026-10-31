@@ -66,6 +66,154 @@ struct Keyframe<Value: Interpolatable>: Codable, Equatable, Identifiable {
     var easeOut: EaseHandle = .easyOut
     /// Incoming handle for the segment arriving at this keyframe.
     var easeIn: EaseHandle = .easyIn
+    /// Flow-style math curve for the segment leaving this keyframe (bounce, elastic, back, expo…). When set it
+    /// replaces the bezier handles; nil = use the handles.
+    var curve: EaseCurve? = nil
+}
+
+/// Easing curves that a single bezier can't draw (Flow-style): real bounces, elastic wobbles, Penner families.
+struct EaseCurve: Codable, Equatable, Hashable {
+    enum Kind: String, Codable, CaseIterable, Identifiable {
+        case sineIn, sineOut, sineInOut, quadIn, quadOut, quadInOut, cubicIn, cubicOut, cubicInOut
+        case quartIn, quartOut, quartInOut, quintIn, quintOut, quintInOut, expoIn, expoOut, expoInOut
+        case circIn, circOut, circInOut, backIn, backOut, backInOut, bounceOut, bounceIn, elasticOut, elasticIn
+        case overshoot, smoothStop, snap
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .sineIn: return "Sine In"
+            case .sineOut: return "Sine Out"
+            case .sineInOut: return "Sine In-Out"
+            case .quadIn: return "Quad In"
+            case .quadOut: return "Quad Out"
+            case .quadInOut: return "Quad In-Out"
+            case .cubicIn: return "Cubic In"
+            case .cubicOut: return "Cubic Out"
+            case .cubicInOut: return "Cubic In-Out"
+            case .quartIn: return "Quart In"
+            case .quartOut: return "Quart Out"
+            case .quartInOut: return "Quart In-Out"
+            case .quintIn: return "Quint In"
+            case .quintOut: return "Quint Out"
+            case .quintInOut: return "Quint In-Out"
+            case .expoIn: return "Expo In"
+            case .expoOut: return "Expo Out"
+            case .expoInOut: return "Expo In-Out"
+            case .circIn: return "Circ In"
+            case .circOut: return "Circ Out"
+            case .circInOut: return "Circ In-Out"
+            case .backIn: return "Back In"
+            case .backOut: return "Back Out"
+            case .backInOut: return "Back In-Out"
+            case .bounceOut: return "Bounce"
+            case .bounceIn: return "Bounce In"
+            case .elasticOut: return "Elastic"
+            case .elasticIn: return "Elastic In"
+            case .overshoot: return "Overshoot"
+            case .smoothStop: return "Smooth Stop"
+            case .snap: return "Snap"
+            }
+        }
+
+        /// Settings the curve has (labels for a and b); nil = none.
+        var paramA: (String, ClosedRange<Double>, Double)? {
+            switch self {
+            case .bounceOut, .bounceIn: return ("Bounces", 1...8, 3)
+            case .elasticOut, .elasticIn: return ("Wobbles", 1...10, 3)
+            case .backIn, .backOut, .backInOut, .overshoot: return ("Overshoot", 0...4, 1.7)
+            default: return nil
+            }
+        }
+        var paramB: (String, ClosedRange<Double>, Double)? {
+            switch self {
+            case .bounceOut, .bounceIn: return ("Bounciness", 0.15...0.8, 0.45)
+            case .elasticOut, .elasticIn: return ("Settle", 1...14, 6)
+            default: return nil
+            }
+        }
+    }
+
+    var kind: Kind
+    var a: Double
+    var b: Double
+
+    init(_ kind: Kind) {
+        self.kind = kind
+        a = kind.paramA?.2 ?? 0
+        b = kind.paramB?.2 ?? 0
+    }
+
+    /// Progress 0…1 (may overshoot) at time fraction x 0…1.
+    func progress(_ x: Double) -> Double {
+        let x = min(max(x, 0), 1)
+        func inOut(_ f: (Double) -> Double) -> Double { x < 0.5 ? f(x * 2) / 2 : 1 - f((1 - x) * 2) / 2 }
+        func pow_(_ n: Double) -> (Double) -> Double { { pow($0, n) } }
+        switch kind {
+        case .sineIn: return 1 - cos(x * .pi / 2)
+        case .sineOut: return sin(x * .pi / 2)
+        case .sineInOut: return -(cos(.pi * x) - 1) / 2
+        case .quadIn: return x * x
+        case .quadOut: return 1 - (1 - x) * (1 - x)
+        case .quadInOut: return inOut(pow_(2))
+        case .cubicIn: return x * x * x
+        case .cubicOut: return 1 - pow(1 - x, 3)
+        case .cubicInOut: return inOut(pow_(3))
+        case .quartIn: return pow(x, 4)
+        case .quartOut: return 1 - pow(1 - x, 4)
+        case .quartInOut: return inOut(pow_(4))
+        case .quintIn: return pow(x, 5)
+        case .quintOut: return 1 - pow(1 - x, 5)
+        case .quintInOut: return inOut(pow_(5))
+        case .expoIn: return x <= 0 ? 0 : pow(2, 10 * x - 10)
+        case .expoOut: return x >= 1 ? 1 : 1 - pow(2, -10 * x)
+        case .expoInOut: return inOut { $0 <= 0 ? 0 : pow(2, 10 * $0 - 10) }
+        case .circIn: return 1 - sqrt(max(0, 1 - x * x))
+        case .circOut: return sqrt(max(0, 1 - (x - 1) * (x - 1)))
+        case .circInOut: return inOut { 1 - sqrt(max(0, 1 - $0 * $0)) }
+        case .backIn: return (a + 1) * x * x * x - a * x * x
+        case .backOut, .overshoot:
+            let u = x - 1
+            return 1 + (a + 1) * u * u * u + a * u * u
+        case .backInOut:
+            let s = a * 1.525
+            return inOut { ($0 * $0) * ((s + 1) * $0 - s) }
+        case .bounceOut: return Self.bounce(x, count: Int(a.rounded()), r: b)
+        case .bounceIn: return 1 - Self.bounce(1 - x, count: Int(a.rounded()), r: b)
+        case .elasticOut: return Self.elastic(x, wobbles: a, settle: b)
+        case .elasticIn: return 1 - Self.elastic(1 - x, wobbles: a, settle: b)
+        case .smoothStop: return 1 - pow(1 - x, 6)
+        case .snap: return x < 0.5 ? 16 * pow(x, 5) : 1 - pow(-2 * x + 2, 5) / 2
+        }
+    }
+
+    /// A ball dropped onto 1: falls, then `count` bounces, each `r` times as long as the one before (real
+    /// gravity: heights scale with duration squared).
+    static func bounce(_ x: Double, count: Int, r: Double) -> Double {
+        let n = max(1, min(12, count)), r = min(max(r, 0.05), 0.95)
+        var total = 1.0
+        for k in 1...n { total += 2 * pow(r, Double(k)) }
+        let t0 = 1 / total
+        if x < t0 { let u = x / t0; return u * u }
+        var start = t0
+        for k in 1...n {
+            let d = 2 * t0 * pow(r, Double(k))
+            if x < start + d || k == n {
+                let u = min(1, (x - start) / d) * 2 - 1      // -1…1 across the bounce
+                let h = pow(r, Double(2 * k))
+                return 1 - h * (1 - u * u)
+            }
+            start += d
+        }
+        return 1
+    }
+
+    /// Spring that overshoots and wobbles into place; always lands exactly on 1.
+    static func elastic(_ x: Double, wobbles: Double, settle: Double) -> Double {
+        let raw = 1 - exp(-settle * x) * cos(2 * .pi * wobbles * x)
+        let land = pow(x, 6)
+        return raw * (1 - land) + land
+    }
 }
 
 /// Solves a CSS/AE-style timing curve: cubic bezier from (0,0) to (1,1) with control points p1, p2.
@@ -151,7 +299,9 @@ struct Animated<Value: Interpolatable>: Codable, Equatable {
         switch a.interpolation {
         case .hold: return a.value
         case .linear: return Value.lerp(a.value, b.value, x)
-        case .bezier: return Value.lerp(a.value, b.value, BezierTiming.progress(x: x, p1: a.easeOut, p2: b.easeIn))
+        case .bezier:
+            if let c = a.curve { return Value.lerp(a.value, b.value, c.progress(x)) }
+            return Value.lerp(a.value, b.value, BezierTiming.progress(x: x, p1: a.easeOut, p2: b.easeIn))
         }
     }
 

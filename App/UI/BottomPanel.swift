@@ -75,6 +75,8 @@ struct BottomPanel: View {
                 case .puppet: PuppetPanel(state: state)
                 case .ccStudio: CCStudioPanel(state: state)
                 case .rig: RigPanel(state: state)
+                case .layerHome: LayerHomePanel(state: state)
+                case .graph: FlowGraphPanel(state: state)
                 case .none: EmptyView()
                 }
             }
@@ -296,14 +298,13 @@ struct TransformPanel: View {
 
     private var easingRow: some View {
         HStack {
-            Button { showGraph = true } label: {
+            Button { state.panel = .graph } label: {
                 Label("Graph", systemImage: "point.topleft.down.to.point.bottomright.curvepath")
                     .font(.system(size: 12, weight: .semibold))
                     .padding(.horizontal, 10).padding(.vertical, 6)
                     .background(Capsule().fill(Theme.accent.opacity(0.25)))
                     .foregroundStyle(Theme.accentGlow)
             }
-            .sheet(isPresented: $showGraph) { GraphEditorSheet(state: state).presentationDetents([.large]) }
             Button { showVelocity = true } label: {
                 Label("Velocity", systemImage: "speedometer").font(.system(size: 12, weight: .semibold))
                     .padding(.horizontal, 10).padding(.vertical, 6)

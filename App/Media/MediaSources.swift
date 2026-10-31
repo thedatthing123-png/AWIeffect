@@ -18,15 +18,9 @@ final class VideoSources {
         let duration: Double
         let fps: Double
         let orientation: CGImagePropertyOrientation
-        /// Serializes reader use for this file.
-        let decodeLock = NSLock()
-        var reader: AVAssetReader?
-        var output: AVAssetReaderTrackOutput?
-        /// Index of the last frame the reader handed out (-1 = none).
-        var readerFrame = -1
-        // Guarded by VideoSources.lock.
-        var lastRequest = -10
-        var prefetching = false
+        /// One sequential reader per playback position: two copies of the same clip at different times each keep
+        /// their own reader instead of fighting over one (which made both stutter and show wrong frames).
+        let channels: [Channel] = (0..<VideoSources.channelCount).map { _ in Channel() }
         var cache: [Int: MTLTexture] = [:]
         var order: [Int] = []
 
@@ -49,12 +43,28 @@ final class VideoSources {
         }
     }
 
+    private final class Channel {
+        /// Serializes this reader.
+        let decodeLock = NSLock()
+        var reader: AVAssetReader?
+        var output: AVAssetReaderTrackOutput?
+        /// Index of the last frame the reader handed out (-1 = none).
+        var readerFrame = -1
+        // Guarded by VideoSources.lock.
+        var lastRequest = -10
+        var prefetching = false
+        var lastUse: UInt64 = 0
+        var owner: Int?
+    }
+
+    static let channelCount = 4
+    private var useCounter: UInt64 = 0
     private var sources: [String: Source] = [:]
     private let lock = NSLock()
     private let prefetchQueue = DispatchQueue(label: "awi.video.prefetch", qos: .userInitiated)
     private let ciLock = NSLock()
     private var ciContext: CIContext?
-    static let cacheFrames = 24
+    static let cacheFrames = 48
     static let prefetchAhead = 4
     /// Decode size cap: a lighter "proxy" size while editing, full size while exporting.
     static let previewMaxSide: CGFloat = 1440
@@ -83,19 +93,32 @@ final class VideoSources {
     func fps(_ url: URL) -> Double { source(url).fps }
 
     /// Frame texture at `time` seconds of the source (clamped), cached per source frame.
-    func texture(url: URL, time: Double, device: MTLDevice) -> MTLTexture? {
+    /// `channel` identifies who is asking (a layer): each caller keeps its own reader position.
+    func texture(url: URL, time: Double, device: MTLDevice, channel: Int = 0) -> MTLTexture? {
         let s = source(url)
         guard s.duration > 0 else { return nil }
         let t = min(max(0, time), max(0, s.duration - 1 / s.fps))
         let frame = Int((t * s.fps + 1e-3).rounded(.down))
         lock.lock()
+        let c = pickChannel(s, owner: channel)
         let hit = s.cache[frame]
-        let sequential = frame > s.lastRequest && frame - s.lastRequest <= 3
-        s.lastRequest = frame
+        let sequential = frame > c.lastRequest && frame - c.lastRequest <= 3
+        c.lastRequest = frame
         lock.unlock()
-        let tex = hit ?? decode(s, frame: frame, device: device)
-        if sequential { prefetch(s, after: frame, device: device) }
+        let tex = hit ?? decode(s, c, frame: frame, device: device)
+        if sequential { prefetch(s, c, after: frame, device: device) }
         return tex
+    }
+
+    /// The caller's own channel, else a free one, else the least recently used. Call with `lock` held.
+    private func pickChannel(_ s: Source, owner: Int) -> Channel {
+        useCounter &+= 1
+        let c = s.channels.first { $0.owner == owner }
+            ?? s.channels.first { $0.owner == nil }
+            ?? s.channels.min { $0.lastUse < $1.lastUse }!
+        if c.owner != owner { c.owner = owner; c.lastRequest = -10 }
+        c.lastUse = useCounter
+        return c
     }
 
     private func cachedTexture(_ s: Source, _ frame: Int) -> MTLTexture? {
@@ -112,10 +135,10 @@ final class VideoSources {
     }
 
     /// Decodes the next few frames in the background while playback continues.
-    private func prefetch(_ s: Source, after frame: Int, device: MTLDevice) {
+    private func prefetch(_ s: Source, _ c: Channel, after frame: Int, device: MTLDevice) {
         lock.lock()
-        if s.prefetching { lock.unlock(); return }
-        s.prefetching = true
+        if c.prefetching { lock.unlock(); return }
+        c.prefetching = true
         lock.unlock()
         let last = max(0, Int(s.duration * s.fps) - 1)
         prefetchQueue.async { [weak self] in
@@ -123,23 +146,23 @@ final class VideoSources {
             var f = frame + 1
             while f <= min(last, frame + Self.prefetchAhead) {
                 // Playback jumped elsewhere: stop guessing.
-                self.lock.lock(); let req = s.lastRequest; self.lock.unlock()
+                self.lock.lock(); let req = c.lastRequest; self.lock.unlock()
                 if req > f || f - req > Self.prefetchAhead + 2 { break }
-                if self.cachedTexture(s, f) == nil { _ = self.decode(s, frame: f, device: device) }
+                if self.cachedTexture(s, f) == nil { _ = self.decode(s, c, frame: f, device: device) }
                 f += 1
             }
-            self.lock.lock(); s.prefetching = false; self.lock.unlock()
+            self.lock.lock(); c.prefetching = false; self.lock.unlock()
         }
     }
 
-    private func decode(_ s: Source, frame: Int, device: MTLDevice) -> MTLTexture? {
-        s.decodeLock.lock(); defer { s.decodeLock.unlock() }
+    private func decode(_ s: Source, _ c: Channel, frame: Int, device: MTLDevice) -> MTLTexture? {
+        c.decodeLock.lock(); defer { c.decodeLock.unlock() }
         if let t = cachedTexture(s, frame) { return t }
         guard let track = s.track else { return nil }
         // Restart the reader for backwards jumps and long forward skips (cheaper than decoding through).
-        if s.reader == nil || s.reader?.status != .reading || frame <= s.readerFrame || frame - s.readerFrame > Int(s.fps * 1.5) {
-            s.reader?.cancelReading()
-            s.reader = nil; s.output = nil; s.readerFrame = -1
+        if c.reader == nil || c.reader?.status != .reading || frame <= c.readerFrame || frame - c.readerFrame > Int(s.fps * 1.5) {
+            c.reader?.cancelReading()
+            c.reader = nil; c.output = nil; c.readerFrame = -1
             guard let r = try? AVAssetReader(asset: s.asset) else { return nil }
             let o = AVAssetReaderTrackOutput(track: track, outputSettings: [
                 kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
@@ -151,14 +174,14 @@ final class VideoSources {
             let start = max(0, (Double(frame) - 0.5) / s.fps)
             r.timeRange = CMTimeRange(start: CMTime(seconds: start, preferredTimescale: 60000), end: .positiveInfinity)
             guard r.startReading() else { return nil }
-            s.reader = r; s.output = o
+            c.reader = r; c.output = o
         }
-        guard let o = s.output else { return nil }
+        guard let o = c.output else { return nil }
         while let sample = o.copyNextSampleBuffer() {
             guard let pb = CMSampleBufferGetImageBuffer(sample) else { continue }
             let pts = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sample))
             let idx = Int((pts * s.fps + 0.25).rounded(.down))
-            s.readerFrame = idx
+            c.readerFrame = idx
             if idx < frame { continue }
             guard let tex = makeTexture(pb, orientation: s.orientation, device: device) else { return nil }
             store(s, idx, tex)
@@ -166,9 +189,10 @@ final class VideoSources {
             if idx != frame { store(s, frame, tex) }
             return tex
         }
-        // Reader ran off the end: show the last decoded frame, if any.
+        // Reader ran off the end (or failed): show the nearest cached frame of this file, never an unrelated one.
         lock.lock(); defer { lock.unlock() }
-        return s.order.last.flatMap { s.cache[$0] }
+        guard let near = s.cache.keys.min(by: { abs($0 - frame) < abs($1 - frame) }) else { return nil }
+        return s.cache[near]
     }
 
     /// Pixel buffer → oriented, size-capped GPU texture (values passed through untouched: still sRGB-encoded).
@@ -198,7 +222,7 @@ final class VideoSources {
 
     func clear() {
         lock.lock(); let all = Array(sources.values); sources.removeAll(); lock.unlock()
-        for s in all { s.decodeLock.lock(); s.reader?.cancelReading(); s.decodeLock.unlock() }
+        for s in all { for c in s.channels { c.decodeLock.lock(); c.reader?.cancelReading(); c.decodeLock.unlock() } }
     }
 }
 

@@ -131,8 +131,27 @@ extension Renderer {
         return max(1e-4, min(simd_length(dx), simd_length(dy)))
     }
 
-    /// AE draw order: 2D layers keep stacking order; each run of adjacent 3D layers is sorted back-to-front.
+    /// Alight Motion / AE draw order: Z decides what's in front. A layer with a smaller Z (closer to the viewer)
+    /// draws over layers above it in the list; layers at the same depth keep their list order. Projects where
+    /// nothing uses Z keep the plain stacking order.
     static func drawOrder(_ layers: [Layer], camera: CameraState, time: Double) -> [Layer] {
+        let usesDepth = layers.contains { l in
+            l.is3D || abs(l.transform.positionZ.value(at: time)) > 1e-6
+        }
+        guard usesDepth else { return Array(layers.reversed()) }
+        // 2D layers sit at the camera's focus plane plus their own Z.
+        let keyed = layers.reversed().enumerated().map { (i, l) -> (Int, Double, Layer) in
+            let d = l.is3D ? layerDepth(l, camera: camera, time: time) : camera.zoom + l.transform.positionZ.value(at: time)
+            return (i, d.isFinite ? d : 0, l)
+        }
+        return keyed.sorted { a, b in
+            if abs(a.1 - b.1) > 1e-6 { return a.1 > b.1 }
+            return a.0 < b.0
+        }.map { $0.2 }
+    }
+
+    /// The old AE-only rule (kept for groups): 2D layers keep stacking order, runs of 3D layers sort by depth.
+    static func drawOrderAE(_ layers: [Layer], camera: CameraState, time: Double) -> [Layer] {
         var out: [Layer] = []
         var run: [Layer] = []
         func flush() {

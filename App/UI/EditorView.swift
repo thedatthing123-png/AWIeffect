@@ -277,7 +277,8 @@ struct EditorView: View {
                                  time: t, redrawToken: state.redrawToken, mediaURL: { state.mediaURL($0) },
                                  viewZoom: state.viewMode == .comp ? viewZoom : 1, viewPan: state.viewMode == .comp ? viewPan : .zero,
                                  qualityCap: state.previewQuality.rawValue, isPlaying: state.isPlaying,
-                                 cacheEnabled: state.viewMode == .comp)
+                                 // No RAM-cache writes mid-gesture: every frame changes, caching only churned memory.
+                                 cacheEnabled: state.viewMode == .comp && lp == nil)
                 }
                 }
                 if state.viewMode == .orbit {
@@ -352,14 +353,22 @@ struct EditorView: View {
             .clipped()
             .contentShape(Rectangle())
             .gesture(canvasDrag(fit: fit), including: pen == nil && state.viewMode == .comp ? .all : .subviews)
+            // Two fingers, like Alight Motion: with a layer selected, pinch scales it and twisting rotates it (both at
+            // once); with nothing selected the pinch zooms the canvas view.
             .simultaneousGesture(MagnificationGesture()
                 .onChanged { m in
                     guard state.viewMode == .comp else { return }
-                    // A second finger turns a layer drag into a canvas zoom: undo the accidental move.
-                    if canvasDragState != nil { state.endCanvasDrag(); state.undo(); canvasDragState = nil; panBase = viewPan }
-                    viewZoom = min(8, max(0.4, zoomBase * m))
+                    pinchScale = Double(m); magActive = true
+                    updatePinch()
                 }
-                .onEnded { _ in zoomBase = viewZoom }, including: pen == nil ? .all : .subviews)
+                .onEnded { _ in magActive = false; finishPinch() }, including: pen == nil ? .all : .subviews)
+            .simultaneousGesture(RotationGesture()
+                .onChanged { a in
+                    guard state.viewMode == .comp else { return }
+                    pinchAngle = a.degrees; rotActive = true
+                    updatePinch()
+                }
+                .onEnded { _ in rotActive = false; finishPinch() }, including: pen == nil ? .all : .subviews)
             .simultaneousGesture(TapGesture(count: 2).onEnded {
                 withAnimation(.easeOut(duration: 0.2)) { viewZoom = 1; zoomBase = 1; viewPan = .zero }
             }, including: pen == nil && state.viewMode == .comp ? .all : .subviews)
@@ -376,6 +385,36 @@ struct EditorView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
+    }
+
+    @State private var pinchScale: Double = 1
+    @State private var pinchAngle: Double = 0
+    /// nil = no pinch yet, true = transforming the selected layer, false = zooming the canvas.
+    @State private var pinchOnLayer: Bool?
+    /// The finger drag that was running when the second finger landed stops moving the layer (no jump).
+    @State private var dragFrozen = false
+
+    private func updatePinch() {
+        if pinchOnLayer == nil {
+            let layer = state.selectedLayer
+            pinchOnLayer = layer != nil && layer?.isLocked == false && layer?.content != .light
+            if pinchOnLayer == true { state.beginLayerPinch(); dragFrozen = canvasDragState != nil }
+        }
+        if pinchOnLayer == true {
+            state.updateLayerPinch(scale: pinchScale, rotation: pinchAngle)
+        } else {
+            viewZoom = min(8, max(0.4, zoomBase * CGFloat(pinchScale)))
+        }
+    }
+
+    @State private var magActive = false
+    @State private var rotActive = false
+
+    /// Pinch and twist are two gestures that end separately: finish once both are done (values hold until then).
+    private func finishPinch() {
+        guard !magActive, !rotActive, let onLayer = pinchOnLayer else { return }
+        if onLayer { state.endLayerPinch(ownsEdit: canvasDragState == nil) } else { zoomBase = viewZoom }
+        pinchOnLayer = nil; pinchScale = 1; pinchAngle = 0
     }
 
     private func toComp(_ p: CGPoint, fit: CGRect) -> Vec2 {
@@ -438,10 +477,11 @@ struct EditorView: View {
                     viewPan = CGSize(width: b.width + v.translation.width, height: b.height + v.translation.height)
                     return
                 }
-                guard let d = canvasDragState else { return }
+                guard let d = canvasDragState, !dragFrozen, pinchOnLayer != true else { return }
                 state.updateCanvasDrag(d, comp: toComp(v.location, fit: fit))
             }
             .onEnded { _ in
+                dragFrozen = false
                 if let k = puppetDragPin { if k >= 0 { state.endEdit() }; puppetDragPin = nil }
                 if let m = maskDrag { if m.count == 2 { state.endEdit() }; maskDrag = nil }
                 if canvasDragState != nil { state.endCanvasDrag() }

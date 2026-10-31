@@ -85,7 +85,7 @@ struct NavStrip: View {
         if visual { out.append(Item(id: "Motion Blur", icon: "wind", panel: .motionBlur)) }
         if visual { out.append(Item(id: "Time", icon: "timer", panel: .time)) }
         if !l.isAudioOnly { out.append(Item(id: c == .camera ? "Lens" : (c == .light ? "Light" : "3D"), icon: c == .camera ? "camera.aperture" : (c == .light ? "lightbulb.fill" : "cube"), panel: .threeD)) }
-        out.append(Item(id: "Easing", icon: "point.topleft.down.to.point.bottomright.curvepath") { showGraph = true })
+        out.append(Item(id: "Graph", icon: "point.topleft.down.to.point.bottomright.curvepath", panel: .graph))
         if visual && c != .adjustment { out.append(Item(id: "Physics", icon: "atom", panel: .physics)) }
         out.append(Item(id: "Layer", icon: "square.3.layers.3d", panel: .layerMenu))
         return out

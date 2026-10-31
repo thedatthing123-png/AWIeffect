@@ -180,6 +180,9 @@ struct MetalPreview: UIViewRepresentable {
             let fw = max(1, Int((Double(project.width) * fullScale).rounded()))
             let fh = max(1, Int((Double(project.height) * fullScale).rounded()))
             let frameIdx = Int((time * max(project.fps, 1)).rounded())
+            // Always render exactly on a frame (like export). Mixing in-between times with cached whole frames made
+            // keyframed layers and the camera jitter against the footage.
+            let frameTime = Double(frameIdx) / max(project.fps, 1)
 
             // Project edited / view resized: forget cached frames.
             let tk = token(project, fw, fh)
@@ -216,7 +219,7 @@ struct MetalPreview: UIViewRepresentable {
                 pool.recycle()
                 // Preview: lighter motion blur while playing, finer when paused (export always renders the full count).
                 Renderer.blurSampleCap = isPlaying ? 4 : (renderedFull ? 12 : 6)
-                r.encode(project: project, time: time, renderScale: scale, into: target, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
+                r.encode(project: project, time: frameTime, renderScale: scale, into: target, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
                 if renderedFull && cacheEnabled { remember(target, frame: frameIdx) }
                 shown = target
                 rendered = true

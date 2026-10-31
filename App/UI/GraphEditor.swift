@@ -7,6 +7,7 @@ struct EaseSegment: Equatable {
     var interpolation: Interpolation
     var out: EaseHandle
     var into: EaseHandle
+    var curve: EaseCurve? = nil
 }
 
 /// Easing presets (handle pairs in normalized segment space).
@@ -33,16 +34,20 @@ struct EasePreset: Identifiable {
 
 extension EditorState {
     /// Applies `f` to the Animated property behind `key` on the selected layer.
-    private func editKeyframes(_ key: PropertyKey, label: String, _ f: (inout [Double], inout [Interpolation], inout [EaseHandle], inout [EaseHandle]) -> Void) {
+    private func editKeyframes(_ key: PropertyKey, label: String, curves: ((inout [EaseCurve?]) -> Void)? = nil,
+                               _ f: (inout [Double], inout [Interpolation], inout [EaseHandle], inout [EaseHandle]) -> Void) {
         guard let i = selectedIndex else { return }
         func apply<V>(_ a: inout Animated<V>) {
             var times = a.keyframes.map(\.time), interps = a.keyframes.map(\.interpolation)
             var outs = a.keyframes.map(\.easeOut), ins = a.keyframes.map(\.easeIn)
+            var cs = a.keyframes.map(\.curve)
             f(&times, &interps, &outs, &ins)
+            curves?(&cs)
             for k in a.keyframes.indices {
                 a.keyframes[k].interpolation = interps[k]
                 a.keyframes[k].easeOut = outs[k]
                 a.keyframes[k].easeIn = ins[k]
+                a.keyframes[k].curve = cs[k]
             }
         }
         mutate(label) { p in
@@ -55,6 +60,9 @@ extension EditorState {
             case .size: apply(&p.layers[i].size)
             case .fill: apply(&p.layers[i].fill)
             case .cornerRadius: apply(&p.layers[i].cornerRadius)
+            case .positionZ: apply(&p.layers[i].transform.positionZ)
+            case .rotationX: apply(&p.layers[i].transform.rotationX)
+            case .rotationY: apply(&p.layers[i].transform.rotationY)
             }
         }
     }
@@ -65,7 +73,7 @@ extension EditorState {
             guard a.keyframes.count >= 2 else { return [] }
             return (0..<(a.keyframes.count - 1)).map { k in
                 EaseSegment(t0: a.keyframes[k].time, t1: a.keyframes[k + 1].time, interpolation: a.keyframes[k].interpolation,
-                            out: a.keyframes[k].easeOut, into: a.keyframes[k + 1].easeIn)
+                            out: a.keyframes[k].easeOut, into: a.keyframes[k + 1].easeIn, curve: a.keyframes[k].curve)
             }
         }
         switch key {
@@ -77,11 +85,15 @@ extension EditorState {
         case .size: return segs(l.size)
         case .fill: return segs(l.fill)
         case .cornerRadius: return segs(l.cornerRadius)
+        case .positionZ: return segs(l.transform.positionZ)
+        case .rotationX: return segs(l.transform.rotationX)
+        case .rotationY: return segs(l.transform.rotationY)
         }
     }
 
     /// Sets one segment's easing (segment index k = keyframe k -> k+1). `nil` index = all segments.
-    func setEase(_ key: PropertyKey, segment: Int?, interpolation: Interpolation, out: EaseHandle, into: EaseHandle, continuous: Bool = false) {
+    func setEase(_ key: PropertyKey, segment: Int?, interpolation: Interpolation, out: EaseHandle, into: EaseHandle,
+                 curve: EaseCurve? = nil, continuous: Bool = false) {
         let body: (inout [Double], inout [Interpolation], inout [EaseHandle], inout [EaseHandle]) -> Void = { _, interps, outs, ins in
             let n = interps.count
             guard n >= 2 else { return }
@@ -92,12 +104,29 @@ extension EditorState {
                 ins[k + 1] = into
             }
         }
+        let setCurves: (inout [EaseCurve?]) -> Void = { cs in
+            let n = cs.count
+            guard n >= 2 else { return }
+            for k in segment.map({ [$0] }) ?? Array(0..<(n - 1)) where k + 1 < n { cs[k] = curve }
+        }
         if continuous {
             beginEdit("Edit Easing")
-            editKeyframes(key, label: "Edit Easing", body)
+            editKeyframes(key, label: "Edit Easing", curves: setCurves, body)
         } else {
-            editKeyframes(key, label: "Easing", body)
+            editKeyframes(key, label: "Easing", curves: setCurves, body)
         }
+    }
+
+    /// Same ease on every animated property of the selected layer (one undo step).
+    func setEaseAll(segmentAt time: Double?, interpolation: Interpolation, out: EaseHandle, into: EaseHandle, curve: EaseCurve?) {
+        beginEdit("Easing")
+        for key in animatedKeys {
+            let segs = easeSegments(key)
+            let k = time.flatMap { t in segs.firstIndex { t >= $0.t0 - 1e-4 && t < $0.t1 - 1e-4 } }
+            if time != nil && k == nil { continue }
+            setEase(key, segment: k, interpolation: interpolation, out: out, into: into, curve: curve, continuous: true)
+        }
+        endEdit()
     }
 
     var animatedKeys: [PropertyKey] { PropertyKey.allCases.filter { isAnimated($0) } }

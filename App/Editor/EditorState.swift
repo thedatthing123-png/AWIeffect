@@ -4,7 +4,7 @@ import QuartzCore
 
 /// Which transform-ish property a panel edits (drives keyframe diamonds).
 enum PropertyKey: String, CaseIterable, Identifiable {
-    case position, scale, rotation, opacity, anchor, size, fill, cornerRadius
+    case position, scale, rotation, opacity, anchor, size, fill, cornerRadius, positionZ, rotationX, rotationY
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -16,6 +16,9 @@ enum PropertyKey: String, CaseIterable, Identifiable {
         case .size: return "Size"
         case .fill: return "Fill"
         case .cornerRadius: return "Roundness"
+        case .positionZ: return "Position Z"
+        case .rotationX: return "Rotation X"
+        case .rotationY: return "Rotation Y"
         }
     }
 }
@@ -48,6 +51,10 @@ enum ToolPanel: Equatable {
     case puppet
     case ccStudio
     case rig
+    /// Tile grid for the selected layer (opened by tapping its clip).
+    case layerHome
+    /// Flow-style easing / graph editor for the selected layer's keyframes.
+    case graph
 }
 
 /// The project as it looks mid-gesture. While a finger drags a layer on the canvas only the preview and the
@@ -77,6 +84,9 @@ final class EditorState: ObservableObject {
     @Published var linkPicking = false
     /// True while a canvas drag writes to `live` instead of `project`.
     private(set) var liveGesture = false
+    var isLiveGesture: Bool { liveGesture }
+    /// Scale / rotation when a two-finger pinch began.
+    var pinchStart: (scale: Vec2, rotation: Double)?
     /// Start positions of every selected layer while a multi-selection is dragged on the canvas.
     var multiDragStarts: [UUID: Vec2] = [:]
     /// What the canvas should draw right now (the live gesture copy, else the project).
@@ -142,6 +152,12 @@ final class EditorState: ObservableObject {
     func select(_ id: UUID?) {
         selectedLayerID = id
         if id == nil { panel = .none } else if panel == .none || panel == .add { panel = .transform }
+    }
+
+    /// Tap on a clip or its row: select it and show its menu (the tile grid of everything that layer has).
+    func openLayer(_ id: UUID) {
+        selectedLayerID = id
+        panel = .layerHome
     }
 
     // MARK: Undo
@@ -423,6 +439,9 @@ final class EditorState: ObservableObject {
         case .size: return l.size.hasKeyframe(at: t)
         case .fill: return l.fill.hasKeyframe(at: t)
         case .cornerRadius: return l.cornerRadius.hasKeyframe(at: t)
+        case .positionZ: return l.transform.positionZ.hasKeyframe(at: t)
+        case .rotationX: return l.transform.rotationX.hasKeyframe(at: t)
+        case .rotationY: return l.transform.rotationY.hasKeyframe(at: t)
         }
     }
 
@@ -437,6 +456,9 @@ final class EditorState: ObservableObject {
         case .size: return l.size.isAnimated
         case .fill: return l.fill.isAnimated
         case .cornerRadius: return l.cornerRadius.isAnimated
+        case .positionZ: return l.transform.positionZ.isAnimated
+        case .rotationX: return l.transform.rotationX.isAnimated
+        case .rotationY: return l.transform.rotationY.isAnimated
         }
     }
 
@@ -453,6 +475,9 @@ final class EditorState: ObservableObject {
             case .size: p.layers[i].size.toggleKeyframe(at: t)
             case .fill: p.layers[i].fill.toggleKeyframe(at: t)
             case .cornerRadius: p.layers[i].cornerRadius.toggleKeyframe(at: t)
+            case .positionZ: p.layers[i].transform.positionZ.toggleKeyframe(at: t)
+            case .rotationX: p.layers[i].transform.rotationX.toggleKeyframe(at: t)
+            case .rotationY: p.layers[i].transform.rotationY.toggleKeyframe(at: t)
             }
         }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -625,6 +650,9 @@ extension EditorState {
         case .size: return l.size.expression
         case .fill: return l.fill.expression
         case .cornerRadius: return l.cornerRadius.expression
+        case .positionZ: return l.transform.positionZ.expression
+        case .rotationX: return l.transform.rotationX.expression
+        case .rotationY: return l.transform.rotationY.expression
         }
     }
 
@@ -641,6 +669,9 @@ extension EditorState {
             case .size: p.layers[i].size.expression = e
             case .fill: p.layers[i].fill.expression = e
             case .cornerRadius: p.layers[i].cornerRadius.expression = e
+            case .positionZ: p.layers[i].transform.positionZ.expression = e
+            case .rotationX: p.layers[i].transform.rotationX.expression = e
+            case .rotationY: p.layers[i].transform.rotationY.expression = e
             }
         }
     }
@@ -653,6 +684,9 @@ extension EditorState {
         case .size: name = "size"
         case .fill: name = "fill"
         case .cornerRadius: name = "cornerRadius"
+        case .positionZ: name = "positionZ"
+        case .rotationX: name = "rotationX"
+        case .rotationY: name = "rotationY"
         }
         return ExpressionEngine.shared.error(for: "\(l.id)/\(name)")
     }

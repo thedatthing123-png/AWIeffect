@@ -8,6 +8,17 @@ struct AWIeffectApp: App {
     init() {
         CrashReporter.install()
         FontLibrary.shared.registerAll()
+        // Number fields select their whole value when you start typing, so a new number replaces the old one
+        // (no deleting digits first).
+        NotificationCenter.default.addObserver(forName: UITextField.textDidBeginEditingNotification, object: nil, queue: .main) { n in
+            guard let tf = n.object as? UITextField else { return }
+            switch tf.keyboardType {
+            case .numbersAndPunctuation, .decimalPad, .numberPad:
+                DispatchQueue.main.async { tf.selectAll(nil) }
+            default:
+                if tf.tag == AutoSelectField.tag { DispatchQueue.main.async { tf.selectAll(nil) } }
+            }
+        }
     }
 
     var body: some Scene {
@@ -18,6 +29,9 @@ struct AWIeffectApp: App {
         }
     }
 }
+
+/// Marker for text fields that should select everything when focused.
+enum AutoSelectField { static let tag = 7_331 }
 
 struct RootView: View {
     @State private var openProject: Project? {

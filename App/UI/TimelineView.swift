@@ -13,6 +13,8 @@ struct TimelineView: View {
     @State private var zoom: CGFloat = 90
     @State private var zoomBase: CGFloat = 90
     @State private var scrubStart: Double?
+    /// Decided on the first movement: true = horizontal (scrub), false = vertical (the list scrolls instead).
+    @State private var scrubAxis: Bool?
     @State private var multiDragStart: CGPoint?
     /// Layer as it was when a clip / trim / keyframe drag began.
     @State private var dragOriginal: Layer?
@@ -22,7 +24,7 @@ struct TimelineView: View {
     @State private var liftOffset: CGFloat = 0
 
     private let rowHeight: CGFloat = 46
-    private let headerWidth: CGFloat = 52
+    private let headerWidth: CGFloat = 60
     private let rulerHeight: CGFloat = 26
 
     var body: some View {
@@ -42,6 +44,8 @@ struct TimelineView: View {
                             .frame(width: trackWidth, height: rulerHeight)
                             .clipped()
                     }
+                    .contentShape(Rectangle())
+                    .onTapGesture { if state.isMultiSelecting { state.endMultiSelect() } else { state.select(nil) } }
                     // Header cells and track rows live in ONE scroll view so they always line up.
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack(spacing: 0) {
@@ -110,7 +114,9 @@ struct TimelineView: View {
                 .accessibilityLabel("Add beat marker")
             }
             .contentShape(Rectangle())
-            .gesture(scrub)
+            .coordinateSpace(name: "timeline")
+            // Simultaneous so the layer list can still scroll up / down with many layers.
+            .simultaneousGesture(scrub)
             .simultaneousGesture(
                 MagnificationGesture()
                     .onChanged { zoom = min(600, max(15, zoomBase * $0)) }
@@ -141,14 +147,20 @@ struct TimelineView: View {
                 .contentShape(Rectangle())
 
         }
-        .frame(width: headerWidth, height: rowHeight)
+        .frame(width: headerWidth, height: rowHeight, alignment: .leading)
         .background(Theme.surface)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if state.isMultiSelecting { state.toggleInMulti(layer.id) } else { state.openLayer(layer.id) }
+        }
     }
 
     private var scrub: some Gesture {
         DragGesture(minimumDistance: 2)
             .onChanged { v in
-                if multiDragStart != nil { return }
+                if multiDragStart != nil || liftLayer != nil || dragOriginal != nil { return }
+                if scrubAxis == nil { scrubAxis = abs(v.translation.width) >= abs(v.translation.height) }
+                guard scrubAxis == true else { return }
                 if scrubStart == nil { state.pause(); scrubStart = state.currentTime }
                 let t = (scrubStart ?? 0) - Double(v.translation.width / zoom)
                 // Snap to beat markers within ~6 pt.
@@ -161,7 +173,7 @@ struct TimelineView: View {
                     }
                 }
             }
-            .onEnded { _ in scrubStart = nil }
+            .onEnded { _ in scrubStart = nil; scrubAxis = nil }
     }
 
     private func ruler(width: CGFloat, offset: CGFloat) -> some View {
@@ -256,13 +268,13 @@ struct TimelineView: View {
         }
         .contentShape(Rectangle())
         .onTapGesture {
-            if state.isMultiSelecting { state.toggleInMulti(layer.id) } else { state.select(selected ? nil : layer.id) }
+            if state.isMultiSelecting { state.toggleInMulti(layer.id) } else { state.openLayer(layer.id) }
         }
     }
 
     private func clipHold(_ layer: Layer) -> some Gesture {
         LongPressGesture(minimumDuration: 0.28)
-            .sequenced(before: DragGesture(minimumDistance: 0))
+            .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named("timeline")))
             .onChanged { v in
                 guard case .second(true, let drag) = v else { return }
                 if liftLayer == nil {
@@ -291,7 +303,7 @@ struct TimelineView: View {
     }
 
     private func clipDrag(_ layer: Layer) -> some Gesture {
-        DragGesture(minimumDistance: 6)
+        DragGesture(minimumDistance: 6, coordinateSpace: .named("timeline"))
             .onChanged { g in
                 if multiDragStart != nil || state.isMultiSelecting { return }
                 if dragOriginal == nil { dragOriginal = layer; state.pause(); state.beginEdit("Move Clip") }
@@ -303,7 +315,7 @@ struct TimelineView: View {
     }
 
     private func keyDrag(_ layer: Layer, _ t: Double) -> some Gesture {
-        DragGesture(minimumDistance: 3)
+        DragGesture(minimumDistance: 3, coordinateSpace: .named("timeline"))
             .onChanged { g in
                 if dragOriginal == nil { dragOriginal = layer; state.pause(); state.beginEdit("Move Keyframes") }
                 guard let o = dragOriginal else { return }
@@ -317,7 +329,7 @@ struct TimelineView: View {
             .frame(width: 8, height: rowHeight - 14)
             .frame(width: 26, height: rowHeight - 4)
             .contentShape(Rectangle())
-            .highPriorityGesture(DragGesture(minimumDistance: 2)
+            .highPriorityGesture(DragGesture(minimumDistance: 2, coordinateSpace: .named("timeline"))
                 .onChanged { g in
                     if dragOriginal == nil { dragOriginal = layer; state.pause(); state.beginEdit("Trim Clip") }
                     guard let o = dragOriginal else { return }

@@ -183,6 +183,31 @@ extension EditorState {
     }
 
     func endCanvasDrag() { endLiveGesture(); endEdit(); snapGuides = SnapGuides(); multiDragStarts = [:] }
+
+    // MARK: Two-finger pinch / twist on the selected layer
+
+    func beginLayerPinch() {
+        guard let l = selectedLayer else { return }
+        if !isLiveGesture { pause(); beginEdit("Transform Layer"); beginLiveGesture() }
+        let t = currentTime
+        let src = live.project?.layers.first { $0.id == l.id } ?? l
+        pinchStart = (src.transform.scale.value(at: t), src.transform.rotation.value(at: t))
+    }
+
+    func updateLayerPinch(scale k: Double, rotation deg: Double) {
+        guard let s = pinchStart, k.isFinite, deg.isFinite else { return }
+        let t = currentTime
+        let kk = max(0.01, k)
+        mutateLayer {
+            $0.transform.scale.set(Vec2((s.scale.x * kk * 10).rounded() / 10, (s.scale.y * kk * 10).rounded() / 10), at: t)
+            $0.transform.rotation.set(((s.rotation + deg) * 10).rounded() / 10, at: t)
+        }
+    }
+
+    func endLayerPinch(ownsEdit: Bool) {
+        pinchStart = nil
+        if ownsEdit { endLiveGesture(); endEdit() }
+    }
 }
 
 /// Mode buttons + scale link toggle shown above the transform properties.

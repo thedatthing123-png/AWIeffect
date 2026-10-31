@@ -461,8 +461,16 @@ final class Renderer {
             }
 
             let M = Self.placementMatrix(layer, camera: camera, time: time, renderScale: renderScale)
-            if abs(M.determinant) < 1e-12 { continue }
+            if abs(M.determinant) < 1e-12 || !M.columns.0.x.isFinite || !M.columns.2.z.isFinite { continue }
             let hs = Self.layerHalfSize(layer, time: time)
+            // A 3D layer behind (or touching) the camera isn't drawn, like AE: projecting it would explode its bounds.
+            if layer.is3D {
+                let near = 1.0
+                let behind = [(-hs.x, -hs.y), (hs.x, -hs.y), (hs.x, hs.y), (-hs.x, hs.y)].contains { c in
+                    (M * SIMD3(c.0, c.1, 1)).z <= near * 1e-3
+                }
+                if behind { continue }
+            }
             let sc = layer.transform.scale.value(at: time)
             let pxPerLocal = layer.is3D ? Self.pixelsPerLocal(M, at: layer.transform.anchor.value(at: time))
                                         : max(1e-4, min(abs(sc.x), abs(sc.y)) / 100 * renderScale)
@@ -675,8 +683,8 @@ final class Renderer {
                 let fps = VideoSources.shared.fps(url)
                 let f = sourceTime * fps, a = f.rounded(.down), w = f - a
                 if w > 0.03, w < 0.97,
-                   let ta = VideoSources.shared.texture(url: url, time: (a + 0.5) / fps, device: device),
-                   let tb = VideoSources.shared.texture(url: url, time: (a + 1.5) / fps, device: device) {
+                   let ta = VideoSources.shared.texture(url: url, time: (a + 0.5) / fps, device: device, channel: layer.id.hashValue),
+                   let tb = VideoSources.shared.texture(url: url, time: (a + 1.5) / fps, device: device, channel: layer.id.hashValue) {
                     let out = pool.acquire(width: ta.width, height: ta.height)
                     var p = EffectParams()
                     p.a.x = Float(w)
@@ -684,11 +692,11 @@ final class Renderer {
                     return .image(out)
                 }
             }
-            guard let frame = VideoSources.shared.texture(url: url, time: sourceTime, device: device) else { return nil }
+            guard let frame = VideoSources.shared.texture(url: url, time: sourceTime, device: device, channel: layer.id.hashValue) else { return nil }
             // Pixel Motion Blur: estimate how pixels moved since the previous frame, blur along it.
             if let amt = layer.timeFX?.pixelMotionBlur, amt > 0, let pool = currentPool {
                 let fps = VideoSources.shared.fps(url)
-                if let prev = VideoSources.shared.texture(url: url, time: max(0, sourceTime - 1 / fps), device: device), prev !== frame {
+                if let prev = VideoSources.shared.texture(url: url, time: max(0, sourceTime - 1 / fps), device: device, channel: layer.id.hashValue), prev !== frame {
                     let fw = max(8, frame.width / 4), fh = max(8, frame.height / 4)
                     let flow = pool.acquire(width: fw, height: fh)
                     var p = EffectParams()
