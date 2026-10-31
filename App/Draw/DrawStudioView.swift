@@ -3,12 +3,13 @@ import MetalKit
 import PhotosUI
 
 enum DrawTool: String, CaseIterable, Identifiable {
-    case brush, eraser, lasso, wand, fill, move, eyedropper
+    case brush, eraser, selectBrush, lasso, wand, fill, move, eyedropper
     var id: String { rawValue }
     var symbol: String {
         switch self {
         case .brush: return "paintbrush.pointed.fill"
         case .eraser: return "eraser.fill"
+        case .selectBrush: return "hand.draw"
         case .lasso: return "lasso"
         case .wand: return "wand.and.stars"
         case .fill: return "drop.fill"
@@ -16,7 +17,7 @@ enum DrawTool: String, CaseIterable, Identifiable {
         case .eyedropper: return "eyedropper"
         }
     }
-    var title: String { rawValue.capitalized }
+    var title: String { self == .selectBrush ? "Select" : rawValue.capitalized }
 }
 
 /// Shared tool state between the SwiftUI chrome and the UIKit canvas.
@@ -27,6 +28,9 @@ final class DrawSession: ObservableObject {
     @Published var fillTolerance = 0.12
     @Published var gapClose = 2
     @Published var lassoPoints: [SIMD2<Double>] = []
+    /// Select Brush: remove from the selection instead of adding; snap brushed areas to the AI-detected subject.
+    @Published var selectSubtract = false
+    @Published var selectSnap = true
     var lastBrushKind: BrushKind = .pen
 
     init(engine: DrawEngine) {
@@ -99,6 +103,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         case .brush, .eraser:
             e.brush.kind = session.tool == .eraser ? .eraser : session.brush.kind
             e.beginStroke(at: p, pressure: pressure(t))
+        case .selectBrush: e.beginSelectStroke(at: p, radius: session.brush.size / 2, subtract: session.selectSubtract)
         case .lasso: session.lassoPoints = [p]
         case .wand: e.selectWand(at: p, tolerance: session.fillTolerance)
         case .fill: e.fill(at: p, tolerance: session.fillTolerance, gapClose: session.gapClose)
@@ -115,6 +120,8 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
                 session.engine.continueStroke(to: toCanvas(c.location(in: self)), pressure: pressure(c))
             }
         case .lasso: session.lassoPoints.append(toCanvas(t.location(in: self)))
+        case .selectBrush:
+            for c in event?.coalescedTouches(for: t) ?? [t] { session.engine.continueSelectStroke(to: toCanvas(c.location(in: self))) }
         default: break
         }
     }
@@ -123,6 +130,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         guard let t = touches.first else { return }
         switch session.tool {
         case .brush, .eraser: session.engine.endStroke()
+        case .selectBrush: session.engine.endSelectStroke(snapToSubject: session.selectSnap && !session.selectSubtract)
         case .lasso:
             session.engine.selectLasso(session.lassoPoints)
             session.lassoPoints = []
@@ -248,7 +256,8 @@ struct DrawStudioView: View {
                 sideSliders.padding(.leading, 8)
                 if showLayers { HStack { Spacer(); LayersPanel(engine: engine).frame(width: 250).padding(8) }.transition(.move(edge: .trailing)) }
             }
-            if engine.hasSelection || session.tool == .lasso || session.tool == .wand { selectionBar }
+            if session.tool == .selectBrush { selectBrushBar }
+            if engine.hasSelection || session.tool == .lasso || session.tool == .wand || session.tool == .selectBrush { selectionBar }
             bottomBar
         }
         .background(Theme.background.ignoresSafeArea())
@@ -295,6 +304,21 @@ struct DrawStudioView: View {
             VerticalSlider(value: Binding(get: { session.brush.opacity * 100 }, set: { session.brush.opacity = $0 / 100 }), range: 1...100, label: "\(Int(session.brush.opacity * 100))%")
         }
         .padding(.vertical, 8).padding(.horizontal, 4).glass(radius: 14)
+    }
+
+    /// Select Brush options, right above the selection actions.
+    private var selectBrushBar: some View {
+        HStack(spacing: 6) {
+            Picker("", selection: $session.selectSubtract) {
+                Text("Add").tag(false)
+                Text("Remove").tag(true)
+            }
+            .pickerStyle(.segmented).frame(width: 150)
+            Toggle("Snap to Subject (AI)", isOn: $session.selectSnap).toggleStyle(.button).tint(Theme.accent)
+                .font(.system(size: 12, weight: .semibold))
+            Spacer()
+        }
+        .padding(.horizontal, 10)
     }
 
     private var selectionBar: some View {

@@ -4,6 +4,7 @@ import CoreGraphics
 import UIKit
 import simd
 import CoreImage
+import Vision
 
 /// Must match DabParams / LayerCompositeParams in Draw.metal.
 struct DabParams { var color: SIMD4<Float>; var dab: SIMD4<Float>; var extra: SIMD4<Float>; var region: SIMD4<UInt32> }
@@ -605,6 +606,92 @@ final class DrawEngine: ObservableObject {
         hasSelection = true
         revision += 1
         return true
+    }
+
+    // MARK: Select Brush
+
+    private var selBuf: [UInt8] = []
+    private var selBefore: [UInt8] = []
+    private var selStroke: [SIMD2<Double>] = []
+    private var selRadius = 10.0
+    private var selSubtract = false
+    private var selLast: SIMD2<Double>?
+
+    /// Starts painting the selection (add or remove). Brushed areas can then snap to the subject under them.
+    func beginSelectStroke(at p: SIMD2<Double>, radius: Double, subtract: Bool) {
+        selBefore = hasSelection ? selectionBytes() : [UInt8](repeating: 0, count: width * height)
+        selBuf = selBefore
+        selStroke = [p]; selRadius = max(2, radius); selSubtract = subtract; selLast = p
+        paintSelection(at: p)
+        uploadSelection()
+    }
+
+    func continueSelectStroke(to p: SIMD2<Double>) {
+        guard let last = selLast else { return }
+        let d = simd_length(p - last), step = max(1, selRadius * 0.35)
+        var t = step
+        while t <= d { paintSelection(at: last + (p - last) * (t / d)); t += step }
+        selStroke.append(p); selLast = p
+        uploadSelection()
+    }
+
+    func endSelectStroke(snapToSubject: Bool) {
+        if snapToSubject { snapSelection() }
+        uploadSelection()
+        hasSelection = selBuf.contains { $0 > 0 }
+        selLast = nil
+        revision += 1
+    }
+
+    private func paintSelection(at p: SIMD2<Double>) {
+        let r = selRadius, r2 = r * r
+        let x0 = max(0, Int(p.x - r)), x1 = min(width - 1, Int(p.x + r)), y0 = max(0, Int(p.y - r)), y1 = min(height - 1, Int(p.y + r))
+        guard x1 >= x0, y1 >= y0 else { return }
+        for y in y0...y1 {
+            for x in x0...x1 {
+                let dx = Double(x) + 0.5 - p.x, dy = Double(y) + 0.5 - p.y
+                let dd = dx * dx + dy * dy
+                guard dd <= r2 else { continue }
+                let a = UInt8(255 * min(1, (r - sqrt(dd)) / 1.5))
+                let i = y * width + x
+                selBuf[i] = selSubtract ? min(selBuf[i], 255 - a) : max(selBuf[i], a)
+            }
+        }
+    }
+
+    private func uploadSelection() {
+        guard selBuf.count == width * height else { return }
+        selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: selBuf, bytesPerRow: width)
+    }
+
+    /// The brushed area becomes the exact subject(s) it touched (AI instance masks, edge-accurate); whatever was
+    /// selected before stays. If nothing is recognized under the brush, the painted shape is kept as is.
+    private func snapSelection() {
+        guard let l = activeLayer, let cg = cgImage(bytes(of: l)) else { return }
+        let handler = VNImageRequestHandler(cgImage: cg, options: [:])
+        let req = VNGenerateForegroundInstanceMaskRequest()
+        guard (try? handler.perform([req])) != nil, let obs = req.results?.first else { return }
+        let labels = obs.instanceMask
+        CVPixelBufferLockBaseAddress(labels, .readOnly)
+        let lw = CVPixelBufferGetWidth(labels), lh = CVPixelBufferGetHeight(labels), row = CVPixelBufferGetBytesPerRow(labels)
+        var picked = IndexSet()
+        if let base = CVPixelBufferGetBaseAddress(labels)?.assumingMemoryBound(to: UInt8.self) {
+            for p in selStroke {
+                let x = min(lw - 1, max(0, Int(p.x / Double(width) * Double(lw))))
+                let y = min(lh - 1, max(0, Int(p.y / Double(height) * Double(lh))))
+                let v = Int(base[y * row + x])
+                if v > 0 { picked.insert(v) }
+            }
+        }
+        CVPixelBufferUnlockBaseAddress(labels, .readOnly)
+        guard !picked.isEmpty, let pb = try? obs.generateScaledMaskForImage(forInstances: picked, from: handler) else { return }
+        let ci = CIImage(cvPixelBuffer: pb)
+        let sx = CGFloat(width) / ci.extent.width, sy = CGFloat(height) / ci.extent.height
+        let img = ci.transformed(by: CGAffineTransform(scaleX: sx, y: -sy).translatedBy(x: 0, y: -ci.extent.height))
+        var mask = [UInt8](repeating: 0, count: width * height)
+        CIContext().render(img, toBitmap: &mask, rowBytes: width, bounds: CGRect(x: 0, y: 0, width: width, height: height),
+                           format: .L8, colorSpace: CGColorSpaceCreateDeviceGray())
+        for i in 0..<(width * height) { selBuf[i] = max(selBefore[i], mask[i]) }
     }
 
     /// Selection → its own layer (the subject lifted off its background, ready to redraw around).

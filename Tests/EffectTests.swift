@@ -67,6 +67,10 @@ final class EffectTests: XCTestCase {
         case "ae.colorBalance": n("mr", 60); n("sb", 50)
         case "ae.changeToColor": e.params["from"] = .color(Animated(RGBA(0.6, 0.2, 0.9))); n("tolerance", 20)
         case "ae.strobe": n("duration", 0.2)
+        case "awi18.puppet":
+            // A held pin at the center and a dragged pin near the top: the top bends sideways.
+            e.params["pinR0"] = .point(Animated(Vec2(0, 20))); e.params["pinD0"] = .point(Animated(Vec2(0, 20)))
+            e.params["pinR1"] = .point(Animated(Vec2(0, -35))); e.params["pinD1"] = .point(Animated(Vec2(28, -30)))
         default: break
         }
         return e

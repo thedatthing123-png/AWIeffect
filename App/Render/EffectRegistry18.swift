@@ -6,7 +6,7 @@ import simd
 /// Twitch-style glitch bursts and a manga negative / mono flash.
 extension EffectRegistry {
     static let batch18: [EffectDefinition] = [shakePro18, zoomPunch18, twitch18, negativeFlash18,
-                                              warpChroma18, scanTear18, waveGlitch18, blockShuffle18, channelSmear18]
+                                              warpChroma18, scanTear18, waveGlitch18, blockShuffle18, channelSmear18, puppet18]
 
     /// Quantizes time to "hold" frames (choppy anime shake: the shake jumps every few frames).
     private static func held(_ t: Double, _ hold: Double) -> Double {
@@ -222,4 +222,38 @@ extension EffectRegistry {
         stage: .pixels { ctx in run18(ctx, 6) { p in
             p.a = SIMD4(Float(ctx.num("length") * ctx.unit), Float(ctx.num("angle") * .pi / 180), Float(ctx.num("spread") / 100), 0)
         } })
+
+    /// Pins stored in the instance: "pinR<i>" rest point and "pinD<i>" (animatable) dragged point, layer px.
+    static func puppetPins(_ e: EffectInstance, _ t: Double) -> [SIMD4<Float>] {
+        var out: [SIMD4<Float>] = []
+        var i = 0
+        while let r = e.params["pinR\(i)"], out.count < 32 {
+            let rest = r.point(at: t), def = e.params["pinD\(i)"]?.point(at: t) ?? rest
+            out.append(SIMD4(Float(rest.x), Float(rest.y), Float(def.x), Float(def.y)))
+            i += 1
+        }
+        return out
+    }
+
+    static let puppet18 = EffectDefinition(
+        id: "awi18.puppet", name: "Puppet Pins", category: .distort,
+        aeMatchNames: ["ADBE FreePin3"],
+        summary: "AE Puppet tool: tap the layer to drop pins, drag a pin to bend the image around it (hair, capes, arms). Turn Animate on to keyframe each pose.",
+        params: [
+            .number("stiffness", "Stiffness", 1.2, 0.5, 3, step: 0.05),
+        ],
+        margin: { e, t in
+            let pins = puppetPins(e, t)
+            return Double(pins.map { max(abs($0.z - $0.x), abs($0.w - $0.y)) }.max() ?? 0)
+        },
+        stage: .pixels { ctx in
+            let pins = puppetPins(ctx.effect, ctx.time)
+            guard !pins.isEmpty else { return ctx.input }
+            let out = ctx.temp()
+            var p = EffectParams()
+            p.a = SIMD4(Float(ctx.num("stiffness")), Float(ctx.unit), 0, 0)
+            p.i.y = UInt32(pins.count)
+            ctx.gpu.run("fxPuppet", ctx.cb, textures: [ctx.input, out], params: p, extra: pins, grid: out)
+            return out
+        })
 }

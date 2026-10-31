@@ -110,3 +110,44 @@ kernel void fx18(texture2d<half, access::sample> src [[texture(0)]],
     }
     dst.write(half4(o), gid);
 }
+
+// Puppet Pins: rigid moving-least-squares warp (Schaefer et al.), solved backwards (deformed pins -> rest pins)
+// so each output pixel finds where to read the source. pins[k] = (restX, restY, deformedX, deformedY), layer px.
+// a = (stiffness exponent, unit = texture px per layer px, -, -), i.y = pin count.
+kernel void fxPuppet(texture2d<half, access::sample> src [[texture(0)]],
+                     texture2d<half, access::write> dst [[texture(1)]],
+                     constant EffectParams& p [[buffer(0)]],
+                     constant float4* pins [[buffer(1)]],
+                     uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    float2 size = float2(dst.get_width(), dst.get_height());
+    float2 c = float2(gid) + 0.5;
+    float unit = max(p.a.y, 1e-4);
+    float2 v = (c - size * 0.5) / unit;
+    uint n = min(p.i.y, 32u);
+    if (n == 0) { dst.write(src.sample(sm18, c), gid); return; }
+    float wsum = 0.0; float2 qs = 0.0, ps = 0.0;
+    for (uint k = 0; k < n; k++) {
+        float2 q = pins[k].zw, r = pins[k].xy;
+        float w = 1.0 / pow(max(dot(q - v, q - v), 1.0), p.a.x);
+        wsum += w; qs += w * q; ps += w * r;
+    }
+    qs /= wsum; ps /= wsum;
+    float2 f;
+    if (n == 1) {
+        f = v + (ps - qs);
+    } else {
+        // Complex-number form: T = sum w conj(qh) ph, rotation of d = v - q* by T, length kept (rigid).
+        float2 T = 0.0;
+        float2 d = v - qs;
+        for (uint k = 0; k < n; k++) {
+            float2 q = pins[k].zw - qs, r = pins[k].xy - ps;
+            float w = 1.0 / pow(max(dot(pins[k].zw - v, pins[k].zw - v), 1.0), p.a.x);
+            T += w * float2(q.x * r.x + q.y * r.y, q.x * r.y - q.y * r.x);
+        }
+        float tl = length(T);
+        float2 rot = tl > 1e-8 ? T / tl : float2(1.0, 0.0);
+        f = ps + float2(d.x * rot.x - d.y * rot.y, d.x * rot.y + d.y * rot.x);
+    }
+    dst.write(src.sample(sm18, size * 0.5 + f * unit), gid);
+}

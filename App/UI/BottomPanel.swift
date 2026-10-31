@@ -72,6 +72,7 @@ struct BottomPanel: View {
                 case .scene: ScenePanel(state: state)
                 case .time: TimePanel(state: state)
                 case .scene3D: Scene3DPanel(state: state)
+                case .puppet: PuppetPanel(state: state)
                 case .none: EmptyView()
                 }
             }

@@ -45,6 +45,7 @@ enum ToolPanel: Equatable {
     case scene
     case time
     case scene3D
+    case puppet
 }
 
 /// The project as it looks mid-gesture. While a finger drags a layer on the canvas only the preview and the
@@ -68,6 +69,8 @@ final class EditorState: ObservableObject {
     }
     let clock = PlayClock()
     let live = LiveCanvas()
+    /// Puppet: drags keyframe pins at the playhead.
+    @Published var puppetAnimate = true
     /// True while a canvas drag writes to `live` instead of `project`.
     private(set) var liveGesture = false
     /// Start positions of every selected layer while a multi-selection is dragged on the canvas.

@@ -66,6 +66,7 @@ struct NavStrip: View {
         if l.drawingID != nil { out.append(Item(id: "Drawing", icon: "paintbrush.pointed.fill") { drawLauncher.open(state.selectedLayerID) }) }
         else if l.mediaFile != nil, !l.isAudioOnly { out.append(Item(id: "Redraw", icon: "paintbrush.pointed.fill") { drawLauncher.open(state.selectedLayerID) }) }
         if visual { out.append(Item(id: "Effects", icon: "sparkles", panel: .effects)) }
+        if visual, c != .text { out.append(Item(id: "Puppet", icon: "hand.point.up.braille", panel: .puppet)) }
         if visual { out.append(Item(id: "Presets", icon: "wand.and.rays", panel: .presets)) }
         switch c {
         case .shape, .solid, .text: out.append(Item(id: "Color & Fill", icon: "paintpalette", panel: .fill))

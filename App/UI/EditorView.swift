@@ -282,6 +282,9 @@ struct EditorView: View {
                 if trackLauncher.active {
                     TrackOverlay(state: state, fit: fit) { trackLauncher.active = false }
                 }
+                if state.panel == .puppet, state.viewMode == .comp {
+                    ClockReader(clock: state.clock) { _ in PuppetOverlay(state: state, fit: fit) }
+                }
                 if pen == nil, state.viewMode == .comp, let id = state.selectedLayerID {
                     LiveReader(live: state.live) { lp in
                         ClockReader(clock: state.clock) { t in
@@ -337,7 +340,12 @@ struct EditorView: View {
             }, including: pen == nil && state.viewMode == .comp ? .all : .subviews)
             .simultaneousGesture(orbitDrag, including: state.viewMode == .orbit ? .all : .subviews)
             .simultaneousGesture(orbitZoom, including: state.viewMode == .orbit ? .all : .subviews)
-            .simultaneousGesture(SpatialTapGesture().onEnded { v in if pen == nil && state.viewMode == .comp { tapSelect(at: v.location, fit: fit) } })
+            .simultaneousGesture(SpatialTapGesture().onEnded { v in
+                guard pen == nil && state.viewMode == .comp else { return }
+                // Puppet panel open: taps drop pins instead of selecting layers.
+                if state.panel == .puppet, state.selectedLayerID != nil { state.addPuppetPin(atComp: toComp(v.location, fit: fit)); return }
+                tapSelect(at: v.location, fit: fit)
+            })
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -349,6 +357,7 @@ struct EditorView: View {
     }
 
     @State private var orbitStart: OrbitCamera?
+    @State private var puppetDragPin: Int?
     @State private var orbitZoomStart: Double?
 
     /// 3D view: one finger orbits (two fingers pan via the pinch's drift), pinch dollies.
@@ -375,6 +384,15 @@ struct EditorView: View {
     private func canvasDrag(fit: CGRect) -> some Gesture {
         DragGesture(minimumDistance: 4)
             .onChanged { v in
+                // Puppet: drag the nearest pin.
+                if state.panel == .puppet, canvasDragState == nil, panBase == nil {
+                    if puppetDragPin == nil {
+                        let reach = 30 * Double(state.project.width) / Double(max(fit.width, 1))
+                        puppetDragPin = state.puppetPin(nearComp: toComp(v.startLocation, fit: fit), reach: reach) ?? -1
+                        if puppetDragPin! >= 0 { state.beginEdit("Move Pin") }
+                    }
+                    if let k = puppetDragPin, k >= 0 { state.movePuppetPin(k, toComp: toComp(v.location, fit: fit)); return }
+                }
                 if canvasDragState == nil && panBase == nil {
                     canvasDragState = state.beginCanvasDrag(at: v.startLocation, comp: toComp(v.startLocation, fit: fit), fit: fit)
                     if canvasDragState == nil { panBase = viewPan }
@@ -387,6 +405,7 @@ struct EditorView: View {
                 state.updateCanvasDrag(d, comp: toComp(v.location, fit: fit))
             }
             .onEnded { _ in
+                if let k = puppetDragPin { if k >= 0 { state.endEdit() }; puppetDragPin = nil }
                 if canvasDragState != nil { state.endCanvasDrag() }
                 canvasDragState = nil
                 panBase = nil

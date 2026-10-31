@@ -137,7 +137,7 @@ final class EffectGPU {
         for name in ["fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
                      "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix",
                      "fxWarp", "fxStylize", "fxGlitch", "fxColor2", "fxSaberCore", "fxShine", "fxParticles", "fxPixelSort",
-                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix"] {
+                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet"] {
             guard let f = library.makeFunction(name: name) else { throw RenderError.pipeline(name) }
             psos[name] = try device.makeComputePipelineState(function: f)
         }
@@ -149,6 +149,22 @@ final class EffectGPU {
         enc.setComputePipelineState(pso)
         for (i, t) in textures.enumerated() { enc.setTexture(t, index: i) }
         if var p = params { enc.setBytes(&p, length: MemoryLayout<EffectParams>.stride, index: 0) }
+        let tw = pso.threadExecutionWidth
+        let th = max(1, pso.maxTotalThreadsPerThreadgroup / tw)
+        enc.dispatchThreadgroups(MTLSize(width: (grid.width + tw - 1) / tw, height: (grid.height + th - 1) / th, depth: 1),
+                                 threadsPerThreadgroup: MTLSize(width: tw, height: th, depth: 1))
+        enc.endEncoding()
+    }
+
+    /// Like `run`, plus an array of float4 bound at buffer 1 (variable-length data such as puppet pins).
+    func run(_ name: String, _ cb: MTLCommandBuffer, textures: [MTLTexture], params: EffectParams, extra: [SIMD4<Float>], grid: MTLTexture) {
+        guard let pso = psos[name], let enc = cb.makeComputeCommandEncoder() else { return }
+        enc.setComputePipelineState(pso)
+        for (i, t) in textures.enumerated() { enc.setTexture(t, index: i) }
+        var p = params
+        enc.setBytes(&p, length: MemoryLayout<EffectParams>.stride, index: 0)
+        var data = extra.isEmpty ? [SIMD4<Float>(repeating: 0)] : extra
+        enc.setBytes(&data, length: MemoryLayout<SIMD4<Float>>.stride * data.count, index: 1)
         let tw = pso.threadExecutionWidth
         let th = max(1, pso.maxTotalThreadsPerThreadgroup / tw)
         enc.dispatchThreadgroups(MTLSize(width: (grid.width + tw - 1) / tw, height: (grid.height + th - 1) / th, depth: 1),
