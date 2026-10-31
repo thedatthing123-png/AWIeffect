@@ -5,32 +5,58 @@ import MetalKit
 import CoreImage
 
 /// Decodes video frames for layers (preview, thumbnails and export all go through here).
+///
+/// Playback reads frames sequentially with an `AVAssetReader` (like a real player) instead of an exact seek per
+/// frame, and decodes a few frames ahead on a background queue so the preview usually finds the next frame ready.
+/// Every decode for a file is serialized, so preview, export and thumbnails can ask at the same time safely.
 final class VideoSources {
     static let shared = VideoSources()
 
     private final class Source {
         let asset: AVURLAsset
-        let generator: AVAssetImageGenerator
+        let track: AVAssetTrack?
         let duration: Double
         let fps: Double
+        let orientation: CGImagePropertyOrientation
+        /// Serializes reader use for this file.
+        let decodeLock = NSLock()
+        var reader: AVAssetReader?
+        var output: AVAssetReaderTrackOutput?
+        /// Index of the last frame the reader handed out (-1 = none).
+        var readerFrame = -1
+        // Guarded by VideoSources.lock.
+        var lastRequest = -10
+        var prefetching = false
         var cache: [Int: MTLTexture] = [:]
         var order: [Int] = []
+
         init(url: URL) {
             asset = AVURLAsset(url: url, options: [AVURLAssetPreferPreciseDurationAndTimingKey: true])
-            generator = AVAssetImageGenerator(asset: asset)
-            generator.appliesPreferredTrackTransform = true
-            generator.requestedTimeToleranceBefore = .zero
-            generator.requestedTimeToleranceAfter = .zero
-            generator.maximumSize = CGSize(width: 2160, height: 2160)
+            track = asset.tracks(withMediaType: .video).first
             duration = CMTimeGetSeconds(asset.duration)
-            fps = Double(asset.tracks(withMediaType: .video).first?.nominalFrameRate ?? 30)
+            fps = Double(max(1, track?.nominalFrameRate ?? 30))
+            orientation = Self.orientation(track?.preferredTransform ?? .identity)
+        }
+
+        static func orientation(_ t: CGAffineTransform) -> CGImagePropertyOrientation {
+            let deg = (atan2(Double(t.b), Double(t.a)) * 180 / .pi).rounded()
+            switch deg {
+            case 90: return .right
+            case -90: return .left
+            case 180, -180: return .down
+            default: return .up
+            }
         }
     }
 
     private var sources: [String: Source] = [:]
     private let lock = NSLock()
-    private var loader: MTKTextureLoader?
-    static let cacheFrames = 12
+    private let prefetchQueue = DispatchQueue(label: "awi.video.prefetch", qos: .userInitiated)
+    private let ciLock = NSLock()
+    private var ciContext: CIContext?
+    static let cacheFrames = 24
+    static let prefetchAhead = 4
+    static let maxSide: CGFloat = 2160
 
     private func source(_ url: URL) -> Source {
         lock.lock(); defer { lock.unlock() }
@@ -45,26 +71,119 @@ final class VideoSources {
     /// Frame texture at `time` seconds of the source (clamped), cached per source frame.
     func texture(url: URL, time: Double, device: MTLDevice) -> MTLTexture? {
         let s = source(url)
-        let t = min(max(0, time), max(0, s.duration - 1 / max(s.fps, 1)))
-        let frame = Int((t * s.fps).rounded(.down))
+        guard s.duration > 0 else { return nil }
+        let t = min(max(0, time), max(0, s.duration - 1 / s.fps))
+        let frame = Int((t * s.fps + 1e-3).rounded(.down))
         lock.lock()
-        if let tex = s.cache[frame] { lock.unlock(); return tex }
-        if loader == nil { loader = MTKTextureLoader(device: device) }
-        let loader = self.loader!
+        let hit = s.cache[frame]
+        let sequential = frame > s.lastRequest && frame - s.lastRequest <= 3
+        s.lastRequest = frame
         lock.unlock()
-        let cm = CMTime(seconds: (Double(frame) + 0.5) / s.fps, preferredTimescale: 60000)
-        guard let cg = try? s.generator.copyCGImage(at: cm, actualTime: nil),
-              let tex = try? loader.newTexture(cgImage: cg, options: [.SRGB: false, .textureStorageMode: MTLStorageMode.private.rawValue])
-        else { return nil }
-        lock.lock()
-        s.cache[frame] = tex
-        s.order.append(frame)
-        if s.order.count > Self.cacheFrames { s.cache[s.order.removeFirst()] = nil }
-        lock.unlock()
+        let tex = hit ?? decode(s, frame: frame, device: device)
+        if sequential { prefetch(s, after: frame, device: device) }
         return tex
     }
 
-    func clear() { lock.lock(); sources.removeAll(); lock.unlock() }
+    private func cachedTexture(_ s: Source, _ frame: Int) -> MTLTexture? {
+        lock.lock(); defer { lock.unlock() }
+        return s.cache[frame]
+    }
+
+    private func store(_ s: Source, _ frame: Int, _ tex: MTLTexture) {
+        lock.lock()
+        if s.cache[frame] == nil { s.order.append(frame) }
+        s.cache[frame] = tex
+        while s.order.count > Self.cacheFrames { s.cache[s.order.removeFirst()] = nil }
+        lock.unlock()
+    }
+
+    /// Decodes the next few frames in the background while playback continues.
+    private func prefetch(_ s: Source, after frame: Int, device: MTLDevice) {
+        lock.lock()
+        if s.prefetching { lock.unlock(); return }
+        s.prefetching = true
+        lock.unlock()
+        let last = max(0, Int(s.duration * s.fps) - 1)
+        prefetchQueue.async { [weak self] in
+            guard let self else { return }
+            var f = frame + 1
+            while f <= min(last, frame + Self.prefetchAhead) {
+                // Playback jumped elsewhere: stop guessing.
+                self.lock.lock(); let req = s.lastRequest; self.lock.unlock()
+                if req > f || f - req > Self.prefetchAhead + 2 { break }
+                if self.cachedTexture(s, f) == nil { _ = self.decode(s, frame: f, device: device) }
+                f += 1
+            }
+            self.lock.lock(); s.prefetching = false; self.lock.unlock()
+        }
+    }
+
+    private func decode(_ s: Source, frame: Int, device: MTLDevice) -> MTLTexture? {
+        s.decodeLock.lock(); defer { s.decodeLock.unlock() }
+        if let t = cachedTexture(s, frame) { return t }
+        guard let track = s.track else { return nil }
+        // Restart the reader for backwards jumps and long forward skips (cheaper than decoding through).
+        if s.reader == nil || s.reader?.status != .reading || frame <= s.readerFrame || frame - s.readerFrame > Int(s.fps * 1.5) {
+            s.reader?.cancelReading()
+            s.reader = nil; s.output = nil; s.readerFrame = -1
+            guard let r = try? AVAssetReader(asset: s.asset) else { return nil }
+            let o = AVAssetReaderTrackOutput(track: track, outputSettings: [
+                kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+                kCVPixelBufferMetalCompatibilityKey as String: true,
+            ])
+            o.alwaysCopiesSampleData = false
+            guard r.canAdd(o) else { return nil }
+            r.add(o)
+            let start = max(0, (Double(frame) - 0.5) / s.fps)
+            r.timeRange = CMTimeRange(start: CMTime(seconds: start, preferredTimescale: 60000), end: .positiveInfinity)
+            guard r.startReading() else { return nil }
+            s.reader = r; s.output = o
+        }
+        guard let o = s.output else { return nil }
+        while let sample = o.copyNextSampleBuffer() {
+            guard let pb = CMSampleBufferGetImageBuffer(sample) else { continue }
+            let pts = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sample))
+            let idx = Int((pts * s.fps + 0.25).rounded(.down))
+            s.readerFrame = idx
+            if idx < frame { continue }
+            guard let tex = makeTexture(pb, orientation: s.orientation, device: device) else { return nil }
+            store(s, idx, tex)
+            // A frame missing in the file (variable frame rate): show the next one for the requested index.
+            if idx != frame { store(s, frame, tex) }
+            return tex
+        }
+        // Reader ran off the end: show the last decoded frame, if any.
+        lock.lock(); defer { lock.unlock() }
+        return s.order.last.flatMap { s.cache[$0] }
+    }
+
+    /// Pixel buffer → oriented, size-capped GPU texture (values passed through untouched: still sRGB-encoded).
+    private func makeTexture(_ pb: CVPixelBuffer, orientation: CGImagePropertyOrientation, device: MTLDevice) -> MTLTexture? {
+        ciLock.lock(); defer { ciLock.unlock() }
+        if ciContext == nil {
+            ciContext = CIContext(mtlDevice: device, options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull(), .cacheIntermediates: false])
+        }
+        guard let ctx = ciContext else { return nil }
+        var img = CIImage(cvPixelBuffer: pb).oriented(orientation)
+        img = img.transformed(by: CGAffineTransform(translationX: -img.extent.minX, y: -img.extent.minY))
+        let fit = min(1, Self.maxSide / max(img.extent.width, img.extent.height))
+        if fit < 1 { img = img.transformed(by: CGAffineTransform(scaleX: fit, y: fit)) }
+        let w = max(1, Int(img.extent.width.rounded())), h = max(1, Int(img.extent.height.rounded()))
+        // Core Image is y-up; Metal textures are y-down.
+        img = img.transformed(by: CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: -CGFloat(h)))
+        let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: w, height: h, mipmapped: false)
+        d.usage = [.shaderRead, .shaderWrite, .renderTarget]
+        d.storageMode = .private
+        guard let tex = device.makeTexture(descriptor: d), let cb = Renderer.shared?.queue.makeCommandBuffer() else { return nil }
+        ctx.render(img, to: tex, commandBuffer: cb, bounds: CGRect(x: 0, y: 0, width: w, height: h), colorSpace: CGColorSpaceCreateDeviceRGB())
+        cb.commit()
+        return tex
+    }
+
+    func clear() {
+        lock.lock(); let all = Array(sources.values); sources.removeAll(); lock.unlock()
+        for s in all { s.decodeLock.lock(); s.reader?.cancelReading(); s.decodeLock.unlock() }
+    }
 }
 
 /// Mapping from comp time to source time for media layers (speed, trim, time remap).

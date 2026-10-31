@@ -57,7 +57,8 @@ final class ExportTests: XCTestCase {
         var s = ExportSettings(); s.fps = 24; s.scale = 0.5
         let url = try await export(p, media, s)
         let asset = AVURLAsset(url: url)
-        XCTAssertEqual(try await asset.loadTracks(withMediaType: .video).count, 1)
+        let tracks = try await asset.loadTracks(withMediaType: .video)
+        XCTAssertEqual(tracks.count, 1)
     }
 
     func testGIFExport() async throws {
