@@ -81,7 +81,11 @@ extension EffectRegistry {
             if let bl = ctx.cb.makeBlitCommandEncoder() { bl.copy(from: ctx.input, to: out); bl.endEncoding() }
             let u = ctx.unit
             let rate = ctx.num("rate"), life = ctx.num("life")
-            let count = UInt32(min(20000, max(1, (rate * life).rounded(.up))))
+            // Pixel budget: big particles draw fewer at once, so a frame can never flood the GPU.
+            let sizePx = max(1, ctx.num("size") * u * (ctx.effect.choice("sprite") == 2 ? 3 : 1))
+            let budget = max(2_000_000, 6 * Double(ctx.width * ctx.height))
+            let byBudget = max(1, budget / (sizePx * sizePx))
+            let count = UInt32(min(20000, byBudget, max(1, (rate * life).rounded(.up))))
             let ca = ctx.effect.color("colorA", ctx.time), cb = ctx.effect.color("colorB", ctx.time)
             let dir = ctx.effect.number("direction", ctx.time) * .pi / 180
             var uni = ParticleUniforms(

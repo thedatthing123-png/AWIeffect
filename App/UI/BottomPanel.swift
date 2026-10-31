@@ -574,6 +574,7 @@ struct LayerMenuPanel: View {
                 if case .precomp = state.selectedLayer?.content {
                     ToolTile(icon: "arrow.down.right.and.arrow.up.left", title: "Open Pre-comp") { state.openPrecomp() }
                 } else {
+                    ToolTile(icon: "folder.badge.plus", title: "Group") { state.groupSelected() }
                     ToolTile(icon: "square.stack.3d.up", title: "Pre-compose") { state.precomposeSelected() }
                 }
                 if state.selectedLayer?.isMedia == true || state.selectedLayer?.isImage == true {

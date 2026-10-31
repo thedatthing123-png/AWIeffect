@@ -343,17 +343,22 @@ struct DrawStudioView: View {
 
     private var bottomBar: some View {
         HStack(spacing: 4) {
+            // Tools scroll sideways so every name stays readable; brushes + color stay pinned on the right.
+            ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 4) {
             ForEach(DrawTool.allCases) { t in
                 Button { session.tool = t } label: {
                     VStack(spacing: 2) {
                         Image(systemName: t.symbol).font(.system(size: 16, weight: .semibold))
-                        Text(t.title).font(.system(size: 9, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
+                        Text(t.title).font(.system(size: 10, weight: .semibold)).lineLimit(1).fixedSize()
                     }
-                        .frame(maxWidth: .infinity, minHeight: 46)
+                        .frame(minWidth: 52, minHeight: 46).padding(.horizontal, 2)
                         .foregroundStyle(session.tool == t ? Theme.accentGlow : Theme.text)
                         .background(RoundedRectangle(cornerRadius: 10).fill(session.tool == t ? Theme.accent.opacity(0.22) : .clear))
                 }
                 .accessibilityLabel(t.title)
+            }
+            }
             }
             Button { showBrushes = true } label: {
                 VStack(spacing: 2) {

@@ -153,6 +153,15 @@ final class EffectThumbnails {
         // Make subtle defaults visible in a thumbnail.
         switch def.id {
         case "ae.gaussianBlur": inst.params["blurriness"] = .number(Animated(14))
+        case "awi18.grade":
+            inst.params["temp"] = .number(Animated(45)); inst.params["contrast"] = .number(Animated(35))
+            inst.params["liftB"] = .number(Animated(40)); inst.params["gainR"] = .number(Animated(30))
+        case "awi18.transform":
+            inst.params["x"] = .number(Animated(120)); inst.params["rotation"] = .number(Animated(18)); inst.params["scale"] = .number(Animated(80))
+        case "awi18.puppet":
+            inst.params["pinR0"] = .point(Animated(Vec2(0, 200))); inst.params["pinD0"] = .point(Animated(Vec2(0, 200)))
+            inst.params["pinR1"] = .point(Animated(Vec2(0, -250))); inst.params["pinD1"] = .point(Animated(Vec2(220, -200)))
+        case "awi18.negativeFlash": inst.params["rate"] = .number(Animated(3))
         case "ae.exposure": inst.params["exposure"] = .number(Animated(1.2))
         case "ae.brightnessContrast": inst.params["contrast"] = .number(Animated(45))
         case "ae.hueSaturation": inst.params["hue"] = .number(Animated(120))
