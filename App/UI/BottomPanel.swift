@@ -131,6 +131,7 @@ struct AddPanel: View {
                         }
                         ToolTile(icon: "rectangle.fill", title: "Solid") { state.addSolid() }
                         ToolTile(icon: "slider.horizontal.below.rectangle", title: "Adjustment") { state.addAdjustmentLayer() }
+                        ToolTile(icon: "sparkles", title: "Particles") { state.addParticleLayer() }
                     }
                     section("Draw") {
                         ToolTile(icon: "paintbrush.pointed.fill", title: "Draw Studio") { drawLauncher.open(nil) }

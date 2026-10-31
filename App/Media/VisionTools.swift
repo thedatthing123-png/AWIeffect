@@ -27,6 +27,12 @@ struct CutoutSettings: Codable, Equatable {
     /// Softens the matte edge, px.
     var feather = 1.0
     var invert = false
+    /// Video: blends each matte with its neighbouring frames so edges don't flicker (0-100).
+    var stabilityStore: Double? = nil
+    var stability: Double { get { stabilityStore ?? 50 } set { stabilityStore = newValue } }
+    /// Sharpens (+) a soft matte edge into a clean cut; 0 keeps the AI's natural softness (hair).
+    var edgeContrastStore: Double? = nil
+    var edgeContrast: Double { get { edgeContrastStore ?? 0 } set { edgeContrastStore = newValue } }
 }
 
 extension VideoSources {
@@ -49,7 +55,78 @@ final class CutoutEngine {
     private var order: [String] = []
     private let lock = NSLock()
 
+    private var raw: [String: (w: Int, h: Int, bytes: [UInt8])] = [:]
+    private var rawOrder: [String] = []
+
+    /// One frame's matte as bytes (computed once, cached).
+    private func rawMatte(_ layer: Layer, file: String, frame: Int, mode: CutoutMode, mediaURL: (String) -> URL) -> (w: Int, h: Int, bytes: [UInt8])? {
+        let key = "\(file)|\(frame)|\(mode.rawValue)"
+        lock.lock()
+        if let r = raw[key] { lock.unlock(); return r }
+        lock.unlock()
+        let url = mediaURL(file)
+        let cg: CGImage?
+        switch layer.content {
+        case .video: cg = VideoSources.shared.cgImage(url: url, time: (Double(frame) + 0.5) / 30)
+        case .image: cg = CIImage(contentsOf: url).flatMap { ci in
+            let scale = min(1, 1024 / max(ci.extent.width, ci.extent.height))
+            return CIContext().createCGImage(ci.transformed(by: CGAffineTransform(scaleX: scale, y: scale)),
+                                             from: ci.extent.applying(CGAffineTransform(scaleX: scale, y: scale)))
+        }
+        default: cg = nil
+        }
+        guard let cg, let pb = Self.mask(cg, mode: mode) else { return nil }
+        let w = CVPixelBufferGetWidth(pb), h = CVPixelBufferGetHeight(pb)
+        var bytes = [UInt8](repeating: 0, count: w * h)
+        CIContext().render(CIImage(cvPixelBuffer: pb), toBitmap: &bytes, rowBytes: w, bounds: CGRect(x: 0, y: 0, width: w, height: h),
+                           format: .L8, colorSpace: CGColorSpaceCreateDeviceGray())
+        let r = (w: w, h: h, bytes: bytes)
+        lock.lock()
+        raw[key] = r; rawOrder.append(key)
+        if rawOrder.count > 96 { raw[rawOrder.removeFirst()] = nil }
+        lock.unlock()
+        return r
+    }
+
     func matte(for layer: Layer, sourceTime: Double, mediaURL: (String) -> URL, device: MTLDevice) -> MTLTexture? {
+        guard let s = layer.cutout, let file = layer.mediaFile else { return nil }
+        var frameKey = 0
+        var isVideo = false
+        if case .video = layer.content { frameKey = Int((sourceTime * 30).rounded(.down)); isVideo = true }
+        let stab = isVideo ? min(100, max(0, s.stability)) / 100 : 0
+        let key = "\(file)|\(frameKey)|\(s.mode.rawValue)|\(Int(stab * 100))"
+        lock.lock()
+        if let t = cache[key] { lock.unlock(); return t }
+        lock.unlock()
+        guard var cur = rawMatte(layer, file: file, frame: frameKey, mode: s.mode, mediaURL: mediaURL) else { return nil }
+        if stab > 0.001 {
+            // Temporal smoothing: weighted average with the previous / next frame's matte (same size).
+            let prev = rawMatte(layer, file: file, frame: max(0, frameKey - 1), mode: s.mode, mediaURL: mediaURL)
+            let next = rawMatte(layer, file: file, frame: frameKey + 1, mode: s.mode, mediaURL: mediaURL)
+            let side = stab / 3
+            var out = cur.bytes
+            for i in out.indices {
+                var v = Double(cur.bytes[i]) * (1 - side * 2), wsum = 1 - side * 2
+                if let p = prev, p.w == cur.w, p.h == cur.h { v += Double(p.bytes[i]) * side; wsum += side }
+                if let n = next, n.w == cur.w, n.h == cur.h { v += Double(n.bytes[i]) * side; wsum += side }
+                out[i] = UInt8(min(255, max(0, v / max(wsum, 1e-6))))
+            }
+            cur.bytes = out
+        }
+        let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r8Unorm, width: cur.w, height: cur.h, mipmapped: false)
+        d.usage = [.shaderRead]
+        guard let tex = device.makeTexture(descriptor: d) else { return nil }
+        tex.replace(region: MTLRegionMake2D(0, 0, cur.w, cur.h), mipmapLevel: 0, withBytes: cur.bytes, bytesPerRow: cur.w)
+        lock.lock()
+        cache[key] = tex
+        order.append(key)
+        if order.count > 48 { cache[order.removeFirst()] = nil }
+        lock.unlock()
+        return tex
+    }
+
+    /// Previous single-frame path (kept for callers that want the raw AI matte only).
+    func rawMatteTexture(for layer: Layer, sourceTime: Double, mediaURL: (String) -> URL, device: MTLDevice) -> MTLTexture? {
         guard let s = layer.cutout, let file = layer.mediaFile else { return nil }
         var frameKey = 0
         if case .video = layer.content { frameKey = Int((sourceTime * 30).rounded(.down)) }
@@ -111,7 +188,7 @@ final class CutoutEngine {
         return tex
     }
 
-    func clear() { lock.lock(); cache.removeAll(); order.removeAll(); lock.unlock() }
+    func clear() { lock.lock(); cache.removeAll(); order.removeAll(); raw.removeAll(); rawOrder.removeAll(); lock.unlock() }
 }
 
 // MARK: - Motion tracking

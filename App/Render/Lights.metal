@@ -16,13 +16,23 @@ struct LightPass {
     float4 normal;       // world-space plane normal facing the camera
     float4 camPos;       // xyz camera position
     float4 tex;          // x,y = texture px -> local: local = tex.xy * px + tex.zw  (uniform scale in x, offset)
-    uint4 count;         // x = number of lights
+    uint4 count;         // x = number of lights, y = number of shadow casters, z = accepts shadows
+};
+
+// A layer that casts shadows: world -> its local px (rows of the inverse world matrix), its plane, half size.
+struct ShadowCaster {
+    float4 inv0;
+    float4 inv1;
+    float4 plane;        // xyz normal, w = dot(normal, point on plane)
+    float4 halfSize;     // xy
 };
 
 kernel void applyLights(texture2d<half, access::read> src [[texture(0)]],
                         texture2d<half, access::write> dst [[texture(1)]],
                         constant LightPass& lp [[buffer(0)]],
                         constant LightGPU* lights [[buffer(1)]],
+                        constant ShadowCaster* casters [[buffer(2)]],
+                        array<texture2d<half, access::sample>, 4> casterTex [[texture(2)]],
                         uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
     float4 s = float4(src.read(gid));
@@ -50,6 +60,25 @@ kernel void applyLights(texture2d<half, access::read> src [[texture(0)]],
                 float inner = mix(L.dirCone.w, 1.0, 1.0 - clamp(L.color.w, 0.0, 1.0));
                 atten *= smoothstep(L.dirCone.w, max(inner, L.dirCone.w + 1e-3), c);
             }
+        }
+        // Shadows: is a casting layer between this point and the light? (its real alpha, so cut-outs cast their shape)
+        if (L.falloff.y > 0.0 && lp.count.z == 1u) {
+            float occ = 0.0;
+            float maxT = type == 2u ? 1e7 : length(L.posType.xyz - P);
+            for (uint k = 0; k < min(lp.count.y, 4u); k++) {
+                ShadowCaster C = casters[k];
+                float denom = dot(C.plane.xyz, Ld);
+                if (abs(denom) < 1e-5) continue;
+                float t = (C.plane.w - dot(C.plane.xyz, P)) / denom;
+                if (t <= 1.0 || t >= maxT) continue;
+                float4 X = float4(P + Ld * t, 1.0);
+                float2 q = float2(dot(C.inv0, X), dot(C.inv1, X));
+                float2 uv = q / (2.0 * max(C.halfSize.xy, float2(1e-3))) + 0.5;
+                if (any(uv < 0.0) || any(uv > 1.0)) continue;
+                constexpr sampler ss(address::clamp_to_zero, filter::linear);
+                occ = max(occ, float(casterTex[k].sample(ss, uv).a));
+            }
+            atten *= 1.0 - occ * L.falloff.y;
         }
         float ndl = abs(dot(N, Ld));           // planes are lit from either side (AE accepts lights two-sided)
         float3 H = normalize(Ld + V);

@@ -89,7 +89,7 @@ final class TexturePool {
             return t
         }
         let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba16Float, width: max(1, width), height: max(1, height), mipmapped: false)
-        d.usage = [.shaderRead, .shaderWrite]
+        d.usage = [.shaderRead, .shaderWrite, .renderTarget]
         d.storageMode = .private
         guard let t = device.makeTexture(descriptor: d) else {
             // Out of GPU memory: drop every spare and try once more rather than crashing.
@@ -144,7 +144,7 @@ final class EffectGPU {
         for name in ["fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
                      "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix",
                      "fxWarp", "fxStylize", "fxGlitch", "fxColor2", "fxSaberCore", "fxShine", "fxParticles", "fxPixelSort",
-                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet", "fxGrade", "maskMix", "fxLayerRef"] {
+                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet", "fxGrade", "maskMix", "fxLayerRef", "flowEstimate", "flowBlur"] {
             guard let f = library.makeFunction(name: name) else { throw RenderError.pipeline(name) }
             psos[name] = try device.makeComputePipelineState(function: f)
         }

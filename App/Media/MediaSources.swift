@@ -56,7 +56,20 @@ final class VideoSources {
     private var ciContext: CIContext?
     static let cacheFrames = 24
     static let prefetchAhead = 4
-    static let maxSide: CGFloat = 2160
+    /// Decode size cap: a lighter "proxy" size while editing, full size while exporting.
+    static let previewMaxSide: CGFloat = 1440
+    static let fullMaxSide: CGFloat = 2160
+    private(set) var maxSide: CGFloat = VideoSources.previewMaxSide
+
+    /// Export switches to full-size frames (and back afterwards); cached frames of the other size are dropped.
+    func setFullQuality(_ full: Bool) {
+        let want = full ? Self.fullMaxSide : Self.previewMaxSide
+        guard want != maxSide else { return }
+        lock.lock()
+        maxSide = want
+        for s in sources.values { s.cache.removeAll(); s.order.removeAll() }
+        lock.unlock()
+    }
 
     private func source(_ url: URL) -> Source {
         lock.lock(); defer { lock.unlock() }
@@ -167,7 +180,7 @@ final class VideoSources {
         guard let ctx = ciContext else { return nil }
         var img = CIImage(cvPixelBuffer: pb).oriented(orientation)
         img = img.transformed(by: CGAffineTransform(translationX: -img.extent.minX, y: -img.extent.minY))
-        let fit = min(1, Self.maxSide / max(img.extent.width, img.extent.height))
+        let fit = min(1, maxSide / max(img.extent.width, img.extent.height))
         if fit < 1 { img = img.transformed(by: CGAffineTransform(scaleX: fit, y: fit)) }
         let w = max(1, Int(img.extent.width.rounded())), h = max(1, Int(img.extent.height.rounded()))
         // Core Image is y-up; Metal textures are y-down.

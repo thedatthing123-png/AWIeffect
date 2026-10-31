@@ -50,7 +50,7 @@ jobs:
             -resultBundlePath TestResults.xcresult \
             -parallel-testing-enabled NO \
             -test-timeouts-enabled YES -default-test-execution-time-allowance 240 -maximum-test-execution-time-allowance 600 \
-            CODE_SIGNING_ALLOWED=NO | tee test.log | grep -E "error:|warning: .*AWI|Test Case|Executed|SKIP|FAIL|Fatal" || true
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee test.log | grep -E "error:|warning: .*AWI|Test Case|Executed|SKIP|FAIL|Fatal|error represents|exceeded|crashed|Restarting" || true
           grep -q "TEST SUCCEEDED" test.log || grep -q "** TEST SUCCEEDED **" test.log
 
       - name: Print app crash reports

@@ -197,6 +197,9 @@ kernel void cutoutApply(texture2d<half, access::read_write> layer [[texture(0)]]
     float2 uv = q / (2.0 * max(p.geom.xy, float2(1e-3))) + 0.5;
     constexpr sampler s(address::clamp_to_zero, filter::linear);
     float m = float(matte.sample(s, uv).r);
+    // Edge contrast: squeeze the soft transition toward a clean cut.
+    float ec = float(p.flags.y) / 100.0;
+    if (ec > 0.0) { float hw = 0.5 * (1.0 - ec * 0.92); m = smoothstep(0.5 - hw, 0.5 + hw, m); }
     // Choke/grow + soften the matte edge.
     float soft = max(p.geom.w, 0.01);
     m = clamp((m - 0.5 + p.geom.z) / (2.0 * soft) + 0.5, 0.0, 1.0);

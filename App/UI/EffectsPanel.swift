@@ -263,7 +263,7 @@ struct EffectsPanel: View {
             }
             .foregroundStyle(Theme.text)
             if isOpen, let def {
-                if EffectRegistry.layerRefIDs.contains(def.id) { layerPicker(e) }
+                if EffectRegistry.layerRefIDs.contains(def.id) || (EffectRegistry.spriteRefIDs.contains(def.id) && e.choice("sprite") == 6) { layerPicker(e) }
                 ForEach(def.params) { pd in ParamRow(state: state, effect: e, def: pd) }
             }
         }

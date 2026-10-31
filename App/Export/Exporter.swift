@@ -55,6 +55,9 @@ final class Exporter {
     func export(project: Project, settings: ExportSettings, mediaURL: @escaping (String) -> URL,
                 progress: @escaping (Double) -> Void) async throws -> URL {
         guard let r = Renderer.shared else { throw ExportError.noRenderer }
+        // Full-resolution footage for the final render (editing uses lighter proxies); restored when done.
+        VideoSources.shared.setFullQuality(true)
+        defer { VideoSources.shared.setFullQuality(false) }
         if settings.format == .gif { return try await exportGIF(project: project, settings: settings, mediaURL: mediaURL, progress: progress) }
         let alpha = settings.format == .transparent
         var project = project

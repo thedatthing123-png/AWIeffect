@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct HomeView: View {
     let open: (Project) -> Void
@@ -8,6 +9,7 @@ struct HomeView: View {
     @State private var renameTarget: ProjectSummary?
     @State private var renameText = ""
     @State private var versionsTarget: ProjectSummary?
+    @State private var shareFile: SharedFile?
     @State private var showSettings = false
     @State private var showImporter = false
     @State private var importURL: URL?
@@ -48,7 +50,8 @@ struct HomeView: View {
             }
         }
         .onAppear(perform: reload)
-        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.aep, .xml, .data]) { result in
+        .sheet(item: $shareFile) { f in ActivitySheet(items: [f.url]) }
+        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.aep, .xml, UTType(filenameExtension: "awi") ?? .data, .data]) { result in
             guard case .success(let url) = result else { return }
             importURL = url
             runImport(compName: nil)
@@ -198,6 +201,9 @@ struct HomeView: View {
             Button { renameText = p.name; renameTarget = p } label: { Label("Rename", systemImage: "character.cursor.ibeam") }
             Button { _ = try? ProjectStore.shared.duplicate(p.id); reload() } label: { Label("Duplicate", systemImage: "plus.square.on.square") }
             Button { versionsTarget = p } label: { Label("Restore Version", systemImage: "clock.arrow.circlepath") }
+            Button {
+                if let proj = try? ProjectStore.shared.load(p.id), let url = try? ProjectPackage.export(proj) { shareFile = SharedFile(url: url) }
+            } label: { Label("Share Project File (.awi)", systemImage: "square.and.arrow.up") }
             Button(role: .destructive) { pendingDelete = p } label: { Label("Delete", systemImage: "trash") }
         }
     }
@@ -209,6 +215,13 @@ struct HomeView: View {
         let access = url.startAccessingSecurityScopedResource()
         defer { if access { url.stopAccessingSecurityScopedResource() } }
         do {
+            if let data = try? Data(contentsOf: url), ProjectPackage.isPackage(data) {
+                // A project shared from AWIeffect: opens exactly as it was saved.
+                let p = try ProjectPackage.importPackage(data)
+                reload()
+                open(p)
+                return
+            }
             if let data = try? Data(contentsOf: url), AMImporter.isAMProject(data) {
                 importResult = try AMImporter.load(data: data, fallbackName: url.deletingPathExtension().lastPathComponent)
             } else {
@@ -329,4 +342,14 @@ struct CreateProjectSheet: View {
         .padding(.horizontal, 14).padding(.vertical, 8)
         .glass(radius: 12)
     }
+}
+
+
+struct SharedFile: Identifiable { let id = UUID(); let url: URL }
+
+/// System share sheet (AirDrop, Messages, Files…).
+struct ActivitySheet: UIViewControllerRepresentable {
+    let items: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController { UIActivityViewController(activityItems: items, applicationActivities: nil) }
+    func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
 }

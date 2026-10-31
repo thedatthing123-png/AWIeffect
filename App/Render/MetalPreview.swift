@@ -9,6 +9,14 @@ func fitRect(compWidth: Int, compHeight: Int, in size: CGSize) -> CGRect {
     return CGRect(x: (size.width - w) / 2, y: (size.height - h) / 2, width: w, height: h)
 }
 
+/// Which frames are ready in the RAM preview (AE's green bar on the timeline ruler).
+@MainActor
+final class PreviewCacheMonitor: ObservableObject {
+    static let shared = PreviewCacheMonitor()
+    @Published var frames = IndexSet()
+    @Published var fps: Double = 30
+}
+
 /// Live Metal preview of the composition. Renders at a proxy resolution matched to the on-screen size.
 struct MetalPreview: UIViewRepresentable {
     let project: Project
@@ -97,11 +105,63 @@ struct MetalPreview: UIViewRepresentable {
         }
 
         private func remember(_ tex: MTLTexture, frame idx: Int) {
-            cache[idx] = tex; cacheOrder.append(idx); cacheBytes += tex.width * tex.height * 8
+            if cache[idx] == nil { cacheOrder.append(idx); cacheBytes += tex.width * tex.height * 8 }
+            cache[idx] = tex
             while cacheBytes > Self.cacheBudget, let old = cacheOrder.first {
                 cacheOrder.removeFirst()
                 if let t = cache.removeValue(forKey: old) { cacheBytes -= t.width * t.height * 8 }
             }
+            publishCache()
+        }
+
+        private func publishCache() {
+            let set = IndexSet(cache.keys)
+            let fps = project?.fps ?? 30
+            Task { @MainActor in
+                let m = PreviewCacheMonitor.shared
+                if m.frames != set { m.frames = set }
+                if m.fps != fps { m.fps = fps }
+            }
+        }
+
+        // MARK: Background render (AE-style): while paused, render the frames after the playhead at full quality.
+        private var prerenderWork: DispatchWorkItem?
+        private var prerenderToken = ""
+        private lazy var prerenderPool: TexturePool? = Renderer.shared?.makePool()
+
+        private func schedulePrerender(from start: Int, size: (Int, Int), scale: Double) {
+            prerenderWork?.cancel()
+            guard cacheEnabled, !isPlaying, let project else { return }
+            let token = cacheToken
+            prerenderToken = token
+            let last = min(Int((project.duration * max(project.fps, 1)).rounded(.down)) - 1, start + Int(max(project.fps, 1) * 3))
+            var next = start + 1
+            func step() {
+                // Stop as soon as anything changes (editing, playing, another frame, memory).
+                guard self.prerenderToken == token, self.cacheToken == token, !self.isPlaying, next <= last,
+                      let r = Renderer.shared, let p = self.project, let media = self.mediaURL, let pool = self.prerenderPool else { return }
+                while next <= last, self.cache[next] != nil { next += 1 }
+                guard next <= last, self.cacheBytes < Self.cacheBudget * 9 / 10,
+                      let tex = r.makeCompTexture(width: size.0, height: size.1), let cb = r.queue.makeCommandBuffer() else { return }
+                pool.recycle()
+                r.encode(project: p, time: Double(next) / max(p.fps, 1), renderScale: scale, into: tex, commandBuffer: cb, pool: pool, mediaURL: media)
+                let idx = next
+                cb.addCompletedHandler { [weak self] _ in
+                    DispatchQueue.main.async {
+                        guard let self, self.cacheToken == token else { return }
+                        self.remember(tex, frame: idx)
+                        // One frame at a time, with a breath between, so the UI never stutters.
+                        let w = DispatchWorkItem { step() }
+                        self.prerenderWork = w
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.012, execute: w)
+                    }
+                }
+                cb.commit()
+                next += 1
+            }
+            let w = DispatchWorkItem { step() }
+            prerenderWork = w
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: w)
         }
 
         func draw(in view: MTKView) {
@@ -119,7 +179,7 @@ struct MetalPreview: UIViewRepresentable {
 
             // Project edited / view resized: forget cached frames.
             let tk = token(project, fw, fh)
-            if tk != cacheToken { cache.removeAll(); cacheOrder.removeAll(); cacheBytes = 0; cacheToken = tk }
+            if tk != cacheToken { cache.removeAll(); cacheOrder.removeAll(); cacheBytes = 0; cacheToken = tk; prerenderWork?.cancel(); publishCache() }
 
             // Never block the main thread waiting on the GPU: skip this frame and redraw when one finishes.
             if inFlight.wait(timeout: .now()) == .timedOut {
@@ -158,6 +218,8 @@ struct MetalPreview: UIViewRepresentable {
             forceFull = false
             let playing = isPlaying
             let full = renderedFull
+            if full && !playing && cacheEnabled { schedulePrerender(from: frameIdx, size: (fw, fh), scale: fullScale) }
+            if playing { prerenderWork?.cancel() }
             cb.addCompletedHandler { [weak self, weak view] buffer in
                 sem.signal()
                 let gpu = buffer.gpuEndTime - buffer.gpuStartTime

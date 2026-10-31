@@ -73,9 +73,13 @@ struct CutoutSection: View {
                 if let c {
                     slider("Choke / Grow", c.choke, -10...10) { v in var n = c; n.choke = v; state.setCutout(n) }
                     slider("Edge Feather", c.feather, 0...10) { v in var n = c; n.feather = v; state.setCutout(n) }
+                    slider("Edge Contrast", c.edgeContrast, 0...100) { v in var n = c; n.edgeContrast = v; state.setCutout(n) }
+                    if case .video = l.content {
+                        slider("Stability", c.stability, 0...100) { v in var n = c; n.stability = v; state.setCutout(n) }
+                    }
                     Toggle("Invert (keep background)", isOn: Binding(get: { c.invert }, set: { b in var n = c; n.invert = b; state.setCutout(n) }))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
-                    Text("Runs on-device. Video mattes are computed per frame and cached.").font(.caption).foregroundStyle(Theme.textDim)
+                    Text("Runs on-device. Stability smooths the edge between video frames; Edge Contrast cleans soft edges (keep it low for hair). For exact part-by-part cuts use Redraw → Select Brush.").font(.caption).foregroundStyle(Theme.textDim)
                 }
             }
             .padding(10).glass(radius: 12)
@@ -85,8 +89,7 @@ struct CutoutSection: View {
     private func slider(_ t: String, _ v: Double, _ r: ClosedRange<Double>, _ set: @escaping (Double) -> Void) -> some View {
         HStack {
             Text(t).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 96, alignment: .leading)
-            Slider(value: Binding(get: { v }, set: set), in: r)
-            Text(String(format: "%.1f", v)).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.accentGlow).frame(width: 36)
+            ValueScrubber(value: v, range: r, onChange: set)
         }
     }
 }

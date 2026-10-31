@@ -69,6 +69,17 @@ struct ThreeDPanel: View {
                             .buttonStyle(.borderedProminent).tint(Theme.accent)
                             .accessibilityLabel("Make 3D Object")
                         }
+                        if l.is3D && l.content != .camera && l.content != .light {
+                            HStack {
+                                Toggle("Casts Shadows", isOn: Binding(get: { l.castsShadows }, set: { b in
+                                    state.mutate("Casts Shadows") { p in if let i = state.selectedIndex { p.layers[i].castsShadows = b } }
+                                })).tint(Theme.accent)
+                                Toggle("Accepts Shadows", isOn: Binding(get: { l.acceptsShadows }, set: { b in
+                                    state.mutate("Accepts Shadows") { p in if let i = state.selectedIndex { p.layers[i].acceptsShadows = b } }
+                                })).tint(Theme.accent)
+                            }
+                            .font(.system(size: 13)).foregroundStyle(Theme.text)
+                        }
                         if l.is3D && l.content != .camera && l.content != .model && l.content != .light {
                             row("Extrude", l.extrude.value(at: t), 0...600, anim: l.extrude,
                                 set: { v in state.mutateLayer { $0.extrude.set(v, at: t) } },
@@ -108,6 +119,21 @@ struct ThreeDPanel: View {
                                 row("Falloff Radius", o.falloffRadius.value(at: t), 0...6000, anim: o.falloffRadius,
                                     set: { v in state.mutateLayer { $0.light?.falloffRadius.set(v, at: t) } },
                                     keyed: { state.mutateLayer { $0.light?.falloffRadius.toggleKeyframe(at: t) } })
+                            }
+                            if o.type != .ambient {
+                                Toggle("Cast Shadows (off = clean 3D, no shadows)", isOn: Binding(get: { o.castsShadows }, set: { b in
+                                    state.mutate("Light Shadows") { p in if let i = state.selectedIndex { p.layers[i].light?.castsShadows = b } }
+                                }))
+                                .tint(Theme.accent).foregroundStyle(Theme.text)
+                                if o.castsShadows {
+                                    HStack {
+                                        Text("Shadow Darkness").font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 110, alignment: .leading)
+                                        ValueScrubber(value: o.shadowDarkness, range: 0...100, step: 1, unit: "%",
+                                                      onBegin: { state.beginEdit("Shadow Darkness") },
+                                                      onChange: { v in state.mutateLayer { $0.light?.shadowDarkness = v } }, onEnd: { state.endEdit() })
+                                    }
+                                    Text("Only 3D layers with Casts Shadows on throw shadows (set it in each layer's 3D panel).").font(.caption).foregroundStyle(Theme.textDim)
+                                }
                             }
                             Text("Move the light with Position + Position Z; aim spot/parallel lights with X/Y Rotation. Every 3D layer is lit once a comp has a light.")
                                 .font(.caption).foregroundStyle(Theme.textDim)

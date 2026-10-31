@@ -6,7 +6,7 @@ import simd
 /// Twitch-style glitch bursts and a manga negative / mono flash.
 extension EffectRegistry {
     static let batch18: [EffectDefinition] = [shakePro18, zoomPunch18, twitch18, negativeFlash18,
-                                              warpChroma18, scanTear18, waveGlitch18, blockShuffle18, channelSmear18, puppet18, grade, transformFX18, displacementMap18, setMatte18]
+                                              warpChroma18, scanTear18, waveGlitch18, blockShuffle18, channelSmear18, puppet18, grade, transformFX18, displacementMap18, setMatte18, particles18]
 
     /// Quantizes time to "hold" frames (choppy anime shake: the shake jumps every few frames).
     private static func held(_ t: Double, _ hold: Double) -> Double {
@@ -271,6 +271,8 @@ extension EffectRegistry {
 
     /// Effects that read another layer (chosen in the effect card; stored as text["layer"]).
     static let layerRefIDs: Set<String> = ["awi18.displacementMap", "awi18.setMatte"]
+    /// Effects that can use another layer's picture as their sprite (the layer itself, uncropped by position).
+    static let spriteRefIDs: Set<String> = ["awi18.particles"]
 
     static let displacementMap18 = EffectDefinition(
         id: "awi18.displacementMap", name: "Displacement Map", category: .distort,

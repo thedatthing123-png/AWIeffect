@@ -162,7 +162,7 @@ struct TimelineView: View {
     }
 
     private func ruler(width: CGFloat, offset: CGFloat) -> some View {
-        Canvas { ctx, size in
+        RulerCanvas(width: width, offset: offset, zoom: zoom, duration: state.project.duration, cache: PreviewCacheMonitor.shared) { ctx, size in
             let dur = state.project.duration
             // Choose a tick step that keeps labels readable.
             let steps: [Double] = [0.1, 0.25, 0.5, 1, 2, 5, 10, 30, 60]
@@ -294,5 +294,30 @@ struct TimelineView: View {
                 }
                 .onEnded { _ in dragOriginal = nil; state.endEdit() })
             .accessibilityLabel(start ? "Trim start" : "Trim end")
+    }
+}
+
+
+/// The ruler plus the green "frames ready" bar of the RAM preview.
+struct RulerCanvas: View {
+    let width: CGFloat
+    let offset: CGFloat
+    let zoom: CGFloat
+    let duration: Double
+    @ObservedObject var cache: PreviewCacheMonitor
+    let draw: (inout GraphicsContext, CGSize) -> Void
+
+    var body: some View {
+        Canvas { ctx, size in
+            // Green bar: contiguous runs of cached frames.
+            let fps = max(cache.fps, 1)
+            for range in cache.frames.rangeView {
+                let x0 = offset + CGFloat(Double(range.lowerBound) / fps) * zoom
+                let x1 = offset + CGFloat(Double(range.upperBound) / fps) * zoom
+                guard x1 >= 0, x0 <= size.width else { continue }
+                ctx.fill(Path(CGRect(x: max(0, x0), y: 0, width: min(size.width, x1) - max(0, x0), height: 3)), with: .color(Color.green.opacity(0.85)))
+            }
+            draw(&ctx, size)
+        }
     }
 }

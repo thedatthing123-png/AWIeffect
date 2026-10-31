@@ -27,7 +27,7 @@ extension Renderer {
         let px = 1 / max(hs.x, hs.y)
         var p = CutoutParams(invRow0: r0, invRow1: r1,
                              geom: SIMD4(Float(hs.x), Float(hs.y), Float(s.choke * px * 8), Float(max(0.02, s.feather * px * 8))),
-                             flags: SIMD4(s.invert ? 1 : 0, 0, 0, 0))
+                             flags: SIMD4(s.invert ? 1 : 0, UInt32(min(100, max(0, s.edgeContrast))), 0, 0))
         enc.setComputePipelineState(pso)
         enc.setTexture(tex, index: 0)
         enc.setTexture(matte, index: 1)

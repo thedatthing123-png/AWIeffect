@@ -42,6 +42,16 @@ final class Renderer {
     private var precompLibrary: [Project] = []
     private var currentPool: TexturePool?
     private var currentDepth = 0
+    /// 3D layers casting shadows this frame (only filled when a light casts shadows).
+    private var shadowCasters: [(id: UUID, gpu: ShadowCasterGPU, tex: MTLTexture)] = []
+    /// 1x1 opaque white: stands in for solid / shape casters and unused caster slots.
+    private lazy var whiteTexture: MTLTexture = {
+        let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: 1, height: 1, mipmapped: false)
+        let t = device.makeTexture(descriptor: d)!
+        var px: [UInt8] = [255, 255, 255, 255]
+        t.replace(region: MTLRegionMake2D(0, 0, 1, 1), mipmapLevel: 0, withBytes: &px, bytesPerRow: 4)
+        return t
+    }()
     /// Parts of each group in the comp being encoded (group id -> parts, in stacking order).
     private var groupParts: [UUID: [Layer]] = [:]
     private var groupCameras: [Layer] = []
@@ -168,6 +178,7 @@ final class Renderer {
     }
 
     struct LightGPU { var posType: SIMD4<Float>; var dirCone: SIMD4<Float>; var color: SIMD4<Float>; var falloff: SIMD4<Float> }
+    struct ShadowCasterGPU { var inv0: SIMD4<Float>; var inv1: SIMD4<Float>; var plane: SIMD4<Float>; var halfSize: SIMD4<Float> }
     struct LightPass {
         var w0: SIMD4<Float>; var w1: SIMD4<Float>; var w2: SIMD4<Float>; var normal: SIMD4<Float>
         var camPos: SIMD4<Float>; var tex: SIMD4<Float>; var count: SIMD4<UInt32>
@@ -186,7 +197,7 @@ final class Renderer {
             return LightGPU(posType: SIMD4(Float(pos.x), Float(pos.y), Float(t.positionZ.value(at: time)), type),
                             dirCone: SIMD4(Float(dir.x), Float(dir.y), Float(dir.z), Float(cos(o.coneAngle.value(at: time) / 2 * .pi / 180))),
                             color: SIMD4(Float(c.r * k), Float(c.g * k), Float(c.b * k), Float(o.coneFeather.value(at: time) / 100)),
-                            falloff: SIMD4(Float(o.falloffRadius.value(at: time)), 0, 0, 0))
+                            falloff: SIMD4(Float(o.falloffRadius.value(at: time)), o.castsShadows ? Float(o.shadowDarkness / 100) : 0, 0, 0))
         }
     }
 
@@ -202,12 +213,20 @@ final class Renderer {
                              tex: SIMD4(Float(1 / density), 0, Float(-ext.x + 0.5 / density), Float(-ext.y + 0.5 / density)),
                              count: SIMD4(UInt32(min(lights.count, 8)), 0, 0, 0))
         var ls = Array(lights.prefix(8))
+        // Shadow casters (not the layer itself).
+        let casters = shadowCasters.filter { $0.id != layer.id }.prefix(4)
+        var cs = casters.map(\.gpu)
+        if cs.isEmpty { cs = [ShadowCasterGPU(inv0: .zero, inv1: .zero, plane: .zero, halfSize: .zero)] }
+        pass.count.y = UInt32(casters.count)
+        pass.count.z = layer.acceptsShadows ? 1 : 0
         guard let enc = cb.makeComputeCommandEncoder() else { return }
         enc.setComputePipelineState(lightPSO)
         enc.setTexture(src, index: 0)
         enc.setTexture(dst, index: 1)
+        for k in 0..<4 { enc.setTexture(k < casters.count ? casters[casters.startIndex + k].tex : whiteTexture, index: 2 + k) }
         enc.setBytes(&pass, length: MemoryLayout<LightPass>.stride, index: 0)
         enc.setBytes(&ls, length: MemoryLayout<LightGPU>.stride * max(ls.count, 1), index: 1)
+        enc.setBytes(&cs, length: MemoryLayout<ShadowCasterGPU>.stride * cs.count, index: 2)
         dispatch(enc, pso: lightPSO, width: dst.width, height: dst.height)
         enc.endEncoding()
     }
@@ -374,6 +393,25 @@ final class Renderer {
         // Bottom-up, with runs of 3D layers depth-sorted through the active camera (AE behaviour).
         let camera = Self.activeCamera(project, time: time)
         let lights = Self.lightsGPU(project, time: time)
+        shadowCasters = []
+        if lights.contains(where: { $0.falloff.y > 0 }) {
+            for l in project.layers where l.is3D && l.castsShadows && l.isActive(at: time) && l.isVisible {
+                let W = Self.layerWorld(l, time: time)
+                let inv = W.inverse
+                var n = W * SIMD4(0, 0, 1, 0)
+                n /= max(simd_length(SIMD3(n.x, n.y, n.z)), 1e-9)
+                let o = W * SIMD4(0, 0, 0, 1)
+                let hs = Self.layerHalfSize(l, time: time)
+                var tex: MTLTexture = whiteTexture
+                if case .image(let t)? = sourceTexture(l, sourceTime: l.sourceTime(at: time), time: time, density: 0.5, cb: cb, mediaURL: mediaURL) { tex = t }
+                else if case .model(let t)? = sourceTexture(l, sourceTime: l.sourceTime(at: time), time: time, density: 0.5, cb: cb, mediaURL: mediaURL) { tex = t }
+                let gpu = ShadowCasterGPU(inv0: SIMD4(Float(inv[0][0]), Float(inv[1][0]), Float(inv[2][0]), Float(inv[3][0])),
+                                          inv1: SIMD4(Float(inv[0][1]), Float(inv[1][1]), Float(inv[2][1]), Float(inv[3][1])),
+                                          plane: SIMD4(Float(n.x), Float(n.y), Float(n.z), Float(n.x * o.x + n.y * o.y + n.z * o.z)),
+                                          halfSize: SIMD4(Float(hs.x), Float(hs.y), 0, 0))
+                shadowCasters.append((l.id, gpu, tex))
+            }
+        }
         let anySolo = project.layers.contains { $0.isSolo }
         // Layers used as a track matte by the layer below them don't draw themselves.
         var matteSources: [UUID: Layer] = [:], hiddenMattes = Set<UUID>()
@@ -517,6 +555,13 @@ final class Renderer {
                     ctx.reference = layerInBuffer(refLayer, project: project, time: time, renderScale: renderScale, comp: comp,
                                                   placement: M, toLocal: toLocal, size: (current.width, current.height),
                                                   cb: cb, pool: pool, mediaURL: mediaURL)
+                } else if EffectRegistry.spriteRefIDs.contains(e.typeID), e.choice("sprite") == 6,
+                          let rid = e.text?["layer"].flatMap(UUID.init(uuidString:)),
+                          let refLayer = project.layers.first(where: { $0.id == rid }), rid != layer.id {
+                    switch sourceTexture(refLayer, sourceTime: refLayer.sourceTime(at: time), time: time, density: 1, cb: cb, mediaURL: mediaURL) {
+                    case .image(let t)?, .model(let t)?: ctx.reference = t
+                    default: ctx.reference = whiteTexture
+                    }
                 }
                 current = run(ctx)
             }
@@ -635,7 +680,24 @@ final class Renderer {
                     return .image(out)
                 }
             }
-            return VideoSources.shared.texture(url: url, time: sourceTime, device: device).map { .image($0) }
+            guard let frame = VideoSources.shared.texture(url: url, time: sourceTime, device: device) else { return nil }
+            // Pixel Motion Blur: estimate how pixels moved since the previous frame, blur along it.
+            if let amt = layer.timeFX?.pixelMotionBlur, amt > 0, let pool = currentPool {
+                let fps = VideoSources.shared.fps(url)
+                if let prev = VideoSources.shared.texture(url: url, time: max(0, sourceTime - 1 / fps), device: device), prev !== frame {
+                    let fw = max(8, frame.width / 4), fh = max(8, frame.height / 4)
+                    let flow = pool.acquire(width: fw, height: fh)
+                    var p = EffectParams()
+                    p.a.x = 6
+                    fx.run("flowEstimate", cb, textures: [prev, flow, frame], params: p, grid: flow)
+                    let out = pool.acquire(width: frame.width, height: frame.height)
+                    var q = EffectParams()
+                    q.a = SIMD4(Float(amt / 100), 0.15, 0, 0)
+                    fx.run("flowBlur", cb, textures: [frame, out, flow], params: q, grid: out)
+                    return .image(out)
+                }
+            }
+            return .image(frame)
         case .model:
             guard let o = layer.model3D else { return nil }
             let size = layer.size.value(at: time)

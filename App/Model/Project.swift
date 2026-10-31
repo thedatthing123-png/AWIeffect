@@ -12,6 +12,9 @@ struct LayerTimeFX: Codable, Equatable {
     /// AE Frame Blending: slowed-down footage blends neighbouring frames instead of repeating them.
     var frameBlendStore: Bool? = nil
     var frameBlend: Bool { get { frameBlendStore ?? false } set { frameBlendStore = newValue ? true : nil } }
+    /// Pixel Motion Blur (RSMB-style) on footage: blur along how pixels move inside the clip, % of one frame.
+    var pixelMotionBlurStore: Double? = nil
+    var pixelMotionBlur: Double { get { pixelMotionBlurStore ?? 0 } set { pixelMotionBlurStore = newValue > 0 ? newValue : nil } }
 
     /// Time at which the layer's content and animation are evaluated.
     func localTime(_ t: Double) -> Double {
@@ -19,7 +22,7 @@ struct LayerTimeFX: Codable, Equatable {
         if posterizeFPS > 0 { return (t * posterizeFPS).rounded(.down) / posterizeFPS }
         return t
     }
-    var isEmpty: Bool { echoCount == 0 && posterizeFPS == 0 && freezeAt == nil && !frameBlend }
+    var isEmpty: Bool { echoCount == 0 && posterizeFPS == 0 && freezeAt == nil && !frameBlend && pixelMotionBlur == 0 }
 }
 
 /// AE track matte: the layer directly above cuts this one out (and hides itself).
@@ -217,6 +220,11 @@ struct LightOptions: Codable, Equatable {
     var coneAngle = Animated(70.0)        // degrees (spot)
     var coneFeather = Animated(50.0)      // %
     var falloffRadius = Animated(0.0)     // px, 0 = no falloff
+    /// Shadows are off unless turned on (AE).
+    var castsShadowsStore: Bool? = nil
+    var castsShadows: Bool { get { castsShadowsStore ?? false } set { castsShadowsStore = newValue ? true : nil } }
+    var shadowDarknessStore: Double? = nil
+    var shadowDarkness: Double { get { shadowDarknessStore ?? 70 } set { shadowDarknessStore = newValue } }
 }
 
 struct CameraOptions: Codable, Equatable {
@@ -307,6 +315,9 @@ struct Layer: Codable, Equatable, Identifiable {
     var ik: IKRig? = nil
     /// IK tips and physics bodies can't pass through this layer.
     var isCollider = false
+    /// 3D shadows (AE defaults: layers don't cast, do accept).
+    var castsShadows = false
+    var acceptsShadows = true
 
     init(id: UUID = UUID(), name: String, content: LayerContent, tag: LayerTag = .purple, outPoint: Double,
          transform: LayerTransform, size: Animated<Vec2>) {
@@ -366,6 +377,8 @@ struct Layer: Codable, Equatable, Identifiable {
         shapeOps = try c.decodeIfPresent(ShapeOps.self, forKey: .shapeOps)
         ik = try c.decodeIfPresent(IKRig.self, forKey: .ik)
         isCollider = try c.decodeIfPresent(Bool.self, forKey: .isCollider) ?? false
+        castsShadows = try c.decodeIfPresent(Bool.self, forKey: .castsShadows) ?? false
+        acceptsShadows = try c.decodeIfPresent(Bool.self, forKey: .acceptsShadows) ?? true
     }
 
     func isActive(at time: Double) -> Bool { isVisible && time >= inPoint && time < outPoint }
