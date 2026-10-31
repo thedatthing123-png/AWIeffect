@@ -58,24 +58,7 @@ jobs:
         run: |
           for f in $(find ~/Library/Logs/DiagnosticReports -name "AWIeffect*" 2>/dev/null | head -3); do
             echo "SKIP-CRASH file $f"
-            python3 - "$f" <<'PY' | sed 's/^/SKIP-CRASH /' | head -120
-          import json, sys
-          raw = open(sys.argv[1]).read()
-          parts = raw.split("
-", 1)
-          try:
-              d = json.loads(parts[1])
-          except Exception:
-              print(raw[:6000]); sys.exit()
-          print("exception", d.get("exception"), d.get("termination", {}).get("indicator"))
-          asi = d.get("asi"); print("asi", asi)
-          imgs = d.get("usedImages", [])
-          for th in d.get("threads", []):
-              if th.get("triggered"):
-                  for fr in th.get("frames", [])[:40]:
-                      im = imgs[fr.get("imageIndex", 0)] if imgs else {}
-                      print(im.get("name", "?"), fr.get("symbol", "?"), fr.get("symbolLocation", ""), fr.get("sourceFile", ""), fr.get("sourceLine", ""))
-          PY
+            python3 .github/crashdump.py "$f" | sed 's/^/SKIP-CRASH /' | head -120
           done
 
       - name: Upload test artifacts
