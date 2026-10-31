@@ -5,7 +5,8 @@ import simd
 /// Batch 18: edit essentials for AMV / manga edits — an AE-grade Shake Pro, Zoom Punch for beat hits,
 /// Twitch-style glitch bursts and a manga negative / mono flash.
 extension EffectRegistry {
-    static let batch18: [EffectDefinition] = [shakePro18, zoomPunch18, twitch18, negativeFlash18]
+    static let batch18: [EffectDefinition] = [shakePro18, zoomPunch18, twitch18, negativeFlash18,
+                                              warpChroma18, scanTear18, waveGlitch18, blockShuffle18, channelSmear18]
 
     /// Quantizes time to "hold" frames (choppy anime shake: the shake jumps every few frames).
     private static func held(_ t: Double, _ hold: Double) -> Double {
@@ -148,5 +149,77 @@ extension EffectRegistry {
         ],
         stage: .pixels { ctx in run18(ctx, 1) { p in
             p.a = SIMD4(Float(ctx.num("rate")), Float(ctx.num("mix") / 100), Float(ctx.effect.choice("style")), Float(ctx.num("threshold") / 100))
+        } })
+
+    static let warpChroma18 = EffectDefinition(
+        id: "awi18.warpChroma", name: "Warp Chroma", category: .distort,
+        aeMatchNames: ["S_WarpChroma"],
+        summary: "Sapphire-style rainbow warp: edges push outward with the color channels split apart.",
+        params: [
+            .number("amount", "Warp Amount", 25, 0, 200, unit: "px"),
+            .number("spread", "Chroma Spread", 60, 0, 100, unit: "%"),
+            .angle("angle", "Warp Angle", 0),
+        ],
+        margin: { e, t in e.number("amount", t) * 2 },
+        stage: .pixels { ctx in run18(ctx, 2) { p in
+            p.a = SIMD4(Float(ctx.num("amount") * ctx.unit), Float(ctx.num("spread") / 100), Float(ctx.num("angle") * .pi / 180), 0)
+        } })
+
+    static let scanTear18 = EffectDefinition(
+        id: "awi18.scanTear", name: "Scanline Tear", category: .stylize,
+        aeMatchNames: [],
+        summary: "A band of torn, jittering scanlines that rolls through the frame.",
+        params: [
+            .number("amount", "Tear Amount", 60, 0, 400, unit: "px"),
+            .number("band", "Band Height", 30, 1, 100, unit: "%"),
+            .number("speed", "Roll Speed", 1, 0, 10, step: 0.05),
+            .number("jagged", "Line Size", 4, 1, 40, step: 1, unit: "px"),
+        ],
+        margin: { e, t in e.number("amount", t) },
+        stage: .pixels { ctx in run18(ctx, 3) { p in
+            p.a = SIMD4(Float(ctx.num("amount") * ctx.unit), Float(ctx.num("band") / 100), Float(ctx.num("speed")), Float(ctx.num("jagged") * ctx.unit))
+        } })
+
+    static let waveGlitch18 = EffectDefinition(
+        id: "awi18.waveGlitch", name: "Wave Glitch", category: .stylize,
+        aeMatchNames: [],
+        summary: "Choppy sideways wave distortion that steps instead of flowing (digital wobble).",
+        params: [
+            .number("amount", "Wave Amount", 24, 0, 300, unit: "px"),
+            .number("waves", "Waves", 4, 0.2, 40, step: 0.1),
+            .number("speed", "Speed", 1.5, 0, 10, step: 0.05),
+            .number("steps", "Steps Per Second", 12, 1, 30, step: 1),
+        ],
+        margin: { e, t in e.number("amount", t) },
+        stage: .pixels { ctx in run18(ctx, 4) { p in
+            p.a = SIMD4(Float(ctx.num("amount") * ctx.unit), Float(ctx.num("waves")), Float(ctx.num("speed")), Float(ctx.num("steps")))
+        } })
+
+    static let blockShuffle18 = EffectDefinition(
+        id: "awi18.blockShuffle", name: "Block Shuffle", category: .stylize,
+        aeMatchNames: [],
+        summary: "Datamosh-style glitch: random blocks of the image swap places every few frames.",
+        params: [
+            .number("block", "Block Size", 24, 4, 200, unit: "px"),
+            .number("chance", "Amount", 25, 0, 100, unit: "%"),
+            .number("rate", "Changes Per Second", 12, 1, 30, step: 1),
+            .number("seed", "Random Seed", 1, 0, 1000, step: 1),
+        ],
+        stage: .pixels { ctx in run18(ctx, 5) { p in
+            p.a = SIMD4(Float(ctx.num("block") * ctx.unit), Float(ctx.num("chance") / 100), Float(ctx.num("rate")), Float(ctx.num("seed")))
+        } })
+
+    static let channelSmear18 = EffectDefinition(
+        id: "awi18.channelSmear", name: "Channel Smear", category: .stylize,
+        aeMatchNames: [],
+        summary: "Red, green and blue streak behind the image at different lengths (speed smear with color split).",
+        params: [
+            .number("length", "Smear Length", 40, 0, 300, unit: "px"),
+            .angle("angle", "Direction", 0),
+            .number("spread", "Color Split", 60, 0, 100, unit: "%"),
+        ],
+        margin: { e, t in e.number("length", t) },
+        stage: .pixels { ctx in run18(ctx, 6) { p in
+            p.a = SIMD4(Float(ctx.num("length") * ctx.unit), Float(ctx.num("angle") * .pi / 180), Float(ctx.num("spread") / 100), 0)
         } })
 }

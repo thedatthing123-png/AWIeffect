@@ -36,7 +36,7 @@ enum EffectSection: String, CaseIterable, Identifiable {
         case .shake: return ["shake", "wiggle", "jitter", "swing", "oscillate", "pulse", "spin", "bounce", "twitch", "earthquake", "wobble", "elastic", "punch"]
         case .glow: return ["glow", "light", "ray", "bloom", "glint", "shine", "flare", "aura", "saber", "neon", "halation", "rim", "sweep", "spot", "beam", "leak", "sparkle"]
         case .blur: return ["blur", "bokeh", "smear", "sharpen", "clarity", "structure", "diffusion", "frosted", "tilt-shift", "minimax", "smooth"]
-        case .glitch: return ["glitch", "datamosh", "pixel sort", "interference", "digital", "rgb split", "chromatic aberration", "signal", "scan", "negative flash"]
+        case .glitch: return ["glitch", "datamosh", "pixel sort", "interference", "digital", "rgb split", "chromatic aberration", "signal", "scan", "negative flash", "shuffle", "tear", "channel smear", "twitch"]
         case .distort: return ["warp", "distort", "twirl", "swirl", "bulge", "pinch", "ripple", "wave", "lens", "fisheye", "kaleid", "mirror", "polar", "spherize",
                                "magnif", "liquid", "glass", "refract", "displace", "shatter", "slice", "tile", "fold", "skew", "tunnel", "vortex", "black hole", "droste", "mirage", "heat"]
         case .transition: return ["wipe", "dissolve", "reveal", "iris", "barn", "blinds", "push", "zoom through", "split reveal", "burn away", "ink bleed", "completion", "flip"]

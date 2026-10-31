@@ -98,6 +98,10 @@ struct TextAnimatorProperties: Codable, Equatable {
     var fill: Animated<RGBA>? = nil
     var tracking: Animated<Double>? = nil // px added between units
     var skew: Animated<Double>? = nil     // degrees
+    /// Per-letter blur, px (AE text animator Blur).
+    var blur: Animated<Double>? = nil
+    /// AE Character Offset: shifts each letter through the alphabet / digits (scramble, decode).
+    var characterOffset: Animated<Double>? = nil
 }
 
 struct TextAnimator: Codable, Equatable, Identifiable {
@@ -209,7 +213,7 @@ enum TextPresets {
         return sel
     }
 
-    static let all: [TextPreset] = [
+    static let all: [TextPreset] = extra + [
         TextPreset(id: "typewriter", name: "Typewriter") { s, d in
             var a = TextAnimator(name: "Typewriter")
             a.selector = TextSelector(basedOn: .characters, start: kf([(s, 0.0), (s + d, 100.0)], interp: .linear), shape: .square)
@@ -465,6 +469,105 @@ enum TextPresets {
             var a = TextAnimator(name: "Karaoke")
             a.selector = sweep(s, d, shape: .rampDown, basedOn: .characters, soft: 5)
             a.properties.fill = Animated(RGBA(hex: 0xFFD25C))
+            return [a]
+        },
+    ]
+}
+
+
+// MARK: - Blur / decode presets (use the per-letter Blur and Character Offset properties)
+
+extension TextPresets {
+    private static func k<V: Interpolatable>(_ pairs: [(Double, V)], interp: Interpolation = .bezier) -> Animated<V> {
+        var a = Animated(pairs[0].1)
+        for (t, v) in pairs { a.insertKeyframe(Keyframe(time: t, value: v, interpolation: interp)) }
+        return a
+    }
+
+    /// Window [start, start+soft] sweeping across the text (units behind it are done).
+    private static func wipe(_ s: Double, _ d: Double, _ basedOn: TextUnit = .characters, soft: Double = 35) -> TextSelector {
+        var sel = TextSelector()
+        sel.basedOn = basedOn
+        sel.shape = .rampUp
+        sel.start = k([(s, -soft), (s + d, 100.0)])
+        sel.end = k([(s, 0.0), (s + d, 100.0 + soft)])
+        return sel
+    }
+
+    static let extra: [TextPreset] = [
+        TextPreset(id: "blurIn", name: "Blur In") { s, d in
+            var a = TextAnimator(name: "Blur In")
+            a.selector = wipe(s, d, soft: 45)
+            a.properties.blur = Animated(18)
+            a.properties.opacity = Animated(0)
+            a.properties.scale = Animated(Vec2(130, 130))
+            return [a]
+        },
+        TextPreset(id: "focusPull", name: "Focus Pull") { s, d in
+            var a = TextAnimator(name: "Focus")
+            a.selector.amount = k([(s, 100.0), (s + d, 0.0)])
+            a.properties.blur = Animated(24)
+            a.properties.tracking = Animated(30)
+            return [a]
+        },
+        TextPreset(id: "decode", name: "Decode") { s, d in
+            var a = TextAnimator(name: "Decode")
+            a.selector = wipe(s, d, soft: 25)
+            a.properties.characterOffset = Animated(14)
+            var f = TextAnimator(name: "Decode Color")
+            f.selector = wipe(s, d, soft: 25)
+            f.properties.fill = Animated(RGBA(hex: 0x5CFFB0))
+            return [a, f]
+        },
+        TextPreset(id: "scramble", name: "Scramble") { s, d in
+            var a = TextAnimator(name: "Scramble")
+            a.selector.kind = .wiggly
+            a.selector.frequency = Animated(12)
+            a.selector.minAmount = 0
+            a.selector.amount = k([(s, 100.0), (s + d, 0.0)], interp: .linear)
+            a.properties.characterOffset = Animated(20)
+            return [a]
+        },
+        TextPreset(id: "blurSlideWords", name: "Blur Slide (Words)") { s, d in
+            var a = TextAnimator(name: "Blur Slide")
+            a.selector = wipe(s, d, .words, soft: 50)
+            a.properties.blur = Animated(14)
+            a.properties.position = Animated(Vec2(120, 0))
+            a.properties.opacity = Animated(0)
+            return [a]
+        },
+        TextPreset(id: "dreamy", name: "Dreamy Float") { s, d in
+            var a = TextAnimator(name: "Float")
+            a.selector = wipe(s, d, soft: 60)
+            a.properties.blur = Animated(10)
+            a.properties.position = Animated(Vec2(0, 40))
+            a.properties.opacity = Animated(0)
+            var w = TextAnimator(name: "Drift")
+            w.selector.kind = .wave
+            w.selector.frequency = Animated(0.6)
+            w.selector.spread = Animated(8)
+            w.properties.position = Animated(Vec2(0, -8))
+            return [a, w]
+        },
+        TextPreset(id: "glitchDecode", name: "Glitch Decode") { s, d in
+            var a = TextAnimator(name: "Decode")
+            a.selector = wipe(s, d, soft: 20)
+            a.properties.characterOffset = Animated(9)
+            a.properties.opacity = Animated(40)
+            var j = TextAnimator(name: "Jitter")
+            j.selector.kind = .wiggly
+            j.selector.frequency = Animated(16)
+            j.selector.amount = k([(s, 100.0), (s + d, 0.0)], interp: .linear)
+            j.properties.position = Animated(Vec2(14, 4))
+            j.properties.blur = Animated(4)
+            return [a, j]
+        },
+        TextPreset(id: "impactSlam", name: "Impact Slam") { s, d in
+            var a = TextAnimator(name: "Slam")
+            a.selector = wipe(s, d * 0.6, soft: 20)
+            a.properties.scale = Animated(Vec2(320, 320))
+            a.properties.blur = Animated(12)
+            a.properties.opacity = Animated(0)
             return [a]
         },
     ]

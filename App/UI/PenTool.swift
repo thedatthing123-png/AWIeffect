@@ -210,12 +210,6 @@ struct MasksPanel: View {
             HStack {
                 Text(m.name).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.text)
                 Spacer()
-                Menu {
-                    ForEach(MaskMode.allCases) { mode in Button(mode.title) { state.editMask(m.id, "Mask Mode") { $0.mode = mode } } }
-                } label: {
-                    Text(m.mode.title).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.accentGlow)
-                        .padding(.horizontal, 10).frame(height: 28).background(Capsule().fill(Theme.surface))
-                }
                 Toggle("Invert", isOn: Binding(get: { m.inverted }, set: { b in state.editMask(m.id, "Invert Mask") { $0.inverted = b } }))
                     .toggleStyle(.button).tint(Theme.accent).font(.system(size: 12))
                 Button(role: .destructive) {
@@ -224,6 +218,36 @@ struct MasksPanel: View {
                     }
                 } label: { Image(systemName: "trash") }
             }
+            // Alight Motion's three modes up front, After Effects' extras one tap away.
+            HStack(spacing: 6) {
+                ForEach([MaskMode.add, .subtract, .intersect]) { mode in
+                    Button { state.editMask(m.id, "Mask Mode") { $0.mode = mode } } label: {
+                        VStack(spacing: 3) {
+                            Image(systemName: mode.symbol).font(.system(size: 16, weight: .semibold))
+                            Text(mode.title).font(.system(size: 10, weight: .bold))
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 46)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(m.mode == mode ? Theme.accent : Theme.surface))
+                        .foregroundStyle(m.mode == mode ? Color.white : Theme.text)
+                    }
+                    .buttonStyle(.plain)
+                }
+                Menu {
+                    ForEach([MaskMode.lighten, .darken, .difference, .none]) { mode in
+                        Button { state.editMask(m.id, "Mask Mode") { $0.mode = mode } } label: { Label(mode.title, systemImage: mode.symbol) }
+                    }
+                } label: {
+                    let extra = [MaskMode.lighten, .darken, .difference, .none].contains(m.mode)
+                    VStack(spacing: 3) {
+                        Image(systemName: extra ? m.mode.symbol : "ellipsis.circle").font(.system(size: 16, weight: .semibold))
+                        Text(extra ? m.mode.title : "More").font(.system(size: 10, weight: .bold))
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 46)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(extra ? Theme.accent : Theme.surface))
+                    .foregroundStyle(extra ? Color.white : Theme.text)
+                }
+            }
+            Text(m.mode.help).font(.caption).foregroundStyle(Theme.textDim).frame(maxWidth: .infinity, alignment: .leading)
             maskSlider("Feather", m.feather.value(at: t), 0...400) { v in state.editMask(m.id, "Feather", continuous: true) { $0.feather.set(v, at: t) } }
             maskSlider("Opacity", m.opacity.value(at: t), 0...100) { v in state.editMask(m.id, "Mask Opacity", continuous: true) { $0.opacity.set(v, at: t) } }
             maskSlider("Expansion", m.expansion.value(at: t), -300...300) { v in state.editMask(m.id, "Expansion", continuous: true) { $0.expansion.set(v, at: t) } }
@@ -241,9 +265,7 @@ struct MasksPanel: View {
     private func maskSlider(_ title: String, _ v: Double, _ r: ClosedRange<Double>, _ set: @escaping (Double) -> Void) -> some View {
         HStack {
             Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 74, alignment: .leading)
-            Slider(value: Binding(get: { min(max(v, r.lowerBound), r.upperBound) }, set: set), in: r) { e in if !e { state.endEdit() } }
-            Text(String(format: "%.0f", v)).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.accentGlow)
-                .frame(width: 40, alignment: .trailing)
+            ValueScrubber(value: v, range: r, step: 1, onChange: set, onEnd: { state.endEdit() })
         }
     }
 }
@@ -289,9 +311,7 @@ struct StrokeSection: View {
     private func row(_ title: String, _ v: Double, _ r: ClosedRange<Double>, _ set: @escaping (Double) -> Void) -> some View {
         HStack {
             Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 60, alignment: .leading)
-            Slider(value: Binding(get: { min(max(v, r.lowerBound), r.upperBound) }, set: set), in: r) { e in if !e { state.endEdit() } }
-            Text(String(format: "%.0f", v)).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.accentGlow)
-                .frame(width: 40, alignment: .trailing)
+            ValueScrubber(value: v, range: r, step: 1, onChange: set, onEnd: { state.endEdit() })
         }
     }
 }

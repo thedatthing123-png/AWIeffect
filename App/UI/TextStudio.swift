@@ -195,6 +195,8 @@ struct TextPanel: View {
                 Button("Fill Color") { addAnimator { $0.fill = Animated(RGBA(hex: 0x9B5CFF)) } }
                 Button("Tracking") { addAnimator { $0.tracking = Animated(40) } }
                 Button("Skew") { addAnimator { $0.skew = Animated(20) } }
+                Button("Blur") { addAnimator { $0.blur = Animated(12) } }
+                Button("Character Offset (Scramble)") { addAnimator { $0.characterOffset = Animated(10) } }
             } label: {
                 Label("Add Animator", systemImage: "plus").frame(maxWidth: .infinity).padding(.vertical, 10)
                     .background(RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.accent.opacity(0.7), style: StrokeStyle(lineWidth: 1.2, dash: [5, 4])))
@@ -384,6 +386,12 @@ struct AnimatorCard: View {
                 }
                 if let sk = animator.properties.skew?.value(at: state.currentTime) {
                     slider("Skew", sk, -70...70) { a, v, t in a.properties.skew?.set(v, at: t) }
+                }
+                if let bl = animator.properties.blur?.value(at: state.currentTime) {
+                    slider("Blur", bl, 0...100) { a, v, t in a.properties.blur?.set(v, at: t) }
+                }
+                if let co = animator.properties.characterOffset?.value(at: state.currentTime) {
+                    slider("Char Offset", co, -40...40) { a, v, t in a.properties.characterOffset?.set(v, at: t) }
                 }
                 if let c = animator.properties.fill?.value(at: state.currentTime) {
                     ColorPicker("Fill Color", selection: Binding(get: { Color(c) }, set: { col in

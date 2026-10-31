@@ -46,6 +46,56 @@ kernel void fx18(texture2d<half, access::sample> src [[texture(0)]],
         o = float4(r, base.g, b, base.a);
         o.a = max(o.a, max(float(src.sample(sm18, q + float2(split, 0.0)).a), float(src.sample(sm18, q - float2(split, 0.0)).a)));
         o.rgb = min(o.rgb + p.b.z * k * o.a, float3(o.a));
+    } else if (p.i.x == 2) {
+        // Warp Chroma: a = (amount px, channel spread 0-1, angle rad, -)
+        float2 e = float2(1.5, 0.0);
+        float lx = lum18(float3(src.sample(sm18, c + e.xy).rgb)) - lum18(float3(src.sample(sm18, c - e.xy).rgb));
+        float ly = lum18(float3(src.sample(sm18, c + e.yx).rgb)) - lum18(float3(src.sample(sm18, c - e.yx).rgb));
+        float2 g = float2(lx, ly);
+        float cs = cos(p.a.z), sn = sin(p.a.z);
+        g = float2(g.x * cs - g.y * sn, g.x * sn + g.y * cs) * p.a.x * 4.0;
+        float4 cr = float4(src.sample(sm18, c + g * (1.0 + p.a.y)));
+        float4 cg = float4(src.sample(sm18, c + g));
+        float4 cb = float4(src.sample(sm18, c + g * (1.0 - p.a.y)));
+        o = float4(cr.r, cg.g, cb.b, max(cg.a, max(cr.a, cb.a)));
+    } else if (p.i.x == 3) {
+        // Scanline Tear: a = (amount px, band height 0-1, speed, jagged px)
+        float center = fract(t * p.a.z * 0.3 + 0.37) * size.y;
+        float half_ = max(p.a.y * size.y * 0.5, 1.0);
+        float inBand = 1.0 - smoothstep(half_ * 0.8, half_, abs(c.y - center));
+        float row = floor(c.y / max(p.a.w, 1.0));
+        float sh = (h182(float2(row, floor(t * 24.0))) - 0.5) * 2.0 * p.a.x * inBand;
+        o = float4(src.sample(sm18, c + float2(sh, 0.0)));
+    } else if (p.i.x == 4) {
+        // Wave Glitch: a = (amount px, waves, speed, steps/s)
+        float tq = floor(t * max(p.a.w, 0.5)) / max(p.a.w, 0.5);
+        float sh = p.a.x * sin(c.y / size.y * p.a.y * 6.2831853 + tq * p.a.z * 6.2831853);
+        o = float4(src.sample(sm18, c + float2(sh, 0.0)));
+    } else if (p.i.x == 5) {
+        // Block Shuffle: a = (block px, chance 0-1, rate fps, seed)
+        float bs = max(p.a.x, 2.0);
+        float2 blk = floor(c / bs);
+        float fr = floor(t * max(p.a.z, 0.5));
+        float2 q = c;
+        if (h182(blk + float2(fr * 1.37, p.a.w)) < p.a.y) {
+            float2 other = floor(float2(h182(blk + fr + 3.1), h182(blk.yx + fr + 7.7)) * size / bs);
+            q = other * bs + fmod(c, bs);
+        }
+        o = float4(src.sample(sm18, q));
+    } else if (p.i.x == 6) {
+        // Channel Smear: a = (length px, angle rad, spread 0-1, -)
+        float2 dir = float2(cos(p.a.y), sin(p.a.y));
+        float3 len = float3(1.0, 1.0 - p.a.z * 0.5, 1.0 - p.a.z) * p.a.x;
+        float4 acc = float4(0.0);
+        for (int k = 0; k < 10; k++) {
+            float f = float(k) / 9.0;
+            acc.r += float(src.sample(sm18, c - dir * len.r * f).r);
+            acc.g += float(src.sample(sm18, c - dir * len.g * f).g);
+            acc.b += float(src.sample(sm18, c - dir * len.b * f).b);
+            acc.a += float(src.sample(sm18, c - dir * len.r * f).a);
+        }
+        o = acc / 10.0;
+        o.rgb = min(o.rgb, float3(max(o.a, 1e-4)));
     } else {
         // Negative / mono flash: a = (flashes per second, mix 0-1, mode 0 negative 1 mono threshold 2 both, threshold)
         float4 s = float4(src.sample(sm18, c));

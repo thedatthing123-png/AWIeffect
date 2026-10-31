@@ -47,6 +47,10 @@ enum TextAnimatorImport {
                     a.properties.tracking = AEPImporter.animated(v, fallback: 0.0)
                 case "ADBE Text Skew":
                     a.properties.skew = AEPImporter.animated(v, fallback: 0.0)
+                case "ADBE Text Blur":
+                    a.properties.blur = AEPImporter.animated(v, fallback: 0.0) { [($0.first ?? 0)] }
+                case "ADBE Text Character Offset":
+                    a.properties.characterOffset = AEPImporter.animated(v, fallback: 0.0)
                 case "ADBE Text Fill Color":
                     a.properties.fill = AEPImporter.animated(v, fallback: RGBA.white)
                 default: break
@@ -55,7 +59,7 @@ enum TextAnimatorImport {
         }
         let used = a.properties
         guard used.position != nil || used.scale != nil || used.rotation != nil || used.opacity != nil
-                || used.tracking != nil || used.skew != nil || used.fill != nil else { return nil }
+                || used.tracking != nil || used.skew != nil || used.fill != nil || used.blur != nil || used.characterOffset != nil else { return nil }
 
         // Selector (first one; AE stacks several, the first usually drives the animation).
         if let sel = deep(g, "ADBE Text Selector") {

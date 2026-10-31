@@ -113,6 +113,14 @@ struct ThreeDPanel: View {
                                 .font(.caption).foregroundStyle(Theme.textDim)
                         }
                         if l.content == .camera, let c = l.camera {
+                            Toggle("2D Camera (moves the whole scene, like Alight Motion)", isOn: Binding(get: { c.affects2D }, set: { b in
+                                state.mutate("2D Camera") { p in if let i = state.selectedIndex { p.layers[i].camera?.affects2D = b } }
+                            }))
+                            .tint(Theme.accent).foregroundStyle(Theme.text)
+                            if c.affects2D {
+                                Text("Move, scale (zoom) and rotate this camera layer, or put Shake Pro on it, and every 2D layer follows. 3D layers use the 3D camera as before.")
+                                    .font(.caption).foregroundStyle(Theme.textDim)
+                            }
                             row("Zoom", c.zoom.value(at: t), 100...8000, anim: c.zoom,
                                 set: { v in state.mutateLayer { $0.camera?.zoom.set(v, at: t) } },
                                 keyed: { state.mutateLayer { $0.camera?.zoom.toggleKeyframe(at: t) } })

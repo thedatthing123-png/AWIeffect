@@ -94,6 +94,29 @@ enum MaskMode: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String { rawValue.capitalized }
     var shaderIndex: UInt32 { UInt32(Self.allCases.firstIndex(of: self)!) }
+    var symbol: String {
+        switch self {
+        case .add: return "plus.square.fill"
+        case .subtract: return "minus.square.fill"
+        case .intersect: return "square.on.square.intersection.dashed"
+        case .lighten: return "sun.max"
+        case .darken: return "moon"
+        case .difference: return "circle.lefthalf.filled"
+        case .none: return "eye.slash"
+        }
+    }
+    /// What the mode does, in plain words.
+    var help: String {
+        switch self {
+        case .add: return "Show what's inside this mask."
+        case .subtract: return "Cut this shape out (hide what's inside)."
+        case .intersect: return "Show only where this mask overlaps the masks above it."
+        case .lighten: return "Overlapping masks keep the more visible one."
+        case .darken: return "Overlapping masks keep the less visible one."
+        case .difference: return "Show where masks don't overlap; overlaps become holes."
+        case .none: return "Mask is off (kept, but does nothing)."
+        }
+    }
 }
 
 struct LayerMask: Codable, Equatable, Identifiable {

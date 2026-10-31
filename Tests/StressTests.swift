@@ -1,4 +1,5 @@
 import XCTest
+import simd
 @testable import AWIeffect
 
 /// Crash hunting: every effect rendered with extreme settings (slider ends, typed values far past them,
@@ -112,5 +113,26 @@ final class StressTests: XCTestCase {
         var d = 0.0
         for i in 0..<min(on.count, off.count) { d += Double(abs(Int(on[i]) - Int(off[i]))) }
         XCTAssertGreaterThan(d / Double(on.count), 0.2, "shake should be motion-blurred by default")
+    }
+
+    /// 2D camera (Alight Motion style): moving the camera right slides 2D layers left; scaling it zooms in.
+    func testTwoDCameraMovesScene() {
+        var p = Project.new(name: "cam", width: 200, height: 200, fps: 30, duration: 2)
+        let box = p.makeLayer(name: "box", content: .solid, size: Vec2(20, 20))
+        var cam = p.makeLayer(name: "cam", content: .camera, size: Vec2(1, 1))
+        cam.camera = CameraOptions()
+        cam.camera?.affects2D = true
+        cam.transform.position = Animated(Vec2(150, 100))
+        cam.transform.scale = Animated(Vec2(200, 200))
+        p.layers = [cam, box]
+        let state = Renderer.activeCamera(p, time: 0)
+        let m = Renderer.placementMatrix(box, camera: state, time: 0, renderScale: 1)
+        let c = m * SIMD3(0, 0, 1)
+        // Box center (100,100) is 50 px left of the camera; zoom 2x -> 100 px left of frame center.
+        XCTAssertEqual(c.x, 0, accuracy: 1e-6); XCTAssertEqual(c.y, 100, accuracy: 1e-6)
+        cam.camera?.affects2D = false
+        p.layers = [cam, box]
+        let m2 = Renderer.placementMatrix(box, camera: Renderer.activeCamera(p, time: 0), time: 0, renderScale: 1)
+        XCTAssertEqual((m2 * SIMD3(0, 0, 1)).x, 100, accuracy: 1e-6, "3D-only camera leaves 2D layers alone")
     }
 }

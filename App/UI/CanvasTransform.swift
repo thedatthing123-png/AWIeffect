@@ -75,7 +75,7 @@ extension EditorState {
             case .pivot: kind = .pivot
             }
         }
-        let M = Renderer.layerMatrix(l, time: t, renderScale: 1, includeEffects: false)
+        let M = Renderer.placementMatrix(l, camera: Renderer.activeCamera(project, time: t), time: t, renderScale: 1)
         let tr = l.transform
         let label: String
         switch kind {
@@ -114,6 +114,14 @@ extension EditorState {
             live.project = lp
         case .move:
             var delta = c - d.startComp
+            // Under a 2D camera the finger moves in what the camera shows: undo the camera's zoom / turn.
+            if let l = selectedLayer, !l.is3D {
+                let v = Renderer.activeCamera(project, time: t).view2D
+                if v != matrix_identity_double3x3 {
+                    let inv = v.inverse
+                    delta = Vec2(inv[0][0] * delta.x + inv[1][0] * delta.y, inv[0][1] * delta.x + inv[1][1] * delta.y)
+                }
+            }
             if let pid = selectedLayer?.parentID, let a = Renderer.parentAffine(pid, in: project, time: t) {
                 // Finger moves in comp space; the child's position lives in its parent's space.
                 let inv = a.m.inverse

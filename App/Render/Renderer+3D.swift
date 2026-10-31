@@ -9,6 +9,8 @@ struct CameraState {
     var zoom: Double
     var center: SIMD2<Double>       // comp center (principal point)
     var options: CameraOptions?
+    /// 2D camera (comp px -> comp px) applied to 2D layers; identity when the camera is 3D-only.
+    var view2D = matrix_identity_double3x3
 
     var view: simd_double4x4 { world.inverse }
 
@@ -46,8 +48,26 @@ extension Renderer {
         let opts = cam.camera ?? CameraOptions()
         let world = CameraState.translation(SIMD3(pos.x, pos.y, t.positionZ.value(at: time)))
             * CameraState.rotation(x: t.rotationX.value(at: time), y: t.rotationY.value(at: time), z: t.rotation.value(at: time))
-        return CameraState(world: world, zoom: opts.zoom.value(at: time),
-                           center: SIMD2(Double(p.width) / 2, Double(p.height) / 2), options: opts)
+        var state = CameraState(world: world, zoom: opts.zoom.value(at: time),
+                                center: SIMD2(Double(p.width) / 2, Double(p.height) / 2), options: opts)
+        if opts.affects2D { state.view2D = view2D(cam, project: p, time: time) }
+        return state
+    }
+
+    /// Scene transform of a 2D camera: what the camera sees fills the frame (move right = scene slides left,
+    /// scale up = zoom in, rotate = scene turns the other way). Shakes on the camera layer shake the scene.
+    static func view2D(_ cam: Layer, project p: Project, time: Double) -> simd_double3x3 {
+        let fx = transformOffsets(cam, time: time)
+        let pos = cam.transform.position.value(at: time) + Vec2(fx.dx, fx.dy)
+        let sc = cam.transform.scale.value(at: time) * fx.ds / 100
+        let r = -(cam.transform.rotation.value(at: time) + fx.dr) * .pi / 180
+        let cx = Double(p.width) / 2, cy = Double(p.height) / 2
+        guard pos.x.isFinite, pos.y.isFinite, sc.x.isFinite, sc.y.isFinite, r.isFinite, abs(sc.x) > 1e-4, abs(sc.y) > 1e-4 else { return matrix_identity_double3x3 }
+        let toCenter = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(cx, cy, 1)))
+        let scale = simd_double3x3(diagonal: SIMD3(sc.x, sc.y, 1))
+        let rot = simd_double3x3(columns: (SIMD3(cos(r), sin(r), 0), SIMD3(-sin(r), cos(r), 0), SIMD3(0, 0, 1)))
+        let fromCam = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(-pos.x, -pos.y, 1)))
+        return toCenter * scale * rot * fromCam
     }
 
     /// Layer-local -> world (4x4), including AE anchor, scale, 3D rotation and Z position.
@@ -91,8 +111,13 @@ extension Renderer {
 
     /// Local -> target matrix for any layer (homography for 3D layers, affine otherwise).
     static func placementMatrix(_ layer: Layer, camera: CameraState, time: Double, renderScale: Double) -> simd_double3x3 {
-        layer.is3D ? layerHomography(layer, camera: camera, time: time, renderScale: renderScale)
-                   : layerMatrix(layer, time: time, renderScale: renderScale)
+        if layer.is3D { return layerHomography(layer, camera: camera, time: time, renderScale: renderScale) }
+        let m = layerMatrix(layer, time: time, renderScale: renderScale)
+        guard camera.view2D != matrix_identity_double3x3, layer.content != .camera else { return m }
+        // view2D works in comp px; layerMatrix already includes the render scale.
+        let s = simd_double3x3(diagonal: SIMD3(renderScale, renderScale, 1))
+        let si = simd_double3x3(diagonal: SIMD3(1 / max(renderScale, 1e-9), 1 / max(renderScale, 1e-9), 1))
+        return s * camera.view2D * si * m
     }
 
     /// Target pixels per local pixel near the layer's anchor (projective-aware).

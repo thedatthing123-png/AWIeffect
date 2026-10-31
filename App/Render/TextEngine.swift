@@ -144,17 +144,20 @@ final class TextEngine {
     }
 
     /// Rasterized alpha mask for a glyph at `scale` device px per local px (bucketed for caching).
-    func glyphTexture(_ g: LaidGlyph, scale: Double, device: MTLDevice) -> (tex: MTLTexture, pad: Double, scale: Double)? {
+    func glyphTexture(_ g: LaidGlyph, scale: Double, blur rawBlur: Double = 0, device: MTLDevice) -> (tex: MTLTexture, pad: Double, scale: Double)? {
         // Bucket scales to powers of 2^(1/4) so zooming doesn't re-rasterize every frame.
         let b = pow(2, (log2(max(scale, 0.05)) * 4).rounded(.up) / 4)
+        // Blur (local px) in half-pixel steps, so animated blur reuses rasters.
+        let blur = min(200, (max(0, rawBlur) * 2).rounded() / 2)
         let fontName = CTFontCopyPostScriptName(g.font) as String
         let size = Double(CTFontGetSize(g.font))
-        let key = "\(fontName)|\(size)|\(g.glyph)|\(b)"
+        let key = "\(fontName)|\(size)|\(g.glyph)|\(b)|\(blur)"
         lock.lock()
         if let c = glyphCache[key] { lock.unlock(); return c }
         lock.unlock()
 
-        let pad = 2.0
+        let blurPx = blur * b
+        let pad = 2.0 + blurPx * 2.5
         let w = max(1, Int(ceil(g.halfSize.x * 2 * b + pad * 2))), h = max(1, Int(ceil(g.halfSize.y * 2 * b + pad * 2)))
         guard w < 4096, h < 4096 else { return nil }
         var pixels = [UInt8](repeating: 0, count: w * h)
@@ -166,6 +169,11 @@ final class TextEngine {
         var rect = CGRect.zero
         var glyph = g.glyph
         CTFontGetBoundingRectsForGlyphs(g.font, .horizontal, &glyph, &rect, 1)
+        if blurPx > 0.25 {
+            // Real gaussian: draw the glyph off-canvas and keep only its blurred shadow on the canvas.
+            ctx.setShadow(offset: CGSize(width: -CGFloat(w * 2), height: 0), blur: CGFloat(blurPx * 2), color: CGColor(gray: 1, alpha: 1))
+            ctx.translateBy(x: CGFloat(w * 2), y: 0)
+        }
         ctx.scaleBy(x: CGFloat(b), y: CGFloat(b))
         var pos = CGPoint(x: -rect.minX + CGFloat(pad / b), y: -rect.minY + CGFloat(pad / b))
         CTFontDrawGlyphs(g.font, &glyph, &pos, 1, ctx)
@@ -196,6 +204,8 @@ extension Renderer {
         var opacity = 1.0
         var color = RGBA.white
         var tracking = 0.0
+        var blur = 0.0
+        var charOffset = 0.0
     }
 
     static func glyphStates(_ text: TextData, layout: TextLayout, time: Double) -> [GlyphState] {
@@ -217,6 +227,7 @@ extension Renderer {
             let pos = p.position?.value(at: time), sc = p.scale?.value(at: time), rot = p.rotation?.value(at: time)
             let op = p.opacity?.value(at: time), col = p.fill?.value(at: time), tr = p.tracking?.value(at: time)
             let sk = p.skew?.value(at: time)
+            let bl = p.blur?.value(at: time), co = p.characterOffset?.value(at: time)
             for (gi, g) in layout.glyphs.enumerated() {
                 let unit: Int
                 switch sel.basedOn {
@@ -234,6 +245,8 @@ extension Renderer {
                 if let op { states[gi].opacity *= max(0, 1 + (op / 100 - 1) * amt) }
                 if let col { states[gi].color = RGBA.lerp(states[gi].color, col, min(1, max(0, amt))) }
                 if let tr { states[gi].tracking += tr * amt }
+                if let bl { states[gi].blur += max(0, bl * amt) }
+                if let co { states[gi].charOffset += co * amt }
             }
         }
         // Tracking accumulates along each line, then the line is re-centered for the alignment.
@@ -254,18 +267,47 @@ extension Renderer {
         return states
     }
 
+    /// AE Character Offset: letters move through A-Z / a-z, digits through 0-9; other characters stay.
+    static func offsetCharacter(_ c: Character, by n: Int) -> Character? {
+        guard let v = c.unicodeScalars.first?.value, c.unicodeScalars.count == 1 else { return nil }
+        func wrap(_ base: UInt32, _ count: Int) -> Character? {
+            let i = ((Int(v - base) + n) % count + count) % count
+            return UnicodeScalar(base + UInt32(i)).map(Character.init)
+        }
+        switch v {
+        case 65...90: return wrap(65, 26)
+        case 97...122: return wrap(97, 26)
+        case 48...57: return wrap(48, 10)
+        default: return nil
+        }
+    }
+
     /// Draws a text layer. `M` maps layer-local px -> target px; `density` = target px per local px.
     func drawText(cb: MTLCommandBuffer, target: MTLTexture, matrix M: simd_double3x3, density: Double,
                   layer: Layer, time: Double, opacity: Double, blend: BlendMode) {
         guard let text = layer.text else { return }
         let lay = TextEngine.shared.layout(text, time: time)
         let states = Self.glyphStates(text, layout: lay, time: time)
-        for (gi, g) in lay.glyphs.enumerated() where !g.isSpace {
+        let chars = Array(text.string)
+        for (gi, g0) in lay.glyphs.enumerated() where !g0.isSpace {
             let st = states[gi]
+            var g = g0
+            // Character Offset: swap in the shifted letter's glyph (same spot, its own size).
+            let shift = Int(st.charOffset.rounded())
+            if shift != 0, g.charIndex < chars.count, let shifted = Self.offsetCharacter(chars[g.charIndex], by: shift) {
+                var u = Array(String(shifted).utf16), gl = [CGGlyph](repeating: 0, count: u.count)
+                if CTFontGetGlyphsForCharacters(g.font, &u, &gl, u.count), gl[0] != 0 {
+                    var r = CGRect.zero
+                    CTFontGetBoundingRectsForGlyphs(g.font, .horizontal, &gl, &r, 1)
+                    g.glyph = gl[0]
+                    g.halfSize = Vec2(Double(r.width) / 2, Double(r.height) / 2)
+                    g.center = Vec2(g.origin.x + Double(r.midX), g.origin.y - Double(r.midY))
+                }
+            }
             let a = opacity * st.opacity * st.color.a
             if a <= 0.001 { continue }
             let glyphScale = density * max(abs(st.scale.x), abs(st.scale.y), 0.05)
-            guard let gt = TextEngine.shared.glyphTexture(g, scale: glyphScale, device: device) else { continue }
+            guard let gt = TextEngine.shared.glyphTexture(g, scale: glyphScale, blur: st.blur, device: device) else { continue }
             // Glyph quad half-size including raster padding (local px).
             let hs = Vec2(g.halfSize.x + gt.pad / gt.scale, g.halfSize.y + gt.pad / gt.scale)
             let rot = st.rotation * .pi / 180, skew = tan(st.skew * .pi / 180)
