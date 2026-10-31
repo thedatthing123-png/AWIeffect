@@ -119,7 +119,7 @@ extension EffectRegistry {
 
     static let twitch18 = EffectDefinition(
         id: "awi18.twitch", name: "Twitch Glitch", category: .stylize,
-        aeMatchNames: ["Twitch"],
+        aeMatchNames: [],
         summary: "Random glitch bursts like the Twitch plugin: RGB split, sliced offsets, flashes and jitter blur that hit and vanish. Pair with Shake Pro (Twitch) for the full look.",
         params: [
             .number("intensity", "Intensity", 80, 0, 100, unit: "%"),
@@ -153,7 +153,7 @@ extension EffectRegistry {
 
     static let warpChroma18 = EffectDefinition(
         id: "awi18.warpChroma", name: "Warp Chroma", category: .distort,
-        aeMatchNames: ["S_WarpChroma"],
+        aeMatchNames: [],
         summary: "Sapphire-style rainbow warp: edges push outward with the color channels split apart.",
         params: [
             .number("amount", "Warp Amount", 25, 0, 200, unit: "px"),
@@ -237,7 +237,7 @@ extension EffectRegistry {
 
     static let puppet18 = EffectDefinition(
         id: "awi18.puppet", name: "Puppet Pins", category: .distort,
-        aeMatchNames: ["ADBE FreePin3"],
+        aeMatchNames: [],
         summary: "AE Puppet tool: tap the layer to drop pins, drag a pin to bend the image around it (hair, capes, arms). Turn Animate on to keyframe each pose.",
         params: [
             .number("stiffness", "Stiffness", 1.2, 0.5, 3, step: 0.05),
@@ -259,7 +259,7 @@ extension EffectRegistry {
 
     static let transformFX18 = EffectDefinition(
         id: "awi18.transform", name: "Transform (Effect)", category: .motion,
-        aeMatchNames: ["ADBE Geometry2"],
+        aeMatchNames: [],
         summary: "AE's Transform effect: offset, scale and rotate inside the effect stack, on top of the layer's own keyframes (stack velocity hits and shakes without touching them). Gets motion blur from Smooth Motion.",
         params: [
             .number("x", "Position X Offset", 0, -2000, 2000, unit: "px"),
@@ -276,7 +276,7 @@ extension EffectRegistry {
 
     static let displacementMap18 = EffectDefinition(
         id: "awi18.displacementMap", name: "Displacement Map", category: .distort,
-        aeMatchNames: ["ADBE Displacement Map"],
+        aeMatchNames: [],
         summary: "Pushes this layer's pixels using another layer: mid grey stays, dark and bright push in opposite directions (glitch, heat, liquid, shattered looks from your own layers).",
         params: [
             .number("h", "Max Horizontal", 30, -500, 500, unit: "px"),
@@ -296,7 +296,7 @@ extension EffectRegistry {
 
     static let setMatte18 = EffectDefinition(
         id: "awi18.setMatte", name: "Set Matte", category: .keying,
-        aeMatchNames: ["ADBE Set Matte3"],
+        aeMatchNames: [],
         summary: "Uses another layer's alpha or brightness as this layer's transparency (any layer, anywhere in the stack — not just the one above).",
         params: [
             .choice("mode", "Use", ["Alpha", "Brightness"], 0),

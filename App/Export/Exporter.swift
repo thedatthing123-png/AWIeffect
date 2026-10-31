@@ -142,7 +142,7 @@ final class Exporter {
             let t = start + Double(i) / fps
             texPool.recycle()
             r.encode(project: project, time: t, renderScale: renderScale, into: comp, commandBuffer: cb, pool: texPool, mediaURL: mediaURL)
-            r.encodeToBGRA(comp: comp, out: outTex, commandBuffer: cb)
+            r.encodeToBGRA(comp: comp, out: outTex, commandBuffer: cb, dither: true)
             let gpuDone = DispatchSemaphore(value: 0)
             cb.addCompletedHandler { _ in gpuDone.signal() }
             cb.commit()

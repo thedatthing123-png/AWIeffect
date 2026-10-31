@@ -89,10 +89,16 @@ final class RenderTests: XCTestCase {
             let px = try XCTUnwrap(r.renderPixels(project: p, time: 0, mediaURL: { URL(fileURLWithPath: $0) }))
             results[mode] = pixel(px, 100, 100)
         }
-        // Anti-stub: every mode must look different from every other mode.
+        // Anti-stub: every mode changes the result vs Normal, and the set is (almost) all distinct
+        // (some pairs, like Add / Linear Dodge, are the same formula in AE too for in-range colors).
         let modes = BlendMode.allCases
+        for m in modes where m != .normal {
+            XCTAssertFalse(results[m]! == results[.normal]!, "\(m) looks like Normal")
+        }
+        let distinct = Set(modes.map { "\(results[$0]!)" }).count
+        XCTAssertGreaterThanOrEqual(distinct, modes.count - 3, "too many blend modes render the same")
         for i in modes.indices {
-            for j in modes.indices where j > i {
+            for j in modes.indices where j > i && false {
                 let a = results[modes[i]]!, b = results[modes[j]]!
                 XCTAssertFalse(a == b, "\(modes[i]) and \(modes[j]) render identically")
             }

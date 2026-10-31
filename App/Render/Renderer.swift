@@ -786,11 +786,14 @@ final class Renderer {
         fx.run("fxAdjustMix", cb, textures: [comp, current], params: p, grid: comp)
     }
 
-    func encodeToBGRA(comp: MTLTexture, out: MTLTexture, commandBuffer cb: MTLCommandBuffer) {
+    /// `dither` adds ±1 LSB noise before 8-bit (video export: no banding); stills stay exact.
+    func encodeToBGRA(comp: MTLTexture, out: MTLTexture, commandBuffer cb: MTLCommandBuffer, dither: Bool = false) {
         guard let enc = cb.makeComputeCommandEncoder() else { return }
         enc.setComputePipelineState(toBGRAPSO)
         enc.setTexture(comp, index: 0)
         enc.setTexture(out, index: 1)
+        var d: UInt32 = dither ? 1 : 0
+        enc.setBytes(&d, length: 4, index: 0)
         dispatch(enc, pso: toBGRAPSO, width: out.width, height: out.height)
         enc.endEncoding()
     }

@@ -214,6 +214,7 @@ kernel void drawLayer(texture2d<half, access::read_write> comp [[texture(0)]],
 // Premultiplied float comp -> straight BGRA8 (for video export / thumbnails).
 kernel void compToBGRA(texture2d<half, access::read> comp [[texture(0)]],
                        texture2d<half, access::write> outTex [[texture(1)]],
+                       constant uint& dither [[buffer(0)]],
                        uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= outTex.get_width() || gid.y >= outTex.get_height()) return;
     float4 c = float4(comp.read(gid));
@@ -224,7 +225,7 @@ kernel void compToBGRA(texture2d<half, access::read> comp [[texture(0)]],
     float2 g = float2(gid);
     float n1 = fract(sin(dot(g, float2(12.9898, 78.233))) * 43758.5453);
     float n2 = fract(sin(dot(g, float2(39.3468, 11.1351))) * 24634.6345);
-    rgb = clamp(rgb + (n1 + n2 - 1.0) / 255.0, 0.0, 1.0);
+    rgb = clamp(rgb + (dither != 0u ? (n1 + n2 - 1.0) / 255.0 : 0.0), 0.0, 1.0);
     outTex.write(half4(half3(rgb), 1.0h), gid);
 }
 

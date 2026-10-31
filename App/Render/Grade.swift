@@ -33,7 +33,7 @@ extension EffectRegistry {
 
     static let grade = EffectDefinition(
         id: "awi18.grade", name: "CC Studio Grade", category: .color,
-        aeMatchNames: ["ADBE Lumetri"],
+        aeMatchNames: [],
         summary: "Full color grade: exposure, contrast, highlights/shadows, white balance, vibrance, lift/gamma/gain, curves, HSL secondary and .cube LUTs. Edit it in CC Studio.",
         params: gradeParams,
         stage: .pixels { ctx in

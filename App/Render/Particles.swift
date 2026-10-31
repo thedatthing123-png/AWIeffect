@@ -40,7 +40,7 @@ extension EffectRegistry {
 
     static let particles18 = EffectDefinition(
         id: "awi18.particles", name: "Particle System", category: .generate,
-        aeMatchNames: ["tc Particular"],
+        aeMatchNames: [],
         summary: "Full particle system (Particular-style): emitters, speed / spread, gravity, wind, turbulence, size and color over life, 3D depth, spin, sprites (glow, spark streaks, stars, shards…) or your own layer as the particle.",
         params: [
             .choice("emitter", "Emitter", ["Point", "Box", "Line", "Ring"], 0),
