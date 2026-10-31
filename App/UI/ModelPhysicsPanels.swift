@@ -17,7 +17,8 @@ struct ModelPanel: View {
                             if o.shapePath == nil && o.imageFile == nil {
                                 HStack {
                                     TextField("3D text", text: $draft).padding(8).glass(radius: 10).foregroundStyle(Theme.text)
-                                    Button("Apply") { edit("3D Text") { $0.text = draft } }.buttonStyle(.borderedProminent).tint(Theme.accent)
+                                        // Live: the 3D text updates as you type.
+                                        .onChange(of: draft) { _, d in edit("3D Text") { $0.text = d } }
                                 }
                             }
                             slider("Extrude", o.extrusion, 1...400) { v in cont { $0.extrusion = v } }

@@ -47,9 +47,9 @@ extension EffectRegistry {
     }
 
     static let pixelSort19 = g("pixelSort", "Pixel Sort", "Bright runs of pixels stretch into streaks along a direction.",
-        [.number("length", "Streak Length", 60, 0, 400, unit: "px"), .number("threshold", "Brightness Threshold", 45, 0, 100, unit: "%"), .angle("angle", "Direction", 90)],
-        margin: { e, t in e.number("length", t) }, 2) { ctx, p in
-        p.a = SIMD4(Float(ctx.num("length") * ctx.unit), Float(ctx.num("threshold") / 100), Float(ctx.num("angle") * .pi / 180), 0)
+        [.number("streak", "Streak Length", 60, 0, 400, unit: "px"), .number("threshold", "Brightness Threshold", 45, 0, 100, unit: "%"), .angle("angle", "Direction", 90)],
+        margin: { e, t in e.number("streak", t) }, 2) { ctx, p in
+        p.a = SIMD4(Float(ctx.num("streak") * ctx.unit), Float(ctx.num("threshold") / 100), Float(ctx.num("angle") * .pi / 180), 0)
     }
 
     static let jpeg19 = g("jpeg", "JPEG Corruption", "Blocky compression damage, ringing, color bleed and hue-shifted blocks.",
