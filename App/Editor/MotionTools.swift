@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import simd
 
 /// Feature "plugins" built in (the kind of AE scripts editors install for workflow, not looks):
 /// Flow-style easing presets, Motion 2-style Excite (inertial bounce), Loop (loopOut cycle / ping-pong),
