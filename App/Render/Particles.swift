@@ -91,7 +91,8 @@ extension EffectRegistry {
             var uni = ParticleUniforms(
                 emit: SIMD4(Float(Double(ctx.width) / 2 * (1 + ctx.num("emitX") / 100)), Float(Double(ctx.height) / 2 * (1 + ctx.num("emitY") / 100)),
                             Float(ctx.num("emitW") * u), Float(ctx.num("emitH") * u)),
-                life: SIMD4(Float(rate), Float(life), Float(ctx.num("lifeRandom") / 100), Float(ctx.time)),
+                // Pre-run (Particular-style): the system has already been running for one life, so the first frame is full.
+                life: SIMD4(Float(rate), Float(life), Float(ctx.num("lifeRandom") / 100), Float(ctx.time + life)),
                 motion: SIMD4(Float(ctx.num("speed") * u), Float(ctx.num("speedRandom") / 100), Float(dir), Float(ctx.num("spread") * .pi / 180)),
                 forces: SIMD4(Float(ctx.num("gravity") * u), Float(ctx.num("wind") * u), Float(ctx.num("turbulence") * u), Float(ctx.num("turbScale") * u)),
                 look: SIMD4(Float(ctx.num("size") * u), Float(ctx.num("sizeRandom") / 100), Float(ctx.num("sizeEnd") / 100), Float(ctx.num("opacity") / 100)),
