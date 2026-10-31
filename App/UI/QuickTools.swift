@@ -184,6 +184,24 @@ struct QuickMenu: View {
                     } label: { Label("Echo Trails", systemImage: "square.3.layers.3d.down.right") }
                     Button { state.panel = .physics } label: { Label("Physics (Newton)", systemImage: "atom") }
                 }
+                Section("Motion Tools (Flow / Motion 2 / Sure Target style)") {
+                    Menu {
+                        ForEach(EditorState.EasePreset.allCases) { e in Button(e.rawValue) { state.applyEase(e) } }
+                    } label: { Label("Ease Keyframes…", systemImage: "point.topleft.down.to.point.bottomright.curvepath") }
+                    Button { state.applyExcite() } label: { Label("Excite (bounce after keys)", systemImage: "waveform.path.ecg") }
+                    Button { state.applyLoop(pingPong: false) } label: { Label("Loop Animation", systemImage: "repeat") }
+                    Button { state.applyLoop(pingPong: true) } label: { Label("Ping-Pong Loop", systemImage: "arrow.left.arrow.right") }
+                    Menu {
+                        Button("Center") { state.anchorGrid(0, 0) }
+                        Button("Top Left") { state.anchorGrid(-1, -1) }; Button("Top") { state.anchorGrid(0, -1) }; Button("Top Right") { state.anchorGrid(1, -1) }
+                        Button("Left") { state.anchorGrid(-1, 0) }; Button("Right") { state.anchorGrid(1, 0) }
+                        Button("Bottom Left") { state.anchorGrid(-1, 1) }; Button("Bottom") { state.anchorGrid(0, 1) }; Button("Bottom Right") { state.anchorGrid(1, 1) }
+                    } label: { Label("Anchor Point…", systemImage: "scope") }
+                    if state.project.layers.contains(where: { $0.content == .camera }) {
+                        Button { state.aimCameraAtSelected() } label: { Label("Aim Camera Here", systemImage: "camera.viewfinder") }
+                    }
+                    Button(role: .destructive) { state.clearMotionExpressions() } label: { Label("Remove Excite / Loop", systemImage: "xmark.circle") }
+                }
                 Section("Animate") {
                     Button { state.keyAllTransform() } label: { Label("Key All Transform", systemImage: "diamond.fill") }
                     Button { state.copyKeyframes() } label: { Label("Copy Keys", systemImage: "doc.on.doc") }
@@ -273,12 +291,12 @@ struct MyLibrarySection: View {
                 .accessibilityLabel("Import to My Library")
             }
             if items.isEmpty {
-                Text("Import your own overlays, light leaks, transitions or clips once — they stay here for every project. Tap to add (Screen blend for overlays), hold for more.")
+                Text("Import your own overlays, transitions or clips once — they stay here for every project. Tap adds it exactly as it is (normal blend); hold for a Screen-blend overlay option.")
                     .font(.caption).foregroundStyle(Theme.textDim)
             }
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
                 ForEach(items, id: \.self) { u in
-                    Button { state.addFromLibrary(u, asOverlay: true) } label: {
+                    Button { state.addFromLibrary(u, asOverlay: false) } label: {
                         ZStack(alignment: .bottomLeading) {
                             RoundedRectangle(cornerRadius: 10).fill(Theme.raised)
                             if let t = thumbs[u] { Image(uiImage: t).resizable().scaledToFill() }
@@ -290,8 +308,8 @@ struct MyLibrarySection: View {
                     }
                     .buttonStyle(.plain)
                     .contextMenu {
-                        Button { state.addFromLibrary(u, asOverlay: true) } label: { Label("Add as Overlay (Screen)", systemImage: "sun.haze") }
-                        Button { state.addFromLibrary(u, asOverlay: false) } label: { Label("Add as Normal Layer", systemImage: "square.on.square") }
+                        Button { state.addFromLibrary(u, asOverlay: false) } label: { Label("Add (as is)", systemImage: "square.on.square") }
+                        Button { state.addFromLibrary(u, asOverlay: true) } label: { Label("Add as Full-Frame Screen Overlay", systemImage: "sun.haze") }
                         Button(role: .destructive) { try? FileManager.default.removeItem(at: u); reload() } label: { Label("Remove from Library", systemImage: "trash") }
                     }
                     .task { if thumbs[u] == nil { thumbs[u] = UserLibrary.thumbnail(u) } }

@@ -85,6 +85,12 @@ static float3 pal12(float x, float sel) {
     return clamp(a + b * cos(6.2831853 * (cc * x + d)), 0.0, 1.0);
 }
 
+// Hue rotation around the gray axis (Rodrigues) for gradient palettes.
+static inline float3 hrot12q(float3 c, float a) {
+    float3 k = float3(0.57735027); float cs = cos(a);
+    return max(c * cs + cross(k, c) * sin(a) + k * dot(k, c) * (1.0 - cs), float3(0.0));
+}
+
 kernel void fxAbstract12(texture2d<half, access::sample> src [[texture(0)]],
                          texture2d<half, access::write> dst [[texture(1)]],
                          texture2d<half, access::sample> aux [[texture(2)]],
@@ -497,18 +503,28 @@ kernel void fxAbstract12(texture2d<half, access::sample> src [[texture(0)]],
             float k0 = floor(c.y / sp);
             float w = max(p.d.w, 0.2);
             float fq = p.a.z * 6.2831853 / mn;
+            float xn = c.x / max(size.x, 1.0);
+            float edge = smoothstep(0.0, 0.18, xn) * smoothstep(0.0, 0.18, 1.0 - xn);
             float3 col = float3(0.0);
             for (int kk = -3; kk <= 3; kk++) {
                 float k = k0 + float(kk);
-                float ph = c.x * fq + t * p.a.w + k * 0.45;
+                float dep = 0.35 + 0.65 * hsh12(float2(k, 4.7));            // per-line depth: far lines dimmer + softer
+                float ph = c.x * fq + t * p.a.w * (0.6 + 0.4 * dep) + k * 0.45;
                 float am = p.a.y * (0.6 + 0.4 * sin(k * 1.7 + t * 0.7));
-                float yk = (k + 0.5) * sp + am * sin(ph);
-                float dy = am * cos(ph) * fq;
-                float dist = abs(c.y - yk) / sqrt(1.0 + dy * dy);
-                float line = 1.0 - smoothstep(w * 0.5, w * 0.5 + 1.0, dist);
-                float glow = exp(-dist / (w * 3.0)) * 0.3;
-                col += mix(p.b.rgb, p.c.rgb, fract(k / cnt)) * (line + glow);
+                float yk = (k + 0.5) * sp + am * (sin(ph) * 0.8 + 0.2 * sin(ph * 2.3 + k));
+                float dydx = am * (cos(ph) * 0.8 + 0.46 * cos(ph * 2.3 + k)) * fq;
+                float dist = abs(c.y - yk) / sqrt(1.0 + dydx * dydx);
+                float lw = w * mix(1.6, 1.0, dep);
+                float core = 1.0 - smoothstep(lw * 0.3, lw * 0.3 + 1.0, dist);
+                float inner = exp(-dist / (lw * 1.4)) * 0.5;
+                float outer = exp(-dist / (lw * 6.0)) * 0.16;
+                float gt = fract(k / cnt + xn * 0.35 + t * 0.05);
+                gt = 0.5 - 0.5 * cos(gt * 6.2831853);
+                float3 lc = mix(p.b.rgb, p.c.rgb, gt);
+                float bright = mix(0.3, 1.0, dep * dep) * (0.75 + 0.25 * sin(ph * 0.5 + t * 2.0 + k));
+                col += (lc * (inner + outer) + mix(lc, float3(1.0), 0.6) * core * mix(0.5, 1.0, dep)) * bright;
             }
+            col *= mix(0.25, 1.0, edge);
             g = col;
             ga = clamp(lum12(col) * 1.5, 0.0, 1.0);
             break;
@@ -525,13 +541,26 @@ kernel void fxAbstract12(texture2d<half, access::sample> src [[texture(0)]],
             float hd = max(dot(abs(gv), float2(0.5, 0.8660254)), abs(gv.x));
             float ed = (0.5 - hd) * hs;
             float w = max(p.a.z, 0.2);
-            float line = 1.0 - smoothstep(w * 0.5, w * 0.5 + 1.0, ed);
-            float lg = exp(-max(ed, 0.0) / (w * 2.0)) * 0.4;
-            float wave = 0.5 + 0.5 * sin(length(id - p.c.x * 0.37) * 0.9 - t * p.a.y * 4.0);
+            float core = 1.0 - smoothstep(w * 0.35, w * 0.35 + 1.0, ed);
+            float lg = exp(-max(ed, 0.0) / (w * 1.5)) * 0.45 + exp(-max(ed, 0.0) / (w * 5.0)) * 0.15;
+            float wd = length(id - p.c.x * 0.37);
+            float wave = 0.5 + 0.5 * sin(wd * 0.9 - t * p.a.y * 4.0);
+            float w3 = wave * wave * wave;
             float fl = step(0.85, hsh12(id * 3.1 + floor(t * p.a.y * 3.0 + hsh12(id) * 5.0) + p.c.x));
-            float e = (line + lg) * (0.25 + 0.9 * wave * wave * wave) * max(p.a.w, 0.0) + fl * 0.3 * max(p.a.w, 0.0);
-            g = p.b.rgb * e;
-            ga = clamp(e, 0.0, 1.0);
+            // color gradient across the grid, shifted by the pulse front
+            float2 uvn = (c - size * 0.5) / mn;
+            float3 cA = p.b.rgb, cB = hrot12q(p.b.rgb, 1.9), cC = hrot12q(p.b.rgb, -1.2);
+            float gp = clamp(0.5 + 0.6 * (uvn.x - uvn.y * 0.5) + 0.25 * w3, 0.0, 1.0);
+            float3 col = gp < 0.5 ? mix(cC, cA, gp * 2.0) : mix(cA, cB, gp * 2.0 - 1.0);
+            // depth fade: cells dim and soften toward the frame edges
+            float dep = 1.0 - smoothstep(0.25, 0.85, length(uvn));
+            float cellFill = (1.0 - smoothstep(0.0, 0.5, hd)) * (0.08 * w3 + fl * 0.22);
+            float gl = max(p.a.w, 0.0);
+            float lineI = (core * 0.8 + lg) * (0.2 + 0.95 * w3) * mix(0.35, 1.0, dep);
+            float3 e = (col * (lineI + cellFill) + float3(1.0) * core * w3 * 0.35 * dep) * gl;
+            e += col * fl * 0.12 * gl;
+            g = e;
+            ga = clamp(max(e.r, max(e.g, e.b)), 0.0, 1.0);
             break;
         }
         case 14: { // light trails: a = (spacing, speed px/s, length frac, thickness px), b = color, c = (angle rad, seed, hue spread), d.w = curve
@@ -622,11 +651,19 @@ kernel void fxAbstract12(texture2d<half, access::sample> src [[texture(0)]],
             float2 f = abs(fract(q / cl + 0.5) - 0.5) * cl;
             float dd = min(f.x, f.y);
             float w = max(p.a.w, 0.2);
-            float line = 1.0 - smoothstep(w * 0.5, w * 0.5 + 1.0, dd);
-            float glow = exp(-dd / (w * 2.5)) * 0.35;
-            float e = (line + glow) * 1.2;
-            g = p.b.rgb * e;
-            ga = clamp(e, 0.0, 1.0);
+            float core = 1.0 - smoothstep(w * 0.35, w * 0.35 + 1.0, dd);
+            float glow = exp(-dd / (w * 1.6)) * 0.45 + exp(-dd / (w * 5.0)) * 0.15;
+            float node = exp(-length_squared(f) / (w * w * 2.5 + 1.0)) * 0.9;     // glowing intersections
+            // "height" of the fabric: bulges toward the viewer read brighter / warmer
+            float ht = clamp(0.5 + (wv.x + wv.y) * 1.6, 0.0, 1.0);
+            float2 uvn = (c - size * 0.5) / mn;
+            float gp = clamp(0.5 + 0.5 * (uvn.y - uvn.x) * 0.9 + (ht - 0.5) * 0.7, 0.0, 1.0);
+            float3 cA = p.b.rgb, cB = hrot12q(p.b.rgb, 1.4), cC = hrot12q(p.b.rgb, -1.3);
+            float3 col = gp < 0.5 ? mix(cC, cA, gp * 2.0) : mix(cA, cB, gp * 2.0 - 1.0);
+            float dep = mix(0.3, 1.0, ht) * (1.0 - 0.55 * smoothstep(0.3, 0.9, length(uvn)));
+            float3 e = (col * (glow + node * 0.6) + mix(col, float3(1.0), 0.55) * (core + node * 0.5)) * 1.2 * dep;
+            g = e;
+            ga = clamp(max(e.r, max(e.g, e.b)), 0.0, 1.0);
             break;
         }
         case 18: { // liquid gradient (over): a = (color 1, speed), b = (color 2, warp), c = (color 3, softness), i.z = color 4 packed, d.w = seed

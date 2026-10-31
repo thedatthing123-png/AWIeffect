@@ -242,7 +242,7 @@ extension EffectRegistry {
 
     static let retroGrid = EffectDefinition(
         id: "awi7.retroGrid", name: "Retro Grid & Sun", category: .generate, aeMatchNames: [],
-        summary: "Synthwave neon perspective grid scrolling toward a striped sunset.",
+        summary: "Synthwave scene: gradient sun with sliding slits and bloom, neon mountains, horizon haze and a glowing grid rushing into the fog.",
         params: p7([.number("horizon", "Horizon", 55, 0, 100, unit: "%"), .number("spacing", "Grid Spacing", 36, 4, 300, unit: "px"),
                  .number("speed", "Speed", 1.5, 0, 10, step: 0.05), .number("lineWidth", "Line Width", 1.6, 0.3, 10, step: 0.1, unit: "px"),
                  .number("sun", "Sun Size", 22, 0, 100, unit: "%"), .color("grid", "Grid Color", RGBA(1, 0.2, 0.85)),
@@ -253,7 +253,7 @@ extension EffectRegistry {
 
     static let tunnel = EffectDefinition(
         id: "awi7.tunnel", name: "Tunnel", category: .generate, aeMatchNames: [],
-        summary: "Neon rings and spokes rushing toward the viewer.",
+        summary: "Glowing neon tunnel: bloomed rings shifting color with depth, twisting spokes, speed streaks and a dark vanishing point.",
         params: p7([.point("center", "Center", Vec2(0.5, 0.5)), .number("density", "Ring Density", 4, 0.5, 20, step: 0.05),
                  .number("speed", "Speed", 1, 0, 10, step: 0.05), .number("width", "Line Width", 15, 0, 100, unit: "%"),
                  .number("segments", "Spokes", 12, 0, 48, step: 1), .number("twist", "Twist", 0.5, -5, 5, step: 0.01),
@@ -277,7 +277,7 @@ extension EffectRegistry {
 
     static let halftoneBackground = EffectDefinition(
         id: "awi7.halftoneBackground", name: "Halftone Pattern", category: .generate, aeMatchNames: [],
-        summary: "Animated pop-art halftone dots pulsing in waves.",
+        summary: "Animated halftone with soft glowing gradient dots sized by a flowing noise field and waves.",
         params: p7([.number("cell", "Dot Spacing", 14, 3, 120, unit: "px"), .angle("angle", "Angle", 45),
                  .number("speed", "Speed", 0.5, 0, 5, step: 0.01), .number("wave", "Wave Scale", 120, 5, 1000, unit: "px"),
                  .number("dot", "Dot Size", 100, 0, 150, unit: "%"), .choice("pattern", "Pattern", ["Radial Wave", "Diagonal Sweep"], 0),

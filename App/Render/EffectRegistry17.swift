@@ -85,21 +85,21 @@ extension EffectRegistry {
         summary: "Wraps the layer around a rotating, shaded 3D globe.",
         params: p17([.number("radius", "Radius", 95, 5, 150, unit: "%"), .number("spin", "Spin Speed", 40, -360, 360, unit: "°/s"),
                      .number("tilt", "Tilt", 20, -90, 90, unit: "°"), .number("shading", "Shading", 70, 0, 100, unit: "%"),
-                     .number("shadow", "Drop Shadow", 50, 0, 100, unit: "%")]),
+                     .toggle("shadow", "Drop Shadow", true)]),
         stage: .pixels { ctx in g17(ctx, 12, comp: 2) { p in
             p.a = SIMD4(pc17(ctx, "radius") * mn17(ctx) * 0.5, rad17(ctx, "spin") * Float(ctx.time), rad17(ctx, "tilt"), pc17(ctx, "shading"))
-            p.b.x = pc17(ctx, "shadow") } })
+            p.b.x = ctx.effect.bool("shadow") ? 0.6 : 0 } })
 
     static let cylinderWrap17 = EffectDefinition(
         id: "awi17.cylinderWrap", name: "Cylinder Wrap", category: .distort, aeMatchNames: [],
         summary: "Wraps the layer around a spinning vertical 3D cylinder.",
         params: p17([.number("radius", "Radius", 60, 5, 100, unit: "%"), .number("spin", "Spin Speed", 40, -360, 360, unit: "°/s"),
                      .number("height", "Height", 80, 10, 100, unit: "%"), .number("shading", "Shading", 70, 0, 100, unit: "%"),
-                     .number("shadow", "Drop Shadow", 50, 0, 100, unit: "%")]),
+                     .toggle("shadow", "Drop Shadow", true)]),
         stage: .pixels { ctx in g17(ctx, 13, comp: 2) { p in
             p.a = SIMD4(pc17(ctx, "radius") * Float(ctx.width) * 0.5, rad17(ctx, "spin") * Float(ctx.time),
                         pc17(ctx, "height") * Float(ctx.height), pc17(ctx, "shading"))
-            p.b.x = pc17(ctx, "shadow") } })
+            p.b.x = ctx.effect.bool("shadow") ? 0.6 : 0 } })
 
     private static func eye17(_ ctx: EffectContext) -> Float { mn17(ctx) * (4.0 - 3.0 * pc17(ctx, "perspective")) }
 
@@ -108,10 +108,10 @@ extension EffectRegistry {
         summary: "Turns the layer over like a book page hinged on its left edge (animate Progress).",
         params: p17([.number("progress", "Progress", 35, 0, 100, unit: "%"), .number("perspective", "Perspective", 50, 0, 100, unit: "%"),
                      .number("shading", "Shading", 70, 0, 100, unit: "%"), .number("pageSize", "Page Size", 90, 30, 100, unit: "%"),
-                     .number("shadow", "Drop Shadow", 50, 0, 100, unit: "%")]),
+                     .toggle("shadow", "Drop Shadow", true)]),
         stage: .pixels { ctx in g17(ctx, 14, comp: 2) { p in
             p.a = SIMD4(pc17(ctx, "progress") * .pi, eye17(ctx), pc17(ctx, "shading"), pc17(ctx, "pageSize"))
-            p.b.x = pc17(ctx, "shadow") } })
+            p.b.x = ctx.effect.bool("shadow") ? 0.6 : 0 } })
 
     static let cubeFlip17 = EffectDefinition(
         id: "awi17.cubeFlip", name: "Cube Flip", category: .distort, aeMatchNames: [],

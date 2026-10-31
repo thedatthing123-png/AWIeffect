@@ -96,6 +96,13 @@ static inline float3 hrotg7(float3 c, float a) {
     return c * cs + cross(k, c) * sin(a) + k * dot(k, c) * (1.0 - cs);
 }
 
+// Premultiplied emission P + solid coverage A -> straight color / alpha for the "over" compositor (glows read as light).
+static inline void ovr7q(float3 P, float A, thread float3& g, thread float& ga) {
+    P = max(P, float3(0.0));
+    ga = clamp(max(A, max(P.r, max(P.g, P.b))), 0.0, 1.0);
+    g = P / max(ga, 1e-3);
+}
+
 kernel void fxGen7(texture2d<half, access::sample> src [[texture(0)]],
                    texture2d<half, access::write> dst [[texture(1)]],
                    texture2d<half, access::sample> aux [[texture(2)]],
@@ -136,34 +143,79 @@ kernel void fxGen7(texture2d<half, access::sample> src [[texture(0)]],
             break;
         }
         case 1: { // twinkling stars: a = (spacing px, size px, twinkle speed, brightness), b = color, c.x = seed
-            float cl = max(p.a.x, 4.0);
-            float2 q = c + p.c.x * 23.0;
-            float2 id = floor(q / cl);
-            float acc = 0.0;
-            for (int j = -1; j <= 1; j++) {
-                for (int i = -1; i <= 1; i++) {
-                    float2 cid = id + float2(float(i), float(j));
-                    float ha = hg7(cid + p.c.x * 3.3), hb = hg7(cid * 1.7 + 4.1), hc = hg7(cid * 0.6 + 9.7 + p.c.x);
-                    if (hc > 0.75) continue;
-                    float2 ctr = (cid + 0.25 + 0.5 * float2(ha, hb)) * cl;
-                    float r = max(p.a.y * (0.5 + hc), 0.3);
-                    float2 dv = q - ctr;
-                    float d2 = dot(dv, dv);
-                    float tw = 0.5 + 0.5 * sin(t * p.a.z * (0.5 + ha) * 6.283 + hb * 6.283);
-                    float core = exp(-d2 / (r * r));
-                    float flare = exp(-abs(dv.x) * abs(dv.y) / (r * r * 0.25)) * exp(-sqrt(d2) / (r * 3.0)) * 0.8;
-                    acc += (core + flare) * mix(0.25, 1.0, tw) * p.a.w;
+            float3 acc = float3(0.0);
+            for (int L = 0; L < 2; L++) {
+                float fl = float(L);
+                float cl = max(p.a.x, 4.0) * (1.0 + fl * 0.7);
+                float2 q = c + p.c.x * 23.0 + fl * 57.3;
+                float2 id = floor(q / cl);
+                for (int j = -1; j <= 1; j++) {
+                    for (int i = -1; i <= 1; i++) {
+                        float2 cid = id + float2(float(i), float(j));
+                        float ha = hg7(cid + p.c.x * 3.3 + fl * 7.1), hb = hg7(cid * 1.7 + 4.1 + fl);
+                        float hc = hg7(cid * 0.6 + 9.7 + p.c.x), hd = hg7(cid * 2.3 + 1.9 + fl * 3.0);
+                        if (hc > 0.75) continue;
+                        float2 ctr = (cid + 0.25 + 0.5 * float2(ha, hb)) * cl;
+                        float near = clamp(fl * 0.6 + hc * 0.5, 0.0, 1.0);
+                        float r = max(p.a.y * (0.4 + near), 0.3);
+                        float2 dv = q - ctr;
+                        float d2 = dot(dv, dv);
+                        float tw = 0.5 + 0.5 * sin(t * p.a.z * (0.5 + ha) * 6.283 + hb * 6.283);
+                        tw = tw * tw;
+                        float core = exp(-d2 / (r * r * 0.6));
+                        float halo = exp(-sqrt(d2) / (r * 1.8)) * 0.35;
+                        // cross-flare glints (long 4-point + short diagonal on near stars), length breathes with the twinkle
+                        float fLen = min(r * (3.0 + 6.0 * tw) * (0.6 + near), cl * 0.9);
+                        float fw = r * 0.18 + 0.25;
+                        float flare = (exp(-abs(dv.y) / fw - abs(dv.x) / fLen) + exp(-abs(dv.x) / fw - abs(dv.y) / fLen)) * 0.75;
+                        float2 dg = float2(dv.x + dv.y, dv.x - dv.y) * 0.7071;
+                        flare += (exp(-abs(dg.y) / fw - abs(dg.x) / (fLen * 0.45)) + exp(-abs(dg.x) / fw - abs(dg.y) / (fLen * 0.45))) * 0.25 * step(0.5, near);
+                        float3 tint = p.b.rgb * mix(float3(0.75, 0.88, 1.2), float3(1.15, 0.95, 0.78), hd);
+                        float depthB = mix(0.45, 1.0, near);
+                        acc += tint * (core * 1.2 + halo + flare * mix(0.3, 1.0, tw)) * mix(0.2, 1.0, tw) * depthB * p.a.w;
+                    }
                 }
             }
-            ga = clamp(acc, 0.0, 1.0);
-            g = p.b.rgb * acc;
+            g = acc;
+            ga = clamp(max(acc.r, max(acc.g, acc.b)), 0.0, 1.0);
             break;
         }
         case 2: { // snow: a = (spacing, size, fall speed, wind), b = color, c = (seed, wobble)
-            float hue;
-            float acc = partg7(c, p.a.x, p.a.y, float2(p.a.w, p.a.z), p.c.y, t, p.c.x, 3, 0.5, 0.0, 0.0, hue);
-            g = p.b.rgb;
-            ga = clamp(acc * 0.9, 0.0, 1.0);
+            float3 P = float3(0.0);
+            float A = 0.0;
+            float wob = clamp(p.c.y, 0.0, 2.0);
+            for (int L = 0; L < 3; L++) {
+                float fl = float(L);
+                float ls = 1.0 + fl * 1.1;
+                float cl = max(p.a.x, 2.0) * ls;
+                float rr = clamp(p.a.y * ls, 0.3, cl * 0.42);
+                float soft = mix(0.3, 0.9, fl * 0.5);          // depth of field: far flakes crisp, near flakes defocused
+                float op = fl < 0.5 ? 0.65 : (fl < 1.5 ? 0.9 : 0.5);
+                float2 vel = float2(p.a.w, p.a.z) * (0.45 + 0.4 * ls);
+                float2 q = c - vel * t + float2(fl * 37.7, fl * 91.3) + p.c.x * 17.0;
+                float2 id = floor(q / cl);
+                float3 lc = mix(p.b.rgb * float3(0.82, 0.9, 1.05), p.b.rgb, fl * 0.5);
+                for (int j = -1; j <= 1; j++) {
+                    for (int i = -1; i <= 1; i++) {
+                        float2 cid = id + float2(float(i), float(j));
+                        float ha = hg7(cid + fl * 13.7 + p.c.x * 3.1), hb = hg7(cid * 1.37 + 5.3 + p.c.x), hc = hg7(cid * 0.71 + 11.9 - p.c.x * 1.7);
+                        if (hc > 0.8) continue;
+                        float2 ctr = (cid + 0.5 + (float2(ha, hb) - 0.5) * 0.5) * cl;
+                        ctr.x += wob * cl * 0.22 * sin(t * (0.7 + hc * 1.4) + ha * 6.283);
+                        ctr.y += wob * cl * 0.06 * cos(t * (0.9 + hb) + hc * 6.283);
+                        float r = rr * (0.55 + 0.45 * hc);
+                        float d = length(q - ctr);
+                        float m = 1.0 - smoothstep(r * (1.0 - soft), r, d);
+                        if (fl > 1.5) m *= 0.7 + 0.3 * smoothstep(r * 0.3, r * 0.95, d);   // bokeh rim
+                        m += exp(-d / (r * 0.9 + 0.5)) * 0.18 * (1.0 - m);
+                        m = clamp(m * op, 0.0, 1.0);
+                        P += lc * m * (1.0 - A);
+                        A += m * (1.0 - A);
+                    }
+                }
+            }
+            g = P / max(A, 1e-3);
+            ga = A;
             break;
         }
         case 3: { // rain: a = (angle rad, speed px/s, length px, spacing px), b = color, c = (width px, seed, amount)
@@ -555,30 +607,87 @@ kernel void fxGen7(texture2d<half, access::sample> src [[texture(0)]],
         case 19: { // retro grid + sun: a = (horizon 0-1, spacing px, speed, line width px), b = grid color, c = sun color, d.w = sun radius 0-1
             float hz = p.a.x * size.y;
             float dy = c.y - hz;
+            float X = c.x - size.x * 0.5;
             float S = max(p.a.y, 2.0);
             float w = max(p.a.w, 0.3);
-            float lineM = 0.0;
-            if (dy > 0.5) {
-                float k = size.y * 0.25;
-                float z = k / dy;
-                float xw = (c.x - size.x * 0.5) * z;
-                float px = abs(fract(xw / S + 0.5) - 0.5) * S / z;
-                float zz = z * size.x * 0.5 / S + t * p.a.z;
-                float dzdy = (size.x * 0.5 / S) * k / (dy * dy);
-                float pz = abs(fract(zz + 0.5) - 0.5) / max(dzdy, 1e-4);
-                float m = max(1.0 - smoothstep(w * 0.5, w * 0.5 + 1.0, px), 1.0 - smoothstep(w * 0.5, w * 0.5 + 1.0, pz));
-                m += (exp(-px / (w * 3.0)) + exp(-pz / (w * 3.0))) * 0.25;
-                lineM = clamp(m, 0.0, 1.0) * smoothstep(0.0, size.y * 0.1 + 1.0, dy);
+            float3 pink = float3(1.0, 0.12, 0.55);
+            float3 orng = float3(1.0, 0.45, 0.12);
+            float3 P = float3(0.0);
+            float A = 0.0;
+            float above = 1.0 - smoothstep(hz - 0.5, hz + 0.5, c.y);
+            // sky: faint dusk gradient + twinkling stars, denser toward the top
+            float skyT = clamp(-dy / max(hz, 1.0), 0.0, 1.0);
+            P += mix(float3(0.35, 0.05, 0.35), float3(0.05, 0.02, 0.18), skyT) * 0.18 * above;
+            float scl = max(mn * 0.035, 2.0);
+            float2 sid = floor(c / scl);
+            float sh = hg7(sid + 7.7);
+            if (sh > 0.86) {
+                float2 spt = (sid + 0.2 + 0.6 * float2(hg7(sid * 1.3 + 2.1), hg7(sid * 0.7 + 5.3))) * scl;
+                float sd2 = length_squared(c - spt);
+                float tw = 0.55 + 0.45 * sin(t * (1.5 + sh * 4.0) + sh * 40.0);
+                P += float3(0.9, 0.85, 1.0) * exp(-sd2 / (0.35 + sh * 0.9)) * tw * skyT * above;
             }
+            // sun: warm vertical gradient, animated slit bands through its lower half, big bloom
             float sr = max(p.d.w * size.y, 1.0);
             float2 sc = float2(size.x * 0.5, hz - sr * 0.35);
             float sd = length(c - sc);
-            float sunM = (1.0 - smoothstep(sr - 1.0, sr + 1.0, sd)) * step(c.y, hz);
+            float v = clamp((c.y - (sc.y - sr)) / (2.0 * sr), 0.0, 1.0);
+            float3 sunCol = v < 0.5 ? mix(p.c.rgb, orng, v * 2.0) : mix(orng, pink, (v - 0.5) * 2.0);
+            float disk = 1.0 - smoothstep(sr - 1.0, sr + 1.0, sd);
             float yy = (c.y - sc.y) / sr;
-            if (yy > 0.0) sunM *= step(yy * 0.6, fract(yy * 7.0 - t * p.a.z * 0.5));
-            float3 sunCol = mix(p.c.rgb, float3(1.0, 0.2, 0.6), clamp((c.y - (sc.y - sr)) / (2.0 * sr), 0.0, 1.0));
-            g = mix(p.b.rgb, sunCol, sunM / (sunM + lineM + 1e-4));
-            ga = max(sunM, lineM);
+            if (yy > -0.15) {
+                float bp = fract(yy * 7.0 - t * p.a.z * 0.6);
+                float gap = clamp((yy + 0.15) * 0.5, 0.0, 0.55);
+                float aa = 7.0 / sr;
+                disk *= smoothstep(gap - aa, gap + aa, bp);
+            }
+            disk *= above;
+            float og = max(sd - sr, 0.0);
+            float bloom = (exp(-og / (sr * 0.25 + 2.0)) * 0.55 + exp(-og / (sr * 1.1 + 4.0)) * 0.3) * (1.0 - disk);
+            float3 glowCol = mix(sunCol, pink, 0.45);
+            P += glowCol * bloom * mix(0.35, 1.0, above);
+            P = P * (1.0 - disk) + sunCol * 1.15 * disk;
+            A = max(A, disk);
+            // distant mountains with a neon rim (kept off the sun in the middle)
+            float mx = c.x / max(mn * 0.22, 1.0);
+            float ridge = ng7(float3(mx, 1.7, 3.1)) * 0.65 + (1.0 - abs(ng7(float3(mx * 2.7, 4.2, 0.5)) * 2.0 - 1.0)) * 0.35;
+            float side = smoothstep(0.08, 0.42, abs(X) / max(size.x, 1.0));
+            float mh = size.y * 0.13 * ridge * side;
+            float mTop = hz - mh;
+            float hasM = step(0.5, mh);
+            float mtn = smoothstep(mTop - 0.6, mTop + 0.6, c.y) * above * hasM;
+            float3 mCol = mix(float3(0.10, 0.02, 0.18), float3(0.02, 0.0, 0.06), clamp((c.y - mTop) / max(mh, 1.0), 0.0, 1.0));
+            P = P * (1.0 - mtn) + mCol * mtn;
+            A = max(A, mtn * 0.95);
+            float rim = exp(-abs(c.y - mTop) / 1.2) * hasM * above;
+            P += mix(p.b.rgb, float3(0.3, 0.8, 1.0), 0.35) * rim * 0.9;
+            // horizon haze line
+            float ad = abs(dy);
+            P += mix(pink, p.b.rgb, 0.5) * (exp(-ad / (size.y * 0.012 + 0.8)) * 0.9 + exp(-ad / (size.y * 0.07 + 2.0)) * 0.3);
+            // perspective floor grid: bright core + colored halo, fading into the fog near the horizon
+            if (dy > 0.5) {
+                float k = size.y * 0.25;
+                float z = k / dy;
+                float xw = X * z;
+                float pxd = abs(fract(xw / S + 0.5) - 0.5) * S / z;
+                float zz = z * size.x * 0.5 / S + t * p.a.z;
+                float dzdy = (size.x * 0.5 / S) * k / (dy * dy);
+                float pzd = abs(fract(zz + 0.5) - 0.5) / max(dzdy, 1e-4);
+                float dd = min(pxd, pzd);
+                float core = 1.0 - smoothstep(w * 0.35, w * 0.35 + 1.0, dd);
+                float halo = exp(-dd / (w * 1.6)) * 0.55 + exp(-dd / (w * 5.0)) * 0.22;
+                float fog = smoothstep(0.0, size.y * 0.35 + 1.0, dy);
+                float dens = clamp(1.0 / max(dzdy * 2.0, 1.0), 0.0, 1.0);
+                float3 gc = mix(p.b.rgb, float3(0.3, 0.75, 1.0), 0.35 * (1.0 - fog));
+                P += (gc * halo + mix(gc, float3(1.0), 0.55) * core) * mix(0.12, 1.0, fog) * mix(0.3, 1.0, dens) * 1.1;
+                P += float3(0.12, 0.0, 0.16) * (1.0 - fog) * 0.6;
+                P += glowCol * exp(-abs(X) / (sr * 0.5 + 2.0)) * exp(-dy / (size.y * 0.12 + 1.0)) * 0.3 * (0.6 + 0.4 * sin(dy * 0.8 - t * 4.0));
+            }
+            // subtle scanlines + chromatic tint toward the frame edges
+            P *= 0.9 + 0.1 * sin(c.y * 3.14159);
+            float ex = X / max(size.x * 0.5, 1.0);
+            P *= float3(1.0 + 0.08 * ex, 1.0, 1.0 - 0.08 * ex);
+            ovr7q(P, A, g, ga);
             break;
         }
         case 20: { // tunnel: a = (cx, cy, ring density, speed), b = color, c = (line width 0-1, segments, twist, depth fade)
@@ -587,13 +696,35 @@ kernel void fxGen7(texture2d<half, access::sample> src [[texture(0)]],
             float z = 0.25 / r;
             float zz = z * p.a.z + t * p.a.w;
             float w = clamp(p.c.x, 0.01, 1.0) * 0.5;
-            float ringM = 1.0 - smoothstep(w * 0.6, w, abs(fract(zz) - 0.5));
-            float ang = atan2(d.y, d.x) / 6.2831853 + p.c.z * z;
-            float segM = 1.0 - smoothstep(w * 0.6, w, abs(fract(ang * p.c.y) - 0.5));
+            float fr = abs(fract(zz) - 0.5);
+            float ringCore = 1.0 - smoothstep(w * 0.25, w * 0.5, fr);
+            float ringHalo = exp(-fr / (w * 0.6 + 0.02)) * 0.55 + exp(-fr / (w * 2.0 + 0.06)) * 0.2;
+            float rid = floor(zz + 0.5);
+            float ang = atan2(d.y, d.x) / 6.2831853 + p.c.z * z * 0.25 + t * 0.04 * p.a.w;
+            float fa = abs(fract(ang * p.c.y) - 0.5);
+            float spW = w * 0.5;
+            float spoke = ((1.0 - smoothstep(spW * 0.4, spW, fa)) + exp(-fa / (spW + 0.01)) * 0.35) * step(0.5, p.c.y);
+            // per-ring color drifting through a neon gradient with depth
+            float3 c1 = p.b.rgb;
+            float3 c2 = hrotg7(p.b.rgb, 2.3);
+            float3 c3 = hrotg7(p.b.rgb, -1.6);
+            float hk = 0.5 + 0.5 * sin(rid * 0.9 + z * 0.15);
+            float3 rc = mix(mix(c1, c2, hk), c3, 0.3 + 0.3 * sin(rid * 0.37 - 1.0));
+            // speed streaks along the walls
+            float sa = ang * 80.0;
+            float shh = hg7(float2(floor(sa), 3.7));
+            float sz = fract(z * 0.08 + t * p.a.w * (0.4 + shh) * 0.5 + shh * 7.0);
+            float streak = smoothstep(0.0, 0.04, sz) * (1.0 - smoothstep(0.04, 0.3, sz)) * step(0.7, shh)
+                         * (1.0 - smoothstep(0.15, 0.45, abs(fract(sa) - 0.5)));
+            // vignette into the center + distance dimming
             float fade = smoothstep(0.0, max(p.c.w, 0.01), r);
-            float e = max(ringM, segM * 0.7) * fade;
-            g = p.b.rgb * e;
-            ga = clamp(e, 0.0, 1.0);
+            float depthDim = exp(-z * 0.012 * p.a.z);
+            float3 e = rc * (ringHalo * 1.1 + spoke * 0.55 * mix(0.4, 1.0, depthDim)) + mix(rc, float3(1.0), 0.6) * ringCore;
+            e += mix(c1, float3(1.0), 0.5) * streak * 0.7;
+            e *= fade * mix(0.35, 1.0, depthDim);
+            e += mix(c3, c1, 0.5) * 0.12 * fade * smoothstep(0.0, 0.8, r);
+            g = e;
+            ga = clamp(max(e.r, max(e.g, e.b)), 0.0, 1.0);
             break;
         }
         case 21: { // equalizer: a = (bars, height 0-1, speed, gap 0-1), b = bottom color, c = top color, d.w = seed, i.z = blocks
@@ -645,10 +776,23 @@ kernel void fxGen7(texture2d<half, access::sample> src [[texture(0)]],
             float2 cc = (cid + 0.5) * cl;
             float wv = max(p.a.w, 1.0);
             float ph = p.i.z == 1u ? (cc.x + cc.y) / wv : length(cc) / wv;
-            float rr = p.c.x * 0.5 * (0.55 + 0.45 * sin(ph * 6.283 - t * p.a.z * 6.283));
+            float wave = 0.5 + 0.5 * sin(ph * 6.283 - t * p.a.z * 6.283);
+            float nf = fbmg7(float3(cc / (wv * 1.3), t * p.a.z * 0.6), 3);
+            float sz = clamp(wave * 0.55 + smoothstep(0.25, 0.75, nf) * 0.6, 0.0, 1.1);
+            float rr = p.c.x * 0.5 * (0.15 + 0.85 * sz);
             float aa = 1.0 / cl;
-            ga = 1.0 - smoothstep(rr - aa, rr + aa, length(f));
-            g = p.b.rgb;
+            float dl = length(f);
+            float dotM = 1.0 - smoothstep(rr - aa, rr + aa, dl);
+            float glowM = exp(-max(dl - rr, 0.0) * 7.0) * 0.3 * smoothstep(0.0, 0.1, rr);
+            // flowing three-stop gradient (cool -> Color -> warm)
+            float2 uvn = (c - size * 0.5) / mn;
+            float gp = clamp(0.5 + 0.55 * (uvn.x * 0.8 - uvn.y * 0.6) + (nf - 0.5) * 0.6 + 0.15 * sin(t * p.a.z * 1.3), 0.0, 1.0);
+            float3 cA = p.b.rgb, cB = hrotg7(p.b.rgb, 0.9) * 1.05, cC = hrotg7(p.b.rgb, -1.5) * 0.95;
+            float3 col = gp < 0.5 ? mix(cC, cA, gp * 2.0) : mix(cA, cB, gp * 2.0 - 1.0);
+            float shade = 1.1 - 0.35 * smoothstep(0.0, max(rr, 1e-3), length(f + float2(0.24) * rr));
+            float3 P = col * dotM * shade + col * glowM * (1.0 - dotM);
+            P += float3(1.0) * dotM * exp(-length_squared(f + float2(0.35) * rr) / max(rr * rr * 0.08, 1e-4)) * 0.25;
+            ovr7q(P, dotM, g, ga);
             break;
         }
         case 23: { // confetti: a = (spacing, size, fall speed, spin speed), c = (seed, saturation, sway)

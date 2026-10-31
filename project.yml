@@ -20,9 +20,8 @@ targets:
     platform: iOS
     sources:
       - path: App
-    resources:
       - path: Resources
-        optional: true
+        buildPhase: resources
     info:
       path: App/Info.plist
       properties:

@@ -93,6 +93,11 @@ jobs:
         run: |
           mkdir -p Payload
           cp -R build/AWIeffect.xcarchive/Products/Applications/AWIeffect.app Payload/
+          # The app icon and bundled resources must be inside the app (a missing asset catalog = blank icon).
+          test -f Payload/AWIeffect.app/Assets.car || { echo "ERROR: Assets.car missing (no app icon)"; exit 1; }
+          test -f Payload/AWIeffect.app/default-preview.jpg || { echo "ERROR: default-preview.jpg missing"; exit 1; }
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIcons:CFBundlePrimaryIcon" Payload/AWIeffect.app/Info.plist || { echo "ERROR: CFBundleIcons missing"; exit 1; }
+          ls Payload/AWIeffect.app | grep -i icon || true
           zip -qry AWIeffect.ipa Payload
           ls -lh AWIeffect.ipa
 
