@@ -26,13 +26,23 @@ kernel void stampDab(texture2d<float, access::read_write> layer [[texture(0)]],
     if (gid.x >= layer.get_width() || gid.y >= layer.get_height()) return;
     float2 c = float2(gid) + 0.5;
     float r = max(p.dab.z, 0.5);
-    float d = length(c - p.dab.xy) / r;
+    float2 off = c - p.dab.xy;
+    // Flat chisel: a thin slanted tip instead of a round one.
+    float d = p.extra.z == 4.0 ? max(abs(off.x + off.y) / (r * 1.414), abs(off.x - off.y) / (r * 0.35)) : length(off) / r;
     if (d >= 1.0) return;
     // Hardness: flat core, smooth falloff to the edge.
     float h = clamp(p.dab.w, 0.0, 0.99);
     float a = 1.0 - smoothstep(h, 1.0, d);
     if (p.extra.z == 1.0) a *= step(0.35, hash12(c + p.extra.w));            // pencil grain
     if (p.extra.z == 2.0) a *= (1.0 - d) * (1.0 - d);                        // airbrush soft
+    if (p.extra.z == 3.0) a *= step(0.88, hash12(c * 1.37 + p.extra.w));     // spray: scattered specks
+    if (p.extra.z == 5.0) a = pow(1.0 - d, 2.2);                             // glow: wide soft light
+    if (p.extra.z == 6.0) a *= 0.55 + 0.45 * smoothstep(0.55, 0.95, d);      // watercolor: pigment pools at the edge
+    if (p.extra.z == 7.0) {                                                  // screentone: manga dot pattern
+        float2 g = fract(c / 7.0) - 0.5;
+        a *= 1.0 - smoothstep(0.28, 0.34, length(g));
+    }
+    if (p.extra.z == 8.0) a *= smoothstep(0.25, 0.8, hash12(floor(c * 0.6)));  // charcoal: fixed paper grain
     a *= p.color.a;
     // Selection restricts painting.
     a *= selection.read(gid).r;

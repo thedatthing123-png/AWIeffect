@@ -10,9 +10,9 @@ struct DabParams { var color: SIMD4<Float>; var dab: SIMD4<Float>; var extra: SI
 struct LayerCompositeParams { var info: SIMD4<Float>; var mode: SIMD4<UInt32> }
 
 enum BrushKind: String, Codable, CaseIterable, Identifiable {
-    case pen, pencil, marker, airbrush, ink, eraser
+    case pen, pencil, marker, airbrush, ink, flat, spray, glow, watercolor, charcoal, screentone, eraser
     var id: String { rawValue }
-    var title: String { rawValue.capitalized }
+    var title: String { self == .flat ? "Flat Chisel" : rawValue.capitalized }
     var symbol: String {
         switch self {
         case .pen: return "pencil.tip"
@@ -20,6 +20,12 @@ enum BrushKind: String, Codable, CaseIterable, Identifiable {
         case .marker: return "highlighter"
         case .airbrush: return "aqi.medium"
         case .ink: return "paintbrush.pointed"
+        case .flat: return "paintbrush"
+        case .spray: return "aqi.high"
+        case .glow: return "sun.max"
+        case .watercolor: return "drop"
+        case .charcoal: return "scribble.variable"
+        case .screentone: return "circle.grid.3x3.fill"
         case .eraser: return "eraser"
         }
     }
@@ -221,7 +227,7 @@ final class DrawEngine: ObservableObject {
         lastPoint = p
         smoothed = p
         residual = 0
-        stamp(at: p, pressure: pressure)
+        stampBatch([p], pressure: pressure)
     }
 
     func continueStroke(to raw: SIMD2<Double>, pressure: Double) {
@@ -231,13 +237,22 @@ final class DrawEngine: ObservableObject {
         s = s + (raw - s) * k
         smoothed = s
         let radius = radiusFor(pressure)
-        let spacing = max(0.75, radius * (brush.kind == .airbrush ? 0.12 : 0.22))
+        let k2: Double
+        switch brush.kind {
+        case .airbrush, .glow, .watercolor: k2 = 0.12
+        case .spray: k2 = 0.35
+        case .screentone: k2 = 0.3
+        default: k2 = 0.22
+        }
+        let spacing = max(0.75, radius * k2)
         let d = simd_length(s - last)
         var t = spacing - residual
+        var dabs: [SIMD2<Double>] = []
         while t <= d {
-            stamp(at: last + (s - last) * (t / max(d, 1e-9)), pressure: pressure)
+            dabs.append(last + (s - last) * (t / max(d, 1e-9)))
             t += spacing
         }
+        stampBatch(dabs, pressure: pressure)
         residual = d - (t - spacing)
         lastPoint = s
     }
@@ -252,28 +267,52 @@ final class DrawEngine: ObservableObject {
         return max(0.5, brush.size / 2 * p)
     }
 
-    private func stamp(at p: SIMD2<Double>, pressure: Double) {
-        guard let l = activeLayer, let cb = queue.makeCommandBuffer(), let enc = cb.makeComputeCommandEncoder() else { return }
+    /// Stamps every dab of a stroke segment in ONE command buffer (dabs stay in order, so overlaps build up right).
+    private func stampBatch(_ points: [SIMD2<Double>], pressure: Double) {
+        guard !points.isEmpty, let l = activeLayer, let cb = queue.makeCommandBuffer(), let enc = cb.makeComputeCommandEncoder() else { return }
         let r = radiusFor(pressure)
-        let x0 = max(0, Int(p.x - r - 1)), y0 = max(0, Int(p.y - r - 1))
-        let x1 = min(width, Int(p.x + r + 2)), y1 = min(height, Int(p.y + r + 2))
-        guard x1 > x0, y1 > y0 else { enc.endEncoding(); return }
         let kind = brush.kind
-        let flow: Double = kind == .airbrush ? 0.08 : (kind == .marker ? 0.35 : 1)
+        let flow: Double
+        switch kind {
+        case .airbrush: flow = 0.08
+        case .glow: flow = 0.1
+        case .watercolor: flow = 0.12
+        case .marker: flow = 0.35
+        case .charcoal: flow = 0.6
+        default: flow = 1
+        }
         var c = brush.color.simd
         c.w = Float(brush.opacity * flow)
-        let texKind: Float = kind == .pencil ? 1 : (kind == .airbrush ? 2 : 0)
+        let texKind: Float
+        switch kind {
+        case .pencil: texKind = 1
+        case .airbrush: texKind = 2
+        case .spray: texKind = 3
+        case .flat: texKind = 4
+        case .glow: texKind = 5
+        case .watercolor: texKind = 6
+        case .screentone: texKind = 7
+        case .charcoal: texKind = 8
+        default: texKind = 0
+        }
         let hard = kind == .ink ? 0.95 : (kind == .pencil ? 0.6 : brush.hardness)
-        var params = DabParams(color: c, dab: SIMD4(Float(p.x), Float(p.y), Float(r), Float(hard)),
-                               extra: SIMD4(kind == .eraser ? 1 : 0, l.alphaLock ? 1 : 0, texKind, Float.random(in: 0...100)),
-                               region: SIMD4(UInt32(x0), UInt32(y0), UInt32(x1 - x0), UInt32(y1 - y0)))
         enc.setComputePipelineState(stampPSO)
         enc.setTexture(l.texture, index: 0)
         enc.setTexture(selection, index: 1)
-        enc.setBytes(&params, length: MemoryLayout<DabParams>.stride, index: 0)
         let tw = stampPSO.threadExecutionWidth, th = max(1, stampPSO.maxTotalThreadsPerThreadgroup / tw)
-        enc.dispatchThreadgroups(MTLSize(width: (x1 - x0 + tw - 1) / tw, height: (y1 - y0 + th - 1) / th, depth: 1),
-                                 threadsPerThreadgroup: MTLSize(width: tw, height: th, depth: 1))
+        for p in points {
+            let x0 = max(0, Int(p.x - r - 1)), y0 = max(0, Int(p.y - r - 1))
+            let x1 = min(width, Int(p.x + r + 2)), y1 = min(height, Int(p.y + r + 2))
+            guard x1 > x0, y1 > y0 else { continue }
+            var params = DabParams(color: c, dab: SIMD4(Float(p.x), Float(p.y), Float(r), Float(hard)),
+                                   extra: SIMD4(kind == .eraser ? 1 : 0, l.alphaLock ? 1 : 0, texKind, Float.random(in: 0...100)),
+                                   region: SIMD4(UInt32(x0), UInt32(y0), UInt32(x1 - x0), UInt32(y1 - y0)))
+            enc.setBytes(&params, length: MemoryLayout<DabParams>.stride, index: 0)
+            enc.dispatchThreadgroups(MTLSize(width: (x1 - x0 + tw - 1) / tw, height: (y1 - y0 + th - 1) / th, depth: 1),
+                                     threadsPerThreadgroup: MTLSize(width: tw, height: th, depth: 1))
+            // Each dab reads what the previous one wrote.
+            enc.memoryBarrier(scope: .textures)
+        }
         enc.endEncoding()
         cb.commit()
     }

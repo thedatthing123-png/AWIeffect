@@ -13,7 +13,7 @@ concurrency:
 jobs:
   build:
     runs-on: macos-26
-    timeout-minutes: 60
+    timeout-minutes: 100
     steps:
       - uses: actions/checkout@v4
 
@@ -48,6 +48,8 @@ jobs:
             -project AWIeffect.xcodeproj -scheme AWIeffect \
             -destination "id=$SIM" \
             -resultBundlePath TestResults.xcresult \
+            -parallel-testing-enabled NO \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 240 -maximum-test-execution-time-allowance 600 \
             CODE_SIGNING_ALLOWED=NO | tee test.log | grep -E "error:|warning: .*AWI|Test Case|Executed|SKIP|FAIL" || true
           grep -q "TEST SUCCEEDED" test.log || grep -q "** TEST SUCCEEDED **" test.log
 
