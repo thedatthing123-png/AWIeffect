@@ -10,7 +10,7 @@ struct TrimStrip: View {
     var body: some View {
         if let l = state.selectedLayer, !state.isMultiSelecting, !state.linkPicking {
             let t = clock.time
-            let inside = t > l.inPoint + 1e-4 && t < l.outPoint - 1e-4
+            let inside = t >= l.inPoint - 1e-4 && t < l.outPoint - 1e-4
             HStack(spacing: 6) {
                 if l.isMedia {
                     button("speedometer", "Speed") { state.panel = .clip }
@@ -19,7 +19,7 @@ struct TrimStrip: View {
                     button("arrow.right.to.line", "Trim Start") { trim(start: true) }
                     button("scissors", "Split") { state.splitSelected() }
                     button("arrow.left.to.line", "Trim End") { trim(start: false) }
-                } else if t <= l.inPoint {
+                } else if t < l.inPoint {
                     button("arrow.left.and.line.vertical.and.arrow.right", "Extend Start Here") { trim(start: true) }
                 } else {
                     button("arrow.left.and.line.vertical.and.arrow.right", "Extend End Here") { trim(start: false) }
