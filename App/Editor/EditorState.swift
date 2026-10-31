@@ -80,6 +80,8 @@ final class EditorState: ObservableObject {
     var multiAnchor: UUID?
     /// Transform values copied with "Copy Keys".
     @Published var keyClipboard: KeyClipboard?
+    /// Effect stack copied with "Copy Effects" (pasted onto any layer).
+    @Published var effectClipboard: [EffectInstance] = []
     @Published var snapGuides = SnapGuides()
     @Published var orbit = OrbitCamera.home
     /// Parents of the currently open pre-comp (empty at the top level).

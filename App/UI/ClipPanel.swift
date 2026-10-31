@@ -42,6 +42,10 @@ struct ClipPanel: View {
                         }
                         HStack(spacing: 8) {
                             ToolTile(icon: "speedometer", title: "Velocity Ramp") { state.applySpeedRamp() }
+                            if l.hasAudio {
+                                ToolTile(icon: "speaker.wave.1", title: "Fade In") { state.audioFade(in: true) }
+                                ToolTile(icon: "speaker.slash", title: "Fade Out") { state.audioFade(in: false) }
+                            }
                             ToolTile(icon: "timer", title: "Time Remap") { state.enableTimeRemap() }
                             ToolTile(icon: "scissors", title: "Split") { state.splitSelected() }
                         }

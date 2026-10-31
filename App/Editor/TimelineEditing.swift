@@ -84,6 +84,34 @@ extension EditorState {
     }
 }
 
+extension EditorState {
+    func copyEffects() {
+        guard let l = selectedLayer, !l.effects.isEmpty else { return }
+        effectClipboard = l.effects
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+
+    func pasteEffects() {
+        guard !effectClipboard.isEmpty, selectedIndex != nil else { return }
+        let fx = effectClipboard.map { e -> EffectInstance in var c = e; c.id = UUID(); return c }
+        mutate("Paste Effects") { p in if let i = self.selectedIndex { p.layers[i].effects += fx } }
+    }
+
+    /// One-tap audio fades (volume keyframes at the clip edges).
+    func audioFade(in fadeIn: Bool, seconds: Double = 0.6) {
+        guard let i = selectedIndex else { return }
+        mutate(fadeIn ? "Audio Fade In" : "Audio Fade Out") { p in
+            let l = p.layers[i]
+            let v = l.volume.value(at: fadeIn ? l.inPoint + seconds : l.outPoint - seconds)
+            let a = fadeIn ? l.inPoint : max(l.inPoint, l.outPoint - seconds)
+            let b = fadeIn ? min(l.outPoint, l.inPoint + seconds) : l.outPoint
+            p.layers[i].volume.insertKeyframe(Keyframe(time: a, value: fadeIn ? 0 : v, interpolation: .linear))
+            p.layers[i].volume.insertKeyframe(Keyframe(time: b, value: fadeIn ? v : 0, interpolation: .linear))
+        }
+        AudioPreview.shared.invalidate()
+    }
+}
+
 struct KeyClipboard: Equatable {
     var position: Vec2, scale: Vec2, rotation: Double, opacity: Double, anchor: Vec2
 }

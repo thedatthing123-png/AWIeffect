@@ -522,6 +522,10 @@ struct LayerMenuPanel: View {
                 ToolTile(icon: "plus.square.on.square", title: "Duplicate") { state.duplicateSelected() }
                 ToolTile(icon: "link", title: state.selectedLayer?.parentID == nil ? "Parent" : "Parented", active: state.selectedLayer?.parentID != nil) { showParent = true }
                 ToolTile(icon: "doc.on.doc", title: "Copy Keys") { state.copyKeyframes() }
+                ToolTile(icon: "sparkles.rectangle.stack", title: "Copy Effects") { state.copyEffects() }
+                if !state.effectClipboard.isEmpty {
+                    ToolTile(icon: "sparkles", title: "Paste Effects (\(state.effectClipboard.count))") { state.pasteEffects() }
+                }
                 ToolTile(icon: "doc.on.clipboard", title: "Paste Keys") { state.pasteKeyframes() }
                 ToolTile(icon: "checklist", title: "Select Many") { if let id = state.selectedLayerID { state.beginMultiSelect(id) } }
                 if case .precomp = state.selectedLayer?.content {

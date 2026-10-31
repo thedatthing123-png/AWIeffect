@@ -126,8 +126,20 @@ final class AudioPreview {
                 dst.scaleTimeRange(CMTimeRange(start: at, duration: srcDur), toDuration: CMTime(seconds: compDur, preferredTimescale: 48000))
             }
             let p = AVMutableAudioMixInputParameters(track: dst)
-            p.setVolume(Float(l.volume.staticValue / 100), at: .zero)
-            for k in l.volume.keyframes { p.setVolume(Float(k.value / 100), at: CMTime(seconds: k.time, preferredTimescale: 600)) }
+            let ks = l.volume.keyframes.sorted { $0.time < $1.time }
+            if ks.isEmpty {
+                p.setVolume(Float(l.volume.staticValue / 100), at: .zero)
+            } else {
+                p.setVolume(Float(ks[0].value / 100), at: .zero)
+                // Smooth fades: ramp between consecutive volume keyframes instead of stepping.
+                for (a, b) in zip(ks, ks.dropFirst()) where b.time > a.time {
+                    let range = CMTimeRange(start: CMTime(seconds: a.time, preferredTimescale: 600),
+                                            end: CMTime(seconds: b.time, preferredTimescale: 600))
+                    if a.interpolation == .hold { p.setVolume(Float(a.value / 100), at: range.start) }
+                    else { p.setVolumeRamp(fromStartVolume: Float(a.value / 100), toEndVolume: Float(b.value / 100), timeRange: range) }
+                }
+                if let last = ks.last { p.setVolume(Float(last.value / 100), at: CMTime(seconds: last.time, preferredTimescale: 600)) }
+            }
             params.append(p)
         }
         guard !params.isEmpty else { return nil }
