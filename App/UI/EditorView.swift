@@ -394,9 +394,6 @@ struct EditorView: View {
                     updatePinch()
                 }
                 .onEnded { _ in rotActive = false; finishPinch() }, including: pen == nil ? .all : .subviews)
-            .simultaneousGesture(TapGesture(count: 2).onEnded {
-                withAnimation(.easeOut(duration: 0.2)) { viewZoom = 1; zoomBase = 1; viewPan = .zero }
-            }, including: pen == nil && state.viewMode == .comp ? .all : .subviews)
             .simultaneousGesture(orbitDrag, including: state.viewMode == .orbit ? .all : .subviews)
             .simultaneousGesture(orbitZoom, including: state.viewMode == .orbit ? .all : .subviews)
             .simultaneousGesture(SpatialTapGesture().onEnded { v in

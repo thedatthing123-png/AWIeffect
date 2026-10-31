@@ -25,7 +25,7 @@ struct BottomPanel: View {
             NavStrip(state: state, showPhotoPicker: $showPhotoPicker, startPen: startPen)
         }
         .background(Theme.background)
-        .animation(.spring(response: 0.3, dampingFraction: 0.88), value: state.panel == .none)
+        .animation(.spring(response: 0.2, dampingFraction: 0.9), value: state.panel == .none)
     }
 
     private var grabber: some View {

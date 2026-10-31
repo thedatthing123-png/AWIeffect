@@ -75,7 +75,7 @@ struct TimelineView: View {
                         }
                         // Hold a row, then (without lifting) drag up/down to select a range.
                         .simultaneousGesture(
-                            LongPressGesture(minimumDuration: 0.35)
+                            LongPressGesture(minimumDuration: 0.3)
                                 .sequenced(before: DragGesture(minimumDistance: 0))
                                 .onChanged { v in
                                     guard case .second(true, let drag) = v, let drag else { return }
@@ -150,9 +150,9 @@ struct TimelineView: View {
         .frame(width: headerWidth, height: rowHeight, alignment: .leading)
         .background(Theme.surface)
         .contentShape(Rectangle())
-        .onTapGesture {
-            if state.isMultiSelecting { state.toggleInMulti(layer.id) } else { state.openLayer(layer.id) }
-        }
+        // The left column only selects (hold = multi-select); tapping it while selecting adds / removes the layer.
+        // Tapping the clip itself is what opens the layer's settings.
+        .onTapGesture { if state.isMultiSelecting { state.toggleInMulti(layer.id) } }
     }
 
     private var scrub: some Gesture {
