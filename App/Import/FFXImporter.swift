@@ -55,6 +55,6 @@ enum FFXImporter {
         }
         findTdgp(root)
         if !anims.isEmpty { report.add(name, "Text animation", .native, "\(anims.count) text animator(s)") }
-        return Result(effects: effects, report: report, textAnimators: anims)
+        return Result(effects: effects, textAnimators: anims, report: report)
     }
 }
