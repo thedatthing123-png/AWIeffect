@@ -84,6 +84,10 @@ final class EditorState: ObservableObject {
     @Published var linkPicking = false
     /// Typing on the canvas: the timeline and panels step aside for the keyboard, the rest is dimmed.
     @Published var textTyping = false
+    /// Camera view (what the export sees) vs free view (look around without the camera; the camera shows as a frame).
+    @Published var cameraView = true
+    /// Grid over the canvas.
+    @Published var showGrid = false
     /// True while a canvas drag writes to `live` instead of `project`.
     private(set) var liveGesture = false
     var isLiveGesture: Bool { liveGesture }

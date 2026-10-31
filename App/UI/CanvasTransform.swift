@@ -54,6 +54,8 @@ extension EditorState {
     /// Starts a canvas drag: handles win over the tool mode (corner = scale, edge = stretch, knob = rotate).
     func beginCanvasDrag(at screen: CGPoint, comp: Vec2, fit: CGRect) -> CanvasDrag? {
         guard let raw = selectedLayer, !raw.isLocked else { return nil }
+        // A selected camera is moved with camera gestures (the scene follows the finger), not like a layer.
+        if raw.content == .camera { return nil }
         let t = currentTime
         // Handles are where the layer is drawn (parenting baked); edits still go to its own values.
         let l = displayProject.layers.first { $0.id == raw.id } ?? raw

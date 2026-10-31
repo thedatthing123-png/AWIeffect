@@ -59,7 +59,7 @@ struct EditorView: View {
         .onDisappear { if AILink.shared.editor === state { AILink.shared.editor = nil } }
         .environmentObject(mediaLauncher)
         .environmentObject(trackLauncher)
-        .photosPicker(isPresented: $mediaLauncher.pickVideo, selection: $videoItem, matching: .videos)
+        .awiSheet(isPresented: $mediaLauncher.pickVideo) { MediaPickerView(state: state, isPresented: $mediaLauncher.pickVideo) }
         .onChange(of: videoItem) { _, item in
             guard let item else { return }
             Task {
@@ -110,7 +110,7 @@ struct EditorView: View {
         .awiSheet(isPresented: $showHistory) {
             HistorySheet(state: state).presentationDetents([.medium])
         }
-        .photosPicker(isPresented: $showPhotoPicker, selection: $photoItem, matching: .images)
+        .awiSheet(isPresented: $showPhotoPicker) { MediaPickerView(state: state, isPresented: $showPhotoPicker) }
         .onChange(of: photoItem) { _, item in
             guard let item else { return }
             Task {
@@ -282,7 +282,8 @@ struct EditorView: View {
             ZStack(alignment: .topLeading) {
                 LiveReader(live: state.live) { lp in
                 ClockReader(clock: state.clock) { t in
-                    MetalPreview(project: state.viewMode == .orbit ? OrbitView.scene(lp ?? state.project, orbit: state.orbit, time: t) : (lp ?? state.project),
+                    MetalPreview(project: state.viewMode == .orbit ? OrbitView.scene(lp ?? state.project, orbit: state.orbit, time: t)
+                                    : (state.cameraView ? (lp ?? state.project) : state.freeViewProject(lp ?? state.project)),
                                  time: t, redrawToken: state.redrawToken, mediaURL: { state.mediaURL($0) },
                                  viewZoom: state.viewMode == .comp ? viewZoom : 1, viewPan: state.viewMode == .comp ? viewPan : .zero,
                                  qualityCap: state.previewQuality.rawValue, isPlaying: state.isPlaying,
@@ -294,6 +295,12 @@ struct EditorView: View {
                     ClockReader(clock: state.clock) { t in OrbitGrid(project: state.project, orbit: state.orbit, time: t, fit: fit) }
                         .allowsHitTesting(false)
                 }
+                if state.viewMode == .comp, !state.cameraView {
+                    LiveReader(live: state.live) { lp in
+                        ClockReader(clock: state.clock) { t in CameraFrameOverlay(project: lp ?? state.project, time: t, fit: fit) }
+                    }
+                }
+                if state.showGrid { CompGrid(fit: fit) }
                 if let pen {
                     PenOverlay(state: state, target: pen.target, style: pen.style, fit: fit) { self.pen = nil }
                 }
@@ -355,14 +362,9 @@ struct EditorView: View {
                 }
                 .allowsHitTesting(false)
             }
-            .overlay(alignment: .topLeading) {
-                if viewZoom != 1 || viewPan != .zero {
-                    Button { withAnimation(.easeOut(duration: 0.2)) { viewZoom = 1; zoomBase = 1; viewPan = .zero } } label: {
-                        Text("\(Int(viewZoom * 100))%").font(.system(size: 11, weight: .bold, design: .monospaced))
-                            .padding(.horizontal, 8).padding(.vertical, 4).background(Capsule().fill(Theme.raised.opacity(0.9)))
-                    }
-                    .foregroundStyle(Theme.text).padding(8)
-                    .accessibilityLabel("Reset canvas zoom")
+            .overlay(alignment: .trailing) {
+                if state.viewMode == .comp && !state.textTyping {
+                    CanvasRail(state: state, viewZoom: $viewZoom, zoomBase: $zoomBase, viewPan: $viewPan)
                 }
             }
             .clipped()
@@ -409,16 +411,26 @@ struct EditorView: View {
     /// The finger drag that was running when the second finger landed stops moving the layer (no jump).
     @State private var dragFrozen = false
 
+    @State private var cameraStart: EditorState.CameraDragStart?
+    @State private var pinchCamera: EditorState.CameraDragStart?
+
     private func updatePinch() {
         if pinchOnLayer == nil {
             let layer = state.selectedLayer
-            pinchOnLayer = layer != nil && layer?.isLocked == false && layer?.content != .light
-            if pinchOnLayer == true { state.beginLayerPinch(); dragFrozen = canvasDragState != nil }
+            let cameraMode = state.cameraView && state.activeCameraLayer != nil && (layer == nil || layer?.content == .camera)
+            if cameraMode, let c = state.beginCameraGesture() {
+                pinchCamera = c; pinchOnLayer = false; dragFrozen = true
+            } else {
+                pinchOnLayer = layer != nil && layer?.isLocked == false && layer?.content != .light && layer?.content != .camera
+                if pinchOnLayer == true { state.beginLayerPinch(); dragFrozen = canvasDragState != nil }
+            }
         }
-        if pinchOnLayer == true {
+        if let c = pinchCamera {
+            state.updateCameraPinch(c, scale: pinchScale, rotation: pinchAngle)
+        } else if pinchOnLayer == true {
             state.updateLayerPinch(scale: pinchScale, rotation: pinchAngle)
         } else {
-            viewZoom = min(8, max(0.4, zoomBase * CGFloat(pinchScale)))
+            viewZoom = min(8, max(0.25, zoomBase * CGFloat(pinchScale)))
         }
     }
 
@@ -428,7 +440,8 @@ struct EditorView: View {
     /// Pinch and twist are two gestures that end separately: finish once both are done (values hold until then).
     private func finishPinch() {
         guard !magActive, !rotActive, let onLayer = pinchOnLayer else { return }
-        if onLayer { state.endLayerPinch(ownsEdit: canvasDragState == nil) } else { zoomBase = viewZoom }
+        if pinchCamera != nil { state.endCameraGesture(); pinchCamera = nil; cameraStart = nil }
+        else if onLayer { state.endLayerPinch(ownsEdit: canvasDragState == nil) } else { zoomBase = viewZoom }
         pinchOnLayer = nil; pinchScale = 1; pinchAngle = 0
     }
 
@@ -484,9 +497,20 @@ struct EditorView: View {
                     }
                     if let k = puppetDragPin, k >= 0 { state.movePuppetPin(k, toComp: toComp(v.location, fit: fit)); return }
                 }
-                if canvasDragState == nil && panBase == nil {
+                if canvasDragState == nil && panBase == nil && cameraStart == nil {
                     canvasDragState = state.beginCanvasDrag(at: v.startLocation, comp: toComp(v.startLocation, fit: fit), fit: fit)
-                    if canvasDragState == nil { panBase = viewPan }
+                    if canvasDragState == nil {
+                        // Nothing to move: in Camera view the camera moves (the scene follows the finger); otherwise
+                        // the view pans (free view never changes the export).
+                        if state.cameraView, state.activeCameraLayer != nil, let c = state.beginCameraGesture() { cameraStart = c }
+                        else { panBase = viewPan }
+                    }
+                }
+                if let c = cameraStart {
+                    guard !dragFrozen, pinchOnLayer == nil else { return }
+                    let s = Double(state.project.width) / Double(max(fit.width, 1))
+                    state.updateCameraDrag(c, delta: Vec2(Double(v.translation.width) * s, Double(v.translation.height) * s))
+                    return
                 }
                 if let b = panBase {
                     viewPan = CGSize(width: b.width + v.translation.width, height: b.height + v.translation.height)
@@ -497,6 +521,7 @@ struct EditorView: View {
             }
             .onEnded { _ in
                 dragFrozen = false
+                if cameraStart != nil { if pinchOnLayer == nil { state.endCameraGesture() }; cameraStart = nil }
                 if let k = puppetDragPin { if k >= 0 { state.endEdit() }; puppetDragPin = nil }
                 if let m = maskDrag { if m.count == 2 { state.endEdit() }; maskDrag = nil }
                 if canvasDragState != nil { state.endCanvasDrag() }

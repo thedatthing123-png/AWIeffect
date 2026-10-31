@@ -7,16 +7,15 @@ extension EditorState {
             let zoom = CameraState.defaultZoom(p)
             l.transform.positionZ = Animated(-zoom)
             l.camera = CameraOptions(zoom: Animated(zoom), focusDistance: Animated(zoom))
+            // Alight Motion-style: a new camera is a 2D camera that films the whole scene. In a 3D scene it can be
+            // switched to a 3D camera (Lens & 3D).
+            l.camera?.affects2D = !p.layers.contains { $0.is3D }
             l.tag = .amber
             p.layers.insert(l, at: 0)
             selectedLayerID = l.id
-            // Make every visual layer 3D so the camera affects it (what AE users usually do next).
-            for i in p.layers.indices where p.layers[i].content != .camera && p.layers[i].content != .adjustment {
-                if case .audio = p.layers[i].content { continue }
-                p.layers[i].is3D = true
-            }
         }
-        panel = .threeD
+        cameraView = true
+        panel = .transform
     }
 }
 
@@ -139,14 +138,18 @@ struct ThreeDPanel: View {
                                 .font(.caption).foregroundStyle(Theme.textDim)
                         }
                         if l.content == .camera, let c = l.camera {
-                            Toggle("2D Camera (moves the whole scene, like Alight Motion)", isOn: Binding(get: { c.affects2D }, set: { b in
-                                state.mutate("2D Camera") { p in if let i = state.selectedIndex { p.layers[i].camera?.affects2D = b } }
-                            }))
-                            .tint(Theme.accent).foregroundStyle(Theme.text)
-                            if c.affects2D {
-                                Text("Move, scale (zoom) and rotate this camera layer, or put Shake Pro on it, and every 2D layer follows. 3D layers use the 3D camera as before.")
+                            if state.project.layers.contains(where: { $0.is3D }) || !c.affects2D {
+                                Toggle("3D Camera (orbit, dolly and fly through 3D layers)", isOn: Binding(get: { !c.affects2D }, set: { b in
+                                    state.mutate("3D Camera") { p in if let i = state.selectedIndex { p.layers[i].camera?.affects2D = !b } }
+                                }))
+                                .tint(Theme.accent).foregroundStyle(Theme.text)
+                            } else {
+                                Text("2D camera: drag the canvas to move it, pinch to zoom, twist to turn (in Camera view). Make a layer 3D to unlock the 3D camera.")
                                     .font(.caption).foregroundStyle(Theme.textDim)
                             }
+                            Text(c.affects2D ? "Effects on this camera (shake, glitch, grade…) apply to the whole shot." :
+                                 "One finger orbits, pinch moves closer / farther, twist rolls. Effects on the camera apply to the whole shot.")
+                                .font(.caption).foregroundStyle(Theme.textDim)
                             row("Zoom", c.zoom.value(at: t), 100...8000, anim: c.zoom,
                                 set: { v in state.mutateLayer { $0.camera?.zoom.set(v, at: t) } },
                                 keyed: { state.mutateLayer { $0.camera?.zoom.toggleKeyframe(at: t) } })

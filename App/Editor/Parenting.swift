@@ -64,10 +64,22 @@ extension Renderer {
             t.rotation = Animated(t.rotation.value(at: time) + a.rot)
             let sc = t.scale.value(at: time)
             t.scale = Animated(Vec2(sc.x * a.scale.x, sc.y * a.scale.y))
+            // Depth adds up the chain too (a null's Z carries everything linked to it).
+            t.positionZ = Animated(t.positionZ.value(at: time) + chainZ(pid, in: p, time: time))
             q.layers[i].transform = t
             q.layers[i].parentID = nil
         }
         return q
+    }
+
+    /// Sum of Z positions along a parent chain (starting at `id`).
+    static func chainZ(_ id: UUID?, in p: Project, time: Double) -> Double {
+        var z = 0.0, walk = id, n = 0
+        while let w = walk, n < 32, let par = p.layers.first(where: { $0.id == w }) {
+            z += par.transform.positionZ.value(at: time)
+            walk = par.parentID; n += 1
+        }
+        return z
     }
 }
 
@@ -114,6 +126,11 @@ extension EditorState {
                     let s = Renderer.parentAffine(new, in: p, time: t)?.scale ?? Vec2(1, 1)
                     return Vec2(v.x / max(abs(s.x), 1e-6) * (s.x < 0 ? -1 : 1), v.y / max(abs(s.y), 1e-6) * (s.y < 0 ? -1 : 1))
                 }
+            }
+            // Depth: keep the layer where it is in Z when linking / unlinking.
+            let oldZ = child.parentID, newZ = parent
+            tr.positionZ = convert(tr.positionZ) { v, t in
+                v + Renderer.chainZ(oldZ, in: p, time: t) - Renderer.chainZ(newZ, in: p, time: t)
             }
             p.layers[i].transform = tr
             p.layers[i].parentID = parent

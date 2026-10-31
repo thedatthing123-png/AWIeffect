@@ -646,6 +646,23 @@ final class Renderer {
             drawQuad(cb: cb, target: comp, matrix: M, halfSize: ext, aa: compAA, opacity: opacity,
                      layer: layer, time: time, source: .image(current), premultipliedImage: true)
         }
+        // Effects on the active camera apply to everything it sees (glitch, grade, glow on the camera = the whole shot).
+        if let cam = project.layers.first(where: { $0.content == .camera && $0.isActive(at: globalTime) }) {
+            let camFX = cam.effects.filter { e in
+                guard e.isEnabled, let d = EffectRegistry.definition(e.typeID) else { return false }
+                return !d.isTransformEffect
+            }
+            if !camFX.isEmpty {
+                let copy = pool.acquire(width: comp.width, height: comp.height)
+                fx.run("fxCopy", cb, textures: [comp, copy], grid: copy)
+                var current = copy
+                for e in camFX {
+                    guard let def = EffectRegistry.definition(e.typeID), case .pixels(let run) = def.stage else { continue }
+                    current = run(EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: globalTime, unit: renderScale, pool: pool))
+                }
+                fx.run("fxCopy", cb, textures: [current, comp], grid: comp)
+            }
+        }
     }
 
     private enum Source { case shape, solid, image(MTLTexture), model(MTLTexture) }
