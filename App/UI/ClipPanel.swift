@@ -26,6 +26,14 @@ struct ClipPanel: View {
                                     }
                                 }
                             }
+                            if l.speed < 0.999, case .video = l.content {
+                                Toggle("Smooth Slow (blend frames so slow motion doesn't stutter)", isOn: Binding(get: { l.timeFX?.frameBlend ?? false }, set: { b in
+                                    state.coalescedEdit("Smooth Slow") { layer in
+                                        var fx = layer.timeFX ?? LayerTimeFX(); fx.frameBlend = b; layer.timeFX = fx.isEmpty ? nil : fx
+                                    }
+                                }))
+                                .tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13))
+                            }
                         } else {
                             HStack {
                                 Label("Time Remap is on", systemImage: "timer").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ok)

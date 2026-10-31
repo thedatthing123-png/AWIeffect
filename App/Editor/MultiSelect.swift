@@ -222,39 +222,49 @@ struct MultiSelectPanel: View {
                     .padding(.leading, 10)
             }
             .padding(.horizontal, 14).padding(.top, 10)
-            Text("Hold a layer and drag up/down to select a range · tap rows to add/remove")
+            Text("Hold the left side of a layer and drag up/down to select a range · tap layers to add / remove")
                 .font(.caption2).foregroundStyle(Theme.textDim).frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 14)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ToolTile(icon: "trash", title: "Delete") { state.deleteMulti() }
-                    ToolTile(icon: "folder.badge.plus", title: "Group") { state.groupSelected() }
-                    ToolTile(icon: "square.stack.3d.up", title: "Pre-compose") { state.precomposeMulti() }
-                    ToolTile(icon: "plus.square.on.square", title: "Duplicate") { state.duplicateMulti() }
-                    ToolTile(icon: "eye", title: "Show") { state.setVisibilityMulti(true) }
-                    ToolTile(icon: "eye.slash", title: "Hide") { state.setVisibilityMulti(false) }
-                    ToolTile(icon: "cube", title: "Make 3D") { state.make3DMulti(true) }
-                    ToolTile(icon: "square", title: "Make 2D") { state.make3DMulti(false) }
-                    ToolTile(icon: "stairs", title: "Stagger") { state.staggerMulti(step: 0.1) }
-                    ToolTile(icon: "arrow.right.to.line", title: "Trim Start") { state.trimMultiToPlayhead(keepAfter: true) }
-                    ToolTile(icon: "arrow.left.to.line", title: "Trim End") { state.trimMultiToPlayhead(keepAfter: false) }
-                }
-                .padding(.horizontal, 12)
-            }
-            .frame(height: 62)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(Array(["align.horizontal.left", "align.horizontal.center", "align.horizontal.right",
-                                   "align.vertical.top", "align.vertical.center", "align.vertical.bottom"].enumerated()), id: \.offset) { i, icon in
-                        Button { state.alignMulti(i) } label: {
-                            Image(systemName: icon).font(.system(size: 15, weight: .semibold)).frame(width: 44, height: 36)
-                                .background(RoundedRectangle(cornerRadius: 9).fill(Theme.surface)).foregroundStyle(Theme.text)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    section("Layers") {
+                        ToolTile(icon: "folder.badge.plus", title: "Group") { state.groupSelected() }
+                        ToolTile(icon: "square.stack.3d.up", title: "Pre-compose") { state.precomposeMulti() }
+                        ToolTile(icon: "plus.square.on.square", title: "Duplicate") { state.duplicateMulti() }
+                        ToolTile(icon: "trash", title: "Delete") { state.deleteMulti() }
+                    }
+                    section("Timing") {
+                        ToolTile(icon: "arrow.right.to.line", title: "Trim Start") { state.trimMultiToPlayhead(keepAfter: true) }
+                        ToolTile(icon: "arrow.left.to.line", title: "Trim End") { state.trimMultiToPlayhead(keepAfter: false) }
+                        ToolTile(icon: "stairs", title: "Stagger") { state.staggerMulti(step: 0.1) }
+                    }
+                    section("View") {
+                        ToolTile(icon: "eye", title: "Show") { state.setVisibilityMulti(true) }
+                        ToolTile(icon: "eye.slash", title: "Hide") { state.setVisibilityMulti(false) }
+                        ToolTile(icon: "cube", title: "Make 3D") { state.make3DMulti(true) }
+                        ToolTile(icon: "square", title: "Make 2D") { state.make3DMulti(false) }
+                    }
+                    Text("ALIGN").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+                    HStack(spacing: 8) {
+                        ForEach(Array(["align.horizontal.left", "align.horizontal.center", "align.horizontal.right",
+                                       "align.vertical.top", "align.vertical.center", "align.vertical.bottom"].enumerated()), id: \.offset) { i, icon in
+                            Button { state.alignMulti(i) } label: {
+                                Image(systemName: icon).font(.system(size: 15, weight: .semibold)).frame(maxWidth: .infinity, minHeight: 36)
+                                    .background(RoundedRectangle(cornerRadius: 9).fill(Theme.surface)).foregroundStyle(Theme.text)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, 12)
+                .padding(.horizontal, 12).padding(.bottom, 12)
             }
             Spacer(minLength: 0)
+        }
+    }
+
+    private func section<C: View>(_ title: String, @ViewBuilder _ content: () -> C) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title.uppercased()).font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+            HStack(spacing: 8) { content() }
         }
     }
 }

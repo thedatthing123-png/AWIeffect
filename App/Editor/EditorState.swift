@@ -73,6 +73,8 @@ final class EditorState: ObservableObject {
     let live = LiveCanvas()
     /// Puppet: drags keyframe pins at the playhead.
     @Published var puppetAnimate = true
+    /// Link mode: the panel steps aside and the next tap on a layer makes it this layer's parent.
+    @Published var linkPicking = false
     /// True while a canvas drag writes to `live` instead of `project`.
     private(set) var liveGesture = false
     /// Start positions of every selected layer while a multi-selection is dragged on the canvas.

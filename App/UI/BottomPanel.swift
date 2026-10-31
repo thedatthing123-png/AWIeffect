@@ -172,82 +172,126 @@ struct TransformPanel: View {
     @State private var showVelocity = false
     @EnvironmentObject private var drawLauncher: DrawLauncher
 
+    /// The five transform sections (Alight Motion style): one tab shows only its own settings, and also sets
+    /// what dragging on the canvas does.
+    enum Section: String, CaseIterable { case position = "Position", scale = "Scale", rotation = "Rotation", opacity = "Opacity", anchor = "Anchor" }
+    @State private var section: Section = .position
+
+    private func tool(for s: Section) -> TransformTool {
+        switch s {
+        case .position, .opacity: return .move
+        case .scale: return .scale
+        case .rotation: return .rotate
+        case .anchor: return .pivot
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: state.selectedLayer?.name ?? "Layer")
-            ScrollViewReader { proxy in
-            // Jump straight to a property instead of scrolling for it.
-            ScrollView(.horizontal, showsIndicators: false) {
+            if let layer = state.selectedLayer {
                 HStack(spacing: 6) {
-                    ForEach(jumpTargets, id: \.self) { k in
-                        Button { withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(k, anchor: .top) } } label: {
-                            Text(k).font(.system(size: 12, weight: .bold)).padding(.horizontal, 11).padding(.vertical, 6)
-                                .background(Capsule().fill(Theme.raised)).foregroundStyle(Theme.text)
+                    ForEach(Section.allCases, id: \.self) { s in
+                        Button { section = s; state.transformTool = tool(for: s) } label: {
+                            Text(s.rawValue).font(.system(size: 12, weight: .bold)).lineLimit(1).minimumScaleFactor(0.75)
+                                .frame(maxWidth: .infinity, minHeight: 34)
+                                .background(RoundedRectangle(cornerRadius: 9).fill(section == s ? Theme.accent : Theme.surface))
+                                .foregroundStyle(section == s ? Color.white : Theme.text)
                         }
                         .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal, 12).padding(.vertical, 4)
-            }
-            ScrollView {
-                VStack(spacing: 6) {
-                    if state.selectedLayer != nil { TransformToolBar(state: state) }
-                    if let layer = state.selectedLayer {
+                ScrollView {
+                    VStack(spacing: 8) {
                         let t = state.currentTime
-                        let pos = layer.transform.position.value(at: t)
-                        let sc = layer.transform.scale.value(at: t)
-                        PropertyRow(state: state, key: .position) {
-                            NumberField(value: pos.x, label: "X") { v in set { $0.transform.position.set(Vec2(v, pos.y), at: t) } }
-                            NumberField(value: pos.y, label: "Y") { v in set { $0.transform.position.set(Vec2(pos.x, v), at: t) } }
-                        }
-                        .id("Position")
-                        if layer.is3D {
+                        switch section {
+                        case .position:
+                            let pos = layer.transform.position.value(at: t)
+                            PropertyRow(state: state, key: .position) {
+                                NumberField(value: pos.x, label: "X") { v in set { $0.transform.position.set(Vec2(v, pos.y), at: t) } }
+                                NumberField(value: pos.y, label: "Y") { v in set { $0.transform.position.set(Vec2(pos.x, v), at: t) } }
+                            }
                             HStack(spacing: 6) {
-                                Text("Depth (Z)").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text).frame(width: 96, alignment: .leading)
-                                let z = layer.transform.positionZ.value(at: t)
-                                NumberField(value: z, label: "Z") { v in set { $0.transform.positionZ.set(v, at: t) } }
-                            }
-                            .id("Depth")
-                        }
-                        PropertyRow(state: state, key: .scale) {
-                            if state.scaleLinked {
-                                NumberField(value: sc.x, label: "%", step: 1) { v in
-                                    set { $0.transform.scale.set(Vec2(v, v * (sc.x == 0 ? 1 : sc.y / sc.x)), at: t) }
+                                KeyframeDiamond(filled: layer.transform.positionZ.hasKeyframe(at: t), animated: layer.transform.positionZ.isAnimated) {
+                                    state.beginEdit("Keyframe Z"); state.mutateLayer { $0.transform.positionZ.toggleKeyframe(at: t) }; state.endEdit()
                                 }
-                            } else {
-                                NumberField(value: sc.x, label: "W%", step: 1) { v in set { $0.transform.scale.set(Vec2(v, sc.y), at: t) } }
-                                NumberField(value: sc.y, label: "H%", step: 1) { v in set { $0.transform.scale.set(Vec2(sc.x, v), at: t) } }
+                                Text("Z (depth)").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text).frame(width: 80, alignment: .leading)
+                                NumberField(value: layer.transform.positionZ.value(at: t), label: "Z") { v in
+                                    // Depth only shows on 3D layers: giving a layer a Z makes it 3D.
+                                    set { $0.is3D = $0.is3D || v != 0; $0.transform.positionZ.set(v, at: t) }
+                                }
                             }
+                            linkRow(layer)
+                        case .scale:
+                            let sc = layer.transform.scale.value(at: t)
+                            PropertyRow(state: state, key: .scale) {
+                                if state.scaleLinked {
+                                    NumberField(value: sc.x, label: "%", step: 1) { v in
+                                        set { $0.transform.scale.set(Vec2(v, v * (sc.x == 0 ? 1 : sc.y / sc.x)), at: t) }
+                                    }
+                                } else {
+                                    NumberField(value: sc.x, label: "W%", step: 1) { v in set { $0.transform.scale.set(Vec2(v, sc.y), at: t) } }
+                                    NumberField(value: sc.y, label: "H%", step: 1) { v in set { $0.transform.scale.set(Vec2(sc.x, v), at: t) } }
+                                }
+                            }
+                            Toggle("Keep proportions (W and H together)", isOn: $state.scaleLinked)
+                                .tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13))
+                        case .rotation:
+                            SliderRow(state: state, key: .rotation, value: layer.transform.rotation.value(at: t), range: -360...360, unit: "°") { v in
+                                state.mutateLayer { $0.transform.rotation.set(v, at: t) }
+                            }
+                            if layer.is3D {
+                                row3D("X Rotation", layer.transform.rotationX.value(at: t)) { v in state.mutateLayer { $0.transform.rotationX.set(v, at: t) } }
+                                row3D("Y Rotation", layer.transform.rotationY.value(at: t)) { v in state.mutateLayer { $0.transform.rotationY.set(v, at: t) } }
+                            }
+                        case .opacity:
+                            SliderRow(state: state, key: .opacity, value: layer.transform.opacity.value(at: t), range: 0...100, unit: "%") { v in
+                                state.mutateLayer { $0.transform.opacity.set(v, at: t) }
+                            }
+                        case .anchor:
+                            PropertyRow(state: state, key: .anchor) {
+                                let a = layer.transform.anchor.value(at: t)
+                                NumberField(value: a.x, label: "X") { v in set { $0.transform.anchor.set(Vec2(v, a.y), at: t) } }
+                                NumberField(value: a.y, label: "Y") { v in set { $0.transform.anchor.set(Vec2(a.x, v), at: t) } }
+                            }
+                            Text("Drag on the canvas to move the pivot; the layer stays where it is.").font(.caption).foregroundStyle(Theme.textDim)
                         }
-                        .id("Scale")
-                        PropertyRow(state: state, key: .anchor) {
-                            let a = layer.transform.anchor.value(at: t)
-                            NumberField(value: a.x, label: "X") { v in set { $0.transform.anchor.set(Vec2(v, a.y), at: t) } }
-                            NumberField(value: a.y, label: "Y") { v in set { $0.transform.anchor.set(Vec2(a.x, v), at: t) } }
-                        }
-                        .id("Anchor")
-                        SliderRow(state: state, key: .rotation, value: layer.transform.rotation.value(at: t), range: -360...360, unit: "°") { v in
-                            state.mutateLayer { $0.transform.rotation.set(v, at: t) }
-                        }
-                        .id("Rotation")
-                        SliderRow(state: state, key: .opacity, value: layer.transform.opacity.value(at: t), range: 0...100, unit: "%") { v in
-                            state.mutateLayer { $0.transform.opacity.set(v, at: t) }
-                        }
-                        .id("Opacity")
-                        easingRow.id("Easing")
+                        easingRow
                     }
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 12)
                 }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 12)
             }
-            }
+        }
+        .onAppear { state.transformTool = tool(for: section) }
+    }
+
+    private func row3D(_ title: String, _ v: Double, _ set: @escaping (Double) -> Void) -> some View {
+        HStack {
+            Text(title).font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text).frame(width: 96, alignment: .leading)
+            ValueScrubber(value: v, range: -360...360, step: 0.1, unit: "°", onBegin: { state.beginEdit(title) }, onChange: set,
+                          onEnd: { state.endEdit() }, allowBeyond: true)
         }
     }
 
-    private var jumpTargets: [String] {
-        var k = ["Position"]
-        if state.selectedLayer?.is3D == true { k.append("Depth") }
-        return k + ["Scale", "Anchor", "Rotation", "Opacity", "Easing"]
+    /// Link (parent) this layer to another: tap Link, then tap the layer to follow on the canvas.
+    @ViewBuilder private func linkRow(_ layer: Layer) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "link").foregroundStyle(Theme.accentGlow)
+            if let pid = layer.parentID, let parent = state.project.layers.first(where: { $0.id == pid }) {
+                Text("Linked to \(parent.name)").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.text).lineLimit(1)
+                Spacer()
+                Button("Unlink") { state.setParent(nil) }.font(.system(size: 13, weight: .semibold))
+            } else {
+                Text("Not linked").font(.system(size: 13)).foregroundStyle(Theme.textDim)
+                Spacer()
+                Button { state.beginLinkPick() } label: {
+                    Label("Link to a Layer", systemImage: "hand.tap").font(.system(size: 13, weight: .semibold))
+                }
+            }
+        }
+        .padding(10).glass(radius: 10)
     }
 
     private var easingRow: some View {

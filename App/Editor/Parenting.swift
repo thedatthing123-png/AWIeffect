@@ -175,3 +175,39 @@ struct ParentPicker: View {
         .presentationDetents([.medium])
     }
 }
+
+
+extension EditorState {
+    /// Starts "tap the layer to link to": hides the panel, highlights the other layers on the canvas.
+    func beginLinkPick() {
+        guard selectedLayerID != nil else { return }
+        linkPicking = true
+        panel = .none
+    }
+
+    func endLinkPick(parent: UUID?) {
+        linkPicking = false
+        if let parent, parent != selectedLayerID { setParent(parent) }
+        panel = .transform
+    }
+}
+
+/// Outlines of every layer you can link to, while Link mode is on.
+struct LinkPickOverlay: View {
+    @ObservedObject var state: EditorState
+    let fit: CGRect
+
+    var body: some View {
+        Canvas { ctx, _ in
+            let p = state.displayProject
+            for l in p.layers where l.id != state.selectedLayerID && l.isActive(at: state.currentTime) && !l.isAudioOnly
+                && l.content != .camera && l.content != .light {
+                let h = CanvasHandles.handles(l, project: p, time: state.currentTime, fit: fit)
+                var path = Path(); path.addLines(h.corners); path.closeSubpath()
+                ctx.fill(path, with: .color(Theme.accent.opacity(0.18)))
+                ctx.stroke(path, with: .color(Theme.accentGlow), style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
+            }
+        }
+        .allowsHitTesting(false)
+    }
+}

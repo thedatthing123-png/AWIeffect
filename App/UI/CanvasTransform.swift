@@ -108,7 +108,7 @@ extension EditorState {
                 guard let s = multiDragStarts[lp.layers[i].id] else { continue }
                 if let pid = lp.layers[i].parentID, multiDragStarts[pid] != nil { continue }
                 let p = s + delta
-                lp.layers[i].transform.position.set(Vec2(p.x.rounded(), p.y.rounded()), at: t)
+                lp.layers[i].transform.position.set(Vec2((p.x * 10).rounded() / 10, (p.y * 10).rounded() / 10), at: t)
             }
             lp.modifiedAt = Date()
             live.project = lp
@@ -132,19 +132,24 @@ extension EditorState {
             }
             var p = d.position + delta
             // Snap to the frame center / edges and to other layers' positions (guides show while snapped).
-            let tol = Double(project.width) * 0.012
+            // Small grab zone + stickiness: it grabs only when really close and lets go once you clearly pull
+            // away, so the layer never flickers between snapped and free.
+            let grab = Double(project.width) * 0.005, release = grab * 2.2
             var gx: Double?, gy: Double?
             var xs = [Double(project.width) / 2, 0, Double(project.width)], ys = [Double(project.height) / 2, 0, Double(project.height)]
             for o in project.layers where o.id != selectedLayerID && o.isActive(at: t) && o.content != .camera && !o.isAudioOnly {
                 let op = o.transform.position.value(at: t); xs.append(op.x); ys.append(op.y)
             }
-            if let x = xs.min(by: { abs($0 - p.x) < abs($1 - p.x) }), abs(x - p.x) < tol { p.x = x; gx = x }
-            if let y = ys.min(by: { abs($0 - p.y) < abs($1 - p.y) }), abs(y - p.y) < tol { p.y = y; gy = y }
+            if let held = snapGuides.x, abs(held - p.x) < release { p.x = held; gx = held }
+            else if let x = xs.min(by: { abs($0 - p.x) < abs($1 - p.x) }), abs(x - p.x) < grab { p.x = x; gx = x }
+            if let held = snapGuides.y, abs(held - p.y) < release { p.y = held; gy = held }
+            else if let y = ys.min(by: { abs($0 - p.y) < abs($1 - p.y) }), abs(y - p.y) < grab { p.y = y; gy = y }
             if (gx, gy) != (snapGuides.x, snapGuides.y) {
                 if gx != nil || gy != nil { UISelectionFeedbackGenerator().selectionChanged() }
                 snapGuides = SnapGuides(x: gx, y: gy)
             }
-            mutateLayer { $0.transform.position.set(Vec2(p.x.rounded(), p.y.rounded()), at: t) }
+            // Sub-pixel positions: smooth motion under the finger (no whole-pixel stepping).
+            mutateLayer { $0.transform.position.set(Vec2((p.x * 10).rounded() / 10, (p.y * 10).rounded() / 10), at: t) }
         case .scale:
             let r0 = hypot(d.startComp.x - d.pivot.x, d.startComp.y - d.pivot.y)
             let r1 = hypot(c.x - d.pivot.x, c.y - d.pivot.y)

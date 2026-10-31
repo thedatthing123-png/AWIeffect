@@ -38,6 +38,7 @@ struct EditorView: View {
             timelineGrip
             TimelineView(state: state)
                 .frame(height: timelineHeight)
+            TrimStrip(state: state, clock: state.clock)
             BottomPanel(state: state, showPhotoPicker: $showPhotoPicker) { target, style in
                 state.pause()
                 pen = (target, style)
@@ -292,6 +293,20 @@ struct EditorView: View {
                 if state.panel == .puppet, state.viewMode == .comp {
                     ClockReader(clock: state.clock) { _ in PuppetOverlay(state: state, fit: fit) }
                 }
+                if state.linkPicking {
+                    LinkPickOverlay(state: state, fit: fit)
+                    VStack {
+                        HStack {
+                            Text("Tap the layer to link to").font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
+                            Spacer()
+                            Button("Cancel") { state.endLinkPick(parent: nil) }.font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
+                        }
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .background(Capsule().fill(Theme.accent))
+                        .padding(8)
+                        Spacer()
+                    }
+                }
                 if state.panel == .masks, state.viewMode == .comp {
                     ClockReader(clock: state.clock) { _ in MaskPointsOverlay(state: state, fit: fit) }
                 }
@@ -352,6 +367,8 @@ struct EditorView: View {
             .simultaneousGesture(orbitZoom, including: state.viewMode == .orbit ? .all : .subviews)
             .simultaneousGesture(SpatialTapGesture().onEnded { v in
                 guard pen == nil && state.viewMode == .comp else { return }
+                // Link mode: the tapped layer becomes the parent.
+                if state.linkPicking { state.endLinkPick(parent: layerAt(v.location, fit: fit)); return }
                 // Puppet panel open: taps drop pins instead of selecting layers.
                 if state.panel == .puppet, state.selectedLayerID != nil { state.addPuppetPin(atComp: toComp(v.location, fit: fit)); return }
                 tapSelect(at: v.location, fit: fit)
@@ -431,6 +448,20 @@ struct EditorView: View {
                 canvasDragState = nil
                 panBase = nil
             }
+    }
+
+    /// Top-most layer under a point (other than the selected one).
+    private func layerAt(_ point: CGPoint, fit: CGRect) -> UUID? {
+        let c = toComp(point, fit: fit)
+        for layer in state.displayProject.layers where layer.isActive(at: state.currentTime) && layer.id != state.selectedLayerID
+            && layer.content != .camera && layer.content != .light && !layer.isAudioOnly {
+            let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(state.project, time: state.currentTime),
+                                             time: state.currentTime, renderScale: 1)
+            let h = M.inverse * SIMD3(c.x, c.y, 1)
+            let hs = Renderer.layerHalfSize(layer, time: state.currentTime)
+            if abs(h.x / h.z) <= hs.x && abs(h.y / h.z) <= hs.y { return layer.id }
+        }
+        return nil
     }
 
     /// Selects the top-most layer whose bounds contain the tap.

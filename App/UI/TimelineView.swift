@@ -17,6 +17,9 @@ struct TimelineView: View {
     /// Layer as it was when a clip / trim / keyframe drag began.
     @State private var dragOriginal: Layer?
     @State private var reorderFrom: Int?
+    /// A clip held and lifted: drag up / down to change its layer order, sideways to move it in time.
+    @State private var liftLayer: UUID?
+    @State private var liftOffset: CGFloat = 0
 
     private let rowHeight: CGFloat = 46
     private let headerWidth: CGFloat = 52
@@ -51,6 +54,7 @@ struct TimelineView: View {
                                 .frame(maxWidth: .infinity).padding(.top, 26)
                             }
                             ForEach(state.project.layers) { layer in
+                                let lifted = liftLayer == layer.id
                                 HStack(spacing: 0) {
                                     header(layer)
                                     layerRow(layer, offset: offset)
@@ -58,6 +62,11 @@ struct TimelineView: View {
                                         .clipped()
                                 }
                                 .frame(height: rowHeight)
+                                .scaleEffect(lifted ? 1.03 : 1)
+                                .shadow(color: .black.opacity(lifted ? 0.5 : 0), radius: 8, y: 4)
+                                .offset(y: lifted ? liftOffset : 0)
+                                .zIndex(lifted ? 1 : 0)
+                                .animation(.interactiveSpring(response: 0.25, dampingFraction: 0.85), value: lifted)
                             }
                         }
                         // Hold a row, then (without lifting) drag up/down to select a range.
@@ -66,6 +75,8 @@ struct TimelineView: View {
                                 .sequenced(before: DragGesture(minimumDistance: 0))
                                 .onChanged { v in
                                     guard case .second(true, let drag) = v, let drag else { return }
+                                    // Alight Motion: holding the left column (eye / icon) selects; holding a clip lifts it.
+                                    guard drag.startLocation.x < headerWidth else { return }
                                     if multiDragStart == nil {
                                         let row = Int(drag.startLocation.y / rowHeight)
                                         if state.project.layers.indices.contains(row) {
@@ -79,7 +90,7 @@ struct TimelineView: View {
                                 .onEnded { _ in multiDragStart = nil }
                         )
                     }
-                    .scrollDisabled(multiDragStart != nil)
+                    .scrollDisabled(multiDragStart != nil || liftLayer != nil)
                 }
                 // Playhead.
                 Rectangle().fill(.white).frame(width: 1.5)
@@ -128,15 +139,7 @@ struct TimelineView: View {
                 .foregroundStyle(state.multiSelection?.contains(layer.id) == true ? Theme.accentGlow : Theme.tagColor(layer.tag))
                 .frame(width: 22, height: rowHeight)
                 .contentShape(Rectangle())
-                // Drag the layer icon up/down to reorder layers.
-                .highPriorityGesture(DragGesture(minimumDistance: 4)
-                    .onChanged { _ in
-                        if reorderFrom == nil { reorderFrom = state.project.layers.firstIndex { $0.id == layer.id } }
-                    }
-                    .onEnded { g in
-                        if let from = reorderFrom { state.reorderLayer(from: from, to: from + Int((g.translation.height / rowHeight).rounded())) }
-                        reorderFrom = nil
-                    })
+
         }
         .frame(width: headerWidth, height: rowHeight)
         .background(Theme.surface)
@@ -231,8 +234,8 @@ struct TimelineView: View {
                     }
                 }
                 .frame(width: w, height: rowHeight - 8)
-                // Drag a selected clip to move it in time (snaps to frames, beats and the playhead).
-                .highPriorityGesture(clipDrag(layer), including: editable ? .all : .subviews)
+                // Hold a clip to lift it: up / down reorders, sideways moves it in time (snaps to frames, beats, playhead).
+                .simultaneousGesture(clipHold(layer), including: state.isMultiSelecting ? .subviews : .all)
                 .offset(x: x0, y: 4)
             if editable {
                 trimHandle(layer, start: true).offset(x: x0 - 13, y: 2)
@@ -255,6 +258,36 @@ struct TimelineView: View {
         .onTapGesture {
             if state.isMultiSelecting { state.toggleInMulti(layer.id) } else { state.select(selected ? nil : layer.id) }
         }
+    }
+
+    private func clipHold(_ layer: Layer) -> some Gesture {
+        LongPressGesture(minimumDuration: 0.28)
+            .sequenced(before: DragGesture(minimumDistance: 0))
+            .onChanged { v in
+                guard case .second(true, let drag) = v else { return }
+                if liftLayer == nil {
+                    liftLayer = layer.id
+                    dragOriginal = layer
+                    state.pause()
+                    state.beginEdit("Move Clip")
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                }
+                guard let g = drag, let o = dragOriginal else { return }
+                liftOffset = g.translation.height
+                let raw = o.inPoint + Double(g.translation.width / zoom)
+                state.moveClip(o, by: state.snapTime(raw, tolerance: Double(8 / zoom)) - o.inPoint)
+            }
+            .onEnded { v in
+                defer { liftLayer = nil; liftOffset = 0; dragOriginal = nil; state.endEdit() }
+                guard case .second(true, let drag) = v, let drag,
+                      let from = state.project.layers.firstIndex(where: { $0.id == layer.id }) else { return }
+                let to = from + Int((drag.translation.height / rowHeight).rounded())
+                if to != from {
+                    state.endEdit()
+                    state.reorderLayer(from: from, to: to)
+                    UISelectionFeedbackGenerator().selectionChanged()
+                }
+            }
     }
 
     private func clipDrag(_ layer: Layer) -> some Gesture {
