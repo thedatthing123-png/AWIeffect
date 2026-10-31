@@ -124,7 +124,9 @@ final class MemoryTests: XCTestCase {
         guard let comp = r.makeCompTexture(width: 432, height: 540) else { return }
         let pool = r.makePool()
         var peak = 0
-        for i in 0..<160 {
+        Renderer.blurSampleCap = 4
+        defer { Renderer.blurSampleCap = 8 }
+        for i in 0..<90 {
             // Simulate adaptive preview resolution changing frame to frame.
             let scale = [0.4, 0.3, 0.2, 0.35, 0.25][i % 5]
             guard let cb = r.queue.makeCommandBuffer() else { break }

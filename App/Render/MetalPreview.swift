@@ -144,6 +144,7 @@ struct MetalPreview: UIViewRepresentable {
                 guard next <= last, self.cacheBytes < Self.cacheBudget * 9 / 10,
                       let tex = r.makeCompTexture(width: size.0, height: size.1), let cb = r.queue.makeCommandBuffer() else { return }
                 pool.recycle()
+                Renderer.blurSampleCap = 12
                 r.encode(project: p, time: Double(next) / max(p.fps, 1), renderScale: scale, into: tex, commandBuffer: cb, pool: pool, mediaURL: media)
                 let idx = next
                 cb.addCompletedHandler { [weak self] _ in
@@ -210,6 +211,8 @@ struct MetalPreview: UIViewRepresentable {
                 let pool = pools[frame % 3]
                 frame += 1
                 pool.recycle()
+                // Preview: lighter motion blur while playing, finer when paused (export always renders the full count).
+                Renderer.blurSampleCap = isPlaying ? 4 : (renderedFull ? 12 : 6)
                 r.encode(project: project, time: time, renderScale: scale, into: target, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
                 if renderedFull && cacheEnabled { remember(target, frame: frameIdx) }
                 shown = target

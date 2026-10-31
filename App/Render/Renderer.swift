@@ -231,6 +231,9 @@ final class Renderer {
         enc.endEncoding()
     }
 
+    /// Motion-blur samples allowed in the live preview (nil = the project's full setting, used by export).
+    nonisolated(unsafe) static var blurSampleCap: Int? = 8
+
     /// Max side of an offscreen layer buffer.
     static let maxLayerTexture = 4096
 
@@ -484,7 +487,8 @@ final class Renderer {
                 let travel = [(-hs.x, -hs.y), (hs.x, hs.y), (hs.x, -hs.y), (-hs.x, hs.y)]
                     .map { c in simd_length(corner(m1, c.0, c.1) - corner(m0, c.0, c.1)) }.max() ?? 0
                 if travel.isFinite, travel > 0.5 {
-                    let n = max(3, min(project.blurSamples, Int((travel / 1.5).rounded(.up)) + 1))
+                    let cap = Renderer.blurSampleCap.map { min($0, project.blurSamples) } ?? project.blurSamples
+                    let n = max(2, min(cap, Int((travel / 1.5).rounded(.up)) + 1))
                     blurMatrices = (0..<n).map { k in
                         Self.placementMatrix(layer, camera: camera, time: time + (Double(k) / Double(n - 1) - 0.5) * shutter, renderScale: renderScale)
                     }

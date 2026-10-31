@@ -57,7 +57,9 @@ final class Exporter {
         guard let r = Renderer.shared else { throw ExportError.noRenderer }
         // Full-resolution footage for the final render (editing uses lighter proxies); restored when done.
         VideoSources.shared.setFullQuality(true)
-        defer { VideoSources.shared.setFullQuality(false) }
+        let savedCap = Renderer.blurSampleCap
+        Renderer.blurSampleCap = nil
+        defer { VideoSources.shared.setFullQuality(false); Renderer.blurSampleCap = savedCap }
         if settings.format == .gif { return try await exportGIF(project: project, settings: settings, mediaURL: mediaURL, progress: progress) }
         let alpha = settings.format == .transparent
         var project = project
