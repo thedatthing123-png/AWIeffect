@@ -124,3 +124,47 @@ extension EditorState {
         }
     }
 }
+
+extension EditorState {
+    /// Manga 3D panel push (the parallax camera move manga editors build in AE): the selected layers (or every
+    /// visual layer) become 3D planes stacked in depth — top layers closest — resized so the first frame looks
+    /// unchanged, and a new camera dollies in through them with a smooth ease.
+    func mangaPanelPush(depth: Double = 600, push: Double = 0.3, duration: Double = 2.5, drift: Double = 0.03, turn: Double = 2, addCamera: Bool = true) {
+        let ids = multiSelection ?? Set(project.layers.filter { !$0.isAudioOnly && $0.content != .camera && $0.content != .adjustment && $0.content != .light }.map(\.id))
+        guard !ids.isEmpty else { return }
+        let t0 = currentTime
+        mutate("Manga 3D Panel Push") { p in
+            let zoom = CameraState.defaultZoom(p)
+            var rank = 0.0
+            for i in p.layers.indices where ids.contains(p.layers[i].id) {
+                let z = rank * depth
+                let oldZ = p.layers[i].is3D ? p.layers[i].transform.positionZ.value(at: t0) : 0
+                p.layers[i].is3D = true
+                p.layers[i].transform.positionZ = Animated(z)
+                // Further away looks smaller in perspective: scale relative to the old depth, so the start frame keeps
+                // looking the same (also when the scene is rebuilt with a new spacing).
+                let k = (zoom + z) / max(1, zoom + oldZ)
+                p.layers[i].transform.scale = p.layers[i].transform.scale.mapped { Vec2($0.x * k, $0.y * k) }
+                // Keep it on-screen at the same place: positions scale around the comp center too.
+                let c = p.center
+                p.layers[i].transform.position = p.layers[i].transform.position.mapped { c + ($0 - c) * k }
+                rank += 1
+            }
+            guard addCamera else { return }
+            var cam = p.makeLayer(name: "Panel Push Camera", content: .camera, size: Vec2(1, 1))
+            cam.camera = CameraOptions(zoom: Animated(zoom), focusDistance: Animated(zoom))
+            cam.tag = .amber
+            let c = p.center
+            cam.transform.position.insertKeyframe(Keyframe(time: t0, value: c, interpolation: .bezier, easeOut: .easyOut, easeIn: .easyIn))
+            cam.transform.position.insertKeyframe(Keyframe(time: t0 + duration, value: c + Vec2(Double(p.width) * drift, -Double(p.height) * drift * 0.66),
+                                                           interpolation: .bezier, easeOut: .easyOut, easeIn: .easyIn))
+            cam.transform.positionZ.insertKeyframe(Keyframe(time: t0, value: -zoom, interpolation: .bezier, easeOut: .easyOut, easeIn: .easyIn))
+            cam.transform.positionZ.insertKeyframe(Keyframe(time: t0 + duration, value: -zoom * (1 - push), interpolation: .bezier, easeOut: .easyOut, easeIn: .easyIn))
+            cam.transform.rotation.insertKeyframe(Keyframe(time: t0, value: 0, interpolation: .bezier, easeOut: .easyOut, easeIn: .easyIn))
+            cam.transform.rotation.insertKeyframe(Keyframe(time: t0 + max(duration, 0.01), value: turn, interpolation: .bezier, easeOut: .easyOut, easeIn: .easyIn))
+            p.layers.insert(cam, at: 0)
+            selectedLayerID = cam.id
+        }
+        multiSelection = nil
+    }
+}

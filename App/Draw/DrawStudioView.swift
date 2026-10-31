@@ -275,7 +275,12 @@ struct DrawStudioView: View {
             iconButton("photo.badge.plus") { showPhotos = true }
             iconButton("square.3.layers.3d", active: showLayers) { showLayers.toggle() }
             Spacer()
-            Button { onDone(engine) } label: {
+            Menu {
+                Button { engine.sendAsParts = false; onDone(engine) } label: { Label("Send as One Layer", systemImage: "square") }
+                Button { engine.sendAsParts = true; onDone(engine) } label: {
+                    Label("Send Parts as Separate Layers (for animating)", systemImage: "square.3.layers.3d.down.right")
+                }
+            } label: {
                 Label("Send to Timeline", systemImage: "arrow.down.to.line")
                     .font(.system(size: 13, weight: .bold)).padding(.horizontal, 12).padding(.vertical, 8)
                     .background(Capsule().fill(Theme.accent)).foregroundStyle(.white)

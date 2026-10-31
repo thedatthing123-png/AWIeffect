@@ -474,7 +474,7 @@ struct TransportBar: View {
             Button { state.togglePlay() } label: {
                 Image(systemName: state.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 20, weight: .bold))
-                    .frame(width: 44, height: 40)
+                    .frame(width: 42, height: 40)
             }
             .accessibilityLabel(state.isPlaying ? "Pause" : "Play")
             button("chevron.right") { state.stepFrame(1) }
@@ -491,14 +491,15 @@ struct TransportBar: View {
             button("clock.arrow.circlepath") { showHistory = true }
         }
         .foregroundStyle(Theme.text)
-        .padding(.horizontal, 6)
+        .padding(.horizontal, 4)
+        .frame(maxWidth: .infinity)
         .frame(height: 44)
     }
 
     private func button(_ icon: String, enabled: Bool = true, tint: Color? = nil, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon).font(.system(size: 15, weight: .semibold))
-                .frame(width: 34, height: 38)
+                .frame(width: 31, height: 38)
                 .foregroundStyle(tint ?? (enabled ? Theme.text : Theme.textDim.opacity(0.4)))
         }
         .disabled(!enabled)

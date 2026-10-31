@@ -71,6 +71,7 @@ struct BottomPanel: View {
                 case .motionBlur: MotionBlurPanel(state: state)
                 case .scene: ScenePanel(state: state)
                 case .time: TimePanel(state: state)
+                case .scene3D: Scene3DPanel(state: state)
                 case .none: EmptyView()
                 }
             }
@@ -169,6 +170,20 @@ struct TransformPanel: View {
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: state.selectedLayer?.name ?? "Layer")
+            ScrollViewReader { proxy in
+            // Jump straight to a property instead of scrolling for it.
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(jumpTargets, id: \.self) { k in
+                        Button { withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(k, anchor: .top) } } label: {
+                            Text(k).font(.system(size: 12, weight: .bold)).padding(.horizontal, 11).padding(.vertical, 6)
+                                .background(Capsule().fill(Theme.raised)).foregroundStyle(Theme.text)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 12).padding(.vertical, 4)
+            }
             ScrollView {
                 VStack(spacing: 6) {
                     if state.selectedLayer != nil { TransformToolBar(state: state) }
@@ -180,6 +195,15 @@ struct TransformPanel: View {
                             NumberField(value: pos.x, label: "X") { v in set { $0.transform.position.set(Vec2(v, pos.y), at: t) } }
                             NumberField(value: pos.y, label: "Y") { v in set { $0.transform.position.set(Vec2(pos.x, v), at: t) } }
                         }
+                        .id("Position")
+                        if layer.is3D {
+                            HStack(spacing: 6) {
+                                Text("Depth (Z)").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text).frame(width: 96, alignment: .leading)
+                                let z = layer.transform.positionZ.value(at: t)
+                                NumberField(value: z, label: "Z") { v in set { $0.transform.positionZ.set(v, at: t) } }
+                            }
+                            .id("Depth")
+                        }
                         PropertyRow(state: state, key: .scale) {
                             if state.scaleLinked {
                                 NumberField(value: sc.x, label: "%", step: 1) { v in
@@ -190,24 +214,35 @@ struct TransformPanel: View {
                                 NumberField(value: sc.y, label: "H%", step: 1) { v in set { $0.transform.scale.set(Vec2(sc.x, v), at: t) } }
                             }
                         }
+                        .id("Scale")
                         PropertyRow(state: state, key: .anchor) {
                             let a = layer.transform.anchor.value(at: t)
                             NumberField(value: a.x, label: "X") { v in set { $0.transform.anchor.set(Vec2(v, a.y), at: t) } }
                             NumberField(value: a.y, label: "Y") { v in set { $0.transform.anchor.set(Vec2(a.x, v), at: t) } }
                         }
+                        .id("Anchor")
                         SliderRow(state: state, key: .rotation, value: layer.transform.rotation.value(at: t), range: -360...360, unit: "°") { v in
                             state.mutateLayer { $0.transform.rotation.set(v, at: t) }
                         }
+                        .id("Rotation")
                         SliderRow(state: state, key: .opacity, value: layer.transform.opacity.value(at: t), range: 0...100, unit: "%") { v in
                             state.mutateLayer { $0.transform.opacity.set(v, at: t) }
                         }
-                        easingRow
+                        .id("Opacity")
+                        easingRow.id("Easing")
                     }
                 }
                 .padding(.horizontal, 12)
                 .padding(.bottom, 12)
             }
+            }
         }
+    }
+
+    private var jumpTargets: [String] {
+        var k = ["Position"]
+        if state.selectedLayer?.is3D == true { k.append("Depth") }
+        return k + ["Scale", "Anchor", "Rotation", "Opacity", "Easing"]
     }
 
     private var easingRow: some View {

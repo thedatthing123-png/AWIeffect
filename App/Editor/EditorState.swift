@@ -44,6 +44,7 @@ enum ToolPanel: Equatable {
     case motionBlur
     case scene
     case time
+    case scene3D
 }
 
 /// The project as it looks mid-gesture. While a finger drags a layer on the canvas only the preview and the
@@ -719,8 +720,39 @@ extension EditorState {
         return e
     }
 
+    /// Every Art Studio layer becomes its own image layer, cropped tight and placed exactly where it was drawn
+    /// (pivot at the part's center), ready to rotate / bend / wave — no exporting parts one by one.
+    func finishDrawingParts(_ engine: DrawEngine) {
+        let parts = engine.partPNGs()
+        guard !parts.isEmpty else { return }
+        var made: [(String, String, CGRect)] = []
+        for part in parts {
+            guard let name = try? store.importMedia(data: part.png, ext: "png", into: project.id) else { continue }
+            made.append((part.name, name, part.rect))
+        }
+        Renderer.shared?.clearImageCache()
+        var newIDs = Set<UUID>()
+        mutate("Add \(made.count) Parts") { p in
+            var insert: [Layer] = []
+            for (title, file, r) in made {
+                var l = p.makeLayer(name: title, content: .image(fileName: file, pixelWidth: Int(r.width), pixelHeight: Int(r.height)),
+                                    size: Vec2(Double(r.width), Double(r.height)))
+                l.fill = Animated(.white)
+                // Canvas == comp size, so the crop's center is where the part sits in the comp.
+                l.transform.position = Animated(Vec2(Double(r.midX), Double(r.midY)))
+                l.tag = .teal
+                insert.append(l)
+                newIDs.insert(l.id)
+            }
+            p.layers.insert(contentsOf: insert, at: 0)
+        }
+        if let first = newIDs.first { selectedLayerID = first }
+        redrawToken += 1
+    }
+
     /// Saves the drawing and adds (or live-updates) its image layer so it sits exactly where it was drawn.
     func finishDrawing(_ engine: DrawEngine, editing existing: UUID?) {
+        if engine.sendAsParts { finishDrawingParts(engine); return }
         let docID = existing.flatMap { id in project.layers.first { $0.id == id }?.drawingID } ?? UUID()
         let folder = store.mediaFolder(for: project.id)
         guard (try? engine.save(doc: docID, folder: folder)) != nil, let png = engine.flattenedPNG() else { return }

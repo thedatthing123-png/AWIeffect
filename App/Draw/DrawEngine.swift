@@ -562,6 +562,31 @@ final class DrawEngine: ObservableObject {
 
     /// A traced-over video frame: shown while painting, left out of the saved drawing.
     var referenceLayerID: UUID?
+    /// Send every visible layer to the timeline as its own layer (cut-out parts to animate).
+    var sendAsParts = false
+
+    /// Each visible layer (except the tracing reference) cropped to what's painted on it:
+    /// (name, PNG, crop rect in canvas px). Empty layers are skipped. Top layer first.
+    func partPNGs() -> [(name: String, png: Data, rect: CGRect)] {
+        var out: [(String, Data, CGRect)] = []
+        for l in layers.reversed() where l.visible && l.id != referenceLayerID {
+            let px = bytes(of: l)
+            var minX = width, minY = height, maxX = -1, maxY = -1
+            for y in 0..<height {
+                let row = y * width * 4
+                for x in 0..<width where px[row + x * 4 + 3] > 2 {
+                    if x < minX { minX = x }; if x > maxX { maxX = x }
+                    if y < minY { minY = y }; if y > maxY { maxY = y }
+                }
+            }
+            guard maxX >= minX, maxY >= minY else { continue }
+            let rect = CGRect(x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1)
+            guard let full = cgImage(px), let crop = full.cropping(to: rect),
+                  let png = UIImage(cgImage: crop).pngData() else { continue }
+            out.append((l.name, png, rect))
+        }
+        return out
+    }
 
     /// AI subject selection (Apple's on-device subject lift) on the active layer: people, animals, objects.
     @discardableResult
