@@ -210,3 +210,83 @@ struct CanvasRail: View {
         .accessibilityLabel(label)
     }
 }
+
+extension EditorState {
+    /// Two fingers dragged together on a 3D camera: slide it sideways / up-down (the scene follows the fingers).
+    func updateCameraPan(_ s: CameraDragStart, delta d: Vec2) {
+        let t = currentTime
+        let R = CameraState.rotation(x: s.rx, y: s.ry, z: s.rz)
+        let r = R * SIMD4(1, 0, 0, 0), u = R * SIMD4(0, 1, 0, 0)
+        let p = SIMD3(s.position.x, s.position.y, s.z) - SIMD3(r.x, r.y, r.z) * d.x - SIMD3(u.x, u.y, u.z) * d.y
+        guard var lp = live.project, let i = lp.layers.firstIndex(where: { $0.id == s.id }) else { return }
+        lp.layers[i].transform.position.set(Vec2((p.x * 10).rounded() / 10, (p.y * 10).rounded() / 10), at: t)
+        lp.layers[i].transform.positionZ.set((p.z * 10).rounded() / 10, at: t)
+        lp.modifiedAt = Date()
+        live.project = lp
+    }
+}
+
+/// Two-finger pan (UIKit, works alongside SwiftUI's pinch / twist). Watches touches inside its own frame.
+struct TwoFingerPan: UIViewRepresentable {
+    var onBegan: () -> Void
+    var onChanged: (CGSize) -> Void
+    var onEnded: () -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeUIView(context: Context) -> WatchView {
+        let v = WatchView()
+        v.isUserInteractionEnabled = false
+        v.backgroundColor = .clear
+        v.coordinator = context.coordinator
+        return v
+    }
+
+    func updateUIView(_ v: WatchView, context: Context) {
+        context.coordinator.onBegan = onBegan
+        context.coordinator.onChanged = onChanged
+        context.coordinator.onEnded = onEnded
+    }
+
+    final class WatchView: UIView {
+        weak var coordinator: Coordinator?
+        private var recognizer: UIPanGestureRecognizer?
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            if let r = recognizer { r.view?.removeGestureRecognizer(r); recognizer = nil }
+            guard let w = window, let c = coordinator else { return }
+            let g = UIPanGestureRecognizer(target: c, action: #selector(Coordinator.handle(_:)))
+            g.minimumNumberOfTouches = 2
+            g.maximumNumberOfTouches = 2
+            g.cancelsTouchesInView = false
+            g.delegate = c
+            c.area = self
+            w.addGestureRecognizer(g)
+            recognizer = g
+        }
+    }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        var onBegan: () -> Void = {}
+        var onChanged: (CGSize) -> Void = { _ in }
+        var onEnded: () -> Void = {}
+        weak var area: UIView?
+        private var active = false
+
+        @objc func handle(_ g: UIPanGestureRecognizer) {
+            guard let area else { return }
+            switch g.state {
+            case .began:
+                active = area.bounds.contains(g.location(in: area))
+                if active { onBegan() }
+            case .changed:
+                if active { let t = g.translation(in: area); onChanged(CGSize(width: t.x, height: t.y)) }
+            default:
+                if active { onEnded() }
+                active = false
+            }
+        }
+
+        func gestureRecognizer(_ g: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool { true }
+    }
+}

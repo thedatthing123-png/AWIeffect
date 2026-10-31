@@ -26,6 +26,8 @@ struct TextData: Codable, Equatable {
     var pathOffset: Animated<Double>? = nil
     /// Counter / timer mode: the shown text comes from an animated number (keyframe it, shape it with the graph).
     var counter: TextCounter? = nil
+    /// Where spacing grows from: 0 = left, 1 = center, 2 = right (nil = same as the alignment).
+    var spacingAnchor: Int? = nil
 
     /// The text as drawn at `time` (the counter's value when counting).
     func resolved(at time: Double) -> TextData {

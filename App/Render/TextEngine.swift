@@ -47,7 +47,7 @@ final class TextEngine {
     func layout(_ t: TextData, time: Double) -> TextLayout {
         let tracking = t.tracking.value(at: time)
         let spacing = t.lineSpacing.value(at: time)
-        let key = "\(t.string)|\(t.fontName)|\(t.fontSize)|\(tracking)|\(spacing)|\(t.alignment.rawValue)"
+        let key = "\(t.string)|\(t.fontName)|\(t.fontSize)|\(tracking)|\(spacing)|\(t.alignment.rawValue)|\(t.spacingAnchor ?? -1)"
         lock.lock()
         if let l = layoutCache[key] { lock.unlock(); return l }
         lock.unlock()
@@ -92,11 +92,20 @@ final class TextEngine {
             let line = CTLineCreateWithAttributedString(attr)
             let width = Double(CTLineGetTypographicBounds(line, nil, nil, nil))
             lineWidths.append(width)
-            let x0: Double
+            var x0: Double
+            let al: Double
             switch t.alignment {
-            case .left: x0 = 0
-            case .center: x0 = -width / 2
-            case .right: x0 = -width
+            case .left: al = 0
+            case .center: al = 0.5
+            case .right: al = 1
+            }
+            x0 = -width * al
+            // Spacing anchor: extra space from tracking grows away from the chosen side.
+            if let anchor = t.spacingAnchor, tracking != 0 {
+                let plain = CTLineCreateWithAttributedString(NSAttributedString(string: lineStr, attributes: [
+                    NSAttributedString.Key(kCTFontAttributeName as String): font]))
+                let w0 = Double(CTLineGetTypographicBounds(plain, nil, nil, nil))
+                x0 = -w0 * al - (width - w0) * Double(anchor) / 2
             }
             let baseline = Double(li) * lineHeight
             for run in (CTLineGetGlyphRuns(line) as? [CTRun]) ?? [] {

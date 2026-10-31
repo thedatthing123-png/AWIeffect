@@ -221,6 +221,13 @@ struct TextPanel: View {
                 }
                 row("Spacing", value: text.tracking.value(at: t), range: -50...300) { v in state.editTextContinuous { $0.tracking.set(v, at: t) } }
             }
+            HStack(spacing: 6) {
+                Text("Spacing from").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text).frame(width: 84, alignment: .leading)
+                Picker("", selection: Binding(get: { text.spacingAnchor ?? -1 }, set: { v in state.editText("Spacing Anchor") { $0.spacingAnchor = v < 0 ? nil : v } })) {
+                    Text("Auto").tag(-1); Text("Left").tag(0); Text("Center").tag(1); Text("Right").tag(2)
+                }
+                .pickerStyle(.segmented)
+            }
             row("Line Height", value: text.lineSpacing.value(at: t), range: 0.6...3) { v in state.editTextContinuous { $0.lineSpacing.set(v, at: t) } }
             HStack(spacing: 6) {
                 quickFX("Stroke", "character.textbox", "awi.border")

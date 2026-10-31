@@ -301,6 +301,14 @@ struct EditorView: View {
                     }
                 }
                 if state.showGrid { CompGrid(fit: fit) }
+                // 3D camera: two fingers dragged together slide the camera.
+                if state.viewMode == .comp, state.cameraView, let cam = state.activeCameraLayer, EditorState.cameraIs3D(cam) {
+                    TwoFingerPan(onBegan: { panCamera = state.beginCameraGesture() }, onChanged: { d in
+                        guard let c = panCamera else { return }
+                        let k = Double(state.project.width) / Double(max(fit.width, 1))
+                        state.updateCameraPan(c, delta: Vec2(Double(d.width) * k, Double(d.height) * k))
+                    }, onEnded: { if panCamera != nil { panCamera = nil; if pinchCamera == nil { state.endCameraGesture() } } })
+                }
                 if let pen {
                     PenOverlay(state: state, target: pen.target, style: pen.style, fit: fit) { self.pen = nil }
                 }
@@ -413,6 +421,7 @@ struct EditorView: View {
 
     @State private var cameraStart: EditorState.CameraDragStart?
     @State private var pinchCamera: EditorState.CameraDragStart?
+    @State private var panCamera: EditorState.CameraDragStart?
 
     private func updatePinch() {
         if pinchOnLayer == nil {
