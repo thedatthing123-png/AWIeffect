@@ -94,7 +94,7 @@ struct NavStrip: View {
          Item(id: "Video", icon: "film") { mediaLauncher.pickVideo = true },
          Item(id: "Draw", icon: "paintbrush.pointed.fill") { drawLauncher.open(nil) },
          Item(id: "Music", icon: "music.note") { mediaLauncher.pickAudio = true },
-         Item(id: "Overlays", icon: "sun.haze", panel: .overlays),
+         Item(id: "Library", icon: "books.vertical.fill", panel: .overlays),
          Item(id: "Beats", icon: "metronome", panel: .beats),
          Item(id: "Scene", icon: "gearshape", panel: .scene)]
     }

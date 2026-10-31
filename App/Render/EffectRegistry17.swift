@@ -83,19 +83,23 @@ extension EffectRegistry {
     static let sphereMap17 = EffectDefinition(
         id: "awi17.sphereMap", name: "Sphere Map", category: .distort, aeMatchNames: [],
         summary: "Wraps the layer around a rotating, shaded 3D globe.",
-        params: p17([.number("radius", "Radius", 40, 5, 100, unit: "%"), .number("spin", "Spin Speed", 40, -360, 360, unit: "°/s"),
-                     .number("tilt", "Tilt", 20, -90, 90, unit: "°"), .number("shading", "Shading", 60, 0, 100, unit: "%")]),
+        params: p17([.number("radius", "Radius", 95, 5, 150, unit: "%"), .number("spin", "Spin Speed", 40, -360, 360, unit: "°/s"),
+                     .number("tilt", "Tilt", 20, -90, 90, unit: "°"), .number("shading", "Shading", 70, 0, 100, unit: "%"),
+                     .number("shadow", "Drop Shadow", 50, 0, 100, unit: "%")]),
         stage: .pixels { ctx in g17(ctx, 12, comp: 2) { p in
-            p.a = SIMD4(pc17(ctx, "radius") * mn17(ctx) * 0.5, rad17(ctx, "spin") * Float(ctx.time), rad17(ctx, "tilt"), pc17(ctx, "shading")) } })
+            p.a = SIMD4(pc17(ctx, "radius") * mn17(ctx) * 0.5, rad17(ctx, "spin") * Float(ctx.time), rad17(ctx, "tilt"), pc17(ctx, "shading"))
+            p.b.x = pc17(ctx, "shadow") } })
 
     static let cylinderWrap17 = EffectDefinition(
         id: "awi17.cylinderWrap", name: "Cylinder Wrap", category: .distort, aeMatchNames: [],
         summary: "Wraps the layer around a spinning vertical 3D cylinder.",
-        params: p17([.number("radius", "Radius", 40, 5, 100, unit: "%"), .number("spin", "Spin Speed", 40, -360, 360, unit: "°/s"),
-                     .number("height", "Height", 80, 10, 100, unit: "%"), .number("shading", "Shading", 60, 0, 100, unit: "%")]),
+        params: p17([.number("radius", "Radius", 60, 5, 100, unit: "%"), .number("spin", "Spin Speed", 40, -360, 360, unit: "°/s"),
+                     .number("height", "Height", 80, 10, 100, unit: "%"), .number("shading", "Shading", 70, 0, 100, unit: "%"),
+                     .number("shadow", "Drop Shadow", 50, 0, 100, unit: "%")]),
         stage: .pixels { ctx in g17(ctx, 13, comp: 2) { p in
             p.a = SIMD4(pc17(ctx, "radius") * Float(ctx.width) * 0.5, rad17(ctx, "spin") * Float(ctx.time),
-                        pc17(ctx, "height") * Float(ctx.height), pc17(ctx, "shading")) } })
+                        pc17(ctx, "height") * Float(ctx.height), pc17(ctx, "shading"))
+            p.b.x = pc17(ctx, "shadow") } })
 
     private static func eye17(_ ctx: EffectContext) -> Float { mn17(ctx) * (4.0 - 3.0 * pc17(ctx, "perspective")) }
 
@@ -103,9 +107,11 @@ extension EffectRegistry {
         id: "awi17.pageFlip", name: "Page Flip 3D", category: .distort, aeMatchNames: [],
         summary: "Turns the layer over like a book page hinged on its left edge (animate Progress).",
         params: p17([.number("progress", "Progress", 35, 0, 100, unit: "%"), .number("perspective", "Perspective", 50, 0, 100, unit: "%"),
-                     .number("shading", "Shading", 60, 0, 100, unit: "%")]),
+                     .number("shading", "Shading", 70, 0, 100, unit: "%"), .number("pageSize", "Page Size", 90, 30, 100, unit: "%"),
+                     .number("shadow", "Drop Shadow", 50, 0, 100, unit: "%")]),
         stage: .pixels { ctx in g17(ctx, 14, comp: 2) { p in
-            p.a = SIMD4(pc17(ctx, "progress") * .pi, eye17(ctx), pc17(ctx, "shading"), 0) } })
+            p.a = SIMD4(pc17(ctx, "progress") * .pi, eye17(ctx), pc17(ctx, "shading"), pc17(ctx, "pageSize"))
+            p.b.x = pc17(ctx, "shadow") } })
 
     static let cubeFlip17 = EffectDefinition(
         id: "awi17.cubeFlip", name: "Cube Flip", category: .distort, aeMatchNames: [],
@@ -169,40 +175,44 @@ extension EffectRegistry {
 
     static let volClouds17 = EffectDefinition(
         id: "awi17.volClouds", name: "Volumetric Clouds", category: .generate, aeMatchNames: [],
-        summary: "A cheap raymarched cloud layer drifting overhead.",
-        params: p17([.number("coverage", "Coverage", 55, 0, 100, unit: "%"), .number("speed", "Drift Speed", 0.6, 0, 5, step: 0.01),
-                     .number("density", "Density", 1.5, 0.1, 5, step: 0.01), .color("color", "Color", RGBA(1, 1, 1))]),
+        summary: "Fluffy raymarched clouds with sun scattering (bright tops, shaded bases, silver lining) drifting overhead.",
+        params: p17([.number("coverage", "Coverage", 50, 0, 100, unit: "%"), .number("speed", "Drift Speed", 0.6, 0, 5, step: 0.01),
+                     .number("density", "Density", 1.5, 0.1, 5, step: 0.01), .angle("sun", "Sun Direction", 60),
+                     .color("color", "Color", RGBA(1, 1, 1))]),
         stage: .pixels { ctx in g17(ctx, 21, comp: 1) { p in
-            p.a = SIMD4(pc17(ctx, "coverage"), n17(ctx, "speed"), n17(ctx, "density"), 0)
+            p.a = SIMD4(pc17(ctx, "coverage"), n17(ctx, "speed"), n17(ctx, "density"), rad17(ctx, "sun"))
             p.b = col17(ctx, "color") } })
 
     static let pointCloud17 = EffectDefinition(
         id: "awi17.pointCloud", name: "Point Cloud Sphere", category: .generate, aeMatchNames: [],
-        summary: "A rotating sphere made of evenly spaced glowing dots.",
+        summary: "A big rotating sphere of glowing points with depth: near points larger and brighter, far ones dimmer and tinted.",
         params: p17([.number("rotX", "Spin X Speed", 20, -360, 360, unit: "°/s"), .number("rotY", "Spin Y Speed", 50, -360, 360, unit: "°/s"),
-                     .number("size", "Size", 60, 10, 100, unit: "%"), .number("count", "Points", 180, 20, 400, step: 1),
-                     .number("dot", "Dot Size", 2, 0.5, 8, step: 0.1, unit: "px"), .color("color", "Color", RGBA(0.4, 0.9, 1))]),
+                     .number("size", "Size", 80, 10, 100, unit: "%"), .number("count", "Points", 600, 50, 2000, step: 1),
+                     .number("dot", "Dot Size", 3, 0.5, 10, step: 0.1, unit: "px"), .color("color", "Near Color", RGBA(0.4, 0.95, 1)),
+                     .color("farColor", "Far Color", RGBA(0.55, 0.25, 1))]),
         stage: .pixels { ctx in g17(ctx, 22, comp: 0) { p in
-            p.a = SIMD4(rad17(ctx, "rotX"), rad17(ctx, "rotY"), pc17(ctx, "size") * mn17(ctx) * 0.4, px17(ctx, "dot"))
-            p.b = col17(ctx, "color"); p.c.x = n17(ctx, "count") } })
+            p.a = SIMD4(rad17(ctx, "rotX"), rad17(ctx, "rotY"), pc17(ctx, "size") * mn17(ctx) * 0.42, px17(ctx, "dot"))
+            p.b = col17(ctx, "color"); p.c = col17(ctx, "farColor"); p.d.w = n17(ctx, "count") } })
 
     static let orbitParticles17 = EffectDefinition(
         id: "awi17.orbitParticles", name: "3D Particles Orbit", category: .generate, aeMatchNames: [],
-        summary: "Glowing particles circling a center on tilted 3D orbits.",
-        params: p17([.number("speed", "Orbit Speed", 1, -5, 5, step: 0.01), .number("radius", "Radius", 55, 10, 100, unit: "%"),
-                     .number("tilt", "Tilt", 25, -90, 90, unit: "°"), .number("count", "Particles", 60, 8, 128, step: 1),
-                     .number("dot", "Particle Size", 2.5, 0.5, 8, step: 0.1, unit: "px"), .color("color", "Color", RGBA(1, 0.8, 0.4))]),
+        summary: "A big swirling 3D swarm of glowing particles with motion streaks and depth-of-field, orbiting the center.",
+        params: p17([.number("speed", "Orbit Speed", 1, -5, 5, step: 0.01), .number("radius", "Radius", 85, 10, 100, unit: "%"),
+                     .number("tilt", "Tilt", 25, -90, 90, unit: "°"), .number("count", "Particles", 48, 8, 64, step: 1),
+                     .number("dot", "Particle Size", 4, 0.5, 12, step: 0.1, unit: "px"),
+                     .number("trail", "Trail Length", 45, 0, 100, unit: "%"), .color("color", "Color", RGBA(1, 0.75, 0.35))]),
         stage: .pixels { ctx in g17(ctx, 23, comp: 0) { p in
-            p.a = SIMD4(n17(ctx, "speed"), pc17(ctx, "radius") * mn17(ctx) * 0.45, rad17(ctx, "tilt"), px17(ctx, "dot"))
-            p.b = col17(ctx, "color"); p.c.x = n17(ctx, "count") } })
+            p.a = SIMD4(n17(ctx, "speed"), pc17(ctx, "radius") * mn17(ctx) * 0.55, rad17(ctx, "tilt"), px17(ctx, "dot"))
+            p.b = col17(ctx, "color"); p.c.x = n17(ctx, "count"); p.c.y = pc17(ctx, "trail") } })
 
     static let extrudeFlat17 = EffectDefinition(
         id: "awi17.extrudeFlat", name: "Extrude Flat", category: .generate, aeMatchNames: [],
         summary: "Fakes a solid 3D extrusion of the layer's shape by stacking shaded offset copies of its alpha.",
-        params: p17([.number("depth", "Depth", 20, 0, 100, unit: "px"), .angle("angle", "Direction", 135),
-                     .number("shade", "Side Shading", 50, 0, 100, unit: "%"), .color("color", "Side Color", RGBA(0.35, 0.3, 0.5))]),
+        params: p17([.number("depth", "Depth", 40, 0, 150, unit: "px"), .angle("angle", "Direction", 135),
+                     .number("shade", "Side Shading", 60, 0, 100, unit: "%"), .number("layerColor", "Use Layer Color", 0, 0, 100, unit: "%"),
+                     .color("color", "Side Color", RGBA(0.35, 0.3, 0.5))]),
         margin: { e, t in e.number("depth", t) },
         stage: .pixels { ctx in g17(ctx, 24, comp: 2) { p in
-            p.a = SIMD4(px17(ctx, "depth"), rad17(ctx, "angle"), pc17(ctx, "shade"), 0)
+            p.a = SIMD4(px17(ctx, "depth"), rad17(ctx, "angle"), pc17(ctx, "shade"), pc17(ctx, "layerColor"))
             p.b = col17(ctx, "color") } })
 }

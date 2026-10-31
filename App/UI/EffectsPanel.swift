@@ -362,7 +362,7 @@ struct EffectBrowser: View {
     @AppStorage("awi.recentEffects") private var recentRaw = ""
     @Environment(\.dismiss) private var dismiss
 
-    enum Tab: Hashable { case all, favorites, recent, category(EffectCategory) }
+    enum Tab: Hashable { case all, favorites, recent, section(EffectSection) }
 
     private var favorites: [String] { favRaw.split(separator: ",").map(String.init) }
     private var recents: [String] { recentRaw.split(separator: ",").map(String.init) }
@@ -373,7 +373,7 @@ struct EffectBrowser: View {
         case .all: base = EffectRegistry.all
         case .favorites: base = favorites.compactMap { EffectRegistry.definition($0) }
         case .recent: base = recents.compactMap { EffectRegistry.definition($0) }
-        case .category(let c): base = EffectRegistry.all.filter { $0.category == c }
+        case .section(let sec): base = EffectRegistry.all.filter { EffectSection.of($0) == sec }
         }
         guard !query.isEmpty else { return base }
         return base.filter { $0.name.localizedCaseInsensitiveContains(query) || $0.summary.localizedCaseInsensitiveContains(query) }
@@ -388,8 +388,27 @@ struct EffectBrowser: View {
                             chip("All", .all)
                             chip("★ Favorites", .favorites)
                             chip("Recent", .recent)
-                            ForEach(EffectCategory.allCases) { c in
-                                if EffectRegistry.all.contains(where: { $0.category == c }) { chip(c.rawValue, .category(c)) }
+                            ForEach(EffectSection.allCases) { sec in
+                                if let n = EffectSection.counts[sec], n > 0 { chip("\(sec.rawValue) \(n)", .section(sec)) }
+                            }
+                        }
+                    }
+                    if tab == .all && query.isEmpty {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+                            ForEach(EffectSection.allCases) { sec in
+                                if let n = EffectSection.counts[sec], n > 0 {
+                                    Button { tab = .section(sec) } label: {
+                                        VStack(spacing: 5) {
+                                            Image(systemName: sec.symbol).font(.system(size: 20, weight: .semibold)).foregroundStyle(Theme.accentGlow)
+                                            Text(sec.rawValue).font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.text).lineLimit(1).minimumScaleFactor(0.7)
+                                            Text("\(n)").font(.system(size: 10, design: .monospaced)).foregroundStyle(Theme.textDim)
+                                        }
+                                        .frame(maxWidth: .infinity, minHeight: 74)
+                                        .background(RoundedRectangle(cornerRadius: 12).fill(Theme.raised))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel(sec.rawValue)
+                                }
                             }
                         }
                     }

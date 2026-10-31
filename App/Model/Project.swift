@@ -229,6 +229,8 @@ struct Layer: Codable, Equatable, Identifiable {
     var parentID: UUID? = nil
     /// Options for `.light` layers.
     var light: LightOptions? = nil
+    /// AE null object: never rendered, used as a parent / control handle.
+    var isNull = false
     /// Thickness (px) given to a 3D layer: the picture is extruded into a solid slab.
     var extrude = Animated(0.0)
     /// Options for `.camera` layers.
@@ -284,6 +286,7 @@ struct Layer: Codable, Equatable, Identifiable {
         timeFX = try c.decodeIfPresent(LayerTimeFX.self, forKey: .timeFX)
         parentID = try c.decodeIfPresent(UUID.self, forKey: .parentID)
         light = try c.decodeIfPresent(LightOptions.self, forKey: .light)
+        isNull = try c.decodeIfPresent(Bool.self, forKey: .isNull) ?? false
         extrude = try c.decodeIfPresent(Animated<Double>.self, forKey: .extrude) ?? Animated(0)
         camera = try c.decodeIfPresent(CameraOptions.self, forKey: .camera)
         model3D = try c.decodeIfPresent(Model3DOptions.self, forKey: .model3D)

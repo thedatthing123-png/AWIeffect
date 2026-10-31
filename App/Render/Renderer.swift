@@ -319,6 +319,7 @@ final class Renderer {
             if case .audio = layer.content { continue }
             if case .camera = layer.content { continue }
             if case .light = layer.content { continue }
+            if layer.isNull { continue }
             let opacity = layer.transform.opacity.value(at: time) / 100
             if opacity <= 0 { continue }
             if let matte = matteSources[layer.id] {

@@ -81,8 +81,8 @@ extension EffectRegistry {
 
     static let embers = EffectDefinition(
         id: "awi7.embers", name: "Embers & Sparks", category: .generate, aeMatchNames: [],
-        summary: "Glowing embers drifting upward and flickering.",
-        params: p7([.number("spacing", "Spacing", 32, 8, 150, unit: "px"), .number("size", "Size", 2.5, 0.5, 10, step: 0.1, unit: "px"),
+        summary: "Hot glowing embers with bloom halos and streaking sparks, rising on turbulent air and cooling from white to red.",
+        params: p7([.number("spacing", "Spacing", 28, 8, 150, unit: "px"), .number("size", "Size", 3.5, 0.5, 10, step: 0.1, unit: "px"),
                  .number("speed", "Rise Speed", 120, 0, 500, unit: "px/s"), .number("turbulence", "Turbulence", 1, 0, 3, step: 0.01),
                  .number("flicker", "Flicker", 6, 0, 20, step: 0.1), .color("color", "Color", RGBA(1, 0.45, 0.1)), seed7]),
         stage: .pixels { ctx in g7(ctx, 4, over: false) { p in
@@ -101,9 +101,9 @@ extension EffectRegistry {
 
     static let dustMotes = EffectDefinition(
         id: "awi7.dustMotes", name: "Dust Motes", category: .generate, aeMatchNames: [],
-        summary: "Tiny specks drifting lazily through the light.",
-        params: p7([.number("spacing", "Spacing", 30, 8, 120, unit: "px"), .number("size", "Size", 1.8, 0.3, 6, step: 0.1, unit: "px"),
-                 .number("speed", "Drift", 12, 0, 100, unit: "px/s"), .number("brightness", "Brightness", 0.9, 0, 3, step: 0.01),
+        summary: "Floating dust in depth: large defocused specks up front, small sharp glinting ones behind, caught in soft light.",
+        params: p7([.number("spacing", "Spacing", 26, 8, 120, unit: "px"), .number("size", "Size", 2.2, 0.3, 6, step: 0.1, unit: "px"),
+                 .number("speed", "Drift", 12, 0, 100, unit: "px/s"), .number("brightness", "Brightness", 1.3, 0, 3, step: 0.01),
                  .color("color", "Color", RGBA(1, 0.95, 0.85)), seed7]),
         stage: .pixels { ctx in g7(ctx, 6, over: false) { p in
             p.a = SIMD4(px7(ctx, "spacing"), px7(ctx, "size"), px7(ctx, "speed"), n7(ctx, "brightness"))
@@ -149,15 +149,17 @@ extension EffectRegistry {
         params: p7([.point("center", "Center", Vec2(0.5, 0.5)), .number("progress", "Progress", 40, 0, 100, unit: "%"),
                  .number("radius", "Max Radius", 220, 10, 2000, unit: "px"), .number("thickness", "Thickness", 12, 1, 100, unit: "px"),
                  .number("distortion", "Distortion", 25, -100, 100, unit: "px"), .number("glow", "Glow", 1, 0, 3, step: 0.01),
-                 .number("auto", "Auto Speed", 0, 0, 3, step: 0.01), .color("color", "Color", RGBA(0.6, 0.85, 1))]),
+                 .number("auto", "Auto Speed", 0, 0, 3, step: 0.01), .color("color", "Color", RGBA(0.6, 0.85, 1)),
+                 .number("secondary", "Secondary Ring", 50, 0, 100, unit: "%")]),
         stage: .pixels { ctx in g7(ctx, 10, over: false) { p in
             let c = pt7(ctx, "center")
             p.a = SIMD4(c.x, c.y, pc7(ctx, "progress"), px7(ctx, "radius")); p.b = col7(ctx, "color")
-            p.c = SIMD4(px7(ctx, "thickness"), px7(ctx, "distortion"), n7(ctx, "glow"), n7(ctx, "auto")) } })
+            p.c = SIMD4(px7(ctx, "thickness"), px7(ctx, "distortion"), n7(ctx, "glow"), n7(ctx, "auto"))
+            p.d.w = pc7(ctx, "secondary") } })
 
     static let energyBeam = EffectDefinition(
         id: "awi7.energyBeam", name: "Energy Beam", category: .generate, aeMatchNames: [],
-        summary: "A glowing laser / energy beam between two points with a hot white core.",
+        summary: "Energy beam between two points: white-hot core, saturated glow, crackling filaments, sparks and flared ends.",
         params: p7([.point("start", "Start", Vec2(0.1, 0.55)), .point("end", "End", Vec2(0.9, 0.45)),
                  .number("width", "Width", 8, 1, 80, unit: "px"), .number("glow", "Glow", 3, 0.5, 10, step: 0.05),
                  .number("wiggle", "Wiggle", 6, 0, 100, unit: "px"), .number("speed", "Speed", 4, 0, 20, step: 0.05),
@@ -169,9 +171,9 @@ extension EffectRegistry {
 
     static let plasma = EffectDefinition(
         id: "awi7.plasma", name: "Plasma", category: .generate, aeMatchNames: [],
-        summary: "Classic flowing rainbow plasma.",
-        params: p7([.number("scale", "Scale", 40, 4, 400, unit: "px"), .number("speed", "Speed", 1, 0, 6, step: 0.05),
-                 .angle("hue", "Hue Shift", 0), .number("saturation", "Saturation", 80, 0, 100, unit: "%")], 50),
+        summary: "Silky domain-warped plasma with a violet / magenta / cyan gradient map (Hue Shift recolors it).",
+        params: p7([.number("scale", "Scale", 110, 4, 400, unit: "px"), .number("speed", "Speed", 1, 0, 6, step: 0.05),
+                 .angle("hue", "Hue Shift", 0), .number("saturation", "Saturation", 100, 0, 100, unit: "%")], 75),
         stage: .pixels { ctx in g7(ctx, 12, over: true) { p in
             p.a = SIMD4(px7(ctx, "scale"), n7(ctx, "speed"), Float(ctx.num("hue") / 360), pc7(ctx, "saturation")) } })
 
@@ -217,7 +219,7 @@ extension EffectRegistry {
 
     static let electricArcs = EffectDefinition(
         id: "awi7.electricArcs", name: "Electric Arcs", category: .generate, aeMatchNames: [],
-        summary: "Crackling lightning bolts between two points.",
+        summary: "Jagged branching lightning between two points with forks, flicker and layered glow.",
         params: p7([.point("start", "Start", Vec2(0.15, 0.5)), .point("end", "End", Vec2(0.85, 0.5)),
                  .number("bolts", "Bolts", 2, 1, 4, step: 1), .number("amplitude", "Amplitude", 25, 0, 200, unit: "px"),
                  .number("width", "Width", 2.5, 0.5, 20, step: 0.1, unit: "px"), .number("fps", "Flicker Rate", 12, 0, 30, step: 0.5, unit: "fps"),
@@ -263,7 +265,7 @@ extension EffectRegistry {
 
     static let equalizer = EffectDefinition(
         id: "awi7.equalizer", name: "Equalizer Bars", category: .generate, aeMatchNames: [],
-        summary: "Animated audio-spectrum style bars (time driven).",
+        summary: "Glowing rounded spectrum bars with gradient, falling peak caps and a floor reflection (time driven).",
         params: p7([.number("bars", "Bars", 24, 2, 128, step: 1), .number("height", "Max Height", 45, 0, 100, unit: "%"),
                  .number("speed", "Speed", 2, 0, 10, step: 0.05), .number("gap", "Gap", 25, 0, 90, unit: "%"),
                  .choice("style", "Style", ["Solid", "Blocks"], 1), .color("bottom", "Bottom Color", RGBA(0.2, 0.9, 1)),

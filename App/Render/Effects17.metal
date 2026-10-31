@@ -112,6 +112,15 @@ static float3 sky17(float3 rd, float3 sd, float3 skyCol) {
     return col;
 }
 
+// Cloud density in a slab y = 0.6..1.4 (rounded bottoms, wispy tops).
+static float cld17(float3 pos, float3 off, float cov) {
+    float hy = clamp((pos.y - 0.6) / 0.8, 0.0, 1.0);
+    float prof = smoothstep(0.0, 0.18, hy) * smoothstep(1.0, 0.45, hy);
+    float3 q = pos * 1.1 + off;
+    float d = fbm17(q) + 0.12 * n17(q * 4.1 + off * 0.5);
+    return max(d * prof - (1.0 - cov) * (0.55 + 0.35 * hy), 0.0);
+}
+
 kernel void fx3D17(texture2d<half, access::sample> src [[texture(0)]],
                    texture2d<half, access::write> dst [[texture(1)]],
                    texture2d<half, access::sample> aux [[texture(2)]],
@@ -192,50 +201,98 @@ kernel void fx3D17(texture2d<half, access::sample> src [[texture(0)]],
                 float R = max(p.a.x, 2.0);
                 float2 q = float2(c.x - ctr.x, ctr.y - c.y) / R;
                 float rr = dot(q, q);
+                float4 col = float4(0.0);
                 if (rr < 1.0) {
                     float3 nv = float3(q.x, q.y, -sqrt(max(1.0 - rr, 0.0)));
                     float3 n = ry17(rx17(nv, p.a.z), p.a.y);
                     float u = atan2(n.x, -n.z) / 6.2831853 + 0.5;
                     float v = 0.5 - asin(clamp(n.y, -1.0, 1.0)) / 3.14159265;
                     float4 tx = float4(src.sample(sm17Rep, float2(u, v)));
-                    float3 L = normalize(float3(-0.5, 0.5, -0.7));
-                    float sh = mix(1.0, 0.3 + 0.7 * max(dot(nv, L), 0.0), clamp(p.a.w, 0.0, 1.0));
+                    float shd = clamp(p.a.w, 0.0, 1.0);
+                    float3 L = normalize(float3(-0.5, 0.55, -0.7));
+                    float lam = max(dot(nv, L), 0.0);
+                    float3 Hh = normalize(L + float3(0.0, 0.0, -1.0));
+                    float spec = pow(max(dot(nv, Hh), 0.0), 40.0) * 0.7 * shd;
+                    float rim = pow(1.0 + nv.z, 3.0) * 0.35 * shd;
+                    float sh = mix(1.0, 0.2 + 0.95 * lam, shd);
                     float cov = clamp((1.0 - sqrt(rr)) * R, 0.0, 1.0);
-                    pc = tx * sh * cov;
+                    col = float4(tx.rgb * sh + (spec + rim) * tx.a, tx.a) * cov;
                 }
+                float2 sq = (q - float2(0.12, -0.16)) * float2(1.0, 1.15);
+                float sa = clamp(p.b.x, 0.0, 1.0) * 0.6 * (1.0 - smoothstep(0.75, 1.3, length(sq)));
+                pc = col + float4(0.0, 0.0, 0.0, sa * (1.0 - col.a));
                 break;
             }
             case 13: { // cylinder wrap: a = (radius px, spin, height px, shading)
                 float R = max(p.a.x, 2.0), H = max(p.a.z, 2.0);
                 float qx = (c.x - ctr.x) / R;
-                float v = (c.y - ctr.y) / H + 0.5;
-                if (abs(qx) < 1.0 && v > 0.0 && v < 1.0) {
-                    float an = asin(clamp(qx, -1.0, 1.0)) + p.a.y;
-                    float u = fract(an / 6.2831853 + 0.5);
-                    float4 tx = float4(src.sample(sm17Rep, float2(u, v)));
-                    float sh = mix(1.0, 0.25 + 0.75 * sqrt(max(1.0 - qx * qx, 0.0)), clamp(p.a.w, 0.0, 1.0));
-                    float cov = clamp((1.0 - abs(qx)) * R, 0.0, 1.0) * clamp(min(v, 1.0 - v) * H, 0.0, 1.0);
-                    pc = tx * sh * cov;
+                float4 col = float4(0.0);
+                if (abs(qx) < 1.0) {
+                    float nz = sqrt(max(1.0 - qx * qx, 0.0));
+                    float v = (c.y - ctr.y - nz * R * 0.12) / H + 0.5;   // curved top/bottom edges (seen from slightly above)
+                    if (v > 0.0 && v < 1.0) {
+                        float an = asin(clamp(qx, -1.0, 1.0)) + p.a.y;
+                        float u = fract(an / 6.2831853 + 0.5);
+                        float4 tx = float4(src.sample(sm17Rep, float2(u, v)));
+                        float shd = clamp(p.a.w, 0.0, 1.0);
+                        float3 nv = float3(qx, 0.0, -nz);
+                        float3 L = normalize(float3(-0.55, 0.35, -0.75));
+                        float lam = max(dot(nv, L), 0.0);
+                        float3 Hh = normalize(L + float3(0.0, 0.0, -1.0));
+                        float spec = pow(max(dot(nv, Hh), 0.0), 24.0) * 0.6 * shd;
+                        float rim = pow(1.0 - nz, 3.0) * 0.3 * shd;
+                        float sh = mix(1.0, 0.2 + 0.95 * lam, shd);
+                        float cov = clamp((1.0 - abs(qx)) * R, 0.0, 1.0) * clamp(min(v, 1.0 - v) * H, 0.0, 1.0);
+                        col = float4(tx.rgb * sh + (spec + rim) * tx.a, tx.a) * cov;
+                    }
                 }
+                float2 so = float2((c.x - ctr.x - R * 0.15) / (R * 1.2), (c.y - (ctr.y + H * 0.5 + R * 0.12)) / (R * 0.25));
+                float sa = clamp(p.b.x, 0.0, 1.0) * 0.6 * (1.0 - smoothstep(0.3, 1.0, length(so)));
+                pc = col + float4(0.0, 0.0, 0.0, sa * (1.0 - col.a));
                 break;
             }
             case 14: { // page flip: a = (angle rad, eye distance px, shading, 0)
+                // a.w = page size 0-1 (page centred, hinged on its left edge), b.x = ground shadow 0-1
                 float th = p.a.x, cs = cos(th), sn = sin(th);
+                float zf = clamp(p.a.w, 0.1, 1.0);
+                float Wp = size.x * zf, Hp = size.y * zf;
+                float3 O = float3(ctr.x - Wp * 0.5, ctr.y - Hp * 0.5, 0.0);
                 float3 E = float3(ctr, -p.a.y);
                 float3 D = float3(c - ctr, p.a.y);
                 float3 n = float3(sn, 0.0, cs);
                 float dn = dot(n, D);
+                float shd = clamp(p.a.z, 0.0, 1.0);
+                float4 col = float4(0.0);
                 if (abs(dn) > 1e-5) {
-                    float sp = -dot(n, E) / dn;
+                    float sp = dot(n, O - E) / dn;
                     float3 P = E + D * sp;
-                    float u = P.x * cs - P.z * sn;
-                    if (sp > 0.0 && u >= 0.0 && u <= size.x && P.y >= 0.0 && P.y <= size.y) {
-                        float4 tx = float4(src.sample(sm17Zero, float2(u, P.y)));
-                        float sh = mix(1.0, 0.35 + 0.65 * abs(cs), clamp(p.a.z, 0.0, 1.0));
-                        if (cs < 0.0) sh *= 0.7;
-                        pc = tx * sh;
+                    float u = (P.x - O.x) * cs - P.z * sn;
+                    float vy = P.y - O.y;
+                    if (sp > 0.0 && u >= 0.0 && u <= Wp && vy >= 0.0 && vy <= Hp) {
+                        float4 tx = float4(src.sample(sm17Zero, float2(u / Wp * size.x, vy / Hp * size.y)));
+                        float3 nf = n * (cs >= 0.0 ? -1.0 : 1.0);          // normal facing the viewer
+                        float3 L = normalize(float3(-0.45, -0.5, -0.75));  // pixel space, y down
+                        float lam = max(dot(nf, L), 0.0);
+                        float3 Hh = normalize(L + float3(0.0, 0.0, -1.0));
+                        float spec = pow(max(dot(nf, Hh), 0.0), 30.0) * 0.6 * shd * clamp(sn * 3.0, 0.0, 1.0);
+                        float sh = mix(1.0, 0.35 + 0.9 * lam, shd);
+                        sh *= 1.0 - 0.3 * shd * abs(sn) * smoothstep(0.55, 1.0, u / Wp);   // soft curl toward the free edge
+                        if (cs < 0.0) sh *= 0.75;
+                        float cov = clamp(min(min(u, Wp - u), min(vy, Hp - vy)) + 0.5, 0.0, 1.0);
+                        col = float4(tx.rgb * sh + spec * tx.a, tx.a) * cov;
                     }
                 }
+                float den2 = cs + 0.35 * sn;
+                float sa = 0.0;
+                if (den2 > 0.05) {
+                    float s2 = (c.x - O.x) / den2;
+                    float yy = c.y - O.y - s2 * sn * 0.25;
+                    float bw = 2.0 + max(s2, 0.0) * sn * 0.08;
+                    float inx = smoothstep(-bw, bw, s2) * (1.0 - smoothstep(Wp - bw, Wp + bw, s2));
+                    float iny = smoothstep(-bw, bw, yy) * (1.0 - smoothstep(Hp - bw, Hp + bw, yy));
+                    sa = clamp(p.b.x, 0.0, 1.0) * 0.55 * inx * iny * clamp(sn * 3.0, 0.0, 1.0);
+                }
+                pc = col + float4(0.0, 0.0, 0.0, sa * (1.0 - col.a));
                 break;
             }
             case 15: { // cube flip: a = (angle rad, eye distance px, shading, 0)
@@ -382,82 +439,146 @@ kernel void fx3D17(texture2d<half, access::sample> src [[texture(0)]],
                 break;
             }
             case 21: { // volumetric clouds: a = (coverage 0-1, speed, density, 0), b = color
-                float3 rd = normalize(float3(uv.x, uv.y + 0.35, 1.2));
-                float T = 1.0, acc = 0.0;
+                // a.w = sun angle. Light scattering: one shadow tap toward the sun per step, bright tops, dark
+                // bases, forward-scatter silver lining when looking toward the sun.
+                float3 rd = normalize(float3(uv.x, uv.y * 0.55 + 0.62, 1.0));
+                float3 L = normalize(float3(cos(p.a.w) * 0.8, 0.45, sin(p.a.w) * 0.8));
+                float cov = clamp(p.a.x, 0.0, 1.0), dens = max(p.a.z, 0.0);
+                float T = 1.0;
+                float3 acc = float3(0.0);
                 if (rd.y > 0.01) {
-                    float t0 = 0.5 / rd.y, t1 = min(1.5 / rd.y, t0 + 8.0);
-                    float dt = (t1 - t0) / 20.0;
+                    float t0 = 0.6 / rd.y, t1 = min(1.4 / rd.y, t0 + 6.0);
+                    float dt = (t1 - t0) / 24.0;
                     float3 off = float3(t * p.a.y * 0.3, 0.0, t * p.a.y);
-                    for (int k = 0; k < 20; k++) {
-                        float3 pos = rd * (t0 + dt * (float(k) + 0.5));
-                        float hy = clamp(pos.y - 0.5, 0.0, 1.0);
-                        float prof = smoothstep(0.0, 0.25, hy) * smoothstep(1.0, 0.6, hy);
-                        float den = max(fbm17((pos + off) * 0.9) - (1.0 - clamp(p.a.x, 0.0, 1.0)), 0.0) * prof;
-                        float as = 1.0 - exp(-den * dt * max(p.a.z, 0.0) * 6.0);
-                        acc += T * as * (0.55 + 0.45 * hy);
+                    float mu = max(dot(rd, L), 0.0);
+                    float phase = 0.8 + 1.8 * pow(mu, 6.0) + 0.6 * pow(mu, 32.0);
+                    float3 shadowCol = p.b.rgb * float3(0.42, 0.47, 0.58);
+                    float jit = h17(c) * 0.8;
+                    for (int k = 0; k < 24; k++) {
+                        float3 pos = rd * (t0 + dt * (float(k) + jit));
+                        float den = cld17(pos, off, cov);
+                        if (den <= 0.002) continue;
+                        float dl = cld17(pos + L * 0.18, off, cov);
+                        float shad = exp(-dl * dens * 5.0);
+                        float hy = clamp((pos.y - 0.6) / 0.8, 0.0, 1.0);
+                        float3 amb = mix(shadowCol, p.b.rgb * 0.85, hy);
+                        float edge = exp(-den * 6.0);                      // thin edges catch the light (silver lining)
+                        float3 lc = amb * 0.7 + p.b.rgb * shad * phase * (0.6 + 0.6 * edge);
+                        float as = 1.0 - exp(-den * dt * dens * 9.0);
+                        acc += T * as * lc;
                         T *= 1.0 - as;
                         if (T < 0.02) break;
                     }
                 }
-                ga = (1.0 - T) * smoothstep(0.01, 0.15, rd.y);
-                g = p.b.rgb * acc / max(1.0 - T, 1e-3);
+                ga = (1.0 - T) * smoothstep(0.01, 0.12, rd.y);
+                g = acc / max(1.0 - T, 1e-3);
                 break;
             }
             case 22: { // point cloud sphere: a = (rotX, rotY, radius px, dot px), b = color, c.x = count
+                // c = far color, d.w = point count. Ray/sphere hit (front + back), then the nearest points of a
+                // latitude-banded lattice around each hit: dense, O(1) per pixel.
                 float2 ang = float2(0.45 + p.a.x * t, 0.6 + p.a.y * t);
-                int N = int(clamp(p.c.x, 4.0, 400.0));
                 float R = max(p.a.z, 2.0);
-                float acc = 0.0;
-                for (int k = 0; k < N; k++) {
-                    float y = 1.0 - 2.0 * (float(k) + 0.5) / float(N);
-                    float r = sqrt(max(1.0 - y * y, 0.0));
-                    float ph = float(k) * 2.3999632;
-                    float3 q = rx17(ry17(float3(cos(ph) * r, y, sin(ph) * r), ang.y), ang.x);
-                    float z = q.z + 3.0;
-                    float2 scr = ctr + float2(q.x, -q.y) * (3.0 / z) * R;
-                    float sz = max(p.a.w, 0.3) * (3.0 / z);
-                    float2 dv = c - scr;
-                    float d2 = dot(dv, dv);
-                    if (d2 > sz * sz * 9.0) continue;
-                    acc += exp(-d2 / (sz * sz)) * (1.25 - (q.z + 1.0) * 0.35);
+                float2 w = float2(c.x - ctr.x, ctr.y - c.y) / R;
+                float3 ro = float3(0.0, 0.0, -3.0), rd = normalize(float3(w, 3.0));
+                float nb = max(3.0, floor(sqrt(clamp(p.d.w, 20.0, 2000.0) / 1.27) + 0.5));
+                float dlat = 3.14159265 / nb;
+                float dpx = max(p.a.w, 0.3);
+                float3 acc = float3(0.0);
+                float rho = length(cross(rd, -ro));                         // ray distance from the sphere centre
+                acc += mix(p.b.rgb, p.c.rgb, 0.4) * 0.2 * exp(-abs(rho - 1.0) * 7.0);   // soft atmospheric bloom
+                float bq = dot(ro, rd), disc = bq * bq - (dot(ro, ro) - 1.0);
+                if (disc > 0.0) {
+                    float sq = sqrt(disc);
+                    for (int hh = 0; hh < 2; hh++) {
+                        float3 P = ro + rd * (-bq + (hh == 0 ? -sq : sq));
+                        float f = clamp((P.z + 1.0) * 0.5, 0.0, 1.0);        // 0 near .. 1 far
+                        float persp = 3.0 / (P.z + 3.0);
+                        float3 O = ry17(rx17(P, -ang.x), -ang.y);
+                        float lat = asin(clamp(O.y, -1.0, 1.0)), lon = atan2(O.z, O.x);
+                        float bi = floor((lat + 1.5707963) / dlat);
+                        float sz = dpx * persp * mix(1.4, 0.65, f);
+                        float bri = mix(1.5, 0.28, f);
+                        float3 pcol = mix(p.b.rgb, p.c.rgb, f);
+                        float sum = 0.0;
+                        for (int bb = -1; bb <= 1; bb++) {
+                            float i = bi + float(bb);
+                            if (i < 0.0 || i >= nb) continue;
+                            float li = -1.5707963 + (i + 0.5) * dlat;
+                            float m = max(1.0, floor(2.0 * nb * cos(li) + 0.5));
+                            float st = 6.2831853 / m;
+                            float of = h17(float2(i, 3.7)) * st;
+                            float ql = of + floor((lon - of) / st + 0.5) * st;
+                            float3 Q = float3(cos(li) * cos(ql), sin(li), cos(li) * sin(ql));
+                            float d = length(O - Q) * R * persp;
+                            sum += exp(-d * d / (sz * sz)) + 0.22 * exp(-d * d / (sz * sz * 5.0));
+                        }
+                        acc += pcol * bri * sum;
+                    }
                 }
-                g = p.b.rgb * acc;
-                ga = clamp(acc, 0.0, 1.0);
+                g = acc;
+                ga = clamp(lum17(acc), 0.0, 1.0);
                 break;
             }
             case 23: { // orbit particles: a = (speed, radius px, tilt, dot px), b = color, c.x = count
-                int N = int(clamp(p.c.x, 1.0, 128.0));
+                // c.x = count (<= 64), c.y = trail 0-1. Each particle is a fading streak along its orbit, sized and
+                // dimmed by distance from the focal plane (depth-of-field look) plus a soft glow halo.
+                int N = int(clamp(p.c.x, 1.0, 64.0));
                 float R = max(p.a.y, 2.0);
-                float acc = 0.0;
-                for (int k = 0; k < N; k++) {
+                float dpx = max(p.a.w, 0.3);
+                float trl = clamp(p.c.y, 0.0, 1.0);
+                float3 acc = float3(0.0);
+                for (int k = 0; k < 64; k++) {
+                    if (k >= N) break;
                     float fk = float(k);
                     float h1 = h17(float2(fk, 1.3)), h2 = h17(float2(fk, 7.1)), h3 = h17(float2(fk, 3.9)), h4 = h17(float2(fk, 9.4));
-                    float rk = 0.45 + 0.55 * h1;
-                    float a = h4 * 6.2831853 + t * p.a.x * (0.6 + 0.8 * h2) / rk;
-                    float3 q = float3(cos(a), 0.0, sin(a)) * rk;
-                    q = ry17(rx17(q, p.a.z + (h2 - 0.5) * 0.6), h3 * 6.2831853);
-                    float z = q.z + 3.0;
-                    float2 scr = ctr + float2(q.x, -q.y) * (3.0 / z) * R;
-                    float sz = max(p.a.w, 0.3) * (3.0 / z);
-                    float2 dv = c - scr;
+                    float rk = 0.35 + 0.65 * h1;
+                    float wsp = p.a.x * (0.6 + 0.8 * h2) / rk;
+                    float a0 = h4 * 6.2831853 + t * wsp;
+                    float a1 = a0 - sign(wsp) * trl * 1.1 * clamp(abs(wsp), 0.3, 2.0);
+                    float inc = p.a.z + (h2 - 0.5) * 1.2, node = h3 * 6.2831853;
+                    float3 q0 = ry17(rx17(float3(cos(a0), 0.0, sin(a0)) * rk, inc), node);
+                    float3 q1 = ry17(rx17(float3(cos(a1), 0.0, sin(a1)) * rk, inc), node);
+                    float z0 = q0.z + 3.0, z1 = q1.z + 3.0;
+                    float2 s0 = ctr + float2(q0.x, -q0.y) * (3.0 / z0) * R;
+                    float2 s1 = ctr + float2(q1.x, -q1.y) * (3.0 / z1) * R;
+                    float dof = 1.0 + 2.2 * abs(q0.z);
+                    float sz = dpx * (3.0 / z0) * dof;
+                    float2 pa = c - s0, ba = s1 - s0;
+                    float hh = clamp(dot(pa, ba) / max(dot(ba, ba), 1e-4), 0.0, 1.0);
+                    float2 dv = pa - ba * hh;
                     float d2 = dot(dv, dv);
-                    if (d2 > sz * sz * 9.0) continue;
-                    acc += exp(-d2 / (sz * sz)) * (1.25 - (q.z + 1.0) * 0.35);
+                    float wd = sz * (1.0 - 0.6 * hh);
+                    if (d2 > wd * wd * 40.0) continue;
+                    float bri = (1.35 - 0.4 * (q0.z + 1.0)) / dof;
+                    float fade = (1.0 - hh) * (1.0 - hh);
+                    float3 pcol = mix(p.b.rgb, p.b.gbr, h1 * 0.35);
+                    float core = exp(-d2 / (wd * wd));
+                    float halo = 0.3 * exp(-d2 / (wd * wd * 8.0));
+                    acc += (pcol * (core + halo) + float3(core * 0.35)) * bri * mix(1.0, fade, 0.9);
                 }
-                g = p.b.rgb * acc;
-                ga = clamp(acc, 0.0, 1.0);
+                g = acc;
+                ga = clamp(lum17(acc), 0.0, 1.0);
                 break;
             }
             default: { // extrude flat: a = (depth px, angle, shade 0-1, 0), b = side color
+                // a.w = layer-color mix 0-1. 48 stacked alpha copies form the side wall; the wall is lit near the
+                // front face and darkens with depth, with a thin highlight along the crease.
                 float2 dir = float2(cos(p.a.y), sin(p.a.y));
-                float ea = 0.0, kk = 24.0;
-                for (int k = 1; k <= 24; k++) {
-                    float a = float(src.sample(sm17Zero, c - dir * p.a.x * (float(k) / 24.0)).a);
-                    if (a > 0.5 && kk > 23.5) kk = float(k);
-                    ea = max(ea, a);
+                float ea = 0.0, kk = 1.0;
+                bool fnd = false;
+                float3 lcol = float3(0.0);
+                for (int k = 1; k <= 48; k++) {
+                    float4 sm = float4(src.sample(sm17Zero, c - dir * p.a.x * (float(k) / 48.0)));
+                    if (!fnd && sm.a > 0.5) { fnd = true; kk = float(k) / 48.0; lcol = sm.rgb / max(sm.a, 1e-3); }
+                    ea = max(ea, sm.a);
                 }
-                float sh = mix(1.0, 1.0 - clamp(p.a.z, 0.0, 1.0), kk / 24.0);
-                float4 ex = float4(p.b.rgb * sh * ea, ea);
+                float shade = clamp(p.a.z, 0.0, 1.0);
+                float3 side = mix(p.b.rgb, lcol * 0.85, clamp(p.a.w, 0.0, 1.0));
+                float sh = mix(1.12, 1.0 - shade, smoothstep(0.0, 1.0, kk));
+                sh *= 1.0 + 0.4 * (1.0 - smoothstep(0.0, 0.08, kk));         // crease highlight next to the face
+                sh *= 1.0 - 0.25 * shade * smoothstep(0.8, 1.0, kk);         // occlusion at the back end
+                float4 ex = float4(side * sh * ea, ea);
                 pc = p.d.z > 0.5 ? ex * (1.0 - s.a) : s + ex * (1.0 - s.a);
                 break;
             }

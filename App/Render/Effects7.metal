@@ -65,6 +65,37 @@ static float partg7(float2 c, float cell, float rad, float2 vel, float wob, floa
     return acc;
 }
 
+static inline float sqg7(float x) { return x * x; }
+// Ember heat ramp: dying red -> tint (orange) -> yellow -> white-hot core.
+static float3 heatg7(float h, float3 tint) {
+    float3 c = mix(float3(0.45, 0.03, 0.01), tint, smoothstep(0.05, 0.45, h));
+    c = mix(c, float3(1.0, 0.82, 0.4), smoothstep(0.45, 0.8, h));
+    return mix(c, float3(1.0, 0.97, 0.88), smoothstep(0.8, 1.0, h));
+}
+// Piecewise-linear value noise (straight segments = jagged lightning).
+static inline float jagg7(float x, float y) { float i = floor(x), f = fract(x); return mix(hg7(float2(i, y)), hg7(float2(i + 1.0, y)), f); }
+static float boltg7(float u, float k, float frame, float seed) {
+    float n = 0.0, a = 1.0, f = 1.0;
+    for (int o = 0; o < 5; o++) {
+        n += (jagg7(u * f * 7.0 + float(o) * 13.1, k * 7.1 + seed * 3.3 + frame * 1.37 + float(o) * 5.7) - 0.5) * a;
+        f *= 2.05; a *= 0.5;
+    }
+    return n;
+}
+static float eqHg7(float id, float tt, float seed) {
+    float hv = ng7(float3(id * 0.37 + seed * 5.0, tt, 0.0)) * 0.7 + 0.3 * ng7(float3(id * 1.7, tt * 2.3, seed));
+    return pow(clamp(hv * 1.25 - 0.1, 0.0, 1.0), 1.3);
+}
+static inline float sdRbg7(float2 q, float2 b, float r) {
+    float2 d = abs(q) - b + r;
+    return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - r;
+}
+// Hue rotation around the gray axis (Rodrigues).
+static inline float3 hrotg7(float3 c, float a) {
+    float3 k = float3(0.57735027); float cs = cos(a);
+    return c * cs + cross(k, c) * sin(a) + k * dot(k, c) * (1.0 - cs);
+}
+
 kernel void fxGen7(texture2d<half, access::sample> src [[texture(0)]],
                    texture2d<half, access::write> dst [[texture(1)]],
                    texture2d<half, access::sample> aux [[texture(2)]],
@@ -163,13 +194,52 @@ kernel void fxGen7(texture2d<half, access::sample> src [[texture(0)]],
             break;
         }
         case 4: { // embers: a = (spacing, size, rise speed, turbulence), b = color, c = (seed, flicker freq)
-            float hue;
-            float acc = partg7(c, p.a.x, p.a.y, float2(p.a.w * 20.0, -p.a.z), p.a.w * 0.5, t, p.c.x, 2, 0.85, p.c.y, 0.7, hue);
-            float k = mix(0.35, 1.0, c.y / size.y);
-            float3 col = mix(p.b.rgb, float3(1.0, 0.9, 0.55), hue * 0.6);
-            float e = acc * k * 1.4;
-            g = col * e;
-            ga = clamp(e, 0.0, 1.0);
+            float cl0 = max(p.a.x, 4.0), rad0 = max(p.a.y, 0.3), tb = p.a.w, fk = p.c.y, sd = p.c.x;
+            float3 acc = float3(0.0);
+            for (int L = 0; L < 3; L++) {
+                float fl = float(L);
+                float cl = cl0 * (1.0 + fl * 0.45);
+                float rr = min(rad0 * (1.25 - fl * 0.3), cl * 0.14);
+                float spf = 1.15 - fl * 0.3;
+                float2 q = c + float2(0.0, p.a.z * spf * t) + float2(fl * 37.7 + sd * 17.0, fl * 91.3 + sd * 11.0);
+                q.x += tb * cl * 0.25 * sin(q.y / (cl * 1.9) + t * 1.4 + fl * 2.1)
+                     + tb * cl * 0.3 * (ng7(float3(q / (cl * 2.5), t * 0.45 + fl * 3.0)) - 0.5);
+                float2 id = floor(q / cl);
+                for (int j = -1; j <= 1; j++) {
+                    for (int i = -1; i <= 1; i++) {
+                        float2 cid = id + float2(float(i), float(j));
+                        if (hg7(cid * 2.17 + 41.0 + fl) > 0.75) continue;
+                        float ha = hg7(cid + fl * 13.7 + sd * 3.1), hb = hg7(cid * 1.37 + 5.3 + sd);
+                        float hc = hg7(cid * 0.71 + 11.9 - sd * 1.7), hd = hg7(cid * 1.91 + 23.3 + fl);
+                        float2 ctr = (cid + 0.5 + (float2(ha, hb) - 0.5) * 0.6) * cl;
+                        ctr.x += tb * cl * 0.12 * sin(t * (1.3 + hc * 2.0) + ha * 6.283);
+                        float life = fract(t * (0.25 + 0.35 * hb) + hc);
+                        float fade = smoothstep(0.0, 0.08, life) * (1.0 - smoothstep(0.6, 1.0, life));
+                        float spark = step(0.84, hd);
+                        float heat = clamp((1.0 - life) * (0.55 + 0.45 * ha) + spark * 0.35, 0.0, 1.0);
+                        float flk = 1.0 - 0.45 * (0.5 + 0.5 * sin(t * fk * (0.7 + ha) + hb * 6.283)) * smoothstep(0.0, 0.5, fk);
+                        float r = max(rr * (0.45 + hc * hc) * mix(1.0, 0.6, spark), 0.3);
+                        float2 dv = q - ctr;
+                        float d2;
+                        if (spark > 0.5) { // short motion streak trailing behind the spark
+                            float2 sdir = normalize(float2((ha - 0.5) * tb * 0.8, -1.0));
+                            float al = dot(dv, sdir), pr = dot(dv, float2(-sdir.y, sdir.x));
+                            float tail = min(r * (3.0 + 5.0 * hb) * clamp(p.a.z / 120.0, 0.25, 2.0), cl * 0.8);
+                            float a2 = al > 0.0 ? al / r : al / max(tail, r);
+                            d2 = a2 * a2 + (pr * pr) / (r * r * 0.5);
+                        } else {
+                            d2 = dot(dv, dv) / (r * r);
+                        }
+                        float core = exp(-d2 * 1.6);
+                        float halo = exp(-d2 * 0.12) * 0.32;
+                        float3 hc3 = heatg7(heat, p.b.rgb);
+                        float in1 = fade * flk * (1.0 - fl * 0.25);
+                        acc += (hc3 * (core * (1.2 + heat) + halo) + float3(1.0, 0.95, 0.85) * core * core * heat * 1.2) * in1;
+                    }
+                }
+            }
+            g = acc * mix(0.5, 1.15, c.y / size.y);
+            ga = clamp(lg7(g), 0.0, 1.0);
             break;
         }
         case 5: { // bokeh particles: a = (spacing, size, speed, softness), b = color, c = (hue variation, seed)
@@ -182,11 +252,39 @@ kernel void fxGen7(texture2d<half, access::sample> src [[texture(0)]],
             break;
         }
         case 6: { // dust motes: a = (spacing, size, drift speed, brightness), b = color, c.x = seed
-            float hue;
-            float acc = partg7(c, p.a.x, p.a.y, float2(p.a.z, -p.a.z * 0.35), 1.0, t, p.c.x, 3, 0.8, 1.5, 0.4, hue);
-            float e = acc * p.a.w;
-            g = p.b.rgb * e;
-            ga = clamp(e, 0.0, 1.0);
+            float cl0 = max(p.a.x, 4.0), rad0 = max(p.a.y, 0.2), sp = p.a.z, sd = p.c.x;
+            float acc = 0.0, gl = 0.0;
+            for (int L = 0; L < 3; L++) { // L0 = near (big, defocused), L2 = far (small, sharp)
+                float fl = float(L);
+                float cl = cl0 * (2.2 - fl * 0.7);
+                float rr = min(rad0 * (3.2 - fl * 1.15), cl * 0.3);
+                float soft = 0.85 - fl * 0.38;
+                float alpha = 0.32 + fl * 0.3;
+                float spf = 1.4 - fl * 0.4;
+                float2 q = c - float2(sp, -sp * 0.3) * spf * t + float2(fl * 53.1 + sd * 19.0, fl * 27.7 + sd * 7.0);
+                float2 id = floor(q / cl);
+                for (int j = -1; j <= 1; j++) {
+                    for (int i = -1; i <= 1; i++) {
+                        float2 cid = id + float2(float(i), float(j));
+                        float ha = hg7(cid + fl * 9.7 + sd * 2.3), hb = hg7(cid * 1.29 + 4.1 + sd);
+                        float hc = hg7(cid * 0.83 + 15.7 - sd), hd = hg7(cid * 1.77 + 31.1 + fl);
+                        if (hd > 0.55) continue;
+                        float2 ctr = (cid + 0.5 + (float2(ha, hb) - 0.5) * 0.5) * cl;
+                        ctr += cl * 0.2 * float2(sin(t * 0.5 * (0.5 + hc) + ha * 6.283), cos(t * 0.4 * (0.5 + hb) + hc * 6.283));
+                        float r = rr * (0.6 + 0.6 * hc);
+                        float d = length(q - ctr);
+                        float disc = 1.0 - smoothstep(r * (1.0 - soft) - 0.5, r + 0.5, d);
+                        float rim = 1.0 + 0.35 * soft * smoothstep(r * 0.4, r * 0.95, d);
+                        float glint = pow(0.5 + 0.5 * sin(t * (1.2 + 2.0 * ha) + hb * 6.283), 10.0);
+                        acc += disc * rim * alpha * (0.55 + 0.45 * glint * (1.0 - soft));
+                        gl += disc * glint * (1.0 - soft) * alpha;
+                    }
+                }
+            }
+            float2 uv = c / size;
+            float shaft = 0.55 + 0.45 * smoothstep(-0.5, 0.6, sin((uv.x * 0.8 + uv.y * 0.6) * 5.0 + ng7(float3(uv * 3.0, t * 0.2)) * 2.0));
+            g = (p.b.rgb * acc + float3(1.0, 0.98, 0.92) * gl * 0.6) * shaft * p.a.w;
+            ga = clamp(lg7(g), 0.0, 1.0);
             break;
         }
         case 7: { // fireflies: a = (spacing, size, wander speed, glow), b = color, c = (seed, pulse speed)
@@ -242,38 +340,98 @@ kernel void fxGen7(texture2d<half, access::sample> src [[texture(0)]],
             float2 d = c - p.a.xy;
             float L = length(d);
             float2 dir = d / max(L, 1e-3);
-            float x = (L - rad) / max(p.c.x, 0.5);
+            float th = max(p.c.x, 0.5);
+            float x = (L - rad) / th;
             float gk = exp(-x * x);
-            s = float4(src.sample(sg7Zero, c - dir * p.c.y * x * gk * (1.0 - prog)));
-            float e = gk * p.c.z * (1.0 - prog);
-            g = p.b.rgb * e;
-            ga = clamp(e, 0.0, 1.0);
+            float fade = pow(1.0 - prog, 1.3) * smoothstep(0.0, 0.04, prog);
+            float sec = clamp(p.d.w, 0.0, 1.0);
+            float x2 = (L - rad * 0.7) / (th * 0.6);
+            float gk2 = exp(-x2 * x2) * sec;
+            float lens = (x * gk + x2 * gk2 * 0.6) * fade; // lens-like refraction across the band
+            float2 off = dir * p.c.y * lens;
+            float2 ch = dir * (gk + gk2 * 0.5) * fade * (1.5 + 0.06 * abs(p.c.y));
+            float4 sR = float4(src.sample(sg7Zero, c - off * 1.15 - ch));
+            float4 sG = float4(src.sample(sg7Zero, c - off));
+            float4 sB = float4(src.sample(sg7Zero, c - off * 0.85 + ch));
+            s = float4(sR.r, sG.g, sB.b, max(sG.a, max(sR.a, sB.a)));
+            float wide = exp(-x * x / 6.0) * 0.35;
+            float xr = (x - 0.55) * 2.0, xg = x * 2.0, xb = (x + 0.55) * 2.0;
+            float3 fr = float3(exp(-xr * xr), exp(-xg * xg), exp(-xb * xb));
+            float3 col = p.b.rgb;
+            float inner = step(L, rad) * pow(1.0 - prog, 3.0) * 0.12 * smoothstep(0.0, 1.0, L / max(rad, 1.0));
+            float3 ring = col * (gk * 0.55 + wide + gk2 * 0.5 + inner) + mix(col, float3(1.0), 0.55) * fr * 0.45;
+            g = ring * p.c.z * fade;
+            ga = clamp(lg7(g), 0.0, 1.0);
             break;
         }
         case 11: { // energy beam: a = (ax, ay, bx, by), b = color, c = (width px, glow, wiggle px, speed)
-            float2 A = p.a.xy, ab = p.a.zw - p.a.xy;
+            float2 A = p.a.xy, B = p.a.zw, ab = B - A;
             float len = max(length(ab), 1.0);
-            float2 dv = ab / len;
+            float2 dv = ab / len, nv = float2(-dv.y, dv.x);
             float2 rel = c - A;
             float ap = dot(rel, dv);
             float al = clamp(ap, 0.0, len);
-            float perp = dot(rel, float2(-dv.y, dv.x));
-            float wig = (ng7(float3(al / 40.0, t * p.c.w, 0.0)) - 0.5) * 2.0 * p.c.z * sin(3.14159265 * al / len);
-            float dd = length(float2(ap - al, perp - wig));
+            float perp = dot(rel, nv);
+            float sp = p.c.w;
             float w = max(p.c.x, 0.5);
-            float core = 1.0 - smoothstep(w * 0.25, w * 0.5 + 0.5, dd);
-            float gl = exp(-dd / max(w * p.c.y, 0.5));
-            float fl = 0.85 + 0.15 * sin(t * (p.c.w + 1.0) * 30.0);
-            g = (p.b.rgb * gl + float3(core)) * fl;
-            ga = clamp(max(core, gl), 0.0, 1.0);
+            float env = sin(3.14159265 * al / len);
+            float wig = (ng7(float3(al / 40.0, t * sp, 0.0)) - 0.5) * 2.0 * p.c.z * env;
+            float th = w * (0.7 + 0.6 * ng7(float3(al / (w * 5.0 + 4.0) - t * sp * 2.5, t * sp * 0.5, 1.7)));
+            float py = perp - wig;
+            float dd = length(float2(ap - al, py));
+            float core = exp(-sqg7(dd / (th * 0.3)));
+            float inner = exp(-sqg7(dd / th));
+            float outer = exp(-dd / max(th * p.c.y * 1.2, 0.5)) * 0.55;
+            float inside = step(0.0, ap) * step(ap, len);
+            float ends = smoothstep(0.0, 0.1, al / len) * smoothstep(0.0, 0.1, 1.0 - al / len);
+            float wisp = 0.0;
+            for (int k = 0; k < 3; k++) { // crackling filaments twisting around the core
+                float fk = float(k);
+                float o = (ng7(float3(al / (18.0 + 10.0 * fk) - t * sp * (1.0 + 0.5 * fk), fk * 5.3, t * sp * 0.6)) - 0.5) * th * 5.0;
+                float seg = smoothstep(0.5, 0.75, ng7(float3(al / 30.0 + fk * 3.7, t * sp * 1.3, fk * 2.0 + 9.0)));
+                wisp += exp(-sqg7((py - o) / (0.6 + w * 0.08))) * seg;
+            }
+            wisp *= inside * ends;
+            float cell = w * 3.0 + 4.0;
+            float frm = floor(t * (8.0 + sp * 3.0));
+            float sid = floor(ap / cell);
+            float spk = 0.0;
+            for (int k = -1; k <= 1; k++) { // short-lived sparks popping off the beam
+                float id = sid + float(k);
+                float h1 = hg7(float2(id, frm)), h2 = hg7(float2(id * 1.7 + 3.1, frm + 7.0)), h3 = hg7(float2(id * 0.7 + 9.0, frm * 1.3));
+                if (h1 < 0.6) continue;
+                float2 o2 = float2((id + h3) * cell - ap, (h2 - 0.5) * th * 6.0 - py);
+                spk += exp(-dot(o2, o2) / (0.8 + w * 0.05)) * 1.5;
+            }
+            spk *= inside;
+            float2 lA = float2(dot(c - A, dv), dot(c - A, nv)), lB = float2(dot(c - B, dv), dot(c - B, nv));
+            float fr = exp(-length(lA) / (w * 2.5)) + exp(-length(lB) / (w * 2.5));
+            float star = exp(-abs(lA.x) / (w * 0.3)) * exp(-abs(lA.y) / (w * 5.0)) + exp(-abs(lB.x) / (w * 0.3)) * exp(-abs(lB.y) / (w * 5.0));
+            float flick = 0.85 + 0.15 * ng7(float3(t * (sp + 1.0) * 6.0, 0.0, 3.0));
+            float3 col = p.b.rgb;
+            float3 hot = mix(col, float3(1.0), 0.6);
+            g = (float3(core * 1.6) + col * (inner * 1.3 + outer) + hot * (wisp * 0.8 + spk) + (col + 0.5) * (fr * 0.9 + star * 0.6)) * flick;
+            ga = clamp(lg7(g), 0.0, 1.0);
             break;
         }
         case 12: { // plasma: a = (scale px, speed, hue shift 0-1, saturation)
             float sc = max(p.a.x, 1.0);
             float2 q = c / sc;
-            float sp = t * p.a.y;
-            float v = sin(q.x + sp) + sin(q.y + sp * 0.7) + sin((q.x + q.y) * 0.7 + sp * 1.3) + sin(length(c - size * 0.5) / sc - sp * 1.5);
-            g = hsvg7(v / 8.0 + p.a.z + 0.5, clamp(p.a.w, 0.0, 1.0), 1.0);
+            float sp = t * p.a.y * 0.3;
+            float2 w1 = float2(fbmg7(float3(q, sp), 4), fbmg7(float3(q + float2(5.2, 1.3), sp * 1.1), 4));
+            float2 w2 = float2(fbmg7(float3(q + 3.0 * w1 + float2(1.7, 9.2), sp * 1.3), 4),
+                               fbmg7(float3(q + 3.0 * w1 + float2(8.3, 2.8), sp * 0.9 + 4.0), 4));
+            float v = fbmg7(float3(q + 3.0 * w2, sp * 0.7 + 2.0), 4);
+            v = smoothstep(0.0, 1.0, clamp((v - 0.22) * 1.9, 0.0, 1.0));
+            // curated gradient map: ink -> violet -> magenta -> cyan -> pale highlight
+            float3 col = mix(float3(0.04, 0.02, 0.12), float3(0.32, 0.07, 0.55), smoothstep(0.0, 0.3, v));
+            col = mix(col, float3(0.92, 0.22, 0.68), smoothstep(0.3, 0.55, v));
+            col = mix(col, float3(0.25, 0.85, 1.0), smoothstep(0.55, 0.8, v));
+            col = mix(col, float3(0.92, 0.97, 1.0), smoothstep(0.85, 1.0, v));
+            col *= 0.8 + 0.4 * clamp(dot(w2, float2(0.7, 0.7)), 0.0, 1.0);
+            col += float3(0.55, 0.85, 1.0) * smoothstep(0.7, 1.0, v) * 0.35;
+            col = max(hrotg7(col, p.a.z * 6.2831853), float3(0.0));
+            g = mix(float3(lg7(col)), col, clamp(p.a.w, 0.0, 1.0));
             ga = 1.0;
             break;
         }
@@ -337,23 +495,38 @@ kernel void fxGen7(texture2d<half, access::sample> src [[texture(0)]],
             float perp = dot(rel, float2(-dv.y, dv.x));
             float frame = floor(t * max(p.c.z, 0.0));
             float w = max(p.c.y, 0.5);
+            float amp = p.c.x;
             int bolts = clamp(int(p.i.z), 1, 4);
-            float3 acc = float3(0.0); float cov = 0.0;
+            float3 acc = float3(0.0);
             for (int k = 0; k < bolts; k++) {
-                float n = 0.0, amp = 1.0, fq = 1.0;
-                for (int o = 0; o < 4; o++) {
-                    n += (ng7(float3(t01 * fq * 6.0, float(k) * 7.1 + p.d.w, frame * 0.37 + float(o) * 3.1)) - 0.5) * amp;
-                    fq *= 2.1; amp *= 0.5;
+                float fk = float(k);
+                float fl = 0.55 + 0.45 * hg7(float2(frame * 1.31 + fk, p.d.w + 3.0));
+                float off = boltg7(t01, fk, frame, p.d.w) * 2.0 * amp * sin(3.14159265 * t01);
+                float dd = sqrt(sqg7(perp - off) + outside * outside);
+                float core = exp(-sqg7(dd / (w * 0.45)));
+                float inner = exp(-sqg7(dd / (w * 2.2))) * 0.7;
+                float outer = exp(-dd / max(w * p.c.w * 1.5, 0.5)) * 0.4;
+                acc += (float3(core * 1.4) + p.b.rgb * (inner + outer)) * fl;
+                for (int f = 0; f < 2; f++) { // forks branching off the main bolt
+                    float ff = float(f);
+                    float hs = hg7(float2(fk * 3.7 + ff * 1.9 + p.d.w, frame * 0.77 + 5.0));
+                    float t0 = 0.12 + 0.6 * hs;
+                    float flen = 0.12 + 0.22 * hg7(float2(hs * 9.1, frame + ff));
+                    float sgn = hg7(float2(hs * 4.3 + ff, frame * 1.9)) > 0.5 ? 1.0 : -1.0;
+                    float sf = (t01 - t0) / flen;
+                    if (sf <= 0.0 || sf >= 1.0) continue;
+                    float base = boltg7(t0, fk, frame, p.d.w) * 2.0 * amp * sin(3.14159265 * t0);
+                    float foff = base + sgn * sf * flen * len * 0.45 + boltg7(sf * 0.6, fk + 10.0 + ff * 3.0, frame, p.d.w) * amp * 0.9 * sf;
+                    float fd = sqrt(sqg7(perp - foff) + outside * outside);
+                    float tp = 1.0 - sf;
+                    float fw = w * (0.35 + 0.55 * tp);
+                    acc += (float3(exp(-sqg7(fd / (fw * 0.45))) * 1.1) + p.b.rgb * exp(-sqg7(fd / (fw * 2.0))) * 0.6) * tp * fl;
                 }
-                float off = n * 2.0 * p.c.x * sin(3.14159265 * t01);
-                float dd = sqrt((perp - off) * (perp - off) + outside * outside);
-                float core = 1.0 - smoothstep(w * 0.3, w * 0.5 + 0.5, dd);
-                float gl = exp(-dd / max(w * p.c.w, 0.5)) * 0.6;
-                acc += p.b.rgb * gl + float3(core);
-                cov = max(cov, max(core, gl));
             }
+            float dA = length(c - A), dB = length(c - p.a.zw);
+            acc += p.b.rgb * (exp(-dA / (w * 5.0)) + exp(-dB / (w * 5.0))) * 0.8 + float3((exp(-dA / (w * 1.2)) + exp(-dB / (w * 1.2))) * 0.6);
             g = acc;
-            ga = clamp(cov, 0.0, 1.0);
+            ga = clamp(lg7(g), 0.0, 1.0);
             break;
         }
         case 18: { // code rain: a = (cell px, fall cells/s, trail cells, glyph change rate), b = color, c = (seed, density)
@@ -426,16 +599,42 @@ kernel void fxGen7(texture2d<half, access::sample> src [[texture(0)]],
         case 21: { // equalizer: a = (bars, height 0-1, speed, gap 0-1), b = bottom color, c = top color, d.w = seed, i.z = blocks
             float n = max(floor(p.a.x), 1.0);
             float bw = size.x / n;
-            float id = floor(c.x / bw), fx = fract(c.x / bw);
-            float hv = ng7(float3(id * 0.37 + p.d.w * 5.0, t * p.a.z, 0.0)) * 0.7 + 0.3 * ng7(float3(id * 1.7, t * p.a.z * 2.3, p.d.w));
-            float hmax = max(p.a.y * size.y, 1.0);
-            float h = pow(clamp(hv, 0.0, 1.0), 1.2) * hmax;
-            float yb = size.y - c.y;
-            float gp = clamp(p.a.w, 0.0, 0.95) * 0.5;
-            float m = step(gp, fx) * step(fx, 1.0 - gp) * step(yb, h);
-            if (p.i.z == 1u) m *= step(0.25, fract(yb / max(bw * 0.6, 1.0)));
-            g = mix(p.b.rgb, p.c.rgb, clamp(yb / hmax, 0.0, 1.0));
-            ga = m;
+            float id = floor(c.x / bw);
+            float fx = c.x - (id + 0.5) * bw;
+            float ybase = size.y * 0.8;
+            float hmax = clamp(p.a.y * size.y, 1.0, ybase * 0.96);
+            float h = eqHg7(id, t * p.a.z, p.d.w) * hmax;
+            float pk = h;
+            for (int k = 1; k < 10; k++) { // peak caps: recent maxima falling under gravity
+                float dt = float(k) * 0.07;
+                pk = max(pk, eqHg7(id, (t - dt) * p.a.z, p.d.w) * hmax - 1.8 * hmax * dt * dt);
+            }
+            float yb = ybase - c.y;
+            bool refl = yb < 0.0;
+            float yy = abs(yb);
+            float hw = max(bw * (1.0 - clamp(p.a.w, 0.0, 0.95)) * 0.5, 0.5);
+            float segH = max(bw * 0.6, 3.0);
+            float colD = sdRbg7(float2(fx, yy - h * 0.5), float2(hw, max(h * 0.5, 0.5)), min(hw, max(h * 0.5, 0.5)) * 0.9);
+            float dbar = colD;
+            if (p.i.z == 1u) {
+                float si = floor(yy / segH);
+                float shh = segH * 0.36;
+                dbar = sdRbg7(float2(fx, yy - (si + 0.5) * segH), float2(hw, shh), min(hw, shh) * 0.5);
+                if ((si + 0.5) * segH > h) dbar = 1e4;
+            }
+            float m = 1.0 - smoothstep(-0.6, 0.6, dbar);
+            float glow = exp(-max(colD, 0.0) / max(bw * 0.35, 1.0)) * 0.45 * step(0.5, h);
+            float capH = max(segH * 0.18, 1.0);
+            float mc = 1.0 - smoothstep(-0.6, 0.6, sdRbg7(float2(fx, yy - (pk + capH * 2.5)), float2(hw, capH), min(hw, capH)));
+            float v = clamp(yy / hmax, 0.0, 1.0);
+            float3 col = mix(p.b.rgb, p.c.rgb, smoothstep(0.0, 1.0, v));
+            col *= (0.85 + 0.35 * v) * (1.0 + 0.3 * (1.0 - clamp(abs(fx) / hw, 0.0, 1.0)));
+            float3 capCol = mix(p.c.rgb, float3(1.0), 0.6);
+            float solid = max(m, mc);
+            float gw = glow * (1.0 - solid);
+            g = (col * m + capCol * mc + col * 1.3 * gw) / max(m + mc + gw, 1e-4);
+            float rk = refl ? 0.3 * exp(-yy / max(hmax * 0.3, 1.0)) : 1.0;
+            ga = clamp(max(solid, glow) * rk, 0.0, 1.0);
             break;
         }
         case 22: { // halftone: a = (cell px, angle rad, speed, wave scale px), b = color, c.x = dot size, i.z = pattern

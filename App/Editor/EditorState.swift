@@ -83,6 +83,7 @@ final class EditorState: ObservableObject {
     /// Effect stack copied with "Copy Effects" (pasted onto any layer).
     @Published var effectClipboard: [EffectInstance] = []
     @Published var snapGuides = SnapGuides()
+    @Published var previewQuality: PreviewQuality = .full
     @Published var orbit = OrbitCamera.home
     /// Parents of the currently open pre-comp (empty at the top level).
     @Published var compStack: [(project: Project, time: Double, selected: UUID?)] = []

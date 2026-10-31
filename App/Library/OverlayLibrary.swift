@@ -159,6 +159,9 @@ struct OverlaysPanel: View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: "Overlays", showKeyNav: false)
             ScrollView {
+                MyLibrarySection(state: state).padding(.horizontal, 12).padding(.bottom, 8)
+                Text("BUILT-IN").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 12)
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
                     ForEach(OverlayKind.allCases) { k in ToolTile(icon: k.symbol, title: k.title) { state.addOverlay(k) } }
                 }

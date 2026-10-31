@@ -67,12 +67,14 @@ extension EffectRegistry {
 
     static let fireworks12 = EffectDefinition(
         id: "awi12.fireworks", name: "Fireworks", category: .generate, aeMatchNames: [],
-        summary: "Colorful firework bursts with falling, trailing sparks.",
-        params: p12([.number("radius", "Burst Size", 55, 10, 400, unit: "px"), .number("period", "Burst Interval", 1.6, 0.3, 6, step: 0.05, unit: "s"),
-                  .number("gravity", "Gravity", 60, 0, 600, unit: "px/s²"), .number("size", "Spark Size", 1.8, 0.5, 8, step: 0.1, unit: "px"),
-                  .number("trail", "Trail", 1, 0, 3, step: 0.01), .number("saturation", "Saturation", 80, 0, 100, unit: "%"), seed12]),
+        summary: "Big staggered firework bursts: glowing spark trails drooping with gravity, bright heads and bloom.",
+        params: p12([.number("radius", "Burst Size", 32, 5, 80, unit: "%"), .number("period", "Burst Interval", 1.8, 0.3, 6, step: 0.05, unit: "s"),
+                  .number("gravity", "Gravity", 22, 0, 200, unit: "%/s²"), .number("size", "Spark Size", 2.2, 0.5, 8, step: 0.1, unit: "px"),
+                  .number("trail", "Trail", 1.2, 0, 3, step: 0.01), .number("saturation", "Saturation", 85, 0, 100, unit: "%"),
+                  .number("bursts", "Bursts", 5, 1, 8, step: 1), seed12]),
         stage: .pixels { ctx in g12(ctx, 2, over: false) { p in
-            p.a = SIMD4(px12(ctx, "radius"), n12(ctx, "period"), px12(ctx, "gravity"), px12(ctx, "size"))
+            p.a = SIMD4(pc12(ctx, "radius"), n12(ctx, "period"), pc12(ctx, "gravity"), px12(ctx, "size"))
+            p.b.x = n12(ctx, "bursts")
             p.c = SIMD4(n12(ctx, "seed"), pc12(ctx, "saturation"), n12(ctx, "trail"), 0) } })
 
     static let bubbles12 = EffectDefinition(
@@ -99,13 +101,13 @@ extension EffectRegistry {
         id: "awi12.vortexDust", name: "Vortex Dust", category: .generate, aeMatchNames: [],
         summary: "Glowing dust swirling in a spiral vortex.",
         params: p12([.point("center", "Center", Vec2(0.5, 0.5)), .number("speed", "Spin Speed", 1, -4, 4, step: 0.01),
-                  .number("twist", "Twist", 2, 0, 8, step: 0.01), .number("density", "Density", 6, 2, 20, step: 0.1),
-                  .number("size", "Particle Size", 1.6, 0.5, 6, step: 0.1, unit: "px"), .number("inflow", "Inflow", 0.3, 0, 2, step: 0.01),
-                  .color("color", "Color", RGBA(1, 0.8, 0.55)), seed12]),
+                  .number("twist", "Twist", 2, 0, 8, step: 0.01), .number("density", "Density", 8, 2, 20, step: 0.1),
+                  .number("size", "Particle Size", 2.2, 0.5, 6, step: 0.1, unit: "px"), .number("inflow", "Inflow", 0.3, 0, 2, step: 0.01),
+                  .number("streak", "Streak Length", 3, 1, 6, step: 0.01), .color("color", "Color", RGBA(1, 0.75, 0.45)), seed12]),
         stage: .pixels { ctx in g12(ctx, 5, over: false) { p in
             let c = pt12(ctx, "center")
             p.a = SIMD4(c.x, c.y, n12(ctx, "speed"), n12(ctx, "twist")); p.b = col12(ctx, "color")
-            p.c = SIMD4(n12(ctx, "density"), px12(ctx, "size"), n12(ctx, "seed"), n12(ctx, "inflow")) } })
+            p.c = SIMD4(n12(ctx, "density"), px12(ctx, "size"), n12(ctx, "seed"), n12(ctx, "inflow")); p.d.w = n12(ctx, "streak") } })
 
     static let neuralNetwork12 = EffectDefinition(
         id: "awi12.neuralNetwork", name: "Neural Network", category: .generate, aeMatchNames: [],
@@ -119,21 +121,23 @@ extension EffectRegistry {
 
     static let metaballs12 = EffectDefinition(
         id: "awi12.metaballs", name: "Metaballs", category: .generate, aeMatchNames: [],
-        summary: "Gooey blobs that drift around and merge together.",
-        params: p12([.number("size", "Blob Size", 26, 5, 150, unit: "px"), .number("speed", "Speed", 1, 0, 5, step: 0.01),
-                  .number("threshold", "Threshold", 1, 0.2, 3, step: 0.01), .number("count", "Count", 6, 2, 12, step: 1),
+        summary: "Glossy liquid blobs drifting and melting into each other, with rim light and soft glow.",
+        params: p12([.number("size", "Blob Size", 14, 3, 40, unit: "%"), .number("speed", "Speed", 0.8, 0, 5, step: 0.01),
+                  .number("threshold", "Gooeyness", 1, 0.2, 3, step: 0.01), .number("count", "Count", 7, 2, 12, step: 1),
                   .color("color", "Color 1", RGBA(1, 0.3, 0.6)), .color("color2", "Color 2", RGBA(0.4, 0.6, 1)), seed12]),
         stage: .pixels { ctx in g12(ctx, 7, over: true) { p in
-            p.a = SIMD4(px12(ctx, "size"), n12(ctx, "speed"), n12(ctx, "threshold"), n12(ctx, "count"))
+            p.a = SIMD4(pc12(ctx, "size"), n12(ctx, "speed"), n12(ctx, "threshold"), n12(ctx, "count"))
             p.b = col12(ctx, "color"); p.c = col12(ctx, "color2"); p.d.w = n12(ctx, "seed") } })
 
     static let voronoiShapes12 = EffectDefinition(
         id: "awi12.voronoiShapes", name: "Voronoi Shapes", category: .generate, aeMatchNames: [],
-        summary: "Animated colorful Voronoi cells with dark borders.",
-        params: p12([.number("size", "Cell Size", 40, 8, 250, unit: "px"), .number("speed", "Speed", 1, 0, 5, step: 0.01),
-                  .number("border", "Border", 2, 0, 10, step: 0.1, unit: "px"), .number("saturation", "Saturation", 70, 0, 100, unit: "%"), seed12]),
+        summary: "Soft beveled cells in a curated palette, with depth shading and thin glowing seams.",
+        params: p12([.number("size", "Cell Size", 46, 8, 250, unit: "px"), .number("speed", "Speed", 0.8, 0, 5, step: 0.01),
+                  .number("border", "Border", 1.5, 0, 10, step: 0.1, unit: "px"), .number("saturation", "Saturation", 85, 0, 100, unit: "%"),
+                  .number("palette", "Palette", 0, 0, 4, step: 1), seed12]),
         stage: .pixels { ctx in g12(ctx, 8, over: true) { p in
-            p.a = SIMD4(px12(ctx, "size"), n12(ctx, "speed"), px12(ctx, "border"), pc12(ctx, "saturation")); p.c.x = n12(ctx, "seed") } })
+            p.a = SIMD4(px12(ctx, "size"), n12(ctx, "speed"), px12(ctx, "border"), pc12(ctx, "saturation"))
+            p.c.x = n12(ctx, "seed"); p.c.y = n12(ctx, "palette") } })
 
     static let isolines12 = EffectDefinition(
         id: "awi12.isolines", name: "Isolines", category: .generate, aeMatchNames: [],
@@ -189,26 +193,29 @@ extension EffectRegistry {
 
     static let lightTrails12 = EffectDefinition(
         id: "awi12.lightTrails", name: "Light Trails", category: .generate, aeMatchNames: [],
-        summary: "Fast streaking light lines with glowing heads.",
-        params: p12([.angle("angle", "Angle", 0), .number("spacing", "Spacing", 14, 3, 100, unit: "px"),
-                  .number("speed", "Speed", 300, 0, 2000, unit: "px/s"), .number("length", "Trail Length", 70, 5, 400, unit: "px"),
-                  .number("thickness", "Thickness", 1.5, 0.3, 8, step: 0.1, unit: "px"), .number("spread", "Color Spread", 40, 0, 100, unit: "%"),
-                  .color("color", "Color", RGBA(1, 0.6, 0.3)), seed12]),
+        summary: "Long-exposure light streaks: curved glowing trails with bright heads and depth layers.",
+        params: p12([.angle("angle", "Angle", 0), .number("spacing", "Spacing", 18, 3, 100, unit: "px"),
+                  .number("speed", "Speed", 400, 0, 2000, unit: "px/s"), .number("length", "Trail Length", 60, 5, 200, unit: "%"),
+                  .number("thickness", "Thickness", 2, 0.3, 8, step: 0.1, unit: "px"), .number("spread", "Color Spread", 40, 0, 100, unit: "%"),
+                  .number("curve", "Curvature", 35, 0, 100, unit: "%"), .color("color", "Color", RGBA(1, 0.55, 0.3)), seed12]),
         stage: .pixels { ctx in g12(ctx, 14, over: false) { p in
-            p.a = SIMD4(px12(ctx, "spacing"), px12(ctx, "speed"), px12(ctx, "length"), px12(ctx, "thickness"))
+            p.a = SIMD4(px12(ctx, "spacing"), px12(ctx, "speed"), pc12(ctx, "length"), px12(ctx, "thickness"))
+            p.d.w = pc12(ctx, "curve")
             p.b = col12(ctx, "color")
             p.c = SIMD4(Float(ctx.num("angle") * .pi / 180), n12(ctx, "seed"), pc12(ctx, "spread"), 0) } })
 
     static let sunburst12 = EffectDefinition(
         id: "awi12.sunburst", name: "Sunburst", category: .generate, aeMatchNames: [],
-        summary: "Rotating two-color sunburst rays (anime background classic).",
-        params: p12([.point("center", "Center", Vec2(0.5, 0.5)), .number("rays", "Rays", 12, 2, 48, step: 1),
-                  .number("speed", "Rotation Speed", 0.5, -3, 3, step: 0.01), .number("softness", "Softness", 10, 0, 100, unit: "%"),
-                  .color("color", "Color 1", RGBA(1, 0.85, 0.3)), .color("color2", "Color 2", RGBA(1, 0.45, 0.2))]),
+        summary: "Soft rotating light rays fading from a glowing center, blended over the image.",
+        params: p12([.point("center", "Center", Vec2(0.5, 0.5)), .number("rays", "Rays", 16, 2, 48, step: 1),
+                  .number("speed", "Rotation Speed", 0.25, -3, 3, step: 0.01), .number("softness", "Softness", 45, 0, 100, unit: "%"),
+                  .number("opacity", "Ray Opacity", 65, 0, 100, unit: "%"), .number("length", "Ray Length", 70, 5, 200, unit: "%"),
+                  .color("color", "Color 1", RGBA(1, 0.88, 0.55)), .color("color2", "Color 2", RGBA(1, 0.5, 0.3))]),
         stage: .pixels { ctx in g12(ctx, 15, over: true) { p in
             let c = pt12(ctx, "center")
             p.a = SIMD4(c.x, c.y, n12(ctx, "rays"), n12(ctx, "speed"))
-            p.b = col12(ctx, "color"); p.c = col12(ctx, "color2"); p.d.w = pc12(ctx, "softness") } })
+            p.b = col12(ctx, "color"); p.c = col12(ctx, "color2"); p.d.w = pc12(ctx, "softness")
+            p.b.w = pc12(ctx, "length"); p.c.w = pc12(ctx, "opacity") } })
 
     static let kaleidoMandala12 = EffectDefinition(
         id: "awi12.kaleidoMandala", name: "Kaleido Mandala", category: .generate, aeMatchNames: [],
@@ -258,33 +265,34 @@ extension EffectRegistry {
         id: "awi12.crystalShards", name: "Crystal Shards", category: .generate, aeMatchNames: [],
         summary: "Faceted crystal shards catching a moving light, with glowing edges.",
         params: p12([.number("size", "Shard Size", 34, 8, 250, unit: "px"), .number("speed", "Light Speed", 1, 0, 5, step: 0.01),
-                  .number("edge", "Edge Glow", 1, 0, 3, step: 0.01), .number("contrast", "Facet Contrast", 60, 0, 100, unit: "%"),
-                  .color("color", "Tint", RGBA(0.55, 0.75, 1)), seed12]),
+                  .number("edge", "Edge Glow", 1, 0, 3, step: 0.01), .number("contrast", "Facet Contrast", 70, 0, 100, unit: "%"),
+                  .number("refraction", "Refraction", 50, 0, 100, unit: "%"), .color("color", "Tint", RGBA(0.55, 0.75, 1)), seed12]),
         stage: .pixels { ctx in g12(ctx, 20, over: true) { p in
             p.a = SIMD4(px12(ctx, "size"), n12(ctx, "speed"), n12(ctx, "edge"), pc12(ctx, "contrast"))
-            p.b = col12(ctx, "color"); p.c.x = n12(ctx, "seed") } })
+            p.b = col12(ctx, "color"); p.c.x = n12(ctx, "seed"); p.c.y = pc12(ctx, "refraction") } })
 
     static let spiralGalaxy12 = EffectDefinition(
         id: "awi12.spiralGalaxy", name: "Spiral Galaxy", category: .generate, aeMatchNames: [],
         summary: "A rotating spiral galaxy with dusty arms and a bright core.",
-        params: p12([.point("center", "Center", Vec2(0.5, 0.5)), .number("size", "Size", 70, 10, 500, unit: "px"),
-                  .number("speed", "Rotation Speed", 0.5, -3, 3, step: 0.01), .number("arms", "Arms", 2, 1, 8, step: 1),
-                  .number("twist", "Twist", 3, 0, 8, step: 0.01), .color("color", "Color", RGBA(0.6, 0.5, 1)), seed12]),
+        params: p12([.point("center", "Center", Vec2(0.5, 0.5)), .number("size", "Size", 45, 5, 150, unit: "%"),
+                  .number("speed", "Rotation Speed", 0.3, -3, 3, step: 0.01), .number("arms", "Arms", 2, 1, 8, step: 1),
+                  .number("twist", "Twist", 3, 0, 8, step: 0.01), .color("color", "Arm Color", RGBA(0.45, 0.45, 1)),
+                  .color("color2", "Core Color", RGBA(1, 0.8, 0.55)), seed12]),
         stage: .pixels { ctx in g12(ctx, 21, over: false) { p in
             let c = pt12(ctx, "center")
-            p.a = SIMD4(c.x, c.y, px12(ctx, "size"), n12(ctx, "speed")); p.b = col12(ctx, "color")
+            p.a = SIMD4(c.x, c.y, pc12(ctx, "size"), n12(ctx, "speed")); p.b = col12(ctx, "color"); p.i.z = pack12(ctx, "color2")
             p.c = SIMD4(n12(ctx, "arms"), n12(ctx, "twist"), n12(ctx, "seed"), 0) } })
 
     static let orbitRings12 = EffectDefinition(
         id: "awi12.orbitRings", name: "Orbit Rings", category: .generate, aeMatchNames: [],
         summary: "Tilted orbital rings with glowing satellites circling a center.",
-        params: p12([.point("center", "Center", Vec2(0.5, 0.5)), .number("radius", "Radius", 70, 10, 500, unit: "px"),
+        params: p12([.point("center", "Center", Vec2(0.5, 0.5)), .number("radius", "Radius", 42, 5, 150, unit: "%"),
                   .number("speed", "Speed", 1, -4, 4, step: 0.01), .number("rings", "Rings", 4, 1, 8, step: 1),
-                  .number("tilt", "Tilt", 35, 5, 100, unit: "%"), .number("width", "Line Width", 1, 0.2, 5, step: 0.1, unit: "px"),
-                  .number("dot", "Satellite Size", 3, 0.5, 12, step: 0.1, unit: "px"), .color("color", "Color", RGBA(0.5, 0.9, 1)), seed12]),
+                  .number("tilt", "Tilt", 32, 5, 100, unit: "%"), .number("width", "Line Width", 1.5, 0.2, 5, step: 0.1, unit: "px"),
+                  .number("dot", "Satellite Size", 4, 0.5, 12, step: 0.1, unit: "px"), .color("color", "Color", RGBA(0.5, 0.9, 1)), seed12]),
         stage: .pixels { ctx in g12(ctx, 22, over: false) { p in
             let c = pt12(ctx, "center")
-            p.a = SIMD4(c.x, c.y, px12(ctx, "radius"), n12(ctx, "speed")); p.b = col12(ctx, "color")
+            p.a = SIMD4(c.x, c.y, pc12(ctx, "radius"), n12(ctx, "speed")); p.b = col12(ctx, "color")
             p.c = SIMD4(n12(ctx, "rings"), pc12(ctx, "tilt"), px12(ctx, "width"), px12(ctx, "dot")); p.d.w = n12(ctx, "seed") } })
 
     static let heartbeatLine12 = EffectDefinition(
@@ -292,11 +300,11 @@ extension EffectRegistry {
         summary: "An ECG heartbeat trace sweeping across with a glowing head.",
         params: p12([.number("y", "Height", 50, 0, 100, unit: "%"), .number("amplitude", "Amplitude", 40, 0, 200, unit: "px"),
                   .number("beat", "Beat Width", 70, 10, 400, unit: "px"), .number("speed", "Sweep Speed", 0.5, 0, 3, step: 0.01),
-                  .number("width", "Line Width", 1.5, 0.3, 6, step: 0.1, unit: "px"), .number("trail", "Trail", 60, 5, 100, unit: "%"),
-                  .color("color", "Color", RGBA(0.3, 1, 0.5))]),
+                  .number("width", "Line Width", 2.5, 0.3, 6, step: 0.1, unit: "px"), .number("trail", "Trail", 60, 5, 100, unit: "%"),
+                  .number("grid", "Grid", 30, 0, 100, unit: "%"), .color("color", "Color", RGBA(0.3, 1, 0.55))]),
         stage: .pixels { ctx in g12(ctx, 23, over: false) { p in
             p.a = SIMD4(pc12(ctx, "y"), px12(ctx, "amplitude"), px12(ctx, "beat"), n12(ctx, "speed"))
-            p.b = col12(ctx, "color"); p.c = SIMD4(px12(ctx, "width"), pc12(ctx, "trail"), 0, 0) } })
+            p.b = col12(ctx, "color"); p.c = SIMD4(px12(ctx, "width"), pc12(ctx, "trail"), pc12(ctx, "grid"), 0) } })
 
     static let sparkleDust12 = EffectDefinition(
         id: "awi12.sparkleDust", name: "Sparkle Dust", category: .generate, aeMatchNames: [],

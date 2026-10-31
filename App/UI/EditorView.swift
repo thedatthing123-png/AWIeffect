@@ -143,6 +143,8 @@ struct EditorView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .layoutPriority(-1)
             .accessibilityLabel("Scene Settings")
+            PreviewQualityMenu(state: state)
+            QuickMenu(state: state)
             ViewModeSwitch(state: state).fixedSize()
 
             Button { showExport = true } label: {
@@ -167,7 +169,8 @@ struct EditorView: View {
                 ClockReader(clock: state.clock) { t in
                     MetalPreview(project: state.viewMode == .orbit ? OrbitView.scene(state.project, orbit: state.orbit, time: t) : state.project,
                                  time: t, redrawToken: state.redrawToken, mediaURL: { state.mediaURL($0) },
-                                 viewZoom: state.viewMode == .comp ? viewZoom : 1, viewPan: state.viewMode == .comp ? viewPan : .zero)
+                                 viewZoom: state.viewMode == .comp ? viewZoom : 1, viewPan: state.viewMode == .comp ? viewPan : .zero,
+                                 qualityCap: state.previewQuality.rawValue)
                 }
                 if state.viewMode == .orbit {
                     ClockReader(clock: state.clock) { t in OrbitGrid(project: state.project, orbit: state.orbit, time: t, fit: fit) }
