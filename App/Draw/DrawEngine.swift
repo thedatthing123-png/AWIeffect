@@ -3,6 +3,7 @@ import Metal
 import CoreGraphics
 import UIKit
 import simd
+import CoreImage
 
 /// Must match DabParams / LayerCompositeParams in Draw.metal.
 struct DabParams { var color: SIMD4<Float>; var dab: SIMD4<Float>; var extra: SIMD4<Float>; var region: SIMD4<UInt32> }
@@ -520,8 +521,40 @@ final class DrawEngine: ObservableObject {
                        provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent)
     }
 
+    /// A traced-over video frame: shown while painting, left out of the saved drawing.
+    var referenceLayerID: UUID?
+
+    /// AI subject selection (Apple's on-device subject lift) on the active layer: people, animals, objects.
+    @discardableResult
+    func selectSubject() -> Bool {
+        guard let l = activeLayer, let cg = cgImage(bytes(of: l)), let pb = CutoutEngine.mask(cg, mode: .object) else { return false }
+        let ci = CIImage(cvPixelBuffer: pb)
+        let sx = CGFloat(width) / ci.extent.width, sy = CGFloat(height) / ci.extent.height
+        var mask = [UInt8](repeating: 0, count: width * height)
+        let ctx = CIContext()
+        // CIImage is y-up, the canvas is y-down.
+        let img = ci.transformed(by: CGAffineTransform(scaleX: sx, y: -sy).translatedBy(x: 0, y: -ci.extent.height))
+        ctx.render(img, toBitmap: &mask, rowBytes: width, bounds: CGRect(x: 0, y: 0, width: width, height: height),
+                   format: .L8, colorSpace: CGColorSpaceCreateDeviceGray())
+        guard mask.contains(where: { $0 > 128 }) else { return false }
+        selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: mask, bytesPerRow: width)
+        hasSelection = true
+        revision += 1
+        return true
+    }
+
+    /// Selection → its own layer (the subject lifted off its background, ready to redraw around).
+    func liftSelectionToLayer() {
+        copySelection()
+        paste()
+    }
+
     /// Flattened drawing as PNG (transparent background).
     func flattenedPNG() -> Data? {
+        let ref = layers.first { $0.id == referenceLayerID }
+        let wasVisible = ref?.visible ?? false
+        ref?.visible = false
+        defer { ref?.visible = wasVisible }
         guard let cb = queue.makeCommandBuffer() else { return nil }
         encodeComposite(cb)
         cb.commit(); cb.waitUntilCompleted()

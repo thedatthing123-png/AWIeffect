@@ -5,6 +5,8 @@ import Foundation
 enum FFXImporter {
     struct Result {
         var effects: [EffectInstance]
+        /// Text animators in the preset (AE text animation presets).
+        var textAnimators: [TextAnimator] = []
         var report: ImportReport
     }
 
@@ -46,6 +48,13 @@ enum FFXImporter {
             report.add(name, def.name, def.id.hasPrefix("awi.") ? .approximate : .native, e.matchName)
         }
         visit(root)
-        return Result(effects: effects, report: report)
+        var anims: [TextAnimator] = []
+        func findTdgp(_ c: RIFXChunk) {
+            if c.key == "tdgp" { anims += TextAnimatorImport.animators(in: AEPImporter.walkGroup(c), timebase: 24576, layerStart: 0); return }
+            for k in c.children { findTdgp(k) }
+        }
+        findTdgp(root)
+        if !anims.isEmpty { report.add(name, "Text animation", .native, "\(anims.count) text animator(s)") }
+        return Result(effects: effects, report: report, textAnimators: anims)
     }
 }

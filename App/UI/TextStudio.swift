@@ -144,12 +144,7 @@ struct TextPanel: View {
     private func labeledSlider(_ title: String, value: Double, range: ClosedRange<Double>, _ set: @escaping (Double) -> Void) -> some View {
         HStack {
             Text(title).font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 90, alignment: .leading)
-            Slider(value: Binding(get: { min(max(value, range.lowerBound), range.upperBound) }, set: { v in
-                state.beginEdit(title)
-                set(v)
-            }), in: range) { e in if !e { state.endEdit() } }
-            Text(String(format: "%.1f", value)).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.accentGlow)
-                .frame(width: 48, alignment: .trailing)
+            ValueScrubber(value: value, range: range, onBegin: { state.beginEdit(title) }, onChange: set, onEnd: { state.endEdit() })
         }
     }
 
@@ -157,6 +152,22 @@ struct TextPanel: View {
 
     private var presetsTab: some View {
         VStack(alignment: .leading, spacing: 8) {
+            Text("TITLE STYLES").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+            Text("A full design in one tap: font, colors, stroke, glow and animation. Everything stays editable.")
+                .font(.caption).foregroundStyle(Theme.textDim)
+            ForEach(TitleStyles.categories, id: \.self) { cat in
+                Text(cat).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.text).padding(.top, 4)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(TitleStyles.all.filter { $0.category == cat }) { style in
+                            Button { state.applyTitleStyle(style) } label: { TitleStyleTile(style: style).frame(width: 118) }
+                                .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+            Divider().overlay(Theme.stroke).padding(.vertical, 4)
+            Text("ANIMATIONS").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
             Text("Premade animations start at the playhead. Every one is built from editable animators.")
                 .font(.caption).foregroundStyle(Theme.textDim)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
@@ -395,15 +406,12 @@ struct AnimatorCard: View {
                         _ set: @escaping (inout TextAnimator, Double, Double) -> Void) -> some View {
         HStack {
             Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 84, alignment: .leading)
-            Slider(value: Binding(get: { min(max(value, range.lowerBound), range.upperBound) }, set: { v in
-                state.beginEdit(title)
+            ValueScrubber(value: value, range: range, onBegin: { state.beginEdit(title) }, onChange: { v in
                 let t = state.currentTime
                 state.editTextContinuous { td in
                     if let i = td.animators.firstIndex(where: { $0.id == animator.id }) { set(&td.animators[i], v, t) }
                 }
-            }), in: range) { e in if !e { state.endEdit() } }
-            Text(String(format: "%.0f", value)).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.accentGlow)
-                .frame(width: 40, alignment: .trailing)
+            }, onEnd: { state.endEdit() })
         }
     }
 }

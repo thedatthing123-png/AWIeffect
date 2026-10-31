@@ -2,7 +2,10 @@ import SwiftUI
 
 @main
 struct AWIeffectApp: App {
-    init() { FontLibrary.shared.registerAll() }
+    init() {
+        CrashReporter.install()
+        FontLibrary.shared.registerAll()
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -14,7 +17,10 @@ struct AWIeffectApp: App {
 }
 
 struct RootView: View {
-    @State private var openProject: Project?
+    @State private var openProject: Project? {
+        didSet { UserDefaults.standard.set(openProject?.id.uuidString, forKey: CrashReporter.openProjectKey) }
+    }
+    @State private var crashReport = CrashReporter.previousReport
 
     var body: some View {
         ZStack {
@@ -33,5 +39,16 @@ struct RootView: View {
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: openProject?.id)
+        .sheet(isPresented: Binding(get: { crashReport != nil }, set: { if !$0 { crashReport = nil; CrashReporter.clear() } })) {
+            CrashReportSheet(report: crashReport ?? "", reopen: lastProject.map { p in { crashReport = nil; openProject = p } }) {
+                crashReport = nil
+            }
+        }
+    }
+
+    /// The project that was open when the app crashed.
+    private var lastProject: Project? {
+        guard let s = UserDefaults.standard.string(forKey: CrashReporter.openProjectKey), let id = UUID(uuidString: s) else { return nil }
+        return try? ProjectStore.shared.load(id)
     }
 }

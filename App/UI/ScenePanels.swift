@@ -34,10 +34,9 @@ struct ScenePanel: View {
                     .tint(Theme.accent).foregroundStyle(Theme.text)
                     label(String(format: "Duration  %.1fs", state.project.duration))
                     HStack {
-                        Slider(value: Binding(get: { state.project.duration }, set: { v in
-                            state.beginEdit("Duration"); state.mutate("Duration") { $0.duration = (v * 10).rounded() / 10 }
-                        }), in: 1...180) { e in if !e { state.endEdit() } }
-                        .tint(Theme.accent)
+                        ValueScrubber(value: state.project.duration, range: 1...180, step: 0.1, unit: "s",
+                                      onBegin: { state.beginEdit("Duration") },
+                                      onChange: { v in state.mutate("Duration") { $0.duration = max(0.1, v) } }, onEnd: { state.endEdit() })
                         Button("Fit") { state.fitDurationToLayers() }.font(.system(size: 12, weight: .semibold))
                     }
                     ColorPicker("Background", selection: Binding(get: { Color(state.project.background) }, set: { c in
@@ -47,7 +46,11 @@ struct ScenePanel: View {
                         state.mutate("Motion Blur") { $0.motionBlurEnabled = b }
                     }))
                     .tint(Theme.accent).foregroundStyle(Theme.text)
-                    Text("Layers blur only when their own Motion Blur switch is on too (like After Effects).")
+                    Toggle("Smooth Motion (auto blur on shakes & motion effects)", isOn: Binding(get: { state.project.smoothMotion }, set: { b in
+                        state.mutate("Smooth Motion") { $0.smoothMotion = b }
+                    }))
+                    .tint(Theme.accent).foregroundStyle(Theme.text)
+                    Text("Other layers blur when their own Motion Blur switch is on too (like After Effects).")
                         .font(.caption).foregroundStyle(Theme.textDim)
                 }
                 .padding(.horizontal, 12).padding(.bottom, 14)
@@ -182,8 +185,7 @@ struct MotionBlurPanel: View {
     private func slider(_ t: String, _ v: Double, _ r: ClosedRange<Double>, _ fmt: String, _ set: @escaping (Double) -> Void) -> some View {
         HStack {
             Text(t).font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 120, alignment: .leading)
-            Slider(value: Binding(get: { v }, set: { x in state.beginEdit(t); set(x) }), in: r) { e in if !e { state.endEdit() } }.tint(Theme.accent)
-            Text(String(format: fmt, v)).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.accentGlow).frame(width: 44)
+            ValueScrubber(value: v, range: r, step: 1, unit: fmt.hasSuffix("°") ? "°" : "", onBegin: { state.beginEdit(t) }, onChange: set, onEnd: { state.endEdit() })
         }
     }
 }
@@ -245,8 +247,7 @@ struct TimePanel: View {
     private func slider(_ t: String, _ v: Double, _ r: ClosedRange<Double>, _ fmt: String, _ set: @escaping (Double) -> Void) -> some View {
         HStack {
             Text(t).font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 70, alignment: .leading)
-            Slider(value: Binding(get: { min(max(v, r.lowerBound), r.upperBound) }, set: set), in: r).tint(Theme.accent)
-            Text(String(format: fmt, v)).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.accentGlow).frame(width: 48)
+            ValueScrubber(value: v, range: r, step: fmt.contains(".2f") ? 0.01 : 1, unit: fmt.hasSuffix("s") ? "s" : (fmt.contains("%%") ? "%" : ""), onChange: set)
         }
     }
 }

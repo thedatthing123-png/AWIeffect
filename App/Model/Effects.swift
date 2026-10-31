@@ -10,13 +10,19 @@ enum ParamValue: Codable, Equatable {
 
     func number(at t: Double) -> Double {
         switch self {
-        case .number(let a): return a.value(at: t)
+        case .number(let a):
+            let v = a.value(at: t)
+            return v.isFinite ? min(max(v, -1e7), 1e7) : 0
         case .toggle(let b): return b ? 1 : 0
         case .choice(let i): return Double(i)
         default: return 0
         }
     }
-    func point(at t: Double) -> Vec2 { if case .point(let a) = self { return a.value(at: t) }; return .zero }
+    func point(at t: Double) -> Vec2 {
+        guard case .point(let a) = self else { return .zero }
+        let v = a.value(at: t)
+        return v.x.isFinite && v.y.isFinite ? v : .zero
+    }
     func color(at t: Double) -> RGBA { if case .color(let a) = self { return a.value(at: t) }; return .white }
 
     var keyframeTimes: [Double] {

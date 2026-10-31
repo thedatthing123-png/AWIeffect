@@ -113,10 +113,13 @@ final class Exporter {
 
         for i in 0..<frames {
             if cancelled { writer.cancelWriting(); throw ExportError.cancelled }
+            let waitStart = CFAbsoluteTimeGetCurrent()
             while !input.isReadyForMoreMediaData {
                 if writer.status == .failed { throw ExportError.writer(writer.error?.localizedDescription ?? "writer failed") }
                 try await Task.sleep(nanoseconds: 2_000_000)
                 if cancelled { writer.cancelWriting(); throw ExportError.cancelled }
+                // Never sit at a percentage forever: report what stalled instead.
+                if CFAbsoluteTimeGetCurrent() - waitStart > 30 { writer.cancelWriting(); throw ExportError.writer("video encoder stopped responding at frame \(i)") }
             }
             guard let pool = adaptor.pixelBufferPool else { throw ExportError.writer("no pixel buffer pool") }
             var pbOut: CVPixelBuffer?
@@ -131,8 +134,14 @@ final class Exporter {
             texPool.recycle()
             r.encode(project: project, time: t, renderScale: renderScale, into: comp, commandBuffer: cb, pool: texPool, mediaURL: mediaURL)
             r.encodeToBGRA(comp: comp, out: outTex, commandBuffer: cb)
+            let gpuDone = DispatchSemaphore(value: 0)
+            cb.addCompletedHandler { _ in gpuDone.signal() }
             cb.commit()
-            cb.waitUntilCompleted()
+            if gpuDone.wait(timeout: .now() + 20) == .timedOut {
+                writer.cancelWriting()
+                throw ExportError.writer("frame \(i) took too long to render (try a lower resolution)")
+            }
+            if let e = cb.error { NSLog("AWIeffect export frame \(i) GPU error: \(e)") }
             let pts = CMTime(value: CMTimeValue((Double(i) / fps * Double(timescale)).rounded()), timescale: timescale)
             if !adaptor.append(pb, withPresentationTime: pts) {
                 throw ExportError.writer(writer.error?.localizedDescription ?? "append failed")

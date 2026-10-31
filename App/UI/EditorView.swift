@@ -263,12 +263,14 @@ struct EditorView: View {
             let fit = CGRect(x: base.midX - base.width * viewZoom / 2 + viewPan.width, y: base.midY - base.height * viewZoom / 2 + viewPan.height,
                              width: base.width * viewZoom, height: base.height * viewZoom)
             ZStack(alignment: .topLeading) {
+                LiveReader(live: state.live) { lp in
                 ClockReader(clock: state.clock) { t in
-                    MetalPreview(project: state.viewMode == .orbit ? OrbitView.scene(state.project, orbit: state.orbit, time: t) : state.project,
+                    MetalPreview(project: state.viewMode == .orbit ? OrbitView.scene(lp ?? state.project, orbit: state.orbit, time: t) : (lp ?? state.project),
                                  time: t, redrawToken: state.redrawToken, mediaURL: { state.mediaURL($0) },
                                  viewZoom: state.viewMode == .comp ? viewZoom : 1, viewPan: state.viewMode == .comp ? viewPan : .zero,
                                  qualityCap: state.previewQuality.rawValue, isPlaying: state.isPlaying,
                                  cacheEnabled: state.viewMode == .comp)
+                }
                 }
                 if state.viewMode == .orbit {
                     ClockReader(clock: state.clock) { t in OrbitGrid(project: state.project, orbit: state.orbit, time: t, fit: fit) }
@@ -280,12 +282,14 @@ struct EditorView: View {
                 if trackLauncher.active {
                     TrackOverlay(state: state, fit: fit) { trackLauncher.active = false }
                 }
-                if pen == nil, state.viewMode == .comp, let id = state.selectedLayerID,
-                   let layer = state.displayProject.layers.first(where: { $0.id == id }) {
-                    ClockReader(clock: state.clock) { t in
-                        if layer.isActive(at: t) {
-                            SelectionOverlay(layer: layer, time: t, fit: fit,
-                                             compWidth: state.project.width, project: state.project, tool: state.transformTool)
+                if pen == nil, state.viewMode == .comp, let id = state.selectedLayerID {
+                    LiveReader(live: state.live) { lp in
+                        ClockReader(clock: state.clock) { t in
+                            let shown = lp ?? state.project
+                            if let layer = Renderer.resolveParenting(shown, time: t).layers.first(where: { $0.id == id }), layer.isActive(at: t) {
+                                SelectionOverlay(layer: layer, time: t, fit: fit,
+                                                 compWidth: shown.width, project: shown, tool: state.transformTool)
+                            }
                         }
                     }
                     .allowsHitTesting(false)
@@ -479,6 +483,11 @@ struct TransportBar: View {
             button("diamond.fill", enabled: state.selectedLayer != nil, tint: state.selectedLayer != nil ? Theme.keyframe : nil) { state.keyAllTransform() }
                 .accessibilityLabel("Key All")
             button(state.loop ? "repeat" : "repeat.1", tint: state.loop ? Theme.accentGlow : Theme.textDim) { state.loop.toggle() }
+            button("checklist", tint: state.isMultiSelecting ? Theme.accentGlow : nil) {
+                if state.isMultiSelecting { state.endMultiSelect() }
+                else if let id = state.selectedLayerID ?? state.project.layers.first?.id { state.beginMultiSelect(id) }
+            }
+            .accessibilityLabel(state.isMultiSelecting ? "Done Selecting" : "Select Multiple")
             button("clock.arrow.circlepath") { showHistory = true }
         }
         .foregroundStyle(Theme.text)

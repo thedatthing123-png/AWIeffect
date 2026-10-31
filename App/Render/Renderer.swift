@@ -350,7 +350,8 @@ final class Renderer {
             let extrude = layer.is3D && layer.content != .model ? max(0, layer.extrude.value(at: time)) : 0
             // Motion blur: placements across the shutter interval (empty when the layer doesn't move).
             var blurMatrices: [simd_double3x3] = []
-            if project.motionBlurEnabled && layer.motionBlur && extrude <= 0.5 {
+            let autoSmooth = project.smoothMotion && layer.effects.contains { $0.isEnabled && (EffectRegistry.definition($0.typeID)?.isTransformEffect ?? false) }
+            if ((project.motionBlurEnabled && layer.motionBlur) || autoSmooth) && extrude <= 0.5 {
                 let shutter = project.shutterAngle / 360 / max(project.fps, 1)
                 func corner(_ m: simd_double3x3, _ x: Double, _ y: Double) -> SIMD2<Double> {
                     let p = m * SIMD3(x, y, 1); return SIMD2(p.x, p.y) / max(p.z, 1e-6)
@@ -360,7 +361,7 @@ final class Renderer {
                 let m1 = Self.placementMatrix(layer, camera: camera, time: time + shutter / 2, renderScale: renderScale)
                 let travel = [(-hs.x, -hs.y), (hs.x, hs.y), (hs.x, -hs.y), (-hs.x, hs.y)]
                     .map { c in simd_length(corner(m1, c.0, c.1) - corner(m0, c.0, c.1)) }.max() ?? 0
-                if travel > 0.5 {
+                if travel.isFinite, travel > 0.5 {
                     let n = max(3, min(project.blurSamples, Int((travel / 1.5).rounded(.up)) + 1))
                     blurMatrices = (0..<n).map { k in
                         Self.placementMatrix(layer, camera: camera, time: time + (Double(k) / Double(n - 1) - 0.5) * shutter, renderScale: renderScale)
@@ -387,9 +388,11 @@ final class Renderer {
             }
 
             // Effects path: render the layer in its own (local, unrotated) buffer, run the stack, then place it.
-            let margin = pixelFX.reduce(0.0) { acc, e in acc + (EffectRegistry.definition(e.typeID)?.margin(e, time) ?? 0) }
+            let rawMargin = pixelFX.reduce(0.0) { acc, e in acc + (EffectRegistry.definition(e.typeID)?.margin(e, time) ?? 0) }
                 + (dof > 0.5 ? dof * 3 / max(pxPerLocal, 1e-4) : 0)
-            let ext = Vec2(hs.x + margin, hs.y + margin)
+            let margin = rawMargin.isFinite ? min(max(0, rawMargin), 20000) : 0
+            guard hs.x.isFinite, hs.y.isFinite, pxPerLocal.isFinite else { continue }
+            let ext = Vec2(min(max(hs.x, 0.5), 1e6) + margin, min(max(hs.y, 0.5), 1e6) + margin)
             var density = min(1.5, max(0.05, pxPerLocal))
             let maxSide = max(ext.x, ext.y) * 2 * density
             if maxSide > Double(Self.maxLayerTexture) { density *= Double(Self.maxLayerTexture) / maxSide }

@@ -428,6 +428,7 @@ enum AEPImporter {
             // Use the project's font when iOS has it (Arial, Helvetica, Futura...), else keep the default.
             if let f = textFont, UIFont(name: f, size: 12) != nil { t.fontName = f }
             t.fill = Animated(.white)
+            t.animators = TextAnimatorImport.animators(in: tree, timebase: comp.timebase, layerStart: start)
             layer.text = t
         }
 

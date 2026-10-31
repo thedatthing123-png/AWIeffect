@@ -86,6 +86,11 @@ extension EditorState {
         }
         pause()
         beginEdit(label)
+        beginLiveGesture()
+        multiDragStarts = [:]
+        if case .move = kind, let ids = multiSelection, ids.count > 1 {
+            for o in project.layers where ids.contains(o.id) && !o.isLocked { multiDragStarts[o.id] = o.transform.position.value(at: t) }
+        }
         UISelectionFeedbackGenerator().selectionChanged()
         return CanvasDrag(kind: kind, startComp: comp, pivot: tr.position.value(at: t), position: tr.position.value(at: t),
                           scale: tr.scale.value(at: t), rotation: tr.rotation.value(at: t), anchor: tr.anchor.value(at: t), inverse: M.inverse)
@@ -94,6 +99,19 @@ extension EditorState {
     func updateCanvasDrag(_ d: CanvasDrag, comp c: Vec2) {
         let t = currentTime
         switch d.kind {
+        case .move where multiDragStarts.count > 1:
+            // Multi-selection: everything selected moves together (each in its own parent's space is skipped
+            // for simplicity: children follow their parents anyway).
+            let delta = c - d.startComp
+            guard liveGesture, var lp = live.project else { return }
+            for i in lp.layers.indices {
+                guard let s = multiDragStarts[lp.layers[i].id] else { continue }
+                if let pid = lp.layers[i].parentID, multiDragStarts[pid] != nil { continue }
+                let p = s + delta
+                lp.layers[i].transform.position.set(Vec2(p.x.rounded(), p.y.rounded()), at: t)
+            }
+            lp.modifiedAt = Date()
+            live.project = lp
         case .move:
             var delta = c - d.startComp
             if let pid = selectedLayer?.parentID, let a = Renderer.parentAffine(pid, in: project, time: t) {
@@ -151,7 +169,7 @@ extension EditorState {
         }
     }
 
-    func endCanvasDrag() { endEdit(); snapGuides = SnapGuides() }
+    func endCanvasDrag() { endLiveGesture(); endEdit(); snapGuides = SnapGuides(); multiDragStarts = [:] }
 }
 
 /// Mode buttons + scale link toggle shown above the transform properties.

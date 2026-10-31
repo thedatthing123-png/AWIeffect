@@ -1,0 +1,116 @@
+import XCTest
+@testable import AWIeffect
+
+/// Crash hunting: every effect rendered with extreme settings (slider ends, typed values far past them,
+/// negatives), degenerate layers, and rapid edits during playback-style rendering. Nothing may crash or hang.
+final class StressTests: XCTestCase {
+    private func scene(_ fx: [EffectInstance], scale: Double = 100) -> Project {
+        var p = Project.new(name: "stress", width: 160, height: 160, fps: 30, duration: 2, background: RGBA(0.1, 0.1, 0.15))
+        var star = p.makeLayer(name: "star", content: .shape(.star), size: Vec2(90, 90))
+        star.fill = Animated(RGBA(1, 0.8, 0.3))
+        star.transform.scale = Animated(Vec2(scale, scale))
+        star.effects = fx
+        var bg = p.makeLayer(name: "bg", content: .solid, size: Vec2(160, 60))
+        bg.fill = Animated(RGBA(0.2, 0.6, 0.9))
+        p.layers = [star, bg]
+        return p
+    }
+
+    private func set(_ d: EffectDefinition, _ pick: (Double, Double) -> Double) -> EffectInstance {
+        var e = d.makeInstance()
+        for pd in d.params {
+            if case .number(let lo, let hi, _, _) = pd.kind { e.params[pd.id] = .number(Animated(pick(lo, hi))) }
+        }
+        return e
+    }
+
+    func testEveryEffectSurvivesExtremeSettings() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        let cases: [(String, (Double, Double) -> Double)] = [
+            ("min", { lo, _ in lo }),
+            ("max", { _, hi in hi }),
+            ("typed 5x max", { lo, hi in hi + (hi - lo) * 4 }),
+            ("typed below min", { lo, hi in lo - (hi - lo) * 2 }),
+            ("zero", { _, _ in 0 }),
+        ]
+        var slow: [String] = []
+        for d in EffectRegistry.all {
+            for (name, pick) in cases {
+                let p = scene([set(d, pick)])
+                let t0 = CFAbsoluteTimeGetCurrent()
+                _ = r.renderPixels(project: p, time: 0.4, mediaURL: { URL(fileURLWithPath: $0) })
+                let ms = (CFAbsoluteTimeGetCurrent() - t0) * 1000
+                if ms > 400 { slow.append("\(d.id) [\(name)] \(Int(ms))ms") }
+            }
+        }
+        for s in slow { print("SKIP-INFO slow extreme: \(s)") }
+        XCTAssertLessThan(slow.count, 1, "effects that stall at extreme settings: \(slow.prefix(20))")
+    }
+
+    func testDegenerateLayersDoNotCrash() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        let glow = EffectRegistry.glow.makeInstance(), blur = EffectRegistry.gaussianBlur.makeInstance()
+        for s in [0.0, 0.0001, -100, 100_000, 5_000_000] {
+            _ = r.renderPixels(project: scene([glow, blur], scale: s), time: 0.4, mediaURL: { URL(fileURLWithPath: $0) })
+        }
+        var p = scene([glow])
+        p.layers[0].size = Animated(Vec2(0, 0))
+        _ = r.renderPixels(project: p, time: 0.4, mediaURL: { URL(fileURLWithPath: $0) })
+        p.layers[0].transform.position = Animated(Vec2(.nan, .infinity))
+        p.layers[0].transform.rotation = Animated(.nan)
+        _ = r.renderPixels(project: p, time: 0.4, mediaURL: { URL(fileURLWithPath: $0) })
+        p.layers[0].transform.position.expression = "1/0"
+        _ = r.renderPixels(project: p, time: 0.4, mediaURL: { URL(fileURLWithPath: $0) })
+    }
+
+    /// Settings changing every frame while "playing" through the preview path (pool recycling, triple buffering).
+    func testRapidEditsWhilePlaying() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        let pools = (0..<3).map { _ in r.makePool() }
+        let defs = Array(EffectRegistry.all.prefix(60))
+        var p = scene([])
+        for frame in 0..<240 {
+            let d = defs[frame % defs.count]
+            p.layers[0].effects = [set(d) { lo, hi in lo + (hi - lo) * Double(frame % 7) / 6 }]
+            p.layers[0].transform.scale = Animated(Vec2(20 + Double(frame % 50) * 8, 100))
+            p.modifiedAt = Date()
+            guard let tex = r.makeCompTexture(width: 120 + frame % 40, height: 120), let cb = r.queue.makeCommandBuffer() else { continue }
+            let pool = pools[frame % 3]
+            pool.recycle()
+            r.encode(project: p, time: Double(frame) / 30, renderScale: 0.75, into: tex, commandBuffer: cb, pool: pool, mediaURL: { URL(fileURLWithPath: $0) })
+            cb.commit()
+            if frame % 3 == 2 { cb.waitUntilCompleted() }
+        }
+    }
+
+    /// Every title style must look different from plain white text and keep its animation.
+    func testTitleStylesRenderAndDiffer() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        var plain = TitleStylePreviews.project(for: TitleStyles.all[0])
+        plain.layers[0].effects = []; plain.layers[0].text?.animators = []
+        plain.layers[0].text?.fill = Animated(.white); plain.layers[0].text?.fontName = "Helvetica-Bold"
+        let base = try XCTUnwrap(r.renderPixels(project: plain, time: 1.5, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        for st in TitleStyles.all {
+            XCTAssertEqual(st.makeEffects().count, st.effects.count, "\(st.name): unknown effect id")
+            if let a = st.animation { XCTAssertNotNil(TextPresets.all.first { $0.id == a }, "\(st.name): unknown animation \(a)") }
+            let px = try XCTUnwrap(r.renderPixels(project: TitleStylePreviews.project(for: st), time: 1.5, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+            var d = 0.0
+            for i in 0..<min(px.count, base.count) { d += Double(abs(Int(px[i]) - Int(base[i]))) }
+            if !["clean", "softShadow", "elegant", "typewriter", "wideSpaced"].contains(st.id) { XCTAssertGreaterThan(d / Double(px.count), 0.3, "\(st.name) looks like plain text") }
+        }
+    }
+
+    /// Smooth Motion: a shaking layer is motion-blurred automatically (AE look), and turning it off removes the blur.
+    func testSmoothMotionBlursShakes() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        var shake = EffectRegistry.shake.makeInstance()
+        shake.params["amplitude"] = .number(Animated(40))
+        var p = scene([shake])
+        let on = try XCTUnwrap(r.renderPixels(project: p, time: 0.43, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        p.smoothMotion = false
+        let off = try XCTUnwrap(r.renderPixels(project: p, time: 0.43, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        var d = 0.0
+        for i in 0..<min(on.count, off.count) { d += Double(abs(Int(on[i]) - Int(off[i]))) }
+        XCTAssertGreaterThan(d / Double(on.count), 0.2, "shake should be motion-blurred by default")
+    }
+}

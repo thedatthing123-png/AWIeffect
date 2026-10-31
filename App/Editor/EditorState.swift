@@ -46,6 +46,13 @@ enum ToolPanel: Equatable {
     case time
 }
 
+/// The project as it looks mid-gesture. While a finger drags a layer on the canvas only the preview and the
+/// selection box watch this; the rest of the editor (timeline, panels) updates once when the finger lifts.
+@MainActor
+final class LiveCanvas: ObservableObject {
+    @Published var project: Project?
+}
+
 /// Playback time on its own publisher: while playing only the preview and timeline redraw each frame,
 /// not every panel in the editor.
 @MainActor
@@ -59,14 +66,25 @@ final class EditorState: ObservableObject {
         didSet { scheduleAutosave() }
     }
     let clock = PlayClock()
+    let live = LiveCanvas()
+    /// True while a canvas drag writes to `live` instead of `project`.
+    private(set) var liveGesture = false
+    /// Start positions of every selected layer while a multi-selection is dragged on the canvas.
+    var multiDragStarts: [UUID: Vec2] = [:]
+    /// What the canvas should draw right now (the live gesture copy, else the project).
+    var canvasProject: Project { live.project ?? project }
     var currentTime: Double = 0 {
         willSet { if !isPlaying && newValue != currentTime { objectWillChange.send() } }
         didSet { if clock.time != currentTime { clock.time = currentTime } }
     }
-    @Published var isPlaying = false
+    @Published var isPlaying = false {
+        didSet { if isPlaying != oldValue { CrashReporter.note(isPlaying ? "Play" : "Pause") } }
+    }
     @Published var loop = true
     @Published var selectedLayerID: UUID?
-    @Published var panel: ToolPanel = .none
+    @Published var panel: ToolPanel = .none {
+        didSet { if panel != oldValue { CrashReporter.note("Opened \(panel)") } }
+    }
     @Published private(set) var undoStack: [(label: String, project: Project)] = []
     @Published private(set) var redoStack: [(label: String, project: Project)] = []
     @Published var redrawToken = 0
@@ -129,6 +147,7 @@ final class EditorState: ObservableObject {
     func endEdit() { editGroupOpen = false }
 
     private func pushUndo(_ label: String) {
+        CrashReporter.note(label)
         undoStack.append((label, project))
         if undoStack.count > 200 { undoStack.removeFirst() }
         redoStack.removeAll()
@@ -147,6 +166,12 @@ final class EditorState: ObservableObject {
     /// Continuous mutation (slider drag / canvas drag): call beginEdit first, endEdit after.
     func mutateLayer(_ change: (inout Layer) -> Void) {
         guard let i = selectedIndex else { return }
+        if liveGesture, var lp = live.project, lp.layers.indices.contains(i) {
+            change(&lp.layers[i])
+            lp.modifiedAt = Date()
+            live.project = lp
+            return
+        }
         var p = project
         change(&p.layers[i])
         p.fitAutoLength()
@@ -157,7 +182,25 @@ final class EditorState: ObservableObject {
     var canUndo: Bool { !undoStack.isEmpty }
     var canRedo: Bool { !redoStack.isEmpty }
 
+    /// Canvas drags: edits go to the lightweight live copy until `endLiveGesture`.
+    func beginLiveGesture() {
+        liveGesture = true
+        live.project = project
+    }
+
+    func endLiveGesture() {
+        guard liveGesture else { return }
+        liveGesture = false
+        if var p = live.project {
+            p.fitAutoLength()
+            p.modifiedAt = Date()
+            project = p
+        }
+        live.project = nil
+    }
+
     func undo() {
+        endLiveGesture()
         guard let last = undoStack.popLast() else { return }
         redoStack.append((last.label, project))
         project = last.project
@@ -310,8 +353,10 @@ final class EditorState: ObservableObject {
 
     /// Continuous param edit (slider drag): wrap with beginEdit/endEdit.
     func setEffectParam(_ effectID: UUID, _ key: String, _ change: (inout ParamValue, Double) -> Void) {
-        guard let i = selectedIndex, let j = project.layers[i].effects.firstIndex(where: { $0.id == effectID }),
-              var v = project.layers[i].effects[j].params[key] else { return }
+        guard let i = selectedIndex, let j = project.layers[i].effects.firstIndex(where: { $0.id == effectID }) else { return }
+        // Imported / older effects may lack a control: start it from the effect's default instead of ignoring the edit.
+        let e = project.layers[i].effects[j]
+        guard var v = e.params[key] ?? EffectRegistry.definition(e.typeID)?.params.first(where: { $0.id == key })?.defaultValue else { return }
         change(&v, currentTime)
         var p = project
         p.layers[i].effects[j].params[key] = v
@@ -614,6 +659,19 @@ extension EditorState {
         defer { if access { url.stopAccessingSecurityScopedResource() } }
         let size = project.layers[i].size.staticValue
         guard let r = try? FFXImporter.load(url: url, layerSize: size) else { return nil }
+        if !r.textAnimators.isEmpty, project.layers[i].text != nil {
+            let start = max(project.layers[i].inPoint, currentTime)
+            mutate("Apply Text Preset \(url.deletingPathExtension().lastPathComponent)") { p in
+                p.layers[i].text?.animators += r.textAnimators.map { a in
+                    var a = a
+                    a.selector.start.keyframes = a.selector.start.keyframes.map { var k = $0; k.time += start; return k }
+                    a.selector.end.keyframes = a.selector.end.keyframes.map { var k = $0; k.time += start; return k }
+                    a.selector.offset.keyframes = a.selector.offset.keyframes.map { var k = $0; k.time += start; return k }
+                    a.selector.amount.keyframes = a.selector.amount.keyframes.map { var k = $0; k.time += start; return k }
+                    return a
+                }
+            }
+        }
         if !r.effects.isEmpty {
             let start = project.layers[i].inPoint
             mutate("Apply Preset \(url.deletingPathExtension().lastPathComponent)") { p in
@@ -641,7 +699,24 @@ extension EditorState {
     /// Engine for a new drawing (canvas = composition size) or the selected drawing layer.
     func makeDrawEngine(editing layer: Layer?) -> DrawEngine? {
         if let id = layer?.drawingID, let e = DrawEngine.load(doc: id, folder: store.mediaFolder(for: project.id)) { return e }
-        return DrawEngine(width: project.width, height: project.height)
+        guard let e = DrawEngine(width: project.width, height: project.height) else { return nil }
+        // Redraw on a photo / video frame: bring the layer in exactly where it sits in the scene.
+        if let layer, layer.mediaFile != nil, let r = Renderer.shared {
+            var solo = project
+            solo.layers = Renderer.resolveParenting(project, time: currentTime).layers.filter { $0.id == layer.id }
+            solo.background.a = 0
+            let pid = project.id, st = store
+            if let img = r.renderImage(project: solo, time: currentTime, maxDimension: Double(max(project.width, project.height)),
+                                       mediaURL: { st.mediaURL($0, projectID: pid) }) {
+                e.importImage(img)
+                if case .video = layer.content {
+                    // Video frames are a tracing guide only: paint on the layer above.
+                    e.referenceLayerID = e.layers.last?.id
+                }
+                e.addLayer(name: "Paint")
+            }
+        }
+        return e
     }
 
     /// Saves the drawing and adds (or live-updates) its image layer so it sits exactly where it was drawn.
@@ -653,8 +728,17 @@ extension EditorState {
         guard (try? png.write(to: folder.appendingPathComponent(file), options: .atomic)) != nil else { return }
         Renderer.shared?.clearImageCache()
         let w = engine.width, h = engine.height
-        if let id = existing, let i = project.layers.firstIndex(where: { $0.id == id }) {
+        if let id = existing, let i = project.layers.firstIndex(where: { $0.id == id }), project.layers[i].drawingID != nil {
             mutate("Edit Drawing") { $0.layers[i].content = .image(fileName: file, pixelWidth: w, pixelHeight: h) }
+        } else if let id = existing, let i = project.layers.firstIndex(where: { $0.id == id }), case .image = project.layers[i].content {
+            // A redrawn photo: becomes an editable drawing at canvas (= comp) placement.
+            mutate("Redraw Image") { p in
+                p.layers[i].content = .image(fileName: file, pixelWidth: w, pixelHeight: h)
+                p.layers[i].drawingID = docID
+                p.layers[i].size = Animated(Vec2(Double(w), Double(h)))
+                p.layers[i].transform = LayerTransform(position: Animated(p.center))
+                p.layers[i].parentID = nil
+            }
         } else {
             mutate("Add Drawing") { p in
                 var l = p.makeLayer(name: "Drawing \(p.layers.count + 1)", content: .image(fileName: file, pixelWidth: w, pixelHeight: h),

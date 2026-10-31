@@ -361,6 +361,10 @@ struct Project: Codable, Equatable, Identifiable {
         let d = max(1, snapToFrame(end))
         if abs(d - duration) > 1e-6 { duration = d }
     }
+    /// AE-style automatic smoothness: layers with shake / wiggle / motion effects get real motion blur
+    /// without switching anything on (on unless turned off).
+    var smoothMotionStore: Bool? = nil
+    var smoothMotion: Bool { get { smoothMotionStore ?? true } set { smoothMotionStore = newValue } }
     var shutterAngleStore: Double? = nil
     var blurSamplesStore: Int? = nil
     var motionBlurEnabled: Bool { get { motionBlurOn ?? false } set { motionBlurOn = newValue } }

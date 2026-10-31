@@ -276,15 +276,9 @@ struct SliderRow: View {
 
     var body: some View {
         PropertyRow(state: state, key: key) {
-            // One undo step per drag: beginEdit is idempotent until endEdit.
-            Slider(value: Binding(get: { value }, set: { v in
-                state.beginEdit("Edit \(key.title)")
-                onChange(v)
-            }), in: range) { editing in if !editing { state.endEdit() } }
-            Text(String(format: "%.1f%@", value, unit))
-                .font(.system(size: 12, weight: .medium, design: .monospaced))
-                .foregroundStyle(Theme.accentGlow)
-                .frame(width: 62, alignment: .trailing)
+            // One undo step per drag / typed value.
+            ValueScrubber(value: value, range: range, unit: unit, onBegin: { state.beginEdit("Edit \(key.title)") },
+                          onChange: onChange, onEnd: { state.endEdit() })
         }
     }
 }
@@ -479,10 +473,8 @@ struct ShapePanel: View {
                         if kind == .star {
                             HStack {
                                 Text("Inner radius").font(.system(size: 13)).foregroundStyle(Theme.text)
-                                Slider(value: Binding(get: { layer.innerRatio.value(at: t) }, set: { v in
-                                    state.beginEdit("Inner Radius")
-                                    state.mutateLayer { $0.innerRatio.set(v, at: t) }
-                                }), in: 0.1...0.95) { e in if !e { state.endEdit() } }
+                                ValueScrubber(value: layer.innerRatio.value(at: t), range: 0.1...0.95, onBegin: { state.beginEdit("Inner Radius") },
+                                              onChange: { v in state.mutateLayer { $0.innerRatio.set(v, at: t) } }, onEnd: { state.endEdit() })
                             }
                         }
                     }

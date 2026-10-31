@@ -158,10 +158,7 @@ struct ThreeDPanel: View {
                 state.beginEdit("Keyframe \(title)"); keyed(); state.endEdit()
             }
             Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 92, alignment: .leading)
-            Slider(value: Binding(get: { min(max(v, r.lowerBound), r.upperBound) }, set: { x in state.beginEdit(title); set(x) }), in: r) { e in
-                if !e { state.endEdit() }
-            }
-            Text(String(format: "%.0f", v)).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.accentGlow).frame(width: 46)
+            ValueScrubber(value: v, range: r, onBegin: { state.beginEdit(title) }, onChange: set, onEnd: { state.endEdit() })
         }
     }
 }

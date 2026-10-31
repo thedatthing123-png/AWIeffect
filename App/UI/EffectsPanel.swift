@@ -275,27 +275,13 @@ struct ParamRow: View {
     @ViewBuilder private func control(t: Double) -> some View {
         switch def.kind {
         case .number(let lo, let hi, let step, let unit):
-            let v = effect.number(def.id, t)
-            Slider(value: Binding(get: { min(max(v, lo), hi) }, set: { nv in
-                state.beginEdit("Edit \(def.name)")
-                let q = step > 0 ? (nv / step).rounded() * step : nv
-                state.setEffectParam(effect.id, def.id) { pv, time in
-                    if case .number(var a) = pv { a.set(q, at: time); pv = .number(a) }
-                }
-            }), in: lo...hi) { e in if !e { state.endEdit() } }
-            Text(String(format: step >= 1 ? "%.0f%@" : "%.2f%@", v, unit))
-                .font(.system(size: 11, weight: .medium, design: .monospaced)).foregroundStyle(Theme.accentGlow)
-                .frame(width: 58, alignment: .trailing)
+            ValueScrubber(value: effect.number(def.id, t), range: lo...hi, step: step, unit: unit,
+                          onBegin: { state.beginEdit("Edit \(def.name)") },
+                          onChange: { setNumber($0) }, onEnd: { state.endEdit() })
         case .angle:
-            let v = effect.number(def.id, t)
-            Slider(value: Binding(get: { v.truncatingRemainder(dividingBy: 360) }, set: { nv in
-                state.beginEdit("Edit \(def.name)")
-                state.setEffectParam(effect.id, def.id) { pv, time in
-                    if case .number(var a) = pv { a.set(nv, at: time); pv = .number(a) }
-                }
-            }), in: -360...360) { e in if !e { state.endEdit() } }
-            Text(String(format: "%.0f°", v)).font(.system(size: 11, weight: .medium, design: .monospaced))
-                .foregroundStyle(Theme.accentGlow).frame(width: 58, alignment: .trailing)
+            ValueScrubber(value: effect.number(def.id, t), range: -360...360, step: 1, unit: "°",
+                          onBegin: { state.beginEdit("Edit \(def.name)") },
+                          onChange: { setNumber($0) }, onEnd: { state.endEdit() })
         case .point:
             let v = effect.point(def.id, t)
             NumberField(value: v.x * 100, label: "X%") { nv in setPoint(Vec2(nv / 100, v.y)) }
@@ -336,6 +322,12 @@ struct ParamRow: View {
                 .background(RoundedRectangle(cornerRadius: 8).fill(Theme.surface))
             }
             Spacer()
+        }
+    }
+
+    private func setNumber(_ v: Double) {
+        state.setEffectParam(effect.id, def.id) { pv, time in
+            if case .number(var a) = pv { a.set(v, at: time); pv = .number(a) }
         }
     }
 

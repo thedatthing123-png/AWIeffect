@@ -21,6 +21,13 @@ struct ClockReader<Content: View>: View {
     var body: some View { content(clock.time) }
 }
 
+/// Re-renders only its content while a canvas gesture is live.
+struct LiveReader<Content: View>: View {
+    @ObservedObject var live: LiveCanvas
+    @ViewBuilder let content: (Project?) -> Content
+    var body: some View { content(live.project) }
+}
+
 enum OrbitView {
     /// Camera world position + rotation for the orbit.
     static func eye(_ p: Project, orbit o: OrbitCamera) -> (pos: SIMD3<Double>, rx: Double, ry: Double) {

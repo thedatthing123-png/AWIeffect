@@ -117,4 +117,18 @@ final class TimelineEditTests: XCTestCase {
         s.trimClip(s.project.layers[0], start: false, by: -5)
         XCTAssertEqual(s.project.duration, 2, accuracy: 0.05, "and shrinks with it")
     }
+
+    func testLiveCanvasDragCommitsOnceOnRelease() {
+        let s = state()
+        let before = s.project.layers[0].transform.position.value(at: s.currentTime)
+        s.beginEdit("Move Layer"); s.beginLiveGesture()
+        for k in 1...20 { s.mutateLayer { $0.transform.position.set(Vec2(Double(k), 5), at: 0) } }
+        XCTAssertEqual(s.project.layers[0].transform.position.value(at: s.currentTime), before, "project untouched mid-drag")
+        XCTAssertEqual(s.canvasProject.layers[0].transform.position.value(at: s.currentTime), Vec2(20, 5))
+        s.endCanvasDrag()
+        XCTAssertNil(s.live.project)
+        XCTAssertEqual(s.project.layers[0].transform.position.value(at: s.currentTime), Vec2(20, 5))
+        s.undo()
+        XCTAssertEqual(s.project.layers[0].transform.position.value(at: s.currentTime), before, "one undo step for the whole drag")
+    }
 }

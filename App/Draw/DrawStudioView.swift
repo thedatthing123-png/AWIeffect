@@ -248,7 +248,7 @@ struct DrawStudioView: View {
                 sideSliders.padding(.leading, 8)
                 if showLayers { HStack { Spacer(); LayersPanel(engine: engine).frame(width: 250).padding(8) }.transition(.move(edge: .trailing)) }
             }
-            if engine.hasSelection { selectionBar }
+            if engine.hasSelection || session.tool == .lasso || session.tool == .wand { selectionBar }
             bottomBar
         }
         .background(Theme.background.ignoresSafeArea())
@@ -293,13 +293,21 @@ struct DrawStudioView: View {
     }
 
     private var selectionBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: 6) {
+            chip("AI Subject", "person.crop.rectangle") {
+                if !engine.selectSubject() { UINotificationFeedbackGenerator().notificationOccurred(.error) }
+            }
+            chip("Select Layer", "square.dashed") { engine.selectOpaque() }
+            chip("To New Layer", "square.on.square") { engine.liftSelectionToLayer() }
             chip("Cut", "scissors") { engine.cutSelection() }
             chip("Copy", "doc.on.doc") { engine.copySelection() }
             chip("Paste", "doc.on.clipboard") { engine.paste() }
             chip("Delete", "trash") { engine.deleteSelection() }
             chip("Invert", "circle.lefthalf.filled") { engine.invertSelection() }
             chip("Clear", "xmark") { engine.clearSelection() }
+        }
+        .padding(.horizontal, 8)
         }
         .padding(.vertical, 6)
     }
@@ -308,15 +316,22 @@ struct DrawStudioView: View {
         HStack(spacing: 4) {
             ForEach(DrawTool.allCases) { t in
                 Button { session.tool = t } label: {
-                    Image(systemName: t.symbol).font(.system(size: 17, weight: .semibold))
-                        .frame(maxWidth: .infinity, minHeight: 44)
+                    VStack(spacing: 2) {
+                        Image(systemName: t.symbol).font(.system(size: 16, weight: .semibold))
+                        Text(t.title).font(.system(size: 9, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
+                    }
+                        .frame(maxWidth: .infinity, minHeight: 46)
                         .foregroundStyle(session.tool == t ? Theme.accentGlow : Theme.text)
                         .background(RoundedRectangle(cornerRadius: 10).fill(session.tool == t ? Theme.accent.opacity(0.22) : .clear))
                 }
                 .accessibilityLabel(t.title)
             }
             Button { showBrushes = true } label: {
-                Image(systemName: session.brush.kind.symbol).font(.system(size: 17)).frame(width: 40, height: 44).foregroundStyle(Theme.text)
+                VStack(spacing: 2) {
+                    Image(systemName: session.brush.kind.symbol).font(.system(size: 16))
+                    Text("Brushes").font(.system(size: 9, weight: .semibold))
+                }
+                .frame(width: 46, height: 46).foregroundStyle(Theme.text)
             }
             ColorPicker("", selection: Binding(get: { Color(session.brush.color) }, set: { session.brush.color = $0.rgba }), supportsOpacity: false)
                 .labelsHidden().frame(width: 40)
@@ -372,11 +387,12 @@ struct LayersPanel: View {
             HStack {
                 Text("Layers").font(.system(size: 14, weight: .bold)).foregroundStyle(Theme.text)
                 Spacer()
-                Button { engine.addLayer() } label: { Image(systemName: "plus") }
-                Button { engine.duplicateActiveLayer() } label: { Image(systemName: "plus.square.on.square") }
-                Button { engine.mergeDown() } label: { Image(systemName: "arrow.down.to.line.compact") }
-                Button(role: .destructive) { engine.deleteActiveLayer() } label: { Image(systemName: "trash") }
+                Button { engine.addLayer() } label: { Label("Add", systemImage: "plus") }
+                Button { engine.duplicateActiveLayer() } label: { Label("Copy", systemImage: "plus.square.on.square") }
+                Button { engine.mergeDown() } label: { Label("Merge", systemImage: "arrow.down.to.line.compact") }
+                Button(role: .destructive) { engine.deleteActiveLayer() } label: { Label("Delete", systemImage: "trash") }
             }
+            .font(.system(size: 11, weight: .semibold)).labelStyle(.titleAndIcon)
             .foregroundStyle(Theme.text)
             ScrollView {
                 VStack(spacing: 4) {

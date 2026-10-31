@@ -99,11 +99,8 @@ struct ClipPanel: View {
     private func row(_ title: String, value: Double, range: ClosedRange<Double>, fmt: String, _ set: @escaping (Double) -> Void) -> some View {
         HStack {
             Text(title).font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 84, alignment: .leading)
-            Slider(value: Binding(get: { min(max(value, range.lowerBound), range.upperBound) }, set: { v in
-                state.beginEdit(title); set(v)
-            }), in: range) { e in if !e { state.endEdit(); AudioPreview.shared.invalidate() } }
-            Text(String(format: fmt, value)).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.accentGlow)
-                .frame(width: 56, alignment: .trailing)
+            ValueScrubber(value: value, range: range, unit: fmt.contains("%%") ? "%" : (fmt.hasSuffix("x") ? "×" : (fmt.hasSuffix("s") ? "s" : "")),
+                          onBegin: { state.beginEdit(title) }, onChange: set, onEnd: { state.endEdit(); AudioPreview.shared.invalidate() })
         }
     }
 }

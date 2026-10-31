@@ -68,7 +68,12 @@ final class TexturePool {
 
     private static func bytes(_ t: MTLTexture) -> Int { t.width * t.height * 8 }
 
-    func acquire(width: Int, height: Int) -> MTLTexture {
+    /// Largest side the pool hands out (Metal's limit is 16384; real layers are capped far below this).
+    static let maxSide = 8192
+    private var fallback: MTLTexture?
+
+    func acquire(width rawW: Int, height rawH: Int) -> MTLTexture {
+        let width = min(Self.maxSide, max(1, rawW)), height = min(Self.maxSide, max(1, rawH))
         let key = "\(width)x\(height)"
         lastUse[key] = generation
         if var list = free[key], let t = list.popLast() {
@@ -82,9 +87,14 @@ final class TexturePool {
         guard let t = device.makeTexture(descriptor: d) else {
             // Out of GPU memory: drop every spare and try once more rather than crashing.
             purge()
-            let t2 = device.makeTexture(descriptor: d)!
-            used.append(t2)
-            return t2
+            if let t2 = device.makeTexture(descriptor: d) { used.append(t2); return t2 }
+            // Still nothing: a tiny blank texture keeps the frame going (that layer just shows empty).
+            if fallback == nil {
+                let fd = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba16Float, width: 1, height: 1, mipmapped: false)
+                fd.usage = [.shaderRead, .shaderWrite]
+                fallback = device.makeTexture(descriptor: fd)
+            }
+            return fallback!
         }
         used.append(t)
         return t

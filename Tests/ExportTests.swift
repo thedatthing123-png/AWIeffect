@@ -68,4 +68,25 @@ final class ExportTests: XCTestCase {
         XCTAssertEqual(url.pathExtension, "gif")
         XCTAssertGreaterThan((try? Data(contentsOf: url).count) ?? 0, 1000)
     }
+
+    /// A project with an imported video (that has its own sound) must export to the end, not stall.
+    func testExportWithVideoLayer() async throws {
+        let (src, media) = try project(withAudio: true)
+        let clip = try await export(src, media, ExportSettings())
+        var p = Project.new(name: "withvideo", width: 320, height: 240, fps: 30, duration: 2, background: .black)
+        var v = p.makeLayer(name: "clip", content: .video(fileName: "clip.mp4", pixelWidth: 320, pixelHeight: 240, hasAudio: true), size: Vec2(320, 240))
+        v.outPoint = 2
+        var title = p.makeLayer(name: "title", content: .shape(.rectangle), size: Vec2(80, 40))
+        title.effects = [EffectRegistry.glow.makeInstance()]
+        p.layers = [title, v]
+        var last = 0.0
+        let t0 = CFAbsoluteTimeGetCurrent()
+        let url = try await Exporter().export(project: p, settings: ExportSettings(), mediaURL: { $0 == "clip.mp4" ? clip : URL(fileURLWithPath: $0) }) { last = $0 }
+        print("SKIP-INFO video export took \(String(format: "%.1f", CFAbsoluteTimeGetCurrent() - t0))s")
+        XCTAssertEqual(last, 1, accuracy: 1e-9)
+        let asset = AVURLAsset(url: url)
+        let vt = try await asset.loadTracks(withMediaType: .video)
+        let at = try await asset.loadTracks(withMediaType: .audio)
+        XCTAssertEqual(vt.count, 1); XCTAssertEqual(at.count, 1, "the clip's own sound is kept")
+    }
 }
