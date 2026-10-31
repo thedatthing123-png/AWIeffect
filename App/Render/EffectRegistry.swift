@@ -95,7 +95,7 @@ final class EffectGPU {
         for name in ["fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
                      "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix",
                      "fxWarp", "fxStylize", "fxGlitch", "fxColor2", "fxSaberCore", "fxShine", "fxParticles", "fxPixelSort",
-                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17"] {
+                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17"] {
             guard let f = library.makeFunction(name: name) else { throw RenderError.pipeline(name) }
             psos[name] = try device.makeComputePipelineState(function: f)
         }
@@ -117,6 +117,20 @@ final class EffectGPU {
     /// Separable Gaussian, `sigma` in texture px. Returns the output texture.
     func gaussian(_ ctx: EffectContext, input: MTLTexture, sigma: Double, horizontal: Bool = true, vertical: Bool = true, repeatEdges: Bool = false) -> MTLTexture {
         guard sigma > 0.05 else { return input }
+        // Big blurs run on a smaller copy (halved until the blur is ~4 px wide there), then scale back up:
+        // same look, a fraction of the samples. Edge-repeat blurs stay full-res so edges don't smear.
+        if sigma > 6, !repeatEdges, horizontal, vertical, input.width > 8, input.height > 8 {
+            var small = input, f = 1.0
+            while sigma / f > 4, small.width > 16, small.height > 16, f < 16 {
+                let half = ctx.pool.acquire(width: max(1, small.width / 2), height: max(1, small.height / 2))
+                run("fxResample", ctx.cb, textures: [small, half], grid: half)
+                small = half; f *= 2
+            }
+            let blurred = gaussian(ctx, input: small, sigma: sigma / f, horizontal: true, vertical: true, repeatEdges: true)
+            let out = ctx.pool.acquire(width: input.width, height: input.height)
+            run("fxResample", ctx.cb, textures: [blurred, out], grid: out)
+            return out
+        }
         var current = input
         // Very large blurs: downsample is the next optimization; for now cap radius and widen sigma steps.
         let radius = Float(min(400, ceil(sigma * 3)))
