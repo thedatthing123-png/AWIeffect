@@ -471,8 +471,14 @@ enum AEPImporter {
                     layer.effects.append(inst)
                     let approx = def.id.hasPrefix("awi.") || e.matchName.hasPrefix("CC ")
                     report.add(name, def.name, approx ? .approximate : .native, e.matchName)
+                } else if let sub = PluginSwap.lookup(e.matchName), let def = EffectRegistry.definition(sub.id) {
+                    // Third-party plugin (Twitch, Optical Flares, Sapphire, BCC, Universe…) → this app's built-in version.
+                    var inst = def.makeInstance()
+                    for (k, v) in sub.params { inst.params[k] = v }
+                    layer.effects.append(inst)
+                    report.add(name, def.name, .approximate, "\(sub.plugin) replaced by the built-in \(def.name).")
                 } else {
-                    report.add(name, e.matchName, .missing, "Not built yet; settings are kept and it will light up once added.")
+                    report.add(name, e.matchName, .missing, "No built-in equivalent yet.")
                 }
             }
         }

@@ -27,8 +27,8 @@ struct HomeView: View {
                                 .background(RoundedRectangle(cornerRadius: 8).fill(Color(hex: 0x1F0F3D)))
                                 .foregroundStyle(Theme.accentGlow)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Import After Effects Project").font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.text)
-                                Text(".aep files from Files, iCloud or AirDrop").font(.caption).foregroundStyle(Theme.textDim)
+                                Text("Import AE or Alight Motion Project").font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.text)
+                                Text(".aep, .ffx or Alight Motion .xml from Files").font(.caption).foregroundStyle(Theme.textDim)
                             }
                             Spacer()
                         }
@@ -48,7 +48,7 @@ struct HomeView: View {
             }
         }
         .onAppear(perform: reload)
-        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.aep, .data]) { result in
+        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.aep, .xml, .data]) { result in
             guard case .success(let url) = result else { return }
             importURL = url
             runImport(compName: nil)
@@ -209,7 +209,11 @@ struct HomeView: View {
         let access = url.startAccessingSecurityScopedResource()
         defer { if access { url.stopAccessingSecurityScopedResource() } }
         do {
-            importResult = try AEPImporter.load(url: url, compName: compName)
+            if let data = try? Data(contentsOf: url), AMImporter.isAMProject(data) {
+                importResult = try AMImporter.load(data: data, fallbackName: url.deletingPathExtension().lastPathComponent)
+            } else {
+                importResult = try AEPImporter.load(url: url, compName: compName)
+            }
         } catch {
             importError = error.localizedDescription
         }

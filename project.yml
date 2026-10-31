@@ -54,6 +54,8 @@ targets:
           - "Fixtures/**"
       - path: Tests/Fixtures/aep
         buildPhase: resources
+      - path: Tests/Fixtures/am
+        buildPhase: resources
     dependencies:
       - target: AWIeffect
     settings:
