@@ -192,7 +192,7 @@ struct ThreeDPanel: View {
                 state.beginEdit("Keyframe \(title)"); keyed(); state.endEdit()
             }
             Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 92, alignment: .leading)
-            ValueScrubber(value: v, range: r, onBegin: { state.beginEdit(title) }, onChange: set, onEnd: { state.endEdit() })
+            ValueScrubber(value: v, range: r, onBegin: { state.beginEdit(title) }, onChange: set, onEnd: { state.endEdit() }, allowBeyond: true)
         }
     }
 }

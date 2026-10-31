@@ -50,7 +50,7 @@ struct Scene3DPanel: View {
                                 Text(l.name).font(.system(size: 12)).foregroundStyle(Theme.text).lineLimit(1).frame(width: 110, alignment: .leading)
                                 ValueScrubber(value: l.transform.positionZ.value(at: state.currentTime), range: -2000...6000, step: 1, unit: " z",
                                               onBegin: { state.beginEdit("Layer Depth") },
-                                              onChange: { v in setZ(l.id, v) }, onEnd: { state.endEdit() })
+                                              onChange: { v in setZ(l.id, v) }, onEnd: { state.endEdit() }, allowBeyond: true)
                             }
                         }
                     }

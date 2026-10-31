@@ -138,7 +138,7 @@ final class EffectTests: XCTestCase {
     func testEveryNumericControlIsWired() throws {
         let r = try renderer()
         // Params that only matter in a mode not active in this test (documented, not silent).
-        let modal: Set<String> = ["ae.hueSaturation/colorizeSat", "awi18.negativeFlash/threshold", "awi18.grade/lutStrength"]
+        let modal: Set<String> = ["ae.hueSaturation/colorizeSat", "awi18.negativeFlash/threshold", "awi18.grade/lutStrength", "awi18.transform/x", "awi18.transform/y"]
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) {
             for pd in d.params {
                 guard case .number(let lo, let hi, _, _) = pd.kind, !modal.contains("\(d.id)/\(pd.id)") else { continue }

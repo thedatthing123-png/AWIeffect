@@ -23,7 +23,8 @@ struct ValueScrubber: View {
 
     private var span: Double { max(range.upperBound - range.lowerBound, 1e-9) }
     /// How far typed values may go past the bar (keeps renders sane).
-    private var hardRange: ClosedRange<Double> { allowBeyond ? (range.lowerBound - span * 4)...(range.upperBound + span * 4) : range }
+    /// Transform values (position, Z, rotation…) are effectively unlimited when typed, like Alight Motion / AE.
+    private var hardRange: ClosedRange<Double> { allowBeyond ? -10_000_000...10_000_000 : range }
 
     static func format(_ v: Double, step: Double, span: Double) -> String {
         if step >= 1 || (step == 0 && span >= 100) { return String(format: "%.0f", v) }
