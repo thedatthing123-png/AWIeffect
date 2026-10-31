@@ -351,6 +351,16 @@ struct Project: Codable, Equatable, Identifiable {
     var markerTimes: [Double]? = nil
     /// Scene motion blur (optional storage so older saves decode).
     var motionBlurOn: Bool? = nil
+    /// Alight Motion-style length: the project is as long as its layers (grows/shrinks with them).
+    var autoLengthStore: Bool? = nil
+    var autoLength: Bool { get { autoLengthStore ?? false } set { autoLengthStore = newValue } }
+
+    /// Length = end of the last layer (at least one second).
+    mutating func fitAutoLength() {
+        guard autoLength, let end = layers.map(\.outPoint).max() else { return }
+        let d = max(1, snapToFrame(end))
+        if abs(d - duration) > 1e-6 { duration = d }
+    }
     var shutterAngleStore: Double? = nil
     var blurSamplesStore: Int? = nil
     var motionBlurEnabled: Bool { get { motionBlurOn ?? false } set { motionBlurOn = newValue } }

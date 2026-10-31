@@ -18,7 +18,7 @@ struct TimelineView: View {
     @State private var dragOriginal: Layer?
     @State private var reorderFrom: Int?
 
-    private let rowHeight: CGFloat = 34
+    private let rowHeight: CGFloat = 46
     private let headerWidth: CGFloat = 52
     private let rulerHeight: CGFloat = 26
 
@@ -42,6 +42,14 @@ struct TimelineView: View {
                     // Header cells and track rows live in ONE scroll view so they always line up.
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack(spacing: 0) {
+                            if state.project.layers.isEmpty {
+                                VStack(spacing: 6) {
+                                    Image(systemName: "square.stack.3d.up").font(.system(size: 26)).foregroundStyle(Theme.textDim.opacity(0.6))
+                                    Text("Your layers will appear here").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.textDim)
+                                    Text("Tap Add, Text, Shapes or Media below to start").font(.caption).foregroundStyle(Theme.textDim.opacity(0.7))
+                                }
+                                .frame(maxWidth: .infinity).padding(.top, 26)
+                            }
                             ForEach(state.project.layers) { layer in
                                 HStack(spacing: 0) {
                                     header(layer)

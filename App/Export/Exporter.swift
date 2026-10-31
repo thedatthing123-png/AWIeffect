@@ -67,7 +67,10 @@ final class Exporter {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(safeName).\(alpha ? "mov" : "mp4")")
         try? FileManager.default.removeItem(at: url)
 
-        let writer = try AVAssetWriter(outputURL: url, fileType: alpha ? .mov : .mp4)
+        // Video is written on its own first; audio is mixed separately and attached at the end, so the two
+        // can never stall each other (the old "export stuck at 11-14%" bug).
+        let videoURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString)-video.\(alpha ? "mov" : "mp4")")
+        let writer = try AVAssetWriter(outputURL: videoURL, fileType: alpha ? .mov : .mp4)
         var compression: [String: Any] = [
             AVVideoAverageBitRateKey: Int(settings.bitrateMbps * 1_000_000),
             AVVideoExpectedSourceFrameRateKey: Int(fps.rounded()),
@@ -95,58 +98,8 @@ final class Exporter {
         ])
         guard writer.canAdd(input) else { throw ExportError.writer("cannot add video input") }
         writer.add(input)
-        // Audio: mix every audible layer through the same composition the preview plays.
-        var audioReader: AVAssetReader?
-        var audioOut: AVAssetReaderAudioMixOutput?
-        var audioIn: AVAssetWriterInput?
-        if let (comp, mix) = AudioPreview.composition(project, mediaURL: mediaURL) {
-            let reader = try AVAssetReader(asset: comp)
-            let start = CMTime(seconds: max(0, settings.start), preferredTimescale: 48000)
-            let end = CMTime(seconds: min(project.duration, settings.end ?? project.duration), preferredTimescale: 48000)
-            reader.timeRange = CMTimeRange(start: start, end: end)
-            let out = AVAssetReaderAudioMixOutput(audioTracks: comp.tracks(withMediaType: .audio), audioSettings: [
-                AVFormatIDKey: kAudioFormatLinearPCM, AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false,
-                AVLinearPCMIsNonInterleaved: false, AVLinearPCMIsBigEndianKey: false, AVSampleRateKey: 48000, AVNumberOfChannelsKey: 2,
-            ])
-            out.audioMix = mix
-            if reader.canAdd(out) {
-                reader.add(out)
-                let ain = AVAssetWriterInput(mediaType: .audio, outputSettings: [
-                    AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: 48000, AVNumberOfChannelsKey: 2, AVEncoderBitRateKey: 256_000,
-                ])
-                ain.expectsMediaDataInRealTime = false
-                if writer.canAdd(ain) { writer.add(ain); audioReader = reader; audioOut = out; audioIn = ain }
-            }
-        }
         guard writer.startWriting() else { throw ExportError.writer(writer.error?.localizedDescription ?? "start") }
         writer.startSession(atSourceTime: .zero)
-
-        // Audio is interleaved with the video as frames go out; feeding it only at the end stalls the writer
-        // (video input stops being ready while it waits for audio) — the old "stuck at 14%" bug.
-        let audioOffset = CMTime(seconds: max(0, settings.start), preferredTimescale: 48000)
-        var pendingAudio: CMSampleBuffer?
-        var audioDone = audioReader == nil
-        if let reader = audioReader, !reader.startReading() { audioDone = true; audioIn?.markAsFinished() }
-        func pumpAudio(until limit: CMTime) {
-            guard !audioDone, let out = audioOut, let ain = audioIn else { return }
-            while ain.isReadyForMoreMediaData {
-                if pendingAudio == nil {
-                    guard let sb = out.copyNextSampleBuffer() else { ain.markAsFinished(); audioDone = true; return }
-                    var timing = CMSampleTimingInfo()
-                    CMSampleBufferGetSampleTimingInfo(sb, at: 0, timingInfoOut: &timing)
-                    timing.presentationTimeStamp = CMTimeSubtract(timing.presentationTimeStamp, audioOffset)
-                    var shifted: CMSampleBuffer?
-                    CMSampleBufferCreateCopyWithNewTiming(allocator: nil, sampleBuffer: sb, sampleTimingEntryCount: 1,
-                                                          sampleTimingArray: &timing, sampleBufferOut: &shifted)
-                    pendingAudio = shifted
-                    if shifted == nil { continue }
-                }
-                guard let sb = pendingAudio else { return }
-                if CMTimeCompare(CMSampleBufferGetPresentationTimeStamp(sb), limit) > 0 { return }
-                ain.append(sb)
-                pendingAudio = nil
-            }
-        }
 
         var cache: CVMetalTextureCache?
         CVMetalTextureCacheCreate(nil, nil, r.device, nil, &cache)
@@ -160,10 +113,7 @@ final class Exporter {
 
         for i in 0..<frames {
             if cancelled { writer.cancelWriting(); throw ExportError.cancelled }
-            let ahead = CMTime(seconds: Double(i) / fps + 0.5, preferredTimescale: 48000)
-            pumpAudio(until: ahead)
             while !input.isReadyForMoreMediaData {
-                pumpAudio(until: ahead)
                 if writer.status == .failed { throw ExportError.writer(writer.error?.localizedDescription ?? "writer failed") }
                 try await Task.sleep(nanoseconds: 2_000_000)
                 if cancelled { writer.cancelWriting(); throw ExportError.cancelled }
@@ -190,16 +140,84 @@ final class Exporter {
             progress(Double(i + 1) / Double(frames))
         }
         input.markAsFinished()
-        // Drain the rest of the audio.
-        var spins = 0
-        while !audioDone && spins < 20000 {
-            pumpAudio(until: .positiveInfinity)
-            if !audioDone { try await Task.sleep(nanoseconds: 1_000_000); spins += 1 }
-        }
-        if !audioDone { audioIn?.markAsFinished() }
         await writer.finishWriting()
         if writer.status != .completed { throw ExportError.writer(writer.error?.localizedDescription ?? "finish") }
+        progress(0.99)
+
+        // Audio pass: mix every audible layer to AAC, then mux with the video (no re-encode).
+        guard let audioURL = try await Self.renderAudio(project: project, start: start, end: end, mediaURL: mediaURL) else {
+            try? FileManager.default.moveItem(at: videoURL, to: url)
+            progress(1)
+            return url
+        }
+        defer { try? FileManager.default.removeItem(at: audioURL); try? FileManager.default.removeItem(at: videoURL) }
+        let mux = AVMutableComposition()
+        let vAsset = AVURLAsset(url: videoURL), aAsset = AVURLAsset(url: audioURL)
+        let vDur = try await vAsset.load(.duration)
+        if let vt = try await vAsset.loadTracks(withMediaType: .video).first,
+           let ct = mux.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) {
+            try ct.insertTimeRange(CMTimeRange(start: .zero, duration: vDur), of: vt, at: .zero)
+        }
+        if let at = try await aAsset.loadTracks(withMediaType: .audio).first,
+           let ct = mux.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) {
+            let aDur = try await aAsset.load(.duration)
+            try ct.insertTimeRange(CMTimeRange(start: .zero, duration: CMTimeMinimum(aDur, vDur)), of: at, at: .zero)
+        }
+        guard let session = AVAssetExportSession(asset: mux, presetName: AVAssetExportPresetPassthrough) else {
+            try? FileManager.default.copyItem(at: videoURL, to: url)
+            progress(1)
+            return url
+        }
+        session.outputURL = url
+        session.outputFileType = alpha ? .mov : .mp4
+        await session.export()
+        if session.status != .completed {
+            // Muxing failed: still hand back the (silent) video rather than nothing.
+            try? FileManager.default.removeItem(at: url)
+            try? FileManager.default.copyItem(at: videoURL, to: url)
+        }
+        progress(1)
         return url
+    }
+
+    /// Mixes the project's audio (all audible layers, volume keys, speed) into an AAC file, or nil when silent.
+    static func renderAudio(project: Project, start: Double, end: Double, mediaURL: @escaping (String) -> URL) async throws -> URL? {
+        guard let (comp, mix) = AudioPreview.composition(project, mediaURL: mediaURL) else { return nil }
+        let tracks = comp.tracks(withMediaType: .audio)
+        guard !tracks.isEmpty else { return nil }
+        let reader = try AVAssetReader(asset: comp)
+        reader.timeRange = CMTimeRange(start: CMTime(seconds: start, preferredTimescale: 48000), end: CMTime(seconds: end, preferredTimescale: 48000))
+        let out = AVAssetReaderAudioMixOutput(audioTracks: tracks, audioSettings: [
+            AVFormatIDKey: kAudioFormatLinearPCM, AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false,
+            AVLinearPCMIsNonInterleaved: false, AVLinearPCMIsBigEndianKey: false, AVSampleRateKey: 48000, AVNumberOfChannelsKey: 2,
+        ])
+        out.audioMix = mix
+        guard reader.canAdd(out) else { return nil }
+        reader.add(out)
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString)-audio.m4a")
+        let writer = try AVAssetWriter(outputURL: url, fileType: .m4a)
+        let ain = AVAssetWriterInput(mediaType: .audio, outputSettings: [
+            AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: 48000, AVNumberOfChannelsKey: 2, AVEncoderBitRateKey: 256_000,
+        ])
+        ain.expectsMediaDataInRealTime = false
+        guard writer.canAdd(ain) else { return nil }
+        writer.add(ain)
+        guard reader.startReading(), writer.startWriting() else { return nil }
+        writer.startSession(atSourceTime: CMTime(seconds: start, preferredTimescale: 48000))
+        var spins = 0
+        while true {
+            if ain.isReadyForMoreMediaData {
+                guard let sb = out.copyNextSampleBuffer() else { break }
+                ain.append(sb)
+            } else {
+                try await Task.sleep(nanoseconds: 1_000_000)
+                spins += 1
+                if spins > 60_000 { break }   // safety: never hang the export
+            }
+        }
+        ain.markAsFinished()
+        await writer.finishWriting()
+        return writer.status == .completed ? url : nil
     }
 
     /// Animated GIF (looping), capped at 480 px and 25 fps so files stay shareable.

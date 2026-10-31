@@ -139,6 +139,7 @@ final class EditorState: ObservableObject {
         if !editGroupOpen { pushUndo(label) }
         var p = project
         change(&p)
+        p.fitAutoLength()
         p.modifiedAt = Date()
         project = p
     }
@@ -148,6 +149,7 @@ final class EditorState: ObservableObject {
         guard let i = selectedIndex else { return }
         var p = project
         change(&p.layers[i])
+        p.fitAutoLength()
         p.modifiedAt = Date()
         project = p
     }

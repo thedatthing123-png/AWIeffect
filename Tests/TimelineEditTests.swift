@@ -102,4 +102,19 @@ final class TimelineEditTests: XCTestCase {
         s.select(b); s.setParent(a)
         XCTAssertNil(s.project.layers[1].parentID)
     }
+
+    func testAutoLengthFollowsLayers() {
+        var p = Project.new(name: "a", width: 100, height: 100, fps: 30, duration: 10)
+        p.autoLength = true
+        var l = p.makeLayer(name: "clip", content: .solid, size: Vec2(10, 10))
+        l.outPoint = 4
+        let s = EditorState(project: p, store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        s.mutate("add") { $0.layers = [l] }
+        XCTAssertEqual(s.project.duration, 4, accuracy: 1e-6)
+        s.select(s.project.layers[0].id)
+        s.trimClip(s.project.layers[0], start: false, by: 3)
+        XCTAssertEqual(s.project.duration, 7, accuracy: 0.05, "project grows with the clip")
+        s.trimClip(s.project.layers[0], start: false, by: -5)
+        XCTAssertEqual(s.project.duration, 2, accuracy: 0.05, "and shrinks with it")
+    }
 }

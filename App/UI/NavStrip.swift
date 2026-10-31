@@ -75,8 +75,9 @@ struct NavStrip: View {
             out.append(Item(id: "Blending", icon: "circle.lefthalf.filled", panel: .blending))
             out.append(Item(id: "Masks", icon: "theatermask.and.paintbrush", panel: .masks))
         }
+        // Background removal right after Transform for photos and videos, so it's easy to find.
+        if l.isImage || (l.isMedia && !l.isAudioOnly) { out.insert(Item(id: "Remove BG", icon: "person.crop.rectangle.badge.plus", panel: .cutout), at: 1) }
         if l.isMedia || l.isAudioOnly { out.append(Item(id: "Speed & Volume", icon: "speedometer", panel: .clip)) }
-        if l.isImage { out.append(Item(id: "AI Cutout", icon: "person.crop.rectangle", panel: .cutout)) }
         if visual { out.append(Item(id: "Motion Blur", icon: "wind", panel: .motionBlur)) }
         if visual { out.append(Item(id: "Time", icon: "timer", panel: .time)) }
         if !l.isAudioOnly { out.append(Item(id: c == .camera ? "Lens" : (c == .light ? "Light" : "3D"), icon: c == .camera ? "camera.aperture" : (c == .light ? "lightbulb.fill" : "cube"), panel: .threeD)) }

@@ -92,13 +92,6 @@ final class RenderSpeedTests: XCTestCase {
         var noFX = p; for i in noFX.layers.indices { noFX.layers[i].effects = [] }; noFX.motionBlurEnabled = false
         var bare = noFX; bare.layers = bare.layers.map { var l = $0; l.content = .solid; return l }
         let a = msPerFrame(noMB, renderer), b = msPerFrame(noFX, renderer), c = msPerFrame(bare, renderer)
-        // Cost of each effect type actually used by this edit (remove one type at a time).
-        let types = Dictionary(grouping: p.layers.flatMap(\.effects), by: \.typeID).mapValues(\.count)
-        for (id, count) in types.sorted(by: { $0.value > $1.value }) {
-            var q = p
-            for i in q.layers.indices { q.layers[i].effects.removeAll { $0.typeID == id } }
-            print(String(format: "SKIP-INFO RENDER-SPEED without %@ (x%d): %.1f ms", id, count, msPerFrame(q, renderer)))
-        }
         // "SKIP-INFO" lines are kept by the CI log filter.
         print(String(format: "SKIP-INFO RENDER-SPEED full %.1f | no motion blur %.1f | no effects %.1f | solids only %.1f ms/frame (%d layers)",
                      full, a, b, c, p.layers.count))
@@ -119,40 +112,6 @@ final class RealAEPTests: XCTestCase {
         if let r = Renderer.shared {
             XCTAssertNotNil(r.renderPixels(project: base.project, time: min(2, base.project.duration / 2), renderScale: 0.2, mediaURL: { URL(fileURLWithPath: $0) }))
         }
-    }
-}
-
-/// Times every effect alone on a preview-sized frame and reports the slowest (so heavy shaders get fixed).
-final class EffectSpeedTests: XCTestCase {
-    func testSlowestEffects() throws {
-        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
-        var base = Project.new(name: "s", width: 432, height: 768, fps: 30, duration: 2, background: RGBA(0.1, 0.1, 0.15))
-        var l = base.makeLayer(name: "full", content: .solid, size: Vec2(432, 768))
-        l.fill = Animated(RGBA(0.8, 0.5, 0.9))
-        base.layers = [l]
-        func time(_ p: Project) -> Double {
-            _ = r.renderPixels(project: p, time: 0.4, mediaURL: { URL(fileURLWithPath: $0) })
-            let t0 = CACurrentMediaTime()
-            for i in 0..<3 { _ = r.renderPixels(project: p, time: 0.4 + Double(i) * 0.1, mediaURL: { URL(fileURLWithPath: $0) }) }
-            return (CACurrentMediaTime() - t0) / 3 * 1000
-        }
-        let plain = time(base)
-        var results: [(String, Double)] = []
-        for d in EffectRegistry.all {
-            var p = base
-            p.layers[0].effects = [d.makeInstance()]
-            results.append((d.id, time(p) - plain))
-        }
-        results.sort { $0.1 > $1.1 }
-        print(String(format: "SKIP-INFO EFFECT-SPEED baseline %.1f ms", plain))
-        // Re-measure the top ones to rule out GPU warm-up noise.
-        for (id, _) in results.prefix(6) {
-            var p = base; p.layers[0].effects = [EffectRegistry.definition(id)!.makeInstance()]
-            print(String(format: "SKIP-INFO EFFECT-SPEED recheck %@ +%.1f ms", id, time(p) - plain))
-        }
-        for (id, ms) in results.prefix(25) { print(String(format: "SKIP-INFO EFFECT-SPEED %@ +%.1f ms", id, ms)) }
-        let lookup = ["ae.exposure", "ae.glow", "ae.motionTile", "ae.ripple", "ae.bulge", "ae.findEdges", "ae.gaussianBlur", "awi.flicker", "awi.chromaKey", "ae.fill", "ae.invert", "awi15.innerBlur", "ae.directionalBlur", "awi.shake"]
-        for id in lookup { if let m = results.first(where: { $0.0 == id }) { print(String(format: "SKIP-INFO EFFECT-SPEED (am) %@ +%.1f ms", id, m.1)) } }
     }
 }
 

@@ -28,6 +28,10 @@ struct ScenePanel: View {
                     chips(["24", "25", "30", "50", "60", "120"], selected: "\(Int(state.project.fps))") { v in
                         state.mutate("Frame Rate") { $0.fps = Double(v) ?? 30 }
                     }
+                    Toggle("Auto length (follows your layers)", isOn: Binding(get: { state.project.autoLength }, set: { b in
+                        state.mutate("Auto Length") { $0.autoLength = b }
+                    }))
+                    .tint(Theme.accent).foregroundStyle(Theme.text)
                     label(String(format: "Duration  %.1fs", state.project.duration))
                     HStack {
                         Slider(value: Binding(get: { state.project.duration }, set: { v in

@@ -460,7 +460,14 @@ final class Renderer {
                                         time: time, unit: density, pool: pool)
                 let side: MTLTexture
                 if let d = EffectRegistry.definition("ae.exposure"), case .pixels(let run) = d.stage { side = run(ctx) } else { side = current }
-                let n = max(3, min(72, Int(extrude * pxPerLocal / 1.2)))
+                // One slice per ~0.8 px of on-screen wall depth (measured at the corners), so the side stays solid at any angle.
+                let Mback = Self.layerHomography(layer, camera: camera, time: time, renderScale: renderScale, localZ: extrude)
+                func proj(_ m: simd_double3x3, _ x: Double, _ y: Double) -> SIMD2<Double> {
+                    let q = m * SIMD3(x, y, 1); return SIMD2(q.x, q.y) / max(q.z, 1e-6)
+                }
+                let span = [(-ext.x, -ext.y), (ext.x, -ext.y), (ext.x, ext.y), (-ext.x, ext.y), (0, 0)]
+                    .map { c in simd_length(proj(Mback, c.0, c.1) - proj(M, c.0, c.1)) }.max() ?? 0
+                let n = max(3, min(400, Int((span / 0.8).rounded(.up))))
                 let front = Self.layerDepth(layer, camera: camera, time: time)
                 var backLayer = layer
                 backLayer.transform.positionZ = Animated(layer.transform.positionZ.value(at: time) + 1)

@@ -89,17 +89,19 @@ final class AWIeffectUITests: XCTestCase {
         snap("multi-select")
         tap("Done")
 
+        tap("Deselect Layer")
         tap("3D view")
         sleep(1)
         snap("orbit-view")
         tap("2D view")
 
+        tap("Deselect Layer")
         tap("Scene Settings")
         sleep(1)
         snap("scene-settings")
 
         // Text Studio
-        tap("Deselect")
+        tap("Deselect Layer")
         sleep(1)
         snap("nav-empty")
         tap("Text")
@@ -110,13 +112,14 @@ final class AWIeffectUITests: XCTestCase {
         snap("text-presets")
 
         // Draw Studio
-        tap("Deselect")
+        tap("Deselect Layer")
         tap("Draw")
         sleep(2)
         snap("draw-studio")
         tap("Cancel")
 
-        // Export
+        // Export (project bar shows once nothing is selected)
+        tap("Deselect Layer")
         tap("Export")
         sleep(1)
         snap("export")
@@ -136,7 +139,7 @@ final class AWIeffectUITests: XCTestCase {
         sleep(2)   // let the panel finish sliding in
         let window = app.windows.firstMatch.frame
         // Fixed chrome (top bar + transport) must sit fully inside the window and must not overlap each other.
-        let chrome = ["Export", "Scene Settings", "2D view", "3D view", "Play", "Key All", "Panel Back"]
+        let chrome = ["Deselect Layer", "Rename Layer", "Duplicate Layer", "Delete Layer", "Layer Options", "Play", "Key All", "Panel Back"]
         var frames: [(String, CGRect)] = []
         for label in chrome {
             let e = app.buttons[label].firstMatch

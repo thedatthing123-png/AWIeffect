@@ -153,6 +153,9 @@ struct QuickMenu: View {
             }
             if state.selectedLayer != nil {
                 Section("Plugins (one tap on the selected layer)") {
+                    if state.selectedLayer?.isImage == true || state.selectedLayer?.isMedia == true {
+                        Button { state.panel = .cutout } label: { Label("Remove Background (AI)", systemImage: "person.crop.rectangle.badge.plus") }
+                    }
                     Button { state.applyPlugin(EffectRegistry.deepGlow) } label: { Label("Deep Glow", systemImage: "sun.max.fill") }
                     Button { state.applyPlugin(EffectRegistry.saber) } label: { Label("Saber", systemImage: "wand.and.rays") }
                     Button { state.applyPlugin(EffectRegistry.outlineGlow) } label: { Label("Outline Glow", systemImage: "person.fill.viewfinder") }

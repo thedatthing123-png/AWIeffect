@@ -302,8 +302,10 @@ struct CreateProjectSheet: View {
 
                 Button("Create from scratch") {
                     let (w, h) = size
-                    create(Project.new(name: name.isEmpty ? "Untitled" : name, width: w, height: h, fps: fps,
-                                       duration: duration, background: background.rgba))
+                    var p = Project.new(name: name.isEmpty ? "Untitled" : name, width: w, height: h, fps: fps,
+                                        duration: duration, background: background.rgba)
+                    p.autoLength = true   // length follows the layers, like Alight Motion
+                    create(p)
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .padding(.top, 8)

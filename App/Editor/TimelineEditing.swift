@@ -54,6 +54,7 @@ extension EditorState {
     func mutateLayer(at i: Int, _ change: (inout Layer) -> Void) {
         var p = project
         change(&p.layers[i])
+        p.fitAutoLength()
         p.modifiedAt = Date()
         project = p
     }

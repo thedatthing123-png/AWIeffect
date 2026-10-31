@@ -64,7 +64,7 @@ struct BottomPanel: View {
                 case .beats: BeatsPanel(state: state)
                 case .cutout:
                     VStack(spacing: 0) {
-                        PanelHeader(state: state, title: "AI Cutout", showKeyNav: false)
+                        PanelHeader(state: state, title: "Remove Background (AI)", showKeyNav: false)
                         ScrollView { CutoutSection(state: state).padding(.horizontal, 12).padding(.bottom, 12) }
                     }
                 case .style: StylePanel(state: state)

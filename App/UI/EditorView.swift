@@ -5,6 +5,8 @@ struct EditorView: View {
     @StateObject var state: EditorState
     let close: () -> Void
     @State private var showExport = false
+    @State private var showLayerRename = false
+    @State private var renameText = ""
     @State private var showHistory = false
     @State private var photoItem: PhotosPickerItem?
     @State private var showPhotoPicker = false
@@ -33,6 +35,7 @@ struct EditorView: View {
                 .frame(maxWidth: .infinity)
                 .layoutPriority(1)
             TransportBar(state: state, showHistory: $showHistory)
+            timelineGrip
             TimelineView(state: state)
                 .frame(height: timelineHeight)
             BottomPanel(state: state, showPhotoPicker: $showPhotoPicker) { target, style in
@@ -110,12 +113,106 @@ struct EditorView: View {
     }
 
     /// Timeline grows with layer count, capped so the preview keeps most of the screen.
+    /// Alight Motion-style: the timeline gets a real share of the screen (≈30%, less while a panel is open),
+    /// and the user can drag its top edge to make it taller or shorter.
+    @AppStorage("awi.timelineShare") private var timelineShare: Double = 0.30
+    @State private var timelineDragBase: Double?
     private var timelineHeight: CGFloat {
-        let rows = CGFloat(max(1, min(state.project.layers.count, 5)))
-        return 34 + rows * 34
+        let screen = UIScreen.main.bounds.height
+        let share = state.panel == .none ? timelineShare : max(0.16, timelineShare * 0.62)
+        return CGFloat(max(150, min(Double(screen) * 0.5, Double(screen) * share)))
     }
 
-    private var topBar: some View {
+    private var timelineGrip: some View {
+        Capsule().fill(Theme.textDim.opacity(0.35)).frame(width: 36, height: 4)
+            .frame(maxWidth: .infinity).frame(height: 12)
+            .background(Theme.surface)
+            .contentShape(Rectangle())
+            .gesture(DragGesture(minimumDistance: 1)
+                .onChanged { g in
+                    if timelineDragBase == nil { timelineDragBase = timelineShare }
+                    let screen = Double(UIScreen.main.bounds.height)
+                    timelineShare = min(0.5, max(0.18, (timelineDragBase ?? 0.3) - Double(g.translation.height) / screen))
+                }
+                .onEnded { _ in timelineDragBase = nil })
+            .accessibilityLabel("Resize timeline")
+    }
+
+    /// Alight Motion-style: with a layer selected the top bar becomes that layer's bar (name, duplicate, delete, ⋯).
+    @ViewBuilder private var topBar: some View {
+        if let l = state.selectedLayer, !state.isMultiSelecting {
+            layerBar(l)
+        } else {
+            projectBar
+        }
+    }
+
+    private func layerBar(_ l: Layer) -> some View {
+        HStack(spacing: 6) {
+            Button { state.select(nil) } label: {
+                Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold)).frame(width: 36, height: 36)
+            }
+            .accessibilityLabel("Deselect Layer")
+            Button { renameText = l.name; showLayerRename = true } label: {
+                Text(l.name).font(.system(size: 17, weight: .semibold)).lineLimit(1).truncationMode(.tail)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(-1)
+            .accessibilityLabel("Rename Layer")
+            Button { state.duplicateSelected() } label: {
+                Image(systemName: "plus.square.on.square").font(.system(size: 18, weight: .semibold)).frame(width: 40, height: 40)
+            }
+            .accessibilityLabel("Duplicate Layer")
+            Button(role: .destructive) { state.deleteSelected() } label: {
+                Image(systemName: "trash").font(.system(size: 18, weight: .semibold)).frame(width: 40, height: 40)
+            }
+            .accessibilityLabel("Delete Layer")
+            Menu {
+                Button { renameText = l.name; showLayerRename = true } label: { Label("Rename", systemImage: "character.cursor.ibeam") }
+                Button { state.splitSelected() } label: { Label("Split at Playhead", systemImage: "scissors") }
+                Button { state.copyKeyframes() } label: { Label("Copy Keyframes", systemImage: "doc.on.doc") }
+                Button { state.pasteKeyframes() } label: { Label("Paste Keyframes", systemImage: "doc.on.clipboard") }
+                Button { state.copyEffects() } label: { Label("Copy Effects", systemImage: "sparkles.rectangle.stack") }
+                if !state.effectClipboard.isEmpty { Button { state.pasteEffects() } label: { Label("Paste Effects", systemImage: "sparkles") } }
+                Divider()
+                if case .precomp = l.content {
+                    Button { state.openPrecomp() } label: { Label("Open Group", systemImage: "arrow.down.right.and.arrow.up.left") }
+                } else {
+                    Button { state.precomposeSelected() } label: { Label("Group (Pre-compose)", systemImage: "square.stack.3d.up") }
+                }
+                Button { state.moveSelected(up: true) } label: { Label("Move Up", systemImage: "arrow.up") }
+                Button { state.moveSelected(up: false) } label: { Label("Move Down", systemImage: "arrow.down") }
+                Button { state.toggleVisibility(l.id) } label: { Label(l.isVisible ? "Hide" : "Show", systemImage: l.isVisible ? "eye.slash" : "eye") }
+                Button { state.mutate("Lock Layer") { p in if let i = state.selectedIndex { p.layers[i].isLocked.toggle() } } } label: {
+                    Label(l.isLocked ? "Unlock" : "Lock", systemImage: l.isLocked ? "lock.open" : "lock")
+                }
+                Button { state.mutate("Solo Layer") { p in if let i = state.selectedIndex { p.layers[i].isSolo.toggle() } } } label: {
+                    Label(l.isSolo ? "Unsolo" : "Solo", systemImage: "s.circle")
+                }
+                Button { state.panel = .layerMenu } label: { Label("Parent, Tag & More…", systemImage: "ellipsis.circle") }
+                Divider()
+                Button { state.beginMultiSelect(l.id) } label: { Label("Select Multiple", systemImage: "checklist") }
+                Button(role: .destructive) { state.deleteSelected() } label: { Label("Delete", systemImage: "trash") }
+            } label: {
+                Image(systemName: "ellipsis.circle").font(.system(size: 22, weight: .regular)).frame(width: 40, height: 40)
+            }
+            .accessibilityLabel("Layer Options")
+        }
+        .foregroundStyle(Theme.text)
+        .padding(.horizontal, 10)
+        .frame(height: 50)
+        .alert("Rename Layer", isPresented: $showLayerRename) {
+            TextField("Name", text: $renameText)
+            Button("Rename") {
+                let n = renameText.trimmingCharacters(in: .whitespaces)
+                if !n.isEmpty { state.mutate("Rename Layer") { p in if let i = state.selectedIndex { p.layers[i].name = n } } }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    private var projectBar: some View {
         HStack(spacing: 10) {
             Button {
                 state.pause()
