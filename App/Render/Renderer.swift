@@ -514,7 +514,22 @@ final class Renderer {
         case .solid: return .solid
         case .image(let file, _, _): return imageTexture(url: mediaURL(file)).map { .image($0) }
         case .video(let file, _, _, _):
-            return VideoSources.shared.texture(url: mediaURL(file), time: sourceTime, device: device).map { .image($0) }
+            let url = mediaURL(file)
+            if layer.timeFX?.frameBlend == true, let pool = currentPool {
+                // Between two source frames: blend them (smooth slow motion instead of repeated frames).
+                let fps = VideoSources.shared.fps(url)
+                let f = sourceTime * fps, a = f.rounded(.down), w = f - a
+                if w > 0.03, w < 0.97,
+                   let ta = VideoSources.shared.texture(url: url, time: (a + 0.5) / fps, device: device),
+                   let tb = VideoSources.shared.texture(url: url, time: (a + 1.5) / fps, device: device) {
+                    let out = pool.acquire(width: ta.width, height: ta.height)
+                    var p = EffectParams()
+                    p.a.x = Float(w)
+                    fx.run("frameMix", cb, textures: [ta, out, tb], params: p, grid: out)
+                    return .image(out)
+                }
+            }
+            return VideoSources.shared.texture(url: url, time: sourceTime, device: device).map { .image($0) }
         case .model:
             guard let o = layer.model3D else { return nil }
             let size = layer.size.value(at: time)

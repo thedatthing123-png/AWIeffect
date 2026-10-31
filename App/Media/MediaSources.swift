@@ -67,6 +67,7 @@ final class VideoSources {
     }
 
     func duration(_ url: URL) -> Double { source(url).duration }
+    func fps(_ url: URL) -> Double { source(url).fps }
 
     /// Frame texture at `time` seconds of the source (clamped), cached per source frame.
     func texture(url: URL, time: Double, device: MTLDevice) -> MTLTexture? {

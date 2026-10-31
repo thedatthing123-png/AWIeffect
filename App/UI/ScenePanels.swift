@@ -207,6 +207,11 @@ struct TimePanel: View {
                         slider("Delay", fx.echoDelay, 0.01...0.5, "%.2fs") { v in set { $0.echoDelay = v } }
                         slider("Keep", fx.echoDecay * 100, 5...100, "%.0f%%") { v in set { $0.echoDecay = v / 100 } }
                         Divider().overlay(Theme.stroke)
+                        Toggle("Frame Blending (smooth slow motion)", isOn: Binding(get: { fx.frameBlend }, set: { b in set { $0.frameBlend = b } }))
+                            .tint(Theme.accent).foregroundStyle(Theme.text)
+                        Text("Slowed-down video blends between frames instead of repeating them, like After Effects' Frame Blending.")
+                            .font(.caption).foregroundStyle(Theme.textDim)
+                        Divider().overlay(Theme.stroke)
                         Text("POSTERIZE TIME (choppy anime look)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
                         HStack(spacing: 6) {
                             ForEach([0.0, 6, 8, 12, 15, 24], id: \.self) { f in

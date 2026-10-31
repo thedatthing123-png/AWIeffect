@@ -5,6 +5,8 @@ struct ClipPanel: View {
     @ObservedObject var state: EditorState
     @EnvironmentObject private var trackLauncher: TrackLauncher
     @State private var sensitivity = 0.5
+    @State private var slowMoProgress: Double?
+    @State private var slowMoMessage: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -31,6 +33,24 @@ struct ClipPanel: View {
                                 Button("Turn Off", role: .destructive) { state.mutate("Disable Time Remap") { p in
                                     if let i = state.selectedIndex { p.layers[i].timeRemap = nil }
                                 } }
+                            }
+                        }
+                        if case .video = l.content {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("SMOOTH SLOW-MO (AI in-between frames, like Twixtor)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+                                if let pr = slowMoProgress {
+                                    ProgressView(value: pr).tint(Theme.accent)
+                                    Text("Rendering smooth frames… \(Int(pr * 100))%").font(.caption).foregroundStyle(Theme.textDim)
+                                } else {
+                                    HStack(spacing: 6) {
+                                        ForEach([2, 4, 8], id: \.self) { f in
+                                            Button("\(f)x") { smoothSlowMo(f) }
+                                                .font(.system(size: 13, weight: .bold)).frame(maxWidth: .infinity, minHeight: 34)
+                                                .background(Capsule().fill(Theme.surface)).foregroundStyle(Theme.text)
+                                        }
+                                    }
+                                }
+                                if let m = slowMoMessage { Text(m).font(.caption).foregroundStyle(Theme.textDim) }
                             }
                         }
                         row("Trim Start", value: l.sourceStart, range: 0...max(1, mediaDuration(l)), fmt: "%.2fs") { v in state.mutateLayer { $0.sourceStart = v } }
@@ -85,6 +105,26 @@ struct ClipPanel: View {
                     .padding(.horizontal, 12).padding(.bottom, 14)
                 }
             }
+        }
+    }
+
+    private func smoothSlowMo(_ factor: Int) {
+        state.pause()
+        slowMoProgress = 0; slowMoMessage = nil
+        Task {
+            do {
+                try await state.applySmoothSlowMo(factor: factor) { p in Task { @MainActor in slowMoProgress = p } }
+                slowMoMessage = "Done: the clip is now \(factor)x slower with smooth in-between frames."
+            } catch {
+                // No AI interpolation here (older device / simulator): fall back to AE-style frame blending.
+                state.coalescedEdit("Frame Blending") { l in
+                    var fx = l.timeFX ?? LayerTimeFX(); fx.frameBlend = true; l.timeFX = fx
+                    l.speed = l.speed / Double(factor)
+                    l.outPoint = l.inPoint + (l.outPoint - l.inPoint) * Double(factor)
+                }
+                slowMoMessage = "\(error.localizedDescription) Used frame blending instead."
+            }
+            slowMoProgress = nil
         }
     }
 

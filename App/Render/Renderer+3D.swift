@@ -59,7 +59,8 @@ extension Renderer {
     static func view2D(_ cam: Layer, project p: Project, time: Double) -> simd_double3x3 {
         let fx = transformOffsets(cam, time: time)
         let pos = cam.transform.position.value(at: time) + Vec2(fx.dx, fx.dy)
-        let sc = cam.transform.scale.value(at: time) * fx.ds / 100
+        let raw = cam.transform.scale.value(at: time)
+        let sc = Vec2(raw.x * fx.ds / 100, raw.y * fx.ds / 100)
         let r = -(cam.transform.rotation.value(at: time) + fx.dr) * .pi / 180
         let cx = Double(p.width) / 2, cy = Double(p.height) / 2
         guard pos.x.isFinite, pos.y.isFinite, sc.x.isFinite, sc.y.isFinite, r.isFinite, abs(sc.x) > 1e-4, abs(sc.y) > 1e-4 else { return matrix_identity_double3x3 }

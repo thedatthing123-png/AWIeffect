@@ -9,6 +9,9 @@ struct LayerTimeFX: Codable, Equatable {
     var posterizeFPS = 0.0
     /// Freeze frame: the layer holds this moment (nil = off).
     var freezeAt: Double? = nil
+    /// AE Frame Blending: slowed-down footage blends neighbouring frames instead of repeating them.
+    var frameBlendStore: Bool? = nil
+    var frameBlend: Bool { get { frameBlendStore ?? false } set { frameBlendStore = newValue ? true : nil } }
 
     /// Time at which the layer's content and animation are evaluated.
     func localTime(_ t: Double) -> Double {
@@ -16,7 +19,7 @@ struct LayerTimeFX: Codable, Equatable {
         if posterizeFPS > 0 { return (t * posterizeFPS).rounded(.down) / posterizeFPS }
         return t
     }
-    var isEmpty: Bool { echoCount == 0 && posterizeFPS == 0 && freezeAt == nil }
+    var isEmpty: Bool { echoCount == 0 && posterizeFPS == 0 && freezeAt == nil && !frameBlend }
 }
 
 /// AE track matte: the layer directly above cuts this one out (and hides itself).
