@@ -96,9 +96,11 @@ final class Renderer {
         guard p.layers.contains(where: { ($0.timeFX?.echoCount ?? 0) > 0 }) else { return p }
         var q = p
         var out: [Layer] = []
+        // A layer used as a track matte by the layer below keeps its slot (no echo copies between them).
+        let matteSources = Set(p.layers.indices.compactMap { i in i > 0 && p.layers[i].trackMatte != .none ? p.layers[i - 1].id : nil })
         for l in p.layers {
             out.append(l)
-            guard let fx = l.timeFX, fx.echoCount > 0 else { continue }
+            guard let fx = l.timeFX, fx.echoCount > 0, !matteSources.contains(l.id) else { continue }
             for k in 1...min(fx.echoCount, 24) {
                 var c = l
                 c.id = UUID()
@@ -281,7 +283,10 @@ final class Renderer {
     func encode(project rawProject: Project, time: Double, renderScale: Double, into comp: MTLTexture,
                 commandBuffer cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL) {
         // Expressions are baked into plain values for this frame first.
-        let project = Self.resolveParenting(Self.expandEchoes(ExpressionResolver.resolve(rawProject, time: time)), time: time)
+        let resolved = ExpressionResolver.resolve(rawProject, time: time)
+        // Echo needs parenting baked over time (costly); everything else bakes just this frame.
+        let hasEcho = resolved.layers.contains { ($0.timeFX?.echoCount ?? 0) > 0 }
+        let project = hasEcho ? Self.expandEchoes(Self.resolveParentingAnimated(resolved)) : Self.resolveParenting(resolved, time: time)
         precompLibrary = project.precomps.isEmpty ? precompLibrary : project.precomps
         currentPool = pool
         currentDepth = project.precompDepth ?? 0
@@ -301,7 +306,10 @@ final class Renderer {
         // Layers used as a track matte by the layer below them don't draw themselves.
         var matteSources: [UUID: Layer] = [:], hiddenMattes = Set<UUID>()
         for (i, l) in project.layers.enumerated() where l.trackMatte != .none && i > 0 {
-            matteSources[l.id] = project.layers[i - 1]; hiddenMattes.insert(project.layers[i - 1].id)
+            let m = project.layers[i - 1]
+            // Only layers that draw pixels can be mattes (a camera / light / audio above means "no matte").
+            if m.content == .camera || m.content == .light || m.isAudioOnly { continue }
+            matteSources[l.id] = m; hiddenMattes.insert(m.id)
         }
         let active = project.layers.filter { $0.isActive(at: time) && !hiddenMattes.contains($0.id) && (!anySolo || $0.isSolo || $0.content == .camera) }
         let globalTime = time

@@ -18,7 +18,7 @@ struct BottomPanel: View {
                 panelContent
                     .id(state.panel)                       // swap panels instantly: no overlapping cross-fade
                     .transaction { $0.animation = nil }
-                    .frame(height: CGFloat(panelHeight), alignment: .top)
+                    .frame(height: CGFloat(min(panelHeight, Double(UIScreen.main.bounds.height) * 0.42)), alignment: .top)
                     .clipped()
                 Divider().overlay(Theme.stroke)
             }
@@ -35,7 +35,8 @@ struct BottomPanel: View {
             .gesture(DragGesture(minimumDistance: 1)
                 .onChanged { g in
                     if dragBase == nil { dragBase = panelHeight }
-                    panelHeight = min(520, max(150, (dragBase ?? 250) - Double(g.translation.height)))
+                    let cap = min(520, Double(UIScreen.main.bounds.height) * 0.42)
+                    panelHeight = min(cap, max(150, (dragBase ?? 250) - Double(g.translation.height)))
                 }
                 .onEnded { _ in dragBase = nil })
             .accessibilityLabel("Resize panel")
@@ -89,7 +90,7 @@ struct PanelHeader: View {
                 Image(systemName: "chevron.down").font(.system(size: 15, weight: .semibold)).frame(width: 34, height: 34)
             }
             .accessibilityLabel("Panel Back")
-            Text(title).font(.system(size: 14, weight: .semibold))
+            Text(title).font(.system(size: 14, weight: .semibold)).lineLimit(1).truncationMode(.middle)
             Spacer()
             if showKeyNav, state.selectedLayer != nil {
                 Button { state.jumpKeyframe(forward: false) } label: { Image(systemName: "chevron.left.to.line").frame(width: 32, height: 32) }
@@ -339,7 +340,7 @@ struct FillPanel: View {
             PanelHeader(state: state, title: "Color & Fill")
             if let layer = state.selectedLayer {
                 let t = state.currentTime
-                let c = layer.fill.value(at: t)
+                let c = layer.text?.fill.value(at: t) ?? layer.fill.value(at: t)
                 VStack(spacing: 12) {
                     PropertyRow(state: state, key: .fill) {
                         ColorPicker("", selection: Binding(get: { Color(c) }, set: { col in
@@ -357,7 +358,9 @@ struct FillPanel: View {
                                     .overlay(Circle().stroke(Color.white.opacity(0.2)))
                                     .onTapGesture {
                                         state.beginEdit("Edit Fill")
-                                        state.mutateLayer { $0.fill.set(RGBA(hex: hex, alpha: c.a), at: t) }
+                                        state.mutateLayer { l in
+                                            if l.text != nil { l.text?.fill.set(RGBA(hex: hex, alpha: c.a), at: t) } else { l.fill.set(RGBA(hex: hex, alpha: c.a), at: t) }
+                                        }
                                         state.endEdit()
                                     }
                             }

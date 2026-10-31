@@ -220,7 +220,12 @@ struct EditorView: View {
             .contentShape(Rectangle())
             .gesture(canvasDrag(fit: fit), including: pen == nil && state.viewMode == .comp ? .all : .subviews)
             .simultaneousGesture(MagnificationGesture()
-                .onChanged { m in if state.viewMode == .comp && canvasDragState == nil { viewZoom = min(8, max(0.4, zoomBase * m)) } }
+                .onChanged { m in
+                    guard state.viewMode == .comp else { return }
+                    // A second finger turns a layer drag into a canvas zoom: undo the accidental move.
+                    if canvasDragState != nil { state.endCanvasDrag(); state.undo(); canvasDragState = nil; panBase = viewPan }
+                    viewZoom = min(8, max(0.4, zoomBase * m))
+                }
                 .onEnded { _ in zoomBase = viewZoom }, including: pen == nil ? .all : .subviews)
             .simultaneousGesture(TapGesture(count: 2).onEnded {
                 withAnimation(.easeOut(duration: 0.2)) { viewZoom = 1; zoomBase = 1; viewPan = .zero }
@@ -239,6 +244,7 @@ struct EditorView: View {
     }
 
     @State private var orbitStart: OrbitCamera?
+    @State private var orbitZoomStart: Double?
 
     /// 3D view: one finger orbits (two fingers pan via the pinch's drift), pinch dollies.
     private var orbitDrag: some Gesture {
@@ -255,11 +261,10 @@ struct EditorView: View {
     private var orbitZoom: some Gesture {
         MagnificationGesture()
             .onChanged { m in
-                if orbitStart == nil { orbitStart = state.orbit }
-                guard let o = orbitStart else { return }
-                state.orbit.distance = max(0.15, min(8, o.distance / Double(m)))
+                if orbitZoomStart == nil { orbitZoomStart = state.orbit.distance }
+                state.orbit.distance = max(0.15, min(8, (orbitZoomStart ?? 1.6) / Double(m)))
             }
-            .onEnded { _ in orbitStart = nil }
+            .onEnded { _ in orbitZoomStart = nil }
     }
 
     private func canvasDrag(fit: CGRect) -> some Gesture {
@@ -286,7 +291,8 @@ struct EditorView: View {
     /// Selects the top-most layer whose bounds contain the tap.
     private func tapSelect(at point: CGPoint, fit: CGRect) {
         let c = toComp(point, fit: fit)
-        for layer in state.displayProject.layers where layer.isActive(at: state.currentTime) && !layer.isLocked {
+        for layer in state.displayProject.layers where layer.isActive(at: state.currentTime) && !layer.isLocked
+            && layer.content != .adjustment && layer.content != .camera && layer.content != .light && !layer.isAudioOnly {
             let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(state.project, time: state.currentTime),
                                              time: state.currentTime, renderScale: 1)
             let h = M.inverse * SIMD3(c.x, c.y, 1)

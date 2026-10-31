@@ -99,6 +99,7 @@ struct TimelineView: View {
             )
         }
         .background(Theme.surface)
+        .onDisappear { if dragOriginal != nil { dragOriginal = nil; state.endEdit() } }
     }
 
     private func header(_ layer: Layer) -> some View {
@@ -132,7 +133,7 @@ struct TimelineView: View {
     private var scrub: some Gesture {
         DragGesture(minimumDistance: 2)
             .onChanged { v in
-                if multiDragStart != nil || state.isMultiSelecting { return }
+                if multiDragStart != nil { return }
                 if scrubStart == nil { state.pause(); scrubStart = state.currentTime }
                 let t = (scrubStart ?? 0) - Double(v.translation.width / zoom)
                 // Snap to beat markers within ~6 pt.
@@ -222,10 +223,10 @@ struct TimelineView: View {
                 .highPriorityGesture(clipDrag(layer), including: editable ? .all : .subviews)
                 .offset(x: x0, y: 4)
             if editable {
-                trimHandle(layer, start: true).offset(x: x0 - 2, y: 4)
-                trimHandle(layer, start: false).offset(x: x0 + w - 14, y: 4)
+                trimHandle(layer, start: true).offset(x: x0 - 13, y: 2)
+                trimHandle(layer, start: false).offset(x: x0 + max(w, 14) - 13, y: 2)
             }
-            ForEach(layer.keyframeTimes, id: \.self) { t in
+            ForEach(Array(layer.keyframeTimes.enumerated()), id: \.offset) { _, t in
                 Image(systemName: "diamond.fill")
                     .font(.system(size: editable ? 12 : 9))
                     .foregroundStyle(editable && abs(t - clock.time) < 1e-3 ? Theme.keyframe : .white)
@@ -247,6 +248,7 @@ struct TimelineView: View {
     private func clipDrag(_ layer: Layer) -> some Gesture {
         DragGesture(minimumDistance: 6)
             .onChanged { g in
+                if multiDragStart != nil || state.isMultiSelecting { return }
                 if dragOriginal == nil { dragOriginal = layer; state.pause(); state.beginEdit("Move Clip") }
                 guard let o = dragOriginal else { return }
                 let raw = o.inPoint + Double(g.translation.width / zoom)
@@ -268,7 +270,7 @@ struct TimelineView: View {
     private func trimHandle(_ layer: Layer, start: Bool) -> some View {
         RoundedRectangle(cornerRadius: 3).fill(.white)
             .frame(width: 8, height: rowHeight - 14)
-            .frame(width: 16, height: rowHeight - 8)
+            .frame(width: 26, height: rowHeight - 4)
             .contentShape(Rectangle())
             .highPriorityGesture(DragGesture(minimumDistance: 2)
                 .onChanged { g in

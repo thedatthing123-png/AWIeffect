@@ -45,7 +45,10 @@ extension EditorState {
 
     func deleteMulti() {
         guard let ids = multiSelection, !ids.isEmpty else { return }
-        mutate("Delete \(ids.count) Layers") { $0.layers.removeAll { ids.contains($0.id) } }
+        mutate("Delete \(ids.count) Layers") { p in
+            Self.unparentKeepingWorld(&p) { l in l.parentID.map { ids.contains($0) } ?? false }
+            p.layers.removeAll { ids.contains($0.id) }
+        }
         selectedLayerID = nil
         endMultiSelect()
     }
@@ -55,9 +58,13 @@ extension EditorState {
         var newIDs = Set<UUID>()
         mutate("Duplicate \(ids.count) Layers") { p in
             var out: [Layer] = []
+            var remap: [UUID: UUID] = [:]
+            for l in p.layers where ids.contains(l.id) { remap[l.id] = UUID() }
             for l in p.layers {
                 if ids.contains(l.id) {
-                    var c = l; c.id = UUID(); c.name += " copy"
+                    var c = l; c.id = remap[l.id]!; c.name += " copy"
+                    // Copies of a parent+child pair stay linked to each other, not to the originals.
+                    if let pid = c.parentID, let np = remap[pid] { c.parentID = np }
                     out.append(c); newIDs.insert(c.id)
                 }
                 out.append(l)
@@ -70,6 +77,12 @@ extension EditorState {
     /// Groups the selection into one pre-comp, keeping order and timing.
     func precomposeMulti(name: String? = nil) {
         guard let ids = multiSelection, !ids.isEmpty else { return }
+        var clean = project
+        Self.unparentKeepingWorld(&clean) { l in
+            guard let pid = l.parentID else { return false }
+            return ids.contains(l.id) != ids.contains(pid)
+        }
+        if clean != project { mutate("Unlink Parents") { $0 = clean } }
         let picked = project.layers.filter { ids.contains($0.id) }
         guard let firstIndex = project.layers.firstIndex(where: { ids.contains($0.id) }) else { return }
         var comp = Project.new(name: name ?? "Group \(project.precomps.count + 1)", width: project.width, height: project.height,
@@ -181,6 +194,10 @@ extension Layer {
             }
         }
         for i in masks.indices { masks[i].path.shift(by: dt) }
+        if camera != nil { camera!.zoom.shift(by: dt); camera!.focusDistance.shift(by: dt); camera!.aperture.shift(by: dt); camera!.blurLevel.shift(by: dt) }
+        if model3D != nil { model3D!.yaw.shift(by: dt); model3D!.pitch.shift(by: dt); model3D!.roll.shift(by: dt); model3D!.color.shift(by: dt) }
+        if light != nil { light!.color.shift(by: dt); light!.intensity.shift(by: dt); light!.coneAngle.shift(by: dt); light!.coneFeather.shift(by: dt); light!.falloffRadius.shift(by: dt) }
+        if text != nil { text!.fill.shift(by: dt); text!.tracking.shift(by: dt) }
     }
 }
 

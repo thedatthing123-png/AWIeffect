@@ -21,6 +21,34 @@ extension Renderer {
         return (m, rot, sc)
     }
 
+    /// Bakes parenting into absolute keyframed transforms (each key evaluated at its own time), so time effects like
+    /// echo see the parent's motion too.
+    static func resolveParentingAnimated(_ p: Project) -> Project {
+        guard p.layers.contains(where: { $0.parentID != nil }) else { return p }
+        var q = p
+        EditorState.unparentKeepingWorld(&q) { _ in true }
+        // Children whose own position is static still move with an animated parent: sample the parent's keys.
+        for i in q.layers.indices {
+            guard let pid = p.layers[i].parentID, let parent = p.layers.first(where: { $0.id == pid }) else { continue }
+            let keyTimes = Set(parent.keyframeTimes + p.layers[i].keyframeTimes).sorted()
+            guard !keyTimes.isEmpty else { continue }
+            var pos = Animated(q.layers[i].transform.position.staticValue), rot = Animated(q.layers[i].transform.rotation.staticValue)
+            var sc = Animated(q.layers[i].transform.scale.staticValue)
+            let fps = max(p.fps, 1)
+            var t = max(0, (keyTimes.first ?? 0) - 1 / fps)
+            let end = min(p.duration, (keyTimes.last ?? 0) + 1 / fps)
+            while t <= end + 1e-9 {
+                let single = resolveParenting(p, time: t).layers[i].transform
+                pos.insertKeyframe(Keyframe(time: t, value: single.position.value(at: t), interpolation: .linear))
+                rot.insertKeyframe(Keyframe(time: t, value: single.rotation.value(at: t), interpolation: .linear))
+                sc.insertKeyframe(Keyframe(time: t, value: single.scale.value(at: t), interpolation: .linear))
+                t += 1 / fps
+            }
+            q.layers[i].transform.position = pos; q.layers[i].transform.rotation = rot; q.layers[i].transform.scale = sc
+        }
+        return q
+    }
+
     /// Bakes parenting into absolute transform values for this frame.
     static func resolveParenting(_ p: Project, time: Double) -> Project {
         guard p.layers.contains(where: { $0.parentID != nil }) else { return p }
@@ -87,6 +115,29 @@ extension EditorState {
             }
             p.layers[i].transform = tr
             p.layers[i].parentID = parent
+        }
+    }
+
+    /// Removes parent links for `ids` (or links pointing at them / across a boundary) keeping every keyframe's world placement.
+    nonisolated static func unparentKeepingWorld(_ p: inout Project, where shouldUnlink: (Layer) -> Bool) {
+        let snapshot = p
+        for i in p.layers.indices where p.layers[i].parentID != nil && shouldUnlink(p.layers[i]) {
+            guard let old = p.layers[i].parentID else { continue }
+            var tr = p.layers[i].transform
+            func convert<V: Interpolatable>(_ a: Animated<V>, _ f: (V, Double) -> V) -> Animated<V> {
+                var out = a
+                out.staticValue = f(a.staticValue, 0)
+                out.keyframes = a.keyframes.map { var k = $0; k.value = f(k.value, k.time); return k }
+                return out
+            }
+            tr.position = convert(tr.position) { v, t in
+                guard let a = Renderer.parentAffine(old, in: snapshot, time: t) else { return v }
+                let w = a.m * SIMD3(v.x, v.y, 1); return Vec2(w.x, w.y)
+            }
+            tr.rotation = convert(tr.rotation) { v, t in v + (Renderer.parentAffine(old, in: snapshot, time: t)?.rot ?? 0) }
+            tr.scale = convert(tr.scale) { v, t in let s = Renderer.parentAffine(old, in: snapshot, time: t)?.scale ?? Vec2(1, 1); return Vec2(v.x * s.x, v.y * s.y) }
+            p.layers[i].transform = tr
+            p.layers[i].parentID = nil
         }
     }
 

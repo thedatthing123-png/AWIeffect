@@ -85,7 +85,7 @@ extension EditorState {
         let dx = Double(width - project.width) / 2, dy = Double(height - project.height) / 2
         mutate("Scene Size") { p in
             p.width = width; p.height = height
-            for i in p.layers.indices {
+            for i in p.layers.indices where p.layers[i].parentID == nil {
                 p.layers[i].transform.position = p.layers[i].transform.position.mapped { $0 + Vec2(dx, dy) }
             }
         }

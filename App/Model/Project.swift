@@ -311,6 +311,7 @@ struct Layer: Codable, Equatable, Identifiable {
         for m in masks { t += m.path.keyframeTimes }
         if let c = camera { t += c.zoom.keyframeTimes + c.focusDistance.keyframeTimes + c.aperture.keyframeTimes + c.blurLevel.keyframeTimes }
         if let m = model3D { t += m.yaw.keyframeTimes + m.pitch.keyframeTimes + m.roll.keyframeTimes + m.color.keyframeTimes }
+        if let o = light { t += o.color.keyframeTimes + o.intensity.keyframeTimes + o.coneAngle.keyframeTimes + o.coneFeather.keyframeTimes + o.falloffRadius.keyframeTimes }
         for e in effects { t += e.keyframeTimes }
         if let tx = text {
             t += tx.fill.keyframeTimes + tx.tracking.keyframeTimes

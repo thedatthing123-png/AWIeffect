@@ -118,5 +118,9 @@ extension Layer {
             }
         }
         for i in masks.indices { masks[i].path.retime(at: from, to: to) }
+        if camera != nil { camera!.zoom.retime(at: from, to: to); camera!.focusDistance.retime(at: from, to: to); camera!.aperture.retime(at: from, to: to); camera!.blurLevel.retime(at: from, to: to) }
+        if model3D != nil { model3D!.yaw.retime(at: from, to: to); model3D!.pitch.retime(at: from, to: to); model3D!.roll.retime(at: from, to: to); model3D!.color.retime(at: from, to: to) }
+        if light != nil { light!.color.retime(at: from, to: to); light!.intensity.retime(at: from, to: to); light!.coneAngle.retime(at: from, to: to); light!.coneFeather.retime(at: from, to: to); light!.falloffRadius.retime(at: from, to: to) }
+        if text != nil { text!.fill.retime(at: from, to: to); text!.tracking.retime(at: from, to: to) }
     }
 }

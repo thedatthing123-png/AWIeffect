@@ -41,6 +41,11 @@ extension EditorState {
 
     /// Moves the selected layer into a new comp (same size/duration) and replaces it with a pre-comp layer.
     func precomposeSelected() {
+        guard let i0 = selectedIndex else { return }
+        let sid = project.layers[i0].id
+        var clean = project
+        Self.unparentKeepingWorld(&clean) { $0.id == sid || $0.parentID == sid }
+        if clean != project { mutate("Unlink Parents") { $0 = clean } }
         guard let i = selectedIndex else { return }
         let layer = project.layers[i]
         var comp = Project.new(name: "\(layer.name) Comp", width: project.width, height: project.height,
@@ -66,11 +71,12 @@ extension EditorState {
               var comp = rootProject.precomps.first(where: { $0.id == id }) ?? project.precomps.first(where: { $0.id == id }) else { return }
         pause()
         let library = rootProject.precomps
+        let inner = max(0, min(comp.duration, l.sourceTime(at: currentTime)))
         compStack.append((project: project, time: currentTime, selected: selectedLayerID))
         comp.precompList = library.filter { $0.id != comp.id }
         pushUndoContext()
         project = comp
-        currentTime = 0
+        currentTime = comp.snapToFrame(inner)
         select(nil)
     }
 

@@ -154,8 +154,8 @@ extension EditorState {
                 guard let i = self.selectedIndex else { return }
                 p.layers[i].is3D = true
                 p.layers[i].extrude = Animated(40)
-                p.layers[i].transform.rotationY = Animated(-25)
-                p.layers[i].transform.rotationX = Animated(12)
+                if !p.layers[i].transform.rotationY.isAnimated { p.layers[i].transform.rotationY = Animated(-25) }
+                if !p.layers[i].transform.rotationX.isAnimated { p.layers[i].transform.rotationX = Animated(12) }
             }
             panel = .threeD
             return

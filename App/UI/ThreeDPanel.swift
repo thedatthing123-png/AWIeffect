@@ -48,18 +48,21 @@ struct ThreeDPanel: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            PanelHeader(state: state, title: state.selectedLayer?.content == .camera ? "Camera" : "3D")
+            PanelHeader(state: state, title: state.selectedLayer?.content == .camera ? "Camera" : (state.selectedLayer?.content == .light ? "Light" : "3D"))
             if let l = state.selectedLayer {
                 let t = state.currentTime
                 ScrollView {
                     VStack(spacing: 8) {
-                        if l.content != .camera && l.content != .light {
+                        if l.content == .adjustment {
+                            Text("Adjustment layers apply their effects in 2D to everything below them.").font(.caption).foregroundStyle(Theme.textDim)
+                        }
+                        if l.content != .camera && l.content != .light && l.content != .adjustment {
                             Toggle("3D Layer", isOn: Binding(get: { l.is3D }, set: { b in
                                 state.mutate("3D Layer") { p in if let i = state.selectedIndex { p.layers[i].is3D = b } }
                             }))
                             .tint(Theme.accent).foregroundStyle(Theme.text)
                         }
-                        if l.content != .camera && l.content != .model && l.content != .light {
+                        if l.content != .camera && l.content != .model && l.content != .light && l.content != .adjustment {
                             Button { state.makeSelected3DObject() } label: {
                                 Label(Self.convertTitle(l), systemImage: "cube.transparent.fill").frame(maxWidth: .infinity)
                             }
