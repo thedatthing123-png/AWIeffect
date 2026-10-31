@@ -327,6 +327,15 @@ struct ParamRow: View {
             Text(def.name).font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text)
                 .frame(width: 96, alignment: .leading).lineLimit(2).minimumScaleFactor(0.8)
             control(t: t)
+            if state.effectSegments(GraphEffectTarget(effect: effect.id, key: def.id)).count > 0 {
+                // Keyframed: shape its motion in the Graph (bounce, ease, elastic…).
+                Button { state.graphEffect = GraphEffectTarget(effect: effect.id, key: def.id); state.panel = .graph } label: {
+                    Image(systemName: "point.topleft.down.to.point.bottomright.curvepath").font(.system(size: 13, weight: .semibold))
+                        .frame(width: 30, height: 30).foregroundStyle(Theme.accentGlow)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Graph for \(def.name)")
+            }
         }
     }
 

@@ -72,7 +72,7 @@ struct TransformPanel: View {
                 KeyframeDiamond(filled: state.hasKeyframe(key), animated: state.isAnimated(key)) { state.toggleKeyframe(key) }
                     .frame(width: 40, height: 36)
             }
-            Button { state.panel = .graph } label: {
+            Button { state.graphEffect = nil; state.panel = .graph } label: {
                 Image(systemName: "point.topleft.down.to.point.bottomright.curvepath").font(.system(size: 15, weight: .semibold))
                     .frame(width: 40, height: 36)
             }

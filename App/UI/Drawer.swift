@@ -42,12 +42,12 @@ struct DrawerChrome<Content: View>: View {
                 .offset(y: shown ? drag : geo.size.height)
             }
         }
-        .onAppear { withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) { shown = true } }
+        .onAppear { withAnimation(.spring(response: 0.34, dampingFraction: 0.88)) { shown = true } }
     }
 
     private func close() {
-        withAnimation(.easeIn(duration: 0.12)) { shown = false }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+        withAnimation(.easeIn(duration: 0.18)) { shown = false }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
             var t = Transaction(); t.disablesAnimations = true
             withTransaction(t) { isPresented = false }
         }

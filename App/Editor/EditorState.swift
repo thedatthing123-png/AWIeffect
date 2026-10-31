@@ -88,6 +88,8 @@ final class EditorState: ObservableObject {
     @Published var cameraView = true
     /// Grid over the canvas.
     @Published var showGrid = false
+    /// Effect setting the Graph is showing (nil = transform properties).
+    @Published var graphEffect: GraphEffectTarget?
     /// True while a canvas drag writes to `live` instead of `project`.
     private(set) var liveGesture = false
     var isLiveGesture: Bool { liveGesture }

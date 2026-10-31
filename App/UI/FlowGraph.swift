@@ -32,7 +32,7 @@ struct FlowGraphPanel: View {
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: "Graph")
-            if state.animatedKeys.isEmpty {
+            if state.animatedKeys.isEmpty && state.effectGraphTargets.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "point.topleft.down.to.point.bottomright.curvepath").font(.system(size: 28)).foregroundStyle(Theme.textDim)
                     Text("Add two keyframes on a property, then shape its motion here.")
@@ -51,7 +51,10 @@ struct FlowGraphPanel: View {
                 .padding(.horizontal, 10).padding(.bottom, 8)
             }
         }
-        .onAppear { if let k = key, !state.animatedKeys.contains(k) { key = nil } }
+        .onAppear {
+            if let k = key, !state.animatedKeys.contains(k) { key = nil }
+            if state.graphEffect == nil, state.animatedKeys.isEmpty { state.graphEffect = state.effectGraphTargets.first?.target }
+        }
     }
 
     // MARK: Current segment
@@ -59,22 +62,29 @@ struct FlowGraphPanel: View {
     /// The property the graph shows (the chosen one, else the first animated).
     private var shownKey: PropertyKey? { key ?? state.animatedKeys.first }
 
+    /// Segments of what the graph shows: a keyframed effect setting, else a transform property.
+    private var shownSegs: [EaseSegment] {
+        if let g = state.graphEffect { return state.effectSegments(g) }
+        return shownKey.map { state.easeSegments($0) } ?? []
+    }
+
     private var segmentIndex: Int? {
-        guard let k = shownKey else { return nil }
-        let segs = state.easeSegments(k)
+        let segs = shownSegs
         guard !segs.isEmpty else { return nil }
         let t = state.currentTime
         return segs.firstIndex { t >= $0.t0 - 1e-4 && t < $0.t1 - 1e-4 } ?? (t < segs[0].t0 ? 0 : segs.count - 1)
     }
 
     private var current: SavedEase? {
-        guard let k = shownKey, let i = segmentIndex else { return nil }
-        let s = state.easeSegments(k)[i]
+        guard let i = segmentIndex else { return nil }
+        let s = shownSegs[i]
         return SavedEase(name: "", interpolation: s.interpolation, out: s.out, into: s.into, curve: s.interpolation == .bezier ? s.curve : nil)
     }
 
     private func apply(_ e: SavedEase, continuous: Bool = false) {
-        if let k = key {
+        if let g = state.graphEffect {
+            state.setEffectEase(g, segment: segmentIndex, interpolation: e.interpolation, out: e.out, into: e.into, curve: e.curve, continuous: continuous)
+        } else if let k = key {
             state.setEase(k, segment: segmentIndex, interpolation: e.interpolation, out: e.out, into: e.into, curve: e.curve, continuous: continuous)
         } else {
             let t = shownKey.flatMap { k in segmentIndex.map { state.easeSegments(k)[$0].t0 } }
@@ -88,8 +98,13 @@ struct FlowGraphPanel: View {
     private var propertyChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
-                chip("All", selected: key == nil) { key = nil }
-                ForEach(state.animatedKeys) { k in chip(k.title, selected: key == k) { key = k } }
+                if !state.animatedKeys.isEmpty {
+                    chip("All", selected: key == nil && state.graphEffect == nil) { key = nil; state.graphEffect = nil }
+                }
+                ForEach(state.animatedKeys) { k in chip(k.title, selected: key == k && state.graphEffect == nil) { key = k; state.graphEffect = nil } }
+                ForEach(state.effectGraphTargets, id: \.target) { e in
+                    chip(e.title, selected: state.graphEffect == e.target) { state.graphEffect = e.target }
+                }
                 Divider().frame(height: 20)
                 Button { state.jumpKeyframe(forward: false) } label: { Image(systemName: "chevron.left.to.line") }
                     .accessibilityLabel("Previous keyframe")
@@ -105,8 +120,8 @@ struct FlowGraphPanel: View {
     }
 
     private var segmentLabel: String {
-        guard let k = shownKey, let i = segmentIndex else { return "" }
-        let s = state.easeSegments(k)[i]
+        guard let i = segmentIndex else { return "" }
+        let s = shownSegs[i]
         return String(format: "%.2fs → %.2fs", s.t0, s.t1)
     }
 

@@ -150,8 +150,7 @@ struct TimelineView: View {
         .frame(width: headerWidth, height: rowHeight, alignment: .leading)
         .background(Theme.surface)
         .contentShape(Rectangle())
-        // The left column only selects (hold = multi-select); tapping it while selecting adds / removes the layer.
-        // Tapping the clip itself is what opens the layer's settings.
+        // Tap in multi-select toggles; otherwise the left column only reacts to a hold (multi-select).
         .onTapGesture { if state.isMultiSelecting { state.toggleInMulti(layer.id) } }
     }
 
