@@ -38,10 +38,42 @@ enum TrackMatte: String, Codable, CaseIterable, Identifiable {
 }
 
 enum BlendMode: String, Codable, CaseIterable, Identifiable {
-    case normal, add, screen, multiply, overlay, lighten, darken, difference
+    case normal, darken, multiply, colorBurn, linearBurn, darkerColor
+    case add, lighten, screen, colorDodge, linearDodge, lighterColor
+    case overlay, softLight, hardLight, linearLight, vividLight, pinLight, hardMix
+    case difference, exclusion, subtract, divide
+    case hue, saturation, color, luminosity
     var id: String { rawValue }
-    var title: String { rawValue.capitalized }
-    /// Index passed to the Metal compositor; must match Shaders.metal.
+    var title: String {
+        switch self {
+        case .colorBurn: return "Color Burn"
+        case .linearBurn: return "Linear Burn"
+        case .darkerColor: return "Darker Color"
+        case .colorDodge: return "Color Dodge"
+        case .linearDodge: return "Linear Dodge"
+        case .lighterColor: return "Lighter Color"
+        case .softLight: return "Soft Light"
+        case .hardLight: return "Hard Light"
+        case .linearLight: return "Linear Light"
+        case .vividLight: return "Vivid Light"
+        case .pinLight: return "Pin Light"
+        case .hardMix: return "Hard Mix"
+        default: return rawValue.capitalized
+        }
+    }
+    /// The same groups After Effects uses in its blend menu.
+    var group: String {
+        switch self {
+        case .normal: return "Normal"
+        case .darken, .multiply, .colorBurn, .linearBurn, .darkerColor: return "Darken"
+        case .add, .lighten, .screen, .colorDodge, .linearDodge, .lighterColor: return "Lighten"
+        case .overlay, .softLight, .hardLight, .linearLight, .vividLight, .pinLight, .hardMix: return "Contrast"
+        case .difference, .exclusion, .subtract, .divide: return "Difference"
+        case .hue, .saturation, .color, .luminosity: return "Color"
+        }
+    }
+    static let groups = ["Normal", "Darken", "Lighten", "Contrast", "Difference", "Color"]
+    /// Index passed to the Metal compositors; must match Shaders.metal / Paths.metal / Draw.metal.
     var shaderIndex: UInt32 {
         switch self {
         case .normal: return 0
@@ -52,6 +84,25 @@ enum BlendMode: String, Codable, CaseIterable, Identifiable {
         case .lighten: return 5
         case .darken: return 6
         case .difference: return 7
+        case .colorBurn: return 8
+        case .linearBurn: return 9
+        case .darkerColor: return 10
+        case .colorDodge: return 11
+        case .linearDodge: return 12
+        case .lighterColor: return 13
+        case .softLight: return 14
+        case .hardLight: return 15
+        case .linearLight: return 16
+        case .vividLight: return 17
+        case .pinLight: return 18
+        case .hardMix: return 19
+        case .exclusion: return 20
+        case .subtract: return 21
+        case .divide: return 22
+        case .hue: return 23
+        case .saturation: return 24
+        case .color: return 25
+        case .luminosity: return 26
         }
     }
 }
@@ -244,6 +295,18 @@ struct Layer: Codable, Equatable, Identifiable {
     var camera: CameraOptions? = nil
     /// Options for `.model` layers.
     var model3D: Model3DOptions? = nil
+    /// Alight Motion-style group: this layer is a group container; its parts are the layers whose `groupID` is
+    /// this layer's id. The group's transform, masks, effects, blend mode and matte apply to all parts together.
+    var isGroup = false
+    var groupCollapsed = false
+    /// The group this layer is a part of.
+    var groupID: UUID? = nil
+    /// AE shape operators (Repeater, Offset / Wiggle Paths, Zig Zag, Pucker & Bloat) for shape layers.
+    var shapeOps: ShapeOps? = nil
+    /// Two-bone IK rig (this layer is the lower limb).
+    var ik: IKRig? = nil
+    /// IK tips and physics bodies can't pass through this layer.
+    var isCollider = false
 
     init(id: UUID = UUID(), name: String, content: LayerContent, tag: LayerTag = .purple, outPoint: Double,
          transform: LayerTransform, size: Animated<Vec2>) {
@@ -297,6 +360,12 @@ struct Layer: Codable, Equatable, Identifiable {
         extrude = try c.decodeIfPresent(Animated<Double>.self, forKey: .extrude) ?? Animated(0)
         camera = try c.decodeIfPresent(CameraOptions.self, forKey: .camera)
         model3D = try c.decodeIfPresent(Model3DOptions.self, forKey: .model3D)
+        isGroup = try c.decodeIfPresent(Bool.self, forKey: .isGroup) ?? false
+        groupCollapsed = try c.decodeIfPresent(Bool.self, forKey: .groupCollapsed) ?? false
+        groupID = try c.decodeIfPresent(UUID.self, forKey: .groupID)
+        shapeOps = try c.decodeIfPresent(ShapeOps.self, forKey: .shapeOps)
+        ik = try c.decodeIfPresent(IKRig.self, forKey: .ik)
+        isCollider = try c.decodeIfPresent(Bool.self, forKey: .isCollider) ?? false
     }
 
     func isActive(at time: Double) -> Bool { isVisible && time >= inPoint && time < outPoint }

@@ -50,7 +50,9 @@ extension Renderer {
     }
 
     /// Bakes parenting into absolute transform values for this frame.
-    static func resolveParenting(_ p: Project, time: Double) -> Project {
+    static func resolveParenting(_ raw: Project, time: Double) -> Project {
+        // IK poses limbs first; parenting then carries the lower limbs along.
+        let p = IKSolver.apply(raw, time: time)
         guard p.layers.contains(where: { $0.parentID != nil }) else { return p }
         var q = p
         for i in q.layers.indices {

@@ -362,7 +362,7 @@ struct DrawStudioView: View {
                 }
                 .frame(width: 46, height: 46).foregroundStyle(Theme.text)
             }
-            ColorPicker("", selection: Binding(get: { Color(session.brush.color) }, set: { session.brush.color = $0.rgba }), supportsOpacity: false)
+            AWIColorWell("", selection: Binding(get: { Color(session.brush.color) }, set: { session.brush.color = $0.rgba }), supportsOpacity: false)
                 .labelsHidden().frame(width: 40)
         }
         .padding(.horizontal, 8).padding(.bottom, 4).frame(height: 56)

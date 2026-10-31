@@ -46,6 +46,8 @@ enum ToolPanel: Equatable {
     case time
     case scene3D
     case puppet
+    case ccStudio
+    case rig
 }
 
 /// The project as it looks mid-gesture. While a finger drags a layer on the canvas only the preview and the
@@ -275,6 +277,7 @@ final class EditorState: ObservableObject {
     func deleteSelected() {
         guard let i = selectedIndex else { return }
         let id = project.layers[i].id
+        if project.layers[i].isGroup { deleteGroup(id); return }
         mutate("Delete Layer") { p in
             Self.unparentKeepingWorld(&p) { $0.parentID == id }
             p.layers.remove(at: i)
@@ -284,6 +287,7 @@ final class EditorState: ObservableObject {
 
     func duplicateSelected() {
         guard let i = selectedIndex else { return }
+        if project.layers[i].isGroup { duplicateGroup(project.layers[i].id); return }
         mutate("Duplicate Layer") { p in
             var copy = p.layers[i]
             copy.id = UUID()

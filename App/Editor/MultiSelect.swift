@@ -227,7 +227,8 @@ struct MultiSelectPanel: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ToolTile(icon: "trash", title: "Delete") { state.deleteMulti() }
-                    ToolTile(icon: "square.stack.3d.up", title: "Group") { state.precomposeMulti() }
+                    ToolTile(icon: "folder.badge.plus", title: "Group") { state.groupSelected() }
+                    ToolTile(icon: "square.stack.3d.up", title: "Pre-compose") { state.precomposeMulti() }
                     ToolTile(icon: "plus.square.on.square", title: "Duplicate") { state.duplicateMulti() }
                     ToolTile(icon: "eye", title: "Show") { state.setVisibilityMulti(true) }
                     ToolTile(icon: "eye.slash", title: "Hide") { state.setVisibilityMulti(false) }

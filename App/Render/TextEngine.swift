@@ -206,6 +206,9 @@ extension Renderer {
         var tracking = 0.0
         var blur = 0.0
         var charOffset = 0.0
+        var rotX = 0.0
+        var rotY = 0.0
+        var z = 0.0
     }
 
     static func glyphStates(_ text: TextData, layout: TextLayout, time: Double) -> [GlyphState] {
@@ -228,6 +231,7 @@ extension Renderer {
             let op = p.opacity?.value(at: time), col = p.fill?.value(at: time), tr = p.tracking?.value(at: time)
             let sk = p.skew?.value(at: time)
             let bl = p.blur?.value(at: time), co = p.characterOffset?.value(at: time)
+            let rx = p.rotationX?.value(at: time), ry = p.rotationY?.value(at: time), pz = p.positionZ?.value(at: time)
             for (gi, g) in layout.glyphs.enumerated() {
                 let unit: Int
                 switch sel.basedOn {
@@ -247,6 +251,9 @@ extension Renderer {
                 if let tr { states[gi].tracking += tr * amt }
                 if let bl { states[gi].blur += max(0, bl * amt) }
                 if let co { states[gi].charOffset += co * amt }
+                if let rx { states[gi].rotX += rx * amt }
+                if let ry { states[gi].rotY += ry * amt }
+                if let pz { states[gi].z += pz * amt }
             }
         }
         // Tracking accumulates along each line, then the line is re-centered for the alignment.
@@ -289,6 +296,10 @@ extension Renderer {
         let lay = TextEngine.shared.layout(text, time: time)
         let states = Self.glyphStates(text, layout: lay, time: time)
         let chars = Array(text.string)
+        // Path for text-on-path (the layer's first mask), measured once per frame.
+        let pathTrack: PathTrack? = (text.onPath ?? false) ? layer.masks.first.map {
+            PathTrack($0.path.value(at: time), offsetPercent: text.pathOffset?.value(at: time) ?? 0)
+        } : nil
         for (gi, g0) in lay.glyphs.enumerated() where !g0.isSpace {
             let st = states[gi]
             var g = g0
@@ -310,15 +321,29 @@ extension Renderer {
             guard let gt = TextEngine.shared.glyphTexture(g, scale: glyphScale, blur: st.blur, device: device) else { continue }
             // Glyph quad half-size including raster padding (local px).
             let hs = Vec2(g.halfSize.x + gt.pad / gt.scale, g.halfSize.y + gt.pad / gt.scale)
-            let rot = st.rotation * .pi / 180, skew = tan(st.skew * .pi / 180)
-            let c = g.center + st.offset
+            var rot = st.rotation * .pi / 180
+            let skew = tan(st.skew * .pi / 180)
+            var c = g.center + st.offset
             // Characters scale/rotate around their baseline center like AE's default anchor.
-            let pivot = Vec2(g.center.x, g.origin.y) + st.offset
+            var pivot = Vec2(g.center.x, g.origin.y) + st.offset
+            // Text on path: slide each letter along the mask path and turn it with the curve.
+            if let track = pathTrack {
+                let along = track.offset + (g.center.x - lay.bounds.minX) + st.offset.x
+                let (pt, ang) = track.point(at: along)
+                let nrm = Vec2(-sin(ang), cos(ang))
+                let lift = g.origin.y - lay.bounds.maxY
+                let base = pt + nrm * (lift + st.offset.y)
+                pivot = base
+                c = base + nrm * (g.center.y - g.origin.y)
+                rot += ang
+            }
             let toPivot = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(c.x - pivot.x, c.y - pivot.y, 1)))
             let T = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(pivot.x, pivot.y, 1)))
             let R = simd_double3x3(columns: (SIMD3(cos(rot), sin(rot), 0), SIMD3(-sin(rot), cos(rot), 0), SIMD3(0, 0, 1)))
             let K = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(-skew, 1, 0), SIMD3(0, 0, 1)))
-            let S = simd_double3x3(diagonal: SIMD3(st.scale.x, st.scale.y, 1))
+            // Per-character 3D: flips foreshorten the letter, depth shrinks / grows it (1000 px focal length).
+            let depth = 1000 / max(50, 1000 + st.z)
+            let S = simd_double3x3(diagonal: SIMD3(st.scale.x * cos(st.rotY * .pi / 180) * depth, st.scale.y * cos(st.rotX * .pi / 180) * depth, 1))
             let G = M * T * R * K * S * toPivot
             let det = G[0][0] * G[1][1] - G[1][0] * G[0][1]
             if abs(det) < 1e-12 { continue }
@@ -356,5 +381,37 @@ extension Renderer {
     static func textBounds(_ layer: Layer, time: Double) -> CGRect? {
         guard let t = layer.text else { return nil }
         return TextEngine.shared.layout(t, time: time).bounds
+    }
+}
+
+
+/// A path measured by length: point + direction at any distance along it (for text on path).
+struct PathTrack {
+    private var pts: [Vec2] = []
+    private var cum: [Double] = [0]
+    let offset: Double
+    var length: Double { cum.last ?? 0 }
+
+    init(_ path: BezierPath, offsetPercent: Double) {
+        let segs = path.segments(stepsPerCurve: 24)
+        if let f = segs.first { pts.append(Vec2(Double(f.x), Double(f.y))) }
+        for s in segs {
+            let p = Vec2(Double(s.z), Double(s.w))
+            cum.append(cum.last! + hypot(p.x - pts.last!.x, p.y - pts.last!.y))
+            pts.append(p)
+        }
+        let total = cum.last ?? 0
+        offset = total * offsetPercent / 100
+    }
+
+    /// Point and angle (radians) at `d` px along the path (clamped to the ends, extended along the end tangents).
+    func point(at d: Double) -> (Vec2, Double) {
+        guard pts.count >= 2 else { return (pts.first ?? .zero, 0) }
+        var i = 1
+        while i < cum.count - 1 && cum[i] < d { i += 1 }
+        let a = pts[i - 1], b = pts[i]
+        let segLen = max(1e-9, cum[i] - cum[i - 1])
+        let f = (d - cum[i - 1]) / segLen
+        return (a + (b - a) * f, atan2(b.y - a.y, b.x - a.x))
     }
 }

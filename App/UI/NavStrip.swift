@@ -67,6 +67,8 @@ struct NavStrip: View {
         else if l.mediaFile != nil, !l.isAudioOnly { out.append(Item(id: "Redraw", icon: "paintbrush.pointed.fill") { drawLauncher.open(state.selectedLayerID) }) }
         if visual { out.append(Item(id: "Effects", icon: "sparkles", panel: .effects)) }
         if visual, c != .text { out.append(Item(id: "Puppet", icon: "hand.point.up.braille", panel: .puppet)) }
+        if visual || c == .adjustment { out.append(Item(id: "CC Studio", icon: "camera.filters", panel: .ccStudio)) }
+        if visual { out.append(Item(id: "Rig", icon: "figure.arms.open", panel: .rig)) }
         if visual { out.append(Item(id: "Presets", icon: "wand.and.rays", panel: .presets)) }
         switch c {
         case .shape, .solid, .text: out.append(Item(id: "Color & Fill", icon: "paintpalette", panel: .fill))
@@ -99,6 +101,7 @@ struct NavStrip: View {
          Item(id: "Music", icon: "music.note") { mediaLauncher.pickAudio = true },
          Item(id: "Library", icon: "books.vertical.fill", panel: .overlays),
          Item(id: "3D Scene", icon: "square.3.layers.3d", panel: .scene3D),
+         Item(id: "CC Studio", icon: "camera.filters", panel: .ccStudio),
          Item(id: "Beats", icon: "metronome", panel: .beats),
          Item(id: "Scene", icon: "gearshape", panel: .scene)]
     }

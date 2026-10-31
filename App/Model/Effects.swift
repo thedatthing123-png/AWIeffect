@@ -95,6 +95,8 @@ struct EffectInstance: Codable, Equatable, Identifiable {
     var typeID: String
     var isEnabled = true
     var params: [String: ParamValue]
+    /// Text settings that aren't numbers (e.g. the chosen LUT file of a grade).
+    var text: [String: String]? = nil
 
     func value(_ key: String) -> ParamValue? { params[key] }
     func number(_ key: String, _ t: Double) -> Double { params[key]?.number(at: t) ?? 0 }

@@ -95,15 +95,26 @@ final class PathGPU {
     /// Applies a layer's masks to `layer` (local buffer). `M` maps layer-local px -> buffer px.
     func applyMasks(cb: MTLCommandBuffer, layer tex: MTLTexture, masks: [LayerMask], time: Double,
                     matrix M: simd_double3x3, aa: Double, pool: TexturePool) {
+        guard let acc = coverage(cb: cb, width: tex.width, height: tex.height, masks: masks, time: time, matrix: M, aa: aa) else { return }
+        guard let enc = cb.makeComputeCommandEncoder() else { return }
+        enc.setComputePipelineState(applyPSO)
+        enc.setTexture(tex, index: 0)
+        enc.setTexture(acc, index: 1)
+        dispatch(enc, applyPSO, tex.width, tex.height)
+        enc.endEncoding()
+    }
+
+    /// The combined mask coverage (0-1, r16Float) of `masks` in a texture of the given size.
+    func coverage(cb: MTLCommandBuffer, width: Int, height: Int, masks: [LayerMask], time: Double,
+                  matrix M: simd_double3x3, aa: Double) -> MTLTexture? {
         let active = masks.filter { $0.mode != .none }
-        guard !active.isEmpty else { return }
-        let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r16Float, width: tex.width, height: tex.height, mipmapped: false)
+        guard !active.isEmpty else { return nil }
+        let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r16Float, width: width, height: height, mipmapped: false)
         d.usage = [.shaderRead, .shaderWrite]
         d.storageMode = .private
-        guard let acc = device.makeTexture(descriptor: d) else { return }
-        _ = pool
+        guard let acc = device.makeTexture(descriptor: d) else { return nil }
         for (i, m) in active.enumerated() {
-            guard let enc = cb.makeComputeCommandEncoder() else { return }
+            guard let enc = cb.makeComputeCommandEncoder() else { return nil }
             var p = PathParams()
             (p.invRow0, p.invRow1) = Self.inverseRows(M)
             let segs = m.path.value(at: time).segments()
@@ -120,12 +131,7 @@ final class PathGPU {
             dispatch(enc, accPSO, acc.width, acc.height)
             enc.endEncoding()
         }
-        guard let enc = cb.makeComputeCommandEncoder() else { return }
-        enc.setComputePipelineState(applyPSO)
-        enc.setTexture(tex, index: 0)
-        enc.setTexture(acc, index: 1)
-        dispatch(enc, applyPSO, tex.width, tex.height)
-        enc.endEncoding()
+        return acc
     }
 
     /// AE Trim Paths: keep the [start, end]% portion of the path's length, rotated by `offset` degrees.

@@ -73,6 +73,8 @@ struct BottomPanel: View {
                 case .time: TimePanel(state: state)
                 case .scene3D: Scene3DPanel(state: state)
                 case .puppet: PuppetPanel(state: state)
+                case .ccStudio: CCStudioPanel(state: state)
+                case .rig: RigPanel(state: state)
                 case .none: EmptyView()
                 }
             }
@@ -166,6 +168,7 @@ struct AddPanel: View {
 struct TransformPanel: View {
     @ObservedObject var state: EditorState
     @State private var showGraph = false
+    @State private var showVelocity = false
     @EnvironmentObject private var drawLauncher: DrawLauncher
 
     var body: some View {
@@ -256,6 +259,12 @@ struct TransformPanel: View {
                     .foregroundStyle(Theme.accentGlow)
             }
             .sheet(isPresented: $showGraph) { GraphEditorSheet(state: state).presentationDetents([.large]) }
+            Button { showVelocity = true } label: {
+                Label("Velocity", systemImage: "speedometer").font(.system(size: 12, weight: .semibold))
+                    .padding(.horizontal, 10).padding(.vertical, 6)
+                    .background(Capsule().fill(Theme.raised)).foregroundStyle(Theme.text)
+            }
+            .sheet(isPresented: $showVelocity) { KeyframeVelocitySheet(state: state).presentationDetents([.medium, .large]) }
             Spacer()
             ForEach(Interpolation.allCases, id: \.self) { i in
                 Button(i.rawValue.capitalized) { state.setInterpolation(i) }
@@ -314,7 +323,7 @@ struct SliderRow: View {
         PropertyRow(state: state, key: key) {
             // One undo step per drag / typed value.
             ValueScrubber(value: value, range: range, unit: unit, onBegin: { state.beginEdit("Edit \(key.title)") },
-                          onChange: onChange, onEnd: { state.endEdit() })
+                          onChange: onChange, onEnd: { state.endEdit() }, allowBeyond: true)
         }
     }
 }
@@ -373,7 +382,7 @@ struct FillPanel: View {
                 let c = layer.text?.fill.value(at: t) ?? layer.fill.value(at: t)
                 VStack(spacing: 12) {
                     PropertyRow(state: state, key: .fill) {
-                        ColorPicker("", selection: Binding(get: { Color(c) }, set: { col in
+                        AWIColorWell("", selection: Binding(get: { Color(c) }, set: { col in
                             state.coalescedEdit("Edit Fill") { l in
                                 if l.text != nil { l.text?.fill.set(col.rgba, at: t) } else { l.fill.set(col.rgba, at: t) }
                             }
@@ -428,8 +437,11 @@ struct BlendingPanel: View {
                             let t = state.currentTime
                             state.mutateLayer { $0.transform.opacity.set(v, at: t) }
                         }
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
-                            ForEach(BlendMode.allCases) { m in
+                        ForEach(BlendMode.groups, id: \.self) { grp in
+                        Text(grp.uppercased()).font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.textDim)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+                            ForEach(BlendMode.allCases.filter { $0.group == grp }) { m in
                                 Button {
                                     state.mutate("Blend Mode") { p in
                                         if let i = state.selectedIndex { p.layers[i].blendMode = m }
@@ -443,6 +455,7 @@ struct BlendingPanel: View {
                                 }
                                 .buttonStyle(.plain)
                             }
+                        }
                         }
                         VStack(alignment: .leading, spacing: 6) {
                             Text("TRACK MATTE (uses the layer above)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
@@ -506,6 +519,7 @@ struct ShapePanel: View {
                             .foregroundStyle(Theme.text)
                         }
                         StrokeSection(state: state)
+                        ShapeOpsSection(state: state)
                         if kind == .star {
                             HStack {
                                 Text("Inner radius").font(.system(size: 13)).foregroundStyle(Theme.text)

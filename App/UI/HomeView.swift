@@ -297,7 +297,7 @@ struct CreateProjectSheet: View {
                     Stepper("\(Int(duration)) s", value: $duration, in: 1...600).foregroundStyle(Theme.text)
                 }
                 row("Background") {
-                    ColorPicker("", selection: $background, supportsOpacity: true).labelsHidden()
+                    AWIColorWell("", selection: $background, supportsOpacity: true).labelsHidden()
                 }
 
                 Button("Create from scratch") {

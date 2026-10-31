@@ -128,6 +128,9 @@ struct LayerMask: Codable, Equatable, Identifiable {
     var feather = Animated(0.0)       // px
     var opacity = Animated(100.0)     // %
     var expansion = Animated(0.0)     // px
+    /// AE effect-mask style: the mask doesn't cut the layer; it limits the layer's effects to its area.
+    var effectsOnlyStore: Bool? = nil
+    var effectsOnly: Bool { get { effectsOnlyStore ?? false } set { effectsOnlyStore = newValue ? true : nil } }
 }
 
 /// Stroke for shape/path layers.

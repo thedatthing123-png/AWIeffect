@@ -67,6 +67,10 @@ final class EffectTests: XCTestCase {
         case "ae.colorBalance": n("mr", 60); n("sb", 50)
         case "ae.changeToColor": e.params["from"] = .color(Animated(RGBA(0.6, 0.2, 0.9))); n("tolerance", 20)
         case "ae.strobe": n("duration", 0.2)
+        case "awi18.transform": n("x", 25); n("rotation", 20); n("scale", 120)
+        case "awi18.grade":
+            // A visible base grade, with the HSL secondary active so its range / sat / light controls matter.
+            n("exposure", 0.6); n("hslHue", 270); n("hslShift", 60); n("hslSat", 40); n("hslLight", 20); n("hslRange", 60)
         case "awi18.puppet":
             // A held pin at the center and a dragged pin near the top: the top bends sideways.
             e.params["pinR0"] = .point(Animated(Vec2(0, 20))); e.params["pinD0"] = .point(Animated(Vec2(0, 20)))
@@ -88,7 +92,7 @@ final class EffectTests: XCTestCase {
 
     func testRegistryIsConsistent() {
         var ids = Set<String>()
-        for d in EffectRegistry.all {
+        for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) {
             XCTAssertTrue(ids.insert(d.id).inserted, "duplicate id \(d.id)")
             XCTAssertFalse(d.params.isEmpty, "\(d.name) has no controls")
             let inst = d.makeInstance()
@@ -101,7 +105,7 @@ final class EffectTests: XCTestCase {
     func testEveryEffectChangesTheImage() throws {
         let r = try renderer()
         let base = try render(r, scene(effect: nil))
-        for d in EffectRegistry.all {
+        for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) {
             let out = try render(r, scene(effect: visible(d), onAdjustment: !d.isTransformEffect && !Self.alphaShaped.contains(d.id)))
             XCTAssertGreaterThan(diff(base, out), 0.5, "\(d.name) did not visibly change the image")
             XCTAssertTrue(out.contains { $0 > 10 }, "\(d.name) rendered black")
@@ -111,7 +115,7 @@ final class EffectTests: XCTestCase {
     func testEveryEffectWorksOnAdjustmentLayer() throws {
         let r = try renderer()
         let base = try render(r, scene(effect: nil))
-        for d in EffectRegistry.all where !d.isTransformEffect && !Self.alphaShaped.contains(d.id) {
+        for d in EffectRegistry.all where !d.isTransformEffect && !Self.alphaShaped.contains(d.id) && !EffectRegistry.layerRefIDs.contains(d.id) {
             let out = try render(r, scene(effect: visible(d), onAdjustment: true))
             XCTAssertGreaterThan(diff(base, out), 0.5, "\(d.name) did nothing on an adjustment layer")
         }
@@ -120,7 +124,7 @@ final class EffectTests: XCTestCase {
     func testDisabledEffectIsIdentity() throws {
         let r = try renderer()
         let base = try render(r, scene(effect: nil))
-        for d in EffectRegistry.all {
+        for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) {
             var e = visible(d)
             e.isEnabled = false
             XCTAssertLessThan(diff(base, try render(r, scene(effect: e))), 0.01, "disabled \(d.name) still changes output")
@@ -131,8 +135,8 @@ final class EffectTests: XCTestCase {
     func testEveryNumericControlIsWired() throws {
         let r = try renderer()
         // Params that only matter in a mode not active in this test (documented, not silent).
-        let modal: Set<String> = ["ae.hueSaturation/colorizeSat", "awi18.negativeFlash/threshold"]
-        for d in EffectRegistry.all {
+        let modal: Set<String> = ["ae.hueSaturation/colorizeSat", "awi18.negativeFlash/threshold", "awi18.grade/lutStrength"]
+        for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) {
             for pd in d.params {
                 guard case .number(let lo, let hi, _, _) = pd.kind, !modal.contains("\(d.id)/\(pd.id)") else { continue }
                 var a = visible(d), b = visible(d)
@@ -194,5 +198,28 @@ final class EffectTests: XCTestCase {
         let back = try JSONDecoder().decode(Project.self, from: data)
         XCTAssertEqual(back.layers[0].effects.count, 0)
         XCTAssertEqual(back.layers[0].blendMode, .normal)
+    }
+
+    /// Layer-referencing effects: a displacement map from another layer moves pixels; Set Matte cuts by it.
+    func testLayerReferenceEffects() throws {
+        let r = try renderer()
+        var p = scene(effect: nil)
+        var map = p.makeLayer(name: "map", content: .solid, size: Vec2(160, 160))
+        map.fill = Animated(RGBA(1, 1, 1))
+        map.isVisible = true
+        p.layers.append(map)
+        let base = try render(r, p)
+        var d = EffectRegistry.displacementMap18.makeInstance()
+        d.params["h"] = .number(Animated(40))
+        d.text = ["layer": map.id.uuidString]
+        var withMap = p
+        if let i = withMap.layers.firstIndex(where: { $0.name == "star" }) { withMap.layers[i].effects = [d] }
+        XCTAssertGreaterThan(diff(base, try render(r, withMap)), 0.3, "displacement map from another layer moves pixels")
+        var m = EffectRegistry.setMatte18.makeInstance()
+        m.params["invert"] = .toggle(true)
+        m.text = ["layer": map.id.uuidString]
+        var matted = p
+        if let i = matted.layers.firstIndex(where: { $0.name == "star" }) { matted.layers[i].effects = [m] }
+        XCTAssertGreaterThan(diff(base, try render(r, matted)), 0.3, "inverted set matte from a full white layer hides the star")
     }
 }

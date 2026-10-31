@@ -20,10 +20,17 @@ struct EffectContext {
     /// Texture pixels per layer pixel (params are authored in layer pixels, like AE).
     let unit: Double
     let pool: TexturePool
+    /// Another layer rendered into this layer's buffer space (for effects that read a layer: displacement map, set matte).
+    var reference: MTLTexture? = nil
 
     var width: Int { input.width }
     var height: Int { input.height }
-    func num(_ k: String) -> Double { effect.number(k, time) }
+    /// A number setting, kept inside its defined range (imported or typed values can't stall the GPU).
+    func num(_ k: String) -> Double {
+        let v = effect.number(k, time)
+        guard let r = EffectRegistry.paramRanges[effect.typeID]?[k] else { return v }
+        return min(max(v, r.lowerBound), r.upperBound)
+    }
     func temp() -> MTLTexture { pool.acquire(width: width, height: height) }
 }
 
@@ -137,7 +144,7 @@ final class EffectGPU {
         for name in ["fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
                      "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix",
                      "fxWarp", "fxStylize", "fxGlitch", "fxColor2", "fxSaberCore", "fxShine", "fxParticles", "fxPixelSort",
-                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet"] {
+                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet", "fxGrade", "maskMix", "fxLayerRef"] {
             guard let f = library.makeFunction(name: name) else { throw RenderError.pipeline(name) }
             psos[name] = try device.makeComputePipelineState(function: f)
         }
@@ -209,6 +216,17 @@ final class EffectGPU {
 // MARK: - Registry
 
 enum EffectRegistry {
+    /// effect id -> number param id -> allowed range.
+    static let paramRanges: [String: [String: ClosedRange<Double>]] = {
+        var out: [String: [String: ClosedRange<Double>]] = [:]
+        for d in all {
+            var m: [String: ClosedRange<Double>] = [:]
+            for p in d.params { if case .number(let lo, let hi, _, _) = p.kind, lo <= hi { m[p.id] = lo...hi } }
+            out[d.id] = m
+        }
+        return out
+    }()
+
     static let all: [EffectDefinition] = [
         gaussianBlur, directionalBlur, radialBlur,
         exposure, brightnessContrast, hueSaturation, tint, levels, invert, fill, vignette,

@@ -171,3 +171,65 @@ struct PuppetOverlay: View {
         .allowsHitTesting(false)
     }
 }
+
+
+// MARK: - Mask points on the canvas
+
+extension EditorState {
+    /// (mask index, vertex index) of the mask point nearest the finger, within reach.
+    func maskPoint(nearComp c: Vec2, reach: Double) -> (Int, Int)? {
+        guard let l = selectedLayer else { return nil }
+        var best: (Int, Int, Double)?
+        for (mi, m) in l.masks.enumerated() {
+            for (vi, v) in m.path.value(at: currentTime).vertices.enumerated() {
+                guard let s = compPoint(fromLocal: v.point) else { continue }
+                let d = hypot(s.x - c.x, s.y - c.y)
+                if d < reach, d < (best?.2 ?? .infinity) { best = (mi, vi, d) }
+            }
+        }
+        return best.map { ($0.0, $0.1) }
+    }
+
+    /// Moves one mask point (keyframed at the playhead when the mask path is animated). Use inside beginEdit/endEdit.
+    func moveMaskPoint(mask mi: Int, vertex vi: Int, toComp c: Vec2) {
+        guard let local = layerLocal(fromComp: c) else { return }
+        let t = currentTime
+        mutateLayer { l in
+            guard l.masks.indices.contains(mi) else { return }
+            var path = l.masks[mi].path.value(at: t)
+            guard path.vertices.indices.contains(vi) else { return }
+            path.vertices[vi].point = local
+            if l.masks[mi].path.isAnimated {
+                l.masks[mi].path.insertKeyframe(Keyframe(time: t, value: path, interpolation: .bezier, easeOut: .easyOut, easeIn: .easyIn))
+            } else {
+                l.masks[mi].path = Animated(path)
+            }
+        }
+    }
+}
+
+/// Mask outlines + draggable points while the Masks panel is open.
+struct MaskPointsOverlay: View {
+    @ObservedObject var state: EditorState
+    let fit: CGRect
+
+    var body: some View {
+        let s = fit.width / CGFloat(max(state.project.width, 1))
+        Canvas { ctx, _ in
+            guard let l = state.selectedLayer else { return }
+            for m in l.masks {
+                let pts = m.path.value(at: state.currentTime).vertices.compactMap { state.compPoint(fromLocal: $0.point) }
+                    .map { CGPoint(x: fit.minX + CGFloat($0.x) * s, y: fit.minY + CGFloat($0.y) * s) }
+                guard pts.count > 1 else { continue }
+                var outline = Path(); outline.addLines(pts); outline.closeSubpath()
+                ctx.stroke(outline, with: .color(m.effectsOnly ? Theme.warning : Theme.accentGlow), style: StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
+                for p in pts {
+                    let r: CGFloat = 7
+                    ctx.fill(Path(CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2)), with: .color(.white))
+                    ctx.stroke(Path(CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2)), with: .color(.black), lineWidth: 1.5)
+                }
+            }
+        }
+        .allowsHitTesting(false)
+    }
+}

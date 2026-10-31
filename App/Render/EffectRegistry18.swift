@@ -6,7 +6,7 @@ import simd
 /// Twitch-style glitch bursts and a manga negative / mono flash.
 extension EffectRegistry {
     static let batch18: [EffectDefinition] = [shakePro18, zoomPunch18, twitch18, negativeFlash18,
-                                              warpChroma18, scanTear18, waveGlitch18, blockShuffle18, channelSmear18, puppet18]
+                                              warpChroma18, scanTear18, waveGlitch18, blockShuffle18, channelSmear18, puppet18, grade, transformFX18, displacementMap18, setMatte18]
 
     /// Quantizes time to "hold" frames (choppy anime shake: the shake jumps every few frames).
     private static func held(_ t: Double, _ hold: Double) -> Double {
@@ -254,6 +254,59 @@ extension EffectRegistry {
             p.a = SIMD4(Float(ctx.num("stiffness")), Float(ctx.unit), 0, 0)
             p.i.y = UInt32(pins.count)
             ctx.gpu.run("fxPuppet", ctx.cb, textures: [ctx.input, out], params: p, extra: pins, grid: out)
+            return out
+        })
+
+    static let transformFX18 = EffectDefinition(
+        id: "awi18.transform", name: "Transform (Effect)", category: .motion,
+        aeMatchNames: ["ADBE Geometry2"],
+        summary: "AE's Transform effect: offset, scale and rotate inside the effect stack, on top of the layer's own keyframes (stack velocity hits and shakes without touching them). Gets motion blur from Smooth Motion.",
+        params: [
+            .number("x", "Position X Offset", 0, -2000, 2000, unit: "px"),
+            .number("y", "Position Y Offset", 0, -2000, 2000, unit: "px"),
+            .number("scale", "Scale", 100, 0, 1000, unit: "%"),
+            .number("rotation", "Rotation", 0, -360, 360, unit: "°"),
+        ],
+        stage: .transform { e, t in (e.number("x", t), e.number("y", t), e.number("rotation", t), max(0, e.number("scale", t)) / 100) })
+
+    /// Effects that read another layer (chosen in the effect card; stored as text["layer"]).
+    static let layerRefIDs: Set<String> = ["awi18.displacementMap", "awi18.setMatte"]
+
+    static let displacementMap18 = EffectDefinition(
+        id: "awi18.displacementMap", name: "Displacement Map", category: .distort,
+        aeMatchNames: ["ADBE Displacement Map"],
+        summary: "Pushes this layer's pixels using another layer: mid grey stays, dark and bright push in opposite directions (glitch, heat, liquid, shattered looks from your own layers).",
+        params: [
+            .number("h", "Max Horizontal", 30, -500, 500, unit: "px"),
+            .number("v", "Max Vertical", 0, -500, 500, unit: "px"),
+            .choice("source", "Use", ["Brightness", "Red (H) / Green (V)"], 0),
+        ],
+        margin: { e, t in max(abs(e.number("h", t)), abs(e.number("v", t))) },
+        stage: .pixels { ctx in
+            guard let ref = ctx.reference else { return ctx.input }
+            let out = ctx.temp()
+            var p = EffectParams()
+            p.a = SIMD4(Float(ctx.num("h") * ctx.unit), Float(ctx.num("v") * ctx.unit), Float(ctx.effect.choice("source")), 0)
+            p.i.x = 0
+            ctx.gpu.run("fxLayerRef", ctx.cb, textures: [ctx.input, out, ref], params: p, grid: out)
+            return out
+        })
+
+    static let setMatte18 = EffectDefinition(
+        id: "awi18.setMatte", name: "Set Matte", category: .keying,
+        aeMatchNames: ["ADBE Set Matte3"],
+        summary: "Uses another layer's alpha or brightness as this layer's transparency (any layer, anywhere in the stack — not just the one above).",
+        params: [
+            .choice("mode", "Use", ["Alpha", "Brightness"], 0),
+            .toggle("invert", "Invert", false),
+        ],
+        stage: .pixels { ctx in
+            guard let ref = ctx.reference else { return ctx.input }
+            let out = ctx.temp()
+            var p = EffectParams()
+            p.a = SIMD4(Float(ctx.effect.choice("mode")), ctx.effect.bool("invert") ? 1 : 0, 0, 0)
+            p.i.x = 1
+            ctx.gpu.run("fxLayerRef", ctx.cb, textures: [ctx.input, out, ref], params: p, grid: out)
             return out
         })
 }

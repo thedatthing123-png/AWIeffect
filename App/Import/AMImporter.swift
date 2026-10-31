@@ -279,10 +279,22 @@ enum AMImporter {
         case "screen", "lighten-add": return .screen
         case "add", "linear-dodge": return .add
         case "multiply": return .multiply
-        case "overlay", "soft-overlay", "soft-light", "hard-light": return .overlay
+        case "overlay", "soft-overlay": return .overlay
+        case "soft-light": return .softLight
+        case "hard-light": return .hardLight
+        case "color-dodge": return .colorDodge
+        case "color-burn": return .colorBurn
+        case "linear-burn": return .linearBurn
+        case "hue": return .hue
+        case "saturation": return .saturation
+        case "color": return .color
+        case "luminosity": return .luminosity
+        case "subtract": return .subtract
+        case "divide": return .divide
         case "lighten": return .lighten
         case "darken": return .darken
-        case "difference", "exclude": return .difference
+        case "difference": return .difference
+        case "exclude", "exclusion": return .exclusion
         default: return .normal
         }
     }

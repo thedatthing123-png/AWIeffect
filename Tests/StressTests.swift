@@ -28,8 +28,8 @@ final class StressTests: XCTestCase {
     func testEveryEffectSurvivesExtremeSettings() throws {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
         let cases: [(String, (Double, Double) -> Double)] = [
+            ("min", { lo, _ in lo }),
             ("max", { _, hi in hi }),
-            ("typed 5x max", { lo, hi in hi + (hi - lo) * 4 }),
         ]
         var slow: [String] = []
         for d in EffectRegistry.all {
@@ -131,5 +131,33 @@ final class StressTests: XCTestCase {
         p.layers = [cam, box]
         let m2 = Renderer.placementMatrix(box, camera: Renderer.activeCamera(p, time: 0), time: 0, renderScale: 1)
         XCTAssertEqual((m2 * SIMD3(0, 0, 1)).x, 100, accuracy: 1e-6, "3D-only camera leaves 2D layers alone")
+    }
+
+    /// Groups: parts render in place; moving the group moves every part; a mask on the group cuts all parts.
+    func testGroupAppliesToAllParts() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        var p = Project.new(name: "grp", width: 100, height: 100, fps: 30, duration: 2, background: RGBA(0, 0, 0, 1))
+        var a = p.makeLayer(name: "a", content: .solid, size: Vec2(20, 20)); a.fill = Animated(RGBA(1, 0, 0)); a.transform.position = Animated(Vec2(25, 50))
+        var b = p.makeLayer(name: "b", content: .solid, size: Vec2(20, 20)); b.fill = Animated(RGBA(0, 1, 0)); b.transform.position = Animated(Vec2(75, 50))
+        var g = p.makeLayer(name: "g", content: .solid, size: Vec2(100, 100)); g.isGroup = true; g.fill = Animated(RGBA(0, 0, 0, 0))
+        a.groupID = g.id; b.groupID = g.id
+        p.layers = [g, a, b]
+        func px(_ proj: Project, _ x: Int, _ y: Int) -> (Int, Int) {
+            let o = r.renderPixels(project: proj, time: 0.5, mediaURL: { URL(fileURLWithPath: $0) })!
+            let i = (y * o.width + x) * 4
+            return (Int(o.rgba[i]), Int(o.rgba[i + 1]))
+        }
+        XCTAssertGreaterThan(px(p, 25, 50).0, 200, "part a renders in place")
+        XCTAssertGreaterThan(px(p, 75, 50).1, 200, "part b renders in place")
+        var moved = p
+        moved.layers[0].transform.position = Animated(Vec2(50, 70))
+        XCTAssertGreaterThan(px(moved, 25, 70).0, 200, "moving the group moves part a")
+        XCTAssertGreaterThan(px(moved, 75, 70).1, 200, "and part b")
+        var masked = p
+        var path = BezierPath.rectangle(size: Vec2(50, 100))
+        for k in path.vertices.indices { path.vertices[k].point = path.vertices[k].point + Vec2(-25, 0) }
+        masked.layers[0].masks = [LayerMask(path: Animated(path))]
+        XCTAssertGreaterThan(px(masked, 25, 50).0, 200, "left part inside the group mask stays")
+        XCTAssertLessThan(px(masked, 75, 50).1, 40, "right part outside the group mask is cut")
     }
 }

@@ -42,6 +42,9 @@ final class Renderer {
     private var precompLibrary: [Project] = []
     private var currentPool: TexturePool?
     private var currentDepth = 0
+    /// Parts of each group in the comp being encoded (group id -> parts, in stacking order).
+    private var groupParts: [UUID: [Layer]] = [:]
+    private var groupCameras: [Layer] = []
 
     /// Renders a nested comp at `time` (layer time -> comp time via the layer's timing), transparent background.
     private func renderPrecomp(_ id: UUID, layer: Layer, time: Double, density: Double, cb: MTLCommandBuffer,
@@ -63,6 +66,54 @@ final class Renderer {
         currentDepth = depth
         return tex
     }
+    /// Renders `ref` alone (comp space) and resamples it into another layer's effect buffer, so an effect can read
+    /// it pixel-for-pixel where the two overlap on screen.
+    private func layerInBuffer(_ ref: Layer, project: Project, time: Double, renderScale: Double, comp: MTLTexture,
+                               placement M: simd_double3x3, toLocal: simd_double3x3, size: (Int, Int),
+                               cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL) -> MTLTexture? {
+        let library = precompLibrary, depth = currentDepth, savedParts = groupParts, savedCams = groupCameras
+        var sub = project
+        var one = ref; one.trackMatte = .none; one.isSolo = false; one.isVisible = true; one.groupID = nil
+        sub.layers = project.layers.filter { $0.content == .camera } + [one]
+        sub.background = RGBA(0, 0, 0, 0)
+        let full = pool.acquire(width: comp.width, height: comp.height)
+        encode(project: sub, time: time, renderScale: renderScale, into: full, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
+        precompLibrary = library; currentPool = pool; currentDepth = depth; groupParts = savedParts; groupCameras = savedCams
+        let out = pool.acquire(width: size.0, height: size.1)
+        fx.run("fxClear", cb, textures: [out], grid: out)
+        // comp-image local (centered) -> comp px -> layer local -> buffer px.
+        let center = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(comp.width) / 2, Double(comp.height) / 2, 1)))
+        let place = toLocal.inverse * M.inverse * center
+        let carrier = Layer(name: "ref", content: .solid, outPoint: 1, transform: LayerTransform(position: Animated(.zero)), size: Animated(Vec2(1, 1)))
+        drawQuad(cb: cb, target: out, matrix: place, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 0.5,
+                 opacity: 1, layer: carrier, time: time, source: .image(full), premultipliedImage: true, blendOverride: .normal)
+        return out
+    }
+
+    /// Renders a group's parts (comp space, transparent) at the layer's density; the group layer then places
+    /// this picture with its own transform, masks and effects. The group layer is comp-sized and centered,
+    /// so with an untouched group transform the parts land exactly where they are.
+    private func renderGroup(_ group: Layer, time: Double, density: Double, cb: MTLCommandBuffer, mediaURL: (String) -> URL) -> MTLTexture? {
+        guard currentDepth < 8, let pool = currentPool else { return nil }
+        // Parenting is already baked into the parts this frame: drop links so it is not applied twice.
+        let members = (groupParts[group.id] ?? []).map { l -> Layer in var c = l; c.parentID = nil; c.groupID = nil; return c }
+        let hs = Self.layerHalfSize(group, time: time)
+        let w0 = max(1, Int((hs.x * 2).rounded())), h0 = max(1, Int((hs.y * 2).rounded()))
+        let scale = min(2, max(0.05, density))
+        let maxSide = Double(max(w0, h0)) * scale
+        let s = maxSide > 4096 ? scale * 4096 / maxSide : scale
+        let tex = pool.acquire(width: max(1, Int((Double(w0) * s).rounded())), height: max(1, Int((Double(h0) * s).rounded())))
+        var sub = Project.new(name: "group", width: w0, height: h0, fps: 30, duration: 1, background: RGBA(0, 0, 0, 0))
+        sub.layers = groupCameras + members
+        sub.precomps = precompLibrary
+        sub.precompList = precompLibrary
+        sub.precompDepth = currentDepth + 1
+        let library = precompLibrary, depth = currentDepth, saved = groupParts, cams = groupCameras
+        encode(project: sub, time: time, renderScale: s, into: tex, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
+        precompLibrary = library; currentPool = pool; currentDepth = depth; groupParts = saved; groupCameras = cams
+        return tex
+    }
+
     /// Track matte: renders the layer and its matte separately at comp size, multiplies, then composites with the layer's blend mode.
     private func encodeMatted(_ layer: Layer, matte: Layer, project: Project, time: Double, renderScale: Double, comp: MTLTexture,
                               cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL) {
@@ -254,6 +305,19 @@ final class Renderer {
     /// Path drawn for a shape layer: its own bezier, or the primitive converted when a stroke is on.
     static func shapePath(_ layer: Layer, time: Double) -> BezierPath? {
         guard case .shape(let k) = layer.content else { return nil }
+        // Shape operators need a real path for every kind.
+        if let ops = layer.shapeOps, !ops.isEmpty {
+            let s = layer.size.value(at: time)
+            let base: BezierPath?
+            switch k {
+            case .path: base = layer.path?.value(at: time)
+            case .ellipse: base = .ellipse(size: s)
+            case .rectangle: base = .rectangle(size: s)
+            case .polygon: base = .polygon(size: s, sides: Int(layer.sides.value(at: time).rounded()), inner: nil)
+            case .star: base = .polygon(size: s, sides: Int(layer.sides.value(at: time).rounded()), inner: layer.innerRatio.value(at: time))
+            }
+            return base.map { ShapeOpsMath.apply(ops, to: $0, time: time) }
+        }
         if k == .path { return layer.path?.value(at: time) }
         guard layer.stroke.enabled else { return nil }
         let s = layer.size.value(at: time)
@@ -265,6 +329,12 @@ final class Renderer {
     }
 
     static func layerHalfSize(_ layer: Layer, time: Double) -> Vec2 {
+        if let ops = layer.shapeOps, !ops.isEmpty, case .shape = layer.content, let path = shapePath(layer, time: time) {
+            let b = path.bounds
+            let sw = layer.stroke.enabled ? layer.stroke.width.value(at: time) / 2 : 0
+            let base = Vec2(max(abs(b.min.x), abs(b.max.x)) + sw, max(abs(b.min.y), abs(b.max.y)) + sw)
+            return ops.repeater.map { ShapeOpsMath.reach($0, base: base, time: time) } ?? base
+        }
         if case .shape(.path) = layer.content, let path = layer.path?.value(at: time) {
             let b = path.bounds
             let sw = layer.stroke.enabled ? layer.stroke.width.value(at: time) / 2 : 0
@@ -313,7 +383,16 @@ final class Renderer {
             if m.content == .camera || m.content == .light || m.isAudioOnly { continue }
             matteSources[l.id] = m; hiddenMattes.insert(m.id)
         }
-        let active = project.layers.filter { $0.isActive(at: time) && !hiddenMattes.contains($0.id) && (!anySolo || $0.isSolo || $0.content == .camera) }
+        // Group parts render inside their group (so the group's mask / effects / transform hit them all at once).
+        let groupIDs = Set(project.layers.filter { $0.isGroup }.map(\.id))
+        var parts: [UUID: [Layer]] = [:]
+        for l in project.layers { if let g = l.groupID, groupIDs.contains(g) { parts[g, default: []].append(l) } }
+        groupParts = parts
+        groupCameras = project.layers.filter { $0.content == .camera }
+        let active = project.layers.filter { l in
+            if let g = l.groupID, groupIDs.contains(g) { return false }
+            return l.isActive(at: time) && !hiddenMattes.contains(l.id) && (!anySolo || l.isSolo || l.content == .camera)
+        }
         let globalTime = time
         for layer in Self.drawOrder(active, camera: camera, time: time) {
             // Posterize time / freeze frame evaluate this layer at its own clock.
@@ -348,7 +427,10 @@ final class Renderer {
                                         : max(1e-4, min(abs(sc.x), abs(sc.y)) / 100 * renderScale)
             let dof = Self.dofSigma(layer, camera: camera, time: time) * renderScale
 
-            let masks = layer.masks.filter { $0.mode != .none }
+            // Text on path uses the first mask as its path (AE), so that mask doesn't cut the text.
+            let pathMaskID = layer.text?.onPath == true ? layer.masks.first?.id : nil
+            let masks = layer.masks.filter { $0.mode != .none && !$0.effectsOnly && $0.id != pathMaskID }
+            let effectMasks = layer.masks.filter { $0.mode != .none && $0.effectsOnly }
             let extrude = layer.is3D && layer.content != .model ? max(0, layer.extrude.value(at: time)) : 0
             // Motion blur: placements across the shutter interval (empty when the layer doesn't move).
             var blurMatrices: [simd_double3x3] = []
@@ -429,7 +511,22 @@ final class Renderer {
             var current = local
             for e in pixelFX {
                 guard let def = EffectRegistry.definition(e.typeID), case .pixels(let run) = def.stage else { continue }
-                current = run(EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: time, unit: density, pool: pool))
+                var ctx = EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: time, unit: density, pool: pool)
+                if EffectRegistry.layerRefIDs.contains(e.typeID), let rid = e.text?["layer"].flatMap(UUID.init(uuidString:)),
+                   let refLayer = project.layers.first(where: { $0.id == rid }), rid != layer.id {
+                    ctx.reference = layerInBuffer(refLayer, project: project, time: time, renderScale: renderScale, comp: comp,
+                                                  placement: M, toLocal: toLocal, size: (current.width, current.height),
+                                                  cb: cb, pool: pool, mediaURL: mediaURL)
+                }
+                current = run(ctx)
+            }
+            // Effects-only masks: effects show inside them, the untouched layer everywhere else.
+            if !effectMasks.isEmpty, current !== local,
+               let cov = PathGPU.shared?.coverage(cb: cb, width: current.width, height: current.height, masks: effectMasks, time: time,
+                                                  matrix: toLocal.inverse, aa: 1 / density) {
+                let mixed = pool.acquire(width: current.width, height: current.height)
+                fx.run("maskMix", cb, textures: [local, mixed, current, cov], grid: mixed)
+                current = mixed
             }
             // 3D lights shade the layer per pixel (AE: 3D layers accept lights once the comp has any).
             if lit {
@@ -503,12 +600,21 @@ final class Renderer {
         let stroke = st.enabled ? (color: st.color.value(at: time), width: st.width.value(at: time),
                                    trim: (st.trimStart.value(at: time), st.trimEnd.value(at: time), st.trimOffset.value(at: time))) : nil
         let fill = layer.fill.value(at: time)
+        if let rep = layer.shapeOps?.repeater {
+            // Repeater: last copy drawn first so copy 1 sits on top (AE "Above").
+            for (m, o) in ShapeOpsMath.copies(rep, time: time).reversed() where o > 0.001 {
+                PathGPU.shared?.drawPath(cb: cb, target: target, matrix: matrix * m, path: path, fill: fill.a > 0 ? fill : nil,
+                                         stroke: stroke, opacity: opacity * o, blend: blend, aa: aa)
+            }
+            return
+        }
         PathGPU.shared?.drawPath(cb: cb, target: target, matrix: matrix, path: path, fill: fill.a > 0 ? fill : nil,
                                  stroke: stroke, opacity: opacity, blend: blend, aa: aa)
     }
 
     private func sourceTexture(_ layer: Layer, sourceTime: Double, time: Double, density: Double, cb: MTLCommandBuffer,
                                mediaURL: (String) -> URL) -> Source? {
+        if layer.isGroup { return renderGroup(layer, time: time, density: density, cb: cb, mediaURL: mediaURL).map { .model($0) } }
         switch layer.content {
         case .shape: return .shape
         case .solid: return .solid

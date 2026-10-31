@@ -263,12 +263,39 @@ struct EffectsPanel: View {
             }
             .foregroundStyle(Theme.text)
             if isOpen, let def {
+                if EffectRegistry.layerRefIDs.contains(def.id) { layerPicker(e) }
                 ForEach(def.params) { pd in ParamRow(state: state, effect: e, def: pd) }
             }
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
         .glass(radius: 12)
         .onAppear { if state.selectedLayer?.effects.last?.id == e.id { expanded.insert(e.id) } }
+    }
+
+    /// Which layer the effect reads.
+    private func layerPicker(_ e: EffectInstance) -> some View {
+        let current = e.text?["layer"]
+        let others = state.project.layers.filter { $0.id != state.selectedLayerID && !$0.isAudioOnly && $0.content != .camera && $0.content != .light }
+        return HStack {
+            Text("Layer").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text).frame(width: 96, alignment: .leading)
+            Menu {
+                Button("None") { setRef(e, nil) }
+                ForEach(others) { l in Button(l.name) { setRef(e, l.id.uuidString) } }
+            } label: {
+                Text(others.first { $0.id.uuidString == current }?.name ?? "Choose a layer…")
+                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.accentGlow)
+                    .frame(maxWidth: .infinity, minHeight: 32).background(RoundedRectangle(cornerRadius: 9).fill(Theme.surface))
+            }
+        }
+    }
+
+    private func setRef(_ e: EffectInstance, _ id: String?) {
+        state.mutate("Effect Layer") { p in
+            guard let i = state.selectedIndex, let j = p.layers[i].effects.firstIndex(where: { $0.id == e.id }) else { return }
+            var t = p.layers[i].effects[j].text ?? [:]
+            t["layer"] = id
+            p.layers[i].effects[j].text = t.isEmpty ? nil : t
+        }
     }
 }
 
@@ -310,7 +337,7 @@ struct ParamRow: View {
             NumberField(value: v.y * 100, label: "Y%") { nv in setPoint(Vec2(v.x, nv / 100)) }
         case .color:
             let c = effect.color(def.id, t)
-            ColorPicker("", selection: Binding(get: { Color(c) }, set: { col in
+            AWIColorWell("", selection: Binding(get: { Color(c) }, set: { col in
                 state.beginEdit("Edit \(def.name)")
                 state.setEffectParam(effect.id, def.id) { pv, time in
                     if case .color(var a) = pv { a.set(col.rgba, at: time); pv = .color(a) }

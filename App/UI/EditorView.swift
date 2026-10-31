@@ -181,6 +181,11 @@ struct EditorView: View {
                 } else {
                     Button { state.precomposeSelected() } label: { Label("Group (Pre-compose)", systemImage: "square.stack.3d.up") }
                 }
+                if l.isGroup {
+                    Button { state.ungroupSelected() } label: { Label("Ungroup", systemImage: "folder.badge.minus") }
+                } else {
+                    Button { state.groupSelected() } label: { Label("Group (keeps parts in this timeline)", systemImage: "folder.badge.plus") }
+                }
                 Button { state.moveSelected(up: true) } label: { Label("Move Up", systemImage: "arrow.up") }
                 Button { state.moveSelected(up: false) } label: { Label("Move Down", systemImage: "arrow.down") }
                 Button { state.toggleVisibility(l.id) } label: { Label(l.isVisible ? "Hide" : "Show", systemImage: l.isVisible ? "eye.slash" : "eye") }
@@ -285,6 +290,9 @@ struct EditorView: View {
                 if state.panel == .puppet, state.viewMode == .comp {
                     ClockReader(clock: state.clock) { _ in PuppetOverlay(state: state, fit: fit) }
                 }
+                if state.panel == .masks, state.viewMode == .comp {
+                    ClockReader(clock: state.clock) { _ in MaskPointsOverlay(state: state, fit: fit) }
+                }
                 if pen == nil, state.viewMode == .comp, let id = state.selectedLayerID {
                     LiveReader(live: state.live) { lp in
                         ClockReader(clock: state.clock) { t in
@@ -358,6 +366,7 @@ struct EditorView: View {
 
     @State private var orbitStart: OrbitCamera?
     @State private var puppetDragPin: Int?
+    @State private var maskDrag: [Int]?
     @State private var orbitZoomStart: Double?
 
     /// 3D view: one finger orbits (two fingers pan via the pinch's drift), pinch dollies.
@@ -385,6 +394,15 @@ struct EditorView: View {
         DragGesture(minimumDistance: 4)
             .onChanged { v in
                 // Puppet: drag the nearest pin.
+                // Masks panel: drag a mask point.
+                if state.panel == .masks, canvasDragState == nil, panBase == nil {
+                    if maskDrag == nil {
+                        let reach = 28 * Double(state.project.width) / Double(max(fit.width, 1))
+                        maskDrag = state.maskPoint(nearComp: toComp(v.startLocation, fit: fit), reach: reach).map { [$0.0, $0.1] } ?? []
+                        if maskDrag?.count == 2 { state.beginEdit("Move Mask Point") }
+                    }
+                    if let m = maskDrag, m.count == 2 { state.moveMaskPoint(mask: m[0], vertex: m[1], toComp: toComp(v.location, fit: fit)); return }
+                }
                 if state.panel == .puppet, canvasDragState == nil, panBase == nil {
                     if puppetDragPin == nil {
                         let reach = 30 * Double(state.project.width) / Double(max(fit.width, 1))
@@ -406,6 +424,7 @@ struct EditorView: View {
             }
             .onEnded { _ in
                 if let k = puppetDragPin { if k >= 0 { state.endEdit() }; puppetDragPin = nil }
+                if let m = maskDrag { if m.count == 2 { state.endEdit() }; maskDrag = nil }
                 if canvasDragState != nil { state.endCanvasDrag() }
                 canvasDragState = nil
                 panBase = nil

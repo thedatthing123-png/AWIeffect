@@ -23,3 +23,15 @@ kernel void frameMix(texture2d<half, access::sample> a [[texture(0)]],
     float2 uv = (float2(gid) + 0.5) / float2(dst.get_width(), dst.get_height());
     dst.write(half4(mix(float4(a.sample(rsLinear, uv)), float4(b.sample(rsLinear, uv)), p.a.x)), gid);
 }
+
+// Effect masks: dst = mix(before effects, after effects, mask coverage).
+kernel void maskMix(texture2d<half, access::sample> before [[texture(0)]],
+                    texture2d<half, access::write> dst [[texture(1)]],
+                    texture2d<half, access::sample> after [[texture(2)]],
+                    texture2d<half, access::sample> cov [[texture(3)]],
+                    uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    float2 uv = (float2(gid) + 0.5) / float2(dst.get_width(), dst.get_height());
+    float m = clamp(float(cov.sample(rsLinear, uv).r), 0.0, 1.0);
+    dst.write(half4(mix(float4(before.sample(rsLinear, uv)), float4(after.sample(rsLinear, uv)), m)), gid);
+}

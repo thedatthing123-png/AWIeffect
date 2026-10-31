@@ -151,3 +151,96 @@ kernel void fxPuppet(texture2d<half, access::sample> src [[texture(0)]],
     }
     dst.write(src.sample(sm18, size * 0.5 + f * unit), gid);
 }
+
+// CC Studio Grade. a = (exposure EV, contrast, highlights, shadows), b = (temp, tint, vibrance, saturation),
+// c = (hsl hue 0-1, hsl range 0-1, hsl shift 0-1, split 0-1), d = (hsl sat, hsl light, lut strength, -), i.x = lut on.
+// wheels[0..2] = lift / gamma / gain rgb (-1..1). curve: 256x1 (r,g,b). lut: 3D.
+static float3 hsv18(float3 c) {
+    float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+    float4 p = mix(float4(c.bg, K.wz), float4(c.gb, K.xy), step(c.b, c.g));
+    float4 q = mix(float4(p.xyw, c.r), float4(c.r, p.yzx), step(p.x, c.r));
+    float d = q.x - min(q.w, q.y);
+    return float3(abs(q.z + (q.w - q.y) / (6.0 * d + 1e-10)), d / (q.x + 1e-10), q.x);
+}
+static float3 rgb18(float3 c) {
+    float3 p = abs(fract(c.xxx + float3(1.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0);
+    return c.z * mix(float3(1.0), clamp(p - 1.0, 0.0, 1.0), c.y);
+}
+kernel void fxGrade(texture2d<half, access::sample> src [[texture(0)]],
+                    texture2d<half, access::write> dst [[texture(1)]],
+                    texture2d<half, access::sample> curve [[texture(2)]],
+                    texture3d<half, access::sample> lut [[texture(3)]],
+                    constant EffectParams& p [[buffer(0)]],
+                    constant float4* wheels [[buffer(1)]],
+                    uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    float4 s = float4(src.read(gid));
+    if (p.c.w > 0.0 && float(gid.x) < p.c.w * float(dst.get_width())) { dst.write(half4(s), gid); return; }
+    if (s.a <= 0.0) { dst.write(half4(s), gid); return; }
+    float3 c = s.rgb / s.a;
+    // Exposure in (approximately) linear light.
+    c = pow(max(c, 0.0), 2.2) * exp2(p.a.x); c = pow(max(c, 0.0), 1.0 / 2.2);
+    // White balance.
+    c += float3(p.b.x * 0.12, p.b.y * 0.12, -p.b.x * 0.12);
+    // Contrast around mid grey.
+    c = (c - 0.5) * (1.0 + p.a.y) + 0.5;
+    // Highlights / shadows.
+    float l = dot(clamp(c, 0.0, 1.0), float3(0.2126, 0.7152, 0.0722));
+    c += p.a.z * 0.3 * smoothstep(0.45, 1.0, l) + p.a.w * 0.3 * (1.0 - smoothstep(0.0, 0.55, l));
+    // Lift / gamma / gain.
+    float3 lift = wheels[0].rgb * 0.25, gam = wheels[1].rgb, gain = 1.0 + wheels[2].rgb * 0.5;
+    c = clamp(c * gain + lift * (1.0 - c), 0.0, 1.0);
+    c = pow(c, exp2(-gam));
+    // Curves (master then channel), from the lookup.
+    constexpr sampler cs(address::clamp_to_edge, filter::linear, coord::normalized);
+    c = float3(float(curve.sample(cs, float2(c.r, 0.5)).r), float(curve.sample(cs, float2(c.g, 0.5)).g), float(curve.sample(cs, float2(c.b, 0.5)).b));
+    // Saturation + vibrance (vibrance boosts dull colors more).
+    l = dot(c, float3(0.2126, 0.7152, 0.0722));
+    float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b));
+    c = l + (c - l) * (1.0 + p.b.w + p.b.z * (1.0 - sat));
+    // HSL secondary: only hues near the target change.
+    float3 h = hsv18(clamp(c, 0.0, 1.0));
+    float dh = abs(fract(h.x - p.c.x + 0.5) - 0.5);
+    float w = 1.0 - smoothstep(p.c.y * 0.5, p.c.y, dh);
+    if (w > 0.0) {
+        h.x = fract(h.x + p.c.z * w);
+        h.y = clamp(h.y * (1.0 + p.d.x * w), 0.0, 1.0);
+        h.z = clamp(h.z + p.d.y * 0.5 * w, 0.0, 1.0);
+        c = rgb18(h);
+    }
+    // LUT.
+    if (p.i.x == 1) {
+        float n = float(lut.get_width());
+        float3 uvw = clamp(c, 0.0, 1.0) * ((n - 1.0) / n) + 0.5 / n;
+        constexpr sampler ls(address::clamp_to_edge, filter::linear, coord::normalized);
+        c = mix(c, float3(lut.sample(ls, uvw).rgb), p.d.z);
+    }
+    c = clamp(c, 0.0, 1.0);
+    dst.write(half4(half3(c * s.a), half(s.a)), gid);
+}
+
+// Layer-referencing effects. aux = the chosen layer, already aligned to this layer's buffer.
+// i.x 0 = displacement map: a = (max horizontal px, max vertical px, source mode 0 luma / 1 red-green, -)
+// i.x 1 = set matte: a = (mode 0 alpha / 1 luma, invert, -, -)
+kernel void fxLayerRef(texture2d<half, access::sample> src [[texture(0)]],
+                       texture2d<half, access::write> dst [[texture(1)]],
+                       texture2d<half, access::sample> aux [[texture(2)]],
+                       constant EffectParams& p [[buffer(0)]],
+                       uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    float2 c = float2(gid) + 0.5;
+    float4 m = float4(aux.sample(sm18, c));
+    float3 mc = m.a > 0.0 ? m.rgb / m.a : float3(0.0);
+    if (p.i.x == 0) {
+        float hx = p.a.z < 0.5 ? lum18(mc) : mc.r;
+        float hy = p.a.z < 0.5 ? lum18(mc) : mc.g;
+        // Mid grey = no move (AE): darker pushes one way, brighter the other; transparent map areas don't move.
+        float2 d = float2((hx - 0.5) * 2.0 * p.a.x, (hy - 0.5) * 2.0 * p.a.y) * m.a;
+        dst.write(src.sample(sm18, c + d), gid);
+    } else {
+        float4 s = float4(src.sample(sm18, c));
+        float k = p.a.x < 0.5 ? m.a : lum18(mc) * m.a;
+        if (p.a.y > 0.5) k = 1.0 - k;
+        dst.write(half4(s * k), gid);
+    }
+}

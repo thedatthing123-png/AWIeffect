@@ -112,6 +112,10 @@ struct TimelineView: View {
 
     private func header(_ layer: Layer) -> some View {
         HStack(spacing: 6) {
+            // Parts of a group get a colored bar so you can see what's inside it.
+            if layer.groupID != nil {
+                RoundedRectangle(cornerRadius: 1).fill(Theme.tagColor(.teal)).frame(width: 3, height: rowHeight - 10)
+            }
             Button { state.toggleVisibility(layer.id) } label: {
                 Image(systemName: layer.isVisible ? "eye" : "eye.slash")
                     .font(.system(size: 11))
@@ -119,7 +123,7 @@ struct TimelineView: View {
                     .frame(width: 20, height: rowHeight)
             }
             .buttonStyle(.plain)
-            Image(systemName: state.multiSelection?.contains(layer.id) == true ? "checkmark.circle.fill" : layer.content.symbol)
+            Image(systemName: state.multiSelection?.contains(layer.id) == true ? "checkmark.circle.fill" : (layer.isGroup ? "folder.fill" : layer.content.symbol))
                 .font(.system(size: 11))
                 .foregroundStyle(state.multiSelection?.contains(layer.id) == true ? Theme.accentGlow : Theme.tagColor(layer.tag))
                 .frame(width: 22, height: rowHeight)

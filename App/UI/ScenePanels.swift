@@ -39,7 +39,7 @@ struct ScenePanel: View {
                                       onChange: { v in state.mutate("Duration") { $0.duration = max(0.1, v) } }, onEnd: { state.endEdit() })
                         Button("Fit") { state.fitDurationToLayers() }.font(.system(size: 12, weight: .semibold))
                     }
-                    ColorPicker("Background", selection: Binding(get: { Color(state.project.background) }, set: { c in
+                    AWIColorWell("Background", selection: Binding(get: { Color(state.project.background) }, set: { c in
                         state.mutate("Background") { $0.background = c.rgba }
                     }), supportsOpacity: true).foregroundStyle(Theme.text)
                     Toggle("Motion Blur (whole scene)", isOn: Binding(get: { state.project.motionBlurEnabled }, set: { b in

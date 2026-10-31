@@ -14,6 +14,12 @@ struct PhysicsSettings: Codable, Equatable {
     var launch = Vec2(0, 0)
     var spin = 0.0                // initial angular velocity, deg/s
     var duration = 3.0
+    /// Constant push (px/s², like gravity sideways / upward).
+    var wind = Vec2(0, 0)
+    /// Simulation steps per frame (more = no tunnelling / jitter on fast hits).
+    var substeps = 8
+    /// Bodies already moving by keyframes keep that speed when physics takes over.
+    var keepMotion = true
 }
 
 /// Rigid-body solver (sequential impulses with box/polygon SAT contacts, Box2D-lite style): boxes tumble and stack,
@@ -89,7 +95,7 @@ enum PhysicsLab {
         if s.walls { wall(-T, height / 2, T, height * 4 + T); wall(width + T, height / 2, T, height * 4 + T) }
 
         var out: [UUID: [Sample]] = [:]
-        let sub = 4
+        let sub = max(1, min(32, s.substeps))
         let dt = 1 / fps / Double(sub)
         let frames = Int((s.duration * fps).rounded())
         for f in 0...frames {
@@ -105,6 +111,7 @@ enum PhysicsLab {
     private static func step(_ bodies: inout [RB], dt: Double, s: PhysicsSettings) {
         for i in bodies.indices where bodies[i].invM > 0 {
             bodies[i].v.y += s.gravity * dt
+            bodies[i].v = bodies[i].v + s.wind * dt
             bodies[i].v = bodies[i].v * max(0, 1 - s.airDrag * dt)
             bodies[i].w *= max(0, 1 - (s.airDrag + 0.05) * dt)
         }
@@ -265,6 +272,8 @@ extension EditorState {
     /// Simulates the chosen layers (others with `staticIDs` act as fixed obstacles) and bakes keyframes from the playhead.
     func bakePhysics(dynamicIDs: [UUID], staticIDs: [UUID] = [], settings: PhysicsSettings) {
         let t0 = currentTime
+        // Collider layers always join as static walls.
+        let staticIDs = staticIDs + project.layers.filter { $0.isCollider && !dynamicIDs.contains($0.id) && !staticIDs.contains($0.id) }.map(\.id)
         var bodies: [PhysicsLab.Body] = []
         var anchors: [UUID: (anchor: Vec2, scale: Vec2)] = [:]
         for l in project.layers where dynamicIDs.contains(l.id) || staticIDs.contains(l.id) {
@@ -291,8 +300,15 @@ extension EditorState {
             let off = Vec2(anc.x * sc.x, anc.y * sc.y)
             let center = l.transform.position.value(at: t0) - Vec2(off.x * cos(ang) - off.y * sin(ang), off.x * sin(ang) + off.y * cos(ang))
             anchors[l.id] = (anc, sc)
-            bodies.append(.init(id: l.id, p: center, v: .zero, angle: l.transform.rotation.value(at: t0),
-                                w: 0, r: r, invMass: isStatic ? 0 : 1, isStatic: isStatic, shape: shape))
+            // Keep the motion the layer already has (from its keyframes) at the start time.
+            var v0 = Vec2.zero, w0 = 0.0
+            if settings.keepMotion, !isStatic {
+                let h = 1 / max(project.fps, 1)
+                v0 = (l.transform.position.value(at: t0) - l.transform.position.value(at: t0 - h)) * (1 / h)
+                w0 = (l.transform.rotation.value(at: t0) - l.transform.rotation.value(at: t0 - h)) / h
+            }
+            bodies.append(.init(id: l.id, p: center, v: v0, angle: l.transform.rotation.value(at: t0),
+                                w: w0, r: r, invMass: isStatic ? 0 : 1, isStatic: isStatic, shape: shape))
         }
         let result = PhysicsLab.simulate(bodies, width: Double(project.width), height: Double(project.height), settings: settings, fps: project.fps)
         mutate("Bake Physics") { p in

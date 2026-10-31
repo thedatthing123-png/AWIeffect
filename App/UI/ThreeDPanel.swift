@@ -90,7 +90,7 @@ struct ThreeDPanel: View {
                                 state.mutate("Light Type") { p in if let i = state.selectedIndex { p.layers[i].light?.type = v } }
                             })) { ForEach(LightType.allCases) { Text($0.title).tag($0) } }
                             .pickerStyle(.segmented)
-                            ColorPicker("Color", selection: Binding(get: { Color(o.color.value(at: t)) }, set: { c in
+                            AWIColorWell("Color", selection: Binding(get: { Color(o.color.value(at: t)) }, set: { c in
                                 state.coalescedEdit("Light Color") { $0.light?.color.set(c.rgba, at: t) }
                             })).foregroundStyle(Theme.text)
                             row("Intensity", o.intensity.value(at: t), 0...400, anim: o.intensity,

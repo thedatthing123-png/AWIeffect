@@ -125,9 +125,21 @@ struct TextPanel: View {
             labeledSlider("Line Spacing", value: text.lineSpacing.value(at: t), range: 0.6...3) { v in
                 state.editTextContinuous { $0.lineSpacing.set(v, at: t) }
             }
+            Toggle("Text on Path (follows this layer's first mask)", isOn: Binding(get: { text.onPath ?? false }, set: { b in
+                state.editText("Text on Path") { $0.onPath = b ? true : nil; if b && $0.pathOffset == nil { $0.pathOffset = Animated(0) } }
+            }))
+            .tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13))
+            if text.onPath == true {
+                if state.selectedLayer?.masks.isEmpty ?? true {
+                    Text("Draw a mask (Pen or Ellipse) on this text layer: its outline becomes the path.").font(.caption).foregroundStyle(Theme.textDim)
+                }
+                labeledSlider("Path Offset %", value: text.pathOffset?.value(at: t) ?? 0, range: -100...100) { v in
+                    state.editTextContinuous { $0.pathOffset = ($0.pathOffset ?? Animated(0)); $0.pathOffset?.set(v, at: t) }
+                }
+            }
             HStack {
                 Text("Color").foregroundStyle(Theme.textDim)
-                ColorPicker("", selection: Binding(get: { Color(text.fill.value(at: t)) }, set: { c in
+                AWIColorWell("", selection: Binding(get: { Color(text.fill.value(at: t)) }, set: { c in
                     state.editText("Text Color") { $0.fill.set(c.rgba, at: t) }
                 })).labelsHidden()
                 Spacer()
@@ -197,6 +209,9 @@ struct TextPanel: View {
                 Button("Skew") { addAnimator { $0.skew = Animated(20) } }
                 Button("Blur") { addAnimator { $0.blur = Animated(12) } }
                 Button("Character Offset (Scramble)") { addAnimator { $0.characterOffset = Animated(10) } }
+                Button("3D Rotation X (flip)") { addAnimator { $0.rotationX = Animated(90) } }
+                Button("3D Rotation Y (turn)") { addAnimator { $0.rotationY = Animated(90) } }
+                Button("3D Position Z (depth)") { addAnimator { $0.positionZ = Animated(800) } }
             } label: {
                 Label("Add Animator", systemImage: "plus").frame(maxWidth: .infinity).padding(.vertical, 10)
                     .background(RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.accent.opacity(0.7), style: StrokeStyle(lineWidth: 1.2, dash: [5, 4])))
@@ -253,7 +268,7 @@ struct WordColorChips: View {
             }
             if let p = picked {
                 HStack {
-                    ColorPicker("Word color", selection: $color).foregroundStyle(Theme.text)
+                    AWIColorWell("Word color", selection: $color).foregroundStyle(Theme.text)
                     Button("Apply") {
                         let c = color.rgba
                         state.editText("Word Color") { t in
@@ -393,8 +408,17 @@ struct AnimatorCard: View {
                 if let co = animator.properties.characterOffset?.value(at: state.currentTime) {
                     slider("Char Offset", co, -40...40) { a, v, t in a.properties.characterOffset?.set(v, at: t) }
                 }
+                if let v0 = animator.properties.rotationX?.value(at: state.currentTime) {
+                    slider("Rotation X", v0, -360...360) { a, v, t in a.properties.rotationX?.set(v, at: t) }
+                }
+                if let v0 = animator.properties.rotationY?.value(at: state.currentTime) {
+                    slider("Rotation Y", v0, -360...360) { a, v, t in a.properties.rotationY?.set(v, at: t) }
+                }
+                if let v0 = animator.properties.positionZ?.value(at: state.currentTime) {
+                    slider("Position Z", v0, -900...5000) { a, v, t in a.properties.positionZ?.set(v, at: t) }
+                }
                 if let c = animator.properties.fill?.value(at: state.currentTime) {
-                    ColorPicker("Fill Color", selection: Binding(get: { Color(c) }, set: { col in
+                    AWIColorWell("Fill Color", selection: Binding(get: { Color(c) }, set: { col in
                         let t = state.currentTime
                         edit("Animator Color") { $0.properties.fill?.set(col.rgba, at: t) }
                     })).foregroundStyle(Theme.text)

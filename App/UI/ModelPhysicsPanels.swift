@@ -22,7 +22,7 @@ struct ModelPanel: View {
                             }
                             slider("Extrude", o.extrusion, 1...400) { v in cont { $0.extrusion = v } }
                             slider("Bevel", o.chamfer, 0...60) { v in cont { $0.chamfer = v } }
-                            ColorPicker("Color", selection: Binding(get: { Color(o.color.value(at: t)) }, set: { c in
+                            AWIColorWell("Color", selection: Binding(get: { Color(o.color.value(at: t)) }, set: { c in
                                 edit("3D Color") { $0.color.set(c.rgba, at: t) }
                             })).foregroundStyle(Theme.text)
                             slider("Metal", o.metalness, 0...1) { v in cont { $0.metalness = v } }
@@ -100,6 +100,11 @@ struct PhysicsPanel: View {
                     slider("Throw Y", Binding(get: { settings.launch.y }, set: { settings.launch.y = $0 }), -4000...2000)
                     slider("Spin °/s", $settings.spin, -1440...1440)
                     slider("Duration s", $settings.duration, 0.5...10)
+                    slider("Wind X", Binding(get: { settings.wind.x }, set: { settings.wind.x = $0 }), -3000...3000)
+                    slider("Wind Y", Binding(get: { settings.wind.y }, set: { settings.wind.y = $0 }), -3000...3000)
+                    slider("Accuracy", Binding(get: { Double(settings.substeps) }, set: { settings.substeps = Int($0.rounded()) }), 1...32)
+                    Toggle("Keep current motion (keyframed speed carries on)", isOn: $settings.keepMotion).tint(Theme.accent).foregroundStyle(Theme.text)
+                    Text("Layers marked as Collider in the Rig panel join as walls automatically.").font(.caption).foregroundStyle(Theme.textDim)
                     HStack {
                         Toggle("Floor", isOn: $settings.floor); Toggle("Walls", isOn: $settings.walls); Toggle("Ceiling", isOn: $settings.ceiling)
                     }
@@ -120,8 +125,7 @@ struct PhysicsPanel: View {
     private func slider(_ title: String, _ v: Binding<Double>, _ r: ClosedRange<Double>) -> some View {
         HStack {
             Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 86, alignment: .leading)
-            Slider(value: v, in: r)
-            Text(String(format: "%.0f", v.wrappedValue)).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.accentGlow).frame(width: 48)
+            ValueScrubber(value: v.wrappedValue, range: r, onChange: { v.wrappedValue = $0 })
         }
     }
 }

@@ -66,6 +66,51 @@ struct LayerCompositeParams {
     uint4  mode;   // blend mode index (same table as the main compositor)
 };
 
+
+// ---------- Extended blend modes (After Effects / W3C set, straight colors 0-1) ----------
+static inline float bxLum(float3 c) { return dot(c, float3(0.3, 0.59, 0.11)); }
+static inline float3 bxClipColor(float3 c) {
+    float l = bxLum(c), n = min(c.r, min(c.g, c.b)), x = max(c.r, max(c.g, c.b));
+    if (n < 0.0) c = l + (c - l) * l / max(l - n, 1e-6);
+    if (x > 1.0) c = l + (c - l) * (1.0 - l) / max(x - l, 1e-6);
+    return c;
+}
+static inline float3 bxSetLum(float3 c, float l) { return bxClipColor(c + (l - bxLum(c))); }
+static inline float bxSat(float3 c) { return max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b)); }
+static inline float3 bxSetSat(float3 c, float s) {
+    float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b));
+    return mx > mn ? (c - mn) * s / (mx - mn) : float3(0.0);
+}
+static inline float3 bxBurn(float3 b, float3 s) { return select(1.0 - min(float3(1.0), (1.0 - b) / max(s, float3(1e-6))), float3(0.0), s <= 0.0); }
+static inline float3 bxDodge(float3 b, float3 s) { return select(min(float3(1.0), b / max(1.0 - s, float3(1e-6))), float3(1.0), s >= 1.0); }
+static float3 blendExtra(float3 Cb, float3 Cs, uint mode) {
+    switch (mode) {
+        case 8: return bxBurn(Cb, Cs);                                                    // color burn
+        case 9: return max(Cb + Cs - 1.0, float3(0.0));                                   // linear burn
+        case 10: return bxLum(Cs) < bxLum(Cb) ? Cs : Cb;                                  // darker color
+        case 11: return bxDodge(Cb, Cs);                                                  // color dodge
+        case 12: return min(Cb + Cs, float3(1.0));                                        // linear dodge
+        case 13: return bxLum(Cs) > bxLum(Cb) ? Cs : Cb;                                  // lighter color
+        case 14: {                                                                        // soft light
+            float3 d = select(sqrt(Cb), ((16.0 * Cb - 12.0) * Cb + 4.0) * Cb, Cb <= 0.25);
+            return select(Cb + (2.0 * Cs - 1.0) * (d - Cb), Cb - (1.0 - 2.0 * Cs) * Cb * (1.0 - Cb), Cs <= 0.5);
+        }
+        case 15: return select(1.0 - 2.0 * (1.0 - Cs) * (1.0 - Cb), 2.0 * Cs * Cb, Cs <= 0.5); // hard light
+        case 16: return clamp(Cb + 2.0 * Cs - 1.0, 0.0, 1.0);                             // linear light
+        case 17: return select(bxDodge(Cb, 2.0 * Cs - 1.0), bxBurn(Cb, 2.0 * Cs), Cs <= 0.5); // vivid light
+        case 18: return select(max(Cb, 2.0 * Cs - 1.0), min(Cb, 2.0 * Cs), Cs <= 0.5);    // pin light
+        case 19: return select(float3(0.0), float3(1.0), Cb + Cs >= 1.0);                 // hard mix
+        case 20: return Cb + Cs - 2.0 * Cb * Cs;                                          // exclusion
+        case 21: return max(Cb - Cs, float3(0.0));                                        // subtract
+        case 22: return select(min(float3(1.0), Cb / max(Cs, float3(1e-6))), float3(1.0), Cs <= 0.0); // divide
+        case 23: return bxSetLum(bxSetSat(Cs, bxSat(Cb)), bxLum(Cb));                     // hue
+        case 24: return bxSetLum(bxSetSat(Cb, bxSat(Cs)), bxLum(Cb));                     // saturation
+        case 25: return bxSetLum(Cs, bxLum(Cb));                                          // color
+        case 26: return bxSetLum(Cb, bxLum(Cs));                                          // luminosity
+        default: return Cs;
+    }
+}
+
 static float3 blendFn(float3 Cb, float3 Cs, uint mode) {
     switch (mode) {
         case 1: return Cb + Cs;
@@ -75,7 +120,7 @@ static float3 blendFn(float3 Cb, float3 Cs, uint mode) {
         case 5: return max(Cb, Cs);
         case 6: return min(Cb, Cs);
         case 7: return abs(Cb - Cs);
-        default: return Cs;
+        default: return blendExtra(Cb, Cs, mode);
     }
 }
 

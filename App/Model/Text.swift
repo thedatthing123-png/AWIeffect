@@ -21,6 +21,9 @@ struct TextData: Codable, Equatable {
     var alignment: TextAlignment = .center
     var colorSpans: [TextColorSpan] = []
     var animators: [TextAnimator] = []
+    /// AE text on path: letters follow the text layer's first mask; offset slides them along it (% of length).
+    var onPath: Bool? = nil
+    var pathOffset: Animated<Double>? = nil
 
     func baseColor(forCharacter i: Int, time: Double) -> RGBA {
         if let span = colorSpans.last(where: { i >= $0.start && i < $0.end }) { return span.color }
@@ -102,6 +105,10 @@ struct TextAnimatorProperties: Codable, Equatable {
     var blur: Animated<Double>? = nil
     /// AE Character Offset: shifts each letter through the alphabet / digits (scramble, decode).
     var characterOffset: Animated<Double>? = nil
+    /// Per-character 3D: flip around X / Y (degrees) and push in depth (px, + = away).
+    var rotationX: Animated<Double>? = nil
+    var rotationY: Animated<Double>? = nil
+    var positionZ: Animated<Double>? = nil
 }
 
 struct TextAnimator: Codable, Equatable, Identifiable {

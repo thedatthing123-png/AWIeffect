@@ -248,6 +248,10 @@ struct MasksPanel: View {
                 }
             }
             Text(m.mode.help).font(.caption).foregroundStyle(Theme.textDim).frame(maxWidth: .infinity, alignment: .leading)
+            Toggle("Effects Only (limit this layer's effects to the mask)", isOn: Binding(get: { m.effectsOnly }, set: { b in
+                state.editMask(m.id, "Effects Only") { $0.effectsOnly = b }
+            }))
+            .tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13))
             maskSlider("Feather", m.feather.value(at: t), 0...400) { v in state.editMask(m.id, "Feather", continuous: true) { $0.feather.set(v, at: t) } }
             maskSlider("Opacity", m.opacity.value(at: t), 0...100) { v in state.editMask(m.id, "Mask Opacity", continuous: true) { $0.opacity.set(v, at: t) } }
             maskSlider("Expansion", m.expansion.value(at: t), -300...300) { v in state.editMask(m.id, "Expansion", continuous: true) { $0.expansion.set(v, at: t) } }
@@ -281,7 +285,7 @@ struct StrokeSection: View {
                 Toggle("Stroke", isOn: Binding(get: { l.stroke.enabled }, set: { b in edit("Stroke") { $0.stroke.enabled = b } }))
                     .tint(Theme.accent).foregroundStyle(Theme.text)
                 if l.stroke.enabled {
-                    ColorPicker("Stroke Color", selection: Binding(get: { Color(l.stroke.color.value(at: t)) }, set: { c in
+                    AWIColorWell("Stroke Color", selection: Binding(get: { Color(l.stroke.color.value(at: t)) }, set: { c in
                         edit("Stroke Color") { $0.stroke.color.set(c.rgba, at: t) }
                     })).foregroundStyle(Theme.text)
                     row("Width", l.stroke.width.value(at: t), 0...200) { v in cont { $0.stroke.width.set(v, at: t) } }
@@ -312,6 +316,66 @@ struct StrokeSection: View {
         HStack {
             Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 60, alignment: .leading)
             ValueScrubber(value: v, range: r, step: 1, onChange: set, onEnd: { state.endEdit() })
+        }
+    }
+}
+
+/// AE shape operators for the selected shape layer: Repeater, Offset Paths, Wiggle Paths, Zig Zag, Pucker & Bloat.
+struct ShapeOpsSection: View {
+    @ObservedObject var state: EditorState
+
+    var body: some View {
+        if let l = state.selectedLayer, case .shape = l.content {
+            let ops = l.shapeOps ?? ShapeOps()
+            let t = state.currentTime
+            VStack(alignment: .leading, spacing: 6) {
+                Text("SHAPE OPERATORS").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+                toggle("Repeater", ops.repeater != nil) { on in edit { $0.repeater = on ? RepeaterOp() : nil } }
+                if let r = ops.repeater {
+                    row("Copies", r.copies.value(at: t), 1...50, 1) { v in edit { $0.repeater?.copies.set(v, at: t) } }
+                    row("Offset X", r.position.value(at: t).x, -1000...1000, 1) { v in edit { $0.repeater?.position.set(Vec2(v, r.position.value(at: t).y), at: t) } }
+                    row("Offset Y", r.position.value(at: t).y, -1000...1000, 1) { v in edit { $0.repeater?.position.set(Vec2(r.position.value(at: t).x, v), at: t) } }
+                    row("Scale %", r.scale.value(at: t).x, 0...200, 1) { v in edit { $0.repeater?.scale.set(Vec2(v, v), at: t) } }
+                    row("Rotation", r.rotation.value(at: t), -360...360, 1) { v in edit { $0.repeater?.rotation.set(v, at: t) } }
+                    row("Start Opacity", r.startOpacity.value(at: t), 0...100, 1) { v in edit { $0.repeater?.startOpacity.set(v, at: t) } }
+                    row("End Opacity", r.endOpacity.value(at: t), 0...100, 1) { v in edit { $0.repeater?.endOpacity.set(v, at: t) } }
+                }
+                toggle("Offset Paths", ops.offset != nil) { on in edit { $0.offset = on ? Animated(10) : nil } }
+                if let o = ops.offset { row("Amount", o.value(at: t), -300...300, 1) { v in edit { $0.offset?.set(v, at: t) } } }
+                toggle("Wiggle Paths", ops.wiggle != nil) { on in edit { $0.wiggle = on ? WiggleOp() : nil } }
+                if let w = ops.wiggle {
+                    row("Size", w.size.value(at: t), 0...200, 1) { v in edit { $0.wiggle?.size.set(v, at: t) } }
+                    row("Detail", w.detail.value(at: t), 0...20, 1) { v in edit { $0.wiggle?.detail.set(v, at: t) } }
+                    row("Wiggles/s", w.speed.value(at: t), 0...20, 0.1) { v in edit { $0.wiggle?.speed.set(v, at: t) } }
+                }
+                toggle("Zig Zag", ops.zigzag != nil) { on in edit { $0.zigzag = on ? ZigZagOp() : nil } }
+                if let z = ops.zigzag {
+                    row("Size", z.size.value(at: t), -200...200, 1) { v in edit { $0.zigzag?.size.set(v, at: t) } }
+                    row("Ridges", z.ridges.value(at: t), 1...40, 1) { v in edit { $0.zigzag?.ridges.set(v, at: t) } }
+                }
+                toggle("Pucker & Bloat", ops.pucker != nil) { on in edit { $0.pucker = on ? Animated(30) : nil } }
+                if let pk = ops.pucker { row("Amount", pk.value(at: t), -100...100, 1) { v in edit { $0.pucker?.set(v, at: t) } } }
+            }
+            .padding(10).glass(radius: 12)
+        }
+    }
+
+    private func edit(_ change: (inout ShapeOps) -> Void) {
+        state.coalescedEdit("Shape Operator") { l in
+            var o = l.shapeOps ?? ShapeOps()
+            change(&o)
+            l.shapeOps = o.isEmpty ? nil : o
+        }
+    }
+
+    private func toggle(_ title: String, _ on: Bool, _ set: @escaping (Bool) -> Void) -> some View {
+        Toggle(title, isOn: Binding(get: { on }, set: set)).tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13, weight: .semibold))
+    }
+
+    private func row(_ title: String, _ v: Double, _ r: ClosedRange<Double>, _ step: Double, _ set: @escaping (Double) -> Void) -> some View {
+        HStack {
+            Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 90, alignment: .leading)
+            ValueScrubber(value: v, range: r, step: step, onChange: set)
         }
     }
 }
