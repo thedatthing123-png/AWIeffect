@@ -132,6 +132,91 @@ final class AWIeffectUITests: XCTestCase {
         XCTAssertTrue(app.state == .runningForeground, "app crashed during the tour")
     }
 
+    /// Walks through every newer feature panel, screenshots each step, and checks the app never crashes.
+    func testNewFeatureTour() {
+        tap("Create New Project")
+        tap("Create from scratch")
+        sleep(1)
+        tap("Add")
+        tap("Star")
+        sleep(1)
+
+        // Puppet: open, drop two pins on the canvas.
+        tap("Puppet")
+        sleep(1)
+        let canvas = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
+        canvas.tap()
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.17)).tap()
+        sleep(1)
+        snap("new-puppet")
+
+        // CC Studio: add a grade, visit every tab.
+        tap("CC Studio")
+        sleep(1)
+        tap("Add Grade to This Layer")
+        sleep(1)
+        snap("new-cc-basic")
+        for tab in ["Wheels", "Curves", "HSL", "LUT", "Looks"] {
+            tap(tab)
+            sleep(1)
+            snap("new-cc-" + tab.lowercased())
+        }
+
+        tap("Rig")
+        sleep(1)
+        snap("new-rig")
+        tap("Blending")
+        sleep(1)
+        snap("new-blending")
+        tap("Edit Shape")
+        sleep(1)
+        snap("new-shape")
+        app.swipeUp()
+        sleep(1)
+        snap("new-shape-operators")
+
+        tap("Masks")
+        tap("Rectangle")
+        sleep(1)
+        snap("new-masks")
+
+        tap("Color & Fill")
+        sleep(1)
+        let well = app.buttons["Color"].firstMatch
+        if well.waitForExistence(timeout: 3) { well.tap(); sleep(1); snap("new-color-picker"); app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.05)).tap() }
+
+        // Group the star (layer options menu).
+        tap("Layer Options")
+        sleep(1)
+        snap("new-layer-options")
+        tap("Group (keeps parts in this timeline)")
+        sleep(1)
+        snap("new-group")
+
+        // 3D Scene + Particles from the Add strip.
+        tap("Deselect Layer")
+        sleep(1)
+        tap("3D Scene")
+        sleep(1)
+        snap("new-3d-scene")
+        tap("Deselect Layer")
+        tap("Add")
+        tap("Particles")
+        sleep(2)
+        snap("new-particles")
+
+        // Art Studio Select tool.
+        tap("Deselect Layer")
+        tap("Draw")
+        sleep(2)
+        tap("Select")
+        sleep(1)
+        snap("new-draw-select")
+        tap("Cancel")
+
+        XCTAssertTrue(app.state == .runningForeground, "app crashed during the new feature tour")
+    }
+
     /// Every on-screen button must sit fully inside the window (catches off-screen / overlapping chrome).
     func testNoButtonsOffscreen() {
         tap("Create New Project")

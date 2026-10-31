@@ -251,7 +251,8 @@ struct CreateProjectSheet: View {
     @State private var aspect = aspects[0]
     @State private var shortSide = 1080
     @State private var fps: Double = 60
-    @State private var duration: Double = 10
+    /// No duration to pick (Alight Motion): the project is as long as its clips; new layers start at 5 s.
+    private let duration: Double = 5
     @State private var background = Color.black
 
     var size: (Int, Int) {
@@ -305,9 +306,6 @@ struct CreateProjectSheet: View {
                 Text("Composition size \(size.0) × \(size.1)").font(.caption).foregroundStyle(Theme.textDim).padding(.top, -14)
                 row("Frame rate") {
                     Picker("", selection: $fps) { ForEach(Self.rates, id: \.self) { Text("\(Int($0)) fps").tag($0) } }
-                }
-                row("Duration") {
-                    Stepper("\(Int(duration)) s", value: $duration, in: 1...600).foregroundStyle(Theme.text)
                 }
                 row("Background") {
                     AWIColorWell("", selection: $background, supportsOpacity: true).labelsHidden()

@@ -442,7 +442,8 @@ struct Project: Codable, Equatable, Identifiable {
     var motionBlurOn: Bool? = nil
     /// Alight Motion-style length: the project is as long as its layers (grows/shrinks with them).
     var autoLengthStore: Bool? = nil
-    var autoLength: Bool { get { autoLengthStore ?? false } set { autoLengthStore = newValue } }
+    /// Alight Motion behaviour, always on: the project is exactly as long as its layers.
+    var autoLength: Bool { get { autoLengthStore ?? true } set { autoLengthStore = newValue } }
 
     /// Length = end of the last layer (at least one second).
     mutating func fitAutoLength() {

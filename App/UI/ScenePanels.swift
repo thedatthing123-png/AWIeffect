@@ -28,17 +28,8 @@ struct ScenePanel: View {
                     chips(["24", "25", "30", "50", "60", "120"], selected: "\(Int(state.project.fps))") { v in
                         state.mutate("Frame Rate") { $0.fps = Double(v) ?? 30 }
                     }
-                    Toggle("Auto length (follows your layers)", isOn: Binding(get: { state.project.autoLength }, set: { b in
-                        state.mutate("Auto Length") { $0.autoLength = b }
-                    }))
-                    .tint(Theme.accent).foregroundStyle(Theme.text)
-                    label(String(format: "Duration  %.1fs", state.project.duration))
-                    HStack {
-                        ValueScrubber(value: state.project.duration, range: 1...180, step: 0.1, unit: "s",
-                                      onBegin: { state.beginEdit("Duration") },
-                                      onChange: { v in state.mutate("Duration") { $0.duration = max(0.1, v) } }, onEnd: { state.endEdit() })
-                        Button("Fit") { state.fitDurationToLayers() }.font(.system(size: 12, weight: .semibold))
-                    }
+                    Text(String(format: "Length  %.1fs  (follows your clips — drag a layer's end to make it longer)", state.project.duration))
+                        .font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.textDim)
                     AWIColorWell("Background", selection: Binding(get: { Color(state.project.background) }, set: { c in
                         state.mutate("Background") { $0.background = c.rgba }
                     }), supportsOpacity: true).foregroundStyle(Theme.text)
