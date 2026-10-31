@@ -45,6 +45,8 @@ struct EditorView: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .environmentObject(drawLauncher)
+        .onAppear { AILink.shared.editor = state }
+        .onDisappear { if AILink.shared.editor === state { AILink.shared.editor = nil } }
         .environmentObject(mediaLauncher)
         .environmentObject(trackLauncher)
         .photosPicker(isPresented: $mediaLauncher.pickVideo, selection: $videoItem, matching: .videos)
