@@ -171,11 +171,13 @@ final class VideoSources {
         let w = max(1, Int(img.extent.width.rounded())), h = max(1, Int(img.extent.height.rounded()))
         // Core Image is y-up; Metal textures are y-down.
         img = img.transformed(by: CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: -CGFloat(h)))
-        let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: w, height: h, mipmapped: false)
+        // Mipmapped: footage scaled down in the comp samples smoothly (no shimmer while it moves).
+        let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: w, height: h, mipmapped: true)
         d.usage = [.shaderRead, .shaderWrite, .renderTarget]
         d.storageMode = .private
         guard let tex = device.makeTexture(descriptor: d), let cb = Renderer.shared?.queue.makeCommandBuffer() else { return nil }
         ctx.render(img, to: tex, commandBuffer: cb, bounds: CGRect(x: 0, y: 0, width: w, height: h), colorSpace: CGColorSpaceCreateDeviceRGB())
+        if tex.mipmapLevelCount > 1, let bl = cb.makeBlitCommandEncoder() { bl.generateMipmaps(for: tex); bl.endEncoding() }
         cb.commit()
         return tex
     }

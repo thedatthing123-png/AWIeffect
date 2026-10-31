@@ -54,7 +54,8 @@ final class VideoDecodeTests: XCTestCase {
         let out = r.device.makeTexture(descriptor: d)!
         let cb = r.queue.makeCommandBuffer()!
         let bl = cb.makeBlitCommandEncoder()!
-        bl.copy(from: tex, to: out)
+        bl.copy(from: tex, sourceSlice: 0, sourceLevel: 0, sourceOrigin: MTLOrigin(x: 0, y: 0, z: 0), sourceSize: MTLSize(width: tex.width, height: tex.height, depth: 1),
+                to: out, destinationSlice: 0, destinationLevel: 0, destinationOrigin: MTLOrigin(x: 0, y: 0, z: 0))
         bl.endEncoding()
         cb.commit(); cb.waitUntilCompleted()
         var px = [UInt8](repeating: 0, count: tex.width * tex.height * 4)

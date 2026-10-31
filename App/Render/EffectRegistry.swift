@@ -137,7 +137,7 @@ final class EffectGPU {
         for name in ["fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
                      "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix",
                      "fxWarp", "fxStylize", "fxGlitch", "fxColor2", "fxSaberCore", "fxShine", "fxParticles", "fxPixelSort",
-                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17"] {
+                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18"] {
             guard let f = library.makeFunction(name: name) else { throw RenderError.pipeline(name) }
             psos[name] = try device.makeComputePipelineState(function: f)
         }
@@ -157,7 +157,9 @@ final class EffectGPU {
     }
 
     /// Separable Gaussian, `sigma` in texture px. Returns the output texture.
-    func gaussian(_ ctx: EffectContext, input: MTLTexture, sigma: Double, horizontal: Bool = true, vertical: Bool = true, repeatEdges: Bool = false) -> MTLTexture {
+    func gaussian(_ ctx: EffectContext, input: MTLTexture, sigma rawSigma: Double, horizontal: Bool = true, vertical: Bool = true, repeatEdges: Bool = false) -> MTLTexture {
+        // Past the image's own size more blur looks the same (a flat average), so stop there.
+        let sigma = min(rawSigma, Double(max(input.width, input.height)) * 0.6)
         guard sigma > 0.05 else { return input }
         // Big blurs run on a smaller copy (halved until the blur is ~4 px wide there), then scale back up:
         // same look, a fraction of the samples. Edge-repeat blurs stay full-res so edges don't smear.
@@ -195,7 +197,7 @@ enum EffectRegistry {
         gaussianBlur, directionalBlur, radialBlur,
         exposure, brightnessContrast, hueSaturation, tint, levels, invert, fill, vignette,
         glow, rgbSplit, fractalNoise, chromaKey, shake,
-    ] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17
+    ] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18
 
     private static let byID: [String: EffectDefinition] = Dictionary(uniqueKeysWithValues: all.map { ($0.id, $0) })
     private static let byMatchName: [String: EffectDefinition] = {

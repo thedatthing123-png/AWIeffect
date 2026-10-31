@@ -130,13 +130,16 @@ kernel void drawLayer(texture2d<half, access::read_write> comp [[texture(0)]],
         coverage *= float(image.sample(gs, uv).r);
         if (coverage <= 0.0) return;
     } else if (content == 2) {
-        // image: bilinear sample, edge AA against the box
+        // image: trilinear sample (mipmaps) so scaled-down / moving footage never shimmers, edge AA against the box
         float d = sdRoundBox(q, hs, 0.0);
         coverage = clamp(0.5 - d / aa, 0.0, 1.0);
         if (coverage <= 0.0) return;
-        constexpr sampler s(address::clamp_to_edge, filter::linear);
+        constexpr sampler s(address::clamp_to_edge, filter::linear, mip_filter::linear);
         float2 uv = q / (2.0 * hs) + 0.5;
-        float4 tex = float4(image.sample(s, uv));
+        // Source texels covered by one output pixel -> mip level (0 when magnified; textures without mips clamp to 0).
+        float texelsPerPixel = max(aa * float(image.get_width()) / max(2.0 * hs.x, 1e-4), aa * float(image.get_height()) / max(2.0 * hs.y, 1e-4));
+        float lod = clamp(log2(max(texelsPerPixel, 1.0)), 0.0, float(image.get_num_mip_levels() - 1));
+        float4 tex = float4(image.sample(s, uv, level(lod)));
         // geom2.w == 1: source is a premultiplied effect buffer -> convert to straight.
         if (p.geom2.w > 0.5) tex.rgb = tex.a > 1e-6 ? tex.rgb / tex.a : float3(0.0);
         color = tex;
@@ -171,7 +174,12 @@ kernel void compToBGRA(texture2d<half, access::read> comp [[texture(0)]],
     float4 c = float4(comp.read(gid));
     float3 rgb = c.a > 0.0 ? c.rgb / c.a : float3(0.0);
     // Video has no alpha: composite over black.
-    rgb = clamp(rgb * c.a, 0.0, 1.0);
+    rgb = rgb * c.a;
+    // Triangular dither (±1 LSB) before 8-bit: smooth glows / gradients with no banding, like AE's high-bit render.
+    float2 g = float2(gid);
+    float n1 = fract(sin(dot(g, float2(12.9898, 78.233))) * 43758.5453);
+    float n2 = fract(sin(dot(g, float2(39.3468, 11.1351))) * 24634.6345);
+    rgb = clamp(rgb + (n1 + n2 - 1.0) / 255.0, 0.0, 1.0);
     outTex.write(half4(half3(rgb), 1.0h), gid);
 }
 

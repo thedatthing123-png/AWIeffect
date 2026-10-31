@@ -40,7 +40,7 @@ final class StressTests: XCTestCase {
                 let t0 = CFAbsoluteTimeGetCurrent()
                 _ = r.renderPixels(project: p, time: 0.4, mediaURL: { URL(fileURLWithPath: $0) })
                 let ms = (CFAbsoluteTimeGetCurrent() - t0) * 1000
-                if ms > 400 { slow.append("\(d.id) [\(name)] \(Int(ms))ms") }
+                if ms > 1500 { slow.append("\(d.id) [\(name)] \(Int(ms))ms") }
             }
         }
         for s in slow { print("SKIP-INFO slow extreme: \(s)") }

@@ -106,6 +106,28 @@ final class EffectThumbnails {
         }
     }
 
+    // Animated previews (looping GIF-like frames), kept for the most recently viewed effects.
+    private var frameCache: [String: [UIImage]] = [:]
+    private var frameOrder: [String] = []
+
+    func frames(for def: EffectDefinition, completion: @escaping ([UIImage]) -> Void) {
+        lock.lock()
+        if let f = frameCache[def.id] { lock.unlock(); completion(f); return }
+        lock.unlock()
+        queue.async {
+            guard let r = Renderer.shared else { return }
+            let url = PreviewImage.url()
+            var p = Self.previewProject(effect: Self.showcase(def))
+            p.fps = 12
+            let imgs = (0..<14).compactMap { i in r.renderImage(project: p, time: 0.1 + Double(i) / 12, maxDimension: 120, mediaURL: { _ in url }) }
+            self.lock.lock()
+            self.frameCache[def.id] = imgs; self.frameOrder.append(def.id)
+            while self.frameOrder.count > 48 { self.frameCache[self.frameOrder.removeFirst()] = nil }
+            self.lock.unlock()
+            DispatchQueue.main.async { completion(imgs) }
+        }
+    }
+
     static func previewProject(effect: EffectInstance?) -> Project {
         var p = Project.new(name: "thumb", width: 360, height: 360, fps: 30, duration: 2, background: RGBA(0.05, 0.04, 0.08))
         var l = p.makeLayer(name: "img", content: .image(fileName: "preview", pixelWidth: 720, pixelHeight: 720), size: Vec2(720, 720))
@@ -465,12 +487,19 @@ struct EffectBrowser: View {
 struct EffectTile: View {
     let def: EffectDefinition
     @State private var image: UIImage?
+    /// Looping preview frames: the tile plays the effect (shakes shake, glitches glitch).
+    @State private var frames: [UIImage] = []
+    @State private var frameIndex = 0
+    @State private var visible = false
+    private let timer = Timer.publish(every: 1.0 / 12, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack(spacing: 6) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12).fill(Theme.raised)
-                if let image {
+                if !frames.isEmpty {
+                    Image(uiImage: frames[frameIndex % frames.count]).resizable().scaledToFill()
+                } else if let image {
                     Image(uiImage: image).resizable().scaledToFill()
                 } else if def.isTransformEffect {
                     Image(systemName: def.category.symbol).font(.system(size: 28)).foregroundStyle(Theme.accentGlow)
@@ -483,10 +512,17 @@ struct EffectTile: View {
             Text(def.name).font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.text)
                 .lineLimit(2).multilineTextAlignment(.center).frame(height: 28)
         }
+        .onReceive(timer) { _ in if visible && !frames.isEmpty { frameIndex += 1 } }
         .onAppear {
-            guard image == nil, !def.isTransformEffect else { return }
-            EffectThumbnails.shared.thumbnail(for: def) { image = $0 }
+            visible = true
+            if image == nil, !def.isTransformEffect { EffectThumbnails.shared.thumbnail(for: def) { image = $0 } }
+            // Animate once the tile has been on screen for a moment (scrolling past stays cheap).
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                guard visible, frames.isEmpty else { return }
+                EffectThumbnails.shared.frames(for: def) { f in if visible { frames = f } }
+            }
         }
+        .onDisappear { visible = false; frames = [] }
     }
 }
 

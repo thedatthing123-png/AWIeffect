@@ -24,7 +24,7 @@ struct ExportSettings: Equatable {
     /// Output frame rate (nil = the project's).
     var fps: Double? = nil
     /// Megabits per second.
-    var bitrateMbps: Double = 20
+    var bitrateMbps: Double = 40
     var start: Double = 0
     var end: Double? = nil
 }
@@ -59,6 +59,8 @@ final class Exporter {
         let alpha = settings.format == .transparent
         var project = project
         if alpha { project.background.a = 0 }
+        // Final render quality: denser motion blur than the live preview (silky blur on shakes and fast moves).
+        project.blurSamples = max(project.blurSamples, 32)
         let fps = settings.fps ?? project.fps
         let (w, h) = Self.outputSize(project, scale: settings.scale)
         let renderScale = Double(w) / Double(project.width)
@@ -72,7 +74,9 @@ final class Exporter {
         let videoURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString)-video.\(alpha ? "mov" : "mp4")")
         let writer = try AVAssetWriter(outputURL: videoURL, fileType: alpha ? .mov : .mp4)
         var compression: [String: Any] = [
-            AVVideoAverageBitRateKey: Int(settings.bitrateMbps * 1_000_000),
+            // Bitrate scales with resolution and frame rate (the setting is for 1080p30), so fast edits never
+            // turn blocky: 4K or 60 fps get proportionally more data.
+            AVVideoAverageBitRateKey: Int(min(200, max(8, settings.bitrateMbps * (Double(w * h) / 2_073_600) * (fps / 30))) * 1_000_000),
             AVVideoExpectedSourceFrameRateKey: Int(fps.rounded()),
             AVVideoMaxKeyFrameIntervalKey: Int(fps.rounded()),
         ]

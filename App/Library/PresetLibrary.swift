@@ -4,7 +4,7 @@ import SwiftUI
 /// Built-in presets. Every preset is made of real keyframes + real effects, so it stays fully editable after you apply it.
 struct LayerPreset: Identifiable {
     enum Kind: String, CaseIterable {
-        case transitionIn = "In", transitionOut = "Out", shake = "Shakes", glow = "Glow & Light", loop = "Loops", look = "Looks & CC", velocity = "Velocity"
+        case manga = "Manga & AMV", transitionIn = "In", transitionOut = "Out", shake = "Shakes", glow = "Glow & Light", loop = "Loops", look = "Looks & CC", velocity = "Velocity"
     }
     let id: String
     let name: String
@@ -33,7 +33,9 @@ enum PresetLibrary {
         layer.effects[idx].params[param] = .number(a)
     }
 
-    static let all: [LayerPreset] = [
+    private static func n(_ v: Double) -> ParamValue { .number(Animated(v)) }
+
+    static let all: [LayerPreset] = mangaPack + [
         // MARK: Transitions in (start at the layer's in point)
         .init(id: "zoomBlurIn", name: "Zoom Blur In", kind: .transitionIn, symbol: "plus.magnifyingglass") { l, _, t in
             let s = l.transform.scale.value(at: t)
@@ -310,4 +312,55 @@ struct PresetsPanel: View {
             }
         }
     }
+}
+
+// MARK: - Manga & AMV pack (the combos edit packs are built around: twitches, cinematic shakes, impacts, auras,
+// clones, one-frame glitches, flickers). Built from real effects + keys, so everything stays editable.
+extension PresetLibrary {
+    static let mangaPack: [LayerPreset] = [
+        .init(id: "twitchShake", name: "Twitch Shake", kind: .manga, symbol: "bolt.fill") { l, _, _ in
+            _ = effect(EffectRegistry.shakePro18, &l, ["mode": .choice(1), "amount": n(28), "rotation": n(3), "zoom": n(4), "speed": n(14), "hold": n(1)])
+            _ = effect(EffectRegistry.twitch18, &l)
+            l.motionBlur = true
+        },
+        .init(id: "cinematicShake", name: "Cinematic Shake & Blur", kind: .manga, symbol: "camera.aperture") { l, _, _ in
+            _ = effect(EffectRegistry.shakePro18, &l, ["mode": .choice(2), "amount": n(22), "rotation": n(2.5), "zoom": n(3), "speed": n(12)])
+            _ = effect(EffectRegistry.turbulentDisplace, &l, ["amount": n(18), "size": n(160), "complexity": n(2)])
+            l.motionBlur = true
+        },
+        .init(id: "animeShake", name: "Choppy Anime Shake", kind: .manga, symbol: "waveform.path") { l, _, _ in
+            _ = effect(EffectRegistry.shakePro18, &l, ["mode": .choice(1), "amount": n(35), "rotation": n(5), "speed": n(10), "hold": n(2)])
+        },
+        .init(id: "impactHit", name: "Impact Hit", kind: .manga, symbol: "burst.fill") { l, _, t in
+            let s = effect(EffectRegistry.shakePro18, &l, ["mode": .choice(4), "amount": n(60), "rotation": n(6), "zoom": n(10), "speed": n(8)])
+            keyEffect(&l, s, "amount", [(t, 60), (t + 0.5, 0)])
+            let f = effect(EffectRegistry.negativeFlash18, &l, ["rate": n(16)])
+            keyEffect(&l, f, "mix", [(t, 100), (t + 0.2, 0)], .hold)
+            let e = effect(EffectRegistry.exposure, &l); keyEffect(&l, e, "exposure", [(t, 2.5), (t + 0.18, 0)])
+            l.motionBlur = true
+        },
+        .init(id: "oneFrameGlitch", name: "One-Frame Glitches", kind: .manga, symbol: "square.split.diagonal") { l, _, _ in
+            _ = effect(EffectRegistry.twitch18, &l, ["rate": n(2.6), "length": n(15), "rgb": n(30), "slice": n(80), "flash": n(40)])
+        },
+        .init(id: "beatZoom", name: "Beat Zoom Punch", kind: .manga, symbol: "plus.magnifyingglass") { l, _, _ in
+            _ = effect(EffectRegistry.zoomPunch18, &l, ["amount": n(14), "decay": n(7)])
+            _ = effect(EffectRegistry.radialBlur, &l, ["amount": n(6), "type": .choice(1)])
+            l.motionBlur = true
+        },
+        .init(id: "powerAura", name: "Power-Up Aura", kind: .manga, symbol: "flame.fill") { l, _, _ in
+            _ = effect(EffectRegistry.energyAura, &l)
+            _ = effect(EffectRegistry.shakePro18, &l, ["mode": .choice(5), "amount": n(4), "rotation": n(0.5), "speed": n(12)])
+            _ = effect(EffectRegistry.deepGlow, &l)
+        },
+        .init(id: "cloneEcho", name: "Clone Echo", kind: .manga, symbol: "square.3.layers.3d.down.right") { l, _, _ in
+            _ = effect(EffectRegistry.echoOffset11, &l, ["copies": n(6), "distance": n(26), "fade": n(55)])
+        },
+        .init(id: "negFlicker", name: "Negative Flicker", kind: .manga, symbol: "circle.lefthalf.filled") { l, _, _ in
+            _ = effect(EffectRegistry.negativeFlash18, &l, ["style": .choice(2), "rate": n(11)])
+        },
+        .init(id: "mangaCC", name: "Manga Contrast CC", kind: .manga, symbol: "camera.filters") { l, _, _ in
+            _ = effect(EffectRegistry.brightnessContrast, &l, ["contrast": n(35), "brightness": n(-5)])
+            _ = effect(EffectRegistry.chromaticAberration, &l)
+        },
+    ]
 }

@@ -211,6 +211,8 @@ final class Renderer {
             .SRGB: false,
             .textureStorageMode: MTLStorageMode.private.rawValue,
             .origin: MTKTextureLoader.Origin.topLeft,
+            .allocateMipmaps: true,
+            .generateMipmaps: true,
         ])
         if let t { imageCache[key] = t }
         return t
@@ -390,7 +392,9 @@ final class Renderer {
             // Effects path: render the layer in its own (local, unrotated) buffer, run the stack, then place it.
             let rawMargin = pixelFX.reduce(0.0) { acc, e in acc + (EffectRegistry.definition(e.typeID)?.margin(e, time) ?? 0) }
                 + (dof > 0.5 ? dof * 3 / max(pxPerLocal, 1e-4) : 0)
-            let margin = rawMargin.isFinite ? min(max(0, rawMargin), 20000) : 0
+            // Glow / shadow room beyond what the screen can show is never seen: cap it to the comp size.
+            let compReach = Double(max(project.width, project.height)) / max(pxPerLocal, 1e-4)
+            let margin = rawMargin.isFinite ? min(max(0, rawMargin), 20000, compReach) : 0
             guard hs.x.isFinite, hs.y.isFinite, pxPerLocal.isFinite else { continue }
             let ext = Vec2(min(max(hs.x, 0.5), 1e6) + margin, min(max(hs.y, 0.5), 1e6) + margin)
             var density = min(1.5, max(0.05, pxPerLocal))
