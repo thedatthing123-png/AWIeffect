@@ -68,6 +68,9 @@ final class EffectTests: XCTestCase {
         case "ae.changeToColor": e.params["from"] = .color(Animated(RGBA(0.6, 0.2, 0.9))); n("tolerance", 20)
         case "ae.strobe": n("duration", 0.2)
         case "awi18.transform": n("x", 25); n("rotation", 20); n("scale", 120)
+        case "awi18.particles":
+            // Box emitter (so its width / height matter) and short lives (so fade out shows by t = 0.4).
+            e.params["emitter"] = .choice(1); n("life", 0.5); n("lifeRandom", 0)
         case "awi18.grade":
             // A visible base grade, with the HSL secondary active so its range / sat / light controls matter.
             n("exposure", 0.6); n("hslHue", 270); n("hslShift", 60); n("hslSat", 40); n("hslLight", 20); n("hslRange", 60)

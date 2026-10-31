@@ -262,8 +262,8 @@ extension EffectRegistry {
         aeMatchNames: [],
         summary: "AE's Transform effect: offset, scale and rotate inside the effect stack, on top of the layer's own keyframes (stack velocity hits and shakes without touching them). Gets motion blur from Smooth Motion.",
         params: [
-            .number("x", "Position X Offset", 0, -2000, 2000, unit: "px"),
-            .number("y", "Position Y Offset", 0, -2000, 2000, unit: "px"),
+            .number("x", "Position X Offset", 0, -1000, 1000, unit: "px"),
+            .number("y", "Position Y Offset", 0, -1000, 1000, unit: "px"),
             .number("scale", "Scale", 100, 0, 1000, unit: "%"),
             .number("rotation", "Rotation", 0, -360, 360, unit: "°"),
         ],

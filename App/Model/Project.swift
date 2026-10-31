@@ -476,7 +476,9 @@ struct Project: Codable, Equatable, Identifiable {
     var frameCount: Int { Int((duration * fps).rounded()) }
 
     func snapToFrame(_ t: Double) -> Double {
-        min(max((t * fps).rounded() / fps, 0), duration)
+        let f = max((t * fps).rounded() / fps, 0)
+        // Auto length: the project grows with its layers, so times may go past the current end.
+        return autoLength ? min(f, 3600) : min(f, duration)
     }
 
     private func gcd(_ a: Int, _ b: Int) -> Int { b == 0 ? max(a, 1) : gcd(b, a % b) }

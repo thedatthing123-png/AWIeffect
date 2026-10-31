@@ -92,7 +92,8 @@ final class RenderTests: XCTestCase {
         // Anti-stub: every mode changes the result vs Normal, and the set is (almost) all distinct
         // (some pairs, like Add / Linear Dodge, are the same formula in AE too for in-range colors).
         let modes = BlendMode.allCases
-        for m in modes where m != .normal {
+        // Darker / Lighter Color legitimately return the top color as-is when it wins (same as AE).
+        for m in modes where m != .normal && m != .lighterColor && m != .darkerColor {
             XCTAssertFalse(results[m]! == results[.normal]!, "\(m) looks like Normal")
         }
         let distinct = Set(modes.map { "\(results[$0]!)" }).count
