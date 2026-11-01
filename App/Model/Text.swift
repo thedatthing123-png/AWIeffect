@@ -417,7 +417,9 @@ enum TextPresets {
             a.selector = sweep(s, d, shape: .rampUp, basedOn: .lines, soft: 60, easeHigh: 70)
             a.properties.position = Animated(Vec2(0, 140))
             a.properties.opacity = Animated(0)
-            a.properties.blur = Animated(10)
+            a.properties.blur = Animated(18)
+            a.properties.scale = Animated(Vec2(70, 70))
+            a.properties.rotation = Animated(-12)
             return [a]
         },
         TextPreset(id: "zoomBig", name: "Zoom From Big") { s, d in

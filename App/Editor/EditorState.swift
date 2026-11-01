@@ -82,6 +82,13 @@ final class EditorState: ObservableObject {
     @Published var puppetAnimate = true
     /// Puppet: taps add pins only while Place is on; off = pins stay put and drags only move them.
     @Published var puppetPlace = true
+    /// Motion Sketch: moving the layer records position keyframes in real time.
+    @Published var motionSketch = false
+    /// Show the selected layer's motion path on the canvas.
+    @Published var showMotionPath = true
+    var sketchStartTime: Double?
+    var sketchStartClock: CFTimeInterval = 0
+    var sketchSamples: [(Double, Vec2)] = []
     /// The searchable Add Light browser.
     @Published var showLightBrowser = false
     /// Cutout refine tools on the canvas.

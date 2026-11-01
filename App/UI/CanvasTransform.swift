@@ -94,6 +94,7 @@ extension EditorState {
             for o in project.layers where ids.contains(o.id) && !o.isLocked { multiDragStarts[o.id] = o.transform.position.value(at: t) }
         }
         UISelectionFeedbackGenerator().selectionChanged()
+        if motionSketch, case .move = kind { beginMotionSketch() }
         return CanvasDrag(kind: kind, startComp: comp, pivot: tr.position.value(at: t), position: tr.position.value(at: t),
                           scale: tr.scale.value(at: t), rotation: tr.rotation.value(at: t), anchor: tr.anchor.value(at: t), inverse: M.inverse)
     }
@@ -151,7 +152,9 @@ extension EditorState {
                 snapGuides = SnapGuides(x: gx, y: gy)
             }
             // Sub-pixel positions: smooth motion under the finger (no whole-pixel stepping).
-            mutateLayer { $0.transform.position.set(Vec2((p.x * 10).rounded() / 10, (p.y * 10).rounded() / 10), at: t) }
+            let rounded = Vec2((p.x * 10).rounded() / 10, (p.y * 10).rounded() / 10)
+            if sketchStartTime != nil { recordMotionSketch(rounded) }
+            mutateLayer { $0.transform.position.set(rounded, at: t) }
         case .scale:
             let r0 = hypot(d.startComp.x - d.pivot.x, d.startComp.y - d.pivot.y)
             let r1 = hypot(c.x - d.pivot.x, c.y - d.pivot.y)
@@ -184,7 +187,10 @@ extension EditorState {
         }
     }
 
-    func endCanvasDrag() { endLiveGesture(); endEdit(); snapGuides = SnapGuides(); multiDragStarts = [:] }
+    func endCanvasDrag() {
+        endLiveGesture(); endEdit(); snapGuides = SnapGuides(); multiDragStarts = [:]
+        if sketchStartTime != nil { endMotionSketch() }
+    }
 
     // MARK: Two-finger pinch / twist on the selected layer
 

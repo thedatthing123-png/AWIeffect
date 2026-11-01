@@ -3,7 +3,7 @@ using namespace metal;
 
 struct EffectParams20 { float4 a; float4 b; float4 c; float4 d; uint4 i; };
 
-constexpr sampler s20(address::clamp_to_zero, filter::linear);
+constexpr sampler s20(coord::pixel, address::clamp_to_zero, filter::linear);
 
 // Flip (2D / 3D card flip, like AE CC Basic 3D / Alight Motion Flip): the layer is a card turned around a pivot and
 // seen through a camera. a = (angle around Y rad, tilt around X rad, spin around Z rad, camera distance px);

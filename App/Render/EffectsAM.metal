@@ -3,7 +3,7 @@ using namespace metal;
 
 // Alight Motion-style warps (own implementation, matching AM's controls and behaviour).
 struct EffectParamsAM { float4 a; float4 b; float4 c; float4 d; uint4 i; };
-constexpr sampler sAM(address::clamp_to_zero, filter::linear);
+constexpr sampler sAM(coord::pixel, address::clamp_to_zero, filter::linear);
 
 static float hAM(float2 p) { return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
 static float nAM(float2 p) {

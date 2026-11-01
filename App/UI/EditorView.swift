@@ -351,6 +351,9 @@ struct EditorView: View {
                 if trackLauncher.active {
                     TrackOverlay(state: state, fit: fit) { trackLauncher.active = false }
                 }
+                if state.showMotionPath, state.canvasMode == .comp, state.panel == .transform || state.panel == .layerHome {
+                    MotionPathOverlay(state: state, fit: fit)
+                }
                 if state.panel == .puppet, state.canvasMode == .comp {
                     ClockReader(clock: state.clock) { _ in PuppetOverlay(state: state, fit: fit) }
                 }

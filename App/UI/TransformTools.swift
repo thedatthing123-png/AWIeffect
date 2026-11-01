@@ -145,6 +145,22 @@ struct TransformToolBody: View {
                         l.transform.position.set(Vec2(((q.x + d.width) * 10).rounded() / 10, ((q.y + d.height) * 10).rounded() / 10), at: t)
                     }
                 } begin: { state.beginPanelGesture("Move Layer") } end: { state.endPanelGesture() }
+                HStack(spacing: 6) {
+                    Toggle(isOn: $state.motionSketch) { Label("Motion Sketch", systemImage: "record.circle") }
+                        .toggleStyle(.button).tint(.red).font(.system(size: 12, weight: .semibold))
+                    Toggle(isOn: $state.showMotionPath) { Label("Path", systemImage: "point.topleft.down.to.point.bottomright.curvepath") }
+                        .toggleStyle(.button).tint(Theme.accent).font(.system(size: 12, weight: .semibold))
+                    Menu {
+                        Button("Simplify (gentle)") { state.simplifyPositionKeys(tolerance: 2) }
+                        Button("Simplify (medium)") { state.simplifyPositionKeys(tolerance: 6) }
+                        Button("Simplify (strong)") { state.simplifyPositionKeys(tolerance: 14) }
+                    } label: { Label("Simplify", systemImage: "wand.and.stars").font(.system(size: 12, weight: .semibold)) }
+                    .disabled(layer.transform.position.keyframes.count < 4)
+                }
+                if state.motionSketch {
+                    Text("Drag the layer on the canvas: the playhead runs and your exact motion is recorded as keyframes.")
+                        .font(.caption2).foregroundStyle(Theme.textDim)
+                }
             case .depth:
                 valueRow([("Z", layer.transform.positionZ.value(at: t), { v in edit("Depth") { $0.transform.positionZ.set(v, at: t) } })])
                 SwipePad(hint: "Swipe up to bring it closer (−Z), down to push it back", gain: compW * 2, vertical: true) { d in

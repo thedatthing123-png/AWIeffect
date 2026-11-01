@@ -146,7 +146,9 @@ final class EffectTests: XCTestCase {
     func testEveryNumericControlIsWired() throws {
         let r = try renderer()
         // Params that only matter in a mode not active in this test (documented, not silent).
-        let modal: Set<String> = ["ae.hueSaturation/colorizeSat", "awi18.negativeFlash/threshold", "awi18.grade/lutStrength", "awi18.transform/x", "awi18.transform/y"]
+        let modal: Set<String> = ["ae.hueSaturation/colorizeSat", "awi18.negativeFlash/threshold", "awi18.grade/lutStrength", "awi18.transform/x", "awi18.transform/y",
+                                   // Whole-number phases line up (loops), and the tile output only shows past the layer bounds.
+                                   "awi20.amWaveWarp/phase", "ae.motionTile/outW", "ae.motionTile/outH"]
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" {
             for pd in d.params {
                 guard case .number(let lo, let hi, _, _) = pd.kind, !modal.contains("\(d.id)/\(pd.id)") else { continue }
