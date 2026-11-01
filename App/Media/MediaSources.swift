@@ -189,6 +189,14 @@ final class VideoSources {
             let idx = Int((pts * s.fps + 0.25).rounded(.down))
             c.readerFrame = idx
             if idx < frame { continue }
+            // The reader skipped past the frame we want (it was sitting somewhere else): reopen exactly at this frame
+            // once instead of showing a later frame (that was a twitch on duplicated clips).
+            if idx > frame + 1 && !retried {
+                c.reader?.cancelReading(); c.reader = nil; c.output = nil; c.readerFrame = -1
+                c.decodeLock.unlock()
+                defer { c.decodeLock.lock() }
+                return decode(s, c, frame: frame, device: device, retried: true)
+            }
             guard let tex = makeTexture(pb, orientation: s.orientation, device: device) else { return nil }
             store(s, idx, tex)
             // A frame missing in the file (variable frame rate): show the next one for the requested index.
@@ -204,7 +212,7 @@ final class VideoSources {
         }
         // Reader ran off the end (or failed): show the nearest cached frame of this file, never an unrelated one.
         lock.lock(); defer { lock.unlock() }
-        guard let near = s.cache.keys.min(by: { abs($0 - frame) < abs($1 - frame) }) else { return nil }
+        guard let near = s.cache.keys.min(by: { abs($0 - frame) < abs($1 - frame) }), abs(near - frame) <= 2 else { return nil }
         return s.cache[near]
     }
 

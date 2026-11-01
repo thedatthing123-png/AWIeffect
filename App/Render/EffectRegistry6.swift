@@ -108,9 +108,20 @@ extension EffectRegistry {
 
     static let bend6 = EffectDefinition(
         id: "awi6.bend", name: "Bend", category: .distort, aeMatchNames: [],
-        summary: "Bend the image into an arc along an axis.",
-        params: [.number("amount", "Bend", 40, -200, 200, unit: "px"), .angle("axis", "Axis Angle", 0)],
-        stage: .pixels { ctx in d6(ctx, 9) { p in p.a = SIMD4(px6(ctx, "amount"), rad6(ctx, "axis"), 0, 0) } })
+        summary: "Curl the layer like Alight Motion: it stays straight from the Origin edge up to Start, then bends by Angle (Start 50% = only the far half bends).",
+        params: [.choice("origin", "Origin", ["Left", "Right", "Top", "Bottom"], 3),
+                 .number("angle", "Angle", 45, -360, 360, unit: "°"),
+                 .number("start", "Start", 0, 0, 99, unit: "%"),
+                 .choice("before", "Before Start", ["Freeze", "Bend"], 0)],
+        margin: { _, _ in 400 },
+        stage: .pixels { ctx in
+            let out = ctx.temp()
+            var p = EffectParams()
+            p.a = SIMD4(Float(ctx.num("angle") * .pi / 180), Float(ctx.num("start") / 100), Float(400 * ctx.unit), 0)
+            p.i = SIMD4(UInt32(max(0, ctx.effect.choice("origin"))), UInt32(max(0, ctx.effect.choice("before"))), 0, 0)
+            ctx.gpu.run("fx19Bend", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
+            return out
+        })
 
     static let swirl6 = EffectDefinition(
         id: "awi6.swirl", name: "Swirl+", category: .distort, aeMatchNames: [],

@@ -300,3 +300,56 @@ kernel void fx19ColorSelect(texture2d<half, access::sample> src [[texture(0)]],
     if (p.a.z > 0.5) keep = 1.0 - keep;
     dst.write(half4(s * keep), gid);
 }
+
+/// Alight Motion-style Bend: the layer stays straight from its origin edge up to Start, then curls along an arc
+/// that turns by Angle by its far end. a = (angle rad, start 0-1, inset px (layer edge inside the buffer), -),
+/// i.x = origin (0 left, 1 right, 2 top, 3 bottom), i.y = before-start mode (0 freeze, 1 bend whole length).
+kernel void fx19Bend(texture2d<half, access::sample> src [[texture(0)]],
+                     texture2d<half, access::write> dst [[texture(1)]],
+                     constant EffectParams& p [[buffer(0)]],
+                     uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    float2 size = float2(dst.get_width(), dst.get_height());
+    float m = p.a.z;
+    float2 lo = float2(m), hi = size - m;
+    // Length axis (from the origin edge inward) and the perpendicular, origin at the middle of that edge.
+    float2 o, along, perp;
+    switch (p.i.x) {
+        case 0: o = float2(lo.x, (lo.y + hi.y) * 0.5); along = float2(1, 0); perp = float2(0, 1); break;
+        case 1: o = float2(hi.x, (lo.y + hi.y) * 0.5); along = float2(-1, 0); perp = float2(0, -1); break;
+        case 2: o = float2((lo.x + hi.x) * 0.5, lo.y); along = float2(0, 1); perp = float2(-1, 0); break;
+        default: o = float2((lo.x + hi.x) * 0.5, hi.y); along = float2(0, -1); perp = float2(1, 0); break;
+    }
+    float L = max(abs(dot(hi - lo, along)), 1.0);
+    float theta = p.a.x;
+    float s = p.i.y == 1 ? 0.0 : clamp(p.a.y, 0.0, 0.999);
+    float x0 = s * L, bendLen = L - x0;
+    float2 c = float2(gid) + 0.5;
+    float X = dot(c - o, along) - x0;   // along the layer, from the bend start
+    float Y = dot(c - o, perp);         // across the layer
+    float2 srcXY;
+    if (abs(theta) < 1e-4 || X < 0.0) {
+        srcXY = float2(X, Y);           // straight part (frozen)
+    } else {
+        float sg = theta < 0.0 ? -1.0 : 1.0;
+        float th = abs(theta);
+        float R = bendLen / th;
+        float y = Y * sg;
+        // Inverse of: (x, y) -> (r sin a, R - r cos a), a = x / R, r = R - y.
+        float a = atan2(X, R - y);
+        float r = length(float2(X, y - R));
+        if (a >= 0.0 && a <= th) {
+            srcXY = float2(a * R, (R - r) * sg);
+        } else if (a > th) {
+            // Past the arc: the rest continues straight in the bent direction.
+            float2 end = float2(R * sin(th), R - R * cos(th));
+            float2 t = float2(cos(th), sin(th)), n = float2(-sin(th), cos(th));
+            float2 d = float2(X, y) - end;
+            srcXY = float2(bendLen + dot(d, t), dot(d, n) * sg);
+        } else {
+            srcXY = float2(X, Y);
+        }
+    }
+    float2 q = o + along * (srcXY.x + x0) + perp * srcXY.y;
+    dst.write(half4(S(src, q)), gid);
+}
