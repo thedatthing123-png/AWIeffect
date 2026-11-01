@@ -253,7 +253,9 @@ final class CutoutEngine {
             let soft = m
             for y in max(1, y0)..<min(h - 1, y1 + 1) { for x in max(1, x0)..<min(w - 1, x1 + 1) {
                 let i = y * w + x
-                m[i] = UInt8((Int(soft[i]) * 4 + Int(soft[i - 1]) + Int(soft[i + 1]) + Int(soft[i - w]) + Int(soft[i + w])) / 8)
+                let center: Int = Int(soft[i]) * 4
+                let sides: Int = Int(soft[i - 1]) + Int(soft[i + 1]) + Int(soft[i - w]) + Int(soft[i + w])
+                m[i] = UInt8((center + sides) / 8)
             } }
             for i in 0..<(w * h) where m[i] > 0 {
                 bytes[i] = st.subtract ? min(bytes[i], 255 - m[i]) : max(bytes[i], m[i])
