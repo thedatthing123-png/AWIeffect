@@ -336,6 +336,9 @@ struct EditorView: View {
                 if let pen {
                     PenOverlay(state: state, target: pen.target, style: pen.style, fit: fit) { self.pen = nil }
                 }
+                if state.cutoutTool != .none, state.canvasMode == .comp {
+                    CutoutBrushOverlay(state: state, fit: fit)
+                }
                 if trackLauncher.active {
                     TrackOverlay(state: state, fit: fit) { trackLauncher.active = false }
                 }
@@ -420,7 +423,14 @@ struct EditorView: View {
                 // Link mode: the tapped layer becomes the parent.
                 if state.linkPicking { state.endLinkPick(parent: layerAt(v.location, fit: fit)); return }
                 // Puppet panel open: taps drop pins instead of selecting layers.
-                if state.panel == .puppet, state.selectedLayerID != nil { state.addPuppetPin(atComp: toComp(v.location, fit: fit)); return }
+                if state.panel == .puppet, state.selectedLayerID != nil {
+                    // Place on: a tap drops a pin (unless it lands on one). Place off: taps never add pins.
+                    let reach = 30 * Double(state.project.width) / Double(max(fit.width, 1))
+                    if state.puppetPlace, state.puppetPin(nearComp: toComp(v.location, fit: fit), reach: reach) == nil {
+                        state.addPuppetPin(atComp: toComp(v.location, fit: fit))
+                    }
+                    return
+                }
                 tapSelect(at: v.location, fit: fit)
             })
         }
@@ -521,6 +531,8 @@ struct EditorView: View {
                         if puppetDragPin! >= 0 { state.beginEdit("Move Pin") }
                     }
                     if let k = puppetDragPin, k >= 0 { state.movePuppetPin(k, toComp: toComp(v.location, fit: fit)); return }
+                    // Like AE's Puppet tool: dragging off a pin never moves the layer by accident.
+                    if state.selectedLayer?.effects.contains(where: { $0.typeID == EffectRegistry.puppet18.id }) == true { return }
                 }
                 if canvasDragState == nil && panBase == nil && cameraStart == nil,
                    state.selectedLayer?.content == .camera, state.activeCameraLayer != nil, let c = state.beginCameraGesture() {

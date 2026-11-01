@@ -79,6 +79,7 @@ struct CutoutSection: View {
                     }
                     Toggle("Invert (keep background)", isOn: Binding(get: { c.invert }, set: { b in var n = c; n.invert = b; state.setCutout(n) }))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
+                    CutoutRefineControls(state: state, c: c, isVideo: { if case .video = l.content { return true }; return false }())
                     Text("Runs on-device. Stability smooths the edge between video frames; Edge Contrast cleans soft edges (keep it low for hair). For exact part-by-part cuts use Redraw → Select Brush.").font(.caption).foregroundStyle(Theme.textDim)
                 }
             }

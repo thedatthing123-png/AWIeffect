@@ -71,16 +71,29 @@ extension EditorState {
         _ = i
     }
 
+    /// Starch pin: holds the area around it rigid (AE's Starch pin).
+    func isPuppetStarch(_ k: Int) -> Bool {
+        guard let l = selectedLayer, let j = puppetEffectIndex else { return false }
+        return (l.effects[j].params["pinS\(k)"]?.number(at: currentTime) ?? 0) > 0.5
+    }
+
+    func togglePuppetStarch(_ k: Int) {
+        guard let i = selectedIndex, let j = puppetEffectIndex else { return }
+        let on = !isPuppetStarch(k)
+        mutate(on ? "Starch Pin" : "Bend Pin") { p in p.layers[i].effects[j].params["pinS\(k)"] = .number(Animated(on ? 1 : 0)) }
+    }
+
     func removePuppetPin(_ k: Int) {
         guard let i = selectedIndex, let j = puppetEffectIndex else { return }
         let pins = project.layers[i].effects[j].params
         mutate("Remove Pin") { p in
-            var params = pins.filter { !$0.key.hasPrefix("pinR") && !$0.key.hasPrefix("pinD") }
+            var params = pins.filter { !$0.key.hasPrefix("pinR") && !$0.key.hasPrefix("pinD") && !$0.key.hasPrefix("pinS") }
             var n = 0, src = 0
             while let r = pins["pinR\(src)"] {
                 if src != k {
                     params["pinR\(n)"] = r
                     params["pinD\(n)"] = pins["pinD\(src)"] ?? r
+                    if let s = pins["pinS\(src)"] { params["pinS\(n)"] = s }
                     n += 1
                 }
                 src += 1
@@ -119,6 +132,14 @@ struct PuppetPanel: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Tap the layer to drop pins (e.g. hair root, hair tip, shoulder, hand). Drag a pin to bend the image around it. Pins you don't move hold their area still.")
                         .font(.caption).foregroundStyle(Theme.textDim)
+                    Picker("", selection: $state.puppetPlace) {
+                        Label("Place Pins", systemImage: "pin.fill").tag(true)
+                        Label("Move Pins", systemImage: "hand.draw.fill").tag(false)
+                    }
+                    .pickerStyle(.segmented)
+                    Text(state.puppetPlace ? "Tap the layer to drop pins. Switch to Move when you're done so you can drag them without adding new ones."
+                         : "Pins stay where they are: drag any pin to bend the layer. Taps never add pins here.")
+                        .font(.caption2).foregroundStyle(Theme.textDim)
                     Toggle("Animate (each drag sets a keyframe at the playhead)", isOn: $state.puppetAnimate)
                         .tint(Theme.accent).foregroundStyle(Theme.text)
                     if let j = state.puppetEffectIndex, let e = state.selectedLayer?.effects[j] {
@@ -141,6 +162,13 @@ struct PuppetPanel: View {
                             Image(systemName: "pin.fill").foregroundStyle(Theme.warning)
                             Text("Pin \(k + 1)").font(.system(size: 13)).foregroundStyle(Theme.text)
                             Spacer()
+                            Button { state.togglePuppetStarch(k) } label: {
+                                Text(state.isPuppetStarch(k) ? "Starch" : "Bend")
+                                    .font(.system(size: 11, weight: .bold)).padding(.horizontal, 8).padding(.vertical, 4)
+                                    .background(Capsule().fill(state.isPuppetStarch(k) ? Theme.accent : Theme.raised))
+                                    .foregroundStyle(state.isPuppetStarch(k) ? Color.white : Theme.text)
+                            }
+                            .buttonStyle(.plain)
                             Button(role: .destructive) { state.removePuppetPin(k) } label: { Image(systemName: "trash") }
                         }
                     }
@@ -148,7 +176,11 @@ struct PuppetPanel: View {
                 .padding(.horizontal, 12).padding(.bottom, 14)
             }
         }
-        .onAppear { state.ensurePuppet() }
+        .onAppear {
+            state.ensurePuppet()
+            // Open in Move when the layer already has pins, so the first touch never adds one by accident.
+            state.puppetPlace = state.puppetPins.isEmpty
+        }
     }
 }
 

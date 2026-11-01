@@ -80,6 +80,14 @@ final class EditorState: ObservableObject {
     let live = LiveCanvas()
     /// Puppet: drags keyframe pins at the playhead.
     @Published var puppetAnimate = true
+    /// Puppet: taps add pins only while Place is on; off = pins stay put and drags only move them.
+    @Published var puppetPlace = true
+    /// Cutout refine tools on the canvas.
+    @Published var cutoutTool: CutoutTool = .none
+    @Published var cutoutBrushSubtract = false
+    @Published var cutoutBrushSize = 40.0
+    @Published var cutoutWholeClip = false
+    @Published var cutoutFixSpan = 0.5
     /// Link mode: the panel steps aside and the next tap on a layer makes it this layer's parent.
     @Published var linkPicking = false
     /// Typing on the canvas: the timeline and panels step aside for the keyboard, the rest is dimmed.
@@ -836,7 +844,44 @@ extension EditorState {
     }
 
     /// Saves the drawing and adds (or live-updates) its image layer so it sits exactly where it was drawn.
+    /// Frame-by-frame drawing -> a pre-comp where each frame is an image held 1/fps (loops by extending it).
+    func finishDrawingFrames(_ engine: DrawEngine) {
+        let pngs = engine.framePNGs()
+        guard !pngs.isEmpty else { return }
+        let fps = max(1, engine.fps)
+        let files = pngs.compactMap { try? store.importMedia(data: $0, ext: "png", into: project.id) }
+        guard !files.isEmpty else { return }
+        Renderer.shared?.clearImageCache()
+        let w = engine.width, h = engine.height
+        let dur = Double(files.count) / fps
+        var comp = Project.new(name: "Animation \(project.precomps.count + 1)", width: project.width, height: project.height,
+                               fps: project.fps, duration: dur, background: RGBA(0, 0, 0, 0))
+        for (k, f) in files.enumerated() {
+            var l = comp.makeLayer(name: "Frame \(k + 1)", content: .image(fileName: f, pixelWidth: w, pixelHeight: h), size: Vec2(Double(w), Double(h)))
+            l.fill = Animated(.white)
+            l.inPoint = Double(k) / fps
+            l.outPoint = Double(k + 1) / fps
+            comp.layers.insert(l, at: 0)
+        }
+        let start = currentTime
+        var newID = UUID()
+        mutate("Add Animation") { p in
+            var all = p.precomps; all.append(comp); p.precomps = all
+            var pl = p.makeLayer(name: comp.name, content: .precomp(id: comp.id), size: Vec2(Double(p.width), Double(p.height)))
+            pl.inPoint = start
+            pl.outPoint = min(max(p.duration, start + dur), start + dur)
+            if start + dur > p.duration { p.duration = start + dur }
+            pl.sourceStart = 0
+            pl.tag = .teal
+            newID = pl.id
+            p.layers.insert(pl, at: 0)
+        }
+        selectedLayerID = newID
+        redrawToken += 1
+    }
+
     func finishDrawing(_ engine: DrawEngine, editing existing: UUID?) {
+        if engine.sendAsFrames { finishDrawingFrames(engine); return }
         if engine.sendAsParts { finishDrawingParts(engine); return }
         let docID = existing.flatMap { id in project.layers.first { $0.id == id }?.drawingID } ?? UUID()
         let folder = store.mediaFolder(for: project.id)

@@ -253,6 +253,10 @@ extension EffectRegistry {
             var p = EffectParams()
             p.a = SIMD4(Float(ctx.num("stiffness")), Float(ctx.unit), 0, 0)
             p.i.y = UInt32(pins.count)
+            // Starch pins (bit k): weigh much more, so the area around them stays rigid like AE's Starch pin.
+            var starch: UInt32 = 0
+            for k in 0..<min(32, pins.count) where ctx.effect.params["pinS\(k)"]?.number(at: ctx.time) ?? 0 > 0.5 { starch |= 1 << UInt32(k) }
+            p.i.z = starch
             ctx.gpu.run("fxPuppet", ctx.cb, textures: [ctx.input, out], params: p, extra: pins, grid: out)
             return out
         })

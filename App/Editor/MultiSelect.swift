@@ -105,6 +105,36 @@ extension EditorState {
         panel = .transform
     }
 
+    /// Mask with the top layer (AE track matte, set up in one tap): the top selected layer becomes the matte and only
+    /// what's inside it (or, inverted, outside it) of the other selected layers shows. Several layers under it are
+    /// pre-composed first so the matte cuts them as one.
+    func maskWithTop(inverted: Bool) {
+        guard let ids = multiSelection, ids.count >= 2,
+              let matteIndex = project.layers.firstIndex(where: { ids.contains($0.id) }) else { return }
+        let matteID = project.layers[matteIndex].id
+        let rest = Set(ids.subtracting([matteID]))
+        var targetID: UUID
+        if rest.count == 1, let only = rest.first {
+            targetID = only
+        } else {
+            multiSelection = rest
+            precomposeMulti(name: "Masked Group")
+            guard let g = selectedLayerID else { return }
+            targetID = g
+        }
+        mutate(inverted ? "Mask with Top (Inverted)" : "Mask with Top") { p in
+            guard let mi = p.layers.firstIndex(where: { $0.id == matteID }) else { return }
+            let matte = p.layers.remove(at: mi)
+            guard let ti = p.layers.firstIndex(where: { $0.id == targetID }) else { p.layers.insert(matte, at: mi); return }
+            p.layers.insert(matte, at: ti)          // directly above the target: the layer a track matte uses
+            p.layers[ti + 1].trackMatte = inverted ? .alphaInverted : .alpha
+            p.layers[ti + 1].clipToBelow = false
+        }
+        selectedLayerID = targetID
+        multiSelection = nil; multiAnchor = nil
+        panel = .blending
+    }
+
     func setVisibilityMulti(_ visible: Bool) {
         guard let ids = multiSelection else { return }
         mutate(visible ? "Show Layers" : "Hide Layers") { p in for i in p.layers.indices where ids.contains(p.layers[i].id) { p.layers[i].isVisible = visible } }
@@ -229,6 +259,8 @@ struct MultiSelectPanel: View {
                     section("Layers") {
                         ToolTile(icon: "folder.badge.plus", title: "Group") { state.groupSelected() }
                         ToolTile(icon: "square.stack.3d.up", title: "Pre-compose") { state.precomposeMulti() }
+                        ToolTile(icon: "circle.square", title: "Mask with Top") { state.maskWithTop(inverted: false) }
+                        ToolTile(icon: "circle.square.fill", title: "Mask Inverted") { state.maskWithTop(inverted: true) }
                         ToolTile(icon: "plus.square.on.square", title: "Duplicate") { state.duplicateMulti() }
                         ToolTile(icon: "trash", title: "Delete") { state.deleteMulti() }
                     }

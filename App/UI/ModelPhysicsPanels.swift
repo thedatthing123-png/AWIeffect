@@ -77,6 +77,9 @@ struct PhysicsPanel: View {
             PanelHeader(state: state, title: "Physics Studio", showKeyNav: false)
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
+                    SoftPhysicsSection(state: state)
+                    Divider().overlay(Theme.stroke)
+                    Text("RIGID BODIES").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.accentGlow)
                     group("Bodies", "Tap a layer to switch it: Falls → Solid → Off. Colliders from Rig are solid automatically.") {
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 2), spacing: 6) {
                             ForEach(state.project.layers.filter { l in

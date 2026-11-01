@@ -3,7 +3,7 @@ import MetalKit
 import PhotosUI
 
 enum DrawTool: String, CaseIterable, Identifiable {
-    case brush, eraser, selectBrush, lasso, wand, fill, move, eyedropper
+    case brush, eraser, selectBrush, lasso, rectSelect, ellipseSelect, wand, fill, move, eyedropper
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -11,20 +11,38 @@ enum DrawTool: String, CaseIterable, Identifiable {
         case .eraser: return "eraser.fill"
         case .selectBrush: return "hand.draw"
         case .lasso: return "lasso"
+        case .rectSelect: return "rectangle.dashed"
+        case .ellipseSelect: return "circle.dashed"
         case .wand: return "wand.and.stars"
         case .fill: return "drop.fill"
         case .move: return "arrow.up.and.down.and.arrow.left.and.right"
         case .eyedropper: return "eyedropper"
         }
     }
-    var title: String { self == .selectBrush ? "Select" : rawValue.capitalized }
+    var title: String {
+        switch self {
+        case .selectBrush: return "AI Select"
+        case .rectSelect: return "Rect"
+        case .ellipseSelect: return "Ellipse"
+        case .eyedropper: return "Picker"
+        default: return rawValue.capitalized
+        }
+    }
+    var isSelection: Bool { [.selectBrush, .lasso, .rectSelect, .ellipseSelect, .wand].contains(self) }
 }
 
 /// Shared tool state between the SwiftUI chrome and the UIKit canvas.
 final class DrawSession: ObservableObject {
     let engine: DrawEngine
     @Published var tool: DrawTool = .brush
-    @Published var brush = Brush() { didSet { engine.brush = brush } }
+    @Published var brush = Brush() { didSet { if tool != .eraser { engine.brush = brush } } }
+    /// The eraser keeps its own size / opacity / shape (like ibis Paint).
+    @Published var eraser = Brush(kind: .pen, size: 30, opacity: 1, hardness: 0.8, stabilizer: 0.2) { didSet { if tool == .eraser { engine.brush = eraser } } }
+    /// Size / opacity sliders edit whichever brush the current tool uses.
+    var activeBrush: Brush {
+        get { tool == .eraser ? eraser : brush }
+        set { if tool == .eraser { eraser = newValue } else { brush = newValue } }
+    }
     @Published var fillTolerance = 0.12
     @Published var gapClose = 2
     @Published var lassoPoints: [SIMD2<Double>] = []
@@ -49,6 +67,9 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
     private var rotation: CGFloat = 0
     private var fitted = false
     private var movingStart: CGPoint?
+    private var shapeStart: SIMD2<Double>?
+    private let outline = CAShapeLayer()
+    private var outlineView: [CGPoint] = []
 
     init(session: DrawSession) {
         self.session = session
@@ -68,6 +89,17 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
             g.cancelsTouchesInView = true
             addGestureRecognizer(g)
         }
+        // ibis Paint gestures: two-finger tap = undo, three-finger tap = redo.
+        let undoTap = UITapGestureRecognizer(target: self, action: #selector(onUndoTap))
+        undoTap.numberOfTouchesRequired = 2
+        let redoTap = UITapGestureRecognizer(target: self, action: #selector(onRedoTap))
+        redoTap.numberOfTouchesRequired = 3
+        for g in [undoTap, redoTap] { g.delegate = self; addGestureRecognizer(g) }
+        outline.fillColor = UIColor.clear.cgColor
+        outline.strokeColor = UIColor.white.cgColor
+        outline.lineWidth = 1.5
+        outline.lineDashPattern = [6, 4]
+        layer.addSublayer(outline)
     }
     required init(coder: NSCoder) { fatalError() }
 
@@ -79,6 +111,19 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         zoom = s
         offset = CGPoint(x: (bounds.width - canvasSize.width * s) / 2, y: (bounds.height - canvasSize.height * s) / 2)
         fitted = true
+    }
+
+    @objc private func onUndoTap() { session.engine.undo() }
+    @objc private func onRedoTap() { session.engine.redo() }
+
+    /// Live outline while making a lasso / rectangle / ellipse selection (view coordinates).
+    private func showOutline(_ pts: [CGPoint], closed: Bool) {
+        let path = UIBezierPath()
+        guard let f = pts.first else { outline.path = nil; return }
+        path.move(to: f)
+        for p in pts.dropFirst() { path.addLine(to: p) }
+        if closed { path.close() }
+        outline.path = path.cgPath
     }
 
     private func toCanvas(_ p: CGPoint) -> SIMD2<Double> {
@@ -101,10 +146,16 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         let e = session.engine
         switch session.tool {
         case .brush, .eraser:
-            e.brush.kind = session.tool == .eraser ? .eraser : session.brush.kind
+            e.erasing = session.tool == .eraser
+            e.brush = session.tool == .eraser ? session.eraser : session.brush
             e.beginStroke(at: p, pressure: pressure(t))
+        case .rectSelect, .ellipseSelect:
+            shapeStart = p
+            outlineView = [t.location(in: self)]
         case .selectBrush: e.beginSelectStroke(at: p, radius: session.brush.size / 2, subtract: session.selectSubtract)
-        case .lasso: session.lassoPoints = [p]
+        case .lasso:
+            session.lassoPoints = [p]
+            outlineView = [t.location(in: self)]
         case .wand: e.selectWand(at: p, tolerance: session.fillTolerance)
         case .fill: e.fill(at: p, tolerance: session.fillTolerance, gapClose: session.gapClose)
         case .eyedropper: pickColor(at: p)
@@ -119,7 +170,15 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
             for c in event?.coalescedTouches(for: t) ?? [t] {
                 session.engine.continueStroke(to: toCanvas(c.location(in: self)), pressure: pressure(c))
             }
-        case .lasso: session.lassoPoints.append(toCanvas(t.location(in: self)))
+        case .lasso:
+            session.lassoPoints.append(toCanvas(t.location(in: self)))
+            outlineView.append(t.location(in: self))
+            showOutline(outlineView, closed: false)
+        case .rectSelect, .ellipseSelect:
+            guard let a = outlineView.first else { break }
+            let b = t.location(in: self)
+            let r = CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(b.x - a.x), height: abs(b.y - a.y))
+            outline.path = (session.tool == .ellipseSelect ? UIBezierPath(ovalIn: r) : UIBezierPath(rect: r)).cgPath
         case .selectBrush:
             for c in event?.coalescedTouches(for: t) ?? [t] { session.engine.continueSelectStroke(to: toCanvas(c.location(in: self))) }
         default: break
@@ -134,6 +193,11 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         case .lasso:
             session.engine.selectLasso(session.lassoPoints)
             session.lassoPoints = []
+            outline.path = nil
+        case .rectSelect, .ellipseSelect:
+            if let a = shapeStart { session.engine.selectShape(a, toCanvas(t.location(in: self)), ellipse: session.tool == .ellipseSelect) }
+            shapeStart = nil
+            outline.path = nil
         case .move:
             if let s = movingStart {
                 let e = t.location(in: self)
@@ -149,6 +213,8 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         session.engine.endStroke()
         session.lassoPoints = []
+        outline.path = nil
+        shapeStart = nil
     }
 
     private func pickColor(at p: SIMD2<Double>) {
@@ -240,6 +306,8 @@ struct DrawStudioView: View {
     @State private var showBrushes = false
     @State private var photo: PhotosPickerItem?
     @State private var showPhotos = false
+    @State private var showAdjust = false
+    @State private var playTimer: Timer?
 
     init(engine: DrawEngine, onDone: @escaping (DrawEngine) -> Void, onCancel: @escaping () -> Void) {
         _session = StateObject(wrappedValue: DrawSession(engine: engine))
@@ -256,13 +324,17 @@ struct DrawStudioView: View {
                 sideSliders.padding(.leading, 8)
                 if showLayers { HStack { Spacer(); LayersPanel(engine: engine).frame(width: 250).padding(8) }.transition(.move(edge: .trailing)) }
             }
+            if engine.animating { animationBar }
+            toolOptions
             if session.tool == .selectBrush { selectBrushBar }
-            if engine.hasSelection || session.tool == .lasso || session.tool == .wand || session.tool == .selectBrush { selectionBar }
+            if engine.hasSelection || session.tool.isSelection { selectionBar }
             bottomBar
         }
         .background(Theme.background.ignoresSafeArea())
         .animation(.spring(response: 0.3, dampingFraction: 0.85), value: showLayers)
-        .awiSheet(isPresented: $showBrushes) { BrushPicker(session: session).presentationDetents([.medium]) }
+        .awiSheet(isPresented: $showBrushes) { BrushPicker(session: session).presentationDetents([.medium, .large]) }
+        .awiSheet(isPresented: $showAdjust) { DrawAdjustSheet(engine: engine).presentationDetents([.medium]) }
+        .onDisappear { playTimer?.invalidate() }
         .photosPicker(isPresented: $showPhotos, selection: $photo, matching: .images)
         .onChange(of: photo) { _, item in
             guard let item else { return }
@@ -283,10 +355,34 @@ struct DrawStudioView: View {
             iconButton("arrow.uturn.forward", enabled: engine.canRedo) { engine.redo() }
             iconButton("photo.badge.plus") { showPhotos = true }
             iconButton("square.3.layers.3d", active: showLayers) { showLayers.toggle() }
+            Menu {
+                Picker("Symmetry", selection: Binding(get: { engine.symmetry }, set: { engine.symmetry = $0; engine.touch() })) {
+                    ForEach(DrawSymmetry.allCases) { Text($0.title).tag($0) }
+                }
+                Toggle("Straight Line Ruler", isOn: Binding(get: { engine.ruler == .line }, set: { engine.ruler = $0 ? .line : .none; engine.touch() }))
+            } label: {
+                Image(systemName: "ruler").font(.system(size: 16, weight: .semibold)).frame(width: 36, height: 36)
+                    .foregroundStyle(engine.symmetry != .none || engine.ruler != .none ? Theme.accentGlow : Theme.text)
+            }
+            Menu {
+                Button { showAdjust = true } label: { Label("Adjust Color / Blur", systemImage: "slider.horizontal.3") }
+                Button { engine.extractLines() } label: { Label("Extract Line Art", systemImage: "scribble") }
+                Button { engine.flipActive(horizontal: true) } label: { Label("Flip Horizontal", systemImage: "arrow.left.and.right.righttriangle.left.righttriangle.right") }
+                Button { engine.flipActive(horizontal: false) } label: { Label("Flip Vertical", systemImage: "arrow.up.and.down.righttriangle.up.righttriangle.down") }
+                Button(role: .destructive) { engine.clearActiveLayer() } label: { Label("Clear Layer", systemImage: "trash") }
+            } label: {
+                Image(systemName: "wand.and.rays").font(.system(size: 16, weight: .semibold)).frame(width: 36, height: 36).foregroundStyle(Theme.text)
+            }
+            iconButton("film.stack", active: engine.animating) { engine.animating.toggle(); engine.touch() }
             Spacer()
             Menu {
-                Button { engine.sendAsParts = false; onDone(engine) } label: { Label("Send as One Layer", systemImage: "square") }
-                Button { engine.sendAsParts = true; onDone(engine) } label: {
+                if engine.animating {
+                    Button { engine.sendAsFrames = true; engine.sendAsParts = false; onDone(engine) } label: {
+                        Label("Send Animation (\(engine.frameLayers.count) frames)", systemImage: "film")
+                    }
+                }
+                Button { engine.sendAsFrames = false; engine.sendAsParts = false; onDone(engine) } label: { Label("Send as One Layer", systemImage: "square") }
+                Button { engine.sendAsFrames = false; engine.sendAsParts = true; onDone(engine) } label: {
                     Label("Send Parts as Separate Layers (for animating)", systemImage: "square.3.layers.3d.down.right")
                 }
             } label: {
@@ -300,10 +396,98 @@ struct DrawStudioView: View {
 
     private var sideSliders: some View {
         VStack(spacing: 18) {
-            VerticalSlider(value: Binding(get: { session.brush.size }, set: { session.brush.size = $0 }), range: 1...300, label: "\(Int(session.brush.size))")
-            VerticalSlider(value: Binding(get: { session.brush.opacity * 100 }, set: { session.brush.opacity = $0 / 100 }), range: 1...100, label: "\(Int(session.brush.opacity * 100))%")
+            VerticalSlider(value: Binding(get: { session.activeBrush.size }, set: { session.activeBrush.size = $0 }), range: 1...400, label: "\(Int(session.activeBrush.size))")
+            VerticalSlider(value: Binding(get: { session.activeBrush.opacity * 100 }, set: { session.activeBrush.opacity = $0 / 100 }), range: 1...100, label: "\(Int(session.activeBrush.opacity * 100))%")
         }
         .padding(.vertical, 8).padding(.horizontal, 4).glass(radius: 14)
+    }
+
+    /// Per-tool options (ibis Paint style bar above the tools).
+    @ViewBuilder private var toolOptions: some View {
+        switch session.tool {
+        case .eraser:
+            HStack(spacing: 8) {
+                Text("Eraser shape").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textDim)
+                Menu {
+                    ForEach(BrushKind.allCases.filter { $0 != .eraser }) { k in Button { session.eraser.kind = k } label: { Label(k.title, systemImage: k.symbol) } }
+                } label: {
+                    Label(session.eraser.kind.title, systemImage: session.eraser.kind.symbol).font(.system(size: 12, weight: .semibold))
+                        .padding(.horizontal, 10).padding(.vertical, 6).background(Capsule().fill(Theme.raised)).foregroundStyle(Theme.text)
+                }
+                optionSlider("Soft", value: Binding(get: { 1 - session.eraser.hardness }, set: { session.eraser.hardness = 1 - $0 }), range: 0...1)
+            }
+            .padding(.horizontal, 10).padding(.vertical, 4)
+        case .wand, .fill:
+            VStack(spacing: 4) {
+                HStack(spacing: 8) {
+                    optionSlider("Tolerance", value: $session.fillTolerance, range: 0...0.6)
+                    Picker("", selection: Binding(get: { engine.sampleSource }, set: { engine.sampleSource = $0 })) {
+                        ForEach(SampleSource.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented).frame(width: 170)
+                }
+                if session.tool == .fill {
+                    HStack(spacing: 8) {
+                        Stepper("Close gaps \(session.gapClose)px", value: $session.gapClose, in: 0...10).font(.system(size: 12))
+                        Stepper("Expand \(engine.fillExpand)px", value: Binding(get: { engine.fillExpand }, set: { engine.fillExpand = $0; engine.touch() }), in: 0...6).font(.system(size: 12))
+                    }
+                } else { selectionModePicker }
+            }
+            .foregroundStyle(Theme.text).padding(.horizontal, 10).padding(.vertical, 4)
+        case .lasso, .rectSelect, .ellipseSelect:
+            selectionModePicker.padding(.horizontal, 10).padding(.vertical, 4)
+        default:
+            EmptyView()
+        }
+    }
+
+    private var selectionModePicker: some View {
+        Picker("", selection: Binding(get: { engine.selectionMode }, set: { engine.selectionMode = $0; engine.touch() })) {
+            ForEach(SelectionMode.allCases) { Text($0.title).tag($0) }
+        }
+        .pickerStyle(.segmented)
+    }
+
+    private func optionSlider(_ t: String, value: Binding<Double>, range: ClosedRange<Double>) -> some View {
+        HStack(spacing: 6) {
+            Text(t).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textDim)
+            Slider(value: value, in: range).tint(Theme.accent)
+        }
+    }
+
+    /// Frame-by-frame animation controls (each layer is a frame).
+    private var animationBar: some View {
+        let frames = engine.frameLayers
+        let cur = engine.activeLayer.flatMap { a in frames.firstIndex { $0.id == a.id } } ?? 0
+        return HStack(spacing: 8) {
+            iconButton("backward.frame.fill") { engine.stepFrame(-1) }
+            Text("\(cur + 1) / \(max(1, frames.count))").font(.system(size: 12, weight: .bold, design: .monospaced)).foregroundStyle(Theme.text)
+            iconButton("forward.frame.fill") { engine.stepFrame(1) }
+            iconButton(playTimer == nil ? "play.fill" : "pause.fill") { togglePlay() }
+            Menu {
+                Button { engine.addFrame(copyCurrent: false) } label: { Label("New Empty Frame", systemImage: "plus.square") }
+                Button { engine.addFrame(copyCurrent: true) } label: { Label("Duplicate Frame", systemImage: "plus.square.on.square") }
+                Button(role: .destructive) { engine.deleteActiveLayer() } label: { Label("Delete Frame", systemImage: "trash") }
+            } label: {
+                Image(systemName: "plus.rectangle.on.rectangle").font(.system(size: 16, weight: .semibold)).frame(width: 36, height: 36).foregroundStyle(Theme.text)
+            }
+            Toggle("Onion", isOn: Binding(get: { engine.onionSkin }, set: { engine.onionSkin = $0; engine.touch() })).toggleStyle(.button).tint(Theme.accent)
+                .font(.system(size: 12, weight: .semibold))
+            Stepper("\(Int(engine.fps)) fps", value: Binding(get: { engine.fps }, set: { engine.fps = $0; if playTimer != nil { togglePlay(); togglePlay() } }), in: 1...30)
+                .font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.text)
+        }
+        .padding(.horizontal, 8).padding(.vertical, 2)
+    }
+
+    private func togglePlay() {
+        if let t = playTimer { t.invalidate(); playTimer = nil; engine.playFrame = nil; engine.touch(); return }
+        var k = 0
+        engine.playFrame = 0
+        playTimer = Timer.scheduledTimer(withTimeInterval: 1 / max(1, engine.fps), repeats: true) { _ in
+            k += 1
+            engine.playFrame = k
+            engine.touch()
+        }
     }
 
     /// Select Brush options, right above the selection actions.
@@ -416,6 +600,8 @@ struct VerticalSlider: View {
 
 struct LayersPanel: View {
     @ObservedObject var engine: DrawEngine
+    @State private var showRename = false
+    @State private var renaming = ""
     var body: some View {
         VStack(spacing: 6) {
             HStack {
@@ -433,6 +619,7 @@ struct LayersPanel: View {
                     ForEach(Array(engine.layers.enumerated().reversed()), id: \.element.id) { i, l in
                         HStack(spacing: 6) {
                             Button { l.visible.toggle(); engine.touch() } label: { Image(systemName: l.visible ? "eye" : "eye.slash") }
+                            LayerThumb(engine: engine, layer: l)
                             Text(l.name).font(.system(size: 12, weight: .semibold)).lineLimit(1)
                             Spacer()
                             if l.clipping { Image(systemName: "arrow.turn.left.down").font(.system(size: 10)) }
@@ -441,7 +628,13 @@ struct LayersPanel: View {
                         .foregroundStyle(Theme.text)
                         .padding(8)
                         .background(RoundedRectangle(cornerRadius: 8).fill(i == engine.activeIndex ? Theme.accent.opacity(0.3) : Theme.surface))
-                        .onTapGesture { engine.activeIndex = i }
+                        .onTapGesture { engine.activeIndex = i; engine.touch() }
+                        .contextMenu {
+                            Button("Rename") { renaming = l.name; engine.activeIndex = i; showRename = true }
+                            Button("Duplicate") { engine.activeIndex = i; engine.duplicateActiveLayer() }
+                            Button("Clear") { engine.activeIndex = i; engine.clearActiveLayer() }
+                            Button("Delete", role: .destructive) { engine.activeIndex = i; engine.deleteActiveLayer() }
+                        }
                     }
                 }
             }
@@ -467,6 +660,59 @@ struct LayersPanel: View {
             }
         }
         .padding(10).glass(radius: 14)
+        .alert("Rename Layer", isPresented: $showRename) {
+            TextField("Name", text: $renaming)
+            Button("OK") { engine.renameActive(renaming) }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
+}
+
+/// Tiny live preview of a layer (refreshes with the engine revision).
+struct LayerThumb: View {
+    @ObservedObject var engine: DrawEngine
+    let layer: DrawLayer
+    @State private var image: UIImage?
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 4).fill(Color.white.opacity(0.9))
+            if let image { Image(uiImage: image).resizable().scaledToFit() }
+        }
+        .frame(width: 34, height: 34)
+        .clipShape(RoundedRectangle(cornerRadius: 4))
+        .task(id: engine.revision) { image = engine.thumbnail(of: layer) }
+    }
+}
+
+/// Color adjustments for the active layer.
+struct DrawAdjustSheet: View {
+    @ObservedObject var engine: DrawEngine
+    @Environment(\.dismiss) private var dismiss
+    @State private var brightness = 0.0
+    @State private var contrast = 1.0
+    @State private var saturation = 1.0
+    @State private var hue = 0.0
+    @State private var blur = 0.0
+    var body: some View {
+        NavigationStack {
+            Form {
+                HStack { Text("Brightness"); Slider(value: $brightness, in: -0.5...0.5) }
+                HStack { Text("Contrast"); Slider(value: $contrast, in: 0.5...1.8) }
+                HStack { Text("Saturation"); Slider(value: $saturation, in: 0...2) }
+                HStack { Text("Hue"); Slider(value: $hue, in: -3.14...3.14) }
+                HStack { Text("Blur"); Slider(value: $blur, in: 0...40) }
+            }
+            .navigationTitle("Adjust Layer")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Apply") {
+                        engine.adjustActive(brightness: brightness, contrast: contrast, saturation: saturation, hue: hue, blur: blur)
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -482,7 +728,11 @@ struct BrushPicker: View {
                 Section("Feel") {
                     HStack { Text("Hardness"); Slider(value: $session.brush.hardness, in: 0...0.99) }
                     HStack { Text("Stabilizer"); Slider(value: $session.brush.stabilizer, in: 0...1) }
+                    HStack { Text("Spacing"); Slider(value: $session.brush.spacing, in: 0...1.5) }
+                    HStack { Text("Start Taper"); Slider(value: $session.brush.taperStart, in: 0...300) }
+                    HStack { Text("Size Jitter"); Slider(value: $session.brush.sizeJitter, in: 0...1) }
                     Toggle("Pressure controls size", isOn: $session.brush.pressureSize)
+                    Toggle("Pressure controls opacity", isOn: $session.brush.pressureOpacity)
                 }
                 Section("Fill & Wand") {
                     HStack { Text("Tolerance"); Slider(value: $session.fillTolerance, in: 0...0.6) }

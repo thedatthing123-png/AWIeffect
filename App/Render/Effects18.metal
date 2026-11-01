@@ -130,6 +130,7 @@ kernel void fxPuppet(texture2d<half, access::sample> src [[texture(0)]],
     for (uint k = 0; k < n; k++) {
         float2 q = pins[k].zw, r = pins[k].xy;
         float w = 1.0 / pow(max(dot(q - v, q - v), 1.0), p.a.x);
+        if ((p.i.z >> k) & 1u) w *= 8.0;
         wsum += w; qs += w * q; ps += w * r;
     }
     qs /= wsum; ps /= wsum;
@@ -143,6 +144,7 @@ kernel void fxPuppet(texture2d<half, access::sample> src [[texture(0)]],
         for (uint k = 0; k < n; k++) {
             float2 q = pins[k].zw - qs, r = pins[k].xy - ps;
             float w = 1.0 / pow(max(dot(pins[k].zw - v, pins[k].zw - v), 1.0), p.a.x);
+            if ((p.i.z >> k) & 1u) w *= 8.0;
             T += w * float2(q.x * r.x + q.y * r.y, q.x * r.y - q.y * r.x);
         }
         float tl = length(T);
