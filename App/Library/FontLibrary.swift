@@ -62,8 +62,9 @@ final class FontLibrary: ObservableObject {
         let q = family.replacingOccurrences(of: " ", with: "+")
         guard let css = URL(string: "https://fonts.googleapis.com/css2?family=\(q):wght@400;700&display=swap") else { return }
         var req = URLRequest(url: css)
-        // An old user agent makes the API answer with TrueType files, which Core Text registers directly.
-        req.setValue("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)", forHTTPHeaderField: "User-Agent")
+        // An old Android user agent makes the API answer with TrueType files (an old IE agent gets EOT, which iOS can't load).
+        req.setValue("Mozilla/5.0 (Linux; U; Android 4.0.3; en-us) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30",
+                     forHTTPHeaderField: "User-Agent")
         URLSession.shared.dataTask(with: req) { data, _, _ in
             let text = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
             let urls = Self.fontURLs(inCSS: text)
