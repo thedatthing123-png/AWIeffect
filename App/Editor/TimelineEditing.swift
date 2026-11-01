@@ -52,6 +52,11 @@ extension EditorState {
     }
 
     func mutateLayer(at i: Int, _ change: (inout Layer) -> Void) {
+        // Mid-drag edits go to the live copy (otherwise they'd be overwritten when the finger lifts).
+        if isLiveGesture, var lp = live.project, lp.layers.indices.contains(i) {
+            change(&lp.layers[i]); lp.modifiedAt = Date(); live.project = lp
+            return
+        }
         var p = project
         change(&p.layers[i])
         p.fitAutoLength()

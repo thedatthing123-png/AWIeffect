@@ -4,8 +4,8 @@ import simd
 extension EditorState {
     func setCutout(_ c: CutoutSettings?) {
         guard let i = selectedIndex else { return }
+        // The AI matte cache is keyed by mode / stability, so slider moves reuse it (smooth, no re-running the AI).
         mutate(c == nil ? "Remove Cutout" : "AI Cutout") { $0.layers[i].cutout = c }
-        CutoutEngine.shared.clear()
     }
 
     /// Tracks the object in `compRect` on the selected video layer and makes `targetID` follow it.

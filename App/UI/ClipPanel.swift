@@ -45,7 +45,7 @@ struct ClipPanel: View {
                         }
                         if case .video = l.content {
                             VStack(alignment: .leading, spacing: 6) {
-                                Text("SMOOTH SLOW-MO (AI in-between frames, like Twixtor)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+                                Text("TWIXTOR · SMOOTH SLOW-MO (AI in-between frames)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
                                 if let pr = slowMoProgress {
                                     ProgressView(value: pr).tint(Theme.accent)
                                     Text("Rendering smooth frames… \(Int(pr * 100))%").font(.caption).foregroundStyle(Theme.textDim)

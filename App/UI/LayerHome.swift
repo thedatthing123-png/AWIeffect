@@ -92,6 +92,7 @@ struct LayerHomePanel: View {
         if visual { move.append(Tile(id: "Rig", icon: "figure.arms.open", panel: .rig)) }
         if visual && c != .adjustment { move.append(Tile(id: "Physics", icon: "atom", panel: .physics)) }
         if l.isMedia || l.isAudioOnly { timing.append(Tile(id: "Speed & Volume", icon: "speedometer", panel: .clip)) }
+        if case .video = c { timing.append(Tile(id: "Twixtor", icon: "tortoise.fill", panel: .clip)) }
         if visual { timing.append(Tile(id: "Time", icon: "timer", panel: .time)) }
         layer.append(Tile(id: "Duplicate", icon: "plus.square.on.square") { state.duplicateSelected() })
         layer.append(Tile(id: "Parent & More", icon: "square.3.layers.3d", panel: .layerMenu))
