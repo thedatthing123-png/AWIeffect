@@ -129,6 +129,23 @@ final class AILink: ObservableObject {
                 return .json(["error": "upload failed"], status: 400)
             }
             return .json(["file": name])
+        case ("POST", "/media/chunk"):
+            // Big files arrive in pieces from the online relay; the last piece imports the joined file.
+            guard let e = editor else { return .noProject }
+            let up = (r.query["upload"] ?? "").filter { $0.isLetter || $0.isNumber || $0 == "-" }
+            let index = Int(r.query["index"] ?? "") ?? -1, total = Int(r.query["total"] ?? "") ?? 0
+            let ext = (r.query["ext"] ?? "png").filter { $0.isLetter || $0.isNumber }
+            guard !up.isEmpty, index >= 0, total > 0, index < total else { return .json(["error": "bad chunk"], status: 400) }
+            let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("upload-\(up)")
+            if index == 0 { try? FileManager.default.removeItem(at: tmp); FileManager.default.createFile(atPath: tmp.path, contents: nil) }
+            guard let h = try? FileHandle(forWritingTo: tmp) else { return .json(["error": "upload not started"], status: 400) }
+            h.seekToEndOfFile(); h.write(r.body); try? h.close()
+            if index < total - 1 { return .json(["ok": true, "received": index + 1]) }
+            defer { try? FileManager.default.removeItem(at: tmp) }
+            guard let data = try? Data(contentsOf: tmp), let name = try? e.store.importMedia(data: data, ext: ext, into: e.project.id) else {
+                return .json(["error": "upload failed"], status: 400)
+            }
+            return .json(["file": name, "bytes": data.count])
         case ("POST", "/action"):
             guard let e = editor else { return .noProject }
             guard let obj = (try? JSONSerialization.jsonObject(with: r.body)) as? [String: Any], let name = obj["name"] as? String else {

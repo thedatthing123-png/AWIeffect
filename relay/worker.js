@@ -12,6 +12,12 @@ export default {
     let key = "";
     if (url.pathname === "/phone") key = url.searchParams.get("key") || "";
     else if (url.pathname.startsWith("/mcp/")) key = url.pathname.slice(5).split("/")[0];
+    else if (url.pathname.startsWith("/u/")) {
+      // Upload address: /u/<durable object id>/<secret> (handed out by the get_upload_url tool).
+      const doid = url.pathname.split("/")[2] || "";
+      if (!/^[0-9a-f]{64}$/.test(doid)) return new Response("bad upload address", { status: 401 });
+      return env.LINK.get(env.LINK.idFromString(doid)).fetch(req);
+    }
     else if (url.pathname === "/") return new Response("AWIeffect relay is running.", { status: 200 });
     else return new Response("not found", { status: 404 });
     if (!/^[0-9a-f]{32,128}$/.test(key)) return new Response("missing or bad key", { status: 401 });
@@ -21,6 +27,10 @@ export default {
 };
 
 const TOOLS = [
+  { name: "get_upload_url", description: "Your permanent upload address for this phone (reusable for any number of files, no setup). Send a file's raw bytes with an HTTP PUT or POST to it, adding ?ext=png|jpg|mp4|mov|mp3...; the answer is {\"file\": name} to use in add_layer (type image / video, file). Any size up to 100 MB.",
+    inputSchema: { type: "object", properties: {} }, local: "uploadURL" },
+  { name: "upload_from_url", description: "Download an image / video / audio file from a public URL straight into the project's media. Returns {\"file\": name} for add_layer.",
+    inputSchema: { type: "object", properties: { url: { type: "string" }, ext: { type: "string", description: "file extension if the URL has none" } }, required: ["url"] }, local: "fromURL" },
   { name: "get_info", description: "App version, effect count and a summary of the open project (size, fps, duration, layers, playhead, selection).",
     inputSchema: { type: "object", properties: {} }, call: () => ["GET", "/info"] },
   { name: "get_catalog", description: "Every effect with its settings and ranges, blend modes, layer presets, title styles and text animations. Read this before adding effects.",
@@ -99,7 +109,55 @@ export class Link {
       server.send(JSON.stringify({ id: "hello", hello: true }));
       return new Response(null, { status: 101, webSocket: client });
     }
+    if (url.pathname.startsWith("/u/")) return this.upload(req, url);
     return this.mcp(req);
+  }
+
+  async secret() {
+    let s = await this.state.storage.get("uploadSecret");
+    if (!s) { s = [...crypto.getRandomValues(new Uint8Array(24))].map((b) => b.toString(16).padStart(2, "0")).join(""); await this.state.storage.put("uploadSecret", s); }
+    return s;
+  }
+
+  async upload(req, url) {
+    if (req.method !== "PUT" && req.method !== "POST") return new Response("PUT or POST the file bytes", { status: 405 });
+    if (url.pathname.split("/")[3] !== await this.secret()) return new Response("bad upload address", { status: 401 });
+    const bytes = new Uint8Array(await req.arrayBuffer());
+    const ext = (url.searchParams.get("ext") || "bin").replace(/[^a-z0-9]/gi, "").toLowerCase();
+    const r = await this.sendFile(bytes, ext);
+    return new Response(r.text, { status: r.status, headers: { "content-type": "application/json" } });
+  }
+
+  /// Sends a file to the phone in pieces (socket messages stay small), the app joins them into project media.
+  async sendFile(bytes, ext) {
+    if (!this.phone()) return { status: 503, text: '{"error":"phone not connected: open AWIeffect with a project"}' };
+    if (!bytes.length) return { status: 400, text: '{"error":"empty file"}' };
+    const CH = 384 * 1024, total = Math.ceil(bytes.length / CH), up = crypto.randomUUID();
+    let last = null;
+    for (let i = 0; i < total; i++) {
+      const part = bytes.subarray(i * CH, Math.min(bytes.length, (i + 1) * CH));
+      let bin = ""; for (let k = 0; k < part.length; k += 8192) bin += String.fromCharCode(...part.subarray(k, k + 8192));
+      last = await this.ask("POST", "/media/chunk", { upload: up, index: String(i), total: String(total), ext }, null, btoa(bin));
+      if (!last || last.status >= 400) break;
+    }
+    if (!last) return { status: 503, text: '{"error":"phone disconnected"}' };
+    let text = ""; try { text = atob(last.body || ""); } catch {}
+    return { status: last.status, text };
+  }
+
+  async local(name, a, origin) {
+    if (name === "uploadURL") {
+      return { text: JSON.stringify({ url: `${origin}/u/${this.state.id.toString()}/${await this.secret()}`,
+        how: "curl -X PUT --data-binary @file.mp4 \"<url>?ext=mp4\"" }) };
+    }
+    if (name === "fromURL") {
+      let res; try { res = await fetch(a.url); } catch (e) { return { text: `{"error":"download failed"}`, error: true }; }
+      if (!res.ok) return { text: `{"error":"download failed (${res.status})"}`, error: true };
+      const guess = (new URL(a.url).pathname.split(".").pop() || "").toLowerCase();
+      const ext = (a.ext || (guess.length <= 4 ? guess : "") || "png").replace(/[^a-z0-9]/gi, "");
+      const r = await this.sendFile(new Uint8Array(await res.arrayBuffer()), ext);
+      return { text: r.text, error: r.status >= 400 };
+    }
   }
 
   webSocketMessage(ws, msg) {
@@ -127,6 +185,7 @@ export class Link {
   }
 
   async mcp(req) {
+    this.origin = new URL(req.url).origin;
     if (req.method === "GET") return new Response("POST JSON-RPC here", { status: 405 });
     if (req.method !== "POST") return new Response(null, { status: 405 });
     let msg;
@@ -158,6 +217,7 @@ export class Link {
       case "tools/call": {
         const tool = TOOLS.find((t) => t.name === params?.name);
         if (!tool) return { jsonrpc: "2.0", id, error: { code: -32602, message: "unknown tool" } };
+        if (tool.local) { const o = await this.local(tool.local, params.arguments || {}, this.origin); return toolText(id, o.text, !!o.error); }
         const res = await this.ask(...tool.call(params.arguments || {}));
         if (!res) return toolText(id, "The phone isn't connected. Open AWIeffect, open a project, and turn on Settings → Connect to Claude.", true);
         if (tool.image && res.status === 200) {
