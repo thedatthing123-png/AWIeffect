@@ -36,6 +36,7 @@ final class Renderer {
     let dummy: MTLTexture
     private var imageCache: [String: MTLTexture] = [:]
     private let cacheLock = NSLock()
+    private let encodeLock = NSRecursiveLock()
 
     static let compFormat: MTLPixelFormat = .rgba16Float
     /// Nested comps available while encoding (root project's library), the pool and nesting depth in use.
@@ -376,6 +377,16 @@ final class Renderer {
     /// (or rotates pools for in-flight frames).
     func encode(project rawProject: Project, time: Double, renderScale: Double, into comp: MTLTexture,
                 commandBuffer cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL) {
+        // Preview, preset thumbnails, and export share this renderer. Protect per-frame state and
+        // restore it after recursive group/precomp renders as well as after top-level renders.
+        encodeLock.lock()
+        let savedLibrary = precompLibrary, savedPool = currentPool, savedDepth = currentDepth
+        let savedCasters = shadowCasters, savedParts = groupParts, savedCameras = groupCameras
+        defer {
+            precompLibrary = savedLibrary; currentPool = savedPool; currentDepth = savedDepth
+            shadowCasters = savedCasters; groupParts = savedParts; groupCameras = savedCameras
+            encodeLock.unlock()
+        }
         // Expressions are baked into plain values for this frame first.
         let resolved = ExpressionResolver.resolve(rawProject, time: time)
         // Echo needs parenting baked over time (costly); everything else bakes just this frame.
