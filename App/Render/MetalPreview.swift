@@ -194,7 +194,10 @@ struct MetalPreview: UIViewRepresentable {
                 return
             }
             let sem = inFlight
-            var shown: MTLTexture? = cacheEnabled ? cache[frameIdx] : nil
+            // While playing at reduced quality (heavy effects), don't mix in sharp cached frames: alternating sharp / soft
+            // frames looked like a twitch. Every frame of the playback stays the same sharpness.
+            let mixesQuality = isPlaying && quality < 0.999
+            var shown: MTLTexture? = cacheEnabled && !mixesQuality ? cache[frameIdx] : nil
             var renderedFull = false
             var rendered = false
             if shown == nil {
