@@ -71,7 +71,7 @@ final class EffectTests: XCTestCase {
         case "awi19.colorSelect":
             // Keep the purple rect: the dark purple background is close in color but not brightness, so the
             // brightness and softness controls decide how much of it stays.
-            e.params["color"] = .color(Animated(RGBA(0.6, 0.2, 0.9))); n("tolerance", 12)
+            e.params["color"] = .color(Animated(RGBA(0.6, 0.2, 0.9))); n("tolerance", 55)
         case "awi18.particles":
             // Box emitter (so its width / height matter) and short lives (so fade out shows by t = 0.4).
             e.params["emitter"] = .choice(1); n("life", 0.5); n("lifeRandom", 0)

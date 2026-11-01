@@ -24,7 +24,7 @@ extension EffectRegistry {
         stage: .pixels { ctx in
             let out = ctx.temp()
             var p = EffectParams()
-            p.a = SIMD4(Float(ctx.num("tolerance") / 100 * 0.8), Float(ctx.num("softness") / 100 * 0.5), ctx.effect.bool("invert") ? 1 : 0, Float(ctx.num("luma") / 100))
+            p.a = SIMD4(Float(ctx.num("tolerance") / 100 * 1.6), Float(ctx.num("softness") / 100), ctx.effect.bool("invert") ? 1 : 0, Float(ctx.num("luma") / 100))
             p.b = ctx.effect.color("color", ctx.time).simd
             ctx.gpu.run("fx19ColorSelect", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
             return out

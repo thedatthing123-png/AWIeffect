@@ -16,6 +16,8 @@ struct BottomPanel: View {
             if state.panel != .none {
                 grabber
                 panelContent
+                    // Pinned to the leading edge: a slightly-too-wide row can never push the header's buttons off-screen.
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .id(state.panel)                       // swap panels instantly: no overlapping cross-fade
                     .transaction { $0.animation = nil }
                     .frame(height: CGFloat(min(panelHeight, Double(UIScreen.main.bounds.height) * 0.42)), alignment: .top)
