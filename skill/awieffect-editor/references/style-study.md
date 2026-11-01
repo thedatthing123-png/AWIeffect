@@ -1,9 +1,10 @@
 # Style study: the user's reference edits
 
-Four manga / anime edits the user (Awiliao) gave as targets, studied frame by frame (cut times detected
-automatically at 30 fps). Use these as the house style.
+Four manga / anime edits the user (Awiliao) likes, studied frame by frame (cut times detected automatically at
+30 fps). This is a taste profile: it shows what this world of editing values. Don't replay it; use it to understand
+the language and make your own choices for each new edit.
 
-## Shared traits (do these by default)
+## What these edits have in common
 - **Fast, beat-locked cutting.** Long holds (1-4 s) on build-ups, then bursts of cuts 2-3 frames apart on the drop
   (one edit had ~14 cuts between 12.9 s and 13.9 s, i.e. a 1-3 frame strobe).
 - **Every cut is "covered":** white flash, color-inverted flash, zoom-blur smear, or a glitch frame. Clean straight
@@ -42,7 +43,7 @@ automatically at 30 fps). Use these as the house style.
      close-ups with motion blur.
    - Sun flare and glints on impacts.
 
-## How to rebuild these in AWIeffect
+## Ways to get these looks in AWIeffect (one option each, not the only way)
 | Look | AWIeffect pieces |
 |---|---|
 | Hit (flash + punch + shake) | white Solid 2-4 frames, opacity 100→0 (expoOut) + `awi18.zoomPunch` or scale keys 100→115→100 (backOut) + `awi18.shakePro` mode Impact Hits |

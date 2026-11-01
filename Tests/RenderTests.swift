@@ -199,4 +199,45 @@ final class RenderTests: XCTestCase {
         let b = try XCTUnwrap(r.renderPixels(project: p, time: 10.0 / 30, mediaURL: { URL(fileURLWithPath: $0) }))
         XCTAssertEqual(a.rgba, b.rgba, "same frame must render identically every time")
     }
+
+    /// Heavy glow must not flicker: a still glowing layer renders the same on every frame, and a moving one glows
+    /// smoothly (the glow's brightness and center move evenly, no frames where the glow drops out).
+    func testDeepGlowIsStableFrameToFrame() throws {
+        let r = try renderer()
+        func scene(moving: Bool) -> Project {
+            project { p in
+                p.width = 400; p.height = 400
+                var l = p.makeLayer(name: "s", content: .shape(.star), size: Vec2(120, 120))
+                l.fill = Animated(RGBA(1, 0.4, 0.1))
+                if moving {
+                    l.transform.position.insertKeyframe(Keyframe(time: 0, value: Vec2(120, 200), interpolation: .linear))
+                    l.transform.position.insertKeyframe(Keyframe(time: 1, value: Vec2(280, 200), interpolation: .linear))
+                } else { l.transform.position = Animated(Vec2(200, 200)) }
+                var g = EffectRegistry.deepGlow.makeInstance()
+                g.params["radius"] = .number(Animated(400))
+                g.params["exposure"] = .number(Animated(1))
+                l.effects = [g]
+                p.layers = [l]
+            }
+        }
+        let still = scene(moving: false)
+        let first = try XCTUnwrap(r.renderPixels(project: still, time: 0, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        for f in 1...8 {
+            let px = try XCTUnwrap(r.renderPixels(project: still, time: Double(f) / 30, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+            XCTAssertEqual(px, first, "still glow changed at frame \(f)")
+        }
+        let moving = scene(moving: true)
+        var lastSum: Double?, lastX: Double?
+        for f in 0...20 {
+            let img = try XCTUnwrap(r.renderPixels(project: moving, time: Double(f) / 30, mediaURL: { URL(fileURLWithPath: $0) }))
+            var sum = 0.0, sx = 0.0
+            for y in stride(from: 0, to: img.height, by: 2) { for x in stride(from: 0, to: img.width, by: 2) {
+                let v = Double(img.rgba[(y * img.width + x) * 4]); sum += v; sx += v * Double(x)
+            } }
+            let cx = sx / max(sum, 1)
+            if let ls = lastSum { XCTAssertEqual(sum / ls, 1, accuracy: 0.08, "glow brightness jumped at frame \(f)") }
+            if let lx = lastX { XCTAssertLessThan(abs(cx - lx), 9, "glow jumped sideways at frame \(f)") }
+            lastSum = sum; lastX = cx
+        }
+    }
 }
