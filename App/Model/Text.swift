@@ -223,7 +223,12 @@ struct TextPreset: Identifiable {
     }
 
     /// Everything in the library: the built-ins plus the big pack.
-    static var library: [TextPreset] { TextPresets.all + TextPresetPack.all }
+    /// Studio set first; the pack's near-duplicate "random" / "words" variants of the same move are left out.
+    static var library: [TextPreset] {
+        TextPresetStudio.all + TextPresets.all + TextPresetPack.all.filter { p in
+            !(p.id.hasPrefix("pack.in.") && p.id.split(separator: ".").count > 3)
+        }
+    }
 }
 
 /// Counter / timer text (Alight Motion-style): a number that counts, or a clock that ticks.

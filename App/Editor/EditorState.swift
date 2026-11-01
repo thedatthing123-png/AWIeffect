@@ -84,8 +84,6 @@ final class EditorState: ObservableObject {
     @Published var puppetPlace = true
     /// The searchable Add Light browser.
     @Published var showLightBrowser = false
-    /// Copy / paste effects between layers.
-    @Published var effectClipboard: [EffectInstance] = []
     /// Cutout refine tools on the canvas.
     @Published var cutoutTool: CutoutTool = .none
     @Published var cutoutBrushSubtract = false
