@@ -25,7 +25,9 @@ final class AILink: ObservableObject {
     static let port: UInt16 = 8765
 
     /// The editor that's open right now (set by EditorView).
-    weak var editor: EditorState?
+    weak var editor: EditorState? {
+        didSet { if editor != nil { AILinkRelay.shared.resume() } }
+    }
     private var listener: NWListener?
 
     func setEnabled(_ on: Bool) { on ? start() : stop() }
@@ -74,6 +76,9 @@ final class AILink: ObservableObject {
         }
         receive()
     }
+
+    /// Same handler for the online relay.
+    func respond(_ r: HTTPRequest) -> HTTPResponse { handle(r) }
 
     private func handle(_ r: HTTPRequest) -> HTTPResponse {
         lastRequest = "\(r.method) \(r.path)"
@@ -210,6 +215,10 @@ struct HTTPRequest {
     let query: [String: String]
     let headers: [String: String]
     let body: Data
+
+    init(method: String, path: String, query: [String: String], headers: [String: String], body: Data) {
+        self.method = method; self.path = path; self.query = query; self.headers = headers; self.body = body
+    }
 
     /// Parses a complete request (nil until all headers + Content-Length bytes have arrived).
     init?(_ data: Data) {

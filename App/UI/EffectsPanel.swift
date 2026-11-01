@@ -615,6 +615,7 @@ struct SettingsSheet: View {
                 } header: { Text("Effect preview image") } footer: {
                     Text("Every effect, preset and transition thumbnail renders on this image.")
                 }
+                AILinkRelaySettings()
                 AILinkSettings()
                 Section("About") {
                     LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")
