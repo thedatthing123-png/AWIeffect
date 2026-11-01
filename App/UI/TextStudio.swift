@@ -104,9 +104,17 @@ struct AnimatorCard: View {
                 Button { edit("Toggle Animator") { $0.isEnabled.toggle() } } label: {
                     Image(systemName: animator.isEnabled ? "eye" : "eye.slash").frame(width: 30, height: 28)
                 }
-                Button(role: .destructive) {
-                    state.editText("Delete Animator") { t in t.animators.removeAll { $0.id == animator.id } }
-                } label: { Image(systemName: "trash").frame(width: 30, height: 28) }
+                Menu {
+                    Button { state.editText("Duplicate Animator") { t in
+                        if let i = t.animators.firstIndex(where: { $0.id == animator.id }) { var c = t.animators[i]; c.id = UUID(); c.name += " copy"; t.animators.insert(c, at: i + 1) }
+                    } } label: { Label("Duplicate", systemImage: "plus.square.on.square") }
+                    Button { state.editText("Move Animator") { t in
+                        if let i = t.animators.firstIndex(where: { $0.id == animator.id }), i > 0 { t.animators.swapAt(i, i - 1) }
+                    } } label: { Label("Move Up", systemImage: "arrow.up") }
+                    Button(role: .destructive) {
+                        state.editText("Delete Animator") { t in t.animators.removeAll { $0.id == animator.id } }
+                    } label: { Label("Delete", systemImage: "trash") }
+                } label: { Image(systemName: "ellipsis").frame(width: 30, height: 28) }
             }
             .foregroundStyle(Theme.text)
             if open {
@@ -122,11 +130,16 @@ struct AnimatorCard: View {
                     Picker("Shape", selection: Binding(get: { animator.selector.shape }, set: { s in edit("Shape") { $0.selector.shape = s } })) {
                         ForEach(SelectorShape.allCases) { Text($0.title).tag($0) }
                     }
-                    slider("Start", animator.selector.start.value(at: state.currentTime), 0...100) { a, v, t in a.selector.start.set(v, at: t) }
-                    slider("End", animator.selector.end.value(at: state.currentTime), 0...100) { a, v, t in a.selector.end.set(v, at: t) }
-                    slider("Offset", animator.selector.offset.value(at: state.currentTime), -100...100) { a, v, t in a.selector.offset.set(v, at: t) }
+                    keyed("Start", animator.selector.start, -100...200, \.selector.start)
+                    keyed("End", animator.selector.end, -100...200, \.selector.end)
+                    keyed("Offset", animator.selector.offset, -200...200, \.selector.offset)
+                    slider("Ease High", animator.selector.easeHigh, -100...100) { a, v, _ in a.selector.easeHigh = v }
+                    slider("Ease Low", animator.selector.easeLow, -100...100) { a, v, _ in a.selector.easeLow = v }
                     Toggle("Randomize Order", isOn: Binding(get: { animator.selector.randomize }, set: { b in edit("Randomize") { $0.selector.randomize = b } }))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
+                    if animator.selector.randomize {
+                        slider("Random Seed", Double(animator.selector.seed), 0...999) { a, v, _ in a.selector.seed = Int(v) }
+                    }
                 } else {
                     slider(animator.selector.kind == .wave ? "Waves/sec" : "Wiggles/sec", animator.selector.frequency.value(at: state.currentTime), 0...30) { a, v, t in
                         a.selector.frequency.set(v, at: t)
@@ -135,13 +148,39 @@ struct AnimatorCard: View {
                         slider("Letters/wave", animator.selector.spread.value(at: state.currentTime), 1...30) { a, v, t in a.selector.spread.set(v, at: t) }
                     }
                 }
-                slider("Amount", animator.selector.amount.value(at: state.currentTime), -100...100) { a, v, t in a.selector.amount.set(v, at: t) }
+                keyed("Amount", animator.selector.amount, -100...100, \.selector.amount)
+                if animator.selector.kind != .range {
+                    slider("Min Amount", animator.selector.minAmount, -100...100) { a, v, _ in a.selector.minAmount = v }
+                    slider("Max Amount", animator.selector.maxAmount, -100...100) { a, v, _ in a.selector.maxAmount = v }
+                }
+                Divider().overlay(Theme.stroke)
+                HStack {
+                    Text("PROPERTIES").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+                    Spacer()
+                    Menu {
+                        prop("Position", animator.properties.position == nil) { $0.position = Animated(Vec2(0, -60)) }
+                        prop("Scale", animator.properties.scale == nil) { $0.scale = Animated(Vec2(0, 0)) }
+                        prop("Rotation", animator.properties.rotation == nil) { $0.rotation = Animated(90) }
+                        prop("Opacity", animator.properties.opacity == nil) { $0.opacity = Animated(0) }
+                        prop("Fill Color", animator.properties.fill == nil) { $0.fill = Animated(RGBA(hex: 0x9B5CFF)) }
+                        prop("Tracking", animator.properties.tracking == nil) { $0.tracking = Animated(40) }
+                        prop("Skew", animator.properties.skew == nil) { $0.skew = Animated(20) }
+                        prop("Blur", animator.properties.blur == nil) { $0.blur = Animated(12) }
+                        prop("Character Offset", animator.properties.characterOffset == nil) { $0.characterOffset = Animated(10) }
+                        prop("Rotation X (3D)", animator.properties.rotationX == nil) { $0.rotationX = Animated(90) }
+                        prop("Rotation Y (3D)", animator.properties.rotationY == nil) { $0.rotationY = Animated(90) }
+                        prop("Position Z (3D)", animator.properties.positionZ == nil) { $0.positionZ = Animated(400) }
+                    } label: {
+                        Label("Add Property", systemImage: "plus.circle.fill").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.accentGlow)
+                    }
+                }
                 if let pos = animator.properties.position?.value(at: state.currentTime) {
                     slider("Position X", pos.x, -1000...1000) { a, v, t in a.properties.position?.set(Vec2(v, pos.y), at: t) }
                     slider("Position Y", pos.y, -1000...1000) { a, v, t in a.properties.position?.set(Vec2(pos.x, v), at: t) }
                 }
                 if let sc = animator.properties.scale?.value(at: state.currentTime) {
-                    slider("Scale", sc.x, 0...400) { a, v, t in a.properties.scale?.set(Vec2(v, v), at: t) }
+                    slider("Scale X", sc.x, -400...400) { a, v, t in a.properties.scale?.set(Vec2(v, a.properties.scale?.value(at: t).y ?? v), at: t) }
+                    slider("Scale Y", sc.y, -400...400) { a, v, t in a.properties.scale?.set(Vec2(a.properties.scale?.value(at: t).x ?? v, v), at: t) }
                 }
                 if let r = animator.properties.rotation?.value(at: state.currentTime) {
                     slider("Rotation", r, -720...720) { a, v, t in a.properties.rotation?.set(v, at: t) }
@@ -179,6 +218,21 @@ struct AnimatorCard: View {
             }
         }
         .padding(10).glass(radius: 12)
+    }
+
+    /// Slider with a keyframe diamond (AE stopwatch) for an animatable selector value.
+    private func keyed(_ title: String, _ anim: Animated<Double>, _ range: ClosedRange<Double>, _ path: WritableKeyPath<TextAnimator, Animated<Double>>) -> some View {
+        let t = state.currentTime
+        return HStack(spacing: 4) {
+            KeyframeDiamond(filled: anim.hasKeyframe(at: t), animated: anim.isAnimated) {
+                edit("Keyframe \(title)") { $0[keyPath: path].toggleKeyframe(at: t) }
+            }
+            slider(title, anim.value(at: t), range) { a, v, tt in a[keyPath: path].set(v, at: tt) }
+        }
+    }
+
+    private func prop(_ title: String, _ available: Bool, _ add: @escaping (inout TextAnimatorProperties) -> Void) -> some View {
+        Button(title) { edit("Add \(title)") { add(&$0.properties) } }.disabled(!available)
     }
 
     private func edit(_ label: String, _ change: (inout TextAnimator) -> Void) {

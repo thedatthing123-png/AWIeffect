@@ -310,8 +310,8 @@ kernel void fx19Bend(texture2d<half, access::sample> src [[texture(0)]],
                      uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
     float2 size = float2(dst.get_width(), dst.get_height());
-    float m = p.a.z;
-    float2 lo = float2(m), hi = size - m;
+    float2 lo = p.b.xy, hi = p.b.xy + p.b.zw;
+    if (p.b.z <= 0.0) { lo = float2(0); hi = size; }
     // Length axis (from the origin edge inward) and the perpendicular, origin at the middle of that edge.
     float2 o, along, perp;
     switch (p.i.x) {

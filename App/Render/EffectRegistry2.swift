@@ -53,26 +53,27 @@ extension EffectRegistry {
     /// Alight Motion-style Fractal Warp: organic noise displacement (hair, smoke, cloth, liquid wobble).
     static let fractalWarp = EffectDefinition(
         id: "awi20.fractalWarp", name: "Fractal Warp", category: .distort, aeMatchNames: [],
-        summary: "Organic noise displacement like Alight Motion's Fractal Warp: animate Evolution (or Parallax) for flowing hair, smoke and cloth. Pinning keeps roots still.",
-        params: [.point("parallax", "Parallax", Vec2(0, 0)), .number("magnitude", "Magnitude", 0.03, 0, 0.5, step: 0.001),
-                 .number("detail", "Detail", 2.5, 1, 6, step: 0.01), .number("lacunarity", "Lacunarity", 0.5, 0.2, 0.9, step: 0.01),
-                 .number("scale", "Scale", 100, 5, 1000, unit: "%"), .angle("evolution", "Evolution", 0),
-                 .number("speed", "Evolution Speed", 0, -10, 10, step: 0.05),
+        summary: "Alight Motion's Fractal Warp: organic noise displacement. Animate Parallax (flow) or Position (drift) for hair, smoke and cloth. Pinning keeps roots still.",
+        params: [.point("position", "Position", Vec2(0, 0)), .point("parallax", "Parallax", Vec2(0, 0)),
+                 .number("magnitude", "Magnitude", 0.2, -5, 5, step: 0.005),
+                 .number("detail", "Detail", 1, 0.1, 4, step: 0.01), .number("lacunarity", "Lacunarity", 0.5, 0.25, 0.75, step: 0.01),
+                 .number("octaves", "Octaves", 6, 1, 9, step: 1),
                  .toggle("screenSpace", "Screen Space", false),
-                 .choice("pinning", "Pinning", ["None", "All Edges", "Top Edge", "Bottom Edge", "Left Edge", "Right Edge", "Top & Bottom", "Left & Right"], 0),
+                 .choice("pinning", "Pinning", ["None", "All Edges", "Top Edge", "Bottom Edge", "Left Edge", "Right Edge"], 0),
                  .number("pinSoft", "Pin Falloff", 60, 1, 100, unit: "%")],
-        margin: { e, t in 900 * e.number("magnitude", t) },
-        stage: .pixels { ctx in run("fxWarp", ctx) { p in
-            let lp = ctx.layerPixels ?? SIMD2(Double(ctx.width), Double(ctx.height))
-            let par = ctx.effect.point("parallax", ctx.time)
-            // Magnitude is a fraction of the layer's longer side (like AM), so it looks the same at any size.
-            let mag = ctx.num("magnitude") * max(lp.x, lp.y)
-            let freq = 1 / max(1, ctx.num("scale") / 100 * max(lp.x, lp.y) * 0.25)
-            p.a = SIMD4(f(mag), f(freq), f(par.x * max(lp.x, lp.y)), f(par.y * max(lp.x, lp.y)))
+        margin: { e, t in 500 * abs(e.number("magnitude", t)) },
+        stage: .pixels { ctx in
+            let out = ctx.temp()
+            let pos = ctx.effect.point("position", ctx.time), par = ctx.effect.point("parallax", ctx.time)
+            var p = EffectParams()
+            p.a = SIMD4(f(pos.x), f(pos.y), f(par.x), f(par.y))
             p.b = layerRect(ctx)
-            p.c = SIMD4(f(ctx.num("pinSoft") / 100), f((ctx.num("evolution") + ctx.time * ctx.num("speed") * 360) / 360),
-                        f(ctx.num("detail")), f(ctx.num("lacunarity")))
-            p.i = SIMD4(10, ctx.effect.bool("screenSpace") ? 1 : 0, UInt32(ctx.effect.choice("pinning")), 0) } })
+            p.c = SIMD4(f(ctx.num("magnitude")), f(ctx.num("detail")), f(ctx.num("lacunarity")), f(ctx.num("octaves")))
+            p.d = SIMD4(f(ctx.num("pinSoft") / 100), 0, 0, 0)
+            p.i = SIMD4(ctx.effect.bool("screenSpace") ? 1 : 0, UInt32(ctx.effect.choice("pinning")), 0, 0)
+            ctx.gpu.run("fx20AMFractal", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
+            return out
+        })
 
     /// The layer's own rectangle inside the (possibly grown) effect buffer: x, y, w, h in buffer px.
     static func layerRect(_ ctx: EffectContext) -> SIMD4<Float> {
@@ -129,11 +130,11 @@ extension EffectRegistry {
         summary: "Repeats the layer in a grid — great with shakes so edges never show.",
         params: [.point("center", "Tile Center", Vec2(0.5, 0.5), ae: 1), .number("tileW", "Tile Width", 100, 1, 1000, unit: "%", ae: 2),
                  .number("tileH", "Tile Height", 100, 1, 1000, unit: "%", ae: 3),
-                 .number("outW", "Output Width", 300, 100, 1000, unit: "%", ae: 4), .number("outH", "Output Height", 300, 100, 1000, unit: "%", ae: 5),
+                 .number("outW", "Output Width", 100, 100, 1000, unit: "%", ae: 4), .number("outH", "Output Height", 100, 100, 1000, unit: "%", ae: 5),
                  .toggle("mirror", "Mirror Edges", true, ae: 6), .number("phase", "Phase", 0, -3600, 3600, unit: "°", ae: 7),
                  .toggle("hphase", "Horizontal Phase Shift", false, ae: 8)],
         // AE's Output Width/Height: the tiles spread past the layer edge so shakes and zooms never show a border.
-        margin: { e, t in 1400 * max(0, max(e.number("outW", t), e.number("outH", t)) - 100) / 100 },
+        margin: { e, t in 700 * max(0, max(e.number("outW", t), e.number("outH", t)) - 100) / 100 },
         stage: .pixels { ctx in run("fxWarp", ctx) { p in
             let c = ctx.effect.point("center", ctx.time)
             let lp = ctx.layerPixels ?? SIMD2(Double(ctx.width), Double(ctx.height))

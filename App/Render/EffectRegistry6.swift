@@ -117,7 +117,10 @@ extension EffectRegistry {
         stage: .pixels { ctx in
             let out = ctx.temp()
             var p = EffectParams()
-            p.a = SIMD4(Float(ctx.num("angle") * .pi / 180), Float(ctx.num("start") / 100), Float(400 * ctx.unit), 0)
+            // The layer's real rectangle in the buffer (the margin can be smaller than asked on small comps).
+            let r = layerRect(ctx)
+            p.a = SIMD4(Float(ctx.num("angle") * .pi / 180), Float(ctx.num("start") / 100), 0, 0)
+            p.b = r
             p.i = SIMD4(UInt32(max(0, ctx.effect.choice("origin"))), UInt32(max(0, ctx.effect.choice("before"))), 0, 0)
             ctx.gpu.run("fx19Bend", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
             return out
