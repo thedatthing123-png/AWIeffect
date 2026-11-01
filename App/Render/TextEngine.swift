@@ -39,6 +39,8 @@ final class TextEngine {
     private var layoutCache: [String: TextLayout] = [:]
     private var glyphCache: [String: (tex: MTLTexture, pad: Double, scale: Double)] = [:]
     private let lock = NSLock()
+    private var glyphCacheBytes = 0
+    private let glyphCacheLimit = 64 * 1024 * 1024
 
     static func availableFonts() -> [String] {
         UIFont.familyNames.sorted().flatMap { UIFont.fontNames(forFamilyName: $0).sorted() }
@@ -157,6 +159,9 @@ final class TextEngine {
 
     /// Rasterized alpha mask for a glyph at `scale` device px per local px (bucketed for caching).
     func glyphTexture(_ g: LaidGlyph, scale: Double, blur rawBlur: Double = 0, outline rawOutline: Double = 0, device: MTLDevice) -> (tex: MTLTexture, pad: Double, scale: Double)? {
+        // Never convert non-finite animation values or oversized raster dimensions to Int.
+        guard scale.isFinite, rawBlur.isFinite, rawOutline.isFinite,
+              g.halfSize.x.isFinite, g.halfSize.y.isFinite else { return nil }
         // Outline width (local px) in half-pixel steps.
         let outline = min(80, (max(0, rawOutline) * 2).rounded() / 2)
         // Bucket scales to powers of 2^(1/4) so zooming doesn't re-rasterize every frame.
@@ -165,17 +170,22 @@ final class TextEngine {
         let blur = min(200, (max(0, rawBlur) * 2).rounded() / 2)
         let fontName = CTFontCopyPostScriptName(g.font) as String
         let size = Double(CTFontGetSize(g.font))
-        let key = "\(fontName)|\(size)|\(g.glyph)|\(b)|\(blur)|\(outline)"
+        let key = "\(ObjectIdentifier(device))|\(fontName)|\(size)|\(g.glyph)|\(b)|\(blur)|\(outline)"
         lock.lock()
         if let c = glyphCache[key] { lock.unlock(); return c }
         lock.unlock()
 
         let blurPx = blur * b
         let pad = 2.0 + blurPx * 2.5 + outline * b
-        let w = max(1, Int(ceil(g.halfSize.x * 2 * b + pad * 2))), h = max(1, Int(ceil(g.halfSize.y * 2 * b + pad * 2)))
-        guard w < 4096, h < 4096 else { return nil }
-        var pixels = [UInt8](repeating: 0, count: w * h)
-        guard let ctx = CGContext(data: &pixels, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w,
+        let width = ceil(g.halfSize.x * 2 * b + pad * 2)
+        let height = ceil(g.halfSize.y * 2 * b + pad * 2)
+        guard width.isFinite, height.isFinite, width > 0, height > 0,
+              width < 4096, height < 4096 else { return nil }
+        let w = Int(width), h = Int(height)
+        // The context owns its storage. An implicit &Array pointer only lives for the initializer call;
+        // retaining that pointer for later CoreText drawing can corrupt memory, especially with shadows.
+        let rowBytes = (w + 63) & ~63
+        guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: rowBytes,
                                   space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return nil }
         ctx.setAllowsFontSmoothing(false)
         ctx.setShouldAntialias(true)
@@ -203,16 +213,24 @@ final class TextEngine {
         }
         // A bitmap context's first memory row is already the TOP of the image (user space is y-up, but
         // memory is stored top-down), so the bytes are in texture order as-is. Flipping here turned letters upside-down.
-        let flipped = pixels
 
         let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r8Unorm, width: w, height: h, mipmapped: false)
         d.usage = [.shaderRead]
         guard let tex = device.makeTexture(descriptor: d) else { return nil }
-        tex.replace(region: MTLRegionMake2D(0, 0, w, h), mipmapLevel: 0, withBytes: flipped, bytesPerRow: w)
+        guard let data = ctx.data else { return nil }
+        withExtendedLifetime(ctx) {
+            tex.replace(region: MTLRegionMake2D(0, 0, w, h), mipmapLevel: 0, withBytes: data, bytesPerRow: ctx.bytesPerRow)
+        }
         let entry = (tex: tex, pad: pad, scale: b)
         lock.lock()
-        if glyphCache.count > 4000 { glyphCache.removeAll() }
+        if let existing = glyphCache[key] { lock.unlock(); return existing }
+        let bytes = tex.allocatedSize
+        if glyphCacheBytes + bytes > glyphCacheLimit || glyphCache.count >= 4000 {
+            glyphCache.removeAll()
+            glyphCacheBytes = 0
+        }
         glyphCache[key] = entry
+        glyphCacheBytes += bytes
         lock.unlock()
         return entry
     }

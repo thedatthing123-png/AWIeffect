@@ -46,14 +46,28 @@ jobs:
           SIM=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];c=[x for r,v in d.items() if 'iOS' in r for x in v if x['name'].startswith('iPhone')];print(c[-1]['udid'] if c else '')")
           echo "Simulator: $SIM"
           set -o pipefail
+          set +e
           xcodebuild test \
             -project AWIeffect.xcodeproj -scheme AWIeffect \
             -destination "id=$SIM" \
             -resultBundlePath TestResults.xcresult \
             -parallel-testing-enabled NO \
             -test-timeouts-enabled YES -default-test-execution-time-allowance 240 -maximum-test-execution-time-allowance 600 \
-            CODE_SIGNING_ALLOWED=NO 2>&1 | tee test.log | grep -E "error:|warning: .*AWI|Test Case|Executed|SKIP|FAIL|Fatal|error represents|exceeded|crashed|Restarting" || true
-          grep -q "TEST SUCCEEDED" test.log || grep -q "** TEST SUCCEEDED **" test.log
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee test.log | grep -E "error:|warning: .*AWI|Test Case|Executed|SKIP|FAIL|Fatal|error represents|exceeded|crashed|Restarting"
+          TEST_STATUS=${PIPESTATUS[0]}
+          set -e
+          exit "$TEST_STATUS"
+
+      - name: Test summary
+        if: always()
+        run: |
+          if test -d TestResults.xcresult; then
+            xcrun xcresulttool get test-results summary --path TestResults.xcresult --format json > test-summary.json
+            cat test-summary.json
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat test-summary.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Print test failures
         if: always()
@@ -75,6 +89,7 @@ jobs:
           name: test-results
           path: |
             test.log
+            test-summary.json
             TestResults.xcresult
           if-no-files-found: ignore
 
@@ -105,6 +120,16 @@ jobs:
             CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
             | tee archive.log | grep -E "error:|ARCHIVE" || true
           test -d build/AWIeffect.xcarchive/Products/Applications/AWIeffect.app
+
+      - name: Upload symbols and archive log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-symbols
+          path: |
+            build/AWIeffect.xcarchive/dSYMs
+            archive.log
+          if-no-files-found: ignore
 
       - name: Package IPA
         run: |

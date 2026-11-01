@@ -211,22 +211,25 @@ kernel void drawLayer(texture2d<half, access::read_write> comp [[texture(0)]],
     comp.write(composite(comp.read(gid), src, p.modes.y), gid);
 }
 
-// Premultiplied float comp -> straight BGRA8 (for video export / thumbnails).
+// Premultiplied float comp -> opaque RGB or straight RGBA (export / thumbnails).
 kernel void compToBGRA(texture2d<half, access::read> comp [[texture(0)]],
                        texture2d<half, access::write> outTex [[texture(1)]],
                        constant uint& dither [[buffer(0)]],
+                       constant uint& preserveAlpha [[buffer(1)]],
                        uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= outTex.get_width() || gid.y >= outTex.get_height()) return;
     float4 c = float4(comp.read(gid));
     float3 rgb = c.a > 0.0 ? c.rgb / c.a : float3(0.0);
-    // Video has no alpha: composite over black.
-    rgb = rgb * c.a;
+    // Ordinary video flattens over black; alpha exports keep straight color.
+    float alpha = clamp(c.a, 0.0, 1.0);
+    if (preserveAlpha == 0u) rgb *= alpha;
     // Triangular dither (±1 LSB) before 8-bit: smooth glows / gradients with no banding, like AE's high-bit render.
     float2 g = float2(gid);
     float n1 = fract(sin(dot(g, float2(12.9898, 78.233))) * 43758.5453);
     float n2 = fract(sin(dot(g, float2(39.3468, 11.1351))) * 24634.6345);
     rgb = clamp(rgb + (dither != 0u ? (n1 + n2 - 1.0) / 255.0 : 0.0), 0.0, 1.0);
-    outTex.write(half4(half3(rgb), 1.0h), gid);
+    if (preserveAlpha != 0u && alpha == 0.0) rgb = float3(0.0);
+    outTex.write(half4(half3(rgb), half(preserveAlpha != 0u ? alpha : 1.0)), gid);
 }
 
 // ---------- Preview display ----------

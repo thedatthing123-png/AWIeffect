@@ -222,7 +222,7 @@ struct EffectsPanel: View {
                                 .font(.caption).foregroundStyle(Theme.textDim).padding(.top, 6)
                         }
                         ForEach(layer.effects) { e in
-                            SwipeToDelete { effectCard(e) } onDelete: { state.removeEffect(e.id) }
+                            SwipeToDelete(content: { effectCard(e) }, isEnabled: !expanded.contains(e.id), onDelete: { state.removeEffect(e.id) })
                         }
                     }
                 }

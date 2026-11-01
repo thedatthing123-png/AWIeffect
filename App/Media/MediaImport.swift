@@ -157,21 +157,35 @@ final class AudioPreview {
 
     /// Builds an audio-only composition for all audible layers.
     static func composition(_ project: Project, mediaURL: (String) -> URL) -> (AVMutableComposition, AVAudioMix)? {
+        return try? buildComposition(project, mediaURL: mediaURL)
+    }
+
+    /// Export uses the throwing variant so failed decoding cannot masquerade as an intentionally silent project.
+    static func buildComposition(_ project: Project, mediaURL: (String) -> URL) throws -> (AVMutableComposition, AVAudioMix)? {
         let comp = AVMutableComposition()
         var params: [AVMutableAudioMixInputParameters] = []
-        for l in project.layers where l.isVisible && l.hasAudio && l.timeRemap == nil {
+        for l in project.layers where l.isVisible && l.hasAudio {
             guard let file = l.mediaFile else { continue }
-            let asset = AVURLAsset(url: mediaURL(file))
+            let retimed = l.timeRemap != nil || l.speed < 0
+            let url = retimed ? try RetimedAudio.file(for: l, source: mediaURL(file)) : mediaURL(file)
+            let asset = AVURLAsset(url: url)
             guard let src = asset.tracks(withMediaType: .audio).first,
-                  let dst = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) else { continue }
-            let srcStart = CMTime(seconds: l.sourceStart, preferredTimescale: 48000)
+                  let dst = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) else {
+                throw ExportError.writer("Cannot load audio for \(l.name).")
+            }
             let compDur = l.outPoint - l.inPoint
-            let srcDur = CMTime(seconds: min(compDur * l.speed, CMTimeGetSeconds(asset.duration) - l.sourceStart), preferredTimescale: 48000)
-            guard CMTimeGetSeconds(srcDur) > 0 else { continue }
-            let at = CMTime(seconds: l.inPoint, preferredTimescale: 48000)
-            try? dst.insertTimeRange(CMTimeRange(start: srcStart, duration: srcDur), of: src, at: at)
-            if abs(l.speed - 1) > 1e-3 {
-                dst.scaleTimeRange(CMTimeRange(start: at, duration: srcDur), toDuration: CMTime(seconds: compDur, preferredTimescale: 48000))
+            let sourceStart = retimed ? 0 : l.sourceStart
+            let speed = retimed ? 1 : l.speed
+            guard compDur.isFinite, sourceStart.isFinite, speed.isFinite, speed > 0 else { continue }
+            let available = CMTimeGetSeconds(asset.duration) - sourceStart
+            let seconds = min(compDur * speed, available)
+            guard seconds > 0 else { continue }
+            let srcStart = CMTime(seconds: max(0, sourceStart), preferredTimescale: 48000)
+            let srcDur = CMTime(seconds: seconds, preferredTimescale: 48000)
+            let at = CMTime(seconds: max(0, l.inPoint), preferredTimescale: 48000)
+            try dst.insertTimeRange(CMTimeRange(start: srcStart, duration: srcDur), of: src, at: at)
+            if abs(speed - 1) > 1e-3 {
+                dst.scaleTimeRange(CMTimeRange(start: at, duration: srcDur), toDuration: CMTime(seconds: seconds / speed, preferredTimescale: 48000))
             }
             let p = AVMutableAudioMixInputParameters(track: dst)
             let ks = l.volume.keyframes.sorted { $0.time < $1.time }
@@ -197,7 +211,7 @@ final class AudioPreview {
     }
 
     func play(_ project: Project, from time: Double, mediaURL: (String) -> URL) {
-        let key = "\(project.layers.map { "\($0.id)\($0.inPoint)\($0.outPoint)\($0.speed)\($0.sourceStart)\($0.isVisible)\($0.volume.staticValue)" })"
+        let key = (try? JSONEncoder().encode(project.layers)).map { $0.base64EncodedString() } ?? UUID().uuidString
         if builtFor != key {
             if let (comp, mix) = Self.composition(project, mediaURL: mediaURL) {
                 let item = AVPlayerItem(asset: comp)

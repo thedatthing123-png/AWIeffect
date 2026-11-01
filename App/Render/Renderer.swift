@@ -842,13 +842,15 @@ final class Renderer {
     }
 
     /// `dither` adds ±1 LSB noise before 8-bit (video export: no banding); stills stay exact.
-    func encodeToBGRA(comp: MTLTexture, out: MTLTexture, commandBuffer cb: MTLCommandBuffer, dither: Bool = false) {
+    func encodeToBGRA(comp: MTLTexture, out: MTLTexture, commandBuffer cb: MTLCommandBuffer, dither: Bool = false, preserveAlpha: Bool = false) {
         guard let enc = cb.makeComputeCommandEncoder() else { return }
         enc.setComputePipelineState(toBGRAPSO)
         enc.setTexture(comp, index: 0)
         enc.setTexture(out, index: 1)
         var d: UInt32 = dither ? 1 : 0
         enc.setBytes(&d, length: 4, index: 0)
+        var a: UInt32 = preserveAlpha ? 1 : 0
+        enc.setBytes(&a, length: 4, index: 1)
         dispatch(enc, pso: toBGRAPSO, width: out.width, height: out.height)
         enc.endEncoding()
     }
@@ -864,7 +866,7 @@ final class Renderer {
     // MARK: Synchronous helpers (thumbnails, tests)
 
     /// Renders a frame and returns RGBA8 pixels composited over black (row-major, top-left origin).
-    func renderPixels(project: Project, time: Double, renderScale: Double = 1, mediaURL: @escaping (String) -> URL) -> (width: Int, height: Int, rgba: [UInt8])? {
+    func renderPixels(project: Project, time: Double, renderScale: Double = 1, preserveAlpha: Bool = false, mediaURL: @escaping (String) -> URL) -> (width: Int, height: Int, rgba: [UInt8])? {
         let w = max(1, Int((Double(project.width) * renderScale).rounded()))
         let h = max(1, Int((Double(project.height) * renderScale).rounded()))
         guard let comp = makeCompTexture(width: w, height: h) else { return nil }
@@ -874,7 +876,7 @@ final class Renderer {
         guard let out = device.makeTexture(descriptor: d), let cb = queue.makeCommandBuffer() else { return nil }
         let pool = makePool()
         encode(project: project, time: time, renderScale: renderScale, into: comp, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
-        encodeToBGRA(comp: comp, out: out, commandBuffer: cb)
+        encodeToBGRA(comp: comp, out: out, commandBuffer: cb, preserveAlpha: preserveAlpha)
         cb.commit()
         cb.waitUntilCompleted()
         var bytes = [UInt8](repeating: 0, count: w * h * 4)
@@ -884,11 +886,11 @@ final class Renderer {
 
     func renderImage(project: Project, time: Double, maxDimension: Double, mediaURL: @escaping (String) -> URL) -> UIImage? {
         let scale = min(1, maxDimension / Double(max(project.width, project.height)))
-        guard let px = renderPixels(project: project, time: time, renderScale: scale, mediaURL: mediaURL) else { return nil }
+        guard let px = renderPixels(project: project, time: time, renderScale: scale, preserveAlpha: true, mediaURL: mediaURL) else { return nil }
         guard let provider = CGDataProvider(data: Data(px.rgba) as CFData),
               let cg = CGImage(width: px.width, height: px.height, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: px.width * 4,
                                space: CGColorSpaceCreateDeviceRGB(),
-                               bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipLast.rawValue),
+                               bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.last.rawValue),
                                provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent)
         else { return nil }
         return UIImage(cgImage: cg)

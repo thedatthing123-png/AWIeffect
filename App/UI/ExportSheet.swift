@@ -9,6 +9,7 @@ struct ExportPreview: View {
     let onSave: () -> Void
     let onClose: () -> Void
     let message: String?
+    var saving = false
     @State private var player: AVPlayer?
     @State private var looper: AVPlayerLooper?
 
@@ -19,7 +20,7 @@ struct ExportPreview: View {
                 Spacer()
             }
             .foregroundStyle(Theme.text).padding(.horizontal, 16).padding(.top, 8)
-            if url.pathExtension.lowercased() == "gif", let data = try? Data(contentsOf: url), let img = UIImage(data: data) {
+            if PhotoLibrarySaver.resourceType(for: url) == .photo, let data = try? Data(contentsOf: url), let img = UIImage(data: data) {
                 Image(uiImage: img).resizable().scaledToFit().frame(maxHeight: .infinity)
             } else {
                 VideoPlayer(player: player).frame(maxHeight: .infinity)
@@ -27,7 +28,7 @@ struct ExportPreview: View {
             if let message { Text(message).font(.footnote).foregroundStyle(Theme.textDim) }
             HStack(spacing: 10) {
                 Button { onSave() } label: { Label("Save to Photos", systemImage: "photo.on.rectangle").frame(maxWidth: .infinity) }
-                    .buttonStyle(PrimaryButtonStyle())
+                    .buttonStyle(PrimaryButtonStyle()).disabled(saving)
                 ShareLink(item: url) { Label("Share", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity) }
                     .frame(maxWidth: .infinity).padding(.vertical, 12).glass(radius: 12).foregroundStyle(Theme.text)
             }
@@ -35,6 +36,7 @@ struct ExportPreview: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .onAppear {
+            guard PhotoLibrarySaver.resourceType(for: url) == .video else { return }
             let item = AVPlayerItem(url: url)
             let q = AVQueuePlayer()
             looper = AVPlayerLooper(player: q, templateItem: item)
@@ -50,6 +52,7 @@ struct ExportSheet: View {
     @State private var settings = ExportSettings()
     @State private var progress: Double = 0
     @State private var exporting = false
+    @State private var saving = false
     @State private var exporter: Exporter?
     @State private var resultURL: URL?
     @State private var message: String?
@@ -138,7 +141,8 @@ struct ExportSheet: View {
                     }
                     if let resultURL {
                         HStack(spacing: 10) {
-                            Button { saveToPhotos(resultURL) } label: { Label("Save to Photos", systemImage: "photo.on.rectangle") }
+                            Button { saveToPhotos(resultURL) } label: { Label(saving ? "Saving…" : "Save to Photos", systemImage: "photo.on.rectangle") }
+                                .disabled(saving)
                                 .frame(maxWidth: .infinity).padding(.vertical, 12).glass(radius: 12)
                             ShareLink(item: resultURL) { Label("Share", systemImage: "square.and.arrow.up") }
                                 .frame(maxWidth: .infinity).padding(.vertical, 12).glass(radius: 12)
@@ -153,7 +157,7 @@ struct ExportSheet: View {
                 if let resultURL {
                     ExportPreview(url: resultURL, onSave: { saveToPhotos(resultURL) },
                                   onClose: { showPreview = false; DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { dismissSheet() } },
-                                  message: message)
+                                  message: message, saving: saving)
                 }
             }
             .navigationTitle("Export & Share")
@@ -238,47 +242,16 @@ struct ExportSheet: View {
     }
 
     private func saveToPhotos(_ url: URL) {
-        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
-            guard status == .authorized || status == .limited else {
-                Task { @MainActor in message = "Photos access was denied. Use Share instead." }
-                return
-            }
-            Self.addToPhotos(url) { ok, err in
-                if ok || url.pathExtension == "gif" {
-                    Task { @MainActor in message = ok ? "Saved to Photos." : (err?.localizedDescription ?? "Save failed.") }
-                    return
-                }
-                // Photos refused the file: make a Photos-friendly copy and save that instead.
-                Task { @MainActor in message = "Converting for Photosâ€¦" }
-                Self.photosCopy(of: url) { copy in
-                    guard let copy else { Task { @MainActor in message = "Couldn't save to Photos. Use Share instead." }; return }
-                    Self.addToPhotos(copy) { ok2, err2 in
-                        try? FileManager.default.removeItem(at: copy)
-                        Task { @MainActor in message = ok2 ? "Saved to Photos." : (err2?.localizedDescription ?? "Save failed. Use Share instead.") }
-                    }
-                }
-            }
+        guard !saving else { return }
+        saving = true
+        message = "Saving to Photos…"
+        Task { @MainActor in
+            defer { saving = false }
+            do {
+                try await PhotoLibrarySaver.save(url)
+                message = "Saved to Photos."
+            } catch { message = error.localizedDescription }
         }
-    }
-
-    nonisolated private static func addToPhotos(_ url: URL, _ done: @escaping (Bool, Error?) -> Void) {
-        PHPhotoLibrary.shared().performChanges({
-            if url.pathExtension == "gif" {
-                PHAssetCreationRequest.forAsset().addResource(with: .photo, fileURL: url, options: nil)
-            } else {
-                PHAssetCreationRequest.forAsset().addResource(with: .video, fileURL: url, options: nil)
-            }
-        }, completionHandler: done)
-    }
-
-    /// Re-encodes a video with Apple's own settings (always accepted by Photos).
-    nonisolated private static func photosCopy(of url: URL, _ done: @escaping (URL?) -> Void) {
-        let asset = AVURLAsset(url: url)
-        guard let s = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else { done(nil); return }
-        let out = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mov")
-        s.outputURL = out
-        s.outputFileType = .mov
-        s.exportAsynchronously { done(s.status == .completed ? out : nil) }
     }
 
     private func saveFrame() {
@@ -289,8 +262,9 @@ struct ExportSheet: View {
                                       maxDimension: Double(max(state.project.width, state.project.height)),
                                       mediaURL: { store.mediaURL($0, projectID: pid) }),
               let data = img.pngData() else { message = "Couldn't render frame."; return }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(state.project.name)-frame.png")
-        try? data.write(to: url)
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString)-frame.png")
+        do { try data.write(to: url, options: .atomic) }
+        catch { message = error.localizedDescription; return }
         resultURL = url
         message = "Frame ready."
     }
