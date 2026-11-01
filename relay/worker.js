@@ -76,7 +76,7 @@ const TOOLS = [
   { name: "render_sheet", description: "Contact sheet of several frames across the whole timeline (check motion at a glance).",
     inputSchema: { type: "object", properties: { count: { type: "integer" }, size: { type: "number" } } },
     call: (a) => ["POST", "/render/sheet", { count: String(a.count ?? 6), size: String(a.size ?? 360) }], image: true },
-  { name: "run_action", description: "Run an app action: undo, redo, seek {time}, select {layer}, play, pause, cutoutSubject {layer, mode}.",
+  { name: "run_action", description: "Run an app action: undo, redo, seek {time}, select {layer}, play, pause, cutoutSubject {layer, mode}, precompose {layers?: [ids], name?} (groups layers, or all, into one pre-comp).",
     inputSchema: { type: "object", properties: { name: { type: "string" } }, required: ["name"], additionalProperties: true },
     call: (a) => ["POST", "/action", {}, JSON.stringify(a)] },
 ];

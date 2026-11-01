@@ -156,9 +156,15 @@ final class AILink: ObservableObject {
             var s = e.selectedLayer?.cutout ?? CutoutSettings()
             s.mode = CutoutMode(rawValue: a["mode"] as? String ?? "object") ?? .object
             e.setCutout(s)
+        case "precompose":
+            // Groups layers (ids in "layers", or all of them) into one pre-comp.
+            let ids = (a["layers"] as? [String])?.compactMap(UUID.init(uuidString:)) ?? e.project.layers.map(\.id)
+            e.multiSelection = Set(ids)
+            e.precomposeMulti(name: a["name"] as? String)
+            e.multiSelection = nil
         default:
             return .json(["error": "unknown action \(name)",
-                          "actions": ["undo", "redo", "seek", "select", "play", "pause", "cutoutSubject"]], status: 404)
+                          "actions": ["undo", "redo", "seek", "select", "play", "pause", "cutoutSubject", "precompose"]], status: 404)
         }
         return .json(["ok": true])
     }
