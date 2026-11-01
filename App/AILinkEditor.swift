@@ -124,7 +124,10 @@ extension AILink {
             return .json(["error": "unknown type", "types": ["text", "shape", "solid", "adjustment", "null", "camera", "light", "particles", "image", "video"]], status: 400)
         }
         guard let id = e.selectedLayerID else { return .json(["error": "couldn't add"], status: 500) }
-        if a.count > 1 { var b = a; b["id"] = id.uuidString; _ = editLayer(b, e) }
+        // Extra fields (position, size, fill, font...) are edit_layer's "set" values.
+        var set = (a["set"] as? [String: Any]) ?? [:]
+        for (k, v) in a where !["type", "shape", "text", "file", "light", "set"].contains(k) { set[k] = v }
+        if !set.isEmpty { _ = editLayer(["id": id.uuidString, "set": set], e) }
         return .json(["ok": true, "id": id.uuidString])
     }
 
@@ -165,7 +168,22 @@ extension AILink {
                 case "motionBlur": if let b = v as? Bool { l.motionBlur = b }
                 case "clip", "clipToBelow": if let b = v as? Bool { l.clipToBelow = b }
                 case "text": if let s = v as? String { l.text?.string = s }
-                case "font": if let s = v as? String { l.text?.fontName = s }
+                case "font":
+                    // A font family from the library (e.g. "Unbounded") downloads first if needed; else a PostScript name.
+                    if let s = v as? String {
+                        let lib = FontLibrary.shared
+                        if let fam = FontLibrary.catalog.first(where: { $0.name.caseInsensitiveCompare(s) == .orderedSame })?.name {
+                            if let ps = lib.installed[fam]?.last { l.text?.fontName = ps }
+                            else {
+                                let lid = l.id
+                                lib.download(fam) { ok in
+                                    guard ok, let ps = lib.installed[fam]?.last else { return }
+                                    e.mutate("Font") { p in if let k = p.layers.firstIndex(where: { $0.id == lid }) { p.layers[k].text?.fontName = ps } }
+                                    e.redrawToken += 1
+                                }
+                            }
+                        } else { l.text?.fontName = s }
+                    }
                 case "fontSize": if let d = v as? Double { l.text?.fontSize = d }
                 case "tracking": if let d = v as? Double, l.text != nil { put(&l.text!.tracking, d) }
                 case "parent", "id", "time", "keyframe", "set", "type", "shape", "light", "file": break

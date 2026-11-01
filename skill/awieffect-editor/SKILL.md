@@ -56,6 +56,10 @@ character and what the user asked for.
 Mix these freely; the numbers are starting points to tune by eye.
 - **Hits:** flash (white or colored Solid, 1-4 frames, fading), zoom punch (`awi18.zoomPunch`, or scale keys with
   overshoot), impact shake (`awi18.shakePro`), negative / mono flash (`awi18.negativeFlash`, `ae.invert`), color washes.
+- **Shape flashes (hard-cut graphics):** a white shape (full-frame solid, thin bar, circle, side lines, block) that
+  sits on screen for only 4-18 frames (0.07-0.3 s) with NO fade: set its in/out points, nothing else. Chain several
+  in quick succession (bar -> circle -> lines -> block), use Difference blend so a shape inverts what's under it, and
+  land the title on one of the hits (scale punch 130->100%, expoOut). Great for watermarks, intros, title hits.
 - **Shake language:** smooth wiggle = tension, twitch = glitchy energy (hold frames for choppy anime feel),
   earthquake = rumble, impact = a single hit that rings out. Shakes should settle.
 - **Speed:** velocity (fast on the beat, slow between), speed ramps, smooth slow-mo (the clip's Twixtor).
