@@ -91,6 +91,8 @@ struct HomeView: View {
                     }
                 }
                 .navigationTitle("Restore \(t.name)").navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(Theme.background, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
             }
             .presentationDetents([.medium])
         }

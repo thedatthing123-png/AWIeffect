@@ -254,6 +254,8 @@ struct FontPicker: View {
             .background(Theme.background)
             .searchable(text: $query)
             .navigationTitle("Fonts")
+            .toolbarBackground(Theme.background, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {

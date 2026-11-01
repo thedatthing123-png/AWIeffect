@@ -1,5 +1,6 @@
 import SwiftUI
 import Photos
+import AVFoundation
 
 struct ExportSheet: View {
     @ObservedObject var state: EditorState
@@ -95,6 +96,8 @@ struct ExportSheet: View {
             }
             .background(Theme.background)
             .navigationTitle("Export & Share")
+            .toolbarBackground(Theme.background, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -178,16 +181,42 @@ struct ExportSheet: View {
                 Task { @MainActor in message = "Photos access was denied. Use Share instead." }
                 return
             }
-            PHPhotoLibrary.shared().performChanges {
-                if url.pathExtension == "gif" {
-                    PHAssetCreationRequest.forAsset().addResource(with: .photo, fileURL: url, options: nil)
-                } else {
-                    PHAssetCreationRequest.creationRequestForAssetFromVideo(atFileURL: url)
+            Self.addToPhotos(url) { ok, err in
+                if ok || url.pathExtension == "gif" {
+                    Task { @MainActor in message = ok ? "Saved to Photos." : (err?.localizedDescription ?? "Save failed.") }
+                    return
                 }
-            } completionHandler: { ok, err in
-                Task { @MainActor in message = ok ? "Saved to Photos." : (err?.localizedDescription ?? "Save failed.") }
+                // Photos refused the file: make a Photos-friendly copy and save that instead.
+                Task { @MainActor in message = "Converting for Photos…" }
+                Self.photosCopy(of: url) { copy in
+                    guard let copy else { Task { @MainActor in message = "Couldn't save to Photos. Use Share instead." }; return }
+                    Self.addToPhotos(copy) { ok2, err2 in
+                        try? FileManager.default.removeItem(at: copy)
+                        Task { @MainActor in message = ok2 ? "Saved to Photos." : (err2?.localizedDescription ?? "Save failed. Use Share instead.") }
+                    }
+                }
             }
         }
+    }
+
+    nonisolated private static func addToPhotos(_ url: URL, _ done: @escaping (Bool, Error?) -> Void) {
+        PHPhotoLibrary.shared().performChanges({
+            if url.pathExtension == "gif" {
+                PHAssetCreationRequest.forAsset().addResource(with: .photo, fileURL: url, options: nil)
+            } else {
+                PHAssetCreationRequest.forAsset().addResource(with: .video, fileURL: url, options: nil)
+            }
+        }, completionHandler: done)
+    }
+
+    /// Re-encodes a video with Apple's own settings (always accepted by Photos).
+    nonisolated private static func photosCopy(of url: URL, _ done: @escaping (URL?) -> Void) {
+        let asset = AVURLAsset(url: url)
+        guard let s = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else { done(nil); return }
+        let out = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mov")
+        s.outputURL = out
+        s.outputFileType = .mov
+        s.exportAsynchronously { done(s.status == .completed ? out : nil) }
     }
 
     private func saveFrame() {

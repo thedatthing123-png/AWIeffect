@@ -38,6 +38,8 @@ struct KeyframeVelocitySheet: View {
                 }
             }
             .navigationTitle("Keyframe Velocity")
+            .toolbarBackground(Theme.background, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }

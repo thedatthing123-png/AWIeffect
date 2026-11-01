@@ -505,6 +505,8 @@ struct EffectBrowser: View {
             .background(Theme.background)
             .searchable(text: $query, prompt: "Search \(EffectRegistry.all.count) effects")
             .navigationTitle("Add Effect")
+            .toolbarBackground(Theme.background, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } } }
         }
@@ -622,6 +624,8 @@ struct SettingsSheet: View {
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .navigationTitle("Settings")
+            .toolbarBackground(Theme.background, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }

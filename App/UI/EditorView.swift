@@ -718,6 +718,8 @@ struct HistorySheet: View {
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .navigationTitle("Undo History")
+            .toolbarBackground(Theme.background, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .navigationBarTitleDisplayMode(.inline)
         }
     }

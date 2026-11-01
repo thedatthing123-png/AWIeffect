@@ -194,6 +194,8 @@ struct GraphEditorSheet: View {
             .padding(16)
             .background(Theme.background)
             .navigationTitle("Graph Editor")
+            .toolbarBackground(Theme.background, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .navigationBarTitleDisplayMode(.inline)
         }
         .onAppear { if let first = state.animatedKeys.first { key = first } }

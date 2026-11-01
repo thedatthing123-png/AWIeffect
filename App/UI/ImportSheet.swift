@@ -63,6 +63,8 @@ struct ImportReportSheet: View {
             .scrollContentBackground(.hidden)
             .background(Theme.background)
             .navigationTitle("After Effects Import")
+            .toolbarBackground(Theme.background, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .navigationBarTitleDisplayMode(.inline)
             .safeAreaInset(edge: .bottom) {
                 Button("Open Project") { open(result.project) }

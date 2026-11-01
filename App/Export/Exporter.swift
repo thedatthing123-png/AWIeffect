@@ -81,7 +81,8 @@ final class Exporter {
         var compression: [String: Any] = [
             // Bitrate scales with resolution and frame rate (the setting is for 1080p30), so fast edits never
             // turn blocky: 4K or 60 fps get proportionally more data.
-            AVVideoAverageBitRateKey: Int(min(200, max(8, settings.bitrateMbps * (Double(w * h) / 2_073_600) * (fps / 30))) * 1_000_000),
+            // Capped so Photos and other players always accept the file (very high H.264 rates get refused).
+            AVVideoAverageBitRateKey: Int(min(settings.codec == .h264 && !alpha ? 60 : 120, max(8, settings.bitrateMbps * (Double(w * h) / 2_073_600) * (fps / 30))) * 1_000_000),
             AVVideoExpectedSourceFrameRateKey: Int(fps.rounded()),
             AVVideoMaxKeyFrameIntervalKey: Int(fps.rounded()),
         ]
