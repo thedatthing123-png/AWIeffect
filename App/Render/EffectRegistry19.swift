@@ -12,7 +12,7 @@ extension EffectRegistry {
     /// Keeps only one color (like a reversed chroma key): duplicate a layer, keep just the hair / eyes / energy,
     /// then glow or grade that part on its own.
     static let colorSelect19 = EffectDefinition(
-        id: "awi19.colorSelect", name: "Color Select", category: .keying, aeMatchNames: [],
+        id: "awi19.colorSelect", name: "Individual Chroma Key", category: .keying, aeMatchNames: [],
         summary: "Keeps only the picked color and hides everything else (or the opposite). Great for glowing just the hair, eyes or energy on a copy of the layer.",
         params: [
             .color("color", "Color to Keep", RGBA(0.1, 0.9, 0.2)),
