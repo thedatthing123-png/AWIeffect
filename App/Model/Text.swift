@@ -421,7 +421,6 @@ enum TextPresets {
             a.properties.scale = Animated(Vec2(70, 70))
             a.properties.rotation = Animated(-12)
             a.properties.fill = Animated(RGBA(hex: 0x3DFFB0))
-            a.properties.position = Animated(Vec2(60, 200))
             a.selector.easeHigh = 20
             return [a]
         },

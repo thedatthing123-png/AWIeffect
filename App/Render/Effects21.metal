@@ -79,8 +79,9 @@ kernel void fx21(texture2d<half, access::sample> src [[texture(0)]],
             float fade = 1.0 - saturate(dy / max(size.y - hz, 1.0)) * 0.6;
             r.rgb *= (1.0 - p.a.w) * fade;
             r.a *= fade;
+            // Like a mirror floor: below the horizon the reflection sits on top (anything there shows through it).
             float4 base = float4(src.sample(s21z, c));
-            o = base + r * (1.0 - base.a);
+            o = r + base * (1.0 - r.a);
             break;
         }
         default: {
