@@ -24,6 +24,16 @@ struct ScenePanel: View {
                     chips(Self.sizes.map(\.0), selected: Self.sizes.first { $0.1 == state.project.width && $0.2 == state.project.height }?.0) { k in
                         if let s = Self.sizes.first(where: { $0.0 == k }) { state.resizeComp(width: s.1, height: s.2) }
                     }
+                    // Custom size: type any width × height.
+                    HStack(spacing: 8) {
+                        Text("Custom").font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.textDim)
+                        NumberField(value: Double(state.project.width), label: "W") { v in
+                            state.resizeComp(width: min(8192, max(16, Int(v) / 2 * 2)), height: state.project.height)
+                        }
+                        NumberField(value: Double(state.project.height), label: "H") { v in
+                            state.resizeComp(width: state.project.width, height: min(8192, max(16, Int(v) / 2 * 2)))
+                        }
+                    }
                     label("Frame Rate  \(Int(state.project.fps)) fps")
                     chips(["24", "25", "30", "50", "60", "120"], selected: "\(Int(state.project.fps))") { v in
                         state.mutate("Frame Rate") { $0.fps = Double(v) ?? 30 }

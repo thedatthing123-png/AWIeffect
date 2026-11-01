@@ -32,6 +32,15 @@ struct ExportSheet: View {
                               title: { [480: "480p", 720: "720p", 1080: "1080p", 1440: "2K", 2160: "4K"][$0] ?? "" }) { v in
                             settings.scale = v / shortSide
                         }
+                        // Custom: any size (short side in px), keeps the project's shape.
+                        HStack(spacing: 8) {
+                            Text("Custom").font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.textDim)
+                            NumberField(value: (shortSide * settings.scale).rounded(), label: "px") { v in
+                                settings.scale = min(4, max(0.05, v / shortSide))
+                            }
+                            let (cw, ch) = Exporter.outputSize(state.project, scale: settings.scale)
+                            Text("\(cw)×\(ch)").font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.textDim)
+                        }
                     }
                     section("Frame Rate") {
                         chips([0.0, 24, 25, 30, 50, 60], selected: settings.fps ?? 0, title: { $0 == 0 ? "Project" : "\(Int($0))" }) { v in

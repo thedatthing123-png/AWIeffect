@@ -247,6 +247,10 @@ struct TimelineView: View {
                 .frame(width: w, height: rowHeight - 8)
                 // Hold a clip to lift it: up / down reorders, sideways moves it in time (snaps to frames, beats, playhead).
                 .simultaneousGesture(clipHold(layer), including: state.isMultiSelecting ? .subviews : .all)
+                .simultaneousGesture(TapGesture().onEnded {
+                    guard liftLayer == nil, !state.isMultiSelecting else { return }
+                    state.openLayer(layer.id)
+                })
                 .offset(x: x0, y: 4)
             if editable {
                 trimHandle(layer, start: true).offset(x: x0 - 13, y: 2)

@@ -256,8 +256,16 @@ struct CreateProjectSheet: View {
     /// No duration to pick (Alight Motion): the project is as long as its clips; new layers start at 5 s.
     private let duration: Double = 5
     @State private var background = Color.black
+    /// Custom composition size (any width × height).
+    @State private var custom = false
+    @State private var customW = "1080"
+    @State private var customH = "1920"
 
     var size: (Int, Int) {
+        if custom {
+            let w = min(8192, max(16, (Int(customW) ?? 1080) / 2 * 2)), h = min(8192, max(16, (Int(customH) ?? 1920) / 2 * 2))
+            return (w, h)
+        }
         // Short side = chosen resolution; long side rounded to even.
         if aspect.w == aspect.h { return (shortSide, shortSide) }
         if aspect.w < aspect.h {
@@ -266,6 +274,14 @@ struct CreateProjectSheet: View {
         }
         let w = Int((Double(shortSide) * Double(aspect.w) / Double(aspect.h) / 2).rounded()) * 2
         return (w, shortSide)
+    }
+
+    private func sizeField(_ label: String, _ v: Binding<String>) -> some View {
+        HStack(spacing: 6) {
+            Text(label).font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+            TextField("", text: v).keyboardType(.numberPad).font(.system(size: 15, weight: .semibold, design: .monospaced)).foregroundStyle(Theme.text)
+        }
+        .padding(.horizontal, 12).frame(height: 42).glass(radius: 10)
     }
 
     var body: some View {
@@ -300,9 +316,19 @@ struct CreateProjectSheet: View {
                     }
                 }
 
-                row("Resolution") {
-                    Picker("", selection: $shortSide) {
-                        ForEach(Self.resolutions, id: \.short) { Text($0.label).tag($0.short) }
+                if !custom {
+                    row("Resolution") {
+                        Picker("", selection: $shortSide) {
+                            ForEach(Self.resolutions, id: \.short) { Text($0.label).tag($0.short) }
+                        }
+                    }
+                }
+                Toggle("Custom size", isOn: $custom).tint(Theme.accent).foregroundStyle(Theme.text)
+                if custom {
+                    HStack(spacing: 10) {
+                        sizeField("Width", $customW)
+                        Text("×").foregroundStyle(Theme.textDim)
+                        sizeField("Height", $customH)
                     }
                 }
                 Text("Composition size \(size.0) × \(size.1)").font(.caption).foregroundStyle(Theme.textDim).padding(.top, -14)
