@@ -138,21 +138,22 @@ struct ThreeDPanel: View {
                                 .font(.caption).foregroundStyle(Theme.textDim)
                         }
                         if l.content == .camera, let c = l.camera {
-                            if state.project.layers.contains(where: { $0.is3D }) || !c.affects2D {
-                                Toggle("3D Camera (orbit, dolly and fly through 3D layers)", isOn: Binding(get: { !c.affects2D }, set: { b in
-                                    state.mutate("3D Camera") { p in if let i = state.selectedIndex { p.layers[i].camera?.affects2D = !b } }
-                                }))
-                                .tint(Theme.accent).foregroundStyle(Theme.text)
+                            CameraModeSwitch(state: state, layer: l)
+                            if c.affects2D {
+                                // 2D lens: zoom = how close the shot is (100% = the whole frame).
+                                row("Zoom %", l.transform.scale.value(at: t).x, 10...1000, anim: { var a = Animated(l.transform.scale.staticValue.x); a.keyframes = l.transform.scale.keyframes.map { Keyframe(time: $0.time, value: $0.value.x) }; return a }(),
+                                    set: { v in state.mutateLayer { $0.transform.scale.set(Vec2(v, v), at: t) } },
+                                    keyed: { state.mutateLayer { $0.transform.scale.toggleKeyframe(at: t) } })
+                                Text("Depth of field needs the 3D camera (it blurs layers by their distance).").font(.caption).foregroundStyle(Theme.textDim)
                             } else {
-                                Text("2D camera: drag the canvas to move it, pinch to zoom, twist to turn (in Camera view). Make a layer 3D to unlock the 3D camera.")
-                                    .font(.caption).foregroundStyle(Theme.textDim)
+                                // 3D lens: focal length. Low = wide angle (strong depth), high = telephoto.
+                                row("Lens (focal)", c.zoom.value(at: t), 100...8000, anim: c.zoom,
+                                    set: { v in state.mutateLayer { $0.camera?.zoom.set(v, at: t) } },
+                                    keyed: { state.mutateLayer { $0.camera?.zoom.toggleKeyframe(at: t) } })
+                                Text("Low = wide angle, high = telephoto (zoomed in, flatter depth).").font(.caption).foregroundStyle(Theme.textDim)
                             }
-                            Text(c.affects2D ? "Effects on this camera (shake, glitch, grade…) apply to the whole shot." :
-                                 "One finger orbits, pinch moves closer / farther, twist rolls. Effects on the camera apply to the whole shot.")
+                            Text("Effects on this camera (shake, glitch, grade…) apply to the whole shot.")
                                 .font(.caption).foregroundStyle(Theme.textDim)
-                            row("Zoom", c.zoom.value(at: t), 100...8000, anim: c.zoom,
-                                set: { v in state.mutateLayer { $0.camera?.zoom.set(v, at: t) } },
-                                keyed: { state.mutateLayer { $0.camera?.zoom.toggleKeyframe(at: t) } })
                             Toggle("Depth of Field", isOn: Binding(get: { c.depthOfField }, set: { b in
                                 state.mutate("Depth of Field") { p in if let i = state.selectedIndex { p.layers[i].camera?.depthOfField = b } }
                             }))

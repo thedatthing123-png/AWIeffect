@@ -47,6 +47,9 @@ struct TransformPanel: View {
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: state.selectedLayer?.content == .camera ? "Camera" : "Move & Transform")
+            if let sel = state.selectedLayer, sel.content == .camera {
+                CameraModeSwitch(state: state, layer: sel).padding(.horizontal, 12).padding(.bottom, 4)
+            }
             if state.selectedLayer != nil {
                 HStack(spacing: 0) {
                     leftRail

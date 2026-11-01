@@ -38,7 +38,7 @@ struct EditorView: View {
                 // Typing: the timeline and panels step aside so the canvas (your text) stays above the keyboard.
                 TypeBar(state: state)
             } else {
-                TransportBar(state: state, showHistory: $showHistory)
+                TransportBar(state: state, showHistory: $showHistory, viewZoom: $viewZoom, zoomBase: $zoomBase, viewPan: $viewPan)
                     // Tap the empty bar to get out of a selection.
                     .background(Color.black.opacity(0.001).onTapGesture { if state.isMultiSelecting { state.endMultiSelect() } else { state.select(nil) } })
                 timelineGrip
@@ -370,11 +370,6 @@ struct EditorView: View {
                 }
                 .allowsHitTesting(false)
             }
-            .overlay(alignment: .trailing) {
-                if state.viewMode == .comp && !state.textTyping {
-                    CanvasRail(state: state, viewZoom: $viewZoom, zoomBase: $zoomBase, viewPan: $viewPan)
-                }
-            }
             .clipped()
             .contentShape(Rectangle())
             .gesture(canvasDrag(fit: fit), including: pen == nil && state.viewMode == .comp ? .all : .subviews)
@@ -648,11 +643,15 @@ struct SelectionOverlay: View {
 struct TransportBar: View {
     @ObservedObject var state: EditorState
     @Binding var showHistory: Bool
+    @Binding var viewZoom: CGFloat
+    @Binding var zoomBase: CGFloat
+    @Binding var viewPan: CGSize
 
     var body: some View {
         HStack(spacing: 0) {
             button("arrow.uturn.backward", enabled: state.canUndo) { state.undo() }
             button("arrow.uturn.forward", enabled: state.canRedo) { state.redo() }
+            ViewMenuButton(state: state, viewZoom: $viewZoom, zoomBase: $zoomBase, viewPan: $viewPan)
             Spacer()
             button("backward.end.fill") { state.pause(); state.seek(0) }
             button("chevron.left") { state.stepFrame(-1) }
