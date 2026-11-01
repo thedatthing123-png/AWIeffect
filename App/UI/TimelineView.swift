@@ -4,9 +4,12 @@ import SwiftUI
 struct TimelineView: View {
     @ObservedObject var state: EditorState
     @ObservedObject private var clock: PlayClock
+    /// Only the selected layer's row (a panel is open).
+    var compact = false
 
-    init(state: EditorState) {
+    init(state: EditorState, compact: Bool = false) {
         self.state = state
+        self.compact = compact
         _clock = ObservedObject(wrappedValue: state.clock)
     }
     /// Points per second.
@@ -57,7 +60,7 @@ struct TimelineView: View {
                                 }
                                 .frame(maxWidth: .infinity).padding(.top, 26)
                             }
-                            ForEach(state.project.layers) { layer in
+                            ForEach(compact ? state.project.layers.filter { $0.id == state.selectedLayerID } : state.project.layers) { layer in
                                 let lifted = liftLayer == layer.id
                                 HStack(spacing: 0) {
                                     header(layer)
@@ -80,7 +83,7 @@ struct TimelineView: View {
                                 .onChanged { v in
                                     guard case .second(true, let drag) = v, let drag else { return }
                                     // Alight Motion: holding the left column (eye / icon) selects; holding a clip lifts it.
-                                    guard drag.startLocation.x < headerWidth else { return }
+                                    guard drag.startLocation.x < headerWidth, !compact else { return }
                                     if multiDragStart == nil {
                                         let row = Int(drag.startLocation.y / rowHeight)
                                         if state.project.layers.indices.contains(row) {

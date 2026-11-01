@@ -7,7 +7,28 @@ import simd
 extension EffectRegistry {
     static let batch19: [EffectDefinition] = [sliceGlitch19, datamosh19, pixelSort19, jpeg19, vhsTracking19, signalLoss19,
                                               interlace19, blockCorrupt19, stutter19, mirrorTile19, slitScan19, chromaShatter19,
-                                              glitchFlash19, displaceGlitch19]
+                                              glitchFlash19, displaceGlitch19, colorSelect19]
+
+    /// Keeps only one color (like a reversed chroma key): duplicate a layer, keep just the hair / eyes / energy,
+    /// then glow or grade that part on its own.
+    static let colorSelect19 = EffectDefinition(
+        id: "awi19.colorSelect", name: "Color Select", category: .keying, aeMatchNames: [],
+        summary: "Keeps only the picked color and hides everything else (or the opposite). Great for glowing just the hair, eyes or energy on a copy of the layer.",
+        params: [
+            .color("color", "Color to Keep", RGBA(0.1, 0.9, 0.2)),
+            .number("tolerance", "Tolerance", 25, 0, 100, unit: "%"),
+            .number("softness", "Edge Softness", 10, 0, 100, unit: "%"),
+            .number("luma", "Brightness Matters", 20, 0, 100, unit: "%"),
+            .toggle("invert", "Invert (hide that color instead)", false),
+        ],
+        stage: .pixels { ctx in
+            let out = ctx.temp()
+            var p = EffectParams()
+            p.a = SIMD4(Float(ctx.num("tolerance") / 100 * 0.8), Float(ctx.num("softness") / 100 * 0.5), ctx.effect.bool("invert") ? 1 : 0, Float(ctx.num("luma") / 100))
+            p.b = ctx.effect.color("color", ctx.time).simd
+            ctx.gpu.run("fx19ColorSelect", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
+            return out
+        })
 
     /// Shared timing controls (b vector in the kernel).
     private static let timing: [ParamDef] = [

@@ -100,7 +100,7 @@ final class VideoSources {
         let t = min(max(0, time), max(0, s.duration - 1 / s.fps))
         let frame = Int((t * s.fps + 1e-3).rounded(.down))
         lock.lock()
-        let c = pickChannel(s, owner: channel)
+        let c = pickChannel(s, owner: channel, frame: frame)
         let hit = s.cache[frame]
         let sequential = frame > c.lastRequest && frame - c.lastRequest <= 3
         c.lastRequest = frame
@@ -110,9 +110,15 @@ final class VideoSources {
         return tex
     }
 
-    /// The caller's own channel, else a free one, else the least recently used. Call with `lock` held.
-    private func pickChannel(_ s: Source, owner: Int) -> Channel {
+    /// A channel already reading right here (copies of a clip at the same moment share one decoder — phones only
+    /// allow a few), else the caller's own, else a free one, else the least recently used. Call with `lock` held.
+    private func pickChannel(_ s: Source, owner: Int, frame: Int) -> Channel {
         useCounter &+= 1
+        if let near = s.channels.filter({ $0.owner != nil && $0.lastRequest >= 0 && frame >= $0.lastRequest && frame - $0.lastRequest <= 2 })
+            .min(by: { frame - $0.lastRequest < frame - $1.lastRequest }) {
+            near.lastUse = useCounter
+            return near
+        }
         let c = s.channels.first { $0.owner == owner }
             ?? s.channels.first { $0.owner == nil }
             ?? s.channels.min { $0.lastUse < $1.lastUse }!
@@ -155,7 +161,7 @@ final class VideoSources {
         }
     }
 
-    private func decode(_ s: Source, _ c: Channel, frame: Int, device: MTLDevice) -> MTLTexture? {
+    private func decode(_ s: Source, _ c: Channel, frame: Int, device: MTLDevice, retried: Bool = false) -> MTLTexture? {
         c.decodeLock.lock(); defer { c.decodeLock.unlock() }
         if let t = cachedTexture(s, frame) { return t }
         guard let track = s.track else { return nil }
@@ -188,6 +194,13 @@ final class VideoSources {
             // A frame missing in the file (variable frame rate): show the next one for the requested index.
             if idx != frame { store(s, frame, tex) }
             return tex
+        }
+        // The decoder was refused / failed mid-way: start a fresh reader once and try again before giving up.
+        if c.reader?.status == .failed, !retried {
+            c.reader = nil; c.output = nil; c.readerFrame = -1
+            c.decodeLock.unlock()
+            defer { c.decodeLock.lock() }
+            return decode(s, c, frame: frame, device: device, retried: true)
         }
         // Reader ran off the end (or failed): show the nearest cached frame of this file, never an unrelated one.
         lock.lock(); defer { lock.unlock() }

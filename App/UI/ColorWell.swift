@@ -9,6 +9,8 @@ struct AWIColorWell: View {
     @Binding var selection: Color
     var supportsOpacity = true
     @State private var open = false
+    @State private var picking = false
+    @State private var shot: UIImage?
 
     init(_ title: String, selection: Binding<Color>, supportsOpacity: Bool = true) {
         self.title = title
@@ -31,8 +33,23 @@ struct AWIColorWell: View {
             .buttonStyle(.plain)
             .accessibilityLabel(title.isEmpty ? "Color" : title)
             .popover(isPresented: $open) {
-                ColorEditor(color: $selection, supportsOpacity: supportsOpacity)
-                    .presentationCompactAdaptation(.popover)
+                ColorEditor(color: $selection, supportsOpacity: supportsOpacity, onEyedropper: {
+                    // The picker steps out of the way first, so you pick from the real screen (canvas, clips…).
+                    open = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { shot = ScreenEyedropper.capture(); picking = true }
+                })
+                .presentationCompactAdaptation(.popover)
+            }
+            .fullScreenCover(isPresented: $picking) {
+                ScreenEyedropper(snapshot: shot) { c in
+                    picking = false
+                    if let c {
+                        let a = UIColor(selection).cgColor.alpha
+                        selection = c.opacity(Double(a))
+                        ColorSwatches.pushRecent(HSBA(c).hex)
+                    }
+                }
+                .presentationBackground(.clear)
             }
         }
     }
@@ -109,6 +126,8 @@ struct ColorEditor: View {
     @State private var saved = ColorSwatches.saved
     @State private var picking = false
     @State private var shot: UIImage?
+    /// Set by the color well: closes the picker, then picks from the live screen.
+    var onEyedropper: (() -> Void)? = nil
 
     private func push(_ v: HSBA) {
         hsb = v
@@ -153,7 +172,7 @@ struct ColorEditor: View {
                     .submitLabel(.done)
                     .onSubmit { if let v = HSBA.fromHex(hexText, alpha: hsb.a) { push(v); ColorSwatches.pushRecent(v.hex) } else { hexText = hsb.hex } }
                     .padding(.horizontal, 8).frame(height: 32).background(RoundedRectangle(cornerRadius: 8).fill(Theme.surface))
-                Button { shot = ScreenEyedropper.capture(); picking = true } label: { Image(systemName: "eyedropper").frame(width: 34, height: 32) }
+                Button { if let f = onEyedropper { f() } else { shot = ScreenEyedropper.capture(); picking = true } } label: { Image(systemName: "eyedropper").frame(width: 34, height: 32) }
                     .background(RoundedRectangle(cornerRadius: 8).fill(Theme.surface))
                     .accessibilityLabel("Pick color from screen")
             }

@@ -280,3 +280,23 @@ kernel void fx19AlphaOf(texture2d<half, access::sample> src [[texture(0)]],
     float a = S(src, c).a;
     dst.write(half4(g * a), gid);
 }
+
+/// Color Select: keeps only pixels close to the picked color (for separate glows / grades on one color).
+/// a = (tolerance 0-1, softness 0-1, invert 0/1, luma weight 0-1), b = key color (straight sRGB)
+kernel void fx19ColorSelect(texture2d<half, access::sample> src [[texture(0)]],
+                            texture2d<half, access::write> dst [[texture(1)]],
+                            constant EffectParams& p [[buffer(0)]],
+                            uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    float4 s = S(src, float2(gid) + 0.5);
+    if (s.a < 1e-4) { dst.write(half4(0.0), gid); return; }
+    float3 c = s.rgb / s.a;
+    float3 k = p.b.rgb;
+    // Chroma (color) distance matters most; brightness only a little, so shaded parts of the color still count.
+    float yc = lum19(c), yk = lum19(k);
+    float2 cc = float2(c.b - yc, c.r - yc), ck = float2(k.b - yk, k.r - yk);
+    float d = length(cc - ck) * 1.6 + abs(yc - yk) * p.a.w;
+    float keep = 1.0 - smoothstep(p.a.x, p.a.x + max(p.a.y, 1e-3), d);
+    if (p.a.z > 0.5) keep = 1.0 - keep;
+    dst.write(half4(s * keep), gid);
+}

@@ -42,8 +42,10 @@ struct EditorView: View {
                     // Tap the empty bar to get out of a selection.
                     .background(Color.black.opacity(0.001).onTapGesture { if state.isMultiSelecting { state.endMultiSelect() } else { state.select(nil) } })
                 timelineGrip
-                TimelineView(state: state)
-                    .frame(height: timelineHeight)
+                // A panel open on a layer: the timeline shows just that layer's row, so the canvas stays big.
+                let compact = state.panel != .none && state.panel != .add && state.selectedLayerID != nil && !state.isMultiSelecting
+                TimelineView(state: state, compact: compact)
+                    .frame(height: compact ? 74 : timelineHeight)
                 TrimStrip(state: state, clock: state.clock)
                 BottomPanel(state: state, showPhotoPicker: $showPhotoPicker) { target, style in
                     state.pause()
