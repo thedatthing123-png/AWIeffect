@@ -4,10 +4,20 @@ import AVFoundation
 /// the same result. Only a few source pages are resident, even for long clips.
 enum RetimedAudio {
     private static let lock = NSLock()
-    private static var cache: [Data: URL] = [:]
+    final class Source {
+        let asset: AVURLAsset
+        init(url: URL) { asset = AVURLAsset(url: url) }
+        deinit { try? FileManager.default.removeItem(at: asset.url) }
+    }
+    private static let cache: NSCache<NSData, Source> = {
+        let cache = NSCache<NSData, Source>()
+        cache.countLimit = 4
+        cache.totalCostLimit = 256 * 1024 * 1024
+        return cache
+    }()
     private static let rate = 48_000.0
 
-    static func file(for layer: Layer, source: URL, isCancelled: () -> Bool = { false }) throws -> URL {
+    static func source(for layer: Layer, source: URL, isCancelled: () -> Bool = { false }) throws -> Source {
         lock.lock(); defer { lock.unlock() }
         if isCancelled() || Task.isCancelled { throw ExportError.cancelled }
         let attributes = try FileManager.default.attributesOfItem(atPath: source.path)
@@ -15,7 +25,7 @@ enum RetimedAudio {
         encoder.outputFormatting = .sortedKeys
         var key = try encoder.encode(layer)
         key.append(Data("\(source.path)|\(attributes[.size] ?? 0)|\(attributes[.modificationDate] ?? "")".utf8))
-        if let url = cache[key], FileManager.default.fileExists(atPath: url.path) { return url }
+        if let source = cache.object(forKey: key as NSData), FileManager.default.fileExists(atPath: source.asset.url.path) { return source }
         let decoded = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".caf")
         defer { try? FileManager.default.removeItem(at: decoded) }
         try decode(source, to: decoded, isCancelled: isCancelled)
@@ -78,8 +88,10 @@ enum RetimedAudio {
             }
         }
         success = true
-        cache[key] = outputURL
-        return outputURL
+        let source = Source(url: outputURL)
+        let bytes = (try FileManager.default.attributesOfItem(atPath: outputURL.path)[.size] as? NSNumber)?.intValue ?? 0
+        cache.setObject(source, forKey: key as NSData, cost: bytes)
+        return source
     }
 
     private static func decode(_ url: URL, to output: URL, isCancelled: () -> Bool) throws {

@@ -215,11 +215,19 @@ final class Exporter {
     /// Mixes the project's audio (all audible layers, volume keys, speed) into an AAC file, or nil when silent.
     static func renderAudio(project: Project, start: Double, end: Double, mediaURL: @escaping (String) -> URL,
                             isCancelled: () -> Bool = { false }) async throws -> URL? {
-        guard let (comp, mix) = try AudioPreview.buildComposition(project, mediaURL: mediaURL, isCancelled: isCancelled) else { return nil }
+        guard let timeline = try AudioPreview.buildComposition(project, mediaURL: mediaURL, isCancelled: isCancelled) else { return nil }
+        defer { withExtendedLifetime(timeline) {} }
+        let comp = timeline.composition, mix = timeline.mix
         let tracks = comp.tracks(withMediaType: .audio)
         guard !tracks.isEmpty else { return nil }
+        let range = CMTimeRange(start: CMTime(seconds: start, preferredTimescale: 48000),
+                                end: CMTime(seconds: min(end, comp.duration.seconds), preferredTimescale: 48000))
+        // Selecting a silent part of a project is valid, and differs from failing to decode a source.
+        guard range.duration.seconds > 0, tracks.contains(where: { track in
+            track.segments.contains { !$0.isEmpty && CMTimeRangeGetIntersection($0.timeMapping.target, range).duration.seconds > 0 }
+        }) else { return nil }
         let reader = try AVAssetReader(asset: comp)
-        reader.timeRange = CMTimeRange(start: CMTime(seconds: start, preferredTimescale: 48000), end: CMTime(seconds: end, preferredTimescale: 48000))
+        reader.timeRange = range
         let out = AVAssetReaderAudioMixOutput(audioTracks: tracks, audioSettings: [
             AVFormatIDKey: kAudioFormatLinearPCM, AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false,
             AVLinearPCMIsNonInterleaved: false, AVLinearPCMIsBigEndianKey: false, AVSampleRateKey: 48000, AVNumberOfChannelsKey: 2,

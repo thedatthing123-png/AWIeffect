@@ -37,7 +37,7 @@ enum PhotoLibrarySaver {
             // A fallback conversion must never flatten a transparent MOV without the user's knowledge.
             guard type == .video, url.pathExtension.lowercased() == "mp4" else { throw error }
             let asset = AVURLAsset(url: staged)
-            guard let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPreset1920x1080),
+            guard let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality),
                   session.supportedFileTypes.contains(.mp4) else { throw error }
             let compatible = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mp4")
             defer { try? FileManager.default.removeItem(at: compatible) }

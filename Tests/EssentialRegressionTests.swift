@@ -75,16 +75,16 @@ final class EssentialRegressionTests: XCTestCase {
         map.insertKeyframe(Keyframe(time: 0, value: 0.99, interpolation: .linear))
         map.insertKeyframe(Keyframe(time: 1, value: 0, interpolation: .linear))
         layer.timeRemap = map
-        let reversed = try RetimedAudio.file(for: layer, source: source)
-        let file = try AVAudioFile(forReading: reversed)
+        let reversed = try RetimedAudio.source(for: layer, source: source)
+        let file = try AVAudioFile(forReading: reversed.asset.url)
         let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: 48000)!
         try file.read(into: buffer)
         XCTAssertEqual(buffer.frameLength, 48000)
         XCTAssertGreaterThan(buffer.floatChannelData![0][100], 0.8)
         XCTAssertLessThan(buffer.floatChannelData![0][47000], 0.2)
         layer.timeRemap = Animated(0.5)
-        let frozen = try RetimedAudio.file(for: layer, source: source)
-        let still = try AVAudioFile(forReading: frozen)
+        let frozen = try RetimedAudio.source(for: layer, source: source)
+        let still = try AVAudioFile(forReading: frozen.asset.url)
         let silence = AVAudioPCMBuffer(pcmFormat: still.processingFormat, frameCapacity: 1024)!
         try still.read(into: silence)
         XCTAssertEqual(silence.floatChannelData![0][500], 0)
@@ -144,5 +144,16 @@ final class EssentialRegressionTests: XCTestCase {
         let stride = CVPixelBufferGetBytesPerRow(buffer)
         XCTAssertLessThan(bytes[3], 10, "Transparent corner became opaque")
         XCTAssertEqual(Double(bytes[32 * stride + 32 * 4 + 3]), 128, accuracy: 12)
+    }
+
+    func testSelectingSilentTailDoesNotReportAnAudioFailure() async throws {
+        let source = try ramp()
+        defer { try? FileManager.default.removeItem(at: source) }
+        var p = Project.new(name: "silent-tail", width: 32, height: 32, fps: 24, duration: 2, background: .black)
+        var layer = p.makeLayer(name: "tone", content: .audio(fileName: "tone.wav", duration: 1), size: Vec2(1, 1))
+        layer.outPoint = 1
+        p.layers = [layer]
+        let result = try await Exporter.renderAudio(project: p, start: 1.5, end: 2, mediaURL: { _ in source })
+        XCTAssertNil(result)
     }
 }

@@ -148,29 +148,37 @@ extension EditorState {
 
 // MARK: - Audio preview (keeps an AVPlayer in sync with the editor)
 
+struct AudioTimeline {
+    let composition: AVMutableComposition
+    let mix: AVAudioMix
+    // Scratch-file owners stay alive for the full playback/export lifetime, even after cache eviction.
+    let sources: [RetimedAudio.Source]
+}
+
 final class AudioPreview {
     static let shared = AudioPreview()
     private var player: AVPlayer?
     private var builtFor: String?
     private var buildTask: Task<Void, Never>?
+    private var preparedAudio: AudioTimeline?
 
     func invalidate() { buildTask?.cancel(); builtFor = nil }
 
-    /// Builds an audio-only composition for all audible layers.
-    static func composition(_ project: Project, mediaURL: (String) -> URL) -> (AVMutableComposition, AVAudioMix)? {
-        return try? buildComposition(project, mediaURL: mediaURL)
-    }
-
-    /// Export uses the throwing variant so failed decoding cannot masquerade as an intentionally silent project.
-    static func buildComposition(_ project: Project, mediaURL: (String) -> URL, isCancelled: () -> Bool = { false }) throws -> (AVMutableComposition, AVAudioMix)? {
+    /// One audio timeline for playback and export; failed decoding cannot masquerade as intentional silence.
+    static func buildComposition(_ project: Project, mediaURL: (String) -> URL, isCancelled: () -> Bool = { false }) throws -> AudioTimeline? {
         let comp = AVMutableComposition()
+        var retainedSources: [RetimedAudio.Source] = []
         var params: [AVMutableAudioMixInputParameters] = []
         for l in project.layers where l.isVisible && l.hasAudio {
             guard let file = l.mediaFile else { continue }
             if isCancelled() || Task.isCancelled { throw ExportError.cancelled }
             let retimed = l.timeRemap != nil || l.speed < 0
-            let url = retimed ? try RetimedAudio.file(for: l, source: mediaURL(file), isCancelled: isCancelled) : mediaURL(file)
-            let asset = AVURLAsset(url: url)
+            let asset: AVURLAsset
+            if retimed {
+                let source = try RetimedAudio.source(for: l, source: mediaURL(file), isCancelled: isCancelled)
+                retainedSources.append(source)
+                asset = source.asset
+            } else { asset = AVURLAsset(url: mediaURL(file)) }
             guard let src = asset.tracks(withMediaType: .audio).first,
                   let dst = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) else {
                 throw ExportError.writer("Cannot load audio for \(l.name).")
@@ -210,7 +218,7 @@ final class AudioPreview {
         guard !params.isEmpty else { return nil }
         let mix = AVMutableAudioMix()
         mix.inputParameters = params
-        return (comp, mix)
+        return AudioTimeline(composition: comp, mix: mix, sources: retainedSources)
     }
 
     func play(_ project: Project, from time: Double, mediaURL: @escaping (String) -> URL) {
@@ -231,11 +239,12 @@ final class AudioPreview {
                 guard !Task.isCancelled else { return }
                 await MainActor.run {
                     guard !Task.isCancelled, let self else { return }
-                    if let (comp, mix) = result {
-                        let item = AVPlayerItem(asset: comp)
-                        item.audioMix = mix
+                    if let result {
+                        let item = AVPlayerItem(asset: result.composition)
+                        item.audioMix = result.mix
                         self.player = AVPlayer(playerItem: item)
                     } else { self.player = nil }
+                    self.preparedAudio = result
                     self.builtFor = key
                     let now = time + ProcessInfo.processInfo.systemUptime - started
                     if now < project.duration { self.startPlayer(at: now) }
