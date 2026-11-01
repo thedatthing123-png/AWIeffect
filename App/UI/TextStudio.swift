@@ -30,11 +30,11 @@ extension EditorState {
         mutateLayer { l in if l.text != nil { change(&l.text!) } }
     }
 
-    func applyTextPreset(_ preset: TextPreset) {
+    func applyTextPreset(_ preset: TextPreset, duration: Double = 1.0) {
         guard let l = selectedLayer else { return }
         let start = max(l.inPoint, currentTime)
         editText("Text Preset \(preset.name)") { t in
-            t.animators = preset.make(start, 1.0)
+            t.animators = preset.make(start, max(0.05, duration))
         }
     }
 }

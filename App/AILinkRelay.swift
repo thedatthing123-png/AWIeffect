@@ -159,7 +159,8 @@ final class AILinkRelay: ObservableObject {
                     case .data(let d): data = d
                     @unknown default: break
                     }
-                    if let data { self.answer(data, on: t) }
+                    // One request at a time on the main thread: parallel calls used to race and lose edits.
+                    if let data { DispatchQueue.main.async { self.answer(data, on: t) } }
                     self.listen(t)
                 }
             }

@@ -72,7 +72,9 @@ extension AILink {
             e.select(id)
             if let t = a["time"] as? Double { e.seek(t) }
             switch kind {
-            case "text": guard let p = TextPreset.library.first(where: { $0.id == pid }) else { return .json(["error": "unknown text animation"], status: 404) }; e.applyTextPreset(p)
+            case "text":
+                guard let p = TextPreset.library.first(where: { $0.id == pid }) else { return .json(["error": "unknown text animation"], status: 404) }
+                e.applyTextPreset(p, duration: a["duration"] as? Double ?? 1.0)
             case "title": guard let s = TitleStyles.all.first(where: { $0.id == pid }) else { return .json(["error": "unknown title style"], status: 404) }; e.applyTitleStyle(s)
             default: guard let p = PresetLibrary.all.first(where: { $0.id == pid }) else { return .json(["error": "unknown layer preset"], status: 404) }; e.applyPreset(p)
             }

@@ -173,6 +173,13 @@ final class AILink: ObservableObject {
             var s = e.selectedLayer?.cutout ?? CutoutSettings()
             s.mode = CutoutMode(rawValue: a["mode"] as? String ?? "object") ?? .object
             e.setCutout(s)
+        case "detectBeats":
+            // Auto beat on the selected (or first) music / video track; answers with every marker time.
+            if let id = (a["layer"] as? String).flatMap(UUID.init(uuidString:)) { e.select(id) }
+            e.detectBeats(sensitivity: a["sensitivity"] as? Double ?? 0.5)
+            return .json(["ok": true, "markers": e.project.markers])
+        case "markers":
+            return .json(["markers": e.project.markers])
         case "precompose":
             // Groups layers (ids in "layers", or all of them) into one pre-comp.
             let ids = (a["layers"] as? [String])?.compactMap(UUID.init(uuidString:)) ?? e.project.layers.map(\.id)
@@ -181,7 +188,7 @@ final class AILink: ObservableObject {
             e.multiSelection = nil
         default:
             return .json(["error": "unknown action \(name)",
-                          "actions": ["undo", "redo", "seek", "select", "play", "pause", "cutoutSubject", "precompose"]], status: 404)
+                          "actions": ["undo", "redo", "seek", "select", "play", "pause", "cutoutSubject", "precompose", "detectBeats", "markers"]], status: 404)
         }
         return .json(["ok": true])
     }
