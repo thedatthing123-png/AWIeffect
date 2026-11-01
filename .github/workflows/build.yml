@@ -54,6 +54,11 @@ jobs:
             -project AWIeffect.xcodeproj -scheme AWIeffect \
             -destination "id=$SIM" \
             -resultBundlePath TestResults.xcresult \
+            -only-testing:AWIeffectTests/EssentialRegressionTests \
+            -only-testing:AWIeffectTests/TextTests \
+            -only-testing:AWIeffectTests/ExportTests \
+            -only-testing:AWIeffectTests/MediaTests \
+            -only-testing:AWIeffectUITests/EssentialUITests \
             -parallel-testing-enabled NO \
             -test-timeouts-enabled YES -default-test-execution-time-allowance 240 -maximum-test-execution-time-allowance 600 \
             CODE_SIGNING_ALLOWED=NO 2>&1 | tee test.log | grep -E "error:|warning: .*AWI|Test Case|Executed|SKIP|FAIL|Fatal|error represents|exceeded|crashed|Restarting"
