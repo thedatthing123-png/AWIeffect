@@ -25,12 +25,12 @@ enum PhotoLibrarySaver {
     static func save(_ url: URL) async throws {
         guard FileManager.default.fileExists(atPath: url.path) else { throw SaveError.missingFile }
         guard let type = resourceType(for: url) else { throw SaveError.unsupported }
-        let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-        guard status == .authorized || status == .limited else { throw SaveError.permission }
         // Give this operation its own stable file, retained until Photos finishes reading it.
         let staged = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension(url.pathExtension)
         try FileManager.default.copyItem(at: url, to: staged)
         defer { try? FileManager.default.removeItem(at: staged) }
+        let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+        guard status == .authorized || status == .limited else { throw SaveError.permission }
         do {
             try await add(staged, type: type)
         } catch {

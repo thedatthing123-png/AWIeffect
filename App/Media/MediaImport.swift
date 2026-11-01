@@ -152,8 +152,9 @@ final class AudioPreview {
     static let shared = AudioPreview()
     private var player: AVPlayer?
     private var builtFor: String?
+    private var buildTask: Task<Void, Never>?
 
-    func invalidate() { builtFor = nil }
+    func invalidate() { buildTask?.cancel(); builtFor = nil }
 
     /// Builds an audio-only composition for all audible layers.
     static func composition(_ project: Project, mediaURL: (String) -> URL) -> (AVMutableComposition, AVAudioMix)? {
@@ -212,24 +213,44 @@ final class AudioPreview {
         return (comp, mix)
     }
 
-    func play(_ project: Project, from time: Double, mediaURL: (String) -> URL) {
+    func play(_ project: Project, from time: Double, mediaURL: @escaping (String) -> URL) {
+        buildTask?.cancel()
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
         let key = (try? encoder.encode(project.layers)).map { $0.base64EncodedString() } ?? UUID().uuidString
-        if builtFor != key {
-            if let (comp, mix) = Self.composition(project, mediaURL: mediaURL) {
-                let item = AVPlayerItem(asset: comp)
-                item.audioMix = mix
-                player = AVPlayer(playerItem: item)
-            } else {
-                player = nil
-            }
-            builtFor = key
+        if builtFor == key {
+            startPlayer(at: time)
+            return
         }
+        player?.pause()
+        let started = ProcessInfo.processInfo.systemUptime
+        // Reverse/remap preprocessing can be substantial. Never block the editor's display link.
+        buildTask = Task.detached(priority: .userInitiated) { [weak self] in
+            do {
+                let result = try Self.buildComposition(project, mediaURL: mediaURL, isCancelled: { Task.isCancelled })
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    guard !Task.isCancelled, let self else { return }
+                    if let (comp, mix) = result {
+                        let item = AVPlayerItem(asset: comp)
+                        item.audioMix = mix
+                        self.player = AVPlayer(playerItem: item)
+                    } else { self.player = nil }
+                    self.builtFor = key
+                    let now = time + ProcessInfo.processInfo.systemUptime - started
+                    if now < project.duration { self.startPlayer(at: now) }
+                }
+            } catch {
+                if !Task.isCancelled { NSLog("AWIeffect audio preview: %@", error.localizedDescription) }
+            }
+        }
+    }
+
+    private func startPlayer(at time: Double) {
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
         player?.seek(to: CMTime(seconds: time, preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero)
         player?.play()
     }
 
-    func pause() { player?.pause() }
+    func pause() { buildTask?.cancel(); player?.pause() }
 }

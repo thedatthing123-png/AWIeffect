@@ -68,7 +68,7 @@ final class EssentialRegressionTests: XCTestCase {
     func testReverseAndFreezeAudioUseTheVisualSourceTimeMap() throws {
         let source = try ramp()
         defer { try? FileManager.default.removeItem(at: source) }
-        let p = Project.new(name: "audio", width: 32, height: 32, fps: 30, duration: 1, background: .black)
+        var p = Project.new(name: "audio", width: 32, height: 32, fps: 30, duration: 1, background: .black)
         var layer = p.makeLayer(name: "tone", content: .audio(fileName: "tone.wav", duration: 1), size: Vec2(1, 1))
         layer.outPoint = 1
         var map = Animated(0.99)
