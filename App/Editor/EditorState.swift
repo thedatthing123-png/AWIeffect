@@ -97,6 +97,8 @@ final class EditorState: ObservableObject {
     @Published var cutoutBrushSize = 40.0
     @Published var cutoutWholeClip = false
     @Published var cutoutFixSpan = 0.5
+    /// Smart brush: strokes snap to the edges of the part they're painted on.
+    @Published var cutoutSmart = true
     /// Link mode: the panel steps aside and the next tap on a layer makes it this layer's parent.
     @Published var linkPicking = false
     /// Typing on the canvas: the timeline and panels step aside for the keyboard, the rest is dimmed.

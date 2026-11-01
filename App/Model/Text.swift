@@ -26,6 +26,8 @@ struct TextData: Codable, Equatable {
     var pathOffset: Animated<Double>? = nil
     /// Counter / timer mode: the shown text comes from an animated number (keyframe it, shape it with the graph).
     var counter: TextCounter? = nil
+    /// Outline the whole text instead of filling it (stroke width px, 0 = solid).
+    var outline: Double? = nil
     /// Where spacing grows from: 0 = left, 1 = center, 2 = right (nil = same as the alignment).
     var spacingAnchor: Int? = nil
 
@@ -121,6 +123,8 @@ struct TextAnimatorProperties: Codable, Equatable {
     var rotationX: Animated<Double>? = nil
     var rotationY: Animated<Double>? = nil
     var positionZ: Animated<Double>? = nil
+    /// Outline only: letters become hollow outlines this thick (px). 0 = solid.
+    var outline: Animated<Double>? = nil
 }
 
 struct TextAnimator: Codable, Equatable, Identifiable {

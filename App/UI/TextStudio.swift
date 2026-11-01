@@ -170,6 +170,7 @@ struct AnimatorCard: View {
                         prop("Rotation X (3D)", animator.properties.rotationX == nil) { $0.rotationX = Animated(90) }
                         prop("Rotation Y (3D)", animator.properties.rotationY == nil) { $0.rotationY = Animated(90) }
                         prop("Position Z (3D)", animator.properties.positionZ == nil) { $0.positionZ = Animated(400) }
+                        prop("Outline", animator.properties.outline == nil) { $0.outline = Animated(4) }
                     } label: {
                         Label("Add Property", systemImage: "plus.circle.fill").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.accentGlow)
                     }
@@ -208,6 +209,9 @@ struct AnimatorCard: View {
                 }
                 if let v0 = animator.properties.positionZ?.value(at: state.currentTime) {
                     slider("Position Z", v0, -900...5000) { a, v, t in a.properties.positionZ?.set(v, at: t) }
+                }
+                if let v0 = animator.properties.outline?.value(at: state.currentTime) {
+                    slider("Outline", v0, 0...40) { a, v, t in a.properties.outline?.set(v, at: t) }
                 }
                 if let c = animator.properties.fill?.value(at: state.currentTime) {
                     AWIColorWell("Fill Color", selection: Binding(get: { Color(c) }, set: { col in

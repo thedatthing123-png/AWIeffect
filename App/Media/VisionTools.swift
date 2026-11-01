@@ -28,6 +28,8 @@ struct CutoutStroke: Codable, Equatable, Hashable {
     var subtract: Bool
     var time: Double?
     var span: Double = 0.5
+    /// Smart: the stroke grows to the edges of what it was painted on (eye, arm, sword) instead of a plain brush.
+    var smart: Bool? = nil
 }
 
 struct CutoutSettings: Codable, Equatable {
@@ -132,7 +134,13 @@ final class CutoutEngine {
             }
             cur.bytes = acc.map { UInt8(min(255, max(0, $0 / wsum))) }
         }
-        if !active.isEmpty { Self.paint(active, into: &cur.bytes, w: cur.w, h: cur.h) }
+        if !active.isEmpty {
+            let smartOnes = active.filter { $0.smart == true }
+            if !smartOnes.isEmpty, let src = sourcePixels(layer, file: file, frame: frameKey, w: cur.w, h: cur.h, mediaURL: mediaURL) {
+                Self.smartPaint(smartOnes, source: src, into: &cur.bytes, w: cur.w, h: cur.h)
+            }
+            Self.paint(active.filter { $0.smart != true }, into: &cur.bytes, w: cur.w, h: cur.h)
+        }
         let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r8Unorm, width: cur.w, height: cur.h, mipmapped: false)
         d.usage = [.shaderRead]
         guard let tex = device.makeTexture(descriptor: d) else { return nil }
@@ -173,6 +181,84 @@ final class CutoutEngine {
         if order.count > 48 { cache[order.removeFirst()] = nil }
         lock.unlock()
         return tex
+    }
+
+    private var srcCache: [String: [UInt8]] = [:]
+
+    /// The frame's pixels at the matte's size (for edge-aware refine strokes).
+    private func sourcePixels(_ layer: Layer, file: String, frame: Int, w: Int, h: Int, mediaURL: (String) -> URL) -> [UInt8]? {
+        let key = "\(file)|\(frame)|\(w)x\(h)"
+        lock.lock(); if let c = srcCache[key] { lock.unlock(); return c }; lock.unlock()
+        let url = mediaURL(file)
+        let cg: CGImage?
+        switch layer.content {
+        case .video: cg = VideoSources.shared.cgImage(url: url, time: (Double(frame) + 0.5) / 30)
+        case .image: cg = CIImage(contentsOf: url).flatMap { CIContext().createCGImage($0, from: $0.extent) }
+        default: cg = nil
+        }
+        guard let cg else { return nil }
+        var px = [UInt8](repeating: 0, count: w * h * 4)
+        px.withUnsafeMutableBytes { buf in
+            let ctx = CGContext(data: buf.baseAddress, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                                space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+            ctx?.interpolationQuality = .medium
+            ctx?.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+        }
+        lock.lock()
+        if srcCache.count > 24 { srcCache.removeAll() }
+        srcCache[key] = px
+        lock.unlock()
+        return px
+    }
+
+    /// Smart refine (Photoshop Quick Select style): from every point of the stroke the selection floods outward
+    /// through similar colors and stops at lines / color edges, within reach of the stroke. Remove strokes cut it.
+    static func smartPaint(_ strokes: [CutoutStroke], source px: [UInt8], into bytes: inout [UInt8], w: Int, h: Int) {
+        let side = Double(max(w, h))
+        for st in strokes {
+            let r = max(1.5, st.radius * side)
+            let pts = st.points.map { (Int($0.x * Double(w)), Int($0.y * Double(h))) }.filter { $0.0 >= 0 && $0.1 >= 0 && $0.0 < w && $0.1 < h }
+            guard !pts.isEmpty else { continue }
+            // Reach: the stroke's box grown by a few brush sizes (so one stroke on an eye fills the eye, not the face).
+            let reach = Int(r * 4)
+            let x0 = max(0, (pts.map(\.0).min() ?? 0) - reach), x1 = min(w - 1, (pts.map(\.0).max() ?? 0) + reach)
+            let y0 = max(0, (pts.map(\.1).min() ?? 0) - reach), y1 = min(h - 1, (pts.map(\.1).max() ?? 0) + reach)
+            // Average color under the stroke = what we're selecting; tolerance relative to it.
+            var sr = 0, sg = 0, sb = 0
+            for (x, y) in pts { let o = (y * w + x) * 4; sr += Int(px[o]); sg += Int(px[o + 1]); sb += Int(px[o + 2]) }
+            let n = pts.count
+            let tr = sr / n, tg = sg / n, tb = sb / n
+            // Spread of colors under the stroke widens the tolerance (striped / shaded parts).
+            var spread = 0
+            for (x, y) in pts { let o = (y * w + x) * 4; spread = max(spread, abs(Int(px[o]) - tr) + abs(Int(px[o + 1]) - tg) + abs(Int(px[o + 2]) - tb)) }
+            let tol = 60 + min(120, spread)
+            var seen = [Bool](repeating: false, count: w * h)
+            var stack = pts
+            var region: [Int] = []
+            while let (x, y) = stack.popLast() {
+                guard x >= x0, x <= x1, y >= y0, y <= y1 else { continue }
+                let i = y * w + x
+                if seen[i] { continue }
+                seen[i] = true
+                let o = i * 4
+                let d = abs(Int(px[o]) - tr) + abs(Int(px[o + 1]) - tg) + abs(Int(px[o + 2]) - tb)
+                if d > tol { continue }
+                region.append(i)
+                stack.append((x + 1, y)); stack.append((x - 1, y)); stack.append((x, y + 1)); stack.append((x, y - 1))
+            }
+            // The painted stroke itself always counts, then the grown region with a soft 1px edge.
+            var m = [UInt8](repeating: 0, count: w * h)
+            for i in region { m[i] = 255 }
+            paint([CutoutStroke(points: st.points, radius: st.radius, subtract: false)], into: &m, w: w, h: h)
+            let soft = m
+            for y in max(1, y0)..<min(h - 1, y1 + 1) { for x in max(1, x0)..<min(w - 1, x1 + 1) {
+                let i = y * w + x
+                m[i] = UInt8((Int(soft[i]) * 4 + Int(soft[i - 1]) + Int(soft[i + 1]) + Int(soft[i - w]) + Int(soft[i + w])) / 8)
+            } }
+            for i in 0..<(w * h) where m[i] > 0 {
+                bytes[i] = st.subtract ? min(bytes[i], 255 - m[i]) : max(bytes[i], m[i])
+            }
+        }
     }
 
     /// Refine-brush strokes rasterized onto a matte (soft round brush; add = max, remove = min).

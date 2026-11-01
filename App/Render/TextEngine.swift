@@ -156,20 +156,22 @@ final class TextEngine {
     }
 
     /// Rasterized alpha mask for a glyph at `scale` device px per local px (bucketed for caching).
-    func glyphTexture(_ g: LaidGlyph, scale: Double, blur rawBlur: Double = 0, device: MTLDevice) -> (tex: MTLTexture, pad: Double, scale: Double)? {
+    func glyphTexture(_ g: LaidGlyph, scale: Double, blur rawBlur: Double = 0, outline rawOutline: Double = 0, device: MTLDevice) -> (tex: MTLTexture, pad: Double, scale: Double)? {
+        // Outline width (local px) in half-pixel steps.
+        let outline = min(80, (max(0, rawOutline) * 2).rounded() / 2)
         // Bucket scales to powers of 2^(1/4) so zooming doesn't re-rasterize every frame.
         let b = pow(2, (log2(max(scale, 0.05)) * 4).rounded(.up) / 4)
         // Blur (local px) in half-pixel steps, so animated blur reuses rasters.
         let blur = min(200, (max(0, rawBlur) * 2).rounded() / 2)
         let fontName = CTFontCopyPostScriptName(g.font) as String
         let size = Double(CTFontGetSize(g.font))
-        let key = "\(fontName)|\(size)|\(g.glyph)|\(b)|\(blur)"
+        let key = "\(fontName)|\(size)|\(g.glyph)|\(b)|\(blur)|\(outline)"
         lock.lock()
         if let c = glyphCache[key] { lock.unlock(); return c }
         lock.unlock()
 
         let blurPx = blur * b
-        let pad = 2.0 + blurPx * 2.5
+        let pad = 2.0 + blurPx * 2.5 + outline * b
         let w = max(1, Int(ceil(g.halfSize.x * 2 * b + pad * 2))), h = max(1, Int(ceil(g.halfSize.y * 2 * b + pad * 2)))
         guard w < 4096, h < 4096 else { return nil }
         var pixels = [UInt8](repeating: 0, count: w * h)
@@ -188,7 +190,17 @@ final class TextEngine {
         }
         ctx.scaleBy(x: CGFloat(b), y: CGFloat(b))
         var pos = CGPoint(x: -rect.minX + CGFloat(pad / b), y: -rect.minY + CGFloat(pad / b))
-        CTFontDrawGlyphs(g.font, &glyph, &pos, 1, ctx)
+        if outline > 0, let path = CTFontCreatePathForGlyph(g.font, glyph, nil) {
+            // Hollow letter: stroke the glyph outline (centered on the edge, like AE's stroke over fill = off).
+            ctx.translateBy(x: pos.x, y: pos.y)
+            ctx.addPath(path)
+            ctx.setStrokeColor(gray: 1, alpha: 1)
+            ctx.setLineWidth(CGFloat(outline))
+            ctx.setLineJoin(.round)
+            ctx.strokePath()
+        } else {
+            CTFontDrawGlyphs(g.font, &glyph, &pos, 1, ctx)
+        }
         // A bitmap context's first memory row is already the TOP of the image (user space is y-up, but
         // memory is stored top-down), so the bytes are in texture order as-is. Flipping here turned letters upside-down.
         let flipped = pixels
@@ -221,12 +233,14 @@ extension Renderer {
         var rotX = 0.0
         var rotY = 0.0
         var z = 0.0
+        var outline = 0.0
     }
 
     static func glyphStates(_ text: TextData, layout: TextLayout, time: Double) -> [GlyphState] {
         var states = layout.glyphs.map { g -> GlyphState in
             var s = GlyphState()
             s.color = text.baseColor(forCharacter: g.charIndex, time: time)
+            s.outline = text.outline ?? 0
             return s
         }
         for a in text.animators where a.isEnabled {
@@ -244,6 +258,7 @@ extension Renderer {
             let sk = p.skew?.value(at: time)
             let bl = p.blur?.value(at: time), co = p.characterOffset?.value(at: time)
             let rx = p.rotationX?.value(at: time), ry = p.rotationY?.value(at: time), pz = p.positionZ?.value(at: time)
+            let ol = p.outline?.value(at: time)
             for (gi, g) in layout.glyphs.enumerated() {
                 let unit: Int
                 switch sel.basedOn {
@@ -266,6 +281,8 @@ extension Renderer {
                 if let rx { states[gi].rotX += rx * amt }
                 if let ry { states[gi].rotY += ry * amt }
                 if let pz { states[gi].z += pz * amt }
+                // Outline blends toward the animator's width (0 = back to solid).
+                if let ol { states[gi].outline += (ol - states[gi].outline) * min(1, max(0, amt)) }
             }
         }
         // Tracking accumulates along each line, then the line is re-centered for the alignment.
@@ -330,7 +347,7 @@ extension Renderer {
             let a = opacity * st.opacity * st.color.a
             if a <= 0.001 { continue }
             let glyphScale = density * max(abs(st.scale.x), abs(st.scale.y), 0.05)
-            guard let gt = TextEngine.shared.glyphTexture(g, scale: glyphScale, blur: st.blur, device: device) else { continue }
+            guard let gt = TextEngine.shared.glyphTexture(g, scale: glyphScale, blur: st.blur, outline: st.outline, device: device) else { continue }
             // Glyph quad half-size including raster padding (local px).
             let hs = Vec2(g.halfSize.x + gt.pad / gt.scale, g.halfSize.y + gt.pad / gt.scale)
             var rot = st.rotation * .pi / 180

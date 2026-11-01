@@ -19,3 +19,4 @@ local-assets/
 # Public MIT test fixtures are allowed
 !Tests/Fixtures/aep/*.aep
 dist/
+build_out/

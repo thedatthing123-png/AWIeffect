@@ -25,7 +25,7 @@ extension EditorState {
         if case .video = l.content { isVideo = true }
         let stroke = CutoutStroke(points: uv, radius: max(0.002, du), subtract: cutoutBrushSubtract,
                                   time: isVideo && !cutoutWholeClip ? l.sourceTime(at: currentTime) : nil,
-                                  span: cutoutFixSpan)
+                                  span: cutoutFixSpan, smart: cutoutSmart ? true : nil)
         c.strokes.append(stroke)
         setCutout(c)
     }
@@ -100,6 +100,8 @@ struct CutoutRefineControls: View {
                     Text("Remove (−)").tag(true)
                 }
                 .pickerStyle(.segmented)
+                Toggle("Smart edges (snaps to the part you paint: eye, arm…)", isOn: $state.cutoutSmart)
+                    .tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 12))
                 HStack {
                     Text("Brush Size").font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 96, alignment: .leading)
                     ValueScrubber(value: state.cutoutBrushSize, range: 6...160, step: 1, unit: "pt", onChange: { state.cutoutBrushSize = $0 })

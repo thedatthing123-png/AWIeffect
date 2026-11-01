@@ -225,6 +225,9 @@ struct TextPanel: View {
                 row("Spacing", value: text.tracking.value(at: t), range: -50...300) { v in state.editTextContinuous { $0.tracking.set(v, at: t) } }
             }
             HStack(spacing: 6) {
+                row("Outline Only", value: text.outline ?? 0, range: 0...40) { v in state.editTextContinuous { $0.outline = v > 0.05 ? v : nil } }
+            }
+            HStack(spacing: 6) {
                 Text("Spacing from").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text).frame(width: 84, alignment: .leading)
                 Picker("", selection: Binding(get: { text.spacingAnchor ?? -1 }, set: { v in state.editText("Spacing Anchor") { $0.spacingAnchor = v < 0 ? nil : v } })) {
                     Text("Auto").tag(-1); Text("Left").tag(0); Text("Center").tag(1); Text("Right").tag(2)
@@ -328,6 +331,7 @@ struct TextPanel: View {
                         state.styleRange(p.start, p.end) { $0.position = Animated(Vec2($0.position?.staticValue.x ?? 0, -v)) }
                     }
                     row("Turn", value: props?.rotation?.staticValue ?? 0, range: -180...180) { v in state.styleRange(p.start, p.end) { $0.rotation = Animated(v) } }
+                    row("Outline", value: props?.outline?.staticValue ?? 0, range: 0...40) { v in state.styleRange(p.start, p.end) { $0.outline = Animated(v) } }
                     row("Opacity", value: props?.opacity?.staticValue ?? 100, range: 0...100) { v in state.styleRange(p.start, p.end) { $0.opacity = Animated(v) } }
                     row("Blur", value: props?.blur?.staticValue ?? 0, range: 0...60) { v in state.styleRange(p.start, p.end) { $0.blur = Animated(v) } }
                 }
