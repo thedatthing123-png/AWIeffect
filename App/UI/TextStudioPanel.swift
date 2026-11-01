@@ -113,20 +113,24 @@ struct TextPanel: View {
             PanelHeader(state: state, title: "Text Studio")
             if let text = state.selectedLayer?.text {
                 quickBar(text)
-                ScrollViewReader { proxy in
-                    jumpBar(proxy)
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 14) {
-                            group("Style") { styleSection(text) }
-                            group("Letters") { lettersSection(text) }
-                            group("Animate") { animateSection }
-                            group("Animators") { animatorsSection(text) }
-                            group("Counter") { counterSection(text) }
-                            group("3D") { threeDSection }
+                // One section at a time (like the Transform tools): tap a tab, only that page shows.
+                sectionBar
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 14) {
+                        switch section {
+                        case "Letters": lettersSection(text)
+                        case "Animate": animateSection
+                        case "Animators": animatorsSection(text)
+                        case "Counter": counterSection(text)
+                        case "3D": threeDSection
+                        default: styleSection(text)
                         }
-                        .padding(.horizontal, 12).padding(.bottom, 18)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12).padding(.top, 4).padding(.bottom, 18)
                 }
+                .id(section)                          // each page starts at its top
+                .transaction { $0.animation = nil }
             }
         }
         .awiSheet(isPresented: $showFonts) {
@@ -180,13 +184,12 @@ struct TextPanel: View {
         .padding(.horizontal, 12).padding(.bottom, 6)
     }
 
-    private func jumpBar(_ proxy: ScrollViewProxy) -> some View {
+    private var sectionBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 ForEach(sections, id: \.self) { s in
                     Button {
                         section = s
-                        withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(s, anchor: .top) }
                     } label: {
                         Text(s).font(.system(size: 12, weight: .semibold))
                             .padding(.horizontal, 11).padding(.vertical, 6)
