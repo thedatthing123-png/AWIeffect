@@ -237,8 +237,9 @@ struct NumberField: View {
             } else {
                 Text(String(format: "%.1f", value))
                     .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .lineLimit(1).minimumScaleFactor(0.55)
                     .foregroundStyle(Theme.accentGlow)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                     .onTapGesture { text = String(format: "%.1f", value); editing = true }
                     .gesture(DragGesture(minimumDistance: 3)
@@ -249,7 +250,7 @@ struct NumberField: View {
                         .onEnded { _ in dragBase = nil })
             }
         }
-        .padding(.horizontal, 10).frame(height: 34)
+        .padding(.horizontal, 8).frame(minWidth: 0).frame(height: 34)
         .background(RoundedRectangle(cornerRadius: 9).fill(Theme.surface))
     }
 }

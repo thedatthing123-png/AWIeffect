@@ -58,7 +58,7 @@ struct TransformPanel: View {
                             TransformToolBody(state: state, layer: l, tool: tool)
                         }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity)
                     rightRail
                 }
                 .padding(.bottom, 6)

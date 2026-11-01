@@ -75,6 +75,30 @@ Mix these freely; the numbers are starting points to tune by eye.
 - **Easing as feel** (`set_easing`): backOut / expoOut = confident arrival, bounceOut = heavy landing,
   elasticOut = playful wobble, sineInOut = smooth camera, cubicOut = clean UI, hold + snap = stop-motion hits.
 
+## Crafting your own effects (compositing)
+Great AE / Alight Motion editors rarely use one effect as-is. A flame arm, an aura, an energy slash or a custom
+transition is built by stacking simple pieces until it reads as one thing. You are expected to invent looks this way.
+
+Think in layers, not presets:
+1. **Shape the source.** What makes the raw energy? Particles, a shape or pen path, a duplicated layer, a noise
+   pattern (`ae.fractalNoise`), a solid with a mask, a text glyph, a cutout of the character itself.
+2. **Give it motion and life.** Turbulence and distortion (displacement, warp, wave, `awi19.displace`), wiggle,
+   flicker (`awi11.blink`, glitch bursts), scrolling noise, keyframed growth, particles with velocity.
+3. **Give it a color and light story.** Map it to a gradient (hot core, colored edge), glow it in passes (a tight
+   bright core + a wide soft halo), use additive blend modes (Add, Screen, Color Dodge) so it emits light.
+4. **Seat it in the shot.** Parent or track it to the arm / character, mask it to the silhouette, match the grade,
+   add light spill on the character (a colored glow on a duplicate), interactive shake or flash when it peaks,
+   motion blur, a bit of grain so it isn't too clean.
+5. **Judge it in motion.** Render a sheet, compare to what the user imagined, push what works, cut what doesn't.
+
+Example of the thinking (not a recipe): flame on an arm = particles emitted along the arm (shape it), fractal
+noise displacing them upward + flicker (life), orange → yellow → white color with Add blend and two Deep Glow
+passes (light), parented to the arm layer with an orange glow duplicate of the arm and a small shake on the
+hand (seat it). A "dirty" effect (heavy blur, posterize, grain, chunky glitch) is often what makes a clean effect
+feel real or stylized: mixing rough and polished is part of the craft.
+
+Use groups (AM-style) to keep a crafted effect as one tidy unit, and name its layers so the user can tweak it.
+
 ## Taste references
 - `references/style-study.md`: what the user's favorite edits (Haiko, Gokuponch and a manga intro) actually do,
   frame by frame. It's a taste profile to understand their world, not a template; mix it with whatever the brief
