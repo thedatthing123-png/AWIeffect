@@ -179,8 +179,8 @@ struct AnimatorCard: View {
                     slider("Position Y", pos.y, -1000...1000) { a, v, t in a.properties.position?.set(Vec2(pos.x, v), at: t) }
                 }
                 if let sc = animator.properties.scale?.value(at: state.currentTime) {
-                    slider("Scale X", sc.x, -400...400) { a, v, t in a.properties.scale?.set(Vec2(v, a.properties.scale?.value(at: t).y ?? v), at: t) }
-                    slider("Scale Y", sc.y, -400...400) { a, v, t in a.properties.scale?.set(Vec2(a.properties.scale?.value(at: t).x ?? v, v), at: t) }
+                    slider("Scale X", sc.x, -400...400) { a, v, t in let y = a.properties.scale?.value(at: t).y ?? v; a.properties.scale?.set(Vec2(v, y), at: t) }
+                    slider("Scale Y", sc.y, -400...400) { a, v, t in let x = a.properties.scale?.value(at: t).x ?? v; a.properties.scale?.set(Vec2(x, v), at: t) }
                 }
                 if let r = animator.properties.rotation?.value(at: state.currentTime) {
                     slider("Rotation", r, -720...720) { a, v, t in a.properties.rotation?.set(v, at: t) }
