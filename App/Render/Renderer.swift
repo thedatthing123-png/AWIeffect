@@ -526,7 +526,8 @@ final class Renderer {
                 + (dof > 0.5 ? dof * 3 / max(pxPerLocal, 1e-4) : 0)
             // Glow / shadow room beyond what the screen can show is never seen: cap it to the comp size.
             let compReach = Double(max(project.width, project.height)) / max(pxPerLocal, 1e-4)
-            let margin = rawMargin.isFinite ? min(max(0, rawMargin), 20000, compReach) : 0
+            // Glow room past half a screen is never visible and only costs memory (big glows crashed phones).
+            let margin = rawMargin.isFinite ? min(max(0, rawMargin), 20000, compReach * 0.5) : 0
             guard hs.x.isFinite, hs.y.isFinite, pxPerLocal.isFinite else { continue }
             let ext = Vec2(min(max(hs.x, 0.5), 1e6) + margin, min(max(hs.y, 0.5), 1e6) + margin)
             var density = min(1.5, max(0.05, pxPerLocal))

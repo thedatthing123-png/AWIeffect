@@ -239,7 +239,7 @@ struct MetalPreview: UIViewRepresentable {
                         let floor = playing ? 0.25 : 0.5
                         if gpu > 0.018 { self.heavyRun += 1; self.lightRun = 0 } else if gpu < 0.008 { self.lightRun += 1; self.heavyRun = 0 } else { self.heavyRun = 0; self.lightRun = 0 }
                         if self.heavyRun >= 3 || gpu > 0.05 { self.quality = max(floor, self.quality * (gpu > 0.04 ? 0.7 : 0.85)); self.heavyRun = 0 }
-                        else if self.lightRun >= 12 { self.quality = min(1, self.quality * 1.15); self.lightRun = 0 }
+                        else if self.lightRun >= 12 && !playing && self.cacheEnabled { self.quality = min(1, self.quality * 1.15); self.lightRun = 0 }
                     }
                     if self.pendingRedraw { self.pendingRedraw = false; view?.setNeedsDisplay() }
                     // Settle: when nothing changes for a moment, show this frame at full quality.

@@ -204,7 +204,7 @@ extension EffectRegistry {
                  .number("threshold", "Threshold", 0, 0, 100, unit: "%"), .color("tint", "Tint", RGBA(1, 1, 1)),
                  .number("aberration", "Chromatic Aberration", 0, 0, 40, unit: "px"),
                  .number("saturation", "Glow Saturation", 30, 0, 200, unit: "%")],
-        margin: { e, t in e.number("radius", t) * 1.5 },
+        margin: { e, t in min(e.number("radius", t) * 1.5, 900) },
         stage: .pixels { ctx in
             // Glow source: the whole subject (threshold 0), or only its brighter parts.
             var source = ctx.input
@@ -215,20 +215,28 @@ extension EffectRegistry {
                 ctx.gpu.run("fxGlowThreshold", ctx.cb, textures: [ctx.input, bright], params: tp, grid: bright)
                 source = bright
             }
+            // The glow is soft, so it's built on a smaller copy (half or quarter size): same look, far less memory.
+            let r0 = ctx.num("radius") * ctx.unit
+            let down = r0 > 160 ? 4 : (r0 > 24 ? 2 : 1)
+            if down > 1 {
+                let small = ctx.pool.acquire(width: max(1, source.width / down), height: max(1, source.height / down))
+                ctx.gpu.run("fxResample", ctx.cb, textures: [source, small], grid: small)
+                source = small
+            }
+            let r = r0 / Double(down)
             // Six octaves of blur summed: tight core + very wide, deep halo.
-            let r = ctx.num("radius") * ctx.unit
             var acc: MTLTexture? = nil
             for k in 0..<6 {
                 let g = ctx.gpu.gaussian(ctx, input: source, sigma: max(0.6, r / pow(2, Double(5 - k)) / 2))
                 if let a = acc {
-                    let o = ctx.temp(); var add = EffectParams(); add.a = SIMD4(1, 0, 0, 0)
+                    let o = ctx.pool.acquire(width: source.width, height: source.height); var add = EffectParams(); add.a = SIMD4(1, 0, 0, 0)
                     ctx.gpu.run("fxGlowCombine", ctx.cb, textures: [a, g, o], params: add, grid: o); acc = o
                 } else { acc = g }
             }
             var glow = acc!
-            let ca = ctx.num("aberration") * ctx.unit
+            let ca = ctx.num("aberration") * ctx.unit / Double(down)
             if ca > 0.1 {
-                let o = ctx.temp(); var p = EffectParams(); p.a = SIMD4(f(ca), 0, 0, 0)
+                let o = ctx.pool.acquire(width: glow.width, height: glow.height); var p = EffectParams(); p.a = SIMD4(f(ca), 0, 0, 0)
                 ctx.gpu.run("fxRGBSplit", ctx.cb, textures: [glow, o], params: p, grid: o); glow = o
             }
             // Color-keeping combine: adds light in the subject's hue; anything past full brightness is scaled as
