@@ -98,7 +98,7 @@ enum TitleStyles {
         S(id: "clean", name: "Clean White", category: "Minimal", font: "HelveticaNeue-Bold", fill: RGBA(hex: 0xFFFFFF), animation: "fadeUp"),
         S(id: "wideSpaced", name: "Wide Spaced", category: "Minimal", font: "AvenirNext-UltraLight", fill: RGBA(hex: 0xFFFFFF), tracking: 40, animation: "trackingIn"),
         S(id: "softShadow", name: "Soft Shadow", category: "Minimal", font: "AvenirNext-Bold", fill: RGBA(hex: 0xFFFFFF),
-          effects: [("ae.dropShadow", ["distance": S.n(8), "softness": S.n(24), "opacity": S.n(60)])], animation: "riseLines"),
+          effects: [("ae.dropShadow", ["distance": S.n(8), "softness": S.n(24), "opacity": S.n(60)])], animation: "studio.lineRise"),
     ]
 
     /// Effect ids a title style owns (replaced when another style is applied; the user's other effects stay).
@@ -114,7 +114,7 @@ extension TitleStyle {
         l.text!.colorSpans = []
         l.text!.tracking = Animated(tracking)
         if l.text!.fontSize < 40 || abs(l.text!.fontSize - 120) < 1 { l.text!.fontSize = size }
-        if let a = animation, let preset = TextPresets.all.first(where: { $0.id == a }) { l.text!.animators = preset.make(start, 1.0) }
+        if let a = animation, let preset = TextPreset.library.first(where: { $0.id == a }) { l.text!.animators = preset.make(start, 1.0) }
         l.effects.removeAll { TitleStyles.styleEffectIDs.contains($0.typeID) }
         l.effects += makeEffects()
     }

@@ -90,7 +90,7 @@ final class StressTests: XCTestCase {
         let base = try XCTUnwrap(r.renderPixels(project: plain, time: 1.5, mediaURL: { URL(fileURLWithPath: $0) })).rgba
         for st in TitleStyles.all {
             XCTAssertEqual(st.makeEffects().count, st.effects.count, "\(st.name): unknown effect id")
-            if let a = st.animation { XCTAssertNotNil(TextPresets.all.first { $0.id == a }, "\(st.name): unknown animation \(a)") }
+            if let a = st.animation { XCTAssertNotNil(TextPreset.library.first { $0.id == a }, "\(st.name): unknown animation \(a)") }
             let px = try XCTUnwrap(r.renderPixels(project: TitleStylePreviews.project(for: st), time: 1.5, mediaURL: { URL(fileURLWithPath: $0) })).rgba
             var d = 0.0
             for i in 0..<min(px.count, base.count) { d += Double(abs(Int(px[i]) - Int(base[i]))) }
