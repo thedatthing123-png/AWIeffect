@@ -289,6 +289,8 @@ struct Layer: Codable, Equatable, Identifiable {
     /// AE motion-blur switch (only renders when the scene's motion blur is enabled too).
     var motionBlur = false
     var trackMatte: TrackMatte = .none
+    /// Clipping mask (Alight Motion style): only shows where the layer directly below has pixels; that layer still draws.
+    var clipToBelow = false
     /// Time effects: echo trails, posterize time (choppy frame rate), freeze frame.
     var timeFX: LayerTimeFX? = nil
     /// Parent layer (position lives in the parent's space; rotation and scale follow it).
@@ -364,6 +366,7 @@ struct Layer: Codable, Equatable, Identifiable {
         isSolo = try c.decodeIfPresent(Bool.self, forKey: .isSolo) ?? false
         motionBlur = try c.decodeIfPresent(Bool.self, forKey: .motionBlur) ?? false
         trackMatte = try c.decodeIfPresent(TrackMatte.self, forKey: .trackMatte) ?? .none
+        clipToBelow = try c.decodeIfPresent(Bool.self, forKey: .clipToBelow) ?? false
         timeFX = try c.decodeIfPresent(LayerTimeFX.self, forKey: .timeFX)
         parentID = try c.decodeIfPresent(UUID.self, forKey: .parentID)
         light = try c.decodeIfPresent(LightOptions.self, forKey: .light)

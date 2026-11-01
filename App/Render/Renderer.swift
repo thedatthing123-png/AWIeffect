@@ -131,7 +131,7 @@ final class Renderer {
         let cameras = project.layers.filter { $0.content == .camera }
         func renderOnly(_ l: Layer) -> MTLTexture {
             var sub = project
-            var one = l; one.trackMatte = .none; one.isSolo = false; one.isVisible = true
+            var one = l; one.trackMatte = .none; one.clipToBelow = false; one.isSolo = false; one.isVisible = true
             sub.layers = cameras + [one]
             sub.background.a = 0
             sub.background = RGBA(0, 0, 0, 0)
@@ -145,7 +145,7 @@ final class Renderer {
         let out = pool.acquire(width: comp.width, height: comp.height)
         var p = EffectParams()
         p.i.x = 6
-        p.i.y = UInt32(TrackMatte.allCases.firstIndex(of: layer.trackMatte) ?? 1) - 1
+        p.i.y = UInt32(TrackMatte.allCases.firstIndex(of: layer.trackMatte == .none ? .alpha : layer.trackMatte) ?? 1) - 1
         fx.run("fxGlow4", cb, textures: [content, out, m], params: p, grid: out)
         let I = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(comp.width) / 2, Double(comp.height) / 2, 1)))
         drawQuad(cb: cb, target: comp, matrix: I, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 0.5,
@@ -423,6 +423,12 @@ final class Renderer {
             // Only layers that draw pixels can be mattes (a camera / light / audio above means "no matte").
             if m.content == .camera || m.content == .light || m.isAudioOnly { continue }
             matteSources[l.id] = m; hiddenMattes.insert(m.id)
+        }
+        // Clipping masks: the layer below cuts this one out and keeps drawing itself.
+        for (i, l) in project.layers.enumerated() where l.clipToBelow && l.trackMatte == .none && i + 1 < project.layers.count {
+            let m = project.layers[i + 1]
+            if m.content == .camera || m.content == .light || m.isAudioOnly { continue }
+            matteSources[l.id] = m
         }
         // Group parts render inside their group (so the group's mask / effects / transform hit them all at once).
         let groupIDs = Set(project.layers.filter { $0.isGroup }.map(\.id))

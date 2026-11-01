@@ -163,6 +163,7 @@ extension AILink {
                 case "is3D": if let b = v as? Bool { l.is3D = b }
                 case "visible": if let b = v as? Bool { l.isVisible = b }
                 case "motionBlur": if let b = v as? Bool { l.motionBlur = b }
+                case "clip", "clipToBelow": if let b = v as? Bool { l.clipToBelow = b }
                 case "text": if let s = v as? String { l.text?.string = s }
                 case "font": if let s = v as? String { l.text?.fontName = s }
                 case "fontSize": if let d = v as? Double { l.text?.fontSize = d }

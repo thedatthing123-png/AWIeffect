@@ -345,6 +345,16 @@ struct BlendingPanel: View {
                             }
                         }
                         }
+                        Toggle(isOn: Binding(get: { layer.clipToBelow }, set: { v in
+                            state.mutate("Clip to Layer Below") { p in if let i = state.selectedIndex { p.layers[i].clipToBelow = v } }
+                        })) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Clip to Layer Below").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.text)
+                                Text("Only shows on the layer under this one").font(.caption).foregroundStyle(Theme.textDim)
+                            }
+                        }
+                        .tint(Theme.accent)
+                        .disabled(state.selectedIndex.map { $0 + 1 >= state.project.layers.count } ?? true)
                         VStack(alignment: .leading, spacing: 6) {
                             Text("TRACK MATTE (uses the layer above)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
                             ScrollView(.horizontal, showsIndicators: false) {
