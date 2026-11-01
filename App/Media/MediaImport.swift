@@ -44,6 +44,54 @@ extension EditorState {
         AudioPreview.shared.invalidate()
     }
 
+    /// Pulls the sound out of a video file into an .m4a (AAC). Calls back on the main thread with the file, or nil.
+    static func extractAudio(from url: URL, completion: @escaping (URL?) -> Void) {
+        let asset = AVURLAsset(url: url)
+        guard let ex = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetAppleM4A) else { completion(nil); return }
+        let out = FileManager.default.temporaryDirectory.appendingPathComponent("sound-\(UUID().uuidString).m4a")
+        ex.outputURL = out
+        ex.outputFileType = .m4a
+        ex.exportAsynchronously {
+            DispatchQueue.main.async { completion(ex.status == .completed ? out : nil) }
+        }
+    }
+
+    /// Music from a video (Photos or Files): only its sound becomes an audio layer.
+    func addAudioFromVideo(_ url: URL) {
+        let access = url.startAccessingSecurityScopedResource()
+        let name = url.deletingPathExtension().lastPathComponent
+        Self.extractAudio(from: url) { out in
+            if access { url.stopAccessingSecurityScopedResource() }
+            guard let out else { return }
+            let named = out.deletingLastPathComponent().appendingPathComponent("\(name) (sound).m4a")
+            try? FileManager.default.removeItem(at: named)
+            let use = (try? FileManager.default.moveItem(at: out, to: named)) != nil ? named : out
+            self.addAudio(from: use)
+        }
+    }
+
+    /// Extract Audio: the selected video's sound becomes its own audio layer, lined up with the clip; the video is muted.
+    func extractAudioFromSelected() {
+        guard let l = selectedLayer, case .video(let file, _, _, _) = l.content else { return }
+        let id = l.id, inP = l.inPoint, outP = l.outPoint, src = l.sourceStart, speed = l.speed, layerName = l.name
+        Self.extractAudio(from: mediaURL(file)) { out in
+            guard let out, let data = try? Data(contentsOf: out),
+                  let name = try? self.store.importMedia(data: data, ext: "m4a", into: self.project.id) else { return }
+            let duration = CMTimeGetSeconds(AVURLAsset(url: self.store.mediaURL(name, projectID: self.project.id)).duration)
+            self.mutate("Extract Audio") { p in
+                var a = p.makeLayer(name: "\(layerName) Audio", content: .audio(fileName: name, duration: duration), size: Vec2(1, 1))
+                a.inPoint = inP; a.outPoint = outP; a.sourceStart = src; a.speed = speed
+                a.tag = .green
+                if let i = p.layers.firstIndex(where: { $0.id == id }) {
+                    p.layers[i].volume = Animated(0)
+                    p.layers.insert(a, at: i + 1)
+                } else { p.layers.append(a) }
+                self.selectedLayerID = a.id
+            }
+            AudioPreview.shared.invalidate()
+        }
+    }
+
     func addAudio(from url: URL) {
         let access = url.startAccessingSecurityScopedResource()
         defer { if access { url.stopAccessingSecurityScopedResource() } }

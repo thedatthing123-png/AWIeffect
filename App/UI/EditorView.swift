@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import UniformTypeIdentifiers
 
 struct EditorView: View {
     @StateObject var state: EditorState
@@ -19,6 +20,7 @@ struct EditorView: View {
     @State private var pen: (target: PenTarget, style: PenStyle)?
     @StateObject private var drawLauncher = DrawLauncher()
     @StateObject private var mediaLauncher = MediaLauncher()
+    @State private var audioVideoItem: PhotosPickerItem?
     @StateObject private var trackLauncher = TrackLauncher()
     @State private var videoItem: PhotosPickerItem?
     @State private var replaceItem: PhotosPickerItem?
@@ -85,11 +87,29 @@ struct EditorView: View {
                 await MainActor.run { replaceItem = nil; mediaLauncher.replaceTarget = nil }
             }
         }
-        .fileImporter(isPresented: $mediaLauncher.pickAudio, allowedContentTypes: [.audio]) { r in
-            if case .success(let url) = r { state.addAudio(from: url) }
-        }
-        .fileImporter(isPresented: $mediaLauncher.pickModel, allowedContentTypes: [.usdz, .usdzModel, .objModel, .data]) { r in
+        // Each file importer sits on its own view: SwiftUI only honours one .fileImporter per view.
+        .background(Color.clear.fileImporter(isPresented: $mediaLauncher.pickAudioFile, allowedContentTypes: [.audio, .movie]) { r in
+            guard case .success(let url) = r else { return }
+            if UTType(filenameExtension: url.pathExtension)?.conforms(to: .movie) == true { state.addAudioFromVideo(url) }
+            else { state.addAudio(from: url) }
+        })
+        .background(Color.clear.fileImporter(isPresented: $mediaLauncher.pickModel, allowedContentTypes: [.usdz, .usdzModel, .objModel, .data]) { r in
             if case .success(let url) = r { state.addModelLayer(text: nil, fileURL: url) }
+        })
+        .confirmationDialog("Add music or sound", isPresented: $mediaLauncher.pickAudio, titleVisibility: .visible) {
+            Button("From Files (music, sound effects)") { mediaLauncher.pickAudioFile = true }
+            Button("Sound from a video in Photos") { mediaLauncher.pickAudioVideo = true }
+            Button("Cancel", role: .cancel) {}
+        }
+        .photosPicker(isPresented: $mediaLauncher.pickAudioVideo, selection: $audioVideoItem, matching: .videos)
+        .onChange(of: audioVideoItem) { _, item in
+            guard let item else { return }
+            Task {
+                if let movie = try? await item.loadTransferable(type: PickedMovie.self) {
+                    await MainActor.run { state.addAudioFromVideo(movie.url) }
+                }
+                await MainActor.run { audioVideoItem = nil }
+            }
         }
         .fullScreenCover(item: $drawLauncher.session) { s in
             DrawStudioView(engine: s.engine, onDone: { engine in

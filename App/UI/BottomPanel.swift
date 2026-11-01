@@ -484,6 +484,9 @@ struct LayerMenuPanel: View {
                 if state.selectedLayer?.isMedia == true || state.selectedLayer?.isImage == true {
                     ToolTile(icon: "arrow.triangle.2.circlepath", title: "Replace Media") { mediaLauncher.replaceTarget = state.selectedLayerID }
                 }
+                if case .video(_, _, _, true)? = state.selectedLayer?.content {
+                    ToolTile(icon: "waveform.badge.plus", title: "Extract Audio") { state.extractAudioFromSelected() }
+                }
                 ToolTile(icon: "arrow.up", title: "Move Up") { state.moveSelected(up: true) }
                 ToolTile(icon: "arrow.down", title: "Move Down") { state.moveSelected(up: false) }
                 ToolTile(icon: "scissors", title: "Split") { state.splitSelected() }

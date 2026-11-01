@@ -93,7 +93,9 @@ extension AILink {
         case ("POST", "/render/sheet") where UIApplication.shared.applicationState == .background:
             return .json(["error": "AWIeffect is in the background: come back to the app to preview frames (edits still work)."], status: 409)
         case ("POST", "/render/sheet"):
-            return contactSheet(e, count: max(2, min(16, Int(r.query["count"] ?? "") ?? 6)), size: Double(r.query["size"] ?? "") ?? 360)
+            // start/end (seconds) give a dense strip over a range: scrub-like motion check, frame numbers labeled.
+            return contactSheet(e, count: max(2, min(36, Int(r.query["count"] ?? "") ?? 6)), size: Double(r.query["size"] ?? "") ?? 360,
+                                start: Double(r.query["start"] ?? ""), end: Double(r.query["end"] ?? ""))
         default:
             return nil
         }
@@ -224,21 +226,28 @@ extension AILink {
 
     // MARK: Contact sheet
 
-    private func contactSheet(_ e: EditorState, count: Int, size: Double) -> HTTPResponse {
+    private func contactSheet(_ e: EditorState, count: Int, size: Double, start: Double? = nil, end: Double? = nil) -> HTTPResponse {
         guard let r = Renderer.shared else { return .json(["error": "no renderer"], status: 500) }
         let pid = e.project.id, store = e.store
-        let dur = max(e.project.duration, 0.1)
-        let imgs: [UIImage] = (0..<count).compactMap { k in
-            r.renderImage(project: e.project, time: dur * Double(k) / Double(count), maxDimension: size, mediaURL: { store.mediaURL($0, projectID: pid) })
+        let t0 = max(0, start ?? 0)
+        let ranged = start != nil || end != nil
+        let t1 = min(max(e.project.duration, 0.1), end ?? e.project.duration)
+        let span = max(t1 - t0, 0.01)
+        // A range includes both ends (every frame step); the whole-clip sheet keeps its old spacing.
+        let times: [Double] = (0..<count).map { k in ranged ? t0 + span * Double(k) / Double(max(count - 1, 1)) : t0 + span * Double(k) / Double(count) }
+        let fps = Double(max(e.project.fps, 1))
+        let imgs: [UIImage] = times.compactMap { t in
+            r.renderImage(project: e.project, time: t, maxDimension: size, mediaURL: { store.mediaURL($0, projectID: pid) })
         }
         guard let first = imgs.first else { return .json(["error": "render failed"], status: 500) }
-        let cols = min(count, 4), rows = (imgs.count + cols - 1) / cols
+        let cols = min(count, count > 16 ? 6 : 4), rows = (imgs.count + cols - 1) / cols
         let cw = first.size.width, ch = first.size.height
         let sheet = UIGraphicsImageRenderer(size: CGSize(width: cw * CGFloat(cols), height: ch * CGFloat(rows))).image { ctx in
             UIColor.black.setFill(); ctx.fill(CGRect(x: 0, y: 0, width: cw * CGFloat(cols), height: ch * CGFloat(rows)))
             for (k, im) in imgs.enumerated() {
                 im.draw(in: CGRect(x: CGFloat(k % cols) * cw, y: CGFloat(k / cols) * ch, width: cw, height: ch))
-                let label = String(format: "%.2fs", dur * Double(k) / Double(count)) as NSString
+                let t = times[min(k, times.count - 1)]
+                let label = String(format: "%.2fs  f%d", t, Int((t * fps).rounded())) as NSString
                 label.draw(at: CGPoint(x: CGFloat(k % cols) * cw + 6, y: CGFloat(k / cols) * ch + 4),
                            withAttributes: [.font: UIFont.boldSystemFont(ofSize: 14), .foregroundColor: UIColor.white])
             }
