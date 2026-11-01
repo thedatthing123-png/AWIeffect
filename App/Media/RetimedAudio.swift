@@ -7,15 +7,16 @@ enum RetimedAudio {
     private static var cache: [Data: URL] = [:]
     private static let rate = 48_000.0
 
-    static func file(for layer: Layer, source: URL) throws -> URL {
+    static func file(for layer: Layer, source: URL, isCancelled: () -> Bool = { false }) throws -> URL {
         lock.lock(); defer { lock.unlock() }
+        if isCancelled() || Task.isCancelled { throw ExportError.cancelled }
         let attributes = try FileManager.default.attributesOfItem(atPath: source.path)
         var key = try JSONEncoder().encode(layer)
         key.append(Data("\(source.path)|\(attributes[.size] ?? 0)|\(attributes[.modificationDate] ?? "")".utf8))
         if let url = cache[key], FileManager.default.fileExists(atPath: url.path) { return url }
         let decoded = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".caf")
         defer { try? FileManager.default.removeItem(at: decoded) }
-        try decode(source, to: decoded)
+        try decode(source, to: decoded, isCancelled: isCancelled)
         let input = try AVAudioFile(forReading: decoded, commonFormat: .pcmFormatFloat32, interleaved: false)
         let format = input.processingFormat
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "-retimed.caf")
@@ -48,6 +49,7 @@ enum RetimedAudio {
             }
             var offset: Int64 = 0
             while offset < count {
+                if isCancelled() || Task.isCancelled { throw ExportError.cancelled }
                 let n = AVAudioFrameCount(min(4096, count - offset))
                 guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: n), let channels = buffer.floatChannelData else {
                     throw ExportError.writer("Cannot allocate retimed audio.")
@@ -78,7 +80,7 @@ enum RetimedAudio {
         return outputURL
     }
 
-    private static func decode(_ url: URL, to output: URL) throws {
+    private static func decode(_ url: URL, to output: URL, isCancelled: () -> Bool) throws {
         let asset = AVURLAsset(url: url)
         guard let track = asset.tracks(withMediaType: .audio).first else { throw ExportError.writer("Audio source has no sound track.") }
         let reader = try AVAssetReader(asset: asset)
@@ -91,6 +93,7 @@ enum RetimedAudio {
         guard reader.startReading() else { throw ExportError.writer(reader.error?.localizedDescription ?? "Cannot read audio.") }
         defer { if reader.status == .reading { reader.cancelReading() } }
         while let sample = source.copyNextSampleBuffer() {
+            if isCancelled() || Task.isCancelled { throw ExportError.cancelled }
             let frames = CMSampleBufferGetNumSamples(sample)
             guard frames > 0, let block = CMSampleBufferGetDataBuffer(sample),
                   let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frames)),

@@ -161,20 +161,22 @@ final class AudioPreview {
     }
 
     /// Export uses the throwing variant so failed decoding cannot masquerade as an intentionally silent project.
-    static func buildComposition(_ project: Project, mediaURL: (String) -> URL) throws -> (AVMutableComposition, AVAudioMix)? {
+    static func buildComposition(_ project: Project, mediaURL: (String) -> URL, isCancelled: () -> Bool = { false }) throws -> (AVMutableComposition, AVAudioMix)? {
         let comp = AVMutableComposition()
         var params: [AVMutableAudioMixInputParameters] = []
         for l in project.layers where l.isVisible && l.hasAudio {
             guard let file = l.mediaFile else { continue }
+            if isCancelled() || Task.isCancelled { throw ExportError.cancelled }
             let retimed = l.timeRemap != nil || l.speed < 0
-            let url = retimed ? try RetimedAudio.file(for: l, source: mediaURL(file)) : mediaURL(file)
+            let url = retimed ? try RetimedAudio.file(for: l, source: mediaURL(file), isCancelled: isCancelled) : mediaURL(file)
             let asset = AVURLAsset(url: url)
             guard let src = asset.tracks(withMediaType: .audio).first,
                   let dst = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) else {
                 throw ExportError.writer("Cannot load audio for \(l.name).")
             }
-            let compDur = l.outPoint - l.inPoint
-            let sourceStart = retimed ? 0 : l.sourceStart
+            let timelineStart = max(0, l.inPoint)
+            let compDur = min(project.duration, l.outPoint) - timelineStart
+            let sourceStart = retimed ? timelineStart - l.inPoint : l.sourceTime(at: timelineStart)
             let speed = retimed ? 1 : l.speed
             guard compDur.isFinite, sourceStart.isFinite, speed.isFinite, speed > 0 else { continue }
             let available = CMTimeGetSeconds(asset.duration) - sourceStart

@@ -258,6 +258,7 @@ struct EffectsPanel: View {
                     Image(systemName: "chevron.right").rotationEffect(.degrees(isOpen ? 90 : 0))
                         .frame(width: 24, height: 30)
                 }
+                .accessibilityIdentifier("effect-expand-\(e.typeID)")
                 Text(def?.name ?? "Missing effect: \(e.typeID)")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(def == nil ? Theme.danger : (e.isEnabled ? Theme.text : Theme.textDim))
@@ -281,6 +282,7 @@ struct EffectsPanel: View {
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
         .glass(radius: 12)
+        .accessibilityIdentifier("effect-card-\(e.typeID)")
         .onAppear { if state.selectedLayer?.effects.last?.id == e.id { expanded.insert(e.id) } }
     }
 
@@ -348,10 +350,12 @@ struct ParamRow: View {
             ValueScrubber(value: effect.number(def.id, t), range: lo...hi, step: step, unit: unit,
                           onBegin: { state.beginEdit("Edit \(def.name)") },
                           onChange: { setNumber($0) }, onEnd: { state.endEdit() })
+                .accessibilityIdentifier("effect-param-\(effect.typeID)-\(def.id)")
         case .angle:
             ValueScrubber(value: effect.number(def.id, t), range: -360...360, step: 1, unit: "°",
                           onBegin: { state.beginEdit("Edit \(def.name)") },
                           onChange: { setNumber($0) }, onEnd: { state.endEdit() })
+                .accessibilityIdentifier("effect-param-\(effect.typeID)-\(def.id)")
         case .point:
             let v = effect.point(def.id, t)
             NumberField(value: v.x * 100, label: "X%") { nv in setPoint(Vec2(nv / 100, v.y)) }

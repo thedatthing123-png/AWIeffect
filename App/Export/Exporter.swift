@@ -215,7 +215,7 @@ final class Exporter {
     /// Mixes the project's audio (all audible layers, volume keys, speed) into an AAC file, or nil when silent.
     static func renderAudio(project: Project, start: Double, end: Double, mediaURL: @escaping (String) -> URL,
                             isCancelled: () -> Bool = { false }) async throws -> URL? {
-        guard let (comp, mix) = try AudioPreview.buildComposition(project, mediaURL: mediaURL) else { return nil }
+        guard let (comp, mix) = try AudioPreview.buildComposition(project, mediaURL: mediaURL, isCancelled: isCancelled) else { return nil }
         let tracks = comp.tracks(withMediaType: .audio)
         guard !tracks.isEmpty else { return nil }
         let reader = try AVAssetReader(asset: comp)

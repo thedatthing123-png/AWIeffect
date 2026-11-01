@@ -98,4 +98,51 @@ final class EssentialRegressionTests: XCTestCase {
             XCTFail("Broken audio must be reported")
         } catch { XCTAssertFalse(error is CancellationError) }
     }
+
+    func testSelectedRangeAudioHasOutputRelativeDuration() async throws {
+        let source = try ramp()
+        defer { try? FileManager.default.removeItem(at: source) }
+        var p = Project.new(name: "trim", width: 32, height: 32, fps: 24, duration: 1, background: .black)
+        var layer = p.makeLayer(name: "tone", content: .audio(fileName: "tone.wav", duration: 1), size: Vec2(1, 1))
+        layer.outPoint = 1
+        p.layers = [layer]
+        let mixed = try await Exporter.renderAudio(project: p, start: 0.4, end: 0.8, mediaURL: { _ in source })
+        let url = try XCTUnwrap(mixed)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let asset = AVURLAsset(url: url)
+        let duration = try await asset.load(.duration)
+        XCTAssertEqual(duration.seconds, 0.4, accuracy: 0.06)
+        let tracks = try await asset.loadTracks(withMediaType: .audio)
+        XCTAssertEqual(tracks.count, 1)
+    }
+
+    func testTransparentMovieDecodedPixelsRetainAlpha() async throws {
+        guard Renderer.shared != nil else { throw XCTSkip("Metal unavailable") }
+        // HEVC alpha requires an available encoder; a missing simulator codec is reported as a skip.
+        let probe = try AVAssetWriter(outputURL: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mov"), fileType: .mov)
+        let settings: [String: Any] = [AVVideoCodecKey: AVVideoCodecType.hevcWithAlpha, AVVideoWidthKey: 64, AVVideoHeightKey: 64]
+        guard probe.canApply(outputSettings: settings, forMediaType: .video) else { throw XCTSkip("HEVC alpha encoder unavailable") }
+        var p = Project.new(name: "alpha-video", width: 64, height: 64, fps: 24, duration: 0.25, background: .black)
+        var layer = p.makeLayer(name: "red", content: .shape(.rectangle), size: Vec2(32, 32))
+        layer.fill = Animated(RGBA(1, 0, 0, 0.5))
+        p.layers = [layer]
+        var options = ExportSettings(); options.format = .transparent
+        let url = try await Exporter().export(project: p, settings: options, mediaURL: { URL(fileURLWithPath: $0) }, progress: { _ in })
+        defer { try? FileManager.default.removeItem(at: url) }
+        let asset = AVURLAsset(url: url)
+        let tracks = try await asset.loadTracks(withMediaType: .video)
+        let track = try XCTUnwrap(tracks.first)
+        let reader = try AVAssetReader(asset: asset)
+        let out = AVAssetReaderTrackOutput(track: track, outputSettings: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
+        reader.add(out)
+        XCTAssertTrue(reader.startReading())
+        let sample = try XCTUnwrap(out.copyNextSampleBuffer())
+        let buffer = try XCTUnwrap(CMSampleBufferGetImageBuffer(sample))
+        CVPixelBufferLockBaseAddress(buffer, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly); reader.cancelReading() }
+        let bytes = try XCTUnwrap(CVPixelBufferGetBaseAddress(buffer)).assumingMemoryBound(to: UInt8.self)
+        let stride = CVPixelBufferGetBytesPerRow(buffer)
+        XCTAssertLessThan(bytes[3], 10, "Transparent corner became opaque")
+        XCTAssertEqual(Double(bytes[32 * stride + 32 * 4 + 3]), 128, accuracy: 12)
+    }
 }
