@@ -420,6 +420,8 @@ enum TextPresets {
             a.properties.blur = Animated(18)
             a.properties.scale = Animated(Vec2(70, 70))
             a.properties.rotation = Animated(-12)
+            a.properties.fill = Animated(RGBA(hex: 0x9B5CFF))
+            a.selector.easeHigh = 20
             return [a]
         },
         TextPreset(id: "zoomBig", name: "Zoom From Big") { s, d in
