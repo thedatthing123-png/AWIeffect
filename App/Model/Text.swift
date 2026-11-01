@@ -412,18 +412,6 @@ enum TextPresets {
             b.properties.scale = Animated(Vec2(150, 60))
             return [a, b]
         },
-        TextPreset(id: "riseLines", name: "Rise Up (Lines)") { s, d in
-            var a = TextAnimator(name: "Rise")
-            a.selector = sweep(s, d, shape: .rampUp, basedOn: .lines, soft: 60, easeHigh: 70)
-            a.properties.position = Animated(Vec2(0, 140))
-            a.properties.opacity = Animated(0)
-            a.properties.blur = Animated(18)
-            a.properties.scale = Animated(Vec2(70, 70))
-            a.properties.rotation = Animated(-12)
-            a.properties.fill = Animated(RGBA(hex: 0x3DFFB0))
-            a.selector.easeHigh = 20
-            return [a]
-        },
         TextPreset(id: "zoomBig", name: "Zoom From Big") { s, d in
             var a = TextAnimator(name: "Zoom")
             a.selector = sweep(s, d, shape: .rampUp, soft: 50)
