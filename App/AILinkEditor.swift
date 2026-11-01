@@ -172,7 +172,8 @@ extension AILink {
             proj.layers[i] = l
         }
         e.redrawToken += 1
-        return .json(unknown.isEmpty ? ["ok": true] : ["ok": true, "ignored": unknown])
+        let out: [String: Any] = unknown.isEmpty ? ["ok": true] : ["ok": true, "ignored": unknown]
+        return .json(out)
     }
 
     private func setParams(_ e: EditorState, layer: UUID, effect: UUID, _ params: [String: Any], at time: Double?, key: Bool) {
