@@ -3,13 +3,14 @@ import MetalKit
 import PhotosUI
 
 enum DrawTool: String, CaseIterable, Identifiable {
-    case brush, eraser, selectBrush, lasso, rectSelect, ellipseSelect, wand, fill, move, eyedropper
+    case brush, eraser, quickSelect, selectBrush, lasso, rectSelect, ellipseSelect, wand, fill, move, eyedropper
     var id: String { rawValue }
     var symbol: String {
         switch self {
         case .brush: return "paintbrush.pointed.fill"
         case .eraser: return "eraser.fill"
-        case .selectBrush: return "hand.draw"
+        case .selectBrush: return "sparkles"
+        case .quickSelect: return "hand.draw"
         case .lasso: return "lasso"
         case .rectSelect: return "rectangle.dashed"
         case .ellipseSelect: return "circle.dashed"
@@ -22,13 +23,14 @@ enum DrawTool: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .selectBrush: return "AI Select"
+        case .quickSelect: return "Quick Sel"
         case .rectSelect: return "Rect"
         case .ellipseSelect: return "Ellipse"
         case .eyedropper: return "Picker"
         default: return rawValue.capitalized
         }
     }
-    var isSelection: Bool { [.selectBrush, .lasso, .rectSelect, .ellipseSelect, .wand].contains(self) }
+    var isSelection: Bool { [.quickSelect, .selectBrush, .lasso, .rectSelect, .ellipseSelect, .wand].contains(self) }
 }
 
 /// Shared tool state between the SwiftUI chrome and the UIKit canvas.
@@ -48,7 +50,18 @@ final class DrawSession: ObservableObject {
     @Published var lassoPoints: [SIMD2<Double>] = []
     /// Select Brush: remove from the selection instead of adding; snap brushed areas to the AI-detected subject.
     @Published var selectSubtract = false
-    @Published var selectSnap = true
+    @Published var selectSnap = false
+    /// Lasso: freehand drag, or polygon (tap points, tap the first point to close).
+    @Published var polygonLasso = false
+    /// Fill tool: fill, or erase the tapped area (Eraser Bucket).
+    @Published var fillErase = false
+    /// Wand: only connected pixels, or every matching color.
+    @Published var wandContiguous = true
+    /// Canvas background while drawing (never saved): 0 transparent checker, 1 color.
+    @Published var bgMode = 0
+    @Published var bgColor: RGBA = .white
+    /// Selection display: 0 dim outside, 1 red quick mask, 2 marching ants only.
+    @Published var selectionView = 0
     var lastBrushKind: BrushKind = .pen
 
     init(engine: DrawEngine) {
@@ -153,11 +166,18 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
             shapeStart = p
             outlineView = [t.location(in: self)]
         case .selectBrush: e.beginSelectStroke(at: p, radius: session.brush.size / 2, subtract: session.selectSubtract)
+        case .quickSelect: e.beginQuickSelect(at: p, subtract: session.selectSubtract)
         case .lasso:
+            if session.polygonLasso {
+                // Polygon lasso: points are added on lift; nothing to start here.
+                break
+            }
             session.lassoPoints = [p]
             outlineView = [t.location(in: self)]
-        case .wand: e.selectWand(at: p, tolerance: session.fillTolerance)
-        case .fill: e.fill(at: p, tolerance: session.fillTolerance, gapClose: session.gapClose)
+        case .wand: e.selectWand(at: p, tolerance: session.fillTolerance, contiguous: session.wandContiguous, gapClose: session.gapClose)
+        case .fill:
+            if session.fillErase { e.eraseFill(at: p, tolerance: session.fillTolerance, gapClose: session.gapClose) }
+            else { e.fill(at: p, tolerance: session.fillTolerance, gapClose: session.gapClose) }
         case .eyedropper: pickColor(at: p)
         case .move: movingStart = t.location(in: self)
         }
@@ -170,10 +190,12 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
             for c in event?.coalescedTouches(for: t) ?? [t] {
                 session.engine.continueStroke(to: toCanvas(c.location(in: self)), pressure: pressure(c))
             }
-        case .lasso:
+        case .lasso where !session.polygonLasso:
             session.lassoPoints.append(toCanvas(t.location(in: self)))
             outlineView.append(t.location(in: self))
             showOutline(outlineView, closed: false)
+        case .quickSelect:
+            for c in event?.coalescedTouches(for: t) ?? [t] { session.engine.continueQuickSelect(to: toCanvas(c.location(in: self))) }
         case .rectSelect, .ellipseSelect:
             guard let a = outlineView.first else { break }
             let b = t.location(in: self)
@@ -190,10 +212,22 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         switch session.tool {
         case .brush, .eraser: session.engine.endStroke()
         case .selectBrush: session.engine.endSelectStroke(snapToSubject: session.selectSnap && !session.selectSubtract)
+        case .lasso where session.polygonLasso:
+            let v = t.location(in: self)
+            // Tap near the first point (or with 2+ points, a quick second tap there) closes the shape.
+            if let first = outlineView.first, outlineView.count >= 3, hypot(v.x - first.x, v.y - first.y) < 24 {
+                session.engine.selectLasso(session.lassoPoints)
+                session.lassoPoints = []; outlineView = []; outline.path = nil
+            } else {
+                session.lassoPoints.append(toCanvas(v)); outlineView.append(v)
+                showOutline(outlineView, closed: false)
+            }
         case .lasso:
             session.engine.selectLasso(session.lassoPoints)
             session.lassoPoints = []
+            outlineView = []
             outline.path = nil
+        case .quickSelect: session.engine.endQuickSelect()
         case .rectSelect, .ellipseSelect:
             if let a = shapeStart { session.engine.selectShape(a, toCanvas(t.location(in: self)), ellipse: session.tool == .ellipseSelect) }
             shapeStart = nil
@@ -272,12 +306,15 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         func ndc(_ p: CGPoint) -> SIMD2<Float> { SIMD2(Float(p.x / w * 2 - 1), Float(1 - p.y / h * 2)) }
         let x0 = offset.x, y0 = offset.y, x1 = offset.x + canvasSize.width * zoom, y1 = offset.y + canvasSize.height * zoom
         var rect = SIMD4<Float>(ndc(CGPoint(x: x0, y: y1)).x, ndc(CGPoint(x: x0, y: y1)).y, ndc(CGPoint(x: x1, y: y0)).x, ndc(CGPoint(x: x1, y: y0)).y)
-        var opts = SIMD4<Float>(e.hasSelection ? 1 : 0, 0, 0, 0)
+        var opts = SIMD4<Float>(e.hasSelection ? 1 : 0, Float(session.bgMode), Float(session.selectionView),
+                                Float(CACurrentMediaTime().truncatingRemainder(dividingBy: 1000)))
+        var bg = session.bgColor.simd
         enc.setRenderPipelineState(e.displayPSO)
         enc.setVertexBytes(&rect, length: 16, index: 0)
         enc.setFragmentTexture(e.canvas, index: 0)
         enc.setFragmentTexture(e.selection, index: 1)
         enc.setFragmentBytes(&opts, length: 16, index: 0)
+        enc.setFragmentBytes(&bg, length: 16, index: 1)
         enc.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
         enc.endEncoding()
         cb.present(drawable)
@@ -307,6 +344,7 @@ struct DrawStudioView: View {
     @State private var photo: PhotosPickerItem?
     @State private var showPhotos = false
     @State private var showAdjust = false
+    @State private var showRefine = false
     @State private var playTimer: Timer?
 
     init(engine: DrawEngine, onDone: @escaping (DrawEngine) -> Void, onCancel: @escaping () -> Void) {
@@ -334,6 +372,7 @@ struct DrawStudioView: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.85), value: showLayers)
         .awiSheet(isPresented: $showBrushes) { BrushPicker(session: session).presentationDetents([.medium, .large]) }
         .awiSheet(isPresented: $showAdjust) { DrawAdjustSheet(engine: engine).presentationDetents([.medium]) }
+        .awiSheet(isPresented: $showRefine) { SelectionRefineSheet(session: session).presentationDetents([.medium, .large]) }
         .onDisappear { playTimer?.invalidate() }
         .photosPicker(isPresented: $showPhotos, selection: $photo, matching: .images)
         .onChange(of: photo) { _, item in
@@ -348,9 +387,9 @@ struct DrawStudioView: View {
     }
 
     private var topBar: some View {
-        HStack(spacing: 6) {
-            Button("Cancel", role: .cancel, action: onCancel).foregroundStyle(Theme.textDim)
-            Spacer()
+        HStack(spacing: 2) {
+            iconButton("xmark") { onCancel() }
+            Spacer(minLength: 2)
             iconButton("arrow.uturn.backward", enabled: engine.canUndo) { engine.undo() }
             iconButton("arrow.uturn.forward", enabled: engine.canRedo) { engine.redo() }
             iconButton("photo.badge.plus") { showPhotos = true }
@@ -374,7 +413,19 @@ struct DrawStudioView: View {
                 Image(systemName: "wand.and.rays").font(.system(size: 16, weight: .semibold)).frame(width: 36, height: 36).foregroundStyle(Theme.text)
             }
             iconButton("film.stack", active: engine.animating) { engine.animating.toggle(); engine.touch() }
-            Spacer()
+            Menu {
+                Picker("Background", selection: $session.bgMode) {
+                    Text("Transparent").tag(0)
+                    Text("Color").tag(1)
+                }
+                Button("White") { session.bgMode = 1; session.bgColor = .white }
+                Button("Black") { session.bgMode = 1; session.bgColor = .black }
+                Button("Gray") { session.bgMode = 1; session.bgColor = RGBA(0.5, 0.5, 0.5) }
+                Text("Only shown while drawing. Drawings stay transparent.")
+            } label: {
+                Image(systemName: "checkerboard.rectangle").font(.system(size: 15, weight: .semibold)).frame(width: 32, height: 36).foregroundStyle(Theme.text)
+            }
+            Spacer(minLength: 2)
             Menu {
                 if engine.animating {
                     Button { engine.sendAsFrames = true; engine.sendAsParts = false; onDone(engine) } label: {
@@ -386,12 +437,13 @@ struct DrawStudioView: View {
                     Label("Send Parts as Separate Layers (for animating)", systemImage: "square.3.layers.3d.down.right")
                 }
             } label: {
-                Label("Send to Timeline", systemImage: "arrow.down.to.line")
-                    .font(.system(size: 13, weight: .bold)).padding(.horizontal, 12).padding(.vertical, 8)
+                Label("Send", systemImage: "arrow.down.to.line")
+                    .font(.system(size: 13, weight: .bold)).lineLimit(1).fixedSize()
+                    .padding(.horizontal, 10).padding(.vertical, 8)
                     .background(Capsule().fill(Theme.accent)).foregroundStyle(.white)
             }
         }
-        .padding(.horizontal, 12).frame(height: 50)
+        .padding(.horizontal, 6).frame(height: 50)
     }
 
     private var sideSliders: some View {
@@ -417,6 +469,19 @@ struct DrawStudioView: View {
                 optionSlider("Soft", value: Binding(get: { 1 - session.eraser.hardness }, set: { session.eraser.hardness = 1 - $0 }), range: 0...1)
             }
             .padding(.horizontal, 10).padding(.vertical, 4)
+        case .quickSelect:
+            VStack(spacing: 4) {
+                HStack(spacing: 8) {
+                    Picker("", selection: $session.selectSubtract) { Text("Add").tag(false); Text("Remove").tag(true) }
+                        .pickerStyle(.segmented).frame(width: 150)
+                    optionSlider("Edge", value: Binding(get: { engine.quickTolerance }, set: { engine.quickTolerance = $0 }), range: 0.02...0.5)
+                }
+                Picker("", selection: Binding(get: { engine.sampleSource }, set: { engine.sampleSource = $0 })) {
+                    ForEach(SampleSource.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+            }
+            .padding(.horizontal, 10).padding(.vertical, 4)
         case .wand, .fill:
             VStack(spacing: 4) {
                 HStack(spacing: 8) {
@@ -427,14 +492,29 @@ struct DrawStudioView: View {
                     .pickerStyle(.segmented).frame(width: 170)
                 }
                 if session.tool == .fill {
+                    Picker("", selection: $session.fillErase) { Text("Fill").tag(false); Text("Erase Area").tag(true) }
+                        .pickerStyle(.segmented)
                     HStack(spacing: 8) {
                         Stepper("Close gaps \(session.gapClose)px", value: $session.gapClose, in: 0...10).font(.system(size: 12))
                         Stepper("Expand \(engine.fillExpand)px", value: Binding(get: { engine.fillExpand }, set: { engine.fillExpand = $0; engine.touch() }), in: 0...6).font(.system(size: 12))
                     }
-                } else { selectionModePicker }
+                } else {
+                    HStack(spacing: 8) {
+                        Toggle("Contiguous", isOn: $session.wandContiguous).toggleStyle(.button).tint(Theme.accent).font(.system(size: 12, weight: .semibold))
+                        Stepper("Gap \(session.gapClose)px", value: $session.gapClose, in: 0...10).font(.system(size: 12))
+                    }
+                    selectionModePicker
+                }
             }
             .foregroundStyle(Theme.text).padding(.horizontal, 10).padding(.vertical, 4)
-        case .lasso, .rectSelect, .ellipseSelect:
+        case .lasso:
+            VStack(spacing: 4) {
+                Picker("", selection: $session.polygonLasso) { Text("Freehand").tag(false); Text("Polygon (tap points)").tag(true) }
+                    .pickerStyle(.segmented)
+                selectionModePicker
+            }
+            .padding(.horizontal, 10).padding(.vertical, 4)
+        case .rectSelect, .ellipseSelect:
             selectionModePicker.padding(.horizontal, 10).padding(.vertical, 4)
         default:
             EmptyView()
@@ -508,6 +588,8 @@ struct DrawStudioView: View {
     private var selectionBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: 6) {
+            chip("Refine Edge", "slider.horizontal.below.square.and.square.filled") { showRefine = true }
+            chip("Remove Background", "person.crop.rectangle.badge.xmark") { engine.deleteOutsideSelection() }
             chip("AI Subject", "person.crop.rectangle") {
                 if !engine.selectSubject() { UINotificationFeedbackGenerator().notificationOccurred(.error) }
             }
@@ -560,7 +642,7 @@ struct DrawStudioView: View {
 
     private func iconButton(_ s: String, enabled: Bool = true, active: Bool = false, _ a: @escaping () -> Void) -> some View {
         Button(action: a) {
-            Image(systemName: s).font(.system(size: 16, weight: .semibold)).frame(width: 36, height: 36)
+            Image(systemName: s).font(.system(size: 15, weight: .semibold)).frame(width: 32, height: 36)
                 .foregroundStyle(active ? Theme.accentGlow : (enabled ? Theme.text : Theme.textDim.opacity(0.4)))
         }
         .disabled(!enabled)
@@ -712,6 +794,46 @@ struct DrawAdjustSheet: View {
                     }
                 }
             }
+        }
+    }
+}
+
+/// Select and Mask: shape the selection edge, pick how it's shown, send it somewhere.
+struct SelectionRefineSheet: View {
+    @ObservedObject var session: DrawSession
+    @Environment(\.dismiss) private var dismiss
+    @State private var feather = 0.0
+    @State private var shift = 0.0
+    @State private var smooth = 0.0
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("View") {
+                    Picker("Show selection as", selection: $session.selectionView) {
+                        Text("Dim outside").tag(0)
+                        Text("Red overlay").tag(1)
+                        Text("Outline only").tag(2)
+                    }
+                    .pickerStyle(.segmented)
+                }
+                Section("Edge") {
+                    HStack { Text("Smooth"); Slider(value: $smooth, in: 0...6, step: 1); Text("\(Int(smooth))").monospacedDigit() }
+                    HStack { Text("Feather"); Slider(value: $feather, in: 0...12, step: 1); Text("\(Int(feather))").monospacedDigit() }
+                    HStack { Text("Shift Edge"); Slider(value: $shift, in: -12...12, step: 1); Text("\(Int(shift))").monospacedDigit() }
+                    Button("Apply to Selection") {
+                        session.engine.refineSelection(feather: Int(feather), shift: Int(shift), smooth: Int(smooth))
+                        feather = 0; shift = 0; smooth = 0
+                    }
+                }
+                Section("Output") {
+                    Button("To New Layer (cutout)") { session.engine.liftSelectionToLayer(); dismiss() }
+                    Button("Remove Background on This Layer") { session.engine.deleteOutsideSelection(); dismiss() }
+                    Button("Delete Selected") { session.engine.deleteSelection(); dismiss() }
+                    Button("Invert Selection") { session.engine.invertSelection() }
+                }
+            }
+            .navigationTitle("Refine Edge")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

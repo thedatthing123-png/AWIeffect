@@ -74,7 +74,7 @@ enum DrawRuler: String, CaseIterable, Identifiable {
 
 /// How a new selection combines with the current one.
 enum SelectionMode: String, CaseIterable, Identifiable {
-    case replace, add, subtract
+    case replace, add, subtract, intersect
     var id: String { rawValue }
     var title: String { rawValue.capitalized }
 }
@@ -447,7 +447,14 @@ final class DrawEngine: ObservableObject {
         var out = m
         if hasSelection, selectionMode != .replace {
             let cur = selectionBytes()
-            for i in out.indices { out[i] = selectionMode == .add ? max(cur[i], m[i]) : min(cur[i], 255 - m[i]) }
+            for i in out.indices {
+                switch selectionMode {
+                case .add: out[i] = max(cur[i], m[i])
+                case .subtract: out[i] = min(cur[i], 255 - m[i])
+                case .intersect: out[i] = min(cur[i], m[i])
+                case .replace: break
+                }
+            }
         }
         selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: out, bytesPerRow: width)
         hasSelection = out.contains { $0 > 0 }
@@ -508,12 +515,123 @@ final class DrawEngine: ObservableObject {
 
     /// Magic wand: contiguous pixels within `tolerance` of the tapped color, read from all layers or just this one
     /// (the old version only read the active layer, so on an empty layer it selected everything).
-    func selectWand(at p: SIMD2<Double>, tolerance: Double) {
+    func selectWand(at p: SIMD2<Double>, tolerance: Double, contiguous: Bool = true, gapClose: Int = 0) {
         let px = samplePixels()
         guard px.count == width * height * 4 else { return }
-        var mask = Self.floodMask(px, width, height, Int(p.x), Int(p.y), tolerance)
+        var mask = contiguous ? Self.floodMask(px, width, height, Int(p.x), Int(p.y), tolerance, gapClose: gapClose)
+                              : Self.colorRange(px, width, height, Int(p.x), Int(p.y), tolerance)
         Self.soften(&mask, width, height)
         applySelection(mask)
+    }
+
+    /// Every pixel of a similar color anywhere (wand with Contiguous off / Select Color Range).
+    static func colorRange(_ px: [UInt8], _ w: Int, _ h: Int, _ x: Int, _ y: Int, _ tolerance: Double) -> [UInt8] {
+        var m = [UInt8](repeating: 0, count: w * h)
+        guard x >= 0, y >= 0, x < w, y < h else { return m }
+        let s = (y * w + x) * 4
+        let t = (Int(px[s]), Int(px[s + 1]), Int(px[s + 2]), Int(px[s + 3]))
+        let tol = Int(tolerance * 255)
+        for i in 0..<(w * h) {
+            let o = i * 4
+            let d = max(abs(Int(px[o]) - t.0), abs(Int(px[o + 1]) - t.1), abs(Int(px[o + 2]) - t.2), abs(Int(px[o + 3]) - t.3))
+            if d <= tol { m[i] = 255 }
+        }
+        return m
+    }
+
+    // MARK: Quick Select (Photoshop style: brush over a part, the selection grows to its edges)
+
+    private var quickSeeds: [SIMD2<Double>] = []
+    private var quickPixels: [UInt8] = []
+    private var quickBase: [UInt8] = []
+    var quickTolerance = 0.18
+
+    func beginQuickSelect(at p: SIMD2<Double>, subtract: Bool) {
+        quickPixels = samplePixels()
+        quickBase = hasSelection ? selectionBytes() : [UInt8](repeating: 0, count: width * height)
+        quickSeeds = []
+        quickSubtract = subtract
+        continueQuickSelect(to: p)
+    }
+
+    private var quickSubtract = false
+
+    /// Each new seed floods its region (bounded by line art and color changes) into the selection.
+    func continueQuickSelect(to p: SIMD2<Double>) {
+        guard quickPixels.count == width * height * 4 else { return }
+        if let last = quickSeeds.last, simd_length(p - last) < 6 { return }
+        let x = Int(p.x), y = Int(p.y)
+        guard x >= 0, y >= 0, x < width, y < height else { return }
+        quickSeeds.append(p)
+        // Already covered: nothing new to flood.
+        if !quickSubtract, quickBase[y * width + x] > 200 { return }
+        let region = Self.floodMask(quickPixels, width, height, x, y, quickTolerance, gapClose: 1)
+        for i in quickBase.indices where region[i] > 0 {
+            quickBase[i] = quickSubtract ? 0 : 255
+        }
+        var show = quickBase
+        Self.soften(&show, width, height)
+        selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: show, bytesPerRow: width)
+        hasSelection = true
+        revision += 1
+    }
+
+    func endQuickSelect() {
+        hasSelection = quickBase.contains { $0 > 0 }
+        if !hasSelection { clearSelection() }
+        quickPixels = []
+        revision += 1
+    }
+
+    // MARK: Selection refine (Select and Mask)
+
+    /// Feather (blur), shift edge (grow + / shrink -), smooth (rounds jaggies) on the current selection.
+    func refineSelection(feather: Int, shift: Int, smooth: Int) {
+        guard hasSelection else { return }
+        var m = selectionBytes()
+        if shift > 0 { Self.grow(&m, width, height, shift) }
+        if shift < 0 {
+            var inv = m.map { 255 - $0 }
+            Self.grow(&inv, width, height, -shift)
+            m = inv.map { 255 - $0 }
+        }
+        for _ in 0..<max(0, smooth) {
+            Self.soften(&m, width, height)
+            for i in m.indices { m[i] = m[i] > 127 ? 255 : 0 }
+        }
+        for _ in 0..<max(0, feather) { Self.soften(&m, width, height) }
+        selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: m, bytesPerRow: width)
+        revision += 1
+    }
+
+    /// Delete everything outside the selection on the active layer (remove background).
+    func deleteOutsideSelection() {
+        guard hasSelection else { return }
+        invertSelection()
+        deleteSelection()
+        invertSelection()
+    }
+
+    // MARK: Eraser Bucket (fill remove)
+
+    /// Clears the tapped area of the active layer in one tap (ibis Paint's Eraser Bucket).
+    func eraseFill(at p: SIMD2<Double>, tolerance: Double, gapClose: Int) {
+        guard let l = activeLayer else { return }
+        pushUndo(l)
+        var px = bytes(of: l)
+        let ref = samplePixels()
+        var mask = Self.floodMask(ref.count == px.count ? ref : px, width, height, Int(p.x), Int(p.y), tolerance, gapClose: gapClose)
+        Self.grow(&mask, width, height, fillExpand)
+        Self.soften(&mask, width, height)
+        let sel = selectionBytes()
+        for i in 0..<(width * height) {
+            let a = UInt16(mask[i]) * UInt16(sel[i]) / 255
+            guard a > 0 else { continue }
+            let keep = UInt16(255 - a)
+            for c in 0..<4 { px[i * 4 + c] = UInt8(UInt16(px[i * 4 + c]) * keep / 255) }
+        }
+        setBytes(px, of: l)
+        revision += 1
     }
 
     /// One-pixel box blur on a mask: anti-aliased selection / fill edges.

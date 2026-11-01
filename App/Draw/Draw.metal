@@ -162,20 +162,34 @@ vertex DrawVOut drawDisplayVertex(uint vid [[vertex_id]], constant float4& rect 
     return o;
 }
 
+// opts = (has selection, background mode 0 checker / 1 color, selection view 0 dim / 1 red quick mask / 2 ants only, time)
+// bg = background color for mode 1.
 fragment float4 drawDisplayFragment(DrawVOut in [[stage_in]],
                                     texture2d<float, access::sample> canvas [[texture(0)]],
                                     texture2d<float, access::sample> selection [[texture(1)]],
-                                    constant float4& opts [[buffer(0)]]) {
+                                    constant float4& opts [[buffer(0)]],
+                                    constant float4& bg [[buffer(1)]]) {
     constexpr sampler s(address::clamp_to_edge, filter::nearest);
     constexpr sampler sl(address::clamp_to_edge, filter::linear);
     float4 c = canvas.sample(sl, in.uv);
-    float2 cell = floor(in.uv * float2(canvas.get_width(), canvas.get_height()) / 16.0);
-    float check = fmod(cell.x + cell.y, 2.0) < 1.0 ? 0.92 : 0.82;
-    float3 rgb = c.rgb + float3(check) * (1.0 - c.a);
+    float2 size = float2(canvas.get_width(), canvas.get_height());
+    float2 cell = floor(in.uv * size / 16.0);
+    float check = fmod(cell.x + cell.y, 2.0) < 1.0 ? 0.92 : 0.80;
+    float3 back = opts.y > 0.5 ? bg.rgb : float3(check);
+    float3 rgb = c.rgb + back * (1.0 - c.a);
     if (opts.x > 0.5) {
-        // Marching tint outside the selection.
-        float sel = selection.sample(s, in.uv).r;
-        rgb = mix(rgb * 0.55 + float3(0.25, 0.1, 0.4) * 0.45, rgb, sel);
+        float sel = selection.sample(sl, in.uv).r;
+        if (opts.z < 0.5) rgb = mix(rgb * 0.5 + float3(0.25, 0.1, 0.4) * 0.5, rgb, sel);
+        else if (opts.z < 1.5) rgb = mix(rgb, rgb * 0.45 + float3(1.0, 0.1, 0.15) * 0.55, sel);
+        // Marching ants on the selection edge (all views).
+        float2 px = 1.5 / size;
+        float e = abs(selection.sample(s, in.uv + float2(px.x, 0)).r - selection.sample(s, in.uv - float2(px.x, 0)).r)
+                + abs(selection.sample(s, in.uv + float2(0, px.y)).r - selection.sample(s, in.uv - float2(0, px.y)).r);
+        if (e > 0.4) {
+            float2 p = in.uv * size;
+            float stripe = fmod(floor((p.x + p.y) / 5.0 + opts.w * 6.0), 2.0);
+            rgb = stripe < 1.0 ? float3(1.0) : float3(0.0);
+        }
     }
     return float4(rgb, 1.0);
 }
