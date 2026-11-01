@@ -90,6 +90,8 @@ extension AILink {
                 e.setEase(prop, segment: seg, interpolation: p.interpolation, out: p.out, into: p.into, curve: nil)
             } else { return .json(["error": "unknown curve", "curves": EaseCurve.Kind.allCases.map(\.rawValue) + EasePreset.all.map(\.id)], status: 404) }
             return .json(["ok": true])
+        case ("POST", "/render/sheet") where UIApplication.shared.applicationState == .background:
+            return .json(["error": "AWIeffect is in the background: come back to the app to preview frames (edits still work)."], status: 409)
         case ("POST", "/render/sheet"):
             return contactSheet(e, count: max(2, min(16, Int(r.query["count"] ?? "") ?? 6)), size: Double(r.query["size"] ?? "") ?? 360)
         default:

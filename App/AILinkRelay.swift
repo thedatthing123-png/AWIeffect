@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import AVFoundation
 
 /// AI Link over the internet: the app keeps one secure WebSocket open to your own relay server (a Cloudflare
 /// Worker), so Claude can reach the open project from anywhere, with no PC and nothing to start by hand. Requests
@@ -25,6 +26,45 @@ final class AILinkRelay: ObservableObject {
     }
 
     private var task: URLSessionWebSocketTask?
+    private var keepAlive: AVAudioPlayer?
+    private var observers: [NSObjectProtocol] = []
+
+    private init() {
+        // Coming back to the app: the old socket may be dead without knowing it — always reconnect fresh.
+        observers.append(NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
+            Task { @MainActor in
+                let r = AILinkRelay.shared
+                if r.enabled { r.reconnect() }
+                UIApplication.shared.isIdleTimerDisabled = r.enabled
+            }
+        })
+        observers.append(NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in
+            Task { @MainActor in UIApplication.shared.isIdleTimerDisabled = false }
+        })
+    }
+
+    /// Silent audio keeps the app running in the background while connected (sideloaded app, so this is allowed
+    /// for us), so Claude can still read and edit while you're in another app.
+    private func setKeepAlive(_ on: Bool) {
+        if !on { keepAlive?.stop(); keepAlive = nil; return }
+        guard keepAlive == nil else { return }
+        let s = AVAudioSession.sharedInstance()
+        try? s.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+        try? s.setActive(true)
+        // 1 s of silence, looped.
+        let rate = 8000, n = rate
+        var wav = Data()
+        func u32(_ v: UInt32) { var x = v.littleEndian; wav.append(Data(bytes: &x, count: 4)) }
+        func u16(_ v: UInt16) { var x = v.littleEndian; wav.append(Data(bytes: &x, count: 2)) }
+        wav.append(Data("RIFF".utf8)); u32(UInt32(36 + n * 2)); wav.append(Data("WAVEfmt ".utf8))
+        u32(16); u16(1); u16(1); u32(UInt32(rate)); u32(UInt32(rate * 2)); u16(2); u16(16)
+        wav.append(Data("data".utf8)); u32(UInt32(n * 2)); wav.append(Data(count: n * 2))
+        guard let p = try? AVAudioPlayer(data: wav) else { return }
+        p.numberOfLoops = -1
+        p.volume = 0
+        p.play()
+        keepAlive = p
+    }
     private var retry = 0
     private var retryWork: DispatchWorkItem?
 
@@ -41,10 +81,16 @@ final class AILinkRelay: ObservableObject {
     func setEnabled(_ on: Bool) {
         enabled = on
         on ? connect() : disconnect()
+        setKeepAlive(on)
+        UIApplication.shared.isIdleTimerDisabled = on
     }
 
     /// Called when the editor opens: stay connected while a project is open.
-    func resume() { if enabled && task == nil { connect() } }
+    func resume() {
+        guard enabled else { return }
+        setKeepAlive(true)
+        if task == nil || status != .connected { reconnect() }
+    }
 
     private func connect() {
         ensureKey()
@@ -72,13 +118,13 @@ final class AILinkRelay: ObservableObject {
         status = .off
     }
 
-    private func reconnect() { disconnect(); connect() }
+    func reconnect() { disconnect(); connect() }
 
     private func scheduleRetry(_ why: String) {
         task = nil
         guard enabled else { status = .off; return }
         status = .failed(why)
-        retry = min(retry + 1, 6)
+        retry = min(retry + 1, 3)   // waits 2, 4, 8 s at most
         let w = DispatchWorkItem { [weak self] in self?.connect() }
         retryWork = w
         DispatchQueue.main.asyncAfter(deadline: .now() + pow(2, Double(retry)), execute: w)
@@ -88,7 +134,12 @@ final class AILinkRelay: ObservableObject {
     private func ping(_ t: URLSessionWebSocketTask) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in
             guard let self, self.task === t else { return }
-            t.sendPing { err in Task { @MainActor in if err == nil { self.ping(t) } } }
+            t.sendPing { err in
+                Task { @MainActor in
+                    guard self.task === t else { return }
+                    if let err { self.scheduleRetry(err.localizedDescription) } else { self.ping(t) }
+                }
+            }
         }
     }
 

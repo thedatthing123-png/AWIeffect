@@ -40,6 +40,7 @@ targets:
         NSPhotoLibraryAddUsageDescription: AWIeffect saves exported videos to your library.
         NSCameraUsageDescription: AWIeffect can capture media for your projects.
         NSMicrophoneUsageDescription: AWIeffect can record audio for your projects.
+        UIBackgroundModes: [audio]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.awieffect.app

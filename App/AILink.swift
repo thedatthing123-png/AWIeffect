@@ -113,6 +113,9 @@ final class AILink: ObservableObject {
             }
         case ("POST", "/render"):
             guard let e = editor, let rr = Renderer.shared else { return .noProject }
+            if UIApplication.shared.applicationState == .background {
+                return .json(["error": "AWIeffect is in the background: iPhone blocks the graphics chip there. Edits still work; come back to the app to preview frames."], status: 409)
+            }
             let t = Double(r.query["t"] ?? "") ?? e.currentTime
             let size = Double(r.query["size"] ?? "") ?? 720
             let pid = e.project.id, store = e.store
