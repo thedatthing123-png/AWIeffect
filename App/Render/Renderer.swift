@@ -624,10 +624,14 @@ final class Renderer {
             }
             if extrude > 0.5 {
                 // Solid thickness: darker slices stacked along the layer normal, drawn far-to-near, caps on both ends.
-                let ctx = EffectContext(gpu: fx, cb: cb, input: current, effect: EffectInstance(typeID: "ae.exposure", params: ["exposure": .number(Animated(-1.4)), "offset": .number(Animated(0)), "gamma": .number(Animated(1))]),
-                                        time: time, unit: density, pool: pool)
-                let side: MTLTexture
-                if let d = EffectRegistry.definition("ae.exposure"), case .pixels(let run) = d.stage { side = run(ctx) } else { side = current }
+                // Walls shade from lit (near the front face) to dark (near the back) so the depth reads like AE's extrude.
+                func shade(_ ev: Double) -> MTLTexture {
+                    let ctx = EffectContext(gpu: fx, cb: cb, input: current, effect: EffectInstance(typeID: "ae.exposure", params: ["exposure": .number(Animated(ev)), "offset": .number(Animated(0)), "gamma": .number(Animated(1))]),
+                                            time: time, unit: density, pool: pool)
+                    if let d = EffectRegistry.definition("ae.exposure"), case .pixels(let run) = d.stage { return run(ctx) }
+                    return current
+                }
+                let sides = [shade(-0.7), shade(-1.15), shade(-1.6), shade(-2.1)]
                 // One slice per ~0.8 px of on-screen wall depth (measured at the corners), so the side stays solid at any angle.
                 let Mback = Self.layerHomography(layer, camera: camera, time: time, renderScale: renderScale, localZ: extrude)
                 func proj(_ m: simd_double3x3, _ x: Double, _ y: Double) -> SIMD2<Double> {
@@ -635,18 +639,20 @@ final class Renderer {
                 }
                 let span = [(-ext.x, -ext.y), (ext.x, -ext.y), (ext.x, ext.y), (-ext.x, ext.y), (0, 0)]
                     .map { c in simd_length(proj(Mback, c.0, c.1) - proj(M, c.0, c.1)) }.max() ?? 0
-                let n = max(3, min(400, Int((span / 0.8).rounded(.up))))
-                let front = Self.layerDepth(layer, camera: camera, time: time)
-                var backLayer = layer
-                backLayer.transform.positionZ = Animated(layer.transform.positionZ.value(at: time) + 1)
-                let backFarther = Self.layerDepth(backLayer, camera: camera, time: time) > front
+                let n = max(3, min(700, Int((span / 0.6).rounded(.up))))
+                // Which end is nearer comes from the projected depth (w) of the actual front and back faces, so the
+                // draw order stays right at any rotation (the old z-offset test broke once the layer was turned).
+                let wFront = (M * SIMD3(0, 0, 1)).z, wBack = (Mback * SIMD3(0, 0, 1)).z
+                let backFarther = wBack > wFront
                 let steps = Array(0...n)
                 for k in (backFarther ? steps : steps.reversed()) {
                     let z = extrude * Double(n - k) / Double(n)
                     let Mk = Self.layerHomography(layer, camera: camera, time: time, renderScale: renderScale, localZ: z)
                     let cap = k == 0 || k == n
+                    // k = 0 is the back face, k = n the front: darker walls toward the back.
+                    let wall = sides[min(sides.count - 1, Int(Double(n - k) / Double(n + 1) * Double(sides.count)))]
                     drawQuad(cb: cb, target: comp, matrix: Mk, halfSize: ext, aa: compAA, opacity: opacity,
-                             layer: layer, time: time, source: .image(cap ? current : side), premultipliedImage: true)
+                             layer: layer, time: time, source: .image(cap ? (k == n ? current : sides.last!) : wall), premultipliedImage: true)
                 }
                 continue
             }
