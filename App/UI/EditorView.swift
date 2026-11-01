@@ -61,6 +61,7 @@ struct EditorView: View {
         .environment(\.scrubSession, ScrubSession(begin: { [weak state] in state?.beginScrub() }, end: { [weak state] in state?.endScrub() }))
         .onAppear {
             AILink.shared.editor = state
+            EffectRegistry.softMeshURL = { [weak state] f in state?.mediaURL(f) ?? URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(f) }
             // The eyedropper samples the edit itself (current frame), never the app UI.
             ScreenEyedropper.sceneProvider = { [weak state] in
                 guard let state else { return nil }

@@ -379,17 +379,28 @@ struct SoftPhysicsSection: View {
     @State private var amount = 400.0
     @State private var pourX = 0.5
     @State private var liquidProgress: Double?
+    @State private var softProgress: Double?
+    @State private var throwX = 0.0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            block("Soft Body", "The selected layer falls, lands and wobbles: the image itself squashes and jiggles (baked to Puppet Pins).") {
+            block("Soft Body", "The selected layer becomes a real soft body: a mesh over its own shape falls, squashes (bulging sideways), wobbles and, for slime, splats and stays flattened.") {
                 Picker("", selection: $material) { ForEach(SoftMaterial.allCases) { Text($0.title).tag($0) } }.pickerStyle(.segmented)
                 row("Drop Height", $drop, 0...1500)
                 row("Gravity", $gravity, 200...5000)
+                row("Throw Sideways", $throwX, -1500...1500)
                 row("Duration s", $duration, 0.5...8)
                 Toggle("Land on the frame's floor", isOn: $floor).tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13))
-                bake("Make Soft Body", enabled: state.selectedLayer != nil) {
-                    state.bakeSoftBody(material, drop: drop, gravity: gravity, duration: duration, floorAtBottom: floor)
+                if let p = softProgress {
+                    ProgressView(value: p).tint(Theme.accent)
+                    Text("Simulating \(Int(p * 100))%").font(.caption).foregroundStyle(Theme.textDim)
+                } else {
+                    bake("Make Soft Body", enabled: state.selectedLayer != nil) {
+                        softProgress = 0
+                        state.bakeSoftMesh(material, drop: drop, gravity: gravity, duration: duration, floorAtBottom: floor, throwX: throwX) { p in
+                            softProgress = p >= 1 ? nil : p
+                        }
+                    }
                 }
             }
             block("Hang / Rope / Cloth", "The selected layer hangs from its top edge and swings (capes, hair, banners, rope).") {
