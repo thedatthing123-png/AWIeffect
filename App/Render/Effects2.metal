@@ -29,6 +29,35 @@ static float fbm(float3 p, int oct) { float s = 0, a = 0.5, n = 0; for (int k = 
 // ---------- Warps: compute a source coordinate, then sample ----------
 // i.x mode: 0 turbulent displace, 1 wave warp, 2 bulge, 3 twirl, 4 optics compensation, 5 mirror,
 //           6 polar (rect->polar), 7 polar (polar->rect), 8 motion tile, 9 offset
+// Pinning (AE Wave Warp): 0 none, 1 all edges, 2 top, 3 bottom, 4 left, 5 right, 6 top+bottom, 7 left+right.
+// Returns how much of the warp applies here (0 on a pinned edge, rising to 1 over `soft` of the layer).
+static float warpPin(float2 c, float4 rect, uint mode, float soft) {
+    if (mode == 0) return 1.0;
+    float2 uv = clamp((c - rect.xy) / max(rect.zw, float2(1.0)), 0.0, 1.0);
+    float s = max(soft, 0.01);
+    float top = smoothstep(0.0, s, uv.y), bottom = smoothstep(0.0, s, 1.0 - uv.y);
+    float left = smoothstep(0.0, s, uv.x), right = smoothstep(0.0, s, 1.0 - uv.x);
+    switch (mode) {
+        case 1: return top * bottom * left * right;
+        case 2: return top;
+        case 3: return bottom;
+        case 4: return left;
+        case 5: return right;
+        case 6: return top * bottom;
+        case 7: return left * right;
+        default: return 1.0;
+    }
+}
+
+// Smooth 2D value noise in -1..1 (for Fractal Warp).
+static float warpHash(float2 p) { return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
+static float warpNoise(float2 p) {
+    float2 i = floor(p), f = fract(p);
+    float2 u = f * f * (3.0 - 2.0 * f);
+    float a = warpHash(i), b = warpHash(i + float2(1, 0)), c2 = warpHash(i + float2(0, 1)), d = warpHash(i + float2(1, 1));
+    return mix(mix(a, b, u.x), mix(c2, d, u.x), u.y) * 2.0 - 1.0;
+}
+
 kernel void fxWarp(texture2d<half, access::sample> src [[texture(0)]],
                    texture2d<half, access::write> dst [[texture(1)]],
                    constant EffectParams& p [[buffer(0)]],
@@ -47,20 +76,26 @@ kernel void fxWarp(texture2d<half, access::sample> src [[texture(0)]],
             edge = true;
             break;
         }
-        case 1: { // a = height(px), width(px), direction(deg), phase(rad); i.y wave type (0 sine,1 square,2 triangle,3 sawtooth)
+        case 1: { // wave warp: a = height(px), width(px), direction(deg), phase(rad); b = layer rect; c.x pin falloff
+                  // i.y type (0 sine,1 square,2 triangle,3 sawtooth,4 circle,5 semicircle,6 smooth noise), i.z pinning
             float ang = p.a.z * M_PI_F / 180.0;
             float2 dir = float2(sin(ang), -cos(ang));
             float2 perp = float2(dir.y, -dir.x);
-            float t = dot(c, perp) / max(p.a.y, 1.0) * 2.0 * M_PI_F + p.a.w;
+            float t = dot(c - p.b.xy, perp) / max(p.a.y, 1.0) * 2.0 * M_PI_F + p.a.w;
+            float ph = fract(t / (2 * M_PI_F));
             float w;
             switch (p.i.y) {
                 case 1: w = sin(t) >= 0 ? 1.0 : -1.0; break;
-                case 2: w = 2.0 * abs(2.0 * fract(t / (2 * M_PI_F)) - 1.0) - 1.0; break;
-                case 3: w = 2.0 * fract(t / (2 * M_PI_F)) - 1.0; break;
+                case 2: w = 2.0 * abs(2.0 * ph - 1.0) - 1.0; break;
+                case 3: w = 2.0 * ph - 1.0; break;
+                case 4: { float u = ph * 2.0 - 1.0; w = (ph < 0.5 ? 1.0 : -1.0) * sqrt(max(0.0, 1.0 - pow(fract(ph * 2.0) * 2.0 - 1.0, 2.0))); (void)u; break; }
+                case 5: w = sqrt(max(0.0, 1.0 - pow(ph * 2.0 - 1.0, 2.0))) * 2.0 - 1.0; break;
+                case 6: { float a0 = floor(t / M_PI_F), f0 = fract(t / M_PI_F);
+                          float h0 = fract(sin(a0 * 127.1) * 43758.5) * 2.0 - 1.0, h1 = fract(sin((a0 + 1.0) * 127.1) * 43758.5) * 2.0 - 1.0;
+                          w = mix(h0, h1, f0 * f0 * (3.0 - 2.0 * f0)); break; }
                 default: w = sin(t);
             }
-            q = c + dir * w * p.a.x;
-            edge = true;
+            q = c + dir * w * p.a.x * warpPin(c, p.b, p.i.z, p.c.x);
             break;
         }
         case 2: { // bulge: a.xy center, a.z radius(px), a.w height (-4..4)
@@ -95,13 +130,37 @@ kernel void fxWarp(texture2d<half, access::sample> src [[texture(0)]],
             q = mix(c, pq, p.a.x); (void)ctr;
             break;
         }
-        case 8: { // motion tile: a.xy tile center, a.zw tile size (fraction of layer); i.y mirror edges
-            float2 tile = max(p.a.zw * size, float2(1));
+        case 8: { // motion tile: a.xy tile center (px), a.zw tile size (px); b = output center xy, half extent zw (px);
+                  // c.x phase (turns), c.y horizontal phase shift; i.y mirror edges
+            float2 tile = max(p.a.zw, float2(1));
+            if (any(abs(c - p.b.xy) > p.b.zw)) { dst.write(half4(0), gid); return; }
             float2 r = (c - p.a.xy) / tile + 0.5;
+            // Phase: every other row (or column) slides by the phase, like AE's brick offset.
+            if (p.c.y > 0.5) r.y += fmod(floor(r.x), 2.0) != 0.0 ? p.c.x : 0.0;
+            else r.x += fmod(floor(r.y), 2.0) != 0.0 ? p.c.x : 0.0;
             float2 f = fract(r);
             if (p.i.y != 0) { float2 cell = floor(r); f = select(f, 1.0 - f, fmod(abs(cell), 2.0) > 0.5); }
             q = p.a.xy + (f - 0.5) * tile;
             edge = true;
+            break;
+        }
+        case 10: { // fractal warp: a = magnitude(px), frequency(1/px), parallax xy (px); b = layer rect;
+                   // c = pin falloff, evolution (turns), detail (octaves), lacunarity (amplitude per octave); i.y screen space, i.z pinning
+            float2 base = (p.i.y != 0 ? c : (c - p.b.xy)) + p.a.zw;
+            float2 uvn = base * p.a.y;
+            float evo = p.c.y * 6.2831853;
+            float2 d = float2(0.0);
+            float amp = 1.0, fq = 1.0, norm = 0.0;
+            int oct = int(clamp(ceil(p.c.z), 1.0, 6.0));
+            for (int k = 0; k < oct; k++) {
+                float frac = (float(k) < p.c.z - 0.0 && float(k + 1) > p.c.z) ? fract(p.c.z) : 1.0;
+                float a = amp * frac;
+                d += a * float2(warpNoise(uvn * fq + float2(cos(evo), sin(evo)) * 0.6 + float2(k * 17.0, 3.1)),
+                                warpNoise(uvn * fq + float2(sin(evo), cos(evo)) * 0.6 + float2(41.7, k * 9.0)));
+                norm += a; amp *= p.c.w; fq *= 2.0;
+            }
+            d /= max(norm, 1e-4);
+            q = c + d * p.a.x * warpPin(c, p.b, p.i.z, p.c.x);
             break;
         }
         case 9: { // offset: a.xy shift (px), wraps

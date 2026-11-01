@@ -208,9 +208,9 @@ struct TimePanel: View {
                         slider("Delay", fx.echoDelay, 0.01...0.5, "%.2fs") { v in set { $0.echoDelay = v } }
                         slider("Keep", fx.echoDecay * 100, 5...100, "%.0f%%") { v in set { $0.echoDecay = v / 100 } }
                         Divider().overlay(Theme.stroke)
-                        Text("PIXEL MOTION BLUR (footage)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+                        Text("PIXEL MOTION BLUR (video & pre-comps)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
                         slider("Amount", fx.pixelMotionBlur, 0...200, "%.0f%%") { v in set { $0.pixelMotionBlur = v } }
-                        Text("Blurs movement inside the clip itself (fast punches, camera whips), like RSMB. 100% = one frame of motion.")
+                        Text("Blurs movement inside the clip itself (fast punches, camera whips), like RSMB. 100% = one frame of motion. To blur a whole group of layers, select them → Pre-compose, then turn this on for the pre-comp.")
                             .font(.caption).foregroundStyle(Theme.textDim)
                         Divider().overlay(Theme.stroke)
                         Toggle("Frame Blending (smooth slow motion)", isOn: Binding(get: { fx.frameBlend }, set: { b in set { $0.frameBlend = b } }))

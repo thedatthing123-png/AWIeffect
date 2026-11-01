@@ -82,6 +82,10 @@ final class EditorState: ObservableObject {
     @Published var puppetAnimate = true
     /// Puppet: taps add pins only while Place is on; off = pins stay put and drags only move them.
     @Published var puppetPlace = true
+    /// The searchable Add Light browser.
+    @Published var showLightBrowser = false
+    /// Copy / paste effects between layers.
+    @Published var effectClipboard: [EffectInstance] = []
     /// Cutout refine tools on the canvas.
     @Published var cutoutTool: CutoutTool = .none
     @Published var cutoutBrushSubtract = false
@@ -416,6 +420,19 @@ final class EditorState: ObservableObject {
         let k = up ? j - 1 : j + 1
         guard project.layers[i].effects.indices.contains(k) else { return }
         mutate("Reorder Effect") { $0.layers[i].effects.swapAt(j, k) }
+    }
+
+    /// Copied effects (one or a whole stack), pasted onto any layer with fresh ids.
+    func copyEffects(_ ids: [UUID]? = nil) {
+        guard let l = selectedLayer else { return }
+        effectClipboard = ids.map { set in l.effects.filter { set.contains($0.id) } } ?? l.effects
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+
+    func pasteEffects() {
+        guard let i = selectedIndex, !effectClipboard.isEmpty else { return }
+        let items = effectClipboard.map { e -> EffectInstance in var c = e; c.id = UUID(); return c }
+        mutate(items.count == 1 ? "Paste Effect" : "Paste \(items.count) Effects") { $0.layers[i].effects.append(contentsOf: items) }
     }
 
     func duplicateEffect(_ id: UUID) {

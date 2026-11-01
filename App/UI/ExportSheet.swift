@@ -1,6 +1,49 @@
 import SwiftUI
 import Photos
 import AVFoundation
+import AVKit
+
+/// After export: the finished video plays first (like Alight Motion's showcase), then save, share or go back to editing.
+struct ExportPreview: View {
+    let url: URL
+    let onSave: () -> Void
+    let onClose: () -> Void
+    let message: String?
+    @State private var player: AVPlayer?
+    @State private var looper: AVPlayerLooper?
+
+    var body: some View {
+        VStack(spacing: 14) {
+            HStack {
+                Button { onClose() } label: { Label("Keep Editing", systemImage: "chevron.left").font(.system(size: 15, weight: .semibold)) }
+                Spacer()
+            }
+            .foregroundStyle(Theme.text).padding(.horizontal, 16).padding(.top, 8)
+            if url.pathExtension.lowercased() == "gif", let data = try? Data(contentsOf: url), let img = UIImage(data: data) {
+                Image(uiImage: img).resizable().scaledToFit().frame(maxHeight: .infinity)
+            } else {
+                VideoPlayer(player: player).frame(maxHeight: .infinity)
+            }
+            if let message { Text(message).font(.footnote).foregroundStyle(Theme.textDim) }
+            HStack(spacing: 10) {
+                Button { onSave() } label: { Label("Save to Photos", systemImage: "photo.on.rectangle").frame(maxWidth: .infinity) }
+                    .buttonStyle(PrimaryButtonStyle())
+                ShareLink(item: url) { Label("Share", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity) }
+                    .frame(maxWidth: .infinity).padding(.vertical, 12).glass(radius: 12).foregroundStyle(Theme.text)
+            }
+            .padding(.horizontal, 16).padding(.bottom, 12)
+        }
+        .background(Theme.background.ignoresSafeArea())
+        .onAppear {
+            let item = AVPlayerItem(url: url)
+            let q = AVQueuePlayer()
+            looper = AVPlayerLooper(player: q, templateItem: item)
+            player = q
+            q.play()
+        }
+        .onDisappear { player?.pause() }
+    }
+}
 
 struct ExportSheet: View {
     @ObservedObject var state: EditorState
@@ -12,6 +55,8 @@ struct ExportSheet: View {
     @State private var message: String?
     @State private var showShare = false
     @State private var rangeMode = "All"
+    @State private var showPreview = false
+    @Environment(\.dismiss) private var dismissSheet
 
     var body: some View {
         NavigationStack {
@@ -104,6 +149,13 @@ struct ExportSheet: View {
                 .padding(20)
             }
             .background(Theme.background)
+            .fullScreenCover(isPresented: $showPreview) {
+                if let resultURL {
+                    ExportPreview(url: resultURL, onSave: { saveToPhotos(resultURL) },
+                                  onClose: { showPreview = false; DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { dismissSheet() } },
+                                  message: message)
+                }
+            }
             .navigationTitle("Export & Share")
             .toolbarBackground(Theme.background, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
@@ -170,6 +222,7 @@ struct ExportSheet: View {
                 await MainActor.run {
                     resultURL = url
                     message = "Export finished."
+                    showPreview = true
                     exporting = false
                     UIApplication.shared.isIdleTimerDisabled = false
                     UINotificationFeedbackGenerator().notificationOccurred(.success)

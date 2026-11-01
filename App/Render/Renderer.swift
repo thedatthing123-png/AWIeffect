@@ -569,6 +569,7 @@ final class Renderer {
             for e in pixelFX {
                 guard let def = EffectRegistry.definition(e.typeID), case .pixels(let run) = def.stage else { continue }
                 var ctx = EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: time, unit: density, pool: pool)
+                ctx.layerPixels = SIMD2(hs.x * 2 * density, hs.y * 2 * density)
                 if EffectRegistry.layerRefIDs.contains(e.typeID), let rid = e.text?["layer"].flatMap(UUID.init(uuidString:)),
                    let refLayer = project.layers.first(where: { $0.id == rid }), rid != layer.id {
                     ctx.reference = layerInBuffer(refLayer, project: project, time: time, renderScale: renderScale, comp: comp,
@@ -747,6 +748,22 @@ final class Renderer {
             return ModelRenderer.shared?.render(o, time: time, width: w, height: h, cb: cb, mediaURL: mediaURL).map { .model($0) }
         case .precomp(let id):
             guard let tex = renderPrecomp(id, layer: layer, time: time, density: density, cb: cb, mediaURL: mediaURL) else { return nil }
+            // Pixel Motion Blur on a pre-comp: blur everything inside along how it moved since the last frame
+            // (pre-compose any group of layers to motion-blur all of it at once, like AE).
+            if let amt = layer.timeFX?.pixelMotionBlur, amt > 0, let pool = currentPool,
+               let prev = renderPrecomp(id, layer: layer, time: time - 1 / max(1, precompLibrary.first(where: { $0.id == id })?.fps ?? 30), density: density, cb: cb, mediaURL: mediaURL),
+               prev.width == tex.width, prev.height == tex.height {
+                let fw = max(8, tex.width / 4), fh = max(8, tex.height / 4)
+                let flow = pool.acquire(width: fw, height: fh)
+                var p = EffectParams()
+                p.a.x = 6
+                fx.run("flowEstimate", cb, textures: [prev, flow, tex], params: p, grid: flow)
+                let out = pool.acquire(width: tex.width, height: tex.height)
+                var q = EffectParams()
+                q.a = SIMD4(Float(amt / 100), 0.15, 0, 0)
+                fx.run("flowBlur", cb, textures: [tex, out, flow], params: q, grid: out)
+                return .model(out)
+            }
             return .model(tex)
         case .adjustment, .text, .audio, .camera, .light: return nil
         }

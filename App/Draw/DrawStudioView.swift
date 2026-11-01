@@ -43,8 +43,13 @@ final class DrawSession: ObservableObject {
     /// Size / opacity sliders edit whichever brush the current tool uses.
     var activeBrush: Brush {
         get { tool == .eraser ? eraser : brush }
-        set { if tool == .eraser { eraser = newValue } else { brush = newValue } }
+        set {
+            if newValue.size != activeBrush.size { sizeChangedAt = CACurrentMediaTime() }
+            if tool == .eraser { eraser = newValue } else { brush = newValue }
+        }
     }
+    /// When the size slider last moved (the size circle shows in the middle for a moment).
+    var sizeChangedAt: CFTimeInterval = 0
     @Published var fillTolerance = 0.12
     @Published var gapClose = 2
     @Published var lassoPoints: [SIMD2<Double>] = []
@@ -82,6 +87,9 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
     private var movingStart: CGPoint?
     private var shapeStart: SIMD2<Double>?
     private let outline = CAShapeLayer()
+    /// Brush / eraser size ring that follows the finger or Pencil.
+    private let cursor = CAShapeLayer()
+    private var cursorPoint: CGPoint?
     private var outlineView: [CGPoint] = []
 
     init(session: DrawSession) {
@@ -113,6 +121,17 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         outline.lineWidth = 1.5
         outline.lineDashPattern = [6, 4]
         layer.addSublayer(outline)
+        cursor.fillColor = UIColor.clear.cgColor
+        cursor.strokeColor = UIColor.white.cgColor
+        cursor.lineWidth = 1.2
+        cursor.shadowColor = UIColor.black.cgColor
+        cursor.shadowOpacity = 0.8
+        cursor.shadowRadius = 1
+        cursor.shadowOffset = .zero
+        layer.addSublayer(cursor)
+        // Apple Pencil hover (iPad): show the ring before touching down.
+        let hover = UIHoverGestureRecognizer(target: self, action: #selector(onHover(_:)))
+        addGestureRecognizer(hover)
     }
     required init(coder: NSCoder) { fatalError() }
 
@@ -124,6 +143,22 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         zoom = s
         offset = CGPoint(x: (bounds.width - canvasSize.width * s) / 2, y: (bounds.height - canvasSize.height * s) / 2)
         fitted = true
+    }
+
+    @objc private func onHover(_ g: UIHoverGestureRecognizer) {
+        cursorPoint = (g.state == .began || g.state == .changed) ? g.location(in: self) : nil
+    }
+
+    /// The ring: brush size on screen, at the touch (or in the middle while the size slider moves).
+    private func updateCursor() {
+        let usesSize = session.tool == .brush || session.tool == .eraser || session.tool == .selectBrush
+        let recent = CACurrentMediaTime() - session.sizeChangedAt < 0.9
+        guard usesSize, let p = cursorPoint ?? (recent ? CGPoint(x: bounds.midX, y: bounds.midY) : nil) else { cursor.path = nil; return }
+        let r = max(2, CGFloat(session.activeBrush.size / 2) * zoom)
+        CATransaction.begin(); CATransaction.setDisableActions(true)
+        cursor.path = UIBezierPath(ovalIn: CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2)).cgPath
+        cursor.strokeColor = (session.tool == .eraser ? UIColor.systemPink : UIColor.white).cgColor
+        CATransaction.commit()
     }
 
     @objc private func onUndoTap() { session.engine.undo() }
@@ -155,6 +190,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard touches.count == 1, (event?.allTouches?.count ?? 1) == 1, let t = touches.first else { return }
+        cursorPoint = t.location(in: self)
         let p = toCanvas(t.location(in: self))
         let e = session.engine
         switch session.tool {
@@ -185,6 +221,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let t = touches.first, (event?.allTouches?.count ?? 1) == 1 else { return }
+        cursorPoint = t.location(in: self)
         switch session.tool {
         case .brush, .eraser:
             for c in event?.coalescedTouches(for: t) ?? [t] {
@@ -209,6 +246,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let t = touches.first else { return }
+        cursorPoint = nil
         switch session.tool {
         case .brush, .eraser: session.engine.endStroke()
         case .selectBrush: session.engine.endSelectStroke(snapToSubject: session.selectSnap && !session.selectSubtract)
@@ -297,6 +335,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
 
     func draw(in view: MTKView) {
         fitIfNeeded()
+        updateCursor()
         let e = session.engine
         guard let cb = e.queue.makeCommandBuffer(), let rpd = currentRenderPassDescriptor, let drawable = currentDrawable else { return }
         e.encodeComposite(cb)

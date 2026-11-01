@@ -4,7 +4,7 @@ import Metal
 /// Batch 2: distortions, stylize, glitch, color, and the AWI plugin set (our own versions of pro plugins).
 extension EffectRegistry {
     static let batch2: [EffectDefinition] = [
-        turbulentDisplace, waveWarp, bulge, twirl, opticsCompensation, mirror, polarCoordinates, motionTile, offset,
+        turbulentDisplace, waveWarp, fractalWarp, bulge, twirl, opticsCompensation, mirror, polarCoordinates, motionTile, offset,
         posterize, threshold, findEdges, mosaic, halftone, crt, curves, looks, grain,
         deepGlow, saber, shine, glitch, vhs, pixelSort, mangaFX, impactFrame, particles,
     ]
@@ -34,13 +34,51 @@ extension EffectRegistry {
     static let waveWarp = EffectDefinition(
         id: "ae.waveWarp", name: "Wave Warp", category: .distort, aeMatchNames: ["ADBE Wave Warp"],
         summary: "Rolling waves across the layer.",
-        params: [.choice("type", "Wave Type", ["Sine", "Square", "Triangle", "Sawtooth"], 0, ae: 1),
+        params: [.choice("type", "Wave Type", ["Sine", "Square", "Triangle", "Sawtooth", "Circle", "Semicircle", "Smooth Noise"], 0, ae: 1),
                  .number("height", "Wave Height", 10, -500, 500, ae: 2), .number("width", "Wave Width", 40, 1, 1000, ae: 3),
-                 .angle("direction", "Direction", 90, ae: 4), .number("speed", "Wave Speed", 1, -20, 20, step: 0.1, ae: 5)],
+                 .angle("direction", "Direction", 90, ae: 4), .number("speed", "Wave Speed", 1, -20, 20, step: 0.1, ae: 5),
+                 .choice("pinning", "Pinning", ["None", "All Edges", "Top Edge", "Bottom Edge", "Left Edge", "Right Edge", "Top & Bottom", "Left & Right"], 0, ae: 6),
+                 .angle("phase", "Phase", 0, ae: 7),
+                 .number("pinSoft", "Pin Falloff", 60, 1, 100, unit: "%")],
         margin: { e, t in abs(e.number("height", t)) },
+        // Like AE / Alight Motion: Phase can be keyframed (hair sway), Pinning holds the roots still, and pixels past
+        // the layer edge stay transparent instead of smearing.
         stage: .pixels { ctx in run("fxWarp", ctx) { p in
-            p.a = SIMD4(f(ctx.num("height") * ctx.unit), f(ctx.num("width") * ctx.unit), f(ctx.num("direction")), f(ctx.time * ctx.num("speed") * 2 * .pi))
-            p.i = SIMD4(1, UInt32(ctx.effect.choice("type")), 0, 0) } })
+            p.a = SIMD4(f(ctx.num("height") * ctx.unit), f(ctx.num("width") * ctx.unit), f(ctx.num("direction")),
+                        f(ctx.time * ctx.num("speed") * 2 * .pi + ctx.num("phase") * .pi / 180))
+            p.b = layerRect(ctx)
+            p.c = SIMD4(f(ctx.num("pinSoft") / 100), 0, 0, 0)
+            p.i = SIMD4(1, UInt32(ctx.effect.choice("type")), UInt32(ctx.effect.choice("pinning")), 0) } })
+
+    /// Alight Motion-style Fractal Warp: organic noise displacement (hair, smoke, cloth, liquid wobble).
+    static let fractalWarp = EffectDefinition(
+        id: "awi20.fractalWarp", name: "Fractal Warp", category: .distort, aeMatchNames: [],
+        summary: "Organic noise displacement like Alight Motion's Fractal Warp: animate Evolution (or Parallax) for flowing hair, smoke and cloth. Pinning keeps roots still.",
+        params: [.point("parallax", "Parallax", Vec2(0, 0)), .number("magnitude", "Magnitude", 0.03, 0, 0.5, step: 0.001),
+                 .number("detail", "Detail", 2.5, 1, 6, step: 0.01), .number("lacunarity", "Lacunarity", 0.5, 0.2, 0.9, step: 0.01),
+                 .number("scale", "Scale", 100, 5, 1000, unit: "%"), .angle("evolution", "Evolution", 0),
+                 .number("speed", "Evolution Speed", 0, -10, 10, step: 0.05),
+                 .toggle("screenSpace", "Screen Space", false),
+                 .choice("pinning", "Pinning", ["None", "All Edges", "Top Edge", "Bottom Edge", "Left Edge", "Right Edge", "Top & Bottom", "Left & Right"], 0),
+                 .number("pinSoft", "Pin Falloff", 60, 1, 100, unit: "%")],
+        margin: { e, t in 900 * e.number("magnitude", t) },
+        stage: .pixels { ctx in run("fxWarp", ctx) { p in
+            let lp = ctx.layerPixels ?? SIMD2(Double(ctx.width), Double(ctx.height))
+            let par = ctx.effect.point("parallax", ctx.time)
+            // Magnitude is a fraction of the layer's longer side (like AM), so it looks the same at any size.
+            let mag = ctx.num("magnitude") * max(lp.x, lp.y)
+            let freq = 1 / max(1, ctx.num("scale") / 100 * max(lp.x, lp.y) * 0.25)
+            p.a = SIMD4(f(mag), f(freq), f(par.x * max(lp.x, lp.y)), f(par.y * max(lp.x, lp.y)))
+            p.b = layerRect(ctx)
+            p.c = SIMD4(f(ctx.num("pinSoft") / 100), f((ctx.num("evolution") + ctx.time * ctx.num("speed") * 360) / 360),
+                        f(ctx.num("detail")), f(ctx.num("lacunarity")))
+            p.i = SIMD4(10, ctx.effect.bool("screenSpace") ? 1 : 0, UInt32(ctx.effect.choice("pinning")), 0) } })
+
+    /// The layer's own rectangle inside the (possibly grown) effect buffer: x, y, w, h in buffer px.
+    static func layerRect(_ ctx: EffectContext) -> SIMD4<Float> {
+        let lp = ctx.layerPixels ?? SIMD2(Double(ctx.width), Double(ctx.height))
+        return SIMD4(f((Double(ctx.width) - lp.x) / 2), f((Double(ctx.height) - lp.y) / 2), f(lp.x), f(lp.y))
+    }
 
     static let bulge = EffectDefinition(
         id: "ae.bulge", name: "Bulge", category: .distort, aeMatchNames: ["ADBE Bulge"],
@@ -90,10 +128,21 @@ extension EffectRegistry {
         id: "ae.motionTile", name: "Motion Tile", category: .distort, aeMatchNames: ["ADBE Tile"],
         summary: "Repeats the layer in a grid — great with shakes so edges never show.",
         params: [.point("center", "Tile Center", Vec2(0.5, 0.5), ae: 1), .number("tileW", "Tile Width", 100, 1, 1000, unit: "%", ae: 2),
-                 .number("tileH", "Tile Height", 100, 1, 1000, unit: "%", ae: 3), .toggle("mirror", "Mirror Edges", true, ae: 6)],
+                 .number("tileH", "Tile Height", 100, 1, 1000, unit: "%", ae: 3),
+                 .number("outW", "Output Width", 300, 100, 1000, unit: "%", ae: 4), .number("outH", "Output Height", 300, 100, 1000, unit: "%", ae: 5),
+                 .toggle("mirror", "Mirror Edges", true, ae: 6), .number("phase", "Phase", 0, -3600, 3600, unit: "°", ae: 7),
+                 .toggle("hphase", "Horizontal Phase Shift", false, ae: 8)],
+        // AE's Output Width/Height: the tiles spread past the layer edge so shakes and zooms never show a border.
+        margin: { e, t in 1400 * max(0, max(e.number("outW", t), e.number("outH", t)) - 100) / 100 },
         stage: .pixels { ctx in run("fxWarp", ctx) { p in
             let c = ctx.effect.point("center", ctx.time)
-            p.a = SIMD4(f(c.x * Double(ctx.width)), f(c.y * Double(ctx.height)), f(ctx.num("tileW") / 100), f(ctx.num("tileH") / 100))
+            let lp = ctx.layerPixels ?? SIMD2(Double(ctx.width), Double(ctx.height))
+            let off = SIMD2((Double(ctx.width) - lp.x) / 2, (Double(ctx.height) - lp.y) / 2)
+            // Tile center / size are measured on the layer itself, not the grown buffer.
+            p.a = SIMD4(f(off.x + c.x * lp.x), f(off.y + c.y * lp.y), f(ctx.num("tileW") / 100 * lp.x), f(ctx.num("tileH") / 100 * lp.y))
+            let ow = ctx.num("outW") / 100 * lp.x, oh = ctx.num("outH") / 100 * lp.y
+            p.b = SIMD4(f(Double(ctx.width) / 2), f(Double(ctx.height) / 2), f(ow / 2), f(oh / 2))
+            p.c = SIMD4(f(ctx.num("phase") / 360), ctx.effect.bool("hphase") ? 1 : 0, 0, 0)
             p.i = SIMD4(8, ctx.effect.bool("mirror") ? 1 : 0, 0, 0) } })
 
     static let offset = EffectDefinition(

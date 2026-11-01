@@ -30,6 +30,7 @@ struct Scene3DPanel: View {
                         tile("Point Light", "lightbulb.fill") { state.addLight(.point) }
                         tile("Sun Light", "sun.max.fill") { state.addLight(.parallel) }
                         tile("Ambient", "circle.hexagongrid.fill") { state.addLight(.ambient) }
+                        tile("+ More Lights", "plus.circle.fill") { state.showLightBrowser = true }
                         tile("All Layers 3D", "cube.fill") {
                             state.mutate("All 3D") { p in
                                 for i in p.layers.indices where !p.layers[i].isAudioOnly && p.layers[i].content != .camera

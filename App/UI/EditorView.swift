@@ -59,8 +59,16 @@ struct EditorView: View {
         .environmentObject(drawLauncher)
         // Every slider in the editor keeps its edits live while dragging (smooth, no full-editor rebuilds).
         .environment(\.scrubSession, ScrubSession(begin: { [weak state] in state?.beginScrub() }, end: { [weak state] in state?.endScrub() }))
-        .onAppear { AILink.shared.editor = state }
+        .onAppear {
+            AILink.shared.editor = state
+            // The eyedropper samples the edit itself (current frame), never the app UI.
+            ScreenEyedropper.sceneProvider = { [weak state] in
+                guard let state else { return nil }
+                return Renderer.shared?.renderImage(project: state.project, time: state.currentTime, maxDimension: 1600, mediaURL: { state.mediaURL($0) })
+            }
+        }
         .onDisappear { if AILink.shared.editor === state { AILink.shared.editor = nil } }
+        .awiSheet(isPresented: $state.showLightBrowser) { LightBrowser(state: state).presentationDetents([.large]) }
         .environmentObject(mediaLauncher)
         .environmentObject(trackLauncher)
         .awiSheet(isPresented: $mediaLauncher.pickVideo) { MediaPickerView(state: state, isPresented: $mediaLauncher.pickVideo) }

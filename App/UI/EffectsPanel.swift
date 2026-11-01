@@ -197,7 +197,7 @@ struct EffectsPanel: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            PanelHeader(state: state, title: "Effects")
+            PanelHeader(state: state, title: "Effects", effectTools: true)
             ScrollView {
                 VStack(spacing: 8) {
                     Button { showBrowser = true } label: {
@@ -221,7 +221,9 @@ struct EffectsPanel: View {
                                                                : "No effects yet.")
                                 .font(.caption).foregroundStyle(Theme.textDim).padding(.top, 6)
                         }
-                        ForEach(layer.effects) { e in effectCard(e) }
+                        ForEach(layer.effects) { e in
+                            SwipeToDelete { effectCard(e) } onDelete: { state.removeEffect(e.id) }
+                        }
                     }
                 }
                 .padding(.horizontal, 12)
@@ -266,6 +268,7 @@ struct EffectsPanel: View {
                 Menu {
                     Button { state.moveEffect(e.id, up: true) } label: { Label("Move Up", systemImage: "arrow.up") }
                     Button { state.moveEffect(e.id, up: false) } label: { Label("Move Down", systemImage: "arrow.down") }
+                    Button { state.copyEffects([e.id]) } label: { Label("Copy Effect", systemImage: "doc.on.doc") }
                     Button { state.duplicateEffect(e.id) } label: { Label("Duplicate", systemImage: "plus.square.on.square") }
                     Button(role: .destructive) { state.removeEffect(e.id) } label: { Label("Delete", systemImage: "trash") }
                 } label: { Image(systemName: "ellipsis").frame(width: 30, height: 30) }

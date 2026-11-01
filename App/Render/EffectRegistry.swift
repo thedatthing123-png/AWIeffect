@@ -22,6 +22,8 @@ struct EffectContext {
     let pool: TexturePool
     /// Another layer rendered into this layer's buffer space (for effects that read a layer: displacement map, set matte).
     var reference: MTLTexture? = nil
+    /// The layer's own size in buffer pixels (the buffer can be bigger when effects grow it), centered.
+    var layerPixels: SIMD2<Double>? = nil
 
     var width: Int { input.width }
     var height: Int { input.height }

@@ -98,6 +98,8 @@ struct PanelHeader: View {
     @ObservedObject var state: EditorState
     let title: String
     var showKeyNav = true
+    /// Effects panel: Copy All / Paste All instead of the keyframe arrows.
+    var effectTools = false
 
     var body: some View {
         HStack(spacing: 4) {
@@ -107,7 +109,22 @@ struct PanelHeader: View {
             .accessibilityLabel("Panel Back")
             Text(title).font(.system(size: 14, weight: .semibold)).lineLimit(1).truncationMode(.middle)
             Spacer()
-            if showKeyNav, state.selectedLayer != nil {
+            if effectTools, state.selectedLayer != nil {
+                Button { state.copyEffects() } label: { Label("Copy All", systemImage: "doc.on.doc").labelStyle(.iconOnly).frame(width: 32, height: 32) }
+                    .disabled(state.selectedLayer?.effects.isEmpty ?? true)
+                    .accessibilityLabel("Copy All Effects")
+                Button { state.pasteEffects() } label: {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "doc.on.clipboard").frame(width: 32, height: 32)
+                        if !state.effectClipboard.isEmpty {
+                            Text("\(state.effectClipboard.count)").font(.system(size: 9, weight: .bold)).foregroundStyle(.white)
+                                .padding(3).background(Circle().fill(Theme.accent)).offset(x: 4, y: -2)
+                        }
+                    }
+                }
+                .disabled(state.effectClipboard.isEmpty)
+                .accessibilityLabel("Paste Effects")
+            } else if showKeyNav, state.selectedLayer != nil {
                 Button { state.jumpKeyframe(forward: false) } label: { Image(systemName: "chevron.left.to.line").frame(width: 32, height: 32) }
                 Button { state.jumpKeyframe(forward: true) } label: { Image(systemName: "chevron.right.to.line").frame(width: 32, height: 32) }
             }

@@ -146,8 +146,7 @@ struct QuickMenu: View {
                 Button { state.addNull() } label: { Label("Null Object", systemImage: "circle.dashed") }
                 Button { state.addAdjustmentLayer() } label: { Label("Adjustment Layer", systemImage: "slider.horizontal.below.rectangle") }
                 Button { state.addCamera() } label: { Label("Camera", systemImage: "video") }
-                Button { state.addLight(.spot) } label: { Label("Spot Light", systemImage: "lightbulb.fill") }
-                Button { state.addLight(.point) } label: { Label("Point Light", systemImage: "lightbulb") }
+                Button { state.showLightBrowser = true } label: { Label("Light… (search all lights & glows)", systemImage: "lightbulb.fill") }
                 Button { state.addText() } label: { Label("Text", systemImage: "textformat") }
                 Button { state.addSolid() } label: { Label("Solid", systemImage: "rectangle.fill") }
                 Button { drawLauncher.open(nil) } label: { Label("Draw", systemImage: "paintbrush.pointed.fill") }

@@ -259,23 +259,34 @@ struct ColorEditor: View {
     }
 }
 
-/// Full-screen eyedropper: shows a frozen snapshot of the app; tap anywhere to take that pixel's color.
+/// Scene eyedropper (like AE / Alight Motion): shows the current frame of the edit only, never the app UI; drag with
+/// a magnifying loupe and a live color readout, lift to pick.
 struct ScreenEyedropper: View {
-    /// The screen as it looked when the eyedropper was tapped (canvas, clip, UI).
+    /// The frame of the edit at the playhead.
     let snapshot: UIImage?
     let done: (Color?) -> Void
     @State private var probe: CGPoint?
+    /// Renders the edit's current frame (set by the editor). Falls back to the screen only outside the editor.
+    static var sceneProvider: (() -> UIImage?)?
 
     var body: some View {
         GeometryReader { g in
+            let frame = imageRect(in: g.size)
             ZStack {
-                if let snapshot { Image(uiImage: snapshot).resizable().frame(width: g.size.width, height: g.size.height) }
-                if let p = probe, let c = color(at: p, in: g.size) {
-                    Circle().fill(c).frame(width: 64, height: 64).overlay(Circle().strokeBorder(.white, lineWidth: 3))
-                        .position(x: p.x, y: max(40, p.y - 70))
+                Color.black
+                if let snapshot { Image(uiImage: snapshot).resizable().frame(width: frame.width, height: frame.height).position(x: frame.midX, y: frame.midY) }
+                if let p = probe, let c = color(at: p, frame: frame) {
+                    loupe(at: p, frame: frame, color: c)
+                        .position(x: min(max(70, p.x), g.size.width - 70), y: p.y > 220 ? p.y - 110 : p.y + 110)
+                    // Crosshair on the exact pixel.
+                    Path { path in
+                        path.move(to: CGPoint(x: p.x - 12, y: p.y)); path.addLine(to: CGPoint(x: p.x + 12, y: p.y))
+                        path.move(to: CGPoint(x: p.x, y: p.y - 12)); path.addLine(to: CGPoint(x: p.x, y: p.y + 12))
+                    }
+                    .stroke(.white, lineWidth: 1.5).shadow(radius: 1)
                 }
                 VStack {
-                    Text("Drag to a color, lift to pick").font(.system(size: 13, weight: .semibold)).padding(8)
+                    Text("Drag over the frame · lift to pick").font(.system(size: 13, weight: .semibold)).padding(8)
                         .background(Capsule().fill(.black.opacity(0.6))).foregroundStyle(.white).padding(.top, 50)
                     Spacer()
                     Button("Cancel") { done(nil) }.buttonStyle(PrimaryButtonStyle()).padding(.bottom, 40)
@@ -283,22 +294,48 @@ struct ScreenEyedropper: View {
             }
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0)
-                .onChanged { probe = $0.location }
-                .onEnded { v in done(color(at: v.location, in: g.size)) })
+                .onChanged { v in probe = CGPoint(x: min(max(v.location.x, frame.minX), frame.maxX - 1), y: min(max(v.location.y, frame.minY), frame.maxY - 1)) }
+                .onEnded { _ in done(probe.flatMap { color(at: $0, frame: frame) }) })
         }
         .ignoresSafeArea()
     }
 
+    /// Magnified pixels around the probe with the picked color and its hex code.
+    private func loupe(at p: CGPoint, frame: CGRect, color c: Color) -> some View {
+        VStack(spacing: 4) {
+            ZStack {
+                if let snapshot, let cg = snapshot.cgImage {
+                    let px = CGPoint(x: (p.x - frame.minX) / frame.width * CGFloat(cg.width), y: (p.y - frame.minY) / frame.height * CGFloat(cg.height))
+                    if let crop = cg.cropping(to: CGRect(x: px.x - 7, y: px.y - 7, width: 15, height: 15)) {
+                        Image(uiImage: UIImage(cgImage: crop)).interpolation(.none).resizable().frame(width: 96, height: 96)
+                    }
+                }
+                Rectangle().strokeBorder(.white, lineWidth: 1.5).frame(width: 8, height: 8)
+            }
+            .frame(width: 96, height: 96).clipShape(Circle()).overlay(Circle().strokeBorder(c, lineWidth: 6)).overlay(Circle().strokeBorder(.white, lineWidth: 1))
+            Text({ let r = c.rgba; return String(format: "#%02X%02X%02X", Int(r.r * 255), Int(r.g * 255), Int(r.b * 255)) }()).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(.white)
+                .padding(.horizontal, 6).padding(.vertical, 2).background(Capsule().fill(.black.opacity(0.7)))
+        }
+    }
+
+    private func imageRect(in size: CGSize) -> CGRect {
+        guard let s = snapshot?.size, s.width > 0, s.height > 0 else { return CGRect(origin: .zero, size: size) }
+        let k = min(size.width / s.width, (size.height - 180) / s.height)
+        let w = s.width * k, h = s.height * k
+        return CGRect(x: (size.width - w) / 2, y: (size.height - h) / 2, width: w, height: h)
+    }
+
     static func capture() -> UIImage? {
+        if let scene = sceneProvider?() { return scene }
         guard let window = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).flatMap(\.windows).first(where: \.isKeyWindow)
         else { return nil }
         let r = UIGraphicsImageRenderer(bounds: window.bounds)
         return r.image { _ in window.drawHierarchy(in: window.bounds, afterScreenUpdates: false) }
     }
 
-    private func color(at p: CGPoint, in size: CGSize) -> Color? {
-        guard let img = snapshot, let cg = img.cgImage, size.width > 0, size.height > 0 else { return nil }
-        let x = Int(p.x / size.width * CGFloat(cg.width)), y = Int(p.y / size.height * CGFloat(cg.height))
+    private func color(at p: CGPoint, frame: CGRect) -> Color? {
+        guard let img = snapshot, let cg = img.cgImage, frame.width > 0, frame.height > 0 else { return nil }
+        let x = Int((p.x - frame.minX) / frame.width * CGFloat(cg.width)), y = Int((p.y - frame.minY) / frame.height * CGFloat(cg.height))
         guard x >= 0, y >= 0, x < cg.width, y < cg.height else { return nil }
         var px = [UInt8](repeating: 0, count: 4)
         guard let ctx = CGContext(data: &px, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4, space: CGColorSpaceCreateDeviceRGB(),
