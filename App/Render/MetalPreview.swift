@@ -83,6 +83,9 @@ struct MetalPreview: UIViewRepresentable {
         private var forceFull = false
         /// Consecutive heavy / light frames: quality only changes after a run of them (no sharp/soft flicker).
         private var heavyRun = 0
+        /// Quality locked for the current playback (nil while paused).
+        private var playQuality: Double?
+        private var wasPlaying = false
         private var lightRun = 0
 
         // RAM preview cache: full-quality frames keyed by frame index, dropped whenever the project changes.
@@ -196,13 +199,21 @@ struct MetalPreview: UIViewRepresentable {
             let sem = inFlight
             // While playing at reduced quality (heavy effects), don't mix in sharp cached frames: alternating sharp / soft
             // frames looked like a twitch. Every frame of the playback stays the same sharpness.
-            let mixesQuality = isPlaying && quality < 0.999
+            let playing = isPlaying
+            let mixesQuality = playing
             var shown: MTLTexture? = cacheEnabled && !mixesQuality ? cache[frameIdx] : nil
             var renderedFull = false
             var rendered = false
             if shown == nil {
                 let steps: [Double] = [1, 0.75, 0.5, 0.35, 0.25]
-                let q = forceFull ? 1 : (steps.first { $0 <= quality + 1e-6 } ?? 0.25)
+                // Alight Motion-style playback: one steady, lighter quality for the whole play (a bit soft, never
+                // flickering, never mixing in sharp frames). It's chosen when play starts and only drops if frames
+                // still can't keep up. Paused frames always render full quality.
+                if playing && !wasPlaying { playQuality = min(0.5, quality) }
+                if !playing { playQuality = nil }
+                wasPlaying = playing
+                if playing, let pq = playQuality, quality < pq - 1e-6 { playQuality = quality }
+                let q = forceFull ? 1 : (playQuality ?? (steps.first { $0 <= quality + 1e-6 } ?? 0.25))
                 let scale = fullScale * q
                 let w = max(1, Int((Double(project.width) * scale).rounded()))
                 let h = max(1, Int((Double(project.height) * scale).rounded()))
@@ -228,7 +239,7 @@ struct MetalPreview: UIViewRepresentable {
                 rendered = true
             }
             forceFull = false
-            let playing = isPlaying
+            // (playing set above)
             let full = renderedFull
             if full && !playing && cacheEnabled { schedulePrerender(from: frameIdx, size: (fw, fh), scale: fullScale) }
             if playing { prerenderWork?.cancel() }

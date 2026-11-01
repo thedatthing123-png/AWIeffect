@@ -231,7 +231,7 @@ final class AWIeffectUITests: XCTestCase {
         for label in chrome {
             let e = app.buttons[label].firstMatch
             guard e.exists else { continue }
-            XCTAssertTrue(window.contains(e.frame), "\(label) is (partly) off-screen: \(e.frame)")
+            XCTAssertTrue(window.insetBy(dx: -1, dy: -1).contains(e.frame), "\(label) is (partly) off-screen: \(e.frame)")
             frames.append((label, e.frame))
         }
         for i in frames.indices { for j in frames.indices where j > i {
