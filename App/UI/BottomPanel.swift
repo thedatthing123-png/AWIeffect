@@ -9,6 +9,8 @@ struct BottomPanel: View {
     /// Panel height is the user's: drag the grabber to give the panel or the canvas more room.
     @AppStorage("awi.panelHeight") private var panelHeight: Double = 250
     @State private var dragBase: Double?
+    /// Height while the grabber is held (saved to panelHeight on release, so dragging never writes settings).
+    @State private var liveHeight: Double?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,7 +22,7 @@ struct BottomPanel: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .id(state.panel)                       // swap panels instantly: no overlapping cross-fade
                     .transaction { $0.animation = nil }
-                    .frame(height: CGFloat(min(panelHeight, Double(UIScreen.main.bounds.height) * 0.42)), alignment: .top)
+                    .frame(height: CGFloat(min(liveHeight ?? panelHeight, Double(UIScreen.main.bounds.height) * 0.42)), alignment: .top)
                     .clipped()
                 Divider().overlay(Theme.stroke)
             }
@@ -34,13 +36,18 @@ struct BottomPanel: View {
         Capsule().fill(Theme.textDim.opacity(0.5)).frame(width: 40, height: 5)
             .frame(maxWidth: .infinity).frame(height: 16)
             .contentShape(Rectangle())
-            .gesture(DragGesture(minimumDistance: 1)
+            // Screen coordinates: the grabber moves with the panel, so local coordinates fed back into the drag (twitch).
+            .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .global)
                 .onChanged { g in
                     if dragBase == nil { dragBase = panelHeight }
                     let cap = min(520, Double(UIScreen.main.bounds.height) * 0.42)
-                    panelHeight = min(cap, max(150, (dragBase ?? 250) - Double(g.translation.height)))
+                    var t = Transaction(); t.disablesAnimations = true
+                    withTransaction(t) { liveHeight = min(cap, max(150, (dragBase ?? 250) - Double(g.translation.height))) }
                 }
-                .onEnded { _ in dragBase = nil })
+                .onEnded { _ in
+                    if let h = liveHeight { panelHeight = h }
+                    liveHeight = nil; dragBase = nil
+                })
             .accessibilityLabel("Resize panel")
     }
 

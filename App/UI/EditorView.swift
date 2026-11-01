@@ -142,7 +142,7 @@ struct EditorView: View {
             .frame(maxWidth: .infinity).frame(height: 12)
             .background(Theme.surface)
             .contentShape(Rectangle())
-            .gesture(DragGesture(minimumDistance: 1)
+            .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .global)
                 .onChanged { g in
                     if timelineDragBase == nil { timelineDragBase = timelineShare }
                     let screen = Double(UIScreen.main.bounds.height)
@@ -284,27 +284,29 @@ struct EditorView: View {
             ZStack(alignment: .topLeading) {
                 LiveReader(live: state.live) { lp in
                 ClockReader(clock: state.clock) { t in
-                    MetalPreview(project: state.viewMode == .orbit ? OrbitView.scene(lp ?? state.project, orbit: state.orbit, time: t)
+                    MetalPreview(project: state.viewMode == .orbit && !state.looksThroughCamera ? OrbitView.scene(lp ?? state.project, orbit: state.orbit, time: t)
                                     : (state.cameraView ? (lp ?? state.project) : state.freeViewProject(lp ?? state.project)),
                                  time: t, redrawToken: state.redrawToken, mediaURL: { state.mediaURL($0) },
-                                 viewZoom: state.viewMode == .comp ? viewZoom : 1, viewPan: state.viewMode == .comp ? viewPan : .zero,
+                                 viewZoom: state.canvasMode == .comp ? viewZoom : 1, viewPan: state.canvasMode == .comp ? viewPan : .zero,
                                  qualityCap: state.previewQuality.rawValue, isPlaying: state.isPlaying,
                                  // No RAM-cache writes mid-gesture: every frame changes, caching only churned memory.
-                                 cacheEnabled: state.viewMode == .comp && lp == nil)
+                                 cacheEnabled: state.canvasMode == .comp && lp == nil)
                 }
                 }
-                if state.viewMode == .orbit {
-                    ClockReader(clock: state.clock) { t in OrbitGrid(project: state.project, orbit: state.orbit, time: t, fit: fit) }
-                        .allowsHitTesting(false)
+                if state.viewMode == .orbit && !state.looksThroughCamera {
+                    LiveReader(live: state.live) { lp in
+                        ClockReader(clock: state.clock) { t in OrbitGrid(project: lp ?? state.project, orbit: state.orbit, time: t, fit: fit) }
+                    }
+                    .allowsHitTesting(false)
                 }
-                if state.viewMode == .comp, !state.cameraView {
+                if state.canvasMode == .comp, !state.cameraView {
                     LiveReader(live: state.live) { lp in
                         ClockReader(clock: state.clock) { t in CameraFrameOverlay(project: lp ?? state.project, time: t, fit: fit) }
                     }
                 }
                 if state.showGrid { CompGrid(fit: fit) }
                 // 3D camera: two fingers dragged together slide the camera.
-                if state.viewMode == .comp, state.cameraView, let cam = state.activeCameraLayer, EditorState.cameraIs3D(cam) {
+                if state.canvasMode == .comp, state.cameraView, let cam = state.activeCameraLayer, EditorState.cameraIs3D(cam) {
                     TwoFingerPan(onBegan: { panCamera = state.beginCameraGesture() }, onChanged: { d in
                         guard let c = panCamera else { return }
                         let k = Double(state.project.width) / Double(max(fit.width, 1))
@@ -317,7 +319,7 @@ struct EditorView: View {
                 if trackLauncher.active {
                     TrackOverlay(state: state, fit: fit) { trackLauncher.active = false }
                 }
-                if state.panel == .puppet, state.viewMode == .comp {
+                if state.panel == .puppet, state.canvasMode == .comp {
                     ClockReader(clock: state.clock) { _ in PuppetOverlay(state: state, fit: fit) }
                 }
                 if state.textTyping, let id = state.selectedLayerID {
@@ -340,10 +342,10 @@ struct EditorView: View {
                         Spacer()
                     }
                 }
-                if state.panel == .masks, state.viewMode == .comp {
+                if state.panel == .masks, state.canvasMode == .comp {
                     ClockReader(clock: state.clock) { _ in MaskPointsOverlay(state: state, fit: fit) }
                 }
-                if pen == nil, state.viewMode == .comp, let id = state.selectedLayerID {
+                if pen == nil, state.canvasMode == .comp, let id = state.selectedLayerID {
                     LiveReader(live: state.live) { lp in
                         ClockReader(clock: state.clock) { t in
                             let shown = lp ?? state.project
@@ -374,27 +376,27 @@ struct EditorView: View {
             }
             .clipped()
             .contentShape(Rectangle())
-            .gesture(canvasDrag(fit: fit), including: pen == nil && state.viewMode == .comp ? .all : .subviews)
+            .gesture(canvasDrag(fit: fit), including: pen == nil && state.canvasMode == .comp ? .all : .subviews)
             // Two fingers, like Alight Motion: with a layer selected, pinch scales it and twisting rotates it (both at
             // once); with nothing selected the pinch zooms the canvas view.
             .simultaneousGesture(MagnificationGesture()
                 .onChanged { m in
-                    guard state.viewMode == .comp else { return }
+                    guard state.canvasMode == .comp else { return }
                     pinchScale = Double(m); magActive = true
                     updatePinch()
                 }
                 .onEnded { _ in magActive = false; finishPinch() }, including: pen == nil ? .all : .subviews)
             .simultaneousGesture(RotationGesture()
                 .onChanged { a in
-                    guard state.viewMode == .comp else { return }
+                    guard state.canvasMode == .comp else { return }
                     pinchAngle = a.degrees; rotActive = true
                     updatePinch()
                 }
                 .onEnded { _ in rotActive = false; finishPinch() }, including: pen == nil ? .all : .subviews)
-            .simultaneousGesture(orbitDrag, including: state.viewMode == .orbit ? .all : .subviews)
-            .simultaneousGesture(orbitZoom, including: state.viewMode == .orbit ? .all : .subviews)
+            .simultaneousGesture(orbitDrag, including: state.canvasMode == .orbit ? .all : .subviews)
+            .simultaneousGesture(orbitZoom, including: state.canvasMode == .orbit ? .all : .subviews)
             .simultaneousGesture(SpatialTapGesture().onEnded { v in
-                guard pen == nil && state.viewMode == .comp else { return }
+                guard pen == nil && state.canvasMode == .comp else { return }
                 // Link mode: the tapped layer becomes the parent.
                 if state.linkPicking { state.endLinkPick(parent: layerAt(v.location, fit: fit)); return }
                 // Puppet panel open: taps drop pins instead of selecting layers.
@@ -499,6 +501,10 @@ struct EditorView: View {
                         if puppetDragPin! >= 0 { state.beginEdit("Move Pin") }
                     }
                     if let k = puppetDragPin, k >= 0 { state.movePuppetPin(k, toComp: toComp(v.location, fit: fit)); return }
+                }
+                if canvasDragState == nil && panBase == nil && cameraStart == nil,
+                   state.selectedLayer?.content == .camera, state.activeCameraLayer != nil, let c = state.beginCameraGesture() {
+                    cameraStart = c
                 }
                 if canvasDragState == nil && panBase == nil && cameraStart == nil {
                     canvasDragState = state.beginCanvasDrag(at: v.startLocation, comp: toComp(v.startLocation, fit: fit), fit: fit)

@@ -7,6 +7,11 @@ extension EditorState {
     /// The camera the shot uses right now (top-most active camera layer).
     var activeCameraLayer: Layer? { canvasProject.layers.first { $0.content == .camera && $0.isActive(at: currentTime) } }
 
+    /// Camera view with a camera in the shot: you look through it, in the 2D and the 3D viewport alike.
+    var looksThroughCamera: Bool { cameraView && activeCameraLayer != nil }
+    /// What the canvas behaves like: the 3D orbit viewer only while not looking through a camera.
+    var canvasMode: ViewMode { viewMode == .orbit && !looksThroughCamera ? .orbit : .comp }
+
     static func cameraIs3D(_ l: Layer) -> Bool { !(l.camera?.affects2D ?? false) }
 
     struct CameraDragStart {

@@ -140,7 +140,10 @@ final class TextEngine {
         // Center the block vertically around the origin (AE-like default anchor for our text layers).
         let totalH = Double(max(1, lines.count - 1)) * lineHeight
         let top = -ascent, bottom = totalH + descent
-        let shiftY = -(top + bottom) / 2
+        // Visual center: halfway between the first line's cap height and the last baseline, so the letters sit
+        // on the pivot (the ascent/descent box put them noticeably above it).
+        let capHeight = Double(CTFontGetCapHeight(font))
+        let shiftY = -(-capHeight + totalH) / 2
         for i in glyphs.indices {
             glyphs[i].center.y += shiftY
             glyphs[i].origin.y += shiftY

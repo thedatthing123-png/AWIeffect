@@ -19,7 +19,7 @@ struct DrawerChrome<Content: View>: View {
                     Capsule().fill(Theme.textDim.opacity(0.6)).frame(width: 42, height: 5)
                         .frame(maxWidth: .infinity).frame(height: 22)
                         .contentShape(Rectangle())
-                        .gesture(DragGesture()
+                        .gesture(DragGesture(coordinateSpace: .global)
                             .onChanged { drag = max(0, $0.translation.height) }
                             .onEnded { g in
                                 if g.translation.height > 120 || g.predictedEndTranslation.height > 260 { close() }

@@ -300,18 +300,9 @@ struct OverlaysPanel: View {
     @ObservedObject var state: EditorState
     var body: some View {
         VStack(spacing: 0) {
-            PanelHeader(state: state, title: "Overlays", showKeyNav: false)
+            PanelHeader(state: state, title: "My Overlays", showKeyNav: false)
             ScrollView {
                 MyLibrarySection(state: state).padding(.horizontal, 12).padding(.bottom, 8)
-                ForEach(["Light", "Manga", "Texture & Retro"], id: \.self) { section in
-                    Text(section.uppercased()).font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
-                        .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 12).padding(.top, 6)
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
-                        ForEach(OverlayKind.allCases.filter { $0.section == section }) { k in OverlayTile(kind: k) { state.addOverlay(k) } }
-                    }
-                    .padding(.horizontal, 12)
-                }
-                Text("Generated at your project size. Each tap makes a new random variation.").font(.caption).foregroundStyle(Theme.textDim).padding(10)
             }
         }
     }
