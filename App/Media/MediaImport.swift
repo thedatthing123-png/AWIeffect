@@ -213,7 +213,9 @@ final class AudioPreview {
     }
 
     func play(_ project: Project, from time: Double, mediaURL: (String) -> URL) {
-        let key = (try? JSONEncoder().encode(project.layers)).map { $0.base64EncodedString() } ?? UUID().uuidString
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        let key = (try? encoder.encode(project.layers)).map { $0.base64EncodedString() } ?? UUID().uuidString
         if builtFor != key {
             if let (comp, mix) = Self.composition(project, mediaURL: mediaURL) {
                 let item = AVPlayerItem(asset: comp)

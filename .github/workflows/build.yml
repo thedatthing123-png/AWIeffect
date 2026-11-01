@@ -20,7 +20,7 @@ jobs:
       - name: Select Xcode
         run: |
           ls /Applications | grep -i xcode || true
-          XC=/Applications/Xcode_26.5.app
+          XC=/Applications/Xcode_26.0.1.app
           echo "Using $XC"
           sudo xcode-select -s "$XC"
           xcodebuild -version
@@ -39,6 +39,9 @@ jobs:
           EOF
           swift /tmp/metal.swift || echo "Metal probe failed"
 
+      - name: Parse Swift sources
+        run: find App Tests UITests -name '*.swift' -print0 | xargs -0 xcrun swiftc -frontend -parse
+
       - name: Run tests (simulator)
         # Quick builds: a commit message containing [quick] skips the test run and goes straight to the IPA.
         if: ${{ !contains(github.event.head_commit.message, '[quick]') }}
@@ -53,7 +56,7 @@ jobs:
             -resultBundlePath TestResults.xcresult \
             -parallel-testing-enabled NO \
             -test-timeouts-enabled YES -default-test-execution-time-allowance 240 -maximum-test-execution-time-allowance 600 \
-            CODE_SIGNING_ALLOWED=NO 2>&1 | tee test.log | grep -E "error:|warning: .*AWI|Test Case|Executed|SKIP|FAIL|Fatal|error represents|exceeded|crashed|Restarting"
+            SWIFT_ENABLE_EXPLICIT_MODULES=NO CODE_SIGNING_ALLOWED=NO 2>&1 | tee test.log | grep -E "error:|warning: .*AWI|Test Case|Executed|SKIP|FAIL|Fatal|error represents|exceeded|crashed|Restarting"
           TEST_STATUS=${PIPESTATUS[0]}
           set -e
           exit "$TEST_STATUS"
@@ -87,7 +90,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: host-diagnostics
-          path: /Users/runner/Library/Logs/DiagnosticReports
+          path: |
+            /Users/runner/Library/Logs/DiagnosticReports
+            /Library/Logs/DiagnosticReports
           if-no-files-found: ignore
 
       - name: Upload test artifacts
@@ -125,7 +130,7 @@ jobs:
             -configuration Release \
             -destination "generic/platform=iOS" \
             -archivePath build/AWIeffect.xcarchive \
-            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            SWIFT_ENABLE_EXPLICIT_MODULES=NO CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
             | tee archive.log | grep -E "error:|ARCHIVE" || true
           test -d build/AWIeffect.xcarchive/Products/Applications/AWIeffect.app
 

@@ -11,7 +11,9 @@ enum RetimedAudio {
         lock.lock(); defer { lock.unlock() }
         if isCancelled() || Task.isCancelled { throw ExportError.cancelled }
         let attributes = try FileManager.default.attributesOfItem(atPath: source.path)
-        var key = try JSONEncoder().encode(layer)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        var key = try encoder.encode(layer)
         key.append(Data("\(source.path)|\(attributes[.size] ?? 0)|\(attributes[.modificationDate] ?? "")".utf8))
         if let url = cache[key], FileManager.default.fileExists(atPath: url.path) { return url }
         let decoded = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".caf")
