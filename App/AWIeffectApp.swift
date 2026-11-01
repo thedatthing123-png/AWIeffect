@@ -51,6 +51,7 @@ struct RootView: View {
                 }
             } else if let p = openProject {
                 EditorView(state: EditorState(project: p)) { openProject = nil }
+                    .id(p.id)
                     .transition(.move(edge: .trailing))
             } else {
                 HomeView { openProject = $0 }
@@ -58,6 +59,8 @@ struct RootView: View {
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: openProject?.id)
+        // AI Link can create / open projects.
+        .onAppear { AILink.openProject = { p in openProject = p } }
         .sheet(isPresented: Binding(get: { crashReport != nil }, set: { if !$0 { crashReport = nil; CrashReporter.clear() } })) {
             CrashReportSheet(report: crashReport ?? "", reopen: lastProject.map { p in { crashReport = nil; openProject = p } }) {
                 crashReport = nil
