@@ -521,7 +521,7 @@ final class DrawEngine: ObservableObject {
     /// Lasso fill paints the closed polygon without replacing the user's selection.
     func fillLasso(_ pts: [SIMD2<Double>], color: RGBA, opacity: Double) {
         guard pts.count >= 3, let layer = activeLayer else { return }
-        let mask = lassoMask(pts), selected = selectionBytes()
+        let mask = lassoMask(pts), selected = hasSelection ? selectionBytes() : [UInt8](repeating: 255, count: width * height)
         var pixels = bytes(of: layer)
         pushUndo(layer)
         let strength = min(1, max(0, opacity * color.a))
@@ -1067,6 +1067,7 @@ final class DrawEngine: ObservableObject {
         if snapToSubject { snapSelection() }
         uploadSelection()
         hasSelection = selBuf.contains { $0 > 0 }
+        if !hasSelection { clearSelection() }
         selLast = nil
         revision += 1
     }
@@ -1088,7 +1089,9 @@ final class DrawEngine: ObservableObject {
     }
 
     func cancelSelectStroke() {
-        selBuf = selBefore; selLast = nil; uploadSelection(); revision += 1
+        selBuf = selBefore; selLast = nil; uploadSelection()
+        if !hasSelection { clearSelection() }
+        revision += 1
     }
 
     private func uploadSelection() {

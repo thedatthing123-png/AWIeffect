@@ -300,6 +300,7 @@ enum AudioAnalysis {
         var result: [Float] = []
         result.reserveCapacity(Int(sampleRate * min(maxSeconds, CMTimeGetSeconds(asset.duration) + 1)))
         while let sb = out.copyNextSampleBuffer(), let bb = CMSampleBufferGetDataBuffer(sb) {
+            if Task.isCancelled { reader.cancelReading(); return [] }
             var len = 0
             var ptr: UnsafeMutablePointer<Int8>?
             CMBlockBufferGetDataPointer(bb, atOffset: 0, lengthAtOffsetOut: nil, totalLengthOut: &len, dataPointerOut: &ptr)

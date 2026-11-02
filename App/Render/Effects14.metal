@@ -86,6 +86,8 @@ kernel void fxWarp14(texture2d<half, access::sample> src [[texture(0)]],
             break;
         }
         case 3: { // page curl: a = (progress 0-1, angle rad, curl radius frac, shadow 0-1)
+            if (p.a.x <= 0.0) break;
+            if (p.a.x >= 1.0) { o = float4(0.0); break; }
             float2 dir = float2(cos(p.a.y), sin(p.a.y));
             float d0 = min(min(0.0, dot(float2(size.x, 0), dir)), min(dot(float2(0, size.y), dir), dot(size, dir)));
             float d1 = max(max(0.0, dot(float2(size.x, 0), dir)), max(dot(float2(0, size.y), dir), dot(size, dir)));
@@ -96,7 +98,8 @@ kernel void fxWarp14(texture2d<half, access::sample> src [[texture(0)]],
             float dd = x - F;
             float4 res;
             if (dd > R) {
-                res = float4(0, 0, 0, p.a.w * 0.5 * exp(-(dd - R) / R));
+                // Removed paper cannot generate a rectangular shadow where no paper exists.
+                res = float4(0.0);
             } else if (dd > 0.0) {
                 float th = asin(clamp(dd / R, 0.0, 1.0));
                 float xb = F + R * (3.1415926 - th);
@@ -112,7 +115,7 @@ kernel void fxWarp14(texture2d<half, access::sample> src [[texture(0)]],
                 float xb = F + 3.1415926 * R + (F - x);
                 float4 b = xb < ext ? tapz14(src, c + dir * (xb - x)) : float4(0.0);
                 float4 fr = o;
-                fr.rgb *= 1.0 - p.a.w * 0.5 * exp(dd / R);
+                fr.rgb *= 1.0 - p.a.w * 0.5 * exp(dd / R) * b.a;
                 float4 bk = float4(mix(b.rgb, float3(0.92) * b.a, 0.55) * 0.75, b.a);
                 res = bk + fr * (1.0 - bk.a);
             }

@@ -5,6 +5,8 @@ struct ClipPanel: View {
     @ObservedObject var state: EditorState
     @EnvironmentObject private var trackLauncher: TrackLauncher
     @State private var sensitivity = 0.5
+    @State private var automaticTempo = true
+    @State private var tempo = 120.0
     @State private var slowMoProgress: Double?
     @State private var slowMoMessage: String?
 
@@ -157,6 +159,8 @@ struct ClipPanel: View {
 struct BeatsPanel: View {
     @ObservedObject var state: EditorState
     @State private var sensitivity = 0.5
+    @State private var automaticTempo = true
+    @State private var tempo = 120.0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -169,9 +173,18 @@ struct BeatsPanel: View {
                             Text("Sensitivity").font(.system(size: 12)).foregroundStyle(Theme.textDim)
                             Slider(value: $sensitivity, in: 0...1).tint(Theme.accent)
                         }
-                        Button { state.detectBeats(sensitivity: sensitivity) } label: {
-                            Label("Detect Beats from Music", systemImage: "waveform.badge.magnifyingglass")
-                        }.buttonStyle(PrimaryButtonStyle())
+                        Toggle("Estimate tempo automatically", isOn: $automaticTempo).font(.footnote).tint(Theme.accent)
+                        if !automaticTempo {
+                            NumberField(value: tempo, label: "BPM") { tempo = min(300, max(30, $0)) }
+                        }
+                        if state.isDetectingBeats {
+                            HStack { ProgressView(); Button("Cancel Analysis") { state.cancelBeatDetection() } }
+                        } else {
+                            Button { state.detectBeats(sensitivity: sensitivity, bpm: automaticTempo ? nil : tempo) } label: {
+                                Label("Detect Beats from Music", systemImage: "waveform.badge.magnifyingglass")
+                            }.buttonStyle(PrimaryButtonStyle())
+                        }
+                        if let status = state.beatStatus { Text(status).font(.caption).foregroundStyle(Theme.textDim) }
                     } else {
                         Text("Add music or a video with sound to auto-detect beats — or tap the ◆ on the playhead while it plays.")
                             .font(.caption).foregroundStyle(Theme.textDim)

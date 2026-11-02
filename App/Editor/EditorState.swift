@@ -101,6 +101,9 @@ final class EditorState: ObservableObject {
     @Published var cutoutSmart = true
     /// Link mode: the panel steps aside and the next tap on a layer makes it this layer's parent.
     @Published var linkPicking = false
+    @Published var isDetectingBeats = false
+    @Published var beatStatus: String?
+    private var beatTask: Task<Void, Never>?
     /// Typing on the canvas: the timeline and panels step aside for the keyboard, the rest is dimmed.
     @Published var textTyping = false
     /// Camera view (what the export sees) vs free view (look around without the camera; the camera shows as a frame).
@@ -601,7 +604,7 @@ final class EditorState: ObservableObject {
         isPlaying = true
         playStartWall = CACurrentMediaTime()
         playStartTime = currentTime
-        let pid = project.id, st = store
+        let pid = rootProject.id, st = store
         AudioPreview.shared.play(project, from: currentTime, mediaURL: { st.mediaURL($0, projectID: pid) })
         let link = CADisplayLink(target: DisplayLinkProxy { [weak self] in self?.tick() }, selector: #selector(DisplayLinkProxy.fire))
         link.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 120, preferred: Float(min(120, max(30, project.fps))))
@@ -818,14 +821,14 @@ extension EditorState {
 extension EditorState {
     /// Engine for a new drawing (canvas = composition size) or the selected drawing layer.
     func makeDrawEngine(editing layer: Layer?) -> DrawEngine? {
-        if let id = layer?.drawingID, let e = DrawEngine.load(doc: id, folder: store.mediaFolder(for: project.id)) { return e }
+        if let id = layer?.drawingID, let e = DrawEngine.load(doc: id, folder: store.mediaFolder(for: rootProject.id)) { return e }
         guard let e = DrawEngine(width: project.width, height: project.height) else { return nil }
         // Redraw on a photo / video frame: bring the layer in exactly where it sits in the scene.
         if let layer, layer.mediaFile != nil, let r = Renderer.shared {
             var solo = project
             solo.layers = Renderer.resolveParenting(project, time: currentTime).layers.filter { $0.id == layer.id }
             solo.background.a = 0
-            let pid = project.id, st = store
+            let pid = rootProject.id, st = store
             if let img = r.renderImage(project: solo, time: currentTime, maxDimension: Double(max(project.width, project.height)),
                                        mediaURL: { st.mediaURL($0, projectID: pid) }) {
                 e.importImage(img)
@@ -910,7 +913,7 @@ extension EditorState {
         if engine.sendAsFrames { finishDrawingFrames(engine); return }
         if engine.sendAsParts { finishDrawingParts(engine); return }
         let docID = existing.flatMap { id in project.layers.first { $0.id == id }?.drawingID } ?? UUID()
-        let folder = store.mediaFolder(for: project.id)
+        let folder = store.mediaFolder(for: rootProject.id)
         guard (try? engine.save(doc: docID, folder: folder)) != nil, let png = engine.flattenedPNG() else { return }
         let file = "draw-\(docID.uuidString)-flat-\(UUID().uuidString.prefix(6)).png"
         guard (try? png.write(to: folder.appendingPathComponent(file), options: .atomic)) != nil else { return }
@@ -947,21 +950,56 @@ extension EditorState {
 
 extension EditorState {
     /// Detects beats in the selected audio/video layer and adds them as markers (comp time).
-    func detectBeats(sensitivity: Double = 0.5) {
-        // The selected clip, or else the first music/video track in the comp.
-        guard let l = (selectedLayer?.hasAudio == true ? selectedLayer : nil) ?? project.layers.first(where: { $0.hasAudio }),
-              let file = l.mediaFile else { return }
-        let url = mediaURL(file)
-        let beats = BeatDetector.beats(url: url, sensitivity: sensitivity)
-            .map { l.inPoint + ($0 - l.sourceStart) / max(l.speed, 0.01) }
-            .filter { $0 >= l.inPoint && $0 <= l.outPoint }
-        mutate("Detect Beats") { $0.markers = Array(Set($0.markers + beats.map { ($0 * 1000).rounded() / 1000 })) }
+    func detectBeats(sensitivity: Double = 0.5, bpm: Double? = nil) {
+        guard let layer = (selectedLayer?.hasAudio == true ? selectedLayer : nil) ?? project.layers.first(where: { $0.hasAudio }),
+              let file = layer.mediaFile else { return }
+        beatTask?.cancel()
+        isDetectingBeats = true; beatStatus = "Analyzing audio..."
+        let url = mediaURL(file), projectID = project.id
+        beatTask = Task.detached(priority: .userInitiated) { [weak self] in
+            do {
+                var bounded = layer
+                bounded.outPoint = min(layer.outPoint, layer.inPoint + 600)
+                let source = try RetimedAudio.source(for: bounded, source: url, isCancelled: { Task.isCancelled })
+                let samples = AudioAnalysis.samples(url: source.asset.url, sampleRate: 22050)
+                let result = BeatDetector.analyze(samples: samples, sampleRate: 22050, sensitivity: sensitivity, bpm: bpm)
+                withExtendedLifetime(source) {}
+                guard !Task.isCancelled else { return }
+                let times = result.times.map { layer.inPoint + $0 }.filter { $0 >= max(0, layer.inPoint) && $0 < layer.outPoint }
+                await MainActor.run {
+                    guard !Task.isCancelled, let self else { return }
+                    self.isDetectingBeats = false
+                    guard self.project.id == projectID, self.project.layers.first(where: { $0.id == layer.id }) == layer else {
+                        self.beatStatus = "The clip changed during analysis. Detect again to update its markers."
+                        return
+                    }
+                    self.mutate("Detect Beats") { p in
+                        let oldAuto = Set((p.detectedBeatTimes ?? []).map { Int(($0 * 1000).rounded()) })
+                        let manual = p.markers.filter { !oldAuto.contains(Int(($0 * 1000).rounded())) }
+                        let manualSet = Set(manual.map { Int(($0 * 1000).rounded()) })
+                        let automatic = Array(Set(times.map { ($0 * 1000).rounded() / 1000 })).filter { !manualSet.contains(Int(($0 * 1000).rounded())) }.sorted()
+                        p.markers = manual + automatic
+                        p.detectedBeatTimes = automatic.isEmpty ? nil : automatic
+                    }
+                    let tempo = result.bpm.map { "Suggested tempo: \(Int($0.rounded())) BPM. " } ?? ""
+                    let limit = layer.outPoint - layer.inPoint > 600 ? " First 10 minutes analyzed." : ""
+                    self.beatStatus = tempo + "\(times.count) beats detected." + limit
+                }
+            } catch {
+                guard !Task.isCancelled else { return }
+                await MainActor.run { self?.isDetectingBeats = false; self?.beatStatus = error.localizedDescription }
+            }
+        }
+    }
+
+    func cancelBeatDetection() {
+        beatTask?.cancel(); isDetectingBeats = false; beatStatus = "Detection cancelled."
     }
 
     /// Manual beat tap (works while playing).
     func tapMarker() { toggleBeatMarker() }
 
-    func clearMarkers() { mutate("Clear Markers") { $0.markers = [] } }
+    func clearMarkers() { mutate("Clear Markers") { $0.markers = []; $0.detectedBeatTimes = nil } }
 
     /// Beat-sync script: a punch-in scale + shake hit on the selected layer at every marker.
     func punchOnBeats(scaleAmount: Double = 12, decay: Double = 0.18) {

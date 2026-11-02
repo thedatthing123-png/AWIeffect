@@ -25,6 +25,7 @@ extension EditorState {
         var parent = entry.project
         if let gid = entry.groupID, let index = parent.layers.firstIndex(where: { $0.id == gid }) {
             let old = descendantIDs(of: gid, in: parent)
+            let oldLayers = parent.layers.filter { old.contains($0.id) }
             parent.layers.removeAll { old.contains($0.id) }
             let nestedGroups = Set(child.layers.filter(\.isGroup).map(\.id))
             let members = child.layers.map { layer -> Layer in
@@ -34,7 +35,17 @@ extension EditorState {
             }
             let at = (parent.layers.firstIndex(where: { $0.id == gid }) ?? index) + 1
             parent.layers.insert(contentsOf: members, at: at)
-            if let i = parent.layers.firstIndex(where: { $0.id == gid }) { parent.layers[i].name = child.name }
+            if let i = parent.layers.firstIndex(where: { $0.id == gid }) {
+                parent.layers[i].name = child.name
+                if let oldEnd = oldLayers.map(\.outPoint).max(), let newEnd = members.map(\.outPoint).max() {
+                    parent.layers[i].outPoint += newEnd - oldEnd
+                }
+                if let oldStart = oldLayers.map(\.inPoint).min(), let newStart = members.map(\.inPoint).min() {
+                    parent.layers[i].inPoint += newStart - oldStart
+                }
+            }
+            parent.markers = child.markers; parent.detectedBeatTimes = child.detectedBeatTimes
+            parent.fitAutoLength()
             parent.precomps = child.precomps
         } else {
             parent.precomps = closing(child, into: parent.precomps)

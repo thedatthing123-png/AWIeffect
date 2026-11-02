@@ -127,9 +127,11 @@ final class LUTLibrary {
         defer { if access { url.stopAccessingSecurityScopedResource() } }
         let name = url.lastPathComponent
         let dest = Self.folder.appendingPathComponent(name)
-        try? FileManager.default.removeItem(at: dest)
-        try FileManager.default.copyItem(at: url, to: dest)
-        _ = try Self.parse(String(contentsOf: dest, encoding: .utf8))
+        let data = try Data(contentsOf: url)
+        guard let text = String(data: data, encoding: .utf8) else { throw CubeError.invalid }
+        _ = try Self.parse(text)
+        // Validate first: a malformed replacement must never erase an existing look.
+        try data.write(to: dest, options: .atomic)
         lock.lock(); cache[name] = nil; lock.unlock()
         return name
     }
@@ -145,20 +147,57 @@ final class LUTLibrary {
     static func parse(_ text: String) throws -> (Int, [Float]) {
         var size = 0
         var values: [Float] = []
-        values.reserveCapacity(33 * 33 * 33 * 3)
+        var minimum: [Float] = [0, 0, 0], maximum: [Float] = [1, 1, 1]
+        var sawMin = false, sawMax = false
         for raw in text.split(whereSeparator: \.isNewline) {
-            let line = raw.trimmingCharacters(in: .whitespaces)
-            if line.isEmpty || line.hasPrefix("#") { continue }
-            if line.uppercased().hasPrefix("LUT_3D_SIZE") {
-                size = Int(line.split(separator: " ").last ?? "") ?? 0
-                continue
+            let line = raw.split(separator: "#", maxSplits: 1, omittingEmptySubsequences: false)[0]
+            let words = line.split(whereSeparator: \.isWhitespace)
+            guard let first = words.first else { continue }
+            let directive = first.uppercased()
+            if directive == "TITLE" { continue }
+            if directive == "LUT_3D_SIZE" {
+                guard size == 0, values.isEmpty, words.count == 2,
+                      let n = Int(words[1]), (2...128).contains(n) else { throw CubeError.invalid }
+                size = n
+            } else if directive == "DOMAIN_MIN" || directive == "DOMAIN_MAX" {
+                let triple = words.dropFirst().compactMap { Float($0) }
+                guard values.isEmpty, words.count == 4, triple.count == 3, triple.allSatisfy(\.isFinite) else { throw CubeError.invalid }
+                if directive == "DOMAIN_MIN" {
+                    guard !sawMin else { throw CubeError.invalid }; minimum = triple; sawMin = true
+                } else {
+                    guard !sawMax else { throw CubeError.invalid }; maximum = triple; sawMax = true
+                }
+            } else {
+                let triple = words.compactMap { Float($0) }
+                guard size > 0, words.count == 3, triple.count == 3,
+                      triple.allSatisfy({ $0.isFinite && abs($0) <= 65504 }),
+                      values.count < size * size * size * 3 else { throw CubeError.invalid }
+                values.append(contentsOf: triple)
             }
-            if let c = line.first, c.isLetter { continue }
-            let parts = line.split(separator: " ").compactMap { Float($0) }
-            if parts.count == 3 { values.append(contentsOf: parts) }
         }
-        guard size >= 2, size <= 128, values.count == size * size * size * 3 else { throw CubeError.invalid }
-        return (size, values)
+        guard size >= 2, values.count == size * size * size * 3,
+              (0..<3).allSatisfy({ maximum[$0] > minimum[$0] }) else { throw CubeError.invalid }
+        if minimum == [0, 0, 0] && maximum == [1, 1, 1] { return (size, values) }
+        // Bake the declared input domain into our normalized GPU LUT. Red changes fastest.
+        var normalized = values
+        for b in 0..<size { for g in 0..<size { for r in 0..<size {
+            let input = [r, g, b].enumerated().map { c, v -> Float in
+                min(Float(size - 1), max(0, (Float(v) / Float(size - 1) - minimum[c]) / (maximum[c] - minimum[c]) * Float(size - 1)))
+            }
+            let lo = input.map { Int($0.rounded(.down)) }
+            let hi = lo.map { min(size - 1, $0 + 1) }
+            let f = (0..<3).map { input[$0] - Float(lo[$0]) }
+            for c in 0..<3 {
+                var value: Float = 0
+                for z in 0...1 { for y in 0...1 { for x in 0...1 {
+                    let ix = x == 0 ? lo[0] : hi[0], iy = y == 0 ? lo[1] : hi[1], iz = z == 0 ? lo[2] : hi[2]
+                    let weight = (x == 0 ? 1 - f[0] : f[0]) * (y == 0 ? 1 - f[1] : f[1]) * (z == 0 ? 1 - f[2] : f[2])
+                    value += values[((iz * size + iy) * size + ix) * 3 + c] * weight
+                } } }
+                normalized[((b * size + g) * size + r) * 3 + c] = value
+            }
+        } } }
+        return (size, normalized)
     }
 
     func texture(named name: String, device: MTLDevice) -> MTLTexture? {

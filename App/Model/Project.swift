@@ -429,6 +429,8 @@ struct Project: Codable, Equatable, Identifiable {
     var parentContext: [Layer]? = nil
     /// Beat / comp markers in seconds (optional so older saves still decode).
     var markerTimes: [Double]? = nil
+    /// Auto-detected markers are tracked separately so re-analysis preserves manual taps.
+    var detectedBeatTimes: [Double]? = nil
     /// Scene motion blur (optional storage so older saves decode).
     var motionBlurOn: Bool? = nil
     /// Alight Motion-style length: the project is as long as its layers (grows/shrinks with them).

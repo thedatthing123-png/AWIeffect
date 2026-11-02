@@ -47,12 +47,19 @@ enum Extrude3D {
     static func alphaOutline(_ image: CGImage, maxSide: Int = 220, threshold: UInt8 = 110) -> (path: UIBezierPath, crop: CGRect)? {
         let sc = min(1, Double(maxSide) / Double(max(image.width, image.height)))
         let w = max(2, Int(Double(image.width) * sc)), h = max(2, Int(Double(image.height) * sc))
-        var px = [UInt8](repeating: 0, count: w * h)
-        guard let ctx = CGContext(data: &px, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w, space: CGColorSpaceCreateDeviceGray(),
-                                  bitmapInfo: CGImageAlphaInfo.alphaOnly.rawValue) else { return nil }
-        ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
-        // CGContext rows run bottom-up; flip into top-down rows.
-        func inside(_ x: Int, _ y: Int) -> Bool { x >= 0 && y >= 0 && x < w && y < h && px[(h - 1 - y) * w + x] >= threshold }
+        var px = [UInt8](repeating: 0, count: w * h * 4)
+        let drawn = px.withUnsafeMutableBytes { buffer -> Bool in
+            guard let ctx = CGContext(data: buffer.baseAddress, width: w, height: h, bitsPerComponent: 8,
+                                      bytesPerRow: w * 4, space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return false }
+            ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+            return true
+        }
+        guard drawn else { return nil }
+        // Read actual alpha, not luminance: a black opaque silhouette is still solid geometry.
+        func inside(_ x: Int, _ y: Int) -> Bool {
+            x >= 0 && y >= 0 && x < w && y < h && px[((h - 1 - y) * w + x) * 4 + 3] >= threshold
+        }
         var minX = w, minY = h, maxX = -1, maxY = -1
         for y in 0..<h { for x in 0..<w where inside(x, y) { minX = min(minX, x); maxX = max(maxX, x); minY = min(minY, y); maxY = max(maxY, y) } }
         guard maxX >= minX else { return nil }

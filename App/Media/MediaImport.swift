@@ -76,7 +76,7 @@ extension EditorState {
         let id = l.id, inP = l.inPoint, outP = l.outPoint, src = l.sourceStart, speed = l.speed, layerName = l.name
         Self.extractAudio(from: mediaURL(file)) { out in
             guard let out, let data = try? Data(contentsOf: out),
-                  let name = try? self.store.importMedia(data: data, ext: "m4a", into: self.project.id) else { return }
+                  let name = try? self.store.importMedia(data: data, ext: "m4a", into: self.rootProject.id) else { return }
             let duration = CMTimeGetSeconds(AVURLAsset(url: self.store.mediaURL(name, projectID: self.rootProject.id)).duration)
             self.mutate("Extract Audio") { p in
                 var a = p.makeLayer(name: "\(layerName) Audio", content: .audio(fileName: name, duration: duration), size: Vec2(1, 1))
@@ -225,7 +225,8 @@ final class AudioPreview {
         buildTask?.cancel()
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
-        let key = (try? encoder.encode(project.layers)).map { $0.base64EncodedString() } ?? UUID().uuidString
+        let media = project.layers.compactMap(\.mediaFile).map { mediaURL($0).path }.joined(separator: "|")
+        let key = "\(project.id)|\(project.duration)|\(media)|" + ((try? encoder.encode(project.layers)).map { $0.base64EncodedString() } ?? UUID().uuidString)
         if builtFor == key {
             startPlayer(at: time)
             return

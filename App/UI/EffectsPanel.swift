@@ -93,7 +93,7 @@ final class EffectThumbnails {
     private let queue = DispatchQueue(label: "awi.thumbnails", qos: .userInitiated)
     private let lock = NSLock()
 
-    func clear() { lock.lock(); cache.removeAll(); lock.unlock() }
+    func clear() { lock.lock(); cache.removeAll(); frameCache.removeAll(); frameOrder.removeAll(); lock.unlock() }
 
     func cached(_ id: String) -> UIImage? { lock.lock(); defer { lock.unlock() }; return cache[id] }
 
@@ -277,6 +277,23 @@ struct EffectsPanel: View {
             .foregroundStyle(Theme.text)
             if isOpen, let def {
                 if EffectRegistry.layerRefIDs.contains(def.id) || (EffectRegistry.spriteRefIDs.contains(def.id) && e.choice("sprite") == 6) { layerPicker(e) }
+                if def.id == "ae.motionTile" {
+                    Text("Output Width and Height extend the repeated image beyond the layer edges.")
+                        .font(.caption).foregroundStyle(Theme.textDim)
+                    Button("Fit Output to Canvas") {
+                        guard let layer = state.selectedLayer else { return }
+                        let size = layer.size.value(at: state.currentTime)
+                        let scale = layer.transform.scale.value(at: state.currentTime)
+                        state.beginEdit("Fit Motion Tile")
+                        for (key, extent, source, percent) in [("outW", Double(state.project.width), size.x, scale.x), ("outH", Double(state.project.height), size.y, scale.y)] {
+                            let value = min(1000, max(100, extent / max(1, source * abs(percent) / 100) * 100))
+                            state.setEffectParam(e.id, key) { pv, time in
+                                if case .number(var a) = pv { a.set(value, at: time); pv = .number(a) }
+                            }
+                        }
+                        state.endEdit()
+                    }.font(.caption).foregroundStyle(Theme.accentGlow)
+                }
                 ForEach(def.params) { pd in ParamRow(state: state, effect: e, def: pd) }
             }
         }

@@ -134,7 +134,10 @@ extension EffectRegistry {
                  .toggle("mirror", "Mirror Edges", true, ae: 6), .number("phase", "Phase", 0, -3600, 3600, unit: "°", ae: 7),
                  .toggle("hphase", "Horizontal Phase Shift", false, ae: 8)],
         // AE's Output Width/Height: the tiles spread past the layer edge so shakes and zooms never show a border.
-        margin: { e, t in 700 * max(0, max(e.number("outW", t), e.number("outH", t)) - 100) / 100 },
+        expandedMargin: { e, t, size in
+            max(0, size.x * (min(1000, e.number("outW", t)) / 100 - 1) / 2,
+                   size.y * (min(1000, e.number("outH", t)) / 100 - 1) / 2)
+        },
         stage: .pixels { ctx in run("fxWarp", ctx) { p in
             let c = ctx.effect.point("center", ctx.time)
             let lp = ctx.layerPixels ?? SIMD2(Double(ctx.width), Double(ctx.height))
@@ -144,6 +147,7 @@ extension EffectRegistry {
             let ow = ctx.num("outW") / 100 * lp.x, oh = ctx.num("outH") / 100 * lp.y
             p.b = SIMD4(f(Double(ctx.width) / 2), f(Double(ctx.height) / 2), f(ow / 2), f(oh / 2))
             p.c = SIMD4(f(ctx.num("phase") / 360), ctx.effect.bool("hphase") ? 1 : 0, 0, 0)
+            p.d = SIMD4(f(off.x), f(off.y), f(lp.x), f(lp.y))
             p.i = SIMD4(8, ctx.effect.bool("mirror") ? 1 : 0, 0, 0) } })
 
     static let offset = EffectDefinition(

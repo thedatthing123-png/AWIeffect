@@ -54,6 +54,7 @@ struct EffectDefinition: Identifiable {
     let params: [ParamDef]
     /// Extra pixels (layer space) the effect may draw outside the layer bounds.
     var margin: (EffectInstance, Double) -> Double = { _, _ in 0 }
+    var expandedMargin: ((EffectInstance, Double, Vec2) -> Double)? = nil
     let stage: EffectStage
 
     func makeInstance() -> EffectInstance {
@@ -75,22 +76,22 @@ final class TexturePool {
     static var budgetBytes = 96 * 1024 * 1024
     init(device: MTLDevice) { self.device = device }
 
-    private static func bytes(_ t: MTLTexture) -> Int { t.width * t.height * 8 }
+    private static func bytes(_ t: MTLTexture) -> Int { max(t.allocatedSize, t.width * t.height * (t.pixelFormat == .rgba16Float ? 8 : 4)) }
 
     /// Largest side the pool hands out (Metal's limit is 16384; real layers are capped far below this).
     static let maxSide = 8192
     private var fallback: MTLTexture?
 
-    func acquire(width rawW: Int, height rawH: Int) -> MTLTexture {
+    func acquire(width rawW: Int, height rawH: Int, format: MTLPixelFormat = .rgba16Float) -> MTLTexture {
         let width = min(Self.maxSide, max(1, rawW)), height = min(Self.maxSide, max(1, rawH))
-        let key = "\(width)x\(height)"
+        let key = "\(format.rawValue):\(width)x\(height)"
         lastUse[key] = generation
         if var list = free[key], let t = list.popLast() {
             free[key] = list
             used.append(t)
             return t
         }
-        let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba16Float, width: max(1, width), height: max(1, height), mipmapped: false)
+        let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: format, width: max(1, width), height: max(1, height), mipmapped: false)
         d.usage = [.shaderRead, .shaderWrite, .renderTarget]
         d.storageMode = .private
         guard let t = device.makeTexture(descriptor: d) else {
@@ -113,7 +114,7 @@ final class TexturePool {
     /// sizes unused for a few frames are released and the spare total stays under the budget.
     func recycle() {
         generation += 1
-        for t in used { free["\(t.width)x\(t.height)", default: []].append(t) }
+        for t in used { free["\(t.pixelFormat.rawValue):\(t.width)x\(t.height)", default: []].append(t) }
         used.removeAll()
         for (k, v) in free {
             if generation - (lastUse[k] ?? 0) > 3 { free[k] = nil; lastUse[k] = nil; continue }

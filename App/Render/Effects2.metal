@@ -140,7 +140,7 @@ kernel void fxWarp(texture2d<half, access::sample> src [[texture(0)]],
             else r.x += fmod(floor(r.y), 2.0) != 0.0 ? p.c.x : 0.0;
             float2 f = fract(r);
             if (p.i.y != 0) { float2 cell = floor(r); f = select(f, 1.0 - f, fmod(abs(cell), 2.0) > 0.5); }
-            q = p.a.xy + (f - 0.5) * tile;
+            q = p.d.xy + f * p.d.zw;
             edge = true;
             break;
         }

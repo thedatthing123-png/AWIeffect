@@ -217,7 +217,7 @@ struct HomeView: View {
         let access = url.startAccessingSecurityScopedResource()
         defer { if access { url.stopAccessingSecurityScopedResource() } }
         do {
-            if let data = try? Data(contentsOf: url), ProjectPackage.isPackage(data) {
+            if let data = try? Data(contentsOf: url, options: .mappedIfSafe), ProjectPackage.isPackage(data) {
                 // A project shared from AWIeffect: opens exactly as it was saved.
                 let p = try ProjectPackage.importPackage(data)
                 reload()

@@ -539,12 +539,14 @@ final class Renderer {
             }
 
             // Effects path: render the layer in its own (local, unrotated) buffer, run the stack, then place it.
-            let rawMargin = pixelFX.reduce(0.0) { acc, e in acc + (EffectRegistry.definition(e.typeID)?.margin(e, time) ?? 0) }
+            let rawMargin = pixelFX.reduce(0.0) { acc, e in acc + (EffectRegistry.definition(e.typeID).map { $0.expandedMargin?(e, time, hs * 2) ?? $0.margin(e, time) } ?? 0) }
                 + (dof > 0.5 ? dof * 3 / max(pxPerLocal, 1e-4) : 0)
             // Glow / shadow room beyond what the screen can show is never seen: cap it to the comp size.
             let compReach = Double(max(project.width, project.height)) / max(pxPerLocal, 1e-4)
             // Glow room past half a screen is never visible and only costs memory (big glows crashed phones).
-            let margin = rawMargin.isFinite ? min(max(0, rawMargin), 20000, compReach * 0.5) : 0
+            let hasExpandedOutput = pixelFX.contains { EffectRegistry.definition($0.typeID)?.expandedMargin != nil }
+            let marginLimit = hasExpandedOutput ? 20000 : compReach * 0.5
+            let margin = rawMargin.isFinite ? min(max(0, rawMargin), 20000, marginLimit) : 0
             guard hs.x.isFinite, hs.y.isFinite, pxPerLocal.isFinite else { continue }
             let ext = Vec2(min(max(hs.x, 0.5), 1e6) + margin, min(max(hs.y, 0.5), 1e6) + margin)
             var density = min(1.5, max(0.05, pxPerLocal))
@@ -756,7 +758,7 @@ final class Renderer {
             guard let o = layer.model3D else { return nil }
             let size = layer.size.value(at: time)
             let w = min(2048, max(16, Int(size.x * density))), h = min(2048, max(16, Int(size.y * density)))
-            return ModelRenderer.shared?.render(o, time: time, width: w, height: h, cb: cb, mediaURL: mediaURL).map { .model($0) }
+            return ModelRenderer.shared?.render(o, time: time, width: w, height: h, cb: cb, pool: currentPool, mediaURL: mediaURL).map { .model($0) }
         case .precomp(let id):
             guard let tex = renderPrecomp(id, layer: layer, time: time, density: density, cb: cb, mediaURL: mediaURL) else { return nil }
             // Pixel Motion Blur on a pre-comp: blur everything inside along how it moved since the last frame

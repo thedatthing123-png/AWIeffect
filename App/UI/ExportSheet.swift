@@ -256,7 +256,7 @@ struct ExportSheet: View {
 
     private func saveFrame() {
         guard let r = Renderer.shared else { return }
-        let pid = state.project.id
+        let pid = state.rootProject.id
         let store = state.store
         guard let img = r.renderImage(project: state.project, time: state.currentTime,
                                       maxDimension: Double(max(state.project.width, state.project.height)),

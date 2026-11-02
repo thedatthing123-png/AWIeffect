@@ -180,6 +180,14 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
 
     private func toCanvas(_ p: CGPoint) -> SIMD2<Double> { viewport.canvas(p) }
 
+    private func updateShapeOutline() {
+        guard let a = shapeStart, let b = shapeEnd else { return }
+        let rect = CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(b.x - a.x), height: abs(b.y - a.y))
+        let path = session.tool == .ellipseSelect ? UIBezierPath(ovalIn: rect) : UIBezierPath(rect: rect)
+        path.apply(viewport.transform)
+        outline.path = path.cgPath
+    }
+
     private func finishLasso() {
         if session.lassoFills { session.engine.fillLasso(session.lassoPoints, color: session.brush.color, opacity: session.brush.opacity) }
         else { session.engine.selectLasso(session.lassoPoints) }
@@ -203,8 +211,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
             e.brush = session.tool == .eraser ? session.eraser : session.brush
             e.beginStroke(at: p, pressure: pressure(t))
         case .rectSelect, .ellipseSelect:
-            shapeStart = p
-            outlineView = [t.location(in: self)]
+            shapeStart = p; shapeEnd = p
         case .selectBrush: e.beginSelectStroke(at: p, radius: session.brush.size / 2, subtract: session.selectSubtract)
         case .quickSelect: e.beginQuickSelect(at: p, subtract: session.selectSubtract)
         case .lasso:
@@ -238,10 +245,8 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         case .quickSelect:
             for c in event?.coalescedTouches(for: t) ?? [t] { session.engine.continueQuickSelect(to: toCanvas(c.location(in: self))) }
         case .rectSelect, .ellipseSelect:
-            guard let a = outlineView.first else { break }
-            let b = t.location(in: self)
-            let r = CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(b.x - a.x), height: abs(b.y - a.y))
-            outline.path = (session.tool == .ellipseSelect ? UIBezierPath(ovalIn: r) : UIBezierPath(rect: r)).cgPath
+            shapeEnd = toCanvas(t.location(in: self))
+            updateShapeOutline()
         case .selectBrush:
             for c in event?.coalescedTouches(for: t) ?? [t] { session.engine.continueSelectStroke(to: toCanvas(c.location(in: self))) }
         default: break
@@ -268,7 +273,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         case .quickSelect: session.engine.endQuickSelect()
         case .rectSelect, .ellipseSelect:
             if let a = shapeStart { session.engine.selectShape(a, toCanvas(t.location(in: self)), ellipse: session.tool == .ellipseSelect) }
-            shapeStart = nil
+            shapeStart = nil; shapeEnd = nil
             outline.path = nil
         case .move:
             if let s = movingStart {
@@ -342,6 +347,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
     func draw(in view: MTKView) {
         fitIfNeeded()
         updateCursor()
+        if session.tool == .rectSelect || session.tool == .ellipseSelect { updateShapeOutline() }
         if session.tool == .lasso, !session.lassoPoints.isEmpty {
             showOutline(session.lassoPoints.map(viewport.view), closed: false)
         }

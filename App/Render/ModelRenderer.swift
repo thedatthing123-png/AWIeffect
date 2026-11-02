@@ -34,8 +34,8 @@ final class ModelRenderer {
 
     private let device: MTLDevice
     private let renderer: SCNRenderer
-    private var scenes: [String: SCNNode] = [:]
-    private var targets: [String: MTLTexture] = [:]
+    private struct CachedContent { let node: SCNNode; let front: SCNMaterial?; let radius: Double }
+    private var scenes: [String: CachedContent] = [:]
     private let lock = NSLock()
 
     init(device: MTLDevice) {
@@ -44,18 +44,19 @@ final class ModelRenderer {
     }
 
     /// Model content node (cached per file / per text settings).
-    private func content(_ o: Model3DOptions, mediaURL: (String) -> URL) -> SCNNode? {
+    private func content(_ o: Model3DOptions, mediaURL: (String) -> URL) -> CachedContent? {
         let key: String
-        if let f = o.fileName { key = f }
+        if let f = o.fileName { key = "file|\(mediaURL(f).path)" }
         else if let p = o.shapePath { key = "shape|\(p.vertices.map { "\($0.point.x),\($0.point.y),\($0.inTangent.x),\($0.inTangent.y),\($0.outTangent.x),\($0.outTangent.y)" }.joined(separator: ";"))|\(o.extrusion)|\(o.chamfer)" }
-        else if let f = o.imageFile { key = "image|\(f)|\(o.extrusion)|\(o.chamfer)|\(o.roughness)" }
+        else if let f = o.imageFile { key = "image|\(mediaURL(f).path)|\(o.extrusion)|\(o.chamfer)|\(o.roughness)" }
         else { key = "text|\(o.text)|\(o.fontName)|\(o.extrusion)|\(o.chamfer)" }
         if let n = scenes[key] { return n }
         let node: SCNNode
+        var front: SCNMaterial?
         if o.shapePath != nil || o.imageFile != nil {
             guard let g = Extrude3D.geometry(o, mediaURL: mediaURL) else { return nil }
             node = SCNNode(geometry: g.geometry)
-            if let front = g.front { node.setValue(front, forKey: "awiFront") }
+            front = g.front
             node.name = g.front == nil ? "awiShape" : "awiImage"
         } else if let f = o.fileName {
             guard let scene = try? SCNScene(url: mediaURL(f), options: [.checkConsistency: true]) else { return nil }
@@ -76,36 +77,48 @@ final class ModelRenderer {
         node.position = SCNVector3(-c.x, -c.y, -c.z)
         holder.addChildNode(node)
         holder.scale = SCNVector3(2 / max(size, 1e-3), 2 / max(size, 1e-3), 2 / max(size, 1e-3))
-        scenes[key] = holder
-        return holder
+        let half = SIMD3(Double(hi.x - lo.x), Double(hi.y - lo.y), Double(hi.z - lo.z)) / Double(max(size, 1e-3))
+        let cached = CachedContent(node: holder, front: front, radius: max(0.01, simd_length(half)))
+        if scenes.count >= 32 { scenes.removeAll() }
+        scenes[key] = cached
+        return cached
+    }
+
+    static func cameraDistance(radius: Double, aspect: Double, fov: Double = 35) -> Double {
+        let vertical = fov * .pi / 360
+        let horizontal = atan(tan(vertical) * max(0.01, aspect))
+        return max(0.01, radius) / max(0.001, sin(min(vertical, horizontal))) * 1.08
     }
 
     /// Renders the layer at `time` into a premultiplied BGRA texture of `width`×`height`.
-    func render(_ o: Model3DOptions, time: Double, width: Int, height: Int, cb: MTLCommandBuffer, mediaURL: (String) -> URL) -> MTLTexture? {
+    func render(_ o: Model3DOptions, time: Double, width: Int, height: Int, cb: MTLCommandBuffer, pool: TexturePool? = nil, mediaURL: (String) -> URL) -> MTLTexture? {
         lock.lock(); defer { lock.unlock() }
-        guard let model = content(o, mediaURL: mediaURL)?.clone() else { return nil }
-        let key = "\(width)x\(height)"
+        guard width > 0, height > 0, width <= TexturePool.maxSide, height <= TexturePool.maxSide,
+              let cached = content(o, mediaURL: mediaURL) else { return nil }
+        let model = cached.node.clone()
+        // Never reuse a render target within a command buffer: motion samples and different layers
+        // must retain independent pictures. A per-frame pool reuses storage only after GPU completion.
         let target: MTLTexture
-        if let t = targets[key] { target = t } else {
-            let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: width, height: height, mipmapped: false)
-            d.usage = [.renderTarget, .shaderRead]
-            d.storageMode = .private
-            guard let t = device.makeTexture(descriptor: d) else { return nil }
-            targets[key] = t
-            target = t
+        if let pool { target = pool.acquire(width: width, height: height, format: .bgra8Unorm) }
+        else {
+            let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: width, height: height, mipmapped: false)
+            descriptor.usage = [.renderTarget, .shaderRead]
+            guard let texture = device.makeTexture(descriptor: descriptor) else { return nil }
+            target = texture
         }
 
         let scene = SCNScene()
         // Materials: PBR so lights/reflections read as real 3D.
         let col = o.color.value(at: time)
         model.enumerateHierarchy { n, _ in
-            guard let g = n.geometry, o.fileName == nil else { return }
+            guard let original = n.geometry, o.fileName == nil, let g = original.copy() as? SCNGeometry else { return }
+            n.geometry = g
             let m = SCNMaterial()
             m.lightingModel = .physicallyBased
-            m.diffuse.contents = UIColor(red: col.r, green: col.g, blue: col.b, alpha: 1)
-            m.metalness.contents = o.metalness
-            m.roughness.contents = o.roughness
-            if o.imageFile != nil, let front = n.value(forKey: "awiFront") as? SCNMaterial {
+            m.diffuse.contents = UIColor(red: col.r, green: col.g, blue: col.b, alpha: col.a)
+            m.metalness.contents = min(1, max(0, o.metalness))
+            m.roughness.contents = min(1, max(0, o.roughness))
+            if o.imageFile != nil, let front = cached.front {
                 // SCNShape elements: front, back, sides, front chamfer, back chamfer.
                 g.materials = [front, front, m, m, m]
             } else {
@@ -119,7 +132,10 @@ final class ModelRenderer {
         let cam = SCNNode()
         cam.camera = SCNCamera()
         cam.camera?.fieldOfView = 35
-        cam.position = SCNVector3(0, 0, 4.2)
+        let distance = Self.cameraDistance(radius: cached.radius, aspect: Double(width) / Double(height))
+        cam.camera?.zNear = max(0.001, distance - cached.radius * 1.5)
+        cam.camera?.zFar = distance + cached.radius * 3
+        cam.position = SCNVector3(0, 0, Float(distance))
         scene.rootNode.addChildNode(cam)
         let key2 = SCNNode()
         key2.light = SCNLight()
