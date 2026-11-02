@@ -224,7 +224,7 @@ final class Exporter {
                                 end: CMTime(seconds: min(end, comp.duration.seconds), preferredTimescale: 48000))
         // Selecting a silent part of a project is valid, and differs from failing to decode a source.
         guard range.duration.seconds > 0, tracks.contains(where: { track in
-            track.segments.contains { !$0.isEmpty && CMTimeRangeGetIntersection($0.timeMapping.target, range).duration.seconds > 0 }
+            track.segments.contains { !$0.isEmpty && CMTimeRangeGetIntersection($0.timeMapping.target, otherRange: range).duration.seconds > 0 }
         }) else { return nil }
         let reader = try AVAssetReader(asset: comp)
         reader.timeRange = range
