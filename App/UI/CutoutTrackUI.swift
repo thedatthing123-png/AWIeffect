@@ -12,47 +12,67 @@ extension EditorState {
     func trackMotion(compRect: CGRect, targetID: UUID, progress: @escaping (Double) -> Void, done: @escaping (Int) -> Void) {
         guard let vi = selectedIndex, case .video(let file, _, _, _) = project.layers[vi].content,
               let ti = project.layers.firstIndex(where: { $0.id == targetID }) else { done(0); return }
-        let video = project.layers[vi]
-        let t0 = currentTime
-        // Comp rect -> normalized source rect (top-left origin).
-        let M0 = Renderer.layerMatrix(video, time: t0, renderScale: 1, includeEffects: false)
-        let inv = M0.inverse
-        let hs = Renderer.layerHalfSize(video, time: t0)
-        func toUV(_ p: CGPoint) -> CGPoint {
-            let q = inv * SIMD3(Double(p.x), Double(p.y), 1)
-            return CGPoint(x: q.x / (2 * hs.x) + 0.5, y: q.y / (2 * hs.y) + 0.5)
+        motionTrackingTask?.cancel()
+        let snapshot = project, video = project.layers[vi], target = project.layers[ti]
+        let t0 = max(video.inPoint, currentTime), t1 = min(video.outPoint, project.duration)
+        guard t1 > t0 else { done(0); return }
+        func worldLayer(_ id: UUID, at t: Double) -> Layer? {
+            Renderer.resolveParenting(ExpressionResolver.resolve(snapshot, time: t), time: t).layers.first { $0.id == id }
         }
-        let a = toUV(CGPoint(x: compRect.minX, y: compRect.minY)), b = toUV(CGPoint(x: compRect.maxX, y: compRect.maxY))
-        let box = CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(b.x - a.x), height: abs(b.y - a.y))
-        let url = mediaURL(file)
-        let s0 = video.sourceTime(at: t0), s1 = video.sourceTime(at: video.outPoint)
-        let fps = project.fps
-        let targetStart = project.layers[ti].transform.position.value(at: t0)
-        Task.detached(priority: .userInitiated) {
-            let samples = MotionTracker.track(url: url, box: box, start: s0, end: s1, fps: fps) { p in
+        func matrix(at t: Double) -> simd_double3x3 {
+            let resolved = worldLayer(video.id, at: t) ?? video
+            return Renderer.placementMatrix(resolved, camera: Renderer.activeCamera(snapshot, time: t), time: t, renderScale: 1)
+        }
+        let initial = matrix(at: t0)
+        guard abs(initial.determinant) > 1e-10 else { done(0); return }
+        let inverse = initial.inverse, hs = Renderer.layerHalfSize(video, time: t0)
+        let corners = [CGPoint(x: compRect.minX, y: compRect.minY), CGPoint(x: compRect.maxX, y: compRect.minY), CGPoint(x: compRect.maxX, y: compRect.maxY), CGPoint(x: compRect.minX, y: compRect.maxY)].map { point -> CGPoint in
+            let q = inverse * SIMD3(Double(point.x), Double(point.y), 1)
+            return CGPoint(x: q.x / q.z / max(1, 2 * hs.x) + 0.5, y: q.y / q.z / max(1, 2 * hs.y) + 0.5)
+        }
+        guard corners.allSatisfy({ $0.x.isFinite && $0.y.isFinite }) else { done(0); return }
+        let xs = corners.map(\.x), ys = corners.map(\.y)
+        let box = CGRect(x: xs.min()!, y: ys.min()!, width: xs.max()! - xs.min()!, height: ys.max()! - ys.min()!)
+        let url = mediaURL(file), fps = project.fps
+        let targetStart = (worldLayer(target.id, at: t0) ?? target).transform.position.value(at: t0)
+        motionTrackingTask = Task.detached(priority: .userInitiated) { [weak self] in
+            let samples = MotionTracker.track(url: url, box: box, start: t0, end: t1, fps: fps, sourceTime: { t in
+                video.sourceTime(at: video.timeFX?.localTime(t) ?? t)
+            }) { p in
+                guard !Task.isCancelled else { return }
                 Task { @MainActor in progress(p) }
             }
+            guard !Task.isCancelled else { return }
             await MainActor.run {
-                guard let first = samples.first else { done(0); return }
+                guard let self, self.project.id == snapshot.id,
+                      self.project.layers.first(where: { $0.id == video.id }) == video,
+                      self.project.layers.first(where: { $0.id == target.id }) == target,
+                      let index = self.project.layers.firstIndex(where: { $0.id == target.id }),
+                      samples.count > 1, let first = samples.first else { done(0); return }
                 func compPoint(_ uv: CGPoint, at t: Double) -> Vec2 {
-                    let M = Renderer.layerMatrix(video, time: t, renderScale: 1, includeEffects: false)
-                    let q = M * SIMD3((Double(uv.x) - 0.5) * 2 * hs.x, (Double(uv.y) - 0.5) * 2 * hs.y, 1)
-                    return Vec2(q.x, q.y)
+                    let q = matrix(at: t) * SIMD3((Double(uv.x) - 0.5) * 2 * hs.x, (Double(uv.y) - 0.5) * 2 * hs.y, 1)
+                    return Vec2(q.x / q.z, q.y / q.z)
                 }
-                let origin = compPoint(first.1, at: t0)
-                let offset = targetStart - origin
+                let offset = targetStart - compPoint(first.1, at: t0)
                 self.mutate("Track Motion") { p in
-                    var pos = p.layers[ti].transform.position
-                    for (s, uv) in samples {
-                        let t = video.inPoint + (s - video.sourceStart) / max(video.speed, 0.01)
-                        pos.insertKeyframe(Keyframe(time: p.snapToFrame(t), value: compPoint(uv, at: t) + offset, interpolation: .linear))
+                    var pos = p.layers[index].transform.position
+                    for (t, uv) in samples {
+                        var value = compPoint(uv, at: t) + offset
+                        if let parent = target.parentID, let parentSpace = Renderer.parentAffine(parent, in: snapshot, time: t) {
+                            let local = parentSpace.m.inverse * SIMD3(value.x, value.y, 1)
+                            value = Vec2(local.x, local.y)
+                        }
+                        guard value.x.isFinite, value.y.isFinite else { continue }
+                        pos.insertKeyframe(Keyframe(time: p.snapToFrame(t), value: value, interpolation: .linear))
                     }
-                    p.layers[ti].transform.position = pos
+                    p.layers[index].transform.position = pos
                 }
                 done(samples.count)
             }
         }
     }
+    func cancelMotionTracking() { motionTrackingTask?.cancel(); motionTrackingTask = nil }
+
 }
 
 /// AI cutout controls (image/video layers).
@@ -132,13 +152,14 @@ struct TrackOverlay: View {
                             .font(.system(size: 12, weight: .semibold)).padding(.horizontal, 10).padding(.vertical, 6)
                             .background(Capsule().fill(Theme.raised)).foregroundStyle(Theme.text)
                     }
-                    Button("Cancel") { done() }.buttonStyle(.bordered).tint(Theme.danger)
+                    Button("Cancel") { state.cancelMotionTracking(); done() }.buttonStyle(.bordered).tint(Theme.danger)
                     Button("Track") { run() }.buttonStyle(.borderedProminent).tint(Theme.accent)
                         .disabled(rectView == nil || target == nil || progress != nil)
                 }
             }
             .padding(.top, 6)
         }
+        .onDisappear { state.cancelMotionTracking() }
     }
 
     private func run() {

@@ -28,7 +28,7 @@ enum RetimedAudio {
         if let source = cache.object(forKey: key as NSData), FileManager.default.fileExists(atPath: source.asset.url.path) { return source }
         let decoded = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".caf")
         defer { try? FileManager.default.removeItem(at: decoded) }
-        try decode(source, to: decoded, isCancelled: isCancelled)
+        let origin = try decode(source, layer: layer, to: decoded, isCancelled: isCancelled)
         let input = try AVAudioFile(forReading: decoded, commonFormat: .pcmFormatFloat32, interleaved: false)
         let format = input.processingFormat
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "-retimed.caf")
@@ -71,9 +71,9 @@ enum RetimedAudio {
                     let t = layer.inPoint + Double(offset + Int64(i)) / rate
                     let seconds = layer.sourceTime(at: t)
                     let next = layer.sourceTime(at: t + 1 / rate)
-                    let position = seconds * rate
+                    let position = (seconds - origin) * rate
                     // A frozen picture has no advancing audio; out-of-source ranges are silence.
-                    let valid = position.isFinite && position >= 0 && position < Double(input.length) && abs(next - seconds) > 1e-12
+                    let valid = layer.timeFX?.freezeAt == nil && position.isFinite && position >= 0 && position < Double(input.length) && abs(next - seconds) > 1e-12
                     for c in 0..<Int(format.channelCount) {
                         if valid {
                             let a = Int64(position.rounded(.down))
@@ -94,7 +94,7 @@ enum RetimedAudio {
         return source
     }
 
-    private static func decode(_ url: URL, to output: URL, isCancelled: () -> Bool) throws {
+    private static func decode(_ url: URL, layer: Layer, to output: URL, isCancelled: () -> Bool) throws -> Double {
         let asset = AVURLAsset(url: url)
         guard let track = asset.tracks(withMediaType: .audio).first else { throw ExportError.writer("Audio source has no sound track.") }
         let reader = try AVAssetReader(asset: asset)
@@ -104,9 +104,22 @@ enum RetimedAudio {
         guard reader.canAdd(source) else { throw ExportError.writer("Cannot decode audio source.") }
         reader.add(source)
         let file = try AVAudioFile(forWriting: output, settings: settings, commonFormat: .pcmFormatFloat32, interleaved: true)
+        // A constant-speed trim/reverse only needs its source window, not a disk copy of a long original.
+        // Arbitrary remaps retain the full source because easing may overshoot their keyed values.
+        if layer.timeFX?.freezeAt != nil { return 0 }
+        if layer.timeRemap == nil {
+            let a = layer.sourceTime(at: layer.inPoint), b = layer.sourceTime(at: layer.outPoint)
+            let start = max(0, min(a, b) - 2 / rate)
+            let end = min(asset.duration.seconds, max(a, b) + 2 / rate)
+            guard start.isFinite, end.isFinite, end > start else { return 0 }
+            reader.timeRange = CMTimeRange(start: CMTime(seconds: start, preferredTimescale: 48000), duration: CMTime(seconds: end - start, preferredTimescale: 48000))
+        }
         guard reader.startReading() else { throw ExportError.writer(reader.error?.localizedDescription ?? "Cannot read audio.") }
         defer { if reader.status == .reading { reader.cancelReading() } }
+        var origin: Double?
         while let sample = source.copyNextSampleBuffer() {
+            let timestamp = CMSampleBufferGetPresentationTimeStamp(sample).seconds
+            if origin == nil { origin = timestamp.isFinite ? timestamp : 0 }
             if isCancelled() || Task.isCancelled { throw ExportError.cancelled }
             let frames = CMSampleBufferGetNumSamples(sample)
             guard frames > 0, let block = CMSampleBufferGetDataBuffer(sample),
@@ -123,5 +136,6 @@ enum RetimedAudio {
             try file.write(from: buffer)
         }
         guard reader.status == .completed else { throw ExportError.writer(reader.error?.localizedDescription ?? "Audio source decoding failed.") }
+        return origin ?? 0
     }
 }

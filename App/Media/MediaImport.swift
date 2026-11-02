@@ -172,7 +172,7 @@ final class AudioPreview {
         for l in project.layers where l.isVisible && l.hasAudio {
             guard let file = l.mediaFile else { continue }
             if isCancelled() || Task.isCancelled { throw ExportError.cancelled }
-            let retimed = l.timeRemap != nil || l.speed < 0
+            let retimed = l.timeRemap != nil || l.speed < 0 || l.timeFX?.freezeAt != nil
             let asset: AVURLAsset
             if retimed {
                 let source = try RetimedAudio.source(for: l, source: mediaURL(file), isCancelled: isCancelled)

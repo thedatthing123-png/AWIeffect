@@ -101,7 +101,7 @@ enum PresetLibrary {
         },
         .init(id: "shakeEarthquake", name: "Earthquake", kind: .shake, symbol: "waveform") { l, _, _ in
             _ = effect(EffectRegistry.shake, &l, ["frequency": .number(Animated(9)), "amplitude": .number(Animated(45)), "zoom": .number(Animated(4)), "octaves": .number(Animated(3))])
-            _ = effect(EffectRegistry.motionTile, &l, ["mirror": .toggle(true), "tileW": .number(Animated(100)), "tileH": .number(Animated(100))])
+            _ = effect(EffectRegistry.motionTile, &l, ["mirror": .toggle(true), "tileW": .number(Animated(100)), "tileH": .number(Animated(100)), "outW": .number(Animated(300)), "outH": .number(Animated(300))])
         },
         // MARK: Looks / CC
         .init(id: "animeCC", name: "Anime CC", kind: .look, symbol: "sparkles") { l, _, _ in

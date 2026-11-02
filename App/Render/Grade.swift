@@ -125,13 +125,15 @@ final class LUTLibrary {
     func importFile(_ url: URL) throws -> String {
         let access = url.startAccessingSecurityScopedResource()
         defer { if access { url.stopAccessingSecurityScopedResource() } }
-        let name = url.lastPathComponent
-        let dest = Self.folder.appendingPathComponent(name)
-        let data = try Data(contentsOf: url)
-        guard let text = String(data: data, encoding: .utf8) else { throw CubeError.invalid }
+        return try importData(Data(contentsOf: url), named: url.lastPathComponent)
+    }
+
+    @discardableResult
+    func importData(_ data: Data, named name: String) throws -> String {
+        guard name == (name as NSString).lastPathComponent, name.lowercased().hasSuffix(".cube"),
+              let text = String(data: data, encoding: .utf8) else { throw CubeError.invalid }
         _ = try Self.parse(text)
-        // Validate first: a malformed replacement must never erase an existing look.
-        try data.write(to: dest, options: .atomic)
+        try data.write(to: Self.folder.appendingPathComponent(name), options: .atomic)
         lock.lock(); cache[name] = nil; lock.unlock()
         return name
     }

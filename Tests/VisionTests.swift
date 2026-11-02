@@ -64,4 +64,17 @@ final class VisionTests: XCTestCase {
         let back = try JSONDecoder().decode(Project.self, from: JSONEncoder().encode(p))
         XCTAssertEqual(back.layers[0].cutout, p.layers[0].cutout)
     }
+    func testReverseTrackerReturnsCompositionTimes() throws {
+        let url = try movingSquareVideo()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let normalBox = CGRect(x: 40.0 / 320, y: 95.0 / 240, width: 50.0 / 320, height: 50.0 / 240)
+        let probe = MotionTracker.track(url: url, box: normalBox, start: 0, end: 1.8, fps: 15) { _ in }
+        guard probe.count > 5 else { throw XCTSkip("Vision tracker unavailable for the known moving-square probe") }
+        let lastBox = CGRect(x: 202.0 / 320, y: 95.0 / 240, width: 50.0 / 320, height: 50.0 / 240)
+        let reversed = MotionTracker.track(url: url, box: lastBox, start: 5, end: 6.8, fps: 15, sourceTime: { 6.8 - $0 }) { _ in }
+        XCTAssertGreaterThan(reversed.count, 5)
+        XCTAssertEqual(reversed.first?.0 ?? 0, 5, accuracy: 0.001)
+        XCTAssertGreaterThan((reversed.first?.1.x ?? 0) - (reversed.last?.1.x ?? 0), 0.3)
+    }
+
 }

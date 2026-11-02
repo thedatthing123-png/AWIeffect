@@ -125,6 +125,9 @@ final class DrawEngine: ObservableObject {
     @Published private(set) var canUndo = false
     @Published private(set) var canRedo = false
     @Published var revision = 0
+    @Published private(set) var isSelectingSubject = false
+    private var selectionTask: Task<Void, Never>?
+    private var selectionGeneration = UUID()
     var brush = Brush()
     /// The eraser paints transparency with any brush shape (works on every layer, imported photos included).
     var erasing = false
@@ -300,6 +303,15 @@ final class DrawEngine: ObservableObject {
     }
 
     // MARK: Strokes
+
+    /// Navigation recognizers cancel drawing; roll back the partial mark instead of leaving a stray dot.
+    func cancelStroke() {
+        guard lastPoint != nil else { return }
+        if let state = undoStack.last, state.layer == activeLayer?.id {
+            undoStack.removeLast(); _ = exchange(state)
+        }
+        endStroke(); canUndo = !undoStack.isEmpty; canRedo = !redoStack.isEmpty
+    }
 
     func beginStroke(at p: SIMD2<Double>, pressure: Double) {
         guard let l = activeLayer else { return }
@@ -599,9 +611,11 @@ final class DrawEngine: ObservableObject {
     private var quickSeeds: [SIMD2<Double>] = []
     private var quickPixels: [UInt8] = []
     private var quickBase: [UInt8] = []
+    private var quickBefore: [UInt8]?
     var quickTolerance = 0.18
 
     func beginQuickSelect(at p: SIMD2<Double>, subtract: Bool) {
+        quickBefore = hasSelection ? selectionBytes() : nil
         pushSelectionUndo()
         quickPixels = samplePixels()
         quickBase = hasSelection ? selectionBytes() : [UInt8](repeating: 0, count: width * height)
@@ -630,6 +644,13 @@ final class DrawEngine: ObservableObject {
         selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: show, bytesPerRow: width)
         hasSelection = true
         revision += 1
+    }
+
+    func cancelQuickSelect() {
+        guard !quickPixels.isEmpty else { return }
+        restoreSelection(quickBefore); quickPixels = []
+        if undoStack.last?.layer == nil { _ = undoStack.popLast() }
+        canUndo = !undoStack.isEmpty; revision += 1
     }
 
     func endQuickSelect() {
@@ -1078,24 +1099,70 @@ final class DrawEngine: ObservableObject {
         return out
     }
 
-    /// AI subject selection (Apple's on-device subject lift) on the active layer: people, animals, objects.
-    @discardableResult
-    func selectSubject() -> Bool {
-        guard let l = activeLayer, let cg = cgImage(bytes(of: l)), let pb = CutoutEngine.mask(cg, mode: .object) else { return false }
-        let ci = CIImage(cvPixelBuffer: pb)
-        let sx = CGFloat(width) / ci.extent.width, sy = CGFloat(height) / ci.extent.height
+    /// Vision runs off the drawing/UI thread. Results are applied only to the unchanged selection/layer.
+    func selectSubjectAsync() { beginSubjectSelection(brush: false) }
+
+    func cancelSubjectSelection() {
+        selectionTask?.cancel(); selectionTask = nil
+        selectionGeneration = UUID(); isSelectingSubject = false
+    }
+
+    private func beginSubjectSelection(brush: Bool) {
+        guard let layer = activeLayer, let image = cgImage(bytes(of: layer)) else { return }
+        cancelSubjectSelection()
+        let generation = selectionGeneration, expectedRevision = revision
+        let layerID = layer.id, width = width, height = height
+        let before = selBefore, painted = brush ? selBuf : nil
+        isSelectingSubject = true
+        selectionTask = Task.detached(priority: .userInitiated) { [weak self] in
+            let result = Self.subjectMask(image, width: width, height: height, touched: painted, previous: before)
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                guard let self, self.selectionGeneration == generation else { return }
+                self.isSelectingSubject = false
+                guard self.revision == expectedRevision, self.activeLayer?.id == layerID, var mask = result else { return }
+                if brush {
+                    for i in mask.indices { mask[i] = max(before[i], mask[i]) }
+                    self.selBuf = mask
+                } else { self.pushSelectionUndo() }
+                self.restoreSelection(mask); self.revision += 1
+            }
+        }
+    }
+
+    private static func subjectMask(_ image: CGImage, width: Int, height: Int, touched: [UInt8]?, previous: [UInt8]) -> [UInt8]? {
+        guard !Task.isCancelled else { return nil }
+        let handler = VNImageRequestHandler(cgImage: image, options: [:])
+        let request = VNGenerateForegroundInstanceMaskRequest()
+        guard (try? handler.perform([request])) != nil, let observation = request.results?.first, !Task.isCancelled else { return nil }
+        let instances: IndexSet
+        if let touched {
+            let labels = observation.instanceMask
+            CVPixelBufferLockBaseAddress(labels, .readOnly)
+            defer { CVPixelBufferUnlockBaseAddress(labels, .readOnly) }
+            guard CVPixelBufferGetPixelFormatType(labels) == kCVPixelFormatType_OneComponent8,
+                  let base = CVPixelBufferGetBaseAddress(labels)?.assumingMemoryBound(to: UInt8.self) else { return nil }
+            let w = CVPixelBufferGetWidth(labels), h = CVPixelBufferGetHeight(labels), row = CVPixelBufferGetBytesPerRow(labels)
+            var picked = IndexSet()
+            // Use the brushed area, including its radius, rather than only the center of each touch.
+            for y in 0..<h { for x in 0..<w {
+                let px = min(width - 1, x * width / w), py = min(height - 1, y * height / h), i = py * width + px
+                let label = Int(base[y * row + x])
+                if label > 0 && touched[i] > previous[i] { picked.insert(label) }
+            } }
+            guard !picked.isEmpty else { return nil }
+            instances = picked
+        } else { instances = observation.allInstances }
+        guard !instances.isEmpty, let pixelBuffer = try? observation.generateScaledMaskForImage(forInstances: instances, from: handler), !Task.isCancelled else { return nil }
+        let input = CIImage(cvPixelBuffer: pixelBuffer)
+        let sx = CGFloat(width) / input.extent.width, sy = CGFloat(height) / input.extent.height
+        let image = input.transformed(by: CGAffineTransform(scaleX: sx, y: -sy).translatedBy(x: 0, y: -input.extent.height))
         var mask = [UInt8](repeating: 0, count: width * height)
-        let ctx = CIContext()
-        // CIImage is y-up, the canvas is y-down.
-        let img = ci.transformed(by: CGAffineTransform(scaleX: sx, y: -sy).translatedBy(x: 0, y: -ci.extent.height))
-        ctx.render(img, toBitmap: &mask, rowBytes: width, bounds: CGRect(x: 0, y: 0, width: width, height: height),
-                   format: .L8, colorSpace: CGColorSpaceCreateDeviceGray())
-        guard mask.contains(where: { $0 > 128 }) else { return false }
-        pushSelectionUndo()
-        selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: mask, bytesPerRow: width)
-        hasSelection = true
-        revision += 1
-        return true
+        mask.withUnsafeMutableBytes { buffer in
+            guard let base = buffer.baseAddress else { return }
+            CIContext().render(image, toBitmap: base, rowBytes: width, bounds: CGRect(x: 0, y: 0, width: width, height: height), format: .L8, colorSpace: CGColorSpaceCreateDeviceGray())
+        }
+        return mask.contains(where: { $0 > 128 }) ? mask : nil
     }
 
     // MARK: Select Brush
@@ -1128,13 +1195,14 @@ final class DrawEngine: ObservableObject {
     }
 
     func endSelectStroke(snapToSubject: Bool) {
+        guard selLast != nil else { return }
         record(UndoState(layer: nil, selection: selBeforeHadSelection ? selBefore : nil))
-        if snapToSubject { snapSelection() }
         uploadSelection()
         hasSelection = selBuf.contains { $0 > 0 }
         if !hasSelection { clearSelection() }
         selLast = nil
         revision += 1
+        if snapToSubject { beginSubjectSelection(brush: true) }
     }
 
     private func paintSelection(at p: SIMD2<Double>) {
@@ -1154,6 +1222,7 @@ final class DrawEngine: ObservableObject {
     }
 
     func cancelSelectStroke() {
+        guard selLast != nil else { return }
         selBuf = selBefore; selLast = nil; uploadSelection()
         if !hasSelection { clearSelection() }
         revision += 1
@@ -1163,36 +1232,6 @@ final class DrawEngine: ObservableObject {
         guard selBuf.count == width * height else { return }
         hasSelection = selBuf.contains { $0 > 0 }
         selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: selBuf, bytesPerRow: width)
-    }
-
-    /// The brushed area becomes the exact subject(s) it touched (AI instance masks, edge-accurate); whatever was
-    /// selected before stays. If nothing is recognized under the brush, the painted shape is kept as is.
-    private func snapSelection() {
-        guard let l = activeLayer, let cg = cgImage(bytes(of: l)) else { return }
-        let handler = VNImageRequestHandler(cgImage: cg, options: [:])
-        let req = VNGenerateForegroundInstanceMaskRequest()
-        guard (try? handler.perform([req])) != nil, let obs = req.results?.first else { return }
-        let labels = obs.instanceMask
-        CVPixelBufferLockBaseAddress(labels, .readOnly)
-        let lw = CVPixelBufferGetWidth(labels), lh = CVPixelBufferGetHeight(labels), row = CVPixelBufferGetBytesPerRow(labels)
-        var picked = IndexSet()
-        if let base = CVPixelBufferGetBaseAddress(labels)?.assumingMemoryBound(to: UInt8.self) {
-            for p in selStroke {
-                let x = min(lw - 1, max(0, Int(p.x / Double(width) * Double(lw))))
-                let y = min(lh - 1, max(0, Int(p.y / Double(height) * Double(lh))))
-                let v = Int(base[y * row + x])
-                if v > 0 { picked.insert(v) }
-            }
-        }
-        CVPixelBufferUnlockBaseAddress(labels, .readOnly)
-        guard !picked.isEmpty, let pb = try? obs.generateScaledMaskForImage(forInstances: picked, from: handler) else { return }
-        let ci = CIImage(cvPixelBuffer: pb)
-        let sx = CGFloat(width) / ci.extent.width, sy = CGFloat(height) / ci.extent.height
-        let img = ci.transformed(by: CGAffineTransform(scaleX: sx, y: -sy).translatedBy(x: 0, y: -ci.extent.height))
-        var mask = [UInt8](repeating: 0, count: width * height)
-        CIContext().render(img, toBitmap: &mask, rowBytes: width, bounds: CGRect(x: 0, y: 0, width: width, height: height),
-                           format: .L8, colorSpace: CGColorSpaceCreateDeviceGray())
-        for i in 0..<(width * height) { selBuf[i] = max(selBefore[i], mask[i]) }
     }
 
     /// Selection → its own layer (the subject lifted off its background, ready to redraw around).

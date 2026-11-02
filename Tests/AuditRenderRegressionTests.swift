@@ -81,7 +81,7 @@ final class AuditRenderRegressionTests: XCTestCase {
         layer.fill = Animated(.white)
         var effect = EffectRegistry.pageCurl14.makeInstance()
         effect.params["progress"] = .number(Animated(0)); layer.effects = [effect]; p.layers = [layer]
-        func pixels() throws -> [UInt8] { try XCTUnwrap(r.renderPixels(project: p, time: 0, mediaURL: { URL(fileURLWithPath: $0) })).rgba }
+        func pixels() throws -> [UInt8] { try XCTUnwrap(r.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) })).rgba }
         XCTAssertGreaterThan(try pixels()[(32 * 64 + 32) * 4 + 3], 250)
         p.layers[0].effects[0].params["progress"] = .number(Animated(100))
         XCTAssertTrue(try pixels().enumerated().filter { $0.offset % 4 == 3 }.allSatisfy { $0.element == 0 })
@@ -94,12 +94,60 @@ final class AuditRenderRegressionTests: XCTestCase {
         var p = Project.new(name: "grain", width: 64, height: 64, fps: 30, duration: 1, background: RGBA(1, 0, 0, 1))
         var layer = p.makeLayer(name: "grain", content: .adjustment, size: Vec2(64, 64))
         layer.effects = [EffectRegistry.grain.makeInstance()]; p.layers = [layer]
-        let px = try XCTUnwrap(r.renderPixels(project: p, time: 0, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        let px = try XCTUnwrap(r.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) })).rgba
         let i = (32 * 64 + 32) * 4
         XCTAssertGreaterThan(Int(px[i]) - Int(px[i + 1]), 150, "Grain replaced red backdrop with gray")
         XCTAssertEqual(px[i + 3], 255)
         p.background = RGBA(0, 0, 0, 0)
-        let empty = try XCTUnwrap(r.renderPixels(project: p, time: 0, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        let empty = try XCTUnwrap(r.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) })).rgba
         XCTAssertTrue(empty.enumerated().filter { $0.offset % 4 == 3 }.allSatisfy { $0.element == 0 })
     }
+    func testMotionTileRepeatsWholeImageBeyondOriginalLayerBounds() throws {
+        let r = try renderer()
+        let format = UIGraphicsImageRendererFormat(); format.scale = 1
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 64, height: 64), format: format).image { context in
+            UIColor.red.setFill(); context.fill(CGRect(x: 0, y: 0, width: 32, height: 64))
+            UIColor.blue.setFill(); context.fill(CGRect(x: 32, y: 0, width: 32, height: 64))
+        }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".png")
+        defer { try? FileManager.default.removeItem(at: url) }
+        try XCTUnwrap(image.pngData()).write(to: url)
+        var p = Project.new(name: "tiles", width: 128, height: 128, fps: 30, duration: 1, background: .black)
+        var l = p.makeLayer(name: "image", content: .image(fileName: "test.png", pixelWidth: 64, pixelHeight: 64), size: Vec2(64, 64))
+        var effect = EffectRegistry.motionTile.makeInstance()
+        for key in ["tileW", "tileH"] { effect.params[key] = .number(Animated(50)) }
+        for key in ["outW", "outH"] { effect.params[key] = .number(Animated(400)) }
+        effect.params["mirror"] = .toggle(false); l.effects = [effect]; p.layers = [l]
+        let pixels = try XCTUnwrap(r.renderPixels(project: p, time: 0, mediaURL: { _ in url })).rgba
+        // Each 32px tile must contain BOTH halves of the source, including outside its original 32...96 bounds.
+        for start in [16, 48, 80] {
+            let left = (64 * 128 + start + 8) * 4, right = (64 * 128 + start + 24) * 4
+            XCTAssertGreaterThan(pixels[left], 220, "Missing red half at \(start)")
+            XCTAssertGreaterThan(pixels[right + 2], 220, "Missing blue half at \(start)")
+        }
+    }
+
+    func testPackageRenamesConflictingLUTAndRelinksNestedComp() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = ProjectStore(root: root), name = UUID().uuidString + ".cube"
+        let old = Data(cube().utf8), newer = Data(cube().replacingOccurrences(of: "1\t1 1", with: "0.8 0.8 0.8").utf8)
+        try LUTLibrary.shared.importData(old, named: name)
+        var p = Project.new(name: "LUT", width: 16, height: 16, fps: 30, duration: 1, background: .black)
+        var child = p
+        var layer = child.makeLayer(name: "grade", content: .solid, size: Vec2(16, 16))
+        var effect = EffectRegistry.grade.makeInstance(); effect.text = ["lut": name]
+        layer.effects = [effect]; child.layers = [layer]; p.precomps = [child]
+        try store.save(p)
+        let package = try ProjectPackage.export(p, store: store)
+        defer { try? FileManager.default.removeItem(at: package.deletingLastPathComponent()); LUTLibrary.shared.remove(name) }
+        try LUTLibrary.shared.importData(newer, named: name)
+        let imported = try ProjectPackage.importPackage(Data(contentsOf: package), store: store)
+        let importedName = try XCTUnwrap(imported.precomps.first?.layers.first?.effects.first?.text?["lut"])
+        defer { LUTLibrary.shared.remove(importedName) }
+        XCTAssertNotEqual(importedName, name)
+        XCTAssertEqual(try Data(contentsOf: LUTLibrary.folder.appendingPathComponent(name)), newer)
+        XCTAssertEqual(try Data(contentsOf: LUTLibrary.folder.appendingPathComponent(importedName)), old)
+    }
+
 }

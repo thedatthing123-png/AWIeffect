@@ -105,6 +105,7 @@ final class EditorState: ObservableObject {
     @Published var recoveryNotice: String?
     @Published var saveError: String?
     @Published var beatStatus: String?
+    var motionTrackingTask: Task<Void, Never>?
     private var beatTask: Task<Void, Never>?
     /// Typing on the canvas: the timeline and panels step aside for the keyboard, the rest is dimmed.
     @Published var textTyping = false

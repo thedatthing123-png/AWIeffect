@@ -345,18 +345,22 @@ final class CutoutEngine {
 // MARK: - Motion tracking
 
 enum MotionTracker {
-    /// Tracks the object inside `box` (normalized source-image rect, origin top-left) from `start` to `end` source seconds.
-    /// Returns (source time, normalized center) samples at `fps`.
+    /// Tracks a source-image box in a caller-defined clock. sourceTime maps each sample to footage time,
+    /// so reversed and remapped clips return composition times without an invalid inverse-speed formula.
     static func track(url: URL, box: CGRect, start: Double, end: Double, fps: Double,
-                      progress: (Double) -> Void) -> [(Double, CGPoint)] {
+                      sourceTime: (Double) -> Double = { $0 }, progress: (Double) -> Void) -> [(Double, CGPoint)] {
+        guard start.isFinite, end.isFinite, fps.isFinite, end >= start else { return [] }
+        let clipped = box.intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
+        guard !clipped.isNull, clipped.width > 0, clipped.height > 0 else { return [] }
         let seq = VNSequenceRequestHandler()
-        // Vision uses a bottom-left origin.
-        var observation = VNDetectedObjectObservation(boundingBox: CGRect(x: box.minX, y: 1 - box.maxY, width: box.width, height: box.height))
-        var out: [(Double, CGPoint)] = [(start, CGPoint(x: box.midX, y: box.midY))]
-        let step = 1 / max(fps, 1)
-        var t = start + step
-        while t <= end {
-            guard let cg = VideoSources.shared.cgImage(url: url, time: t, maxSize: 640) else { break }
+        var observation = VNDetectedObjectObservation(boundingBox: CGRect(x: clipped.minX, y: 1 - clipped.maxY, width: clipped.width, height: clipped.height))
+        var out: [(Double, CGPoint)] = []
+        let step = 1 / min(120, max(fps, 1))
+        var t = start
+        while t <= end + step * 0.01 {
+            if Task.isCancelled { return [] }
+            let seconds = sourceTime(t)
+            guard seconds.isFinite, let cg = VideoSources.shared.cgImage(url: url, time: seconds, maxSize: 640) else { break }
             let req = VNTrackObjectRequest(detectedObjectObservation: observation)
             req.trackingLevel = .accurate
             do { try seq.perform([req], on: cg) } catch { break }
@@ -364,7 +368,7 @@ enum MotionTracker {
             observation = res
             let b = res.boundingBox
             out.append((t, CGPoint(x: b.midX, y: 1 - b.midY)))
-            progress((t - start) / max(end - start, 1e-6))
+            progress(min(1, (t - start) / max(end - start, 1e-6)))
             t += step
         }
         return out

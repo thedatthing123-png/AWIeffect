@@ -196,12 +196,15 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
 
     // MARK: Touches (single finger / Pencil = draw)
 
+    private weak var drawingTouch: UITouch?
+
     private func pressure(_ t: UITouch) -> Double {
         t.type == .pencil && t.maximumPossibleForce > 0 ? Double(t.force / t.maximumPossibleForce) : 1
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard touches.count == 1, (event?.allTouches?.count ?? 1) == 1, let t = touches.first else { return }
+        drawingTouch = t
         cursorPoint = t.location(in: self)
         let p = toCanvas(t.location(in: self))
         let e = session.engine
@@ -231,7 +234,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
     }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let t = touches.first, (event?.allTouches?.count ?? 1) == 1 else { return }
+        guard let t = touches.first(where: { $0 === drawingTouch }), (event?.allTouches?.count ?? 1) == 1 else { return }
         cursorPoint = t.location(in: self)
         switch session.tool {
         case .brush, .eraser:
@@ -254,7 +257,8 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let t = touches.first else { return }
+        guard let t = touches.first(where: { $0 === drawingTouch }) else { return }
+        drawingTouch = nil
         cursorPoint = nil
         switch session.tool {
         case .brush, .eraser: session.engine.endStroke()
@@ -288,9 +292,11 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
     }
 
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        session.engine.endStroke()
+        guard touches.contains(where: { $0 === drawingTouch }) else { return }
+        drawingTouch = nil
+        if session.tool == .brush || session.tool == .eraser { session.engine.cancelStroke() }
         if session.tool == .selectBrush { session.engine.cancelSelectStroke() }
-        if session.tool == .quickSelect { session.engine.endQuickSelect() }
+        if session.tool == .quickSelect { session.engine.cancelQuickSelect() }
         // Polygon points are committed taps and survive navigation gestures; their overlay is reprojected.
         if !session.polygonLasso { session.lassoPoints = [] }
         outlineView = []; outline.path = nil
@@ -646,7 +652,7 @@ struct DrawStudioView: View {
             chip("Refine Edge", "slider.horizontal.below.square.and.square.filled") { showRefine = true }
             chip("Remove Background", "person.crop.rectangle.badge.xmark") { engine.deleteOutsideSelection() }
             chip("AI Subject", "person.crop.rectangle") {
-                if !engine.selectSubject() { UINotificationFeedbackGenerator().notificationOccurred(.error) }
+                engine.selectSubjectAsync()
             }
             chip("Select Layer", "square.dashed") { engine.selectOpaque() }
             chip("To New Layer", "square.on.square") { engine.liftSelectionToLayer() }
@@ -655,6 +661,10 @@ struct DrawStudioView: View {
             chip("Paste", "doc.on.clipboard") { engine.paste() }
             chip("Delete", "trash") { engine.deleteSelection() }
             chip("Invert", "circle.lefthalf.filled") { engine.invertSelection() }
+            if engine.isSelectingSubject {
+                ProgressView().tint(Theme.accentGlow)
+                chip("Cancel AI", "xmark") { engine.cancelSubjectSelection() }
+            }
             chip("Clear", "xmark") { engine.clearSelection(recordUndo: true) }
         }
         .padding(.horizontal, 8)

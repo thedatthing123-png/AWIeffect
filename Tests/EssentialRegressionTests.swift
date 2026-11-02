@@ -156,4 +156,27 @@ final class EssentialRegressionTests: XCTestCase {
         let result = try await Exporter.renderAudio(project: p, start: 1.5, end: 2, mediaURL: { _ in source })
         XCTAssertNil(result)
     }
+    func testConstantSpeedTrimReverseAndTimeFXFreezeAudio() throws {
+        let source = try ramp()
+        defer { try? FileManager.default.removeItem(at: source) }
+        var p = Project.new(name: "window", width: 32, height: 32, fps: 30, duration: 1, background: .black)
+        var layer = p.makeLayer(name: "clip", content: .audio(fileName: "tone.wav", duration: 1), size: Vec2(1, 1))
+        layer.outPoint = 0.2; layer.sourceStart = 0.6
+        func samples(_ l: Layer) throws -> [Float] {
+            let rendered = try RetimedAudio.source(for: l, source: source)
+            let file = try AVAudioFile(forReading: rendered.asset.url)
+            let buffer = try XCTUnwrap(AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: 9600))
+            try file.read(into: buffer)
+            return Array(UnsafeBufferPointer(start: buffer.floatChannelData![0], count: Int(buffer.frameLength)))
+        }
+        let forward = try samples(layer)
+        XCTAssertEqual(forward[100], 0.1 + Float(28900) / 60000, accuracy: 0.002)
+        layer.speed = -1
+        let reversed = try samples(layer)
+        XCTAssertGreaterThan(reversed[100], reversed[9000])
+        XCTAssertEqual(reversed[100], 0.1 + Float(28700) / 60000, accuracy: 0.002)
+        layer.timeFX = LayerTimeFX(); layer.timeFX!.freezeAt = 0.4
+        XCTAssertTrue(try samples(layer).allSatisfy { $0 == 0 })
+    }
+
 }

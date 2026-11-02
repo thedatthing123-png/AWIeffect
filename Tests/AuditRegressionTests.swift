@@ -215,4 +215,13 @@ final class AuditRegressionTests: XCTestCase {
         XCTAssertEqual(try store.load(state.project.id).id, state.project.id)
     }
 
+    func testCancelledArtStrokeDoesNotLeaveNavigationDot() throws {
+        let engine = try XCTUnwrap(DrawEngine(width: 32, height: 32))
+        let layer = try XCTUnwrap(engine.activeLayer), before = engine.bytes(of: try XCTUnwrap(engine.activeLayer))
+        engine.brush.size = 8; engine.beginStroke(at: SIMD2(16, 16), pressure: 1)
+        engine.cancelStroke()
+        XCTAssertEqual(engine.bytes(of: layer), before)
+        XCTAssertFalse(engine.canUndo)
+    }
+
 }

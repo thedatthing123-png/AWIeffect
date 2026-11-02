@@ -110,16 +110,41 @@ enum ProjectPackage {
         let media = store.mediaFolder(for: p.id)
         try FileManager.default.createDirectory(at: media, withIntermediateDirectories: true)
         var success = false
-        defer { if !success { try? FileManager.default.removeItem(at: store.folder(for: p.id)) } }
-        for (name, body) in files {
-            let file = (name as NSString).lastPathComponent
-            guard !file.isEmpty, !file.contains("..") else { continue }
-            if name.hasPrefix("media/") { try body.write(to: media.appendingPathComponent(file), options: .atomic) }
-            else if name.hasPrefix("luts/") {
-                let dest = LUTLibrary.folder.appendingPathComponent(file)
-                if !FileManager.default.fileExists(atPath: dest.path) { try? body.write(to: dest, options: .atomic) }
+        var createdLUTs: [String] = []
+        defer {
+            if !success {
+                try? FileManager.default.removeItem(at: store.folder(for: p.id))
+                for name in createdLUTs { LUTLibrary.shared.remove(name) }
             }
         }
+        var renamed: [String: String] = [:], seen = Set<String>()
+        for (name, body) in files {
+            let components = name.split(separator: "/", omittingEmptySubsequences: false)
+            guard components.count == 2, !components[1].isEmpty, components[1] != ".", components[1] != "..", !components[1].contains("\\") else { throw Failure.notAPackage }
+            guard seen.insert(name).inserted else { throw Failure.notAPackage }
+            let file = String(components[1])
+            if components[0] == "media" { try body.write(to: media.appendingPathComponent(file), options: .atomic) }
+            else if components[0] == "luts" {
+                let dest = LUTLibrary.folder.appendingPathComponent(file)
+                let exists = FileManager.default.fileExists(atPath: dest.path)
+                if exists, try Data(contentsOf: dest) == body { continue }
+                let stored = exists ? (file as NSString).deletingPathExtension + "-" + UUID().uuidString + ".cube" : file
+                try LUTLibrary.shared.importData(body, named: stored)
+                createdLUTs.append(stored)
+                if stored != file { renamed[file] = stored }
+            }
+        }
+        func relink(_ project: inout Project) {
+            for i in project.layers.indices { for j in project.layers[i].effects.indices {
+                if let old = project.layers[i].effects[j].text?["lut"], let new = renamed[old] {
+                    project.layers[i].effects[j].text?["lut"] = new
+                }
+            } }
+            var children = project.precomps
+            for i in children.indices { relink(&children[i]) }
+            project.precomps = children
+        }
+        if !renamed.isEmpty { relink(&p) }
         try store.save(p)
         success = true
         return p
