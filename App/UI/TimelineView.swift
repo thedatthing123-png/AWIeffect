@@ -78,7 +78,7 @@ struct TimelineView: View {
                         }
                         // Hold a row, then (without lifting) drag up/down to select a range.
                         .simultaneousGesture(
-                            LongPressGesture(minimumDuration: 0.3)
+                            LongPressGesture(minimumDuration: 0.3, maximumDistance: 4)
                                 .sequenced(before: DragGesture(minimumDistance: 0))
                                 .onChanged { v in
                                     guard case .second(true, let drag) = v, let drag else { return }
@@ -277,7 +277,7 @@ struct TimelineView: View {
     }
 
     private func clipHold(_ layer: Layer) -> some Gesture {
-        LongPressGesture(minimumDuration: 0.28)
+        LongPressGesture(minimumDuration: 0.28, maximumDistance: 4)
             .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named("timeline")))
             .onChanged { v in
                 guard case .second(true, let drag) = v else { return }

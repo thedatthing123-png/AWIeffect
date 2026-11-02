@@ -115,7 +115,8 @@ final class ModelRenderer {
         // model pass before the caller encodes sampling it; a bounded wait prevents a hung GPU
         // from holding the editor forever, and completion callbacks never acquire this lock.
         guard let modelBuffer = renderQueue?.makeCommandBuffer() else { return nil }
-        let renderer = availableRenderers.popLast() ?? SCNRenderer(device: device, options: nil)
+        let reusedRenderer = availableRenderers.popLast()
+        let renderer = reusedRenderer ?? SCNRenderer(device: device, options: nil)
         let completed = DispatchSemaphore(value: 0)
         modelBuffer.addCompletedHandler { [renderer] _ in
             withExtendedLifetime(renderer) {}
@@ -184,6 +185,11 @@ final class ModelRenderer {
         rp.depthAttachment.storeAction = .dontCare; rp.depthAttachment.clearDepth = 1
         rp.stencilAttachment.texture = depth; rp.stencilAttachment.loadAction = .clear
         rp.stencilAttachment.storeAction = .dontCare; rp.stencilAttachment.clearStencil = 0
+        // SceneKit initializes its offscreen presentation resources on the first render.
+        // Prime a new renderer before the visible pass, at the identical scene time.
+        if reusedRenderer == nil {
+            renderer.render(atTime: time, viewport: CGRect(x: 0, y: 0, width: width, height: height), commandBuffer: modelBuffer, passDescriptor: rp)
+        }
         renderer.render(atTime: time, viewport: CGRect(x: 0, y: 0, width: width, height: height), commandBuffer: modelBuffer, passDescriptor: rp)
         modelBuffer.commit()
         guard completed.wait(timeout: .now() + 10) == .success, modelBuffer.status == .completed else {
