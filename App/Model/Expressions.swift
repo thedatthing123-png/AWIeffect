@@ -41,6 +41,7 @@ struct ExpressionScope {
     var outPoint: Double
     /// Stable per-property seed (wiggle/random differ per property, like AE).
     var seed: Double
+    var layerCount: Int = 0
 }
 
 /// AE-compatible expression evaluator on JavaScriptCore (ES2018+, like AE's modern JavaScript engine).
@@ -81,7 +82,7 @@ final class ExpressionEngine {
         ctx.setObject(scope.fps, forKeyedSubscript: "__fps" as NSString)
         ctx.setObject([
             "width": scope.compWidth, "height": scope.compHeight, "duration": scope.compDuration,
-            "frameDuration": 1 / scope.fps, "numLayers": 0,
+            "frameDuration": 1 / max(scope.fps, 1), "numLayers": scope.layerCount,
         ], forKeyedSubscript: "thisComp" as NSString)
         ctx.setObject(["index": scope.layerIndex, "name": scope.layerName, "inPoint": scope.inPoint, "outPoint": scope.outPoint],
                       forKeyedSubscript: "thisLayer" as NSString)
@@ -261,7 +262,8 @@ enum ExpressionResolver {
         p.layers.contains { l in
             let t = l.transform
             if t.position.hasActiveExpression || t.scale.hasActiveExpression || t.rotation.hasActiveExpression
-                || t.opacity.hasActiveExpression || t.anchor.hasActiveExpression || l.size.hasActiveExpression
+                || t.opacity.hasActiveExpression || t.anchor.hasActiveExpression || t.positionZ.hasActiveExpression
+                || t.rotationX.hasActiveExpression || t.rotationY.hasActiveExpression || l.size.hasActiveExpression
                 || l.fill.hasActiveExpression || l.cornerRadius.hasActiveExpression { return true }
             return l.effects.contains { e in e.params.values.contains { v in
                 switch v {
@@ -284,7 +286,7 @@ enum ExpressionResolver {
                 // Read comp settings from the untouched input: `p` is being mutated through inout while this runs.
                 ExpressionScope(time: time, fps: project.fps, compWidth: project.width, compHeight: project.height, compDuration: project.duration,
                                 layerIndex: i + 1, layerName: l.name, inPoint: l.inPoint, outPoint: l.outPoint,
-                                seed: stableSeed(l.id, salt))
+                                seed: stableSeed(l.id, salt), layerCount: project.layers.count)
             }
             func bake<V: ExpressionValue>(_ a: inout Animated<V>, _ key: String) {
                 guard a.hasActiveExpression else { return }
@@ -297,6 +299,9 @@ enum ExpressionResolver {
             bake(&p.layers[i].transform.position, "position")
             bake(&p.layers[i].transform.scale, "scale")
             bake(&p.layers[i].transform.rotation, "rotation")
+            bake(&p.layers[i].transform.rotationX, "rotationX")
+            bake(&p.layers[i].transform.rotationY, "rotationY")
+            bake(&p.layers[i].transform.positionZ, "positionZ")
             bake(&p.layers[i].transform.opacity, "opacity")
             bake(&p.layers[i].transform.anchor, "anchor")
             bake(&p.layers[i].size, "size")

@@ -174,7 +174,7 @@ struct QuickMenu: View {
                     Button {
                         state.mutate("Twixtor Slow-mo") { p in
                             guard let i = state.selectedIndex else { return }
-                            p.layers[i].speed = 0.4; p.layers[i].frameBlending = true
+                            p.layers[i].speed = 0.4; p.layers[i].usesFrameBlending = true
                         }
                     } label: { Label("Twixtor-style Slow-mo", systemImage: "tortoise.fill") }
                     Button { state.applySpeedRamp() } label: { Label("Velocity Ramp", systemImage: "speedometer") }

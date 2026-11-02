@@ -19,8 +19,8 @@ extension EditorState {
     /// Copies a video into the project and adds it as a layer that fits the comp.
     func addVideo(from url: URL) {
         let ext = url.pathExtension.isEmpty ? "mov" : url.pathExtension
-        guard let data = try? Data(contentsOf: url), let name = try? store.importMedia(data: data, ext: ext, into: project.id) else { return }
-        let asset = AVURLAsset(url: store.mediaURL(name, projectID: project.id))
+        guard let data = try? Data(contentsOf: url), let name = try? store.importMedia(data: data, ext: ext, into: rootProject.id) else { return }
+        let asset = AVURLAsset(url: store.mediaURL(name, projectID: rootProject.id))
         guard let track = asset.tracks(withMediaType: .video).first else { return }
         let size = track.naturalSize.applying(track.preferredTransform)
         let w = Int(abs(size.width)), h = Int(abs(size.height))
@@ -77,7 +77,7 @@ extension EditorState {
         Self.extractAudio(from: mediaURL(file)) { out in
             guard let out, let data = try? Data(contentsOf: out),
                   let name = try? self.store.importMedia(data: data, ext: "m4a", into: self.project.id) else { return }
-            let duration = CMTimeGetSeconds(AVURLAsset(url: self.store.mediaURL(name, projectID: self.project.id)).duration)
+            let duration = CMTimeGetSeconds(AVURLAsset(url: self.store.mediaURL(name, projectID: self.rootProject.id)).duration)
             self.mutate("Extract Audio") { p in
                 var a = p.makeLayer(name: "\(layerName) Audio", content: .audio(fileName: name, duration: duration), size: Vec2(1, 1))
                 a.inPoint = inP; a.outPoint = outP; a.sourceStart = src; a.speed = speed
@@ -96,8 +96,8 @@ extension EditorState {
         let access = url.startAccessingSecurityScopedResource()
         defer { if access { url.stopAccessingSecurityScopedResource() } }
         guard let data = try? Data(contentsOf: url),
-              let name = try? store.importMedia(data: data, ext: url.pathExtension.isEmpty ? "m4a" : url.pathExtension, into: project.id) else { return }
-        let duration = CMTimeGetSeconds(AVURLAsset(url: store.mediaURL(name, projectID: project.id)).duration)
+              let name = try? store.importMedia(data: data, ext: url.pathExtension.isEmpty ? "m4a" : url.pathExtension, into: rootProject.id) else { return }
+        let duration = CMTimeGetSeconds(AVURLAsset(url: store.mediaURL(name, projectID: rootProject.id)).duration)
         mutate("Add Audio") { p in
             var l = p.makeLayer(name: url.deletingPathExtension().lastPathComponent, content: .audio(fileName: name, duration: duration),
                                 size: Vec2(1, 1))

@@ -1,0 +1,157 @@
+import XCTest
+import simd
+@testable import AWIeffect
+
+final class AuditRegressionTests: XCTestCase {
+    private func animated(_ value: Double, at time: Double = 2) -> Animated<Double> {
+        var a = Animated(value)
+        a.insertKeyframe(Keyframe(time: time, value: value, interpolation: .linear))
+        return a
+    }
+
+    private func project() -> Project {
+        Project.new(name: "audit", width: 128, height: 128, fps: 30, duration: 8, background: .black)
+    }
+
+    func testNestedAnimationFieldsShareTimelineRetimeAndShift() throws {
+        var p = project()
+        var l = p.makeLayer(name: "text", content: .text, size: Vec2(40, 40))
+        l.text = TextData(string: "A")
+        l.text!.lineSpacing = animated(1.5)
+        l.text!.pathOffset = animated(20)
+        l.text!.counter = TextCounter()
+        l.text!.counter!.value = animated(12)
+        var animator = TextAnimator(name: "blur")
+        animator.selector.frequency = animated(2)
+        animator.selector.spread = animated(3)
+        animator.properties.blur = animated(8)
+        animator.properties.rotationX = animated(90)
+        animator.properties.outline = animated(4)
+        l.text!.animators = [animator]
+        var mask = LayerMask(path: Animated(BezierPath.rectangle(size: Vec2(30, 30))))
+        mask.opacity = animated(50); mask.expansion = animated(5); mask.feather = animated(8)
+        l.masks = [mask]
+        l.shapeOps = ShapeOps(); l.shapeOps!.offset = animated(4)
+        l.model3D = Model3DOptions(); l.model3D!.lightAngle = animated(45)
+        XCTAssertEqual(l.keyframeTimes, [2])
+        l.retimeKeys(at: 2, to: 3)
+        XCTAssertEqual(l.keyframeTimes, [3])
+        l.shiftTiming(by: 1, duration: p.duration)
+        XCTAssertEqual(l.keyframeTimes, [4])
+        XCTAssertTrue(l.text!.animators[0].properties.blur!.hasKeyframe(at: 4))
+        XCTAssertTrue(l.masks[0].expansion.hasKeyframe(at: 4))
+        let roundTrip = try JSONDecoder().decode(Layer.self, from: JSONEncoder().encode(l))
+        XCTAssertEqual(roundTrip, l)
+    }
+
+    func testClipShiftUsesActualClampedDeltaAndPreservesPreroll() {
+        var p = project()
+        var l = p.makeLayer(name: "clip", content: .solid, size: Vec2(10, 10))
+        l.inPoint = 2; l.outPoint = 6
+        l.transform.rotation = animated(45, at: 1)
+        l.shiftTiming(by: -10, duration: p.duration)
+        XCTAssertEqual(l.inPoint, 0); XCTAssertEqual(l.outPoint, 4)
+        XCTAssertEqual(l.transform.rotation.keyframeTimes, [-1])
+    }
+
+    func testLegacyAndModernFrameBlendingCanBothBeDisabled() {
+        var p = project()
+        var l = p.makeLayer(name: "clip", content: .solid, size: Vec2(10, 10))
+        l.frameBlending = true
+        XCTAssertTrue(l.usesFrameBlending)
+        l.usesFrameBlending = false
+        XCTAssertFalse(l.usesFrameBlending)
+        l.usesFrameBlending = true
+        XCTAssertTrue(l.timeFX?.frameBlend == true)
+    }
+
+    func testDepthExpressionsAndCompositionLayerCountAreEvaluated() {
+        var p = project()
+        var l = p.makeLayer(name: "3d", content: .solid, size: Vec2(10, 10))
+        l.transform.positionZ.expression = "thisComp.numLayers * 100"
+        l.transform.rotationX.expression = "time * 90"
+        l.transform.rotationY.expression = "45"
+        p.layers = [l, p.makeLayer(name: "other", content: .solid, size: Vec2(10, 10))]
+        let resolved = ExpressionResolver.resolve(p, time: 2)
+        XCTAssertEqual(resolved.layers[0].transform.positionZ.staticValue, 200)
+        XCTAssertEqual(resolved.layers[0].transform.rotationX.staticValue, 180)
+        XCTAssertEqual(resolved.layers[0].transform.rotationY.staticValue, 45)
+    }
+
+    func testViewportRenderingAndInputAgreeAfterRotationAndZoom() {
+        let viewport = DrawViewport(size: CGSize(width: 160, height: 90), zoom: 2.3, rotation: .pi / 3, offset: CGPoint(x: 21, y: -8))
+        for point in [SIMD2(0.0, 0), SIMD2(160.0, 90), SIMD2(67.0, 22)] {
+            let restored = viewport.canvas(viewport.view(point))
+            XCTAssertEqual(restored.x, point.x, accuracy: 1e-8)
+            XCTAssertEqual(restored.y, point.y, accuracy: 1e-8)
+        }
+        XCTAssertNotEqual(viewport.view(SIMD2(0, 0)).y, viewport.view(SIMD2(160, 0)).y)
+    }
+
+    func testSelectionBrushShowsLiveMaskAndCanCancel() throws {
+        let e = try XCTUnwrap(DrawEngine(width: 64, height: 64))
+        e.beginSelectStroke(at: SIMD2(20, 20), radius: 8, subtract: false)
+        XCTAssertTrue(e.hasSelection, "Live brush mask was hidden")
+        e.continueSelectStroke(to: SIMD2(40, 20))
+        e.cancelSelectStroke()
+        XCTAssertFalse(e.hasSelection)
+    }
+
+    func testLassoFillsPixelsWithoutChangingSelectionAndSupportsUndo() throws {
+        let e = try XCTUnwrap(DrawEngine(width: 64, height: 64))
+        e.fillLasso([SIMD2(5, 5), SIMD2(30, 5), SIMD2(30, 30), SIMD2(5, 30)], color: RGBA(1, 0, 0), opacity: 1)
+        XCTAssertFalse(e.hasSelection)
+        let px = e.bytes(of: try XCTUnwrap(e.activeLayer))
+        XCTAssertGreaterThan(px[(15 * 64 + 15) * 4 + 3], 240)
+        XCTAssertEqual(px[(45 * 64 + 45) * 4 + 3], 0)
+        e.undo()
+        XCTAssertEqual(e.bytes(of: e.activeLayer!)[(15 * 64 + 15) * 4 + 3], 0)
+    }
+
+    func testTempoTrackingRejectsSubdivisionAsIndependentBeats() {
+        var flux = [Double](repeating: 0, count: 1200)
+        for i in stride(from: 25, to: 1200, by: 25) { flux[i] = i % 50 == 25 ? 1 : 0.2 }
+        let result = BeatDetector.track(flux: flux, hopSeconds: 0.01, bpm: 120)
+        XCTAssertEqual(result.bpm ?? 0, 120, accuracy: 0.1)
+        XCTAssertGreaterThan(result.times.count, 15)
+        for gap in zip(result.times, result.times.dropFirst()).map({ $1 - $0 }) {
+            XCTAssertEqual(gap, 0.5, accuracy: 0.03)
+        }
+        XCTAssertTrue(BeatDetector.track(flux: [Double](repeating: 0, count: 100), hopSeconds: 0.01).times.isEmpty)
+    }
+
+    @MainActor
+    func testGroupScopeSavesMembersAndUsesRootMediaFolder() throws {
+        var p = project()
+        let l = p.makeLayer(name: "art", content: .image(fileName: "image.png", pixelWidth: 40, pixelHeight: 40), size: Vec2(40, 40))
+        p.layers = [l]
+        let store = ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
+        let state = EditorState(project: p, store: store)
+        state.select(l.id); state.groupSelected()
+        let group = try XCTUnwrap(state.selectedLayerID)
+        state.openGroup()
+        XCTAssertEqual(state.project.background.a, 0)
+        XCTAssertEqual(state.project.layers.count, 1)
+        XCTAssertEqual(state.mediaURL("image.png"), store.mediaURL("image.png", projectID: p.id))
+        state.mutate("inside group") { $0.layers[0].name = "edited" }
+        XCTAssertEqual(state.rootProject.layers.first(where: { $0.id == l.id })?.name, "edited")
+        state.closePrecomp()
+        XCTAssertEqual(state.project.layers.first(where: { $0.id == l.id })?.groupID, group)
+        XCTAssertEqual(state.project.id, p.id)
+    }
+
+    @MainActor
+    func testTimelineParentPickKeepsOriginalChildSelected() throws {
+        var p = project()
+        let child = p.makeLayer(name: "child", content: .solid, size: Vec2(10, 10))
+        let parent = p.makeLayer(name: "parent", content: .solid, size: Vec2(10, 10))
+        p.layers = [child, parent]
+        let state = EditorState(project: p, store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        state.select(child.id); state.beginLinkPick(); state.openLayer(parent.id)
+        XCTAssertEqual(state.selectedLayerID, child.id)
+        XCTAssertEqual(state.selectedLayer?.parentID, parent.id)
+        XCTAssertFalse(state.linkPicking)
+        state.select(parent.id)
+        XCTAssertFalse(state.canParent(to: child.id))
+    }
+}

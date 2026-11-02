@@ -225,6 +225,7 @@ struct EditorView: View {
                     Button { state.precomposeSelected() } label: { Label("Group (Pre-compose)", systemImage: "square.stack.3d.up") }
                 }
                 if l.isGroup {
+                    Button { state.openGroup() } label: { Label("Open Group", systemImage: "folder") }
                     Button { state.ungroupSelected() } label: { Label("Ungroup", systemImage: "folder.badge.minus") }
                 } else {
                     Button { state.groupSelected() } label: { Label("Group (keeps parts in this timeline)", systemImage: "folder.badge.plus") }
@@ -275,7 +276,7 @@ struct EditorView: View {
                         .font(.system(size: 12, weight: .semibold)).lineLimit(1).frame(maxWidth: 110)
                         .padding(.horizontal, 8).padding(.vertical, 5).background(Capsule().fill(Theme.accent.opacity(0.3)))
                 }
-                .accessibilityLabel("Close Pre-comp")
+                .accessibilityLabel(state.compStack.last?.groupID == nil ? "Close Pre-comp" : "Close Group")
             }
             Button { state.panel = .scene } label: {
             VStack(alignment: .leading, spacing: 1) {
@@ -587,6 +588,7 @@ struct EditorView: View {
     private func layerAt(_ point: CGPoint, fit: CGRect) -> UUID? {
         let c = toComp(point, fit: fit)
         for layer in state.displayProject.layers where layer.isActive(at: state.currentTime) && layer.id != state.selectedLayerID
+            && (!state.linkPicking || state.canParent(to: layer.id))
             && layer.content != .camera && layer.content != .light && !layer.isAudioOnly {
             let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(state.project, time: state.currentTime),
                                              time: state.currentTime, renderScale: 1)

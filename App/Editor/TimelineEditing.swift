@@ -123,26 +123,7 @@ extension Animated {
 extension Layer {
     /// Moves keys at one time to another across every animatable property.
     mutating func retimeKeys(at from: Double, to: Double) {
-        transform.position.retime(at: from, to: to); transform.scale.retime(at: from, to: to); transform.rotation.retime(at: from, to: to)
-        transform.opacity.retime(at: from, to: to); transform.anchor.retime(at: from, to: to)
-        transform.rotationX.retime(at: from, to: to); transform.rotationY.retime(at: from, to: to); transform.positionZ.retime(at: from, to: to)
-        size.retime(at: from, to: to); fill.retime(at: from, to: to); cornerRadius.retime(at: from, to: to)
-        sides.retime(at: from, to: to); innerRatio.retime(at: from, to: to); volume.retime(at: from, to: to); extrude.retime(at: from, to: to)
-        timeRemap?.retime(at: from, to: to); path?.retime(at: from, to: to)
-        for i in effects.indices {
-            for (k, v) in effects[i].params {
-                switch v {
-                case .number(var a): a.retime(at: from, to: to); effects[i].params[k] = .number(a)
-                case .point(var a): a.retime(at: from, to: to); effects[i].params[k] = .point(a)
-                case .color(var a): a.retime(at: from, to: to); effects[i].params[k] = .color(a)
-                default: break
-                }
-            }
-        }
-        for i in masks.indices { masks[i].path.retime(at: from, to: to) }
-        if camera != nil { camera!.zoom.retime(at: from, to: to); camera!.focusDistance.retime(at: from, to: to); camera!.aperture.retime(at: from, to: to); camera!.blurLevel.retime(at: from, to: to) }
-        if model3D != nil { model3D!.yaw.retime(at: from, to: to); model3D!.pitch.retime(at: from, to: to); model3D!.roll.retime(at: from, to: to); model3D!.color.retime(at: from, to: to) }
-        if light != nil { light!.color.retime(at: from, to: to); light!.intensity.retime(at: from, to: to); light!.coneAngle.retime(at: from, to: to); light!.coneFeather.retime(at: from, to: to); light!.falloffRadius.retime(at: from, to: to) }
-        if text != nil { text!.fill.retime(at: from, to: to); text!.tracking.retime(at: from, to: to) }
+        var visit = AnimationTraversal(operation: .retime(from, to))
+        traverseAnimations(&visit)
     }
 }

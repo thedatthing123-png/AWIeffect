@@ -150,7 +150,7 @@ final class EditorState: ObservableObject {
     @Published var previewQuality: PreviewQuality = .full
     @Published var orbit = OrbitCamera.home
     /// Parents of the currently open pre-comp (empty at the top level).
-    @Published var compStack: [(project: Project, time: Double, selected: UUID?)] = []
+    @Published var compStack: [CompositionEditContext] = []
 
     let store: ProjectStore
     private var displayLink: CADisplayLink?
@@ -178,12 +178,14 @@ final class EditorState: ObservableObject {
     var selectedLayer: Layer? { selectedIndex.map { project.layers[$0] } }
 
     func select(_ id: UUID?) {
+        if linkPicking { endLinkPick(parent: id); return }
         selectedLayerID = id
         if id == nil { panel = .none } else if panel == .none || panel == .add { panel = .transform }
     }
 
     /// Tap on a clip or its row: select it and show its menu (the tile grid of everything that layer has).
     func openLayer(_ id: UUID) {
+        if linkPicking { endLinkPick(parent: id); return }
         selectedLayerID = id
         panel = .layerHome
     }
@@ -338,7 +340,7 @@ final class EditorState: ObservableObject {
 
     func addImage(data: Data, ext: String) {
         guard let ui = UIImage(data: data), let cg = ui.cgImage else { return }
-        guard let name = try? store.importMedia(data: data, ext: ext, into: project.id) else { return }
+        guard let name = try? store.importMedia(data: data, ext: ext, into: rootProject.id) else { return }
         let pw = cg.width, ph = cg.height
         // Fit inside the comp like Alight Motion does.
         let fit = min(Double(project.width) / Double(pw), Double(project.height) / Double(ph), 1)
@@ -700,7 +702,7 @@ final class EditorState: ObservableObject {
         }
     }
 
-    func mediaURL(_ name: String) -> URL { store.mediaURL(name, projectID: project.id) }
+    func mediaURL(_ name: String) -> URL { store.mediaURL(name, projectID: rootProject.id) }
 }
 
 /// Breaks the CADisplayLink -> target retain cycle.
@@ -844,7 +846,7 @@ extension EditorState {
         guard !parts.isEmpty else { return }
         var made: [(String, String, CGRect)] = []
         for part in parts {
-            guard let name = try? store.importMedia(data: part.png, ext: "png", into: project.id) else { continue }
+            guard let name = try? store.importMedia(data: part.png, ext: "png", into: rootProject.id) else { continue }
             made.append((part.name, name, part.rect))
         }
         Renderer.shared?.clearImageCache()
@@ -873,7 +875,7 @@ extension EditorState {
         let pngs = engine.framePNGs()
         guard !pngs.isEmpty else { return }
         let fps = max(1, engine.fps)
-        let files = pngs.compactMap { try? store.importMedia(data: $0, ext: "png", into: project.id) }
+        let files = pngs.compactMap { try? store.importMedia(data: $0, ext: "png", into: rootProject.id) }
         guard !files.isEmpty else { return }
         Renderer.shared?.clearImageCache()
         let w = engine.width, h = engine.height

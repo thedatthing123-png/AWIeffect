@@ -496,8 +496,8 @@ final class DrawEngine: ObservableObject {
     }
 
     /// Lasso selection from canvas-space points (antialiased).
-    func selectLasso(_ pts: [SIMD2<Double>]) {
-        guard pts.count >= 3 else { return }
+    private func lassoMask(_ pts: [SIMD2<Double>]) -> [UInt8] {
+        guard pts.count >= 3, pts.allSatisfy({ $0.x.isFinite && $0.y.isFinite }) else { return [UInt8](repeating: 0, count: width * height) }
         var mask = [UInt8](repeating: 0, count: width * height)
         mask.withUnsafeMutableBytes { buf in
             guard let ctx = CGContext(data: buf.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width,
@@ -510,7 +510,34 @@ final class DrawEngine: ObservableObject {
             for p in pts.dropFirst() { ctx.addLine(to: CGPoint(x: p.x, y: p.y)) }
             ctx.closePath(); ctx.fillPath()
         }
-        applySelection(mask)
+        return mask
+    }
+
+    func selectLasso(_ pts: [SIMD2<Double>]) {
+        guard pts.count >= 3 else { return }
+        applySelection(lassoMask(pts))
+    }
+
+    /// Lasso fill paints the closed polygon without replacing the user's selection.
+    func fillLasso(_ pts: [SIMD2<Double>], color: RGBA, opacity: Double) {
+        guard pts.count >= 3, let layer = activeLayer else { return }
+        let mask = lassoMask(pts), selected = selectionBytes()
+        var pixels = bytes(of: layer)
+        pushUndo(layer)
+        let strength = min(1, max(0, opacity * color.a))
+        for i in mask.indices {
+            let coverage = Double(mask[i]) / 255 * Double(selected[i]) / 255 * strength
+            guard coverage > 0 else { continue }
+            let at = i * 4, oldAlpha = Double(pixels[at + 3]) / 255
+            let newAlpha = layer.alphaLock ? oldAlpha : coverage + oldAlpha * (1 - coverage)
+            let paintAlpha = layer.alphaLock ? coverage * oldAlpha : coverage
+            for (c, value) in [color.r, color.g, color.b].enumerated() {
+                let channel = value * paintAlpha + Double(pixels[at + c]) / 255 * (1 - coverage)
+                pixels[at + c] = UInt8(min(255, max(0, (channel * 255).rounded())))
+            }
+            pixels[at + 3] = UInt8(min(255, max(0, (newAlpha * 255).rounded())))
+        }
+        setBytes(pixels, of: layer); revision += 1
     }
 
     /// Magic wand: contiguous pixels within `tolerance` of the tapped color, read from all layers or just this one
@@ -1060,8 +1087,13 @@ final class DrawEngine: ObservableObject {
         }
     }
 
+    func cancelSelectStroke() {
+        selBuf = selBefore; selLast = nil; uploadSelection(); revision += 1
+    }
+
     private func uploadSelection() {
         guard selBuf.count == width * height else { return }
+        hasSelection = selBuf.contains { $0 > 0 }
         selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: selBuf, bytesPerRow: width)
     }
 

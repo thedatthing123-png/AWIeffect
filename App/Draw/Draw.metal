@@ -152,9 +152,7 @@ kernel void fillCanvas(texture2d<float, access::write> canvas [[texture(0)]],
 // Display: canvas over a transparency checkerboard with the selection outline tinted.
 struct DrawVOut { float4 pos [[position]]; float2 uv; };
 
-vertex DrawVOut drawDisplayVertex(uint vid [[vertex_id]], constant float4& rect [[buffer(0)]]) {
-    // rect = NDC x0, y0, x1, y1
-    float2 corners[4] = { float2(rect.x, rect.y), float2(rect.z, rect.y), float2(rect.x, rect.w), float2(rect.z, rect.w) };
+vertex DrawVOut drawDisplayVertex(uint vid [[vertex_id]], constant float2* corners [[buffer(0)]]) {
     float2 uvs[4] = { float2(0, 1), float2(1, 1), float2(0, 0), float2(1, 0) };
     DrawVOut o;
     o.pos = float4(corners[vid], 0, 1);

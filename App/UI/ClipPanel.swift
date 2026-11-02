@@ -27,9 +27,9 @@ struct ClipPanel: View {
                                 }
                             }
                             if l.speed < 0.999, case .video = l.content {
-                                Toggle("Smooth Slow (blend frames so slow motion doesn't stutter)", isOn: Binding(get: { l.timeFX?.frameBlend ?? false }, set: { b in
+                                Toggle("Smooth Slow (blend frames so slow motion doesn't stutter)", isOn: Binding(get: { l.usesFrameBlending }, set: { b in
                                     state.coalescedEdit("Smooth Slow") { layer in
-                                        var fx = layer.timeFX ?? LayerTimeFX(); fx.frameBlend = b; layer.timeFX = fx.isEmpty ? nil : fx
+                                        layer.usesFrameBlending = b
                                     }
                                 }))
                                 .tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13))
@@ -81,8 +81,8 @@ struct ClipPanel: View {
                             Text("Time Remap keyframes are on the timeline; edit their easing in the Graph Editor for smooth velocity edits.")
                                 .font(.caption).foregroundStyle(Theme.textDim)
                         }
-                        Toggle("Frame Blending", isOn: Binding(get: { l.frameBlending }, set: { b in state.mutate("Frame Blending") { p in
-                            if let i = state.selectedIndex { p.layers[i].frameBlending = b }
+                        Toggle("Frame Blending", isOn: Binding(get: { l.usesFrameBlending }, set: { b in state.mutate("Frame Blending") { p in
+                            if let i = state.selectedIndex { p.layers[i].usesFrameBlending = b }
                         } }))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
                         if case .video = l.content {
@@ -126,7 +126,7 @@ struct ClipPanel: View {
             } catch {
                 // No AI interpolation here (older device / simulator): fall back to AE-style frame blending.
                 state.coalescedEdit("Frame Blending") { l in
-                    var fx = l.timeFX ?? LayerTimeFX(); fx.frameBlend = true; l.timeFX = fx
+                    l.usesFrameBlending = true
                     l.speed = l.speed / Double(factor)
                     l.outPoint = l.inPoint + (l.outPoint - l.inPoint) * Double(factor)
                 }

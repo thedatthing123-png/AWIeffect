@@ -68,9 +68,11 @@ extension Animated {
     mutating func setVelocity(at t: Double, inInfluence: Double, inSpeed: Double, outInfluence: Double, outSpeed: Double) {
         guard let k = keyframes.firstIndex(where: { abs($0.time - t) < 1e-4 }) else { return }
         let oi = min(max(outInfluence, 0.001), 1), ii = min(max(inInfluence, 0.001), 1)
+        keyframes[k].curve = nil
         keyframes[k].interpolation = .bezier
         keyframes[k].easeOut = EaseHandle(x: oi, y: oi * outSpeed)
         if k > 0 {
+            keyframes[k - 1].curve = nil
             keyframes[k - 1].interpolation = .bezier
             keyframes[k].easeIn = EaseHandle(x: 1 - ii, y: 1 - ii * inSpeed)
         } else {

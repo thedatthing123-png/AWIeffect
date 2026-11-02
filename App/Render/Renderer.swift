@@ -720,7 +720,7 @@ final class Renderer {
         case .image(let file, _, _): return imageTexture(url: mediaURL(file)).map { .image($0) }
         case .video(let file, _, _, _):
             let url = mediaURL(file)
-            if layer.timeFX?.frameBlend == true, let pool = currentPool {
+            if layer.usesFrameBlending, let pool = currentPool {
                 // Between two source frames: blend them (smooth slow motion instead of repeated frames).
                 let fps = VideoSources.shared.fps(url)
                 let f = sourceTime * fps, a = f.rounded(.down), w = f - a

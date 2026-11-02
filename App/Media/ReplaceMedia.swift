@@ -10,12 +10,12 @@ extension EditorState {
         var content: LayerContent?
         var size = project.layers[i].size.staticValue
         if let data = imageData, let img = UIImage(data: data), let cg = img.cgImage,
-           let name = try? store.importMedia(data: data, ext: "png", into: project.id) {
+           let name = try? store.importMedia(data: data, ext: "png", into: rootProject.id) {
             content = .image(fileName: name, pixelWidth: cg.width, pixelHeight: cg.height)
             size = Vec2(Double(cg.width), Double(cg.height))
         } else if let url, let data = try? Data(contentsOf: url),
-                  let name = try? store.importMedia(data: data, ext: url.pathExtension.isEmpty ? "mov" : url.pathExtension, into: project.id) {
-            let asset = AVURLAsset(url: store.mediaURL(name, projectID: project.id))
+                  let name = try? store.importMedia(data: data, ext: url.pathExtension.isEmpty ? "mov" : url.pathExtension, into: rootProject.id) {
+            let asset = AVURLAsset(url: store.mediaURL(name, projectID: rootProject.id))
             guard let track = asset.tracks(withMediaType: .video).first else { return }
             let s = track.naturalSize.applying(track.preferredTransform)
             content = .video(fileName: name, pixelWidth: Int(abs(s.width)), pixelHeight: Int(abs(s.height)),

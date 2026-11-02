@@ -337,7 +337,7 @@ extension EditorState {
             let access = u.startAccessingSecurityScopedResource()
             defer { if access { u.stopAccessingSecurityScopedResource() } }
             guard let data = try? Data(contentsOf: u),
-                  let name = try? store.importMedia(data: data, ext: u.pathExtension.isEmpty ? "usdz" : u.pathExtension, into: project.id) else { return }
+                  let name = try? store.importMedia(data: data, ext: u.pathExtension.isEmpty ? "usdz" : u.pathExtension, into: rootProject.id) else { return }
             opts.fileName = name
         }
         let side = Double(min(project.width, project.height)) * 0.7

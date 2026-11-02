@@ -204,36 +204,18 @@ extension EditorState {
 extension Layer {
     /// Moves the layer and all its keyframes in time.
     mutating func shiftTiming(by dt: Double, duration: Double) {
-        guard dt != 0 else { return }
-        let len = outPoint - inPoint
+        guard dt.isFinite, dt != 0 else { return }
+        let length = outPoint - inPoint, oldStart = inPoint
         inPoint = max(0, inPoint + dt)
-        outPoint = inPoint + len
-        transform.position.shift(by: dt); transform.scale.shift(by: dt); transform.rotation.shift(by: dt)
-        transform.opacity.shift(by: dt); transform.anchor.shift(by: dt)
-        transform.rotationX.shift(by: dt); transform.rotationY.shift(by: dt); transform.positionZ.shift(by: dt)
-        size.shift(by: dt); fill.shift(by: dt); cornerRadius.shift(by: dt); sides.shift(by: dt); innerRatio.shift(by: dt)
-        volume.shift(by: dt); extrude.shift(by: dt); timeRemap?.shift(by: dt); path?.shift(by: dt)
-        for i in effects.indices {
-            for (k, v) in effects[i].params {
-                switch v {
-                case .number(var a): a.shift(by: dt); effects[i].params[k] = .number(a)
-                case .point(var a): a.shift(by: dt); effects[i].params[k] = .point(a)
-                case .color(var a): a.shift(by: dt); effects[i].params[k] = .color(a)
-                default: break
-                }
-            }
-        }
-        for i in masks.indices { masks[i].path.shift(by: dt) }
-        if camera != nil { camera!.zoom.shift(by: dt); camera!.focusDistance.shift(by: dt); camera!.aperture.shift(by: dt); camera!.blurLevel.shift(by: dt) }
-        if model3D != nil { model3D!.yaw.shift(by: dt); model3D!.pitch.shift(by: dt); model3D!.roll.shift(by: dt); model3D!.color.shift(by: dt) }
-        if light != nil { light!.color.shift(by: dt); light!.intensity.shift(by: dt); light!.coneAngle.shift(by: dt); light!.coneFeather.shift(by: dt); light!.falloffRadius.shift(by: dt) }
-        if text != nil { text!.fill.shift(by: dt); text!.tracking.shift(by: dt) }
+        outPoint = inPoint + length
+        var visit = AnimationTraversal(operation: .shift(inPoint - oldStart))
+        traverseAnimations(&visit)
     }
 }
 
 extension Animated {
     mutating func shift(by dt: Double) {
-        keyframes = keyframes.map { var k = $0; k.time = max(0, k.time + dt); return k }
+        keyframes = keyframes.map { var k = $0; k.time += dt; return k }
     }
 }
 

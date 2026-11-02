@@ -138,7 +138,7 @@ extension EditorState {
         let src = mediaURL(file)
         let out = try await SlowMotion.render(url: src, factor: factor, progress: progress)
         let data = try Data(contentsOf: out)
-        let name = try store.importMedia(data: data, ext: "mov", into: project.id)
+        let name = try store.importMedia(data: data, ext: "mov", into: rootProject.id)
         try? FileManager.default.removeItem(at: out)
         guard let i = project.layers.firstIndex(where: { $0.id == l.id }) else { return }
         mutate("Smooth Slow-Mo \(factor)x") { p in

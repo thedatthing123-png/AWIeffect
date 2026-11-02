@@ -7,7 +7,7 @@ import simd
 extension Renderer {
     /// Parent's local -> comp affine at `time` (renderScale 1), following the parent's own parents.
     static func parentAffine(_ id: UUID, in p: Project, time: Double, depth: Int = 0) -> (m: simd_double3x3, rot: Double, scale: Vec2)? {
-        guard depth < 16, let parent = p.layers.first(where: { $0.id == id }) else { return nil }
+        guard depth < 16, let parent = (p.layers + (p.parentContext ?? [])).first(where: { $0.id == id }) else { return nil }
         let own = layerMatrix(parent, time: time, renderScale: 1)
         let rot = parent.transform.rotation.value(at: time)
         let sc = parent.transform.scale.value(at: time) * 0.01
@@ -75,7 +75,7 @@ extension Renderer {
     /// Sum of Z positions along a parent chain (starting at `id`).
     static func chainZ(_ id: UUID?, in p: Project, time: Double) -> Double {
         var z = 0.0, walk = id, n = 0
-        while let w = walk, n < 32, let par = p.layers.first(where: { $0.id == w }) {
+        while let w = walk, n < 32, let par = (p.layers + (p.parentContext ?? [])).first(where: { $0.id == w }) {
             z += par.transform.positionZ.value(at: time)
             walk = par.parentID; n += 1
         }
@@ -84,11 +84,21 @@ extension Renderer {
 }
 
 extension EditorState {
+    func canParent(to id: UUID) -> Bool {
+        guard let child = selectedLayerID, project.layers.contains(where: { $0.id == id }) else { return false }
+        var walk: UUID? = id, visited = Set<UUID>()
+        while let current = walk {
+            if current == child || !visited.insert(current).inserted { return false }
+            walk = project.layers.first(where: { $0.id == current })?.parentID
+        }
+        return true
+    }
+
     /// Links (or unlinks with nil) the selected layer to a parent, converting its transform so it doesn't jump.
     func setParent(_ parent: UUID?) {
         guard let i = selectedIndex else { return }
         let child = project.layers[i]
-        guard parent != child.id else { return }
+        guard parent != child.id, parent == nil || project.layers.contains(where: { $0.id == parent }) else { return }
         // No cycles.
         var walk = parent
         var guardCount = 0
@@ -97,6 +107,7 @@ extension EditorState {
             walk = project.layers.first { $0.id == w }?.parentID
             guardCount += 1
         }
+        guard walk == nil else { return }
         let now = currentTime
         mutate(parent == nil ? "Unparent" : "Parent Layer") { p in
             var tr = p.layers[i].transform
@@ -155,6 +166,7 @@ extension EditorState {
             }
             tr.rotation = convert(tr.rotation) { v, t in v + (Renderer.parentAffine(old, in: snapshot, time: t)?.rot ?? 0) }
             tr.scale = convert(tr.scale) { v, t in let s = Renderer.parentAffine(old, in: snapshot, time: t)?.scale ?? Vec2(1, 1); return Vec2(v.x * s.x, v.y * s.y) }
+            tr.positionZ = convert(tr.positionZ) { v, t in v + Renderer.chainZ(old, in: snapshot, time: t) }
             p.layers[i].transform = tr
             p.layers[i].parentID = nil
         }
@@ -175,7 +187,7 @@ struct ParentPicker: View {
                 Button { state.setParent(nil); dismiss() } label: {
                     Label("None", systemImage: "link.badge.plus").foregroundStyle(Theme.text)
                 }
-                ForEach(state.project.layers.filter { $0.id != state.selectedLayerID && $0.content != .camera && !$0.isAudioOnly }) { l in
+                ForEach(state.project.layers.filter { state.canParent(to: $0.id) && $0.content != .camera && !$0.isAudioOnly }) { l in
                     Button { state.setParent(l.id); dismiss() } label: {
                         HStack {
                             Image(systemName: l.content.symbol).foregroundStyle(Theme.tagColor(l.tag))
@@ -217,7 +229,7 @@ struct LinkPickOverlay: View {
     var body: some View {
         Canvas { ctx, _ in
             let p = state.displayProject
-            for l in p.layers where l.id != state.selectedLayerID && l.isActive(at: state.currentTime) && !l.isAudioOnly
+            for l in p.layers where state.canParent(to: l.id) && l.isActive(at: state.currentTime) && !l.isAudioOnly
                 && l.content != .camera && l.content != .light {
                 let h = CanvasHandles.handles(l, project: p, time: state.currentTime, fit: fit)
                 var path = Path(); path.addLines(h.corners); path.closeSubpath()

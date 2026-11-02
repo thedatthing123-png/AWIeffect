@@ -48,7 +48,8 @@ extension EditorState {
     func deleteGroup(_ gid: UUID) {
         mutate("Delete Group") { p in
             Self.unparentKeepingWorld(&p) { l in l.parentID == gid }
-            p.layers.removeAll { $0.id == gid || $0.groupID == gid }
+            let descendants = Self.descendantIDs(of: gid, in: p)
+            p.layers.removeAll { $0.id == gid || descendants.contains($0.id) }
         }
         select(nil)
     }
@@ -57,12 +58,19 @@ extension EditorState {
     func duplicateGroup(_ gid: UUID) {
         guard let gi = project.layers.firstIndex(where: { $0.id == gid }) else { return }
         mutate("Duplicate Group") { p in
-            var g = p.layers[gi]
-            let newID = UUID()
-            g.id = newID; g.name += " copy"
-            let parts = p.layers.filter { $0.groupID == gid }.map { m -> Layer in var c = m; c.id = UUID(); c.groupID = newID; return c }
-            p.layers.insert(contentsOf: [g] + parts, at: gi)
-            selectedLayerID = newID
+            let ids = Self.descendantIDs(of: gid, in: p).union([gid])
+            let originals = p.layers.filter { ids.contains($0.id) }
+            let remap = Dictionary(uniqueKeysWithValues: originals.map { ($0.id, UUID()) })
+            let copies = originals.map { layer -> Layer in
+                var copy = layer
+                copy.id = remap[layer.id]!
+                if layer.id == gid { copy.name += " copy" }
+                if let parent = layer.parentID, let mapped = remap[parent] { copy.parentID = mapped }
+                if let group = layer.groupID, let mapped = remap[group] { copy.groupID = mapped }
+                return copy
+            }
+            p.layers.insert(contentsOf: copies, at: gi)
+            selectedLayerID = remap[gid]
         }
     }
 }

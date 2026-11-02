@@ -22,7 +22,7 @@ enum DrawTool: String, CaseIterable, Identifiable {
     }
     var title: String {
         switch self {
-        case .selectBrush: return "AI Select"
+        case .selectBrush: return "Select Brush"
         case .quickSelect: return "Quick Sel"
         case .rectSelect: return "Rect"
         case .ellipseSelect: return "Ellipse"
@@ -58,6 +58,7 @@ final class DrawSession: ObservableObject {
     @Published var selectSnap = false
     /// Lasso: freehand drag, or polygon (tap points, tap the first point to close).
     @Published var polygonLasso = false
+    @Published var lassoFills = false
     /// Fill tool: fill, or erase the tapped area (Eraser Bucket).
     @Published var fillErase = false
     /// Wand: only connected pixels, or every matching color.
@@ -86,6 +87,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
     private var fitted = false
     private var movingStart: CGPoint?
     private var shapeStart: SIMD2<Double>?
+    private var shapeEnd: SIMD2<Double>?
     private let outline = CAShapeLayer()
     /// Brush / eraser size ring that follows the finger or Pencil.
     private let cursor = CAShapeLayer()
@@ -174,18 +176,20 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         outline.path = path.cgPath
     }
 
-    private func toCanvas(_ p: CGPoint) -> SIMD2<Double> {
-        // Inverse of: translate(offset) * rotate(about center) * scale(zoom)
-        let c = CGPoint(x: offset.x + canvasSize.width * zoom / 2, y: offset.y + canvasSize.height * zoom / 2)
-        let dx = p.x - c.x, dy = p.y - c.y
-        let rx = dx * cos(-rotation) - dy * sin(-rotation), ry = dx * sin(-rotation) + dy * cos(-rotation)
-        return SIMD2(Double((rx + canvasSize.width * zoom / 2) / zoom), Double((ry + canvasSize.height * zoom / 2) / zoom))
+    private var viewport: DrawViewport { DrawViewport(size: canvasSize, zoom: zoom, rotation: rotation, offset: offset) }
+
+    private func toCanvas(_ p: CGPoint) -> SIMD2<Double> { viewport.canvas(p) }
+
+    private func finishLasso() {
+        if session.lassoFills { session.engine.fillLasso(session.lassoPoints, color: session.brush.color, opacity: session.brush.opacity) }
+        else { session.engine.selectLasso(session.lassoPoints) }
+        session.lassoPoints = []; outlineView = []; outline.path = nil
     }
 
     // MARK: Touches (single finger / Pencil = draw)
 
     private func pressure(_ t: UITouch) -> Double {
-        t.maximumPossibleForce > 0 ? Double(t.force / t.maximumPossibleForce) : 0.6
+        t.type == .pencil && t.maximumPossibleForce > 0 ? Double(t.force / t.maximumPossibleForce) : 1
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -253,18 +257,14 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         case .lasso where session.polygonLasso:
             let v = t.location(in: self)
             // Tap near the first point (or with 2+ points, a quick second tap there) closes the shape.
-            if let first = outlineView.first, outlineView.count >= 3, hypot(v.x - first.x, v.y - first.y) < 24 {
-                session.engine.selectLasso(session.lassoPoints)
-                session.lassoPoints = []; outlineView = []; outline.path = nil
+            if let first = session.lassoPoints.first.map(viewport.view), session.lassoPoints.count >= 3, hypot(v.x - first.x, v.y - first.y) < 24 {
+                finishLasso()
             } else {
                 session.lassoPoints.append(toCanvas(v)); outlineView.append(v)
                 showOutline(outlineView, closed: false)
             }
         case .lasso:
-            session.engine.selectLasso(session.lassoPoints)
-            session.lassoPoints = []
-            outlineView = []
-            outline.path = nil
+            finishLasso()
         case .quickSelect: session.engine.endQuickSelect()
         case .rectSelect, .ellipseSelect:
             if let a = shapeStart { session.engine.selectShape(a, toCanvas(t.location(in: self)), ellipse: session.tool == .ellipseSelect) }
@@ -273,7 +273,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         case .move:
             if let s = movingStart {
                 let e = t.location(in: self)
-                let d = SIMD2(Double(e.x - s.x) / Double(zoom), Double(e.y - s.y) / Double(zoom))
+                let d = toCanvas(e) - toCanvas(s)
                 session.engine.transformActive(translate: d, scale: 1, rotation: 0,
                                                pivot: SIMD2(Double(canvasSize.width) / 2, Double(canvasSize.height) / 2))
             }
@@ -284,9 +284,12 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
 
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         session.engine.endStroke()
-        session.lassoPoints = []
-        outline.path = nil
-        shapeStart = nil
+        if session.tool == .selectBrush { session.engine.cancelSelectStroke() }
+        if session.tool == .quickSelect { session.engine.endQuickSelect() }
+        // Polygon points are committed taps and survive navigation gestures; their overlay is reprojected.
+        if !session.polygonLasso { session.lassoPoints = [] }
+        outlineView = []; outline.path = nil
+        movingStart = nil; shapeStart = nil; shapeEnd = nil
     }
 
     private func pickColor(at p: SIMD2<Double>) {
@@ -313,9 +316,9 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         zoom = min(max(zoom * g.scale, 0.05), 40)
         g.scale = 1
         // Keep the pinch point fixed.
-        let after = toCanvas(loc)
-        offset.x += CGFloat(after.x - before.x) * zoom
-        offset.y += CGFloat(after.y - before.y) * zoom
+        let projected = viewport.view(before)
+        offset.x += loc.x - projected.x
+        offset.y += loc.y - projected.y
     }
 
     @objc private func onPan(_ g: UIPanGestureRecognizer) {
@@ -325,8 +328,11 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
     }
 
     @objc private func onRotate(_ g: UIRotationGestureRecognizer) {
+        let location = g.location(in: self), anchor = toCanvas(g.location(in: self))
         rotation += g.rotation
         g.rotation = 0
+        let projected = viewport.view(anchor)
+        offset.x += location.x - projected.x; offset.y += location.y - projected.y
     }
 
     // MARK: Rendering
@@ -336,6 +342,9 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
     func draw(in view: MTKView) {
         fitIfNeeded()
         updateCursor()
+        if session.tool == .lasso, !session.lassoPoints.isEmpty {
+            showOutline(session.lassoPoints.map(viewport.view), closed: false)
+        }
         let e = session.engine
         guard let cb = e.queue.makeCommandBuffer(), let rpd = currentRenderPassDescriptor, let drawable = currentDrawable else { return }
         e.encodeComposite(cb)
@@ -343,13 +352,13 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         // Canvas quad in NDC (rotation applied by rotating the viewport-sized quad corners on the CPU).
         let w = bounds.width, h = bounds.height
         func ndc(_ p: CGPoint) -> SIMD2<Float> { SIMD2(Float(p.x / w * 2 - 1), Float(1 - p.y / h * 2)) }
-        let x0 = offset.x, y0 = offset.y, x1 = offset.x + canvasSize.width * zoom, y1 = offset.y + canvasSize.height * zoom
-        var rect = SIMD4<Float>(ndc(CGPoint(x: x0, y: y1)).x, ndc(CGPoint(x: x0, y: y1)).y, ndc(CGPoint(x: x1, y: y0)).x, ndc(CGPoint(x: x1, y: y0)).y)
+        let corners = [SIMD2(0.0, Double(canvasSize.height)), SIMD2(Double(canvasSize.width), Double(canvasSize.height)),
+                       SIMD2(0.0, 0.0), SIMD2(Double(canvasSize.width), 0.0)].map { ndc(viewport.view($0)) }
         var opts = SIMD4<Float>(e.hasSelection ? 1 : 0, Float(session.bgMode), Float(session.selectionView),
                                 Float(CACurrentMediaTime().truncatingRemainder(dividingBy: 1000)))
         var bg = session.bgColor.simd
         enc.setRenderPipelineState(e.displayPSO)
-        enc.setVertexBytes(&rect, length: 16, index: 0)
+        corners.withUnsafeBufferPointer { enc.setVertexBytes($0.baseAddress!, length: MemoryLayout<SIMD2<Float>>.stride * 4, index: 0) }
         enc.setFragmentTexture(e.canvas, index: 0)
         enc.setFragmentTexture(e.selection, index: 1)
         enc.setFragmentBytes(&opts, length: 16, index: 0)
@@ -550,7 +559,8 @@ struct DrawStudioView: View {
             VStack(spacing: 4) {
                 Picker("", selection: $session.polygonLasso) { Text("Freehand").tag(false); Text("Polygon (tap points)").tag(true) }
                     .pickerStyle(.segmented)
-                selectionModePicker
+                Picker("Lasso action", selection: $session.lassoFills) { Text("Select").tag(false); Text("Fill drawing").tag(true) }.pickerStyle(.segmented)
+                if !session.lassoFills { selectionModePicker }
             }
             .padding(.horizontal, 10).padding(.vertical, 4)
         case .rectSelect, .ellipseSelect:

@@ -59,6 +59,7 @@ struct LayerHomePanel: View {
         var fx: [Tile] = []
         var timing: [Tile] = []
         var layer: [Tile] = []
+        if l.isGroup { layer.append(Tile(id: "Open Group", icon: "folder") { state.openGroup() }) }
         switch c {
         case .text: look.append(Tile(id: "Text Studio", icon: "textformat", panel: .text))
         case .shape: look.append(Tile(id: "Edit Shape", icon: "skew", panel: .shape))

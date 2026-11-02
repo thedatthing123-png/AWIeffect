@@ -279,6 +279,15 @@ struct Layer: Codable, Equatable, Identifiable {
     var timeRemap: Animated<Double>? = nil
     var volume = Animated(100.0)
     var frameBlending = false
+    /// The legacy switch and the newer time-effects panel must drive the same renderer state.
+    var usesFrameBlending: Bool {
+        get { timeFX?.frameBlendStore ?? frameBlending }
+        set {
+            frameBlending = newValue
+            var fx = timeFX ?? LayerTimeFX(); fx.frameBlend = newValue
+            timeFX = fx.isEmpty ? nil : fx
+        }
+    }
     /// AI background cutout (image/video layers).
     var cutout: CutoutSettings? = nil
     /// AE 3D layer switch.
@@ -391,33 +400,10 @@ struct Layer: Codable, Equatable, Identifiable {
 
     /// All keyframe times on this layer (for timeline markers).
     var keyframeTimes: [Double] {
-        var t: [Double] = []
-        t += transform.anchor.keyframeTimes
-        t += transform.position.keyframeTimes
-        t += transform.scale.keyframeTimes
-        t += transform.rotation.keyframeTimes
-        t += transform.opacity.keyframeTimes
-        t += size.keyframeTimes
-        t += fill.keyframeTimes
-        t += cornerRadius.keyframeTimes
-        t += transform.rotationX.keyframeTimes + transform.rotationY.keyframeTimes + transform.positionZ.keyframeTimes
-        t += extrude.keyframeTimes + volume.keyframeTimes + sides.keyframeTimes + innerRatio.keyframeTimes
-        t += (timeRemap?.keyframeTimes ?? []) + (path?.keyframeTimes ?? [])
-        for m in masks { t += m.path.keyframeTimes }
-        if let c = camera { t += c.zoom.keyframeTimes + c.focusDistance.keyframeTimes + c.aperture.keyframeTimes + c.blurLevel.keyframeTimes }
-        if let m = model3D { t += m.yaw.keyframeTimes + m.pitch.keyframeTimes + m.roll.keyframeTimes + m.color.keyframeTimes }
-        if let o = light { t += o.color.keyframeTimes + o.intensity.keyframeTimes + o.coneAngle.keyframeTimes + o.coneFeather.keyframeTimes + o.falloffRadius.keyframeTimes }
-        for e in effects { t += e.keyframeTimes }
-        if let tx = text {
-            t += tx.fill.keyframeTimes + tx.tracking.keyframeTimes
-            for a in tx.animators {
-                t += a.selector.start.keyframeTimes + a.selector.end.keyframeTimes + a.selector.offset.keyframeTimes + a.selector.amount.keyframeTimes
-                let pr = a.properties
-                t += (pr.position?.keyframeTimes ?? []) + (pr.scale?.keyframeTimes ?? []) + (pr.rotation?.keyframeTimes ?? [])
-                t += (pr.opacity?.keyframeTimes ?? []) + (pr.fill?.keyframeTimes ?? []) + (pr.tracking?.keyframeTimes ?? [])
-            }
-        }
-        return Array(Set(t.map { ($0 * 10000).rounded() / 10000 })).sorted()
+        var copy = self
+        var visit = AnimationTraversal(operation: .inspect)
+        copy.traverseAnimations(&visit)
+        return Array(Set(visit.times.map { ($0 * 10000).rounded() / 10000 })).sorted()
     }
 }
 
@@ -439,6 +425,8 @@ struct Project: Codable, Equatable, Identifiable {
     }
     /// Render-time nesting depth (guards against a comp containing itself).
     var precompDepth: Int? = nil
+    /// Non-editable parent transforms supplied while editing a scoped group; stripped before saving.
+    var parentContext: [Layer]? = nil
     /// Beat / comp markers in seconds (optional so older saves still decode).
     var markerTimes: [Double]? = nil
     /// Scene motion blur (optional storage so older saves decode).

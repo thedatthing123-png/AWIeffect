@@ -1,14 +1,21 @@
 import Foundation
 import Accelerate
 
-/// On-device beat/onset detection: spectral flux with an adaptive threshold, then tempo-aware peak picking.
+/// On-device spectral onsets, tempo estimation, and a tempo-consistent dynamic-programming beat path.
 enum BeatDetector {
     /// Returns beat times in seconds for mono `samples` at `sampleRate`.
     static func beats(samples: [Float], sampleRate: Double, sensitivity: Double = 0.5) -> [Double] {
+        analyze(samples: samples, sampleRate: sampleRate, sensitivity: sensitivity).times
+    }
+
+    struct Analysis { var times: [Double]; var bpm: Double? }
+
+    static func analyze(samples: [Float], sampleRate: Double, sensitivity: Double = 0.5, bpm: Double? = nil) -> Analysis {
+        guard sampleRate.isFinite, sampleRate >= 1000, samples.allSatisfy(\.isFinite) else { return Analysis(times: [], bpm: nil) }
         let n = 1024, hop = 512
-        guard samples.count > n * 2 else { return [] }
+        guard samples.count > n * 2 else { return Analysis(times: [], bpm: nil) }
         let log2n = vDSP_Length(log2(Double(n)))
-        guard let setup = vDSP_create_fftsetup(log2n, FFTRadix(kFFTRadix2)) else { return [] }
+        guard let setup = vDSP_create_fftsetup(log2n, FFTRadix(kFFTRadix2)) else { return Analysis(times: [], bpm: nil) }
         defer { vDSP_destroy_fftsetup(setup) }
         var window = [Float](repeating: 0, count: n)
         vDSP_hann_window(&window, vDSP_Length(n), Int32(vDSP_HANN_NORM))
@@ -19,6 +26,7 @@ enum BeatDetector {
         var mags = [Float](repeating: 0, count: n / 2)
         var i = 0
         while i + n <= samples.count {
+            if Task.isCancelled { return Analysis(times: [], bpm: nil) }
             vDSP_vmul(Array(samples[i..<(i + n)]), 1, window, 1, &frame, 1, vDSP_Length(n))
             real.withUnsafeMutableBufferPointer { rp in
                 imag.withUnsafeMutableBufferPointer { ip in
@@ -42,24 +50,65 @@ enum BeatDetector {
             i += hop
         }
         let hopSec = Double(hop) / sampleRate
-        // Adaptive threshold: local mean + k * local std over ~0.5s.
-        let win = max(4, Int(0.5 / hopSec))
-        let k = Float(1.6 - sensitivity)
-        var onsets: [Double] = []
-        let minGap = 0.18
-        for j in 0..<flux.count {
-            let lo = max(0, j - win), hi = min(flux.count, j + win)
-            let slice = Array(flux[lo..<hi])
-            var mean: Float = 0, std: Float = 0
-            vDSP_normalize(slice, 1, nil, 1, &mean, &std, vDSP_Length(slice.count))
-            let isPeak = (j == 0 || flux[j] > flux[j - 1]) && (j == flux.count - 1 || flux[j] >= flux[j + 1])
-            if isPeak, flux[j] > mean + k * std, flux[j] > 0.01 {
-                let t = Double(j) * hopSec + Double(n) / 2 / sampleRate
-                if let last = onsets.last, t - last < minGap { continue }
-                onsets.append(t)
+        return track(flux: flux.map(Double.init), hopSeconds: hopSec, offset: Double(n) / 2 / sampleRate,
+                     sensitivity: sensitivity, bpm: bpm)
+    }
+
+    /// Independently implemented from the onset/tempo/sequence method described by Ellis (2007).
+    /// A transient is evidence for a beat, not automatically a beat itself.
+    static func track(flux: [Double], hopSeconds: Double, offset: Double = 0, sensitivity: Double = 0.5, bpm manualBPM: Double? = nil) -> Analysis {
+        guard flux.count >= 4, hopSeconds.isFinite, hopSeconds > 0 else { return Analysis(times: [], bpm: nil) }
+        let sensitivity = sensitivity.isFinite ? min(1, max(0, sensitivity)) : 0.5
+        let maximum = flux.max() ?? 0
+        guard maximum.isFinite, maximum > 1e-8 else { return Analysis(times: [], bpm: nil) }
+        let normalized = flux.map { max(0, $0 / maximum) }
+        let minimumLag = max(2, Int((60 / 240 / hopSeconds).rounded(.up)))
+        let maximumLag = min(flux.count / 2, Int((60 / 45 / hopSeconds).rounded(.down)))
+        guard maximumLag >= minimumLag else { return Analysis(times: [], bpm: nil) }
+        var period: Double
+        if let bpm = manualBPM, bpm.isFinite, (30...300).contains(bpm) {
+            period = 60 / bpm / hopSeconds
+        } else {
+            var best = -Double.infinity, lag = minimumLag
+            for candidate in minimumLag...maximumLag {
+                var cross = 0.0, left = 0.0, right = 0.0
+                for i in candidate..<normalized.count {
+                    let a = normalized[i], b = normalized[i - candidate]
+                    cross += a * b; left += a * a; right += b * b
+                }
+                let correlation = cross / max(1e-12, sqrt(left * right))
+                let tempo = 60 / Double(candidate) / hopSeconds
+                let prior = exp(-0.5 * pow(log2(tempo / 120) / 1.1, 2))
+                let score = correlation * prior
+                if score > best { best = score; lag = candidate }
             }
+            guard best > 0.015 else { return Analysis(times: [], bpm: nil) }
+            period = Double(lag)
         }
-        return onsets
+        let minStep = max(1, Int((period * 0.5).rounded(.down)))
+        let maxStep = max(minStep, Int((period * 2).rounded(.up)))
+        var scores = [Double](repeating: 0, count: normalized.count)
+        var previous = [Int](repeating: -1, count: normalized.count)
+        let threshold = 0.025 + (1 - sensitivity) * 0.12
+        for i in normalized.indices {
+            var best = 0.0, predecessor = -1
+            if i >= minStep {
+                for step in minStep...min(maxStep, i) {
+                    let candidate = scores[i - step] - 2.5 * pow(log(Double(step) / period), 2)
+                    if candidate > best { best = candidate; predecessor = i - step }
+                }
+            }
+            scores[i] = best + max(0, normalized[i] - threshold)
+            previous[i] = predecessor
+        }
+        guard var end = scores.indices.max(by: { scores[$0] < scores[$1] }), scores[end] > 0 else { return Analysis(times: [], bpm: nil) }
+        var path: [Int] = []
+        while end >= 0 {
+            if normalized[end] > threshold { path.append(end) }
+            end = previous[end]
+        }
+        let times = path.reversed().map { Double($0) * hopSeconds + offset }
+        return Analysis(times: times, bpm: 60 / period / hopSeconds)
     }
 
     static func beats(url: URL, sensitivity: Double = 0.5) -> [Double] {

@@ -278,7 +278,7 @@ extension EditorState {
     /// Generates an overlay at comp size and adds it on top with the right blend mode and a slow drift.
     func addOverlay(_ kind: OverlayKind) {
         let img = OverlayLibrary.render(kind, width: project.width, height: project.height, seed: Int.random(in: 1...9999))
-        guard let data = img.pngData(), let name = try? store.importMedia(data: data, ext: "png", into: project.id) else { return }
+        guard let data = img.pngData(), let name = try? store.importMedia(data: data, ext: "png", into: rootProject.id) else { return }
         mutate("Add \(kind.title)") { p in
             var l = p.makeLayer(name: kind.title, content: .image(fileName: name, pixelWidth: p.width, pixelHeight: p.height),
                                 size: Vec2(Double(p.width), Double(p.height)))

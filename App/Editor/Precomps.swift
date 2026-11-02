@@ -1,6 +1,13 @@
 import Foundation
 import SwiftUI
 
+struct CompositionEditContext {
+    var project: Project
+    var time: Double
+    var selected: UUID?
+    var groupID: UUID? = nil
+}
+
 /// Pre-compose / open / close nested comps. While a pre-comp is open, `project` IS that comp;
 /// the parents wait on `compStack` and get the edited comp written back on close.
 extension EditorState {
@@ -8,16 +15,59 @@ extension EditorState {
 
     /// The top-level project (what gets saved).
     var rootProject: Project {
-        guard var root = compStack.first?.project else { return project }
-        // Write the open chain back into a copy of the root so saves always contain the latest edits.
+        guard !compStack.isEmpty else { return project }
         var child = project
-        for entry in compStack.dropFirst().reversed() {
-            var parent = entry.project
-            parent.precomps = Self.closing(child, into: parent.precomps)
-            child = parent
+        for entry in compStack.reversed() { child = Self.applying(child, to: entry) }
+        return child
+    }
+
+    private static func applying(_ child: Project, to entry: CompositionEditContext) -> Project {
+        var parent = entry.project
+        if let gid = entry.groupID, let index = parent.layers.firstIndex(where: { $0.id == gid }) {
+            let old = descendantIDs(of: gid, in: parent)
+            parent.layers.removeAll { old.contains($0.id) }
+            let nestedGroups = Set(child.layers.filter(\.isGroup).map(\.id))
+            let members = child.layers.map { layer -> Layer in
+                var l = layer
+                if l.groupID == nil || !nestedGroups.contains(l.groupID!) { l.groupID = gid }
+                return l
+            }
+            let at = (parent.layers.firstIndex(where: { $0.id == gid }) ?? index) + 1
+            parent.layers.insert(contentsOf: members, at: at)
+            if let i = parent.layers.firstIndex(where: { $0.id == gid }) { parent.layers[i].name = child.name }
+            parent.precomps = child.precomps
+        } else {
+            parent.precomps = closing(child, into: parent.precomps)
         }
-        root.precomps = Self.closing(child, into: root.precomps)
-        return root
+        return parent
+    }
+
+    static func descendantIDs(of group: UUID, in project: Project) -> Set<UUID> {
+        var result = Set<UUID>(), parents = Set([group])
+        while true {
+            let found = Set(project.layers.filter { $0.groupID.map(parents.contains) ?? false }.map(\.id)).subtracting(result).subtracting([group])
+            if found.isEmpty { break }
+            result.formUnion(found); parents = found
+        }
+        return result
+    }
+
+    func openGroup() {
+        guard let group = selectedLayer, group.isGroup else { return }
+        pause()
+        let members = Self.descendantIDs(of: group.id, in: project)
+        var child = project
+        child.id = group.id; child.name = group.name; child.background = RGBA(0, 0, 0, 0)
+        child.layers = project.layers.filter { members.contains($0.id) }.map { l in
+            var value = l
+            if value.groupID == group.id { value.groupID = nil }
+            return value
+        }
+        child.parentContext = project.layers.filter { !members.contains($0.id) } + (project.parentContext ?? [])
+        compStack.append(CompositionEditContext(project: project, time: currentTime, selected: selectedLayerID, groupID: group.id))
+        pushUndoContext()
+        project = child
+        select(nil)
     }
 
     /// Writes an edited nested comp back into a library: strips its working copy of the library and keeps any
@@ -26,6 +76,7 @@ extension EditorState {
         var edited = comp
         let extras = edited.precomps
         edited.precompList = nil
+        edited.parentContext = nil
         var l = replacing(edited, in: list)
         for e in extras where e.id != edited.id && !l.contains(where: { $0.id == e.id }) {
             var c = e; c.precompList = nil; l.append(c)
@@ -72,7 +123,8 @@ extension EditorState {
         pause()
         let library = rootProject.precomps
         let inner = max(0, min(comp.duration, l.sourceTime(at: currentTime)))
-        compStack.append((project: project, time: currentTime, selected: selectedLayerID))
+        compStack.append(CompositionEditContext(project: project, time: currentTime, selected: selectedLayerID))
+        comp.parentContext = nil
         comp.precompList = library.filter { $0.id != comp.id }
         pushUndoContext()
         project = comp
@@ -84,8 +136,7 @@ extension EditorState {
     func closePrecomp() {
         guard let entry = compStack.popLast() else { return }
         pause()
-        var parent = entry.project
-        parent.precomps = Self.closing(project, into: parent.precomps)
+        let parent = Self.applying(project, to: entry)
         popUndoContext()
         project = parent
         currentTime = entry.time
