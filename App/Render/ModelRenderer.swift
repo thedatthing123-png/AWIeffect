@@ -33,6 +33,7 @@ final class ModelRenderer {
     static let shared: ModelRenderer? = Renderer.shared.map { ModelRenderer(device: $0.device) }
 
     private let device: MTLDevice
+    private let renderQueue: MTLCommandQueue?
     private var availableRenderers: [SCNRenderer] = []
     private var rendererGeneration = 0
     private struct CachedContent { let node: SCNNode; let front: SCNMaterial?; let radius: Double }
@@ -41,6 +42,7 @@ final class ModelRenderer {
 
     init(device: MTLDevice) {
         self.device = device
+        renderQueue = device.makeCommandQueue()
     }
 
     func clear() { lock.lock(); scenes.removeAll(); availableRenderers.removeAll(); rendererGeneration += 1; lock.unlock() }
@@ -109,11 +111,17 @@ final class ModelRenderer {
             target = texture
         }
 
-        // SceneKit keeps per-renderer frame state: two scenes at the same time in one command
-        // buffer cannot share it. Return a renderer to the pool only after its GPU work finishes.
+        // SceneKit finalizes frame resources per command buffer. Isolate each model draw, then
+        // make the compositor wait on the GPU; this preserves multiple models without a CPU stall.
+        guard let modelBuffer = renderQueue?.makeCommandBuffer(), let finished = device.makeSharedEvent() else { return nil }
         let renderer = availableRenderers.popLast() ?? SCNRenderer(device: device, options: nil)
         let generation = rendererGeneration
-        cb.addCompletedHandler { [weak self, renderer] _ in
+        modelBuffer.addCompletedHandler { [weak self, renderer, finished] buffer in
+            if buffer.status == .error {
+                NSLog("AWIeffect model render failed: %@", buffer.error?.localizedDescription ?? "GPU error")
+                // A failed GPU buffer may not execute its signal. Never leave the compositor waiting forever.
+                finished.signaledValue = 1
+            }
             renderer.scene = nil; renderer.pointOfView = nil
             guard let self else { return }
             self.lock.lock(); defer { self.lock.unlock() }
@@ -180,7 +188,10 @@ final class ModelRenderer {
         rp.depthAttachment.storeAction = .dontCare; rp.depthAttachment.clearDepth = 1
         rp.stencilAttachment.texture = depth; rp.stencilAttachment.loadAction = .clear
         rp.stencilAttachment.storeAction = .dontCare; rp.stencilAttachment.clearStencil = 0
-        renderer.render(atTime: time, viewport: CGRect(x: 0, y: 0, width: width, height: height), commandBuffer: cb, passDescriptor: rp)
+        renderer.render(atTime: time, viewport: CGRect(x: 0, y: 0, width: width, height: height), commandBuffer: modelBuffer, passDescriptor: rp)
+        modelBuffer.encodeSignalEvent(finished, value: 1)
+        cb.encodeWaitForEvent(finished, value: 1)
+        modelBuffer.commit()
         return target
     }
 }
