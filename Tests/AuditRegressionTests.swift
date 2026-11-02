@@ -248,4 +248,16 @@ final class AuditRegressionTests: XCTestCase {
         XCTAssertEqual(state.project.layers.filter { !$0.isGroup }.count, 2)
     }
 
+    @MainActor
+    func testAutomaticSaveFailureIsVisibleWithoutExplicitSave() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let store = ProjectStore(root: root)
+        try FileManager.default.removeItem(at: root); try Data("occupied".utf8).write(to: root)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let state = EditorState(project: project(), store: store)
+        state.mutate("edit") { $0.name = "unsaved" }
+        try await Task.sleep(nanoseconds: 1_500_000_000)
+        XCTAssertNotNil(state.saveError)
+    }
+
 }

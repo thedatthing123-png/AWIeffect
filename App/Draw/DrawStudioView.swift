@@ -433,7 +433,7 @@ struct DrawStudioView: View {
         .awiSheet(isPresented: $showBrushes) { BrushPicker(session: session).presentationDetents([.medium, .large]) }
         .awiSheet(isPresented: $showAdjust) { DrawAdjustSheet(engine: engine).presentationDetents([.medium]) }
         .awiSheet(isPresented: $showRefine) { SelectionRefineSheet(session: session).presentationDetents([.medium, .large]) }
-        .onDisappear { playTimer?.invalidate() }
+        .onDisappear { playTimer?.invalidate(); engine.cancelSubjectSelection() }
         .photosPicker(isPresented: $showPhotos, selection: $photo, matching: .images)
         .onChange(of: photo) { _, item in
             guard let item else { return }
@@ -649,6 +649,7 @@ struct DrawStudioView: View {
     private var selectionBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: 6) {
+            if let message = engine.selectionMessage { Text(message).font(.caption).foregroundStyle(Theme.textDim) }
             chip("Refine Edge", "slider.horizontal.below.square.and.square.filled") { showRefine = true }
             chip("Remove Background", "person.crop.rectangle.badge.xmark") { engine.deleteOutsideSelection() }
             chip("AI Subject", "person.crop.rectangle") {

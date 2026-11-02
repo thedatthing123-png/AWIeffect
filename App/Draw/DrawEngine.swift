@@ -126,6 +126,7 @@ final class DrawEngine: ObservableObject {
     @Published private(set) var canRedo = false
     @Published var revision = 0
     @Published private(set) var isSelectingSubject = false
+    @Published private(set) var selectionMessage: String?
     private var selectionTask: Task<Void, Never>?
     private var selectionGeneration = UUID()
     var brush = Brush()
@@ -1110,6 +1111,7 @@ final class DrawEngine: ObservableObject {
     private func beginSubjectSelection(brush: Bool) {
         guard let layer = activeLayer, let image = cgImage(bytes(of: layer)) else { return }
         cancelSubjectSelection()
+        selectionMessage = nil
         let generation = selectionGeneration, expectedRevision = revision
         let layerID = layer.id, width = width, height = height
         let before = selBefore, painted = brush ? selBuf : nil
@@ -1120,7 +1122,11 @@ final class DrawEngine: ObservableObject {
             await MainActor.run {
                 guard let self, self.selectionGeneration == generation else { return }
                 self.isSelectingSubject = false
-                guard self.revision == expectedRevision, self.activeLayer?.id == layerID, var mask = result else { return }
+                guard self.revision == expectedRevision, self.activeLayer?.id == layerID else { return }
+                guard var mask = result else {
+                    self.selectionMessage = brush ? "No subject found under the brush. Your painted selection is kept." : "No subject found. Try Select Brush or Wand."
+                    return
+                }
                 if brush {
                     for i in mask.indices { mask[i] = max(before[i], mask[i]) }
                     self.selBuf = mask

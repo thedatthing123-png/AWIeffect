@@ -173,4 +173,42 @@ final class AuditRenderRegressionTests: XCTestCase {
         XCTAssertEqual(identity[(32 * 64 + 24) * 4 + 3], 0)
     }
 
+    func testBlackOpaqueImageExtrusionUsesAlphaAndPreservesHole() throws {
+        let format = UIGraphicsImageRendererFormat(); format.scale = 1; format.opaque = false
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 64, height: 64), format: format).image { context in
+            UIColor.black.setFill(); context.fill(CGRect(x: 16, y: 16, width: 32, height: 32))
+            context.cgContext.clear(CGRect(x: 28, y: 28, width: 8, height: 8))
+        }
+        let result = try XCTUnwrap(Extrude3D.alphaOutline(try XCTUnwrap(image.cgImage)))
+        XCTAssertTrue(result.path.contains(CGPoint(x: 10, y: 10)), "Opaque black was treated as empty")
+        XCTAssertFalse(result.path.contains(.zero), "The alpha hole was filled")
+        XCTAssertEqual(result.crop.width, 32, accuracy: 1)
+    }
+    func testModelMaterialsAndTargetsRemainIndependentWithinFrame() throws {
+        let r = try renderer(), pool = TexturePool(device: try renderer().device)
+        let command = try XCTUnwrap(r.queue.makeCommandBuffer())
+        var options = Model3DOptions(); options.text = "I"; options.yaw = Animated(0); options.pitch = Animated(0)
+        options.color = Animated(RGBA(1, 0, 0)); options.metalness = 0
+        let models = ModelRenderer(device: r.device)
+        let a = try XCTUnwrap(models.render(options, time: 0, width: 64, height: 64, cb: command, pool: pool, mediaURL: { URL(fileURLWithPath: $0) }))
+        options.color = Animated(RGBA(0, 1, 0))
+        let b = try XCTUnwrap(models.render(options, time: 0, width: 64, height: 64, cb: command, pool: pool, mediaURL: { URL(fileURLWithPath: $0) }))
+        XCTAssertFalse(a === b)
+        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: 64, height: 64, mipmapped: false)
+        descriptor.storageMode = .shared
+        let readA = try XCTUnwrap(r.device.makeTexture(descriptor: descriptor)), readB = try XCTUnwrap(r.device.makeTexture(descriptor: descriptor))
+        let blit = try XCTUnwrap(command.makeBlitCommandEncoder())
+        blit.copy(from: a, to: readA); blit.copy(from: b, to: readB); blit.endEncoding()
+        command.commit(); command.waitUntilCompleted()
+        XCTAssertEqual(command.status, .completed)
+        func channels(_ texture: MTLTexture) -> [Int] {
+            var bytes = [UInt8](repeating: 0, count: 64 * 64 * 4)
+            texture.getBytes(&bytes, bytesPerRow: 256, from: MTLRegionMake2D(0, 0, 64, 64), mipmapLevel: 0)
+            return (0..<3).map { channel in stride(from: channel, to: bytes.count, by: 4).reduce(0) { $0 + Int(bytes[$1]) } }
+        }
+        let red = channels(readA), green = channels(readB)
+        XCTAssertGreaterThan(red[2], red[1] + 1000)
+        XCTAssertGreaterThan(green[1], green[2] + 1000)
+    }
+
 }

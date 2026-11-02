@@ -17,6 +17,7 @@ struct ProjectSummary: Identifiable, Equatable {
 final class ProjectStore {
     static let shared = ProjectStore()
 
+    private let ioLock = NSRecursiveLock()
     let root: URL
     private(set) var recoveredVersions: [UUID: String] = [:]
     private let encoder: JSONEncoder = {
@@ -47,6 +48,7 @@ final class ProjectStore {
     private func thumbURL(for id: UUID) -> URL { folder(for: id).appendingPathComponent("thumb.jpg") }
 
     func save(_ project: Project, snapshotVersion: Bool = false) throws {
+        ioLock.lock(); defer { ioLock.unlock() }
         let fm = FileManager.default
         try fm.createDirectory(at: mediaFolder(for: project.id), withIntermediateDirectories: true)
         let data = try encoder.encode(project)
@@ -77,10 +79,12 @@ final class ProjectStore {
     }
 
     func loadVersion(_ url: URL) throws -> Project {
-        try decoder.decode(Project.self, from: Data(contentsOf: url))
+        ioLock.lock(); defer { ioLock.unlock() }
+        return try decoder.decode(Project.self, from: Data(contentsOf: url))
     }
 
     func load(_ id: UUID) throws -> Project {
+        ioLock.lock(); defer { ioLock.unlock() }
         do { return try decoder.decode(Project.self, from: Data(contentsOf: jsonURL(for: id))) }
         catch {
             let originalError = error
@@ -108,6 +112,7 @@ final class ProjectStore {
     }
 
     func list() -> [ProjectSummary] {
+        ioLock.lock(); defer { ioLock.unlock() }
         let fm = FileManager.default
         let dirs = (try? fm.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
         return dirs.compactMap { dir -> ProjectSummary? in
@@ -124,6 +129,7 @@ final class ProjectStore {
     }
 
     func duplicate(_ id: UUID) throws -> Project {
+        ioLock.lock(); defer { ioLock.unlock() }
         var p = try load(id)
         let oldMedia = mediaFolder(for: id)
         p.id = UUID()

@@ -649,16 +649,24 @@ final class EditorState: ObservableObject {
 
     private static let saveQueue = DispatchQueue(label: "awi.autosave", qos: .utility)
 
+    private var saveGeneration = 0
     private func scheduleAutosave() {
         autosaveWork?.cancel()
-        // Encode + write off the main thread so edits never hitch.
         let work = DispatchWorkItem { [weak self] in
             guard let self else { return }
             let project = self.rootProject, store = self.store
             let snapshot = Date().timeIntervalSince(self.lastVersionSnapshot) > 120
-            if snapshot { self.lastVersionSnapshot = Date() }
+            self.saveGeneration += 1
+            let generation = self.saveGeneration
             Self.saveQueue.async {
-                do { try store.save(project, snapshotVersion: snapshot) } catch { NSLog("AWIeffect autosave failed: \(error)") }
+                let error: String?
+                do { try store.save(project, snapshotVersion: snapshot); error = nil }
+                catch { error = "Changes could not be saved: " + error.localizedDescription }
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, self.saveGeneration == generation else { return }
+                    self.saveError = error
+                    if error == nil && snapshot { self.lastVersionSnapshot = Date() }
+                }
             }
         }
         autosaveWork = work
@@ -693,10 +701,12 @@ final class EditorState: ObservableObject {
     }
 
     func saveNow(thumbnail: Bool = false) {
+        autosaveWork?.cancel(); saveGeneration += 1
         let snapshot = Date().timeIntervalSince(lastVersionSnapshot) > 120
         let project = rootProject
         do {
-            try store.save(project, snapshotVersion: snapshot)
+            // Drain older queued snapshots before writing the newest project on close/export/retry.
+            try Self.saveQueue.sync { try store.save(project, snapshotVersion: snapshot) }
             if snapshot { lastVersionSnapshot = Date() }
             saveError = nil
         } catch {

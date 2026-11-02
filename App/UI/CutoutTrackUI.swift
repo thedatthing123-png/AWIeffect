@@ -16,14 +16,7 @@ extension EditorState {
         let snapshot = project, video = project.layers[vi], target = project.layers[ti]
         let t0 = max(video.inPoint, currentTime), t1 = min(video.outPoint, project.duration)
         guard t1 > t0 else { done(0); return }
-        func worldLayer(_ id: UUID, at t: Double) -> Layer? {
-            Renderer.resolveParenting(ExpressionResolver.resolve(snapshot, time: t), time: t).layers.first { $0.id == id }
-        }
-        func matrix(at t: Double) -> simd_double3x3 {
-            let resolved = worldLayer(video.id, at: t) ?? video
-            return Renderer.placementMatrix(resolved, camera: Renderer.activeCamera(snapshot, time: t), time: t, renderScale: 1)
-        }
-        let initial = matrix(at: t0)
+        let initial = Self.trackingMatrix(video, in: snapshot, time: t0)
         guard abs(initial.determinant) > 1e-10 else { done(0); return }
         let inverse = initial.inverse, hs = Renderer.layerHalfSize(video, time: t0)
         let corners = [CGPoint(x: compRect.minX, y: compRect.minY), CGPoint(x: compRect.maxX, y: compRect.minY), CGPoint(x: compRect.maxX, y: compRect.maxY), CGPoint(x: compRect.minX, y: compRect.maxY)].map { point -> CGPoint in
@@ -34,7 +27,7 @@ extension EditorState {
         let xs = corners.map(\.x), ys = corners.map(\.y)
         let box = CGRect(x: xs.min()!, y: ys.min()!, width: xs.max()! - xs.min()!, height: ys.max()! - ys.min()!)
         let url = mediaURL(file), fps = project.fps
-        let targetStart = (worldLayer(target.id, at: t0) ?? target).transform.position.value(at: t0)
+        let targetStart = (Renderer.resolveParenting(snapshot, time: t0).layers.first(where: { $0.id == target.id }) ?? target).transform.position.value(at: t0)
         motionTrackingTask = Task.detached(priority: .userInitiated) { [weak self] in
             let samples = MotionTracker.track(url: url, box: box, start: t0, end: t1, fps: fps, sourceTime: { t in
                 video.sourceTime(at: video.timeFX?.localTime(t) ?? t)
@@ -50,7 +43,7 @@ extension EditorState {
                       let index = self.project.layers.firstIndex(where: { $0.id == target.id }),
                       samples.count > 1, let first = samples.first else { done(0); return }
                 func compPoint(_ uv: CGPoint, at t: Double) -> Vec2 {
-                    let q = matrix(at: t) * SIMD3((Double(uv.x) - 0.5) * 2 * hs.x, (Double(uv.y) - 0.5) * 2 * hs.y, 1)
+                    let q = Self.trackingMatrix(video, in: snapshot, time: t) * SIMD3((Double(uv.x) - 0.5) * 2 * hs.x, (Double(uv.y) - 0.5) * 2 * hs.y, 1)
                     return Vec2(q.x / q.z, q.y / q.z)
                 }
                 let offset = targetStart - compPoint(first.1, at: t0)
@@ -70,6 +63,11 @@ extension EditorState {
                 done(samples.count)
             }
         }
+    }
+    nonisolated static func trackingMatrix(_ video: Layer, in project: Project, time: Double) -> simd_double3x3 {
+        let resolved = Renderer.resolveParenting(ExpressionResolver.resolve(project, time: time), time: time)
+        let layer = resolved.layers.first(where: { $0.id == video.id }) ?? video
+        return Renderer.placementMatrix(layer, camera: Renderer.activeCamera(resolved, time: time), time: time, renderScale: 1)
     }
     func cancelMotionTracking() { motionTrackingTask?.cancel(); motionTrackingTask = nil }
 
