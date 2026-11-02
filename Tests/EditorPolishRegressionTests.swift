@@ -98,6 +98,27 @@ final class EditorPolishRegressionTests: XCTestCase {
         XCTAssertFalse(p.layers[1].is3D)
         XCTAssertEqual(p.layers.first?.content, .camera)
     }
+    func testSnappingUsesVisibleEdgesAndReleasesAwayFromGuide() {
+        let edge = LayerPlacement.snap(features: [42, 62, 82], targets: [0, 64, 128], held: nil, grab: 3)
+        XCTAssertEqual(edge.delta, 2); XCTAssertEqual(edge.guide, 64)
+        let held = LayerPlacement.snap(features: [48, 68, 88], targets: [], held: 64, grab: 3)
+        XCTAssertEqual(held.delta, -4); XCTAssertEqual(held.guide, 64)
+        XCTAssertNil(LayerPlacement.snap(features: [55, 75, 95], targets: [], held: 64, grab: 3).guide)
+    }
+    @MainActor func testAlignmentUsesRotatedVisibleBoundsAndCanUndo() throws {
+        var p = scene()
+        p.layers[1].transform.rotation = Animated(37)
+        p.layers[1].transform.anchor = Animated(Vec2(7, -4))
+        p.layers[1].transform.positionZ = Animated(CameraState.defaultZoom(p))
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let state = EditorState(project: p, store: ProjectStore(root: root))
+        state.select(p.layers[1].id); state.alignSelected(0)
+        let bounds = try XCTUnwrap(LayerPlacement.bounds(state.project.layers[1], project: state.project, time: 0))
+        XCTAssertEqual(bounds.minX, 0, accuracy: 0.001)
+        state.undo()
+        XCTAssertEqual(state.project.layers[1].transform, p.layers[1].transform)
+    }
 
     @MainActor func testSelectiveStyleKeepsContentAndUnselectedProperties() {
         var p = scene(), source = p.layers[1]

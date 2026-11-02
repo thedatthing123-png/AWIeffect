@@ -566,8 +566,9 @@ final class Renderer {
             }
 
             let M = Self.placementMatrix(layer, camera: camera, time: time, renderScale: renderScale)
-            if abs(M.determinant) < 1e-12 || !M.columns.0.x.isFinite || !M.columns.2.z.isFinite { continue }
+            if abs(M.determinant) < 1e-12 || !(0..<3).allSatisfy({ column in (0..<3).allSatisfy { M[column][$0].isFinite } }) { continue }
             let hs = Self.layerHalfSize(layer, time: time)
+            guard hs.x.isFinite, hs.y.isFinite else { continue }
             // A 3D layer behind (or touching) the camera isn't drawn, like AE: projecting it would explode its bounds.
             if layer.is3D {
                 let near = 1.0
@@ -576,9 +577,7 @@ final class Renderer {
                 }
                 if behind { continue }
             }
-            let sc = layer.transform.scale.value(at: time)
-            let pxPerLocal = layer.is3D ? Self.pixelsPerLocal(M, at: layer.transform.anchor.value(at: time))
-                                        : max(1e-4, min(abs(sc.x), abs(sc.y)) / 100 * renderScale)
+            let pxPerLocal = Self.pixelsPerLocal(M, at: layer.transform.anchor.value(at: time))
             let dof = Self.dofSigma(layer, camera: camera, time: time) * renderScale
 
             // Text on path uses the first mask as its path (AE), so that mask doesn't cut the text.
@@ -601,7 +600,7 @@ final class Renderer {
                     .map { c in simd_length(corner(m1, c.0, c.1) - corner(m0, c.0, c.1)) }.max() ?? 0
                 if travel.isFinite, travel > 0.5 {
                     let cap = Renderer.blurSampleCap.map { min($0, project.blurSamples) } ?? project.blurSamples
-                    let n = max(2, min(cap, Int((travel / 1.5).rounded(.up)) + 1))
+                    let n = max(2, min(cap, Int(min(Double(max(2, cap)), (travel / 1.5).rounded(.up))) + 1))
                     blurMatrices = (0..<n).map { k in
                         Self.placementMatrix(layer, camera: camera, time: time + (Double(k) / Double(n - 1) - 0.5) * shutter, renderScale: renderScale)
                     }

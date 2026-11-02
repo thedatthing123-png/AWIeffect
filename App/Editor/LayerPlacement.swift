@@ -3,6 +3,17 @@ import simd
 
 /// Projection shared by dragging and alignment: position values remain in their parent's space.
 enum LayerPlacement {
+    static func snap(features: [Double], targets: [Double], held: Double?, grab: Double) -> (delta: Double, guide: Double?) {
+        if let held, let feature = features.min(by: { abs($0 - held) < abs($1 - held) }), abs(feature - held) < grab * 2.2 {
+            return (held - feature, held)
+        }
+        var best = grab, result: (Double, Double?) = (0, nil)
+        for feature in features { for target in targets {
+            let d = target - feature
+            if abs(d) < best { best = abs(d); result = (d, target) }
+        } }
+        return result
+    }
     static func projected(_ point: Vec2, by matrix: simd_double3x3) -> Vec2? {
         let q = matrix * SIMD3(point.x, point.y, 1)
         guard q.x.isFinite, q.y.isFinite, q.z.isFinite, abs(q.z) > 1e-8 else { return nil }

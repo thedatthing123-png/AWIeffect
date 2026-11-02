@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 enum LayerStylePart: String, CaseIterable, Identifiable {
-    case fill = "Color & Fill", border = "Border", blending = "Blending & Opacity"
+    case fill = "Color & Fill", border = "Border & Shadow", blending = "Blending & Opacity"
     case transform = "Move & Transform", text = "Text Style", effects = "Effects"
     var id: String { rawValue }
 }
@@ -186,7 +186,14 @@ extension EditorState {
     }
     static func applyStyle(_ source: Layer, to target: inout Layer, parts: Set<LayerStylePart>) {
         if parts.contains(.fill) { target.fill = source.fill; target.cornerRadius = source.cornerRadius }
-        if parts.contains(.border) { target.stroke = source.stroke }
+        let styleIDs: Set<String> = [EffectRegistry.border.id, EffectRegistry.dropShadow.id]
+        if parts.contains(.border) {
+            target.stroke = source.stroke
+            if !parts.contains(.effects) {
+                target.effects.removeAll { styleIDs.contains($0.typeID) }
+                target.effects += source.effects.filter { styleIDs.contains($0.typeID) }
+            }
+        }
         if parts.contains(.blending) {
             target.blendMode = source.blendMode; target.transform.opacity = source.transform.opacity
             target.trackMatte = source.trackMatte; target.clipToBelow = source.clipToBelow
@@ -199,7 +206,10 @@ extension EditorState {
         if parts.contains(.text), let text = source.text, let string = target.text?.string {
             target.text = text; target.text?.string = string
         }
-        if parts.contains(.effects) { target.effects = source.effects }
+        if parts.contains(.effects) {
+            if parts.contains(.border) { target.effects = source.effects }
+            else { target.effects = target.effects.filter { styleIDs.contains($0.typeID) } + source.effects.filter { !styleIDs.contains($0.typeID) } }
+        }
     }
 }
 
@@ -214,7 +224,7 @@ struct PasteLayerStyleSheet: View {
                     Toggle(part.rawValue, isOn: Binding(get: { parts.contains(part) }, set: { if $0 { parts.insert(part) } else { parts.remove(part) } }))
                         .disabled(part == .text && (state.selectedLayer?.text == nil || LayerClipboard.shared.payload?.layers.first?.text == nil))
                 }
-                Text("Shadow effects are included with Effects. Text Style keeps your target text.")
+                Text("Choose which properties to replace. Text Style keeps your target text.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             .navigationTitle("Paste Style")

@@ -127,14 +127,14 @@ extension EditorState {
                   let candidate = LayerPlacement.projected(start + delta, by: d.positionProjection.inverse) else { return }
             var p = candidate
             // Depth, rotation and parenting are removed together so the layer follows the finger exactly.
-            if selectedLayer?.parentID != nil || selectedLayer?.is3D == true || !snappingEnabled {
+            if selectedLayer?.is3D == true || !snappingEnabled {
                 snapGuides = SnapGuides(x: nil, y: nil)
                 mutateLayer { $0.transform.position.set(p, at: t) }; return
             }
             // Snap to the frame center / edges and to other layers' positions (guides show while snapped).
             // Small grab zone + stickiness: it grabs only when really close and lets go once you clearly pull
             // away, so the layer never flickers between snapped and free.
-            let grab = Double(project.width) * 0.005, release = grab * 2.2
+            let grab = Double(project.width) * 0.005
             guard let projectedCandidate = LayerPlacement.projected(p, by: d.positionProjection) else { return }
             p = projectedCandidate
             var gx: Double?, gy: Double?
@@ -144,10 +144,14 @@ extension EditorState {
                     xs += [rect.minX, rect.midX, rect.maxX]; ys += [rect.minY, rect.midY, rect.maxY]
                 }
             }
-            if let held = snapGuides.x, abs(held - p.x) < release { p.x = held; gx = held }
-            else if let x = xs.min(by: { abs($0 - p.x) < abs($1 - p.x) }), abs(x - p.x) < grab { p.x = x; gx = x }
-            if let held = snapGuides.y, abs(held - p.y) < release { p.y = held; gy = held }
-            else if let y = ys.min(by: { abs($0 - p.y) < abs($1 - p.y) }), abs(y - p.y) < grab { p.y = y; gy = y }
+            var xFeatures = [p.x], yFeatures = [p.y]
+            if let layer = selectedLayer, let rect = LayerPlacement.bounds(layer, project: project, time: t) {
+                xFeatures += [rect.minX, rect.midX, rect.maxX].map { $0 + p.x - start.x }
+                yFeatures += [rect.minY, rect.midY, rect.maxY].map { $0 + p.y - start.y }
+            }
+            let sx = LayerPlacement.snap(features: xFeatures, targets: xs, held: snapGuides.x, grab: grab)
+            let sy = LayerPlacement.snap(features: yFeatures, targets: ys, held: snapGuides.y, grab: grab)
+            p.x += sx.delta; p.y += sy.delta; gx = sx.guide; gy = sy.guide
             if (gx, gy) != (snapGuides.x, snapGuides.y) {
                 if gx != nil || gy != nil { UISelectionFeedbackGenerator().selectionChanged() }
                 snapGuides = SnapGuides(x: gx, y: gy)
