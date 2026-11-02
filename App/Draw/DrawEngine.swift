@@ -243,13 +243,20 @@ final class DrawEngine: ObservableObject {
 
     // MARK: Pixels
 
+    private func finishQueuedPainting() {
+        guard let barrier = queue.makeCommandBuffer() else { return }
+        barrier.commit(); barrier.waitUntilCompleted()
+    }
+
     func bytes(of l: DrawLayer) -> [UInt8] {
+        finishQueuedPainting()
         var b = [UInt8](repeating: 0, count: width * height * 4)
         l.texture.getBytes(&b, bytesPerRow: width * 4, from: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0)
         return b
     }
 
     func setBytes(_ b: [UInt8], of l: DrawLayer) {
+        finishQueuedPainting()
         l.texture.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: b, bytesPerRow: width * 4)
     }
 

@@ -51,6 +51,11 @@ extension Renderer {
             * CameraState.rotation(x: t.rotationX.value(at: time), y: t.rotationY.value(at: time), z: t.rotation.value(at: time))
         var state = CameraState(world: world, zoom: opts.zoom.value(at: time),
                                 center: SIMD2(Double(p.width) / 2, Double(p.height) / 2), options: opts)
+        // Older 2D cameras were created at Z=0, before camera depth was used.
+        // Preserve their neutral view while explicit depth keys retain dolly behavior.
+        if opts.affects2D && !t.positionZ.isAnimated && t.positionZ.staticValue == 0 {
+            state.world.columns.3.z = -state.zoom
+        }
         if opts.affects2D { state.view2D = view2D(cam, project: p, time: time); state.projects2DDepth = true }
         return state
     }
