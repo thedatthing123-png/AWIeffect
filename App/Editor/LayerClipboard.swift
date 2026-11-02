@@ -25,7 +25,7 @@ enum LayerClipboardFiles {
             if let file = layer.mediaFile { names.insert(file) }
             if let file = layer.model3D?.fileName { names.insert(file) }
             if let file = layer.model3D?.imageFile { names.insert(file) }
-            for effect in layer.effects { if let file = effect.text["file"], !file.isEmpty { names.insert(file) } }
+            for effect in layer.effects { if let file = effect.text?["file"], !file.isEmpty { names.insert(file) } }
             if let id = layer.drawingID {
                 let name = "draw-\(id).json"
                 let doc = try JSONDecoder().decode(DrawingDoc.self, from: Data(contentsOf: folder.appendingPathComponent(name)))
@@ -87,9 +87,9 @@ enum LayerClipboardFiles {
                 if let f = l.model3D?.imageFile { l.model3D?.imageFile = mapping[f] }
                 for i in l.effects.indices {
                     l.effects[i].id = UUID()
-                    if let f = l.effects[i].text["file"] { l.effects[i].text["file"] = mapping[f] }
-                    if let id = l.effects[i].text["layer"].flatMap(UUID.init(uuidString:)) {
-                        l.effects[i].text["layer"] = layerIDs[id]?.uuidString
+                    if let f = l.effects[i].text?["file"] { l.effects[i].text?["file"] = mapping[f] }
+                    if let id = l.effects[i].text?["layer"].flatMap(UUID.init(uuidString:)) {
+                        l.effects[i].text?["layer"] = layerIDs[id]?.uuidString
                     }
                 }
                 for i in l.masks.indices { l.masks[i].id = UUID() }
