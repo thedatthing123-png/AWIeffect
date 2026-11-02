@@ -162,7 +162,7 @@ final class EditorState: ObservableObject {
     private var displayLink: CADisplayLink?
     private var playStartWall: CFTimeInterval = 0
     private var playStartTime: Double = 0
-    private var autosaveWork: DispatchWorkItem?
+    private var autosaveTask: Task<Void, Never>?
     private var lastVersionSnapshot = Date.distantPast
     /// Coalesces continuous edits (slider drags) into one undo step.
     private var editGroupOpen = false
@@ -651,26 +651,23 @@ final class EditorState: ObservableObject {
 
     private var saveGeneration = 0
     private func scheduleAutosave() {
-        autosaveWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in
-            guard let self else { return }
+        autosaveTask?.cancel(); saveGeneration += 1
+        let generation = saveGeneration
+        autosaveTask = Task { [weak self] in
+            do { try await Task.sleep(nanoseconds: 800_000_000) } catch { return }
+            guard !Task.isCancelled, let self, self.saveGeneration == generation else { return }
             let project = self.rootProject, store = self.store
             let snapshot = Date().timeIntervalSince(self.lastVersionSnapshot) > 120
-            self.saveGeneration += 1
-            let generation = self.saveGeneration
-            Self.saveQueue.async {
-                let failure: String?
-                do { try store.save(project, snapshotVersion: snapshot); failure = nil }
-                catch { failure = "Changes could not be saved: " + error.localizedDescription }
-                DispatchQueue.main.async { [weak self] in
-                    guard let self, self.saveGeneration == generation else { return }
-                    self.saveError = failure
-                    if failure == nil && snapshot { self.lastVersionSnapshot = Date() }
+            let failure = await withCheckedContinuation { (continuation: CheckedContinuation<String?, Never>) in
+                Self.saveQueue.async {
+                    do { try store.save(project, snapshotVersion: snapshot); continuation.resume(returning: nil) }
+                    catch { continuation.resume(returning: "Changes could not be saved: " + error.localizedDescription) }
                 }
             }
+            guard !Task.isCancelled, self.saveGeneration == generation else { return }
+            self.saveError = failure
+            if failure == nil && snapshot { self.lastVersionSnapshot = Date() }
         }
-        autosaveWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: work)
     }
 
     /// Undo history belongs to one comp; switching comps starts a fresh history.
@@ -701,7 +698,7 @@ final class EditorState: ObservableObject {
     }
 
     func saveNow(thumbnail: Bool = false) {
-        autosaveWork?.cancel(); saveGeneration += 1
+        autosaveTask?.cancel(); saveGeneration += 1
         let snapshot = Date().timeIntervalSince(lastVersionSnapshot) > 120
         let project = rootProject
         do {

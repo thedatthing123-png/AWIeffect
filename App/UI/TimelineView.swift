@@ -39,7 +39,7 @@ struct TimelineView: View {
             ZStack(alignment: .topLeading) {
                 VStack(spacing: 0) {
                     HStack(spacing: 0) {
-                        Text(formatTimecode(clock.time, fps: state.project.fps))
+                        Text(formatTimecode(clock.time, fps: state.project.fps)).accessibilityIdentifier("timeline-timecode")
                             .font(.system(size: 9, weight: .semibold, design: .monospaced))
                             .foregroundStyle(Theme.accentGlow)
                             .frame(width: headerWidth, height: rulerHeight)
@@ -50,7 +50,7 @@ struct TimelineView: View {
                     .contentShape(Rectangle())
                     .onTapGesture { if state.isMultiSelecting { state.endMultiSelect() } else { state.select(nil) } }
                     // Header cells and track rows live in ONE scroll view so they always line up.
-                    ScrollView(.vertical, showsIndicators: false) {
+                    ScrollView(.vertical, showsIndicators: true) {
                         VStack(spacing: 0) {
                             if state.project.layers.isEmpty {
                                 VStack(spacing: 6) {
@@ -97,6 +97,8 @@ struct TimelineView: View {
                                 .onEnded { _ in multiDragStart = nil }
                         )
                     }
+                    .frame(maxHeight: .infinity)
+                    .accessibilityIdentifier("layer-timeline-scroll")
                     .scrollDisabled(multiDragStart != nil || liftLayer != nil)
                 }
                 // Playhead.
@@ -119,7 +121,10 @@ struct TimelineView: View {
             .contentShape(Rectangle())
             .coordinateSpace(name: "timeline")
             // Simultaneous so the layer list can still scroll up / down with many layers.
-            .simultaneousGesture(scrub)
+            .simultaneousGesture(TimelineHorizontalPan(
+                canBegin: { multiDragStart == nil && liftLayer == nil && dragOriginal == nil },
+                onChange: scrubHorizontal,
+                onEnd: { scrubStart = nil; scrubAxis = nil }))
             .simultaneousGesture(
                 MagnificationGesture()
                     .onChanged { zoom = min(600, max(15, zoomBase * $0)) }
@@ -157,25 +162,18 @@ struct TimelineView: View {
         .onTapGesture { if state.isMultiSelecting { state.toggleInMulti(layer.id) } }
     }
 
-    private var scrub: some Gesture {
-        DragGesture(minimumDistance: 2)
-            .onChanged { v in
-                if multiDragStart != nil || liftLayer != nil || dragOriginal != nil { return }
-                if scrubAxis == nil { scrubAxis = abs(v.translation.width) >= abs(v.translation.height) }
-                guard scrubAxis == true else { return }
-                if scrubStart == nil { state.pause(); scrubStart = state.currentTime }
-                let t = (scrubStart ?? 0) - Double(v.translation.width / zoom)
-                // Snap to beat markers within ~6 pt.
-                let clamped = min(max(t, 0), state.project.duration)
-                let snapped = state.project.snapToFrame(state.snapToMarker(clamped, tolerance: Double(6 / zoom)))
-                if snapped != state.currentTime {
-                    state.currentTime = snapped
-                    if state.selectedLayer?.keyframeTimes.contains(where: { abs($0 - snapped) < 1e-4 }) == true {
-                        UISelectionFeedbackGenerator().selectionChanged()
-                    }
-                }
+    private func scrubHorizontal(_ translation: CGFloat) {
+        guard multiDragStart == nil, liftLayer == nil, dragOriginal == nil else { return }
+        if scrubStart == nil { state.pause(); scrubStart = state.currentTime }
+        let t = (scrubStart ?? 0) - Double(translation / zoom)
+        let clamped = min(max(t, 0), state.project.duration)
+        let snapped = state.project.snapToFrame(state.snapToMarker(clamped, tolerance: Double(6 / zoom)))
+        if snapped != state.currentTime {
+            state.currentTime = snapped
+            if state.selectedLayer?.keyframeTimes.contains(where: { abs($0 - snapped) < 1e-4 }) == true {
+                UISelectionFeedbackGenerator().selectionChanged()
             }
-            .onEnded { _ in scrubStart = nil; scrubAxis = nil }
+        }
     }
 
     private func ruler(width: CGFloat, offset: CGFloat) -> some View {

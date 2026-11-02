@@ -50,7 +50,7 @@ struct MetalPreview: UIViewRepresentable {
     }
 
     func updateUIView(_ v: MTKView, context: Context) {
-        context.coordinator.project = project
+        context.coordinator.updateProject(project, redrawToken: redrawToken)
         context.coordinator.time = time
         context.coordinator.mediaURL = mediaURL
         context.coordinator.viewZoom = viewZoom
@@ -62,7 +62,22 @@ struct MetalPreview: UIViewRepresentable {
     }
 
     final class Coordinator: NSObject, MTKViewDelegate {
-        var project: Project?
+        private(set) var project: Project?
+        private(set) var renderRevision = 0
+        private var lastRedrawToken: Int?
+        private var suppressFullUntil: TimeInterval = 0
+        private var prerenderInFlight = false
+
+        func updateProject(_ next: Project, redrawToken: Int) {
+            if project != next || lastRedrawToken != redrawToken {
+                renderRevision += 1
+                cache.removeAll(); cacheOrder.removeAll(); cacheBytes = 0
+                cacheToken = ""; prerenderToken = ""
+                prerenderWork?.cancel(); settleWork?.cancel()
+                pendingRedraw = true
+            }
+            project = next; lastRedrawToken = redrawToken
+        }
         var time: Double = 0
         var mediaURL: ((String) -> URL)?
         var viewZoom: CGFloat = 1
@@ -98,16 +113,20 @@ struct MetalPreview: UIViewRepresentable {
         override init() {
             super.init()
             NotificationCenter.default.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main) { [weak self] _ in
-                self?.cache.removeAll(); self?.cacheOrder.removeAll(); self?.cacheBytes = 0
-                self?.pools.forEach { $0.purge() }
-                self?.quality = min(self?.quality ?? 1, 0.5)
+                guard let self else { return }
+                self.cache.removeAll(); self.cacheOrder.removeAll(); self.cacheBytes = 0
+                self.cacheToken = ""; self.prerenderToken = ""
+                self.prerenderWork?.cancel(); self.settleWork?.cancel()
+                self.pools.forEach { $0.purge() }; self.prerenderPool?.purge()
+                self.suppressFullUntil = ProcessInfo.processInfo.systemUptime + 10
+                self.forceFull = false; self.quality = min(self.quality, 0.5)
             }
         }
 
         func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) { view.setNeedsDisplay() }
 
         private func token(_ p: Project, _ w: Int, _ h: Int) -> String {
-            "\(p.id)|\(p.modifiedAt.timeIntervalSinceReferenceDate)|\(p.layers.count)|\(w)x\(h)"
+            "\(renderRevision)|\(p.id)|\(p.modifiedAt.timeIntervalSinceReferenceDate)|\(p.layers.count)|\(w)x\(h)"
         }
 
         private func remember(_ tex: MTLTexture, frame idx: Int) {
@@ -137,7 +156,9 @@ struct MetalPreview: UIViewRepresentable {
 
         private func schedulePrerender(from start: Int, size: (Int, Int), scale: Double) {
             prerenderWork?.cancel()
-            guard cacheEnabled, !isPlaying, let project else { return }
+            guard cacheEnabled, !isPlaying, ProcessInfo.processInfo.systemUptime >= suppressFullUntil, let project else { return }
+            // Complex camera/3D work gets the current frame first, without filling a second GPU workload.
+            guard project.layers.count <= 12, !project.layers.contains(where: { $0.is3D || $0.content == .model }) else { return }
             let token = cacheToken
             prerenderToken = token
             let last = min(Int((project.duration * max(project.fps, 1)).rounded(.down)) - 1, start + Int(max(project.fps, 1) * 3))
@@ -146,16 +167,24 @@ struct MetalPreview: UIViewRepresentable {
                 // Stop as soon as anything changes (editing, playing, another frame, memory).
                 guard self.prerenderToken == token, self.cacheToken == token, !self.isPlaying, next <= last,
                       let r = Renderer.shared, let p = self.project, let media = self.mediaURL, let pool = self.prerenderPool else { return }
+                if self.prerenderInFlight {
+                    let retry = DispatchWorkItem { step() }; self.prerenderWork = retry
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: retry)
+                    return
+                }
                 while next <= last, self.cache[next] != nil { next += 1 }
                 guard next <= last, self.cacheBytes < Self.cacheBudget * 9 / 10,
                       let tex = r.makeCompTexture(width: size.0, height: size.1), let cb = r.queue.makeCommandBuffer() else { return }
+                self.prerenderInFlight = true
                 pool.recycle()
                 Renderer.blurSampleCap = 12
                 r.encode(project: p, time: Double(next) / max(p.fps, 1), renderScale: scale, into: tex, commandBuffer: cb, pool: pool, mediaURL: media)
                 let idx = next
                 cb.addCompletedHandler { [weak self] _ in
                     DispatchQueue.main.async {
-                        guard let self, self.cacheToken == token else { return }
+                        guard let self else { return }
+                        self.prerenderInFlight = false
+                        guard self.cacheToken == token, self.prerenderToken == token else { return }
                         self.remember(tex, frame: idx)
                         // One frame at a time, with a breath between, so the UI never stutters.
                         let w = DispatchWorkItem { step() }
@@ -213,7 +242,7 @@ struct MetalPreview: UIViewRepresentable {
                 if !playing { playQuality = nil }
                 wasPlaying = playing
                 if playing, let pq = playQuality, quality < pq - 1e-6 { playQuality = quality }
-                let q = forceFull ? 1 : (playQuality ?? (steps.first { $0 <= quality + 1e-6 } ?? 0.25))
+                let q = forceFull && ProcessInfo.processInfo.systemUptime >= suppressFullUntil ? 1 : (playQuality ?? (steps.first { $0 <= quality + 1e-6 } ?? 0.25))
                 let scale = fullScale * q
                 let w = max(1, Int((Double(project.width) * scale).rounded()))
                 let h = max(1, Int((Double(project.height) * scale).rounded()))
@@ -257,7 +286,7 @@ struct MetalPreview: UIViewRepresentable {
                     }
                     if self.pendingRedraw { self.pendingRedraw = false; view?.setNeedsDisplay() }
                     // Settle: when nothing changes for a moment, show this frame at full quality.
-                    if rendered && !full && !playing {
+                    if rendered && !full && !playing && ProcessInfo.processInfo.systemUptime >= self.suppressFullUntil {
                         self.settleWork?.cancel()
                         let w = DispatchWorkItem { [weak self, weak view] in self?.forceFull = true; view?.setNeedsDisplay() }
                         self.settleWork = w

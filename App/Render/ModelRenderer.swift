@@ -169,6 +169,8 @@ final class ModelRenderer {
 
         renderer.scene = scene
         renderer.pointOfView = cam
+        SCNTransaction.flush()
+        renderer.update(atTime: time)
         guard renderer.prepare(scene, shouldAbortBlock: nil) else { return nil }
         let depthDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float_stencil8, width: target.width, height: target.height, mipmapped: false)
         depthDescriptor.storageMode = .private; depthDescriptor.usage = .renderTarget

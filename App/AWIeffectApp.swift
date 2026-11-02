@@ -48,6 +48,19 @@ struct RootView: View {
     }
     @State private var crashReport = CrashReporter.previousReport
 
+    init() {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-manyLayers") {
+            var project = Project.new(name: "Timeline Scroll Test", width: 128, height: 128, fps: 30, duration: 8, background: .black)
+            for n in 1...40 {
+                let layer = project.makeLayer(name: "Layer \(n)", content: .solid, size: Vec2(20, 20))
+                project.layers.append(layer)
+            }
+            _openProject = State(initialValue: project)
+        }
+        #endif
+    }
+
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()

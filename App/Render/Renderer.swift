@@ -541,6 +541,7 @@ final class Renderer {
             if case .camera = layer.content { continue }
             if case .light = layer.content { continue }
             if layer.isNull { continue }
+            if !layer.is3D && camera.projects2DDepth && layer.transform.positionZ.value(at: time) - camera.world.columns.3.z <= max(1, abs(camera.zoom) * 0.01) { continue }
             let opacity = layer.transform.opacity.value(at: time) / 100
             if opacity <= 0 { continue }
             if layer.effects.contains(where: { $0.isEnabled && $0.typeID == "awi18.displacementMap" && $0.choice("target") == 1 }) {

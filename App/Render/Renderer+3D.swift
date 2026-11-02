@@ -11,13 +11,14 @@ struct CameraState {
     var options: CameraOptions?
     /// 2D camera (comp px -> comp px) applied to 2D layers; identity when the camera is 3D-only.
     var view2D = matrix_identity_double3x3
+    var projects2DDepth = false
 
     var view: simd_double4x4 { world.inverse }
 
     static func defaultCamera(for p: Project) -> CameraState {
         let zoom = defaultZoom(p)
         let c = SIMD2(Double(p.width) / 2, Double(p.height) / 2)
-        return CameraState(world: translation(SIMD3(c.x, c.y, -zoom)), zoom: zoom, center: c, options: nil)
+        return CameraState(world: translation(SIMD3(c.x, c.y, -zoom)), zoom: zoom, center: c, options: nil, projects2DDepth: true)
     }
 
     /// AE's default 50 mm-equivalent camera ≈ zoom of comp width × 1.37 (close enough for layout).
@@ -50,7 +51,7 @@ extension Renderer {
             * CameraState.rotation(x: t.rotationX.value(at: time), y: t.rotationY.value(at: time), z: t.rotation.value(at: time))
         var state = CameraState(world: world, zoom: opts.zoom.value(at: time),
                                 center: SIMD2(Double(p.width) / 2, Double(p.height) / 2), options: opts)
-        if opts.affects2D { state.view2D = view2D(cam, project: p, time: time) }
+        if opts.affects2D { state.view2D = view2D(cam, project: p, time: time); state.projects2DDepth = true }
         return state
     }
 
@@ -114,11 +115,17 @@ extension Renderer {
     static func placementMatrix(_ layer: Layer, camera: CameraState, time: Double, renderScale: Double) -> simd_double3x3 {
         if layer.is3D { return layerHomography(layer, camera: camera, time: time, renderScale: renderScale) }
         let m = layerMatrix(layer, time: time, renderScale: renderScale)
-        guard camera.view2D != matrix_identity_double3x3, layer.content != .camera else { return m }
-        // view2D works in comp px; layerMatrix already includes the render scale.
+        guard layer.content != .camera else { return m }
+        // Flat layers in a 2D camera still occupy depth planes: perspective makes distant
+        // planes smaller and their camera movement slower. The true 3D homography above is unchanged.
+        let depth = layer.transform.positionZ.value(at: time) - camera.world.columns.3.z
+        let near = max(1, abs(camera.zoom) * 0.01)
+        let factor = camera.projects2DDepth ? max(1e-4, camera.zoom / max(near, depth)) : 1
+        let center = camera.center
+        let perspective = simd_double3x3(columns: (SIMD3(factor, 0, 0), SIMD3(0, factor, 0), SIMD3(center.x * (1 - factor), center.y * (1 - factor), 1)))
         let s = simd_double3x3(diagonal: SIMD3(renderScale, renderScale, 1))
         let si = simd_double3x3(diagonal: SIMD3(1 / max(renderScale, 1e-9), 1 / max(renderScale, 1e-9), 1))
-        return s * camera.view2D * si * m
+        return s * perspective * camera.view2D * si * m
     }
 
     /// Target pixels per local pixel near the layer's anchor (projective-aware).

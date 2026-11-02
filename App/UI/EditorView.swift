@@ -282,7 +282,7 @@ struct EditorView: View {
             Button {
                 state.pause()
                 state.saveNow(thumbnail: true)
-                close()
+                if state.saveError == nil { close() }
             } label: {
                 Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold)).frame(width: 36, height: 36)
             }
