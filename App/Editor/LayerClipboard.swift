@@ -185,7 +185,13 @@ extension EditorState {
         }
     }
     static func applyStyle(_ source: Layer, to target: inout Layer, parts: Set<LayerStylePart>) {
-        if parts.contains(.fill) { target.fill = source.fill; target.cornerRadius = source.cornerRadius }
+        if parts.contains(.fill) {
+            target.fill = source.fill; target.cornerRadius = source.cornerRadius
+            if target.text != nil {
+                target.text?.fill = source.text?.fill ?? source.fill
+                target.text?.colorSpans = source.text?.colorSpans ?? []
+            }
+        }
         let styleIDs: Set<String> = [EffectRegistry.border.id, EffectRegistry.dropShadow.id]
         if parts.contains(.border) {
             target.stroke = source.stroke
@@ -204,7 +210,10 @@ extension EditorState {
             target.is3D = source.is3D; target.extrude = source.extrude
         }
         if parts.contains(.text), let text = source.text, let string = target.text?.string {
-            target.text = text; target.text?.string = string
+            let previous = target.text!
+            target.text = text; target.text?.string = string; target.text?.counter = previous.counter
+            if !parts.contains(.fill) { target.text?.fill = previous.fill; target.text?.colorSpans = previous.colorSpans }
+            if target.masks.isEmpty { target.text?.onPath = false }
         }
         if parts.contains(.effects) {
             if parts.contains(.border) { target.effects = source.effects }

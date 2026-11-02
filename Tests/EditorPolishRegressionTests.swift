@@ -127,7 +127,8 @@ final class EditorPolishRegressionTests: XCTestCase {
         var target = p.makeLayer(name: "target", content: .text, size: Vec2(50, 60))
         target.text = TextData(string: "Keep me"); let original = target
         EditorState.applyStyle(source, to: &target, parts: [.effects, .fill])
-        XCTAssertEqual(target.transform, original.transform); XCTAssertEqual(target.text, original.text)
+        XCTAssertEqual(target.transform, original.transform); XCTAssertEqual(target.text?.string, original.text?.string)
+        XCTAssertEqual(target.text?.fill, source.fill)
         XCTAssertEqual(target.content, original.content); XCTAssertEqual(target.size, original.size)
         XCTAssertEqual(target.fill, source.fill); XCTAssertEqual(target.effects, source.effects)
         EditorState.applyStyle(source, to: &target, parts: [.transform])
