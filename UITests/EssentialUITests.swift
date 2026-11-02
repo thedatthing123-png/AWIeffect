@@ -55,6 +55,7 @@ final class EssentialUITests: XCTestCase {
     func testTextAnimatePanelOpensWithoutCrashing() {
         createProject()
         tap("Text")
+        tap("Done Typing")
         tap("Animate")
         XCTAssertTrue(app.staticTexts["Presets start at the playhead and are made of normal animators: open Animators to tweak them."].waitForExistence(timeout: 15), "Preset browser did not open")
         XCTAssertEqual(app.state, .runningForeground)

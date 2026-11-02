@@ -282,7 +282,6 @@ struct EffectsPanel: View {
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
         .glass(radius: 12)
-        .accessibilityIdentifier("effect-card-\(e.typeID)")
         .onAppear { if state.selectedLayer?.effects.last?.id == e.id { expanded.insert(e.id) } }
     }
 

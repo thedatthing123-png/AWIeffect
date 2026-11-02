@@ -237,6 +237,9 @@ final class VideoSources {
         guard let tex = device.makeTexture(descriptor: d), let cb = Renderer.shared?.queue.makeCommandBuffer() else { return nil }
         ctx.render(img, to: tex, commandBuffer: cb, bounds: CGRect(x: 0, y: 0, width: w, height: h), colorSpace: CGColorSpaceCreateDeviceRGB())
         if tex.mipmapLevelCount > 1, let bl = cb.makeBlitCommandEncoder() { bl.generateMipmaps(for: tex); bl.endEncoding() }
+        // CI encodes GPU work lazily. Keep the decoder's surface alive until that work completes;
+        // releasing it here let AVFoundation reuse it for a later frame during prefetch.
+        cb.addCompletedHandler { [pb, img] _ in withExtendedLifetime((pb, img)) {} }
         cb.commit()
         return tex
     }
