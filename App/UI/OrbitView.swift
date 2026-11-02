@@ -29,6 +29,12 @@ struct LiveReader<Content: View>: View {
 }
 
 enum OrbitView {
+    // View-only layers must retain identity across playback ticks; fresh UUIDs invalidate the RAM cache.
+    private static func syntheticID(_ project: UUID, salt: UInt8) -> UUID {
+        var bytes = project.uuid
+        bytes.0 ^= 0xA7; bytes.15 ^= salt
+        return UUID(uuid: bytes)
+    }
     /// Camera world position + rotation for the orbit.
     static func eye(_ p: Project, orbit o: OrbitCamera) -> (pos: SIMD3<Double>, rx: Double, ry: Double) {
         let d = CameraState.defaultZoom(p) * o.distance
@@ -53,6 +59,7 @@ enum OrbitView {
         // The comp's background becomes a card in space instead of a flat screen fill.
         if s.background.a > 0 {
             var bg = s.makeLayer(name: "Background", content: .solid, size: Vec2(Double(p.width), Double(p.height)))
+            bg.id = syntheticID(p.id, salt: 1)
             bg.fill = Animated(s.background)
             bg.is3D = true
             bg.transform.positionZ = Animated(1)
@@ -62,6 +69,7 @@ enum OrbitView {
         s.background = RGBA(0, 0, 0, 0)
         let e = eye(p, orbit: o)
         var cam = s.makeLayer(name: "Orbit View", content: .camera, size: Vec2(1, 1))
+        cam.id = syntheticID(p.id, salt: 2)
         cam.inPoint = 0; cam.outPoint = max(p.duration, 1) + 1
         cam.transform.position = Animated(Vec2(e.pos.x, e.pos.y))
         cam.transform.positionZ = Animated(e.pos.z)

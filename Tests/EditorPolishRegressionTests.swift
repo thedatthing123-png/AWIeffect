@@ -90,6 +90,15 @@ final class EditorPolishRegressionTests: XCTestCase {
         XCTAssertEqual(after.y - before.y, -17, accuracy: 1e-6)
     }
 
+    func testOrbitViewIsStableAndDoesNotMutateComposition() {
+        let p = scene()
+        let a = OrbitView.scene(p, orbit: .home, time: 0)
+        let b = OrbitView.scene(p, orbit: .home, time: 1)
+        XCTAssertEqual(a, b)
+        XCTAssertFalse(p.layers[1].is3D)
+        XCTAssertEqual(p.layers.first?.content, .camera)
+    }
+
     @MainActor func testSelectiveStyleKeepsContentAndUnselectedProperties() {
         var p = scene(), source = p.layers[1]
         source.fill = Animated(RGBA(1, 0, 0, 1)); source.transform.position = Animated(Vec2(10, 20))

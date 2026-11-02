@@ -28,9 +28,9 @@ extension EditorState {
             p.layers[i].content = content
             // Keep the on-screen size the placeholder had (like AE's Replace Footage).
             let k = min(old.x / max(size.x, 1), old.y / max(size.y, 1))
-            let sc = p.layers[i].transform.scale.staticValue
             p.layers[i].size = Animated(size)
-            if !p.layers[i].transform.scale.isAnimated { p.layers[i].transform.scale = Animated(Vec2(sc.x * k, sc.y * k)) }
+            p.layers[i].transform.scale = p.layers[i].transform.scale.mapped { Vec2($0.x * k, $0.y * k) }
+            p.layers[i].drawingID = nil
             p.layers[i].fill = Animated(.white)
         }
         AudioPreview.shared.invalidate()

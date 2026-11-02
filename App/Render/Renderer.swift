@@ -845,7 +845,8 @@ final class Renderer {
         case .model:
             guard let o = layer.model3D else { return nil }
             let size = layer.size.value(at: time)
-            let w = min(2048, max(16, Int(size.x * density))), h = min(2048, max(16, Int(size.y * density)))
+            guard size.x.isFinite, size.y.isFinite, density.isFinite, size.x > 0, size.y > 0 else { return nil }
+            let w = Int(min(2048, max(16, size.x * density))), h = Int(min(2048, max(16, size.y * density)))
             return ModelRenderer.shared?.render(o, time: time, width: w, height: h, cb: cb, pool: currentPool, mediaURL: mediaURL).map { .model($0) }
         case .precomp(let id):
             guard let tex = renderPrecomp(id, layer: layer, time: time, density: density, cb: cb, mediaURL: mediaURL) else { return nil }
