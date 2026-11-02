@@ -111,21 +111,15 @@ final class ModelRenderer {
             target = texture
         }
 
-        // SceneKit finalizes frame resources per command buffer. Isolate each model draw, then
-        // make the compositor wait on the GPU; this preserves multiple models without a CPU stall.
-        guard let modelBuffer = renderQueue?.makeCommandBuffer(), let finished = device.makeSharedEvent() else { return nil }
+        // SceneKit finalizes frame resources per submitted command buffer. Finish the isolated
+        // model pass before the caller encodes sampling it; a bounded wait prevents a hung GPU
+        // from holding the editor forever, and completion callbacks never acquire this lock.
+        guard let modelBuffer = renderQueue?.makeCommandBuffer() else { return nil }
         let renderer = availableRenderers.popLast() ?? SCNRenderer(device: device, options: nil)
-        let generation = rendererGeneration
-        modelBuffer.addCompletedHandler { [weak self, renderer, finished] buffer in
-            if buffer.status == .error {
-                NSLog("AWIeffect model render failed: %@", buffer.error?.localizedDescription ?? "GPU error")
-                // A failed GPU buffer may not execute its signal. Never leave the compositor waiting forever.
-                finished.signaledValue = 1
-            }
-            renderer.scene = nil; renderer.pointOfView = nil
-            guard let self else { return }
-            self.lock.lock(); defer { self.lock.unlock() }
-            if self.rendererGeneration == generation && self.availableRenderers.count < 8 { self.availableRenderers.append(renderer) }
+        let completed = DispatchSemaphore(value: 0)
+        modelBuffer.addCompletedHandler { [renderer] _ in
+            withExtendedLifetime(renderer) {}
+            completed.signal()
         }
         let scene = SCNScene()
         // Materials: PBR so lights/reflections read as real 3D.
@@ -189,9 +183,13 @@ final class ModelRenderer {
         rp.stencilAttachment.texture = depth; rp.stencilAttachment.loadAction = .clear
         rp.stencilAttachment.storeAction = .dontCare; rp.stencilAttachment.clearStencil = 0
         renderer.render(atTime: time, viewport: CGRect(x: 0, y: 0, width: width, height: height), commandBuffer: modelBuffer, passDescriptor: rp)
-        modelBuffer.encodeSignalEvent(finished, value: 1)
-        cb.encodeWaitForEvent(finished, value: 1)
         modelBuffer.commit()
+        guard completed.wait(timeout: .now() + 10) == .success, modelBuffer.status == .completed else {
+            NSLog("AWIeffect model render failed: %@", modelBuffer.error?.localizedDescription ?? "GPU render timed out")
+            return nil
+        }
+        renderer.scene = nil; renderer.pointOfView = nil
+        if availableRenderers.count < 8 { availableRenderers.append(renderer) }
         return target
     }
 }
