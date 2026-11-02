@@ -60,4 +60,15 @@ final class EssentialUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Presets start at the playhead and are made of normal animators: open Animators to tweak them."].waitForExistence(timeout: 15), "Preset browser did not open")
         XCTAssertEqual(app.state, .runningForeground)
     }
+    func testGroupOpensItsOwnEditorAndReturnsToParent() {
+        createProject(); tap("Add"); tap("Star")
+        tap("Layer Options"); tap("Group (keeps parts in this timeline)")
+        tap("Layer Options"); tap("Open Group")
+        XCTAssertTrue(app.buttons["Close Group"].firstMatch.waitForExistence(timeout: 10))
+        tap("Add"); tap("Star"); tap("Deselect Layer")
+        tap("Close Group")
+        XCTAssertTrue(app.buttons["Layer Options"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertEqual(app.state, .runningForeground)
+    }
+
 }
