@@ -260,4 +260,20 @@ final class AuditRegressionTests: XCTestCase {
         XCTAssertNotNil(state.saveError)
     }
 
+    func testBeatAnalysisFindsPulsesInActualAudioWaveform() {
+        let rate = 22050.0
+        var audio = [Float](repeating: 0, count: Int(rate * 8))
+        for beat in 1..<16 {
+            let start = Int(Double(beat) * rate / 2)
+            for i in 0..<900 where start + i < audio.count {
+                audio[start + i] = Float(sin(Double(i) * 2 * .pi * 100 / rate) * exp(-Double(i) / 180))
+            }
+        }
+        let result = BeatDetector.analyze(samples: audio, sampleRate: rate, bpm: 120)
+        XCTAssertGreaterThanOrEqual(result.times.count, 12)
+        for time in result.times { XCTAssertEqual(time, (time * 2).rounded() / 2, accuracy: 0.07) }
+        let automatic = BeatDetector.analyze(samples: audio, sampleRate: rate)
+        XCTAssertEqual(automatic.bpm ?? 0, 120, accuracy: 6)
+    }
+
 }

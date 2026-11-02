@@ -195,7 +195,7 @@ extension EditorState {
         let fps = min(30, project.fps)
         let start = currentTime
         let count = max(60, min(900, amount))
-        let pid = project.id, store = self.store
+        let pid = rootProject.id, contextID = project.id, store = self.store
         Task.detached(priority: .userInitiated) {
             let frames = Self.simulateLiquid(kind, count: count, width: W, height: H, pourX: pourX, duration: duration, fps: fps) { p in
                 Task { @MainActor in progress(p * 0.6) }
@@ -209,7 +209,7 @@ extension EditorState {
                 Task { @MainActor in progress(pr) }
             }
             await MainActor.run {
-                guard !files.isEmpty else { progress(1); return }
+                guard self.project.id == contextID, !files.isEmpty else { progress(1); return }
                 Renderer.shared?.clearImageCache()
                 let dur = Double(files.count) / fps
                 var comp = Project.new(name: "\(kind.title) \(self.project.precomps.count + 1)", width: self.project.width, height: self.project.height,

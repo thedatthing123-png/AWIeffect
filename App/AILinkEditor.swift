@@ -230,7 +230,7 @@ extension AILink {
 
     private func contactSheet(_ e: EditorState, count: Int, size: Double, start: Double? = nil, end: Double? = nil) -> HTTPResponse {
         guard let r = Renderer.shared else { return .json(["error": "no renderer"], status: 500) }
-        let pid = e.project.id, store = e.store
+        let pid = e.rootProject.id, store = e.store
         let t0 = max(0, start ?? 0)
         let ranged = start != nil || end != nil
         let t1 = min(max(e.project.duration, 0.1), end ?? e.project.duration)

@@ -118,14 +118,14 @@ final class AILink: ObservableObject {
             }
             let t = Double(r.query["t"] ?? "") ?? e.currentTime
             let size = Double(r.query["size"] ?? "") ?? 720
-            let pid = e.project.id, store = e.store
+            let pid = e.rootProject.id, store = e.store
             guard let img = rr.renderImage(project: e.project, time: t, maxDimension: size, mediaURL: { store.mediaURL($0, projectID: pid) }),
                   let png = img.pngData() else { return .json(["error": "render failed"], status: 500) }
             return HTTPResponse(status: 200, type: "image/png", body: png)
         case ("POST", "/media"):
             guard let e = editor else { return .noProject }
             let ext = (r.query["ext"] ?? "png").filter { $0.isLetter || $0.isNumber }
-            guard !r.body.isEmpty, let name = try? e.store.importMedia(data: r.body, ext: ext, into: e.project.id) else {
+            guard !r.body.isEmpty, let name = try? e.store.importMedia(data: r.body, ext: ext, into: e.rootProject.id) else {
                 return .json(["error": "upload failed"], status: 400)
             }
             return .json(["file": name])
@@ -142,7 +142,7 @@ final class AILink: ObservableObject {
             h.seekToEndOfFile(); h.write(r.body); try? h.close()
             if index < total - 1 { return .json(["ok": true, "received": index + 1]) }
             defer { try? FileManager.default.removeItem(at: tmp) }
-            guard let data = try? Data(contentsOf: tmp), let name = try? e.store.importMedia(data: data, ext: ext, into: e.project.id) else {
+            guard let data = try? Data(contentsOf: tmp), let name = try? e.store.importMedia(data: data, ext: ext, into: e.rootProject.id) else {
                 return .json(["error": "upload failed"], status: 400)
             }
             return .json(["file": name, "bytes": data.count])

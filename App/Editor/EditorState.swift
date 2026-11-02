@@ -659,13 +659,13 @@ final class EditorState: ObservableObject {
             self.saveGeneration += 1
             let generation = self.saveGeneration
             Self.saveQueue.async {
-                let error: String?
-                do { try store.save(project, snapshotVersion: snapshot); error = nil }
-                catch { error = "Changes could not be saved: " + error.localizedDescription }
+                let failure: String?
+                do { try store.save(project, snapshotVersion: snapshot); failure = nil }
+                catch { failure = "Changes could not be saved: " + error.localizedDescription }
                 DispatchQueue.main.async { [weak self] in
                     guard let self, self.saveGeneration == generation else { return }
-                    self.saveError = error
-                    if error == nil && snapshot { self.lastVersionSnapshot = Date() }
+                    self.saveError = failure
+                    if failure == nil && snapshot { self.lastVersionSnapshot = Date() }
                 }
             }
         }
