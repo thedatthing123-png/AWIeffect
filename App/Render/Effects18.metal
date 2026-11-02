@@ -242,7 +242,8 @@ kernel void fxLayerRef(texture2d<half, access::sample> src [[texture(0)]],
         if (p.i.y == 1) { float2 f = q / size; q = (1.0 - abs(fract(f * 0.5) * 2.0 - 1.0)) * size; }
         else if (p.i.y == 2 && (any(q < 0.0) || any(q >= size))) { dst.write(half4(0), gid); return; }
         else if (p.i.y == 3) q = fract(q / size) * size;
-        dst.write(src.sample(sm18, q), gid);
+        constexpr sampler edges(address::clamp_to_edge, filter::linear, coord::pixel);
+        dst.write(src.sample(edges, q), gid);
     } else {
         float4 s = float4(src.sample(sm18, c));
         float k = p.a.x < 0.5 ? m.a : lum18(mc) * m.a;

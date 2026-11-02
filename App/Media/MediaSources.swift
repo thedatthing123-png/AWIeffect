@@ -60,6 +60,12 @@ final class VideoSources {
     static let channelCount = 4
     private var useCounter: UInt64 = 0
     private var sources: [String: Source] = [:]
+    private var cacheOrder: [(source: Source, frame: Int)] = []
+    private var cacheBytes = 0
+    private var qualityGeneration = 0
+    static var cacheBudgetBytes = 128 * 1024 * 1024
+    var cachedBytes: Int { lock.lock(); defer { lock.unlock() }; return cacheBytes }
+    private static func cost(_ texture: MTLTexture) -> Int { max(texture.allocatedSize, texture.width * texture.height * 4) }
     private let lock = NSLock()
     private let prefetchQueue = DispatchQueue(label: "awi.video.prefetch", qos: .userInitiated)
     private let ciLock = NSLock()
@@ -74,11 +80,11 @@ final class VideoSources {
     /// Export switches to full-size frames (and back afterwards); cached frames of the other size are dropped.
     func setFullQuality(_ full: Bool) {
         let want = full ? Self.fullMaxSide : Self.previewMaxSide
+        lock.lock(); defer { lock.unlock() }
         guard want != maxSide else { return }
-        lock.lock()
-        maxSide = want
+        maxSide = want; qualityGeneration += 1
         for s in sources.values { s.cache.removeAll(); s.order.removeAll() }
-        lock.unlock()
+        cacheOrder.removeAll(); cacheBytes = 0
     }
 
     private func source(_ url: URL) -> Source {
@@ -102,6 +108,7 @@ final class VideoSources {
         lock.lock()
         let c = pickChannel(s, owner: channel, frame: frame)
         let hit = s.cache[frame]
+        if hit != nil { touchCache(s, frame) }
         let sequential = frame > c.lastRequest && frame - c.lastRequest <= 3
         c.lastRequest = frame
         lock.unlock()
@@ -127,17 +134,37 @@ final class VideoSources {
         return c
     }
 
+    /// Callers hold lock for these cache bookkeeping helpers.
+    private func touchCache(_ source: Source, _ frame: Int) {
+        cacheOrder.removeAll { $0.source === source && $0.frame == frame }
+        cacheOrder.append((source, frame))
+    }
+    private func evict(_ source: Source, _ frame: Int) {
+        if let old = source.cache.removeValue(forKey: frame) { cacheBytes -= Self.cost(old) }
+        source.order.removeAll { $0 == frame }
+        cacheOrder.removeAll { $0.source === source && $0.frame == frame }
+    }
     private func cachedTexture(_ s: Source, _ frame: Int) -> MTLTexture? {
         lock.lock(); defer { lock.unlock() }
-        return s.cache[frame]
+        if let texture = s.cache[frame] { touchCache(s, frame); return texture }
+        return nil
     }
 
-    private func store(_ s: Source, _ frame: Int, _ tex: MTLTexture) {
-        lock.lock()
-        if s.cache[frame] == nil { s.order.append(frame) }
-        s.cache[frame] = tex
-        while s.order.count > Self.cacheFrames { s.cache[s.order.removeFirst()] = nil }
-        lock.unlock()
+    private func store(_ s: Source, _ frame: Int, _ tex: MTLTexture, generation: Int) {
+        lock.lock(); defer { lock.unlock() }
+        guard generation == qualityGeneration, sources.values.contains(where: { $0 === s }) else { return }
+        if let old = s.cache[frame] { cacheBytes -= Self.cost(old) } else { s.order.append(frame) }
+        s.cache[frame] = tex; cacheBytes += Self.cost(tex); touchCache(s, frame)
+        while s.order.count > Self.cacheFrames, let old = s.order.first { evict(s, old) }
+        // One budget across every clip, not 48 full-resolution textures for each clip.
+        while cacheBytes > Self.cacheBudgetBytes, cacheOrder.count > 1, let old = cacheOrder.first { evict(old.source, old.frame) }
+    }
+
+    func purgeCache() {
+        lock.lock(); defer { lock.unlock() }
+        qualityGeneration += 1
+        for source in sources.values { source.cache.removeAll(); source.order.removeAll() }
+        cacheOrder.removeAll(); cacheBytes = 0
     }
 
     /// Decodes the next few frames in the background while playback continues.
@@ -165,6 +192,7 @@ final class VideoSources {
         c.decodeLock.lock(); defer { c.decodeLock.unlock() }
         if let t = cachedTexture(s, frame) { return t }
         guard let track = s.track else { return nil }
+        lock.lock(); let generation = qualityGeneration, sizeCap = maxSide; lock.unlock()
         // Restart the reader for backwards jumps and long forward skips (cheaper than decoding through).
         if c.reader == nil || c.reader?.status != .reading || frame <= c.readerFrame || frame - c.readerFrame > Int(s.fps * 1.5) {
             c.reader?.cancelReading()
@@ -197,10 +225,10 @@ final class VideoSources {
                 defer { c.decodeLock.lock() }
                 return decode(s, c, frame: frame, device: device, retried: true)
             }
-            guard let tex = makeTexture(pb, orientation: s.orientation, device: device) else { return nil }
-            store(s, idx, tex)
+            guard let tex = makeTexture(pb, orientation: s.orientation, device: device, maxSide: sizeCap) else { return nil }
+            store(s, idx, tex, generation: generation)
             // A frame missing in the file (variable frame rate): show the next one for the requested index.
-            if idx != frame { store(s, frame, tex) }
+            if idx != frame { store(s, frame, tex, generation: generation) }
             return tex
         }
         // The decoder was refused / failed mid-way: start a fresh reader once and try again before giving up.
@@ -217,7 +245,7 @@ final class VideoSources {
     }
 
     /// Pixel buffer → oriented, size-capped GPU texture (values passed through untouched: still sRGB-encoded).
-    private func makeTexture(_ pb: CVPixelBuffer, orientation: CGImagePropertyOrientation, device: MTLDevice) -> MTLTexture? {
+    private func makeTexture(_ pb: CVPixelBuffer, orientation: CGImagePropertyOrientation, device: MTLDevice, maxSide: CGFloat) -> MTLTexture? {
         ciLock.lock(); defer { ciLock.unlock() }
         if ciContext == nil {
             ciContext = CIContext(mtlDevice: device, options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull(), .cacheIntermediates: false])
@@ -245,7 +273,9 @@ final class VideoSources {
     }
 
     func clear() {
-        lock.lock(); let all = Array(sources.values); sources.removeAll(); lock.unlock()
+        lock.lock(); let all = Array(sources.values); sources.removeAll()
+        cacheOrder.removeAll(); cacheBytes = 0; qualityGeneration += 1
+        lock.unlock()
         for s in all { for c in s.channels { c.decodeLock.lock(); c.reader?.cancelReading(); c.decodeLock.unlock() } }
     }
 }

@@ -33,15 +33,17 @@ final class ModelRenderer {
     static let shared: ModelRenderer? = Renderer.shared.map { ModelRenderer(device: $0.device) }
 
     private let device: MTLDevice
-    private let renderer: SCNRenderer
+    private var availableRenderers: [SCNRenderer] = []
+    private var rendererGeneration = 0
     private struct CachedContent { let node: SCNNode; let front: SCNMaterial?; let radius: Double }
     private var scenes: [String: CachedContent] = [:]
     private let lock = NSLock()
 
     init(device: MTLDevice) {
         self.device = device
-        renderer = SCNRenderer(device: device, options: nil)
     }
+
+    func clear() { lock.lock(); scenes.removeAll(); availableRenderers.removeAll(); rendererGeneration += 1; lock.unlock() }
 
     /// Model content node (cached per file / per text settings).
     private func content(_ o: Model3DOptions, mediaURL: (String) -> URL) -> CachedContent? {
@@ -107,6 +109,16 @@ final class ModelRenderer {
             target = texture
         }
 
+        // SceneKit keeps per-renderer frame state: two scenes at the same time in one command
+        // buffer cannot share it. Return a renderer to the pool only after its GPU work finishes.
+        let renderer = availableRenderers.popLast() ?? SCNRenderer(device: device, options: nil)
+        let generation = rendererGeneration
+        cb.addCompletedHandler { [weak self, renderer] _ in
+            renderer.scene = nil; renderer.pointOfView = nil
+            guard let self else { return }
+            self.lock.lock(); defer { self.lock.unlock() }
+            if self.rendererGeneration == generation && self.availableRenderers.count < 8 { self.availableRenderers.append(renderer) }
+        }
         let scene = SCNScene()
         // Materials: PBR so lights/reflections read as real 3D.
         let col = o.color.value(at: time)

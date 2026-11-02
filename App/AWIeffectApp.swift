@@ -10,6 +10,8 @@ struct AWIeffectApp: App {
         FontLibrary.shared.registerAll()
         NotificationCenter.default.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main) { _ in
             Renderer.shared?.clearImageCache()
+            VideoSources.shared.purgeCache()
+            ModelRenderer.shared?.clear()
             CutoutEngine.shared.clear()
             EffectThumbnails.shared.clear()
         }

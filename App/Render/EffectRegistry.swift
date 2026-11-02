@@ -80,7 +80,7 @@ final class TexturePool {
 
     /// Largest side the pool hands out (Metal's limit is 16384; real layers are capped far below this).
     static let maxSide = 8192
-    private var fallback: MTLTexture?
+    private var fallbacks: [MTLPixelFormat: MTLTexture] = [:]
 
     func acquire(width rawW: Int, height rawH: Int, format: MTLPixelFormat = .rgba16Float) -> MTLTexture {
         let width = min(Self.maxSide, max(1, rawW)), height = min(Self.maxSide, max(1, rawH))
@@ -99,12 +99,16 @@ final class TexturePool {
             purge()
             if let t2 = device.makeTexture(descriptor: d) { used.append(t2); return t2 }
             // Still nothing: a tiny blank texture keeps the frame going (that layer just shows empty).
-            if fallback == nil {
-                let fd = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba16Float, width: 1, height: 1, mipmapped: false)
-                fd.usage = [.shaderRead, .shaderWrite]
-                fallback = device.makeTexture(descriptor: fd)
+            if fallbacks[format] == nil {
+                let fd = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: format, width: 1, height: 1, mipmapped: false)
+                fd.usage = [.shaderRead, .shaderWrite, .renderTarget]; fd.storageMode = .shared
+                if let blank = device.makeTexture(descriptor: fd) {
+                    let zeros = [UInt8](repeating: 0, count: format == .rgba16Float ? 8 : 4)
+                    blank.replace(region: MTLRegionMake2D(0, 0, 1, 1), mipmapLevel: 0, withBytes: zeros, bytesPerRow: zeros.count)
+                    fallbacks[format] = blank
+                }
             }
-            return fallback!
+            return fallbacks[format]!
         }
         used.append(t)
         return t
@@ -145,7 +149,7 @@ final class EffectGPU {
     init(device: MTLDevice, library: MTLLibrary) throws {
         self.device = device
         for name in ["fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
-                     "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix",
+                     "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix", "fxBackdropMix", "fxBackdropMask",
                      "fxWarp", "fxStylize", "fxGlitch", "fxColor2", "fxSaberCore", "fxShine", "fxParticles", "fxPixelSort",
                      "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet", "fxGrade", "maskMix", "fxLayerRef", "flowEstimate", "flowBlur", "fx19", "fx19GlowKeep", "fx19KeyInvert", "fx19AlphaOf", "fx19ColorSelect", "fx19Bend", "fx20Flip", "fx20AMWave", "fx20AMFractal", "fx21", "fx22"] {
             guard let f = library.makeFunction(name: name) else { throw RenderError.pipeline(name) }

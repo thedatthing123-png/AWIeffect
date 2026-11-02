@@ -262,6 +262,7 @@ final class DrawEngine: ObservableObject {
     // MARK: Undo
 
     private func record(_ state: UndoState) {
+        cancelSubjectSelection()
         undoStack.append(state)
         // Keep at least the most recent operation even for a large canvas.
         while undoStack.count > 1 && (undoStack.count > Self.maxUndo || undoStack.reduce(0, { $0 + $1.cost }) > Self.historyBudget) { undoStack.removeFirst() }
@@ -1183,6 +1184,7 @@ final class DrawEngine: ObservableObject {
 
     /// Starts painting the selection (add or remove). Brushed areas can then snap to the subject under them.
     func beginSelectStroke(at p: SIMD2<Double>, radius: Double, subtract: Bool) {
+        cancelSubjectSelection()
         selBeforeHadSelection = hasSelection
         selBefore = hasSelection ? selectionBytes() : [UInt8](repeating: 0, count: width * height)
         selBuf = selBefore

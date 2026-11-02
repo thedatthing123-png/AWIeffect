@@ -58,7 +58,7 @@ jobs:
           set +e
           FILTER=()
           if [[ "${{ inputs.validation }}" == "audit" ]]; then
-            FILTER=(-only-testing:AWIeffectTests/AuditRegressionTests -only-testing:AWIeffectTests/AuditRenderRegressionTests -only-testing:AWIeffectTests/PrecompMaskImportTests -only-testing:AWIeffectTests/EssentialRegressionTests -only-testing:AWIeffectTests/DrawStudioTests -only-testing:AWIeffectTests/VisionTests)
+            FILTER=(-only-testing:AWIeffectTests/AuditRegressionTests -only-testing:AWIeffectTests/AuditRenderRegressionTests -only-testing:AWIeffectTests/PrecompMaskImportTests -only-testing:AWIeffectTests/EssentialRegressionTests -only-testing:AWIeffectTests/DrawStudioTests -only-testing:AWIeffectTests/VisionTests -only-testing:AWIeffectTests/VideoDecodeTests)
           fi
           xcodebuild test -jobs 2 "${FILTER[@]}" \
             -project AWIeffect.xcodeproj -scheme AWIeffect \

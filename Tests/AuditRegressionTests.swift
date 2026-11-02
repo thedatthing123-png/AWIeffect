@@ -1,4 +1,5 @@
 import XCTest
+import Combine
 import simd
 @testable import AWIeffect
 
@@ -255,8 +256,11 @@ final class AuditRegressionTests: XCTestCase {
         try FileManager.default.removeItem(at: root); try Data("occupied".utf8).write(to: root)
         defer { try? FileManager.default.removeItem(at: root) }
         let state = EditorState(project: project(), store: store)
+        let reported = expectation(description: "Automatic save reports its write failure")
+        let subscription = state.$saveError.compactMap { $0 }.first().sink { _ in reported.fulfill() }
         state.mutate("edit") { $0.name = "unsaved" }
-        try await Task.sleep(nanoseconds: 1_500_000_000)
+        await fulfillment(of: [reported], timeout: 10)
+        withExtendedLifetime(subscription) {}
         XCTAssertNotNil(state.saveError)
     }
 

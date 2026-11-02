@@ -157,4 +157,18 @@ final class VideoDecodeTests: XCTestCase {
             XCTAssertEqual(a, b, "duplicates differ at frame \(f)")
         }
     }
+    func testVideoCacheBudgetEvictsWithoutChangingDecodedFrames() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        let source = VideoSources.shared, oldBudget = VideoSources.cacheBudgetBytes
+        let url = try makeVideo(rotated: false)
+        defer { VideoSources.cacheBudgetBytes = oldBudget; source.clear(); try? FileManager.default.removeItem(at: url) }
+        source.clear(); VideoSources.cacheBudgetBytes = 1_000_000
+        for frame in [0, 7, 14, 21, 28, 35, 1] {
+            let texture = try XCTUnwrap(source.texture(url: url, time: (Double(frame) + 0.1) / 30, device: r.device))
+            XCTAssertEqual(Double(stripe(texture, rotated: false)), Double(frame * 6), accuracy: 10)
+            XCTAssertLessThanOrEqual(source.cachedBytes, VideoSources.cacheBudgetBytes)
+        }
+        source.purgeCache(); XCTAssertEqual(source.cachedBytes, 0)
+    }
+
 }
