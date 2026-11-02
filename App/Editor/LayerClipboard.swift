@@ -48,7 +48,7 @@ enum LayerClipboardFiles {
     }
 
     /// Imports assets transactionally and refreshes references, including editable drawings and nested comps.
-    static func imported(_ payload: LayerClipboardPayload, destination: URL) throws -> (layers: [Layer], comps: [Project]) {
+    static func imported(_ payload: LayerClipboardPayload, destination: URL, existingLayerIDs: Set<UUID> = []) throws -> (layers: [Layer], comps: [Project]) {
         let fm = FileManager.default
         try fm.createDirectory(at: destination, withIntermediateDirectories: true)
         let names = try files(payload.layers + payload.precomps.flatMap(\.layers), folder: payload.folder)
@@ -88,8 +88,8 @@ enum LayerClipboardFiles {
                 for i in l.effects.indices {
                     l.effects[i].id = UUID()
                     if let f = l.effects[i].text?["file"] { l.effects[i].text?["file"] = mapping[f] }
-                    if let id = l.effects[i].text?["layer"].flatMap(UUID.init(uuidString:)) {
-                        l.effects[i].text?["layer"] = layerIDs[id]?.uuidString
+                    if let id = (l.effects[i].text?["layer"]).flatMap(UUID.init(uuidString:)) {
+                        l.effects[i].text?["layer"] = (layerIDs[id] ?? (existingLayerIDs.contains(id) ? id : nil))?.uuidString
                     }
                 }
                 for i in l.masks.indices { l.masks[i].id = UUID() }
@@ -144,13 +144,14 @@ extension EditorState {
     func pasteLayer(style: Set<LayerStylePart>? = nil, contentOnly: Bool = false) {
         guard let payload = LayerClipboard.shared.payload, !LayerClipboard.shared.busy else { return }
         let target = selectedLayerID, projectID = project.id, folder = store.mediaFolder(for: rootProject.id)
+        let existingLayerIDs = Set(project.layers.map(\.id))
         if (style != nil || contentOnly) && selectedLayer == nil { return }
         LayerClipboard.shared.busy = true
         Task {
             defer { LayerClipboard.shared.busy = false }
             do {
                 let imported = try await Task.detached(priority: .userInitiated) {
-                    try LayerClipboardFiles.imported(payload, destination: folder)
+                    try LayerClipboardFiles.imported(payload, destination: folder, existingLayerIDs: existingLayerIDs)
                 }.value
                 guard project.id == projectID else { recoveryNotice = "Paste cancelled because the open composition changed."; return }
                 var layers = imported.layers
