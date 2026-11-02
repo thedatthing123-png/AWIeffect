@@ -299,6 +299,7 @@ final class Exporter {
             await Task.yield()
         }
         guard CGImageDestinationFinalize(dest) else { throw ExportError.writer("gif finalize") }
+        progress(1)
         return url
     }
 }
