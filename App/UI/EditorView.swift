@@ -6,6 +6,8 @@ struct EditorView: View {
     @StateObject var state: EditorState
     let close: () -> Void
     @State private var showExport = false
+    @State private var showPasteStyle = false
+    @ObservedObject private var layerClipboard = LayerClipboard.shared
     @State private var showLayerRename = false
     @State private var renameText = ""
     @State private var showHistory = false
@@ -85,6 +87,7 @@ struct EditorView: View {
                     .accessibilityIdentifier("save-error")
             }
         }
+        .awiSheet(isPresented: $showPasteStyle) { PasteLayerStyleSheet(state: state).presentationDetents([.medium, .large]) }
         .awiSheet(isPresented: $state.showLightBrowser) { LightBrowser(state: state).presentationDetents([.large]) }
         .environmentObject(mediaLauncher)
         .environmentObject(trackLauncher)
@@ -232,6 +235,12 @@ struct EditorView: View {
                 Button { state.splitSelected() } label: { Label("Split at Playhead", systemImage: "scissors") }
                 Button { state.copyKeyframes() } label: { Label("Copy Keyframes", systemImage: "doc.on.doc") }
                 Button { state.pasteKeyframes() } label: { Label("Paste Keyframes", systemImage: "doc.on.clipboard") }
+                Button { state.copyLayer() } label: { Label(layerClipboard.busy ? "Copying…" : "Copy Layer", systemImage: "doc.on.doc") }.disabled(layerClipboard.busy)
+                if layerClipboard.payload != nil {
+                    Button { state.pasteLayer() } label: { Label("Paste Layer", systemImage: "plus.square.on.square") }.disabled(layerClipboard.busy)
+                    Button { showPasteStyle = true } label: { Label("Paste Style…", systemImage: "paintbrush") }.disabled(layerClipboard.busy || l.isLocked)
+                    Button { state.pasteLayer(contentOnly: true) } label: { Label("Replace Content from Copy", systemImage: "photo.on.rectangle") }.disabled(layerClipboard.busy || l.isLocked)
+                }
                 Button { state.copyEffects() } label: { Label("Copy Effects", systemImage: "sparkles.rectangle.stack") }
                 if !state.effectClipboard.isEmpty { Button { state.pasteEffects() } label: { Label("Paste Effects", systemImage: "sparkles") } }
                 Divider()

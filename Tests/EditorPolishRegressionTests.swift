@@ -75,4 +75,67 @@ final class EditorPolishRegressionTests: XCTestCase {
         XCTAssertEqual(first, try pixels(1))
         XCTAssertEqual(first, try pixels(0))
     }
+
+    func testProjectedDragTracksFingerAtDepthAndUnderRotatedParent() throws {
+        var p = scene()
+        p.layers[1].transform.positionZ = Animated(CameraState.defaultZoom(p))
+        var parent = p.makeLayer(name: "parent", content: .solid, size: Vec2(10, 10))
+        parent.transform.rotation = Animated(35); parent.transform.scale = Animated(Vec2(150, 75))
+        p.layers.append(parent); p.layers[1].parentID = parent.id
+        let layer = p.layers[1], matrix = LayerPlacement.positionMatrix(layer, project: p, time: 0)
+        let before = try XCTUnwrap(LayerPlacement.projected(layer.transform.position.value(at: 0), by: matrix))
+        let moved = try XCTUnwrap(LayerPlacement.movedPosition(layer, project: p, time: 0, screenDelta: Vec2(21, -17)))
+        let after = try XCTUnwrap(LayerPlacement.projected(moved, by: matrix))
+        XCTAssertEqual(after.x - before.x, 21, accuracy: 1e-6)
+        XCTAssertEqual(after.y - before.y, -17, accuracy: 1e-6)
+    }
+
+    @MainActor func testSelectiveStyleKeepsContentAndUnselectedProperties() {
+        var p = scene(), source = p.layers[1]
+        source.fill = Animated(RGBA(1, 0, 0, 1)); source.transform.position = Animated(Vec2(10, 20))
+        source.transform.opacity = Animated(25); source.effects = [EffectRegistry.deepGlow.makeInstance()]
+        var target = p.makeLayer(name: "target", content: .text, size: Vec2(50, 60))
+        target.text = TextData(string: "Keep me"); let original = target
+        EditorState.applyStyle(source, to: &target, parts: [.effects, .fill])
+        XCTAssertEqual(target.transform, original.transform); XCTAssertEqual(target.text, original.text)
+        XCTAssertEqual(target.content, original.content); XCTAssertEqual(target.size, original.size)
+        XCTAssertEqual(target.fill, source.fill); XCTAssertEqual(target.effects, source.effects)
+        EditorState.applyStyle(source, to: &target, parts: [.transform])
+        XCTAssertEqual(target.transform.position, source.transform.position)
+        XCTAssertEqual(target.transform.opacity, original.transform.opacity)
+    }
+
+    func testClipboardOwnsMediaAndRemapsDrawingAndNestedReferences() throws {
+        let fm = FileManager.default, root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let input = root.appendingPathComponent("source"), output = root.appendingPathComponent("target")
+        try fm.createDirectory(at: input, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: root) }
+        try Data([1, 2, 3]).write(to: input.appendingPathComponent("image.png"))
+        try Data([4, 5, 6]).write(to: input.appendingPathComponent("paint.png"))
+        let drawing = UUID()
+        let doc = DrawingDoc(id: drawing, width: 2, height: 2, layers: [DrawingDoc.LayerInfo(id: UUID(), name: "paint", opacity: 1, blend: .normal, visible: true, clipping: false, alphaLock: false, file: "paint.png")])
+        try JSONEncoder().encode(doc).write(to: input.appendingPathComponent("draw-\(drawing).json"))
+        var p = scene(), nested = scene()
+        var image = p.makeLayer(name: "image", content: .image(fileName: "image.png", pixelWidth: 2, pixelHeight: 2), size: Vec2(2, 2))
+        image.drawingID = drawing
+        var group = p.makeLayer(name: "group", content: .solid, size: Vec2(128, 128)); group.isGroup = true
+        image.groupID = group.id; image.parentID = group.id
+        nested.layers = [image]
+        let compLayer = p.makeLayer(name: "nested", content: .precomp(id: nested.id), size: Vec2(128, 128))
+        let payload = try LayerClipboardFiles.snapshot(layers: [group, image, compLayer], precomps: [nested], source: input)
+        try fm.removeItem(at: input)
+        let result = try LayerClipboardFiles.imported(payload, destination: output)
+        XCTAssertNotEqual(result.layers[0].id, group.id)
+        XCTAssertEqual(result.layers[1].parentID, result.layers[0].id)
+        XCTAssertEqual(result.layers[1].groupID, result.layers[0].id)
+        XCTAssertEqual(result.layers[2].content, .precomp(id: result.comps[0].id))
+        let file = try XCTUnwrap(result.layers[1].mediaFile)
+        XCTAssertEqual(try Data(contentsOf: output.appendingPathComponent(file)), Data([1, 2, 3]))
+        let newID = try XCTUnwrap(result.layers[1].drawingID); XCTAssertNotEqual(newID, drawing)
+        let copiedDoc = try JSONDecoder().decode(DrawingDoc.self, from: Data(contentsOf: output.appendingPathComponent("draw-\(newID).json")))
+        XCTAssertEqual(copiedDoc.id, newID)
+        XCTAssertEqual(try Data(contentsOf: output.appendingPathComponent(copiedDoc.layers[0].file)), Data([4, 5, 6]))
+        let second = try LayerClipboardFiles.imported(payload, destination: output)
+        XCTAssertNotEqual(result.layers[1].mediaFile, second.layers[1].mediaFile)
+    }
 }

@@ -113,7 +113,9 @@ extension EditorState {
             for i in lp.layers.indices {
                 guard let s = multiDragStarts[lp.layers[i].id] else { continue }
                 if let pid = lp.layers[i].parentID, multiDragStarts[pid] != nil { continue }
-                let p = s + delta
+                var original = project.layers.first { $0.id == lp.layers[i].id } ?? lp.layers[i]
+                original.transform.position = Animated(s)
+                guard let p = LayerPlacement.movedPosition(original, project: project, time: t, screenDelta: delta) else { continue }
                 lp.layers[i].transform.position.set(Vec2((p.x * 10).rounded() / 10, (p.y * 10).rounded() / 10), at: t)
             }
             lp.modifiedAt = Date()

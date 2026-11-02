@@ -23,8 +23,8 @@ enum LayerPlacement {
         let plane = simd_double4x4(columns: (SIMD4(parent[0].x, parent[0].y, 0, 0), SIMD4(parent[1].x, parent[1].y, 0, 0),
                                           SIMD4(0, 0, 1, 0), SIMD4(parent[2].x, parent[2].y, world.transform.positionZ.value(at: time), 1)))
         let view = camera.view * plane
-        func project(_ v: SIMD4<Double>) -> SIMD3<Double> { SIMD3(camera.zoom * v.x + camera.center.x * v.z, camera.zoom * v.y + camera.center.y * v.z, v.z) }
-        return simd_double3x3(columns: (project(view[0]), project(view[1]), project(view[3])))
+        func projectColumn(_ v: SIMD4<Double>) -> SIMD3<Double> { SIMD3(camera.zoom * v.x + camera.center.x * v.z, camera.zoom * v.y + camera.center.y * v.z, v.z) }
+        return simd_double3x3(columns: (projectColumn(view[0]), projectColumn(view[1]), projectColumn(view[3])))
     }
     static func bounds(_ layer: Layer, project: Project, time: Double) -> CGRect? {
         let resolved = Renderer.resolveParenting(project, time: time)

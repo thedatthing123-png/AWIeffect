@@ -142,6 +142,7 @@ struct PanelHeader: View {
 
 struct AddPanel: View {
     @ObservedObject var state: EditorState
+    @ObservedObject private var layerClipboard = LayerClipboard.shared
     @Binding var showPhotoPicker: Bool
     var startPen: (PenTarget, PenStyle) -> Void = { _, _ in }
     @EnvironmentObject private var drawLauncher: DrawLauncher
@@ -152,6 +153,11 @@ struct AddPanel: View {
             PanelHeader(state: state, title: "Add", showKeyNav: false)
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
+                    if layerClipboard.payload != nil {
+                        section("Clipboard") {
+                            ToolTile(icon: "doc.on.clipboard", title: layerClipboard.busy ? "Pasting…" : "Paste Layer") { state.pasteLayer() }.disabled(layerClipboard.busy)
+                        }
+                    }
                     section("Basic") {
                         ToolTile(icon: "textformat", title: "Text") { state.addText() }
                         ForEach(ShapeKind.allCases.filter { $0 != .path }) { k in
