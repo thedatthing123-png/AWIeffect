@@ -86,6 +86,7 @@ final class EditorState: ObservableObject {
     @Published var motionSketch = false
     /// Show the selected layer's motion path on the canvas.
     @Published var showMotionPath = true
+    @Published var snappingEnabled = true
     var sketchStartTime: Double?
     var sketchStartClock: CFTimeInterval = 0
     var sketchSamples: [(Double, Vec2)] = []

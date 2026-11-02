@@ -164,27 +164,7 @@ extension EditorState {
     }
 
     /// Aligns the selection in the comp: 0 left, 1 center, 2 right (x) / 3 top, 4 middle, 5 bottom (y).
-    func alignMulti(_ mode: Int) {
-        guard let ids = multiSelection else { return }
-        let t = currentTime
-        mutate("Align Layers") { p in
-            for i in p.layers.indices where ids.contains(p.layers[i].id) {
-                let hs = Renderer.layerHalfSize(p.layers[i], time: t)
-                let sc = p.layers[i].transform.scale.value(at: t) * 0.01
-                var pos = p.layers[i].transform.position.value(at: t)
-                let w = Double(p.width), h = Double(p.height)
-                switch mode {
-                case 0: pos.x = hs.x * abs(sc.x)
-                case 1: pos.x = w / 2
-                case 2: pos.x = w - hs.x * abs(sc.x)
-                case 3: pos.y = hs.y * abs(sc.y)
-                case 4: pos.y = h / 2
-                default: pos.y = h - hs.y * abs(sc.y)
-                }
-                p.layers[i].transform.position.set(pos, at: t)
-            }
-        }
-    }
+    func alignMulti(_ mode: Int) { alignSelected(mode) }
 
     func trimMultiToPlayhead(keepAfter: Bool) {
         guard let ids = multiSelection else { return }

@@ -27,6 +27,8 @@ struct CanvasDrag {
     let rotation: Double
     let anchor: Vec2
     let inverse: simd_double3x3   // comp -> layer local at drag start
+    let positionProjection: simd_double3x3
+    let rawPosition: Vec2
 }
 
 enum CanvasHandles {
@@ -96,7 +98,8 @@ extension EditorState {
         UISelectionFeedbackGenerator().selectionChanged()
         if motionSketch, case .move = kind { beginMotionSketch() }
         return CanvasDrag(kind: kind, startComp: comp, pivot: tr.position.value(at: t), position: tr.position.value(at: t),
-                          scale: tr.scale.value(at: t), rotation: tr.rotation.value(at: t), anchor: tr.anchor.value(at: t), inverse: M.inverse)
+                          scale: tr.scale.value(at: t), rotation: tr.rotation.value(at: t), anchor: tr.anchor.value(at: t), inverse: M.inverse,
+                          positionProjection: LayerPlacement.positionMatrix(raw, project: project, time: t), rawPosition: raw.transform.position.value(at: t))
     }
 
     func updateCanvasDrag(_ d: CanvasDrag, comp c: Vec2) {
@@ -116,32 +119,28 @@ extension EditorState {
             lp.modifiedAt = Date()
             live.project = lp
         case .move:
-            var delta = c - d.startComp
-            // Under a 2D camera the finger moves in what the camera shows: undo the camera's zoom / turn.
-            if let l = selectedLayer, !l.is3D {
-                let v = Renderer.activeCamera(project, time: t).view2D
-                if v != matrix_identity_double3x3 {
-                    let inv = v.inverse
-                    delta = Vec2(inv[0][0] * delta.x + inv[1][0] * delta.y, inv[0][1] * delta.x + inv[1][1] * delta.y)
-                }
+            let delta = c - d.startComp
+            guard abs(d.positionProjection.determinant) > 1e-10,
+                  let start = LayerPlacement.projected(d.rawPosition, by: d.positionProjection),
+                  let candidate = LayerPlacement.projected(start + delta, by: d.positionProjection.inverse) else { return }
+            var p = candidate
+            // Depth, rotation and parenting are removed together so the layer follows the finger exactly.
+            if selectedLayer?.parentID != nil || selectedLayer?.is3D == true || !snappingEnabled {
+                snapGuides = SnapGuides(x: nil, y: nil)
+                mutateLayer { $0.transform.position.set(p, at: t) }; return
             }
-            if let pid = selectedLayer?.parentID, let a = Renderer.parentAffine(pid, in: project, time: t) {
-                // Finger moves in comp space; the child's position lives in its parent's space.
-                let inv = a.m.inverse
-                delta = Vec2(inv[0][0] * delta.x + inv[1][0] * delta.y, inv[0][1] * delta.x + inv[1][1] * delta.y)
-                let p = d.position + delta
-                mutateLayer { $0.transform.position.set(Vec2((p.x * 10).rounded() / 10, (p.y * 10).rounded() / 10), at: t) }
-                return
-            }
-            var p = d.position + delta
             // Snap to the frame center / edges and to other layers' positions (guides show while snapped).
             // Small grab zone + stickiness: it grabs only when really close and lets go once you clearly pull
             // away, so the layer never flickers between snapped and free.
             let grab = Double(project.width) * 0.005, release = grab * 2.2
+            guard let projectedCandidate = LayerPlacement.projected(p, by: d.positionProjection) else { return }
+            p = projectedCandidate
             var gx: Double?, gy: Double?
             var xs = [Double(project.width) / 2, 0, Double(project.width)], ys = [Double(project.height) / 2, 0, Double(project.height)]
             for o in project.layers where o.id != selectedLayerID && o.isActive(at: t) && o.content != .camera && !o.isAudioOnly {
-                let op = o.transform.position.value(at: t); xs.append(op.x); ys.append(op.y)
+                if let rect = LayerPlacement.bounds(o, project: project, time: t) {
+                    xs += [rect.minX, rect.midX, rect.maxX]; ys += [rect.minY, rect.midY, rect.maxY]
+                }
             }
             if let held = snapGuides.x, abs(held - p.x) < release { p.x = held; gx = held }
             else if let x = xs.min(by: { abs($0 - p.x) < abs($1 - p.x) }), abs(x - p.x) < grab { p.x = x; gx = x }
@@ -152,7 +151,8 @@ extension EditorState {
                 snapGuides = SnapGuides(x: gx, y: gy)
             }
             // Sub-pixel positions: smooth motion under the finger (no whole-pixel stepping).
-            let rounded = Vec2((p.x * 10).rounded() / 10, (p.y * 10).rounded() / 10)
+            guard let localPosition = LayerPlacement.projected(p, by: d.positionProjection.inverse) else { return }
+            let rounded = Vec2((localPosition.x * 10).rounded() / 10, (localPosition.y * 10).rounded() / 10)
             if sketchStartTime != nil { recordMotionSketch(rounded) }
             mutateLayer { $0.transform.position.set(rounded, at: t) }
         case .scale:

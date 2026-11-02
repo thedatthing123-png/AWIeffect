@@ -146,6 +146,15 @@ struct TransformToolBody: View {
                     }
                 } begin: { state.beginPanelGesture("Move Layer") } end: { state.endPanelGesture() }
                 HStack(spacing: 6) {
+                    Toggle("Snap", isOn: $state.snappingEnabled).toggleStyle(.button).font(.caption)
+                    Menu {
+                        ForEach(Array(["Left", "Horizontal Center", "Right", "Top", "Vertical Center", "Bottom"].enumerated()), id: \.offset) { index, name in
+                            Button(name) { state.alignSelected(index) }
+                        }
+                    } label: { Label("Align to Canvas", systemImage: "align.horizontal.center").font(.caption) }
+                    Spacer()
+                }
+                HStack(spacing: 6) {
                     Toggle(isOn: $state.motionSketch) { Label("Motion Sketch", systemImage: "record.circle") }
                         .toggleStyle(.button).tint(.red).font(.system(size: 12, weight: .semibold))
                     Toggle(isOn: $state.showMotionPath) { Label("Path", systemImage: "point.topleft.down.to.point.bottomright.curvepath") }

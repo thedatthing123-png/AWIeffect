@@ -121,7 +121,7 @@ struct TimelineView: View {
             .contentShape(Rectangle())
             .coordinateSpace(name: "timeline")
             // Simultaneous so the layer list can still scroll up / down with many layers.
-            .simultaneousGesture(TimelineHorizontalPan(
+            .gesture(TimelineHorizontalPan(
                 canBegin: { multiDragStart == nil && liftLayer == nil && dragOriginal == nil },
                 onChange: scrubHorizontal,
                 onEnd: { scrubStart = nil; scrubAxis = nil }))
