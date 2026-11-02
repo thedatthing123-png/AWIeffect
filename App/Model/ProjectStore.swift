@@ -18,6 +18,7 @@ final class ProjectStore {
     static let shared = ProjectStore()
 
     let root: URL
+    private(set) var recoveredVersions: [UUID: String] = [:]
     private let encoder: JSONEncoder = {
         let e = JSONEncoder()
         e.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -58,7 +59,10 @@ final class ProjectStore {
         let fm = FileManager.default
         let dir = versionsFolder(for: id)
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
-        let stamp = ISO8601DateFormatter().string(from: Date()).replacingOccurrences(of: ":", with: "-")
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let now = Date()
+        let stamp = formatter.string(from: now).replacingOccurrences(of: ":", with: "-") + "-" + String(format: "%020.6f", now.timeIntervalSince1970) + "-" + UUID().uuidString
         try data.write(to: dir.appendingPathComponent("\(stamp).json"), options: .atomic)
         let files = try fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)
             .sorted { $0.lastPathComponent < $1.lastPathComponent }
@@ -77,7 +81,25 @@ final class ProjectStore {
     }
 
     func load(_ id: UUID) throws -> Project {
-        try decoder.decode(Project.self, from: Data(contentsOf: jsonURL(for: id)))
+        do { return try decoder.decode(Project.self, from: Data(contentsOf: jsonURL(for: id))) }
+        catch {
+            let originalError = error
+            for version in versions(for: id) {
+                guard var recovered = try? loadVersion(version) else { continue }
+                // Preserve the damaged file before a later autosave writes the recovered version.
+                let source = jsonURL(for: id)
+                if FileManager.default.fileExists(atPath: source.path) {
+                    let attributes = try FileManager.default.attributesOfItem(atPath: source.path)
+                    let stamp = (attributes[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0
+                    let backup = folder(for: id).appendingPathComponent("project-corrupt-\(stamp).json")
+                    if !FileManager.default.fileExists(atPath: backup.path) { try FileManager.default.copyItem(at: source, to: backup) }
+                }
+                recovered.id = id
+                recoveredVersions[id] = version.lastPathComponent
+                return recovered
+            }
+            throw originalError
+        }
     }
 
     func saveThumbnail(_ image: UIImage, for id: UUID) {
@@ -108,11 +130,13 @@ final class ProjectStore {
         p.name += " copy"
         p.createdAt = Date()
         p.modifiedAt = Date()
-        try save(p)
         let fm = FileManager.default
-        for f in (try? fm.contentsOfDirectory(at: oldMedia, includingPropertiesForKeys: nil)) ?? [] {
-            try? fm.copyItem(at: f, to: mediaFolder(for: p.id).appendingPathComponent(f.lastPathComponent))
-        }
+        var success = false
+        defer { if !success { try? fm.removeItem(at: folder(for: p.id)) } }
+        try save(p)
+        let files = try fm.contentsOfDirectory(at: oldMedia, includingPropertiesForKeys: nil)
+        for f in files { try fm.copyItem(at: f, to: mediaFolder(for: p.id).appendingPathComponent(f.lastPathComponent)) }
+        success = true
         return p
     }
 

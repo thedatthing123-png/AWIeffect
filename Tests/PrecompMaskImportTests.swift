@@ -30,14 +30,20 @@ final class PrecompMaskImportTests: XCTestCase {
     }
 
     func testMaskModeImports() throws {
-        // The sample file holds several comps; check them all.
-        guard let u = Bundle(for: Self.self).url(forResource: "mask_intersect", withExtension: "aep") else { throw XCTSkip("fixture missing") }
-        let comps = try AEPImporter.load(url: u).report.comps
-        let modes = try comps.flatMap { name in try AEPImporter.load(url: u, compName: name).project.layers.flatMap { $0.masks.map(\.mode) } }
-        guard !modes.isEmpty else {
-            throw XCTSkip("KNOWN GAP: mask_intersect.aep stores its mask in a variant the importer doesn't decode yet (other mask files import).")
-        }
-        XCTAssertTrue(modes.contains(.intersect), "expected an Intersect mask, got \(modes)")
+        guard let url = Bundle(for: Self.self).url(forResource: "mask", withExtension: "aep") else { throw XCTSkip("fixture missing") }
+        var data = try Data(contentsOf: url)
+        let tag = try XCTUnwrap(data.range(of: Data("mkif".utf8)))
+        // Change the first real mask's big-endian mode field to Intersect.
+        data[tag.lowerBound + 14] = 0; data[tag.lowerBound + 15] = 3
+        let temporary = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".aep")
+        defer { try? FileManager.default.removeItem(at: temporary) }
+        try data.write(to: temporary)
+        let result = try AEPImporter.load(url: temporary)
+        XCTAssertTrue(result.project.layers.flatMap(\.masks).contains { $0.mode == .intersect && !$0.path.staticValue.vertices.isEmpty })
+    }
+    func testEmptyMaskFixtureDoesNotInventPathGeometry() throws {
+        let result = try load("mask_intersect")
+        XCTAssertTrue(result.project.layers.flatMap(\.masks).isEmpty)
     }
 
     func testImportedMaskedLayerRenders() throws {

@@ -138,8 +138,15 @@ final class DrawEngine: ObservableObject {
     private(set) var selection: MTLTexture
     private let stampPSO, compositePSO, fillPSO: MTLComputePipelineState
     let displayPSO: MTLRenderPipelineState
-    private var undoStack: [(layer: UUID, bytes: [UInt8])] = []
-    private var redoStack: [(layer: UUID, bytes: [UInt8])] = []
+    private struct UndoState {
+        var layer: UUID?
+        var bytes: [UInt8] = []
+        var selection: [UInt8]?
+        var cost: Int { bytes.count + (selection?.count ?? 0) }
+    }
+    private var undoStack: [UndoState] = []
+    private var redoStack: [UndoState] = []
+    private static let historyBudget = 96 * 1024 * 1024
     private var lastPoint: SIMD2<Double>?
     private var smoothed: SIMD2<Double>?
     private var residual = 0.0
@@ -250,27 +257,46 @@ final class DrawEngine: ObservableObject {
 
     // MARK: Undo
 
+    private func record(_ state: UndoState) {
+        undoStack.append(state)
+        // Keep at least the most recent operation even for a large canvas.
+        while undoStack.count > 1 && (undoStack.count > Self.maxUndo || undoStack.reduce(0, { $0 + $1.cost }) > Self.historyBudget) { undoStack.removeFirst() }
+        redoStack.removeAll(); canUndo = true; canRedo = false
+    }
     private func pushUndo(_ l: DrawLayer) {
-        undoStack.append((l.id, bytes(of: l)))
-        if undoStack.count > Self.maxUndo { undoStack.removeFirst() }
-        redoStack.removeAll()
-        canUndo = true; canRedo = false
+        record(UndoState(layer: l.id, bytes: bytes(of: l), selection: hasSelection ? selectionBytes() : nil))
     }
-
+    private func pushSelectionUndo() {
+        record(UndoState(layer: nil, selection: hasSelection ? selectionBytes() : nil))
+    }
+    private func restoreSelection(_ mask: [UInt8]?) {
+        guard let mask else { clearSelection(); return }
+        selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: mask, bytesPerRow: width)
+        hasSelection = mask.contains { $0 > 0 }
+        if !hasSelection { clearSelection() }
+    }
+    private func exchange(_ state: UndoState) -> UndoState? {
+        let currentMask = hasSelection ? selectionBytes() : nil
+        if let id = state.layer {
+            guard let l = layers.first(where: { $0.id == id }) else { return nil }
+            let inverse = UndoState(layer: id, bytes: bytes(of: l), selection: currentMask)
+            setBytes(state.bytes, of: l); restoreSelection(state.selection)
+            revision += 1; return inverse
+        }
+        restoreSelection(state.selection); revision += 1
+        return UndoState(layer: nil, selection: currentMask)
+    }
     func undo() {
-        guard let s = undoStack.popLast(), let l = layers.first(where: { $0.id == s.layer }) else { return }
-        redoStack.append((l.id, bytes(of: l)))
-        setBytes(s.bytes, of: l)
-        canUndo = !undoStack.isEmpty; canRedo = true
-        revision += 1
+        while let state = undoStack.popLast() {
+            if let inverse = exchange(state) { redoStack.append(inverse); break }
+        }
+        canUndo = !undoStack.isEmpty; canRedo = !redoStack.isEmpty
     }
-
     func redo() {
-        guard let s = redoStack.popLast(), let l = layers.first(where: { $0.id == s.layer }) else { return }
-        undoStack.append((l.id, bytes(of: l)))
-        setBytes(s.bytes, of: l)
-        canUndo = true; canRedo = !redoStack.isEmpty
-        revision += 1
+        while let state = redoStack.popLast() {
+            if let inverse = exchange(state) { undoStack.append(inverse); break }
+        }
+        canUndo = !undoStack.isEmpty; canRedo = !redoStack.isEmpty
     }
 
     // MARK: Strokes
@@ -444,6 +470,7 @@ final class DrawEngine: ObservableObject {
 
     /// Combines a new selection mask with the current one (Replace / Add / Subtract).
     private func applySelection(_ m: [UInt8]) {
+        pushSelectionUndo()
         var out = m
         if hasSelection, selectionMode != .replace {
             let cur = selectionBytes()
@@ -488,7 +515,8 @@ final class DrawEngine: ObservableObject {
         return b
     }
 
-    func clearSelection() {
+    func clearSelection(recordUndo: Bool = false) {
+        if recordUndo && hasSelection { pushSelectionUndo() }
         let full = [UInt8](repeating: 255, count: width * height)
         selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: full, bytesPerRow: width)
         hasSelection = false
@@ -574,6 +602,7 @@ final class DrawEngine: ObservableObject {
     var quickTolerance = 0.18
 
     func beginQuickSelect(at p: SIMD2<Double>, subtract: Bool) {
+        pushSelectionUndo()
         quickPixels = samplePixels()
         quickBase = hasSelection ? selectionBytes() : [UInt8](repeating: 0, count: width * height)
         quickSeeds = []
@@ -615,6 +644,7 @@ final class DrawEngine: ObservableObject {
     /// Feather (blur), shift edge (grow + / shrink -), smooth (rounds jaggies) on the current selection.
     func refineSelection(feather: Int, shift: Int, smooth: Int) {
         guard hasSelection else { return }
+        pushSelectionUndo()
         var m = selectionBytes()
         if shift > 0 { Self.grow(&m, width, height, shift) }
         if shift < 0 {
@@ -634,9 +664,14 @@ final class DrawEngine: ObservableObject {
     /// Delete everything outside the selection on the active layer (remove background).
     func deleteOutsideSelection() {
         guard hasSelection else { return }
-        invertSelection()
-        deleteSelection()
-        invertSelection()
+        guard let l = activeLayer else { return }
+        pushUndo(l)
+        var pixels = bytes(of: l)
+        let mask = selectionBytes()
+        for i in 0..<(width * height) {
+            for c in 0..<4 { pixels[i * 4 + c] = UInt8(UInt16(pixels[i * 4 + c]) * UInt16(mask[i]) / 255) }
+        }
+        setBytes(pixels, of: l); revision += 1
     }
 
     // MARK: Eraser Bucket (fill remove)
@@ -684,6 +719,7 @@ final class DrawEngine: ObservableObject {
     }
 
     func invertSelection() {
+        pushSelectionUndo()
         let s = selectionBytes().map { 255 - $0 }
         selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: s, bytesPerRow: width)
         hasSelection = true
@@ -693,6 +729,7 @@ final class DrawEngine: ObservableObject {
     /// Selects everything the active layer covers (select by opacity).
     func selectOpaque() {
         guard let l = activeLayer else { return }
+        pushSelectionUndo()
         let px = bytes(of: l)
         var m = [UInt8](repeating: 0, count: width * height)
         for i in 0..<(width * height) { m[i] = px[i * 4 + 3] }
@@ -741,23 +778,47 @@ final class DrawEngine: ObservableObject {
 
     /// Moves/scales/rotates the active layer's selected pixels (or the whole layer) around `pivot`.
     func transformActive(translate: SIMD2<Double>, scale: Double, rotation: Double, pivot: SIMD2<Double>) {
-        guard let l = activeLayer, let src = cgImage(bytes(of: l)) else { return }
-        pushUndo(l)
+        guard translate.x.isFinite, translate.y.isFinite, scale.isFinite, scale > 0, rotation.isFinite,
+              pivot.x.isFinite, pivot.y.isFinite, let l = activeLayer else { return }
+        let original = bytes(of: l)
+        let mask = hasSelection ? selectionBytes() : nil
+        var moving = original
         var out = [UInt8](repeating: 0, count: width * height * 4)
+        if let mask {
+            for i in 0..<(width * height) { for c in 0..<4 {
+                moving[i * 4 + c] = UInt8(UInt16(original[i * 4 + c]) * UInt16(mask[i]) / 255)
+                out[i * 4 + c] = original[i * 4 + c] - moving[i * 4 + c]
+            } }
+        }
+        guard let src = cgImage(moving) else { return }
+        pushUndo(l)
+        func place(_ context: CGContext, image: CGImage) {
+            context.interpolationQuality = .high
+            context.translateBy(x: 0, y: CGFloat(height)); context.scaleBy(x: 1, y: -1)
+            context.translateBy(x: CGFloat(pivot.x + translate.x), y: CGFloat(pivot.y + translate.y))
+            context.rotate(by: CGFloat(rotation)); context.scaleBy(x: CGFloat(scale), y: CGFloat(scale))
+            context.translateBy(x: CGFloat(-pivot.x), y: CGFloat(-pivot.y))
+            context.translateBy(x: 0, y: CGFloat(height)); context.scaleBy(x: 1, y: -1)
+            context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        }
         out.withUnsafeMutableBytes { buf in
-            guard let ctx = CGContext(data: buf.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
-                                      space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return }
-            ctx.interpolationQuality = .high
-            ctx.translateBy(x: 0, y: CGFloat(height)); ctx.scaleBy(x: 1, y: -1)
-            ctx.translateBy(x: CGFloat(pivot.x + translate.x), y: CGFloat(pivot.y + translate.y))
-            ctx.rotate(by: CGFloat(rotation))
-            ctx.scaleBy(x: CGFloat(scale), y: CGFloat(scale))
-            ctx.translateBy(x: CGFloat(-pivot.x), y: CGFloat(-pivot.y))
-            // Draw flipped back so image rows stay top-down.
-            ctx.translateBy(x: 0, y: CGFloat(height)); ctx.scaleBy(x: 1, y: -1)
-            ctx.draw(src, in: CGRect(x: 0, y: 0, width: width, height: height))
+            guard let context = CGContext(data: buf.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+                                          space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return }
+            place(context, image: src)
         }
         setBytes(out, of: l)
+        if let mask, let provider = CGDataProvider(data: Data(mask) as CFData),
+           let image = CGImage(width: width, height: height, bitsPerComponent: 8, bitsPerPixel: 8, bytesPerRow: width,
+                               space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.none.rawValue),
+                               provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent) {
+            var movedMask = [UInt8](repeating: 0, count: width * height)
+            movedMask.withUnsafeMutableBytes { buf in
+                guard let context = CGContext(data: buf.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width,
+                                              space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return }
+                place(context, image: image)
+            }
+            restoreSelection(movedMask)
+        }
         revision += 1
     }
 
@@ -1030,6 +1091,7 @@ final class DrawEngine: ObservableObject {
         ctx.render(img, toBitmap: &mask, rowBytes: width, bounds: CGRect(x: 0, y: 0, width: width, height: height),
                    format: .L8, colorSpace: CGColorSpaceCreateDeviceGray())
         guard mask.contains(where: { $0 > 128 }) else { return false }
+        pushSelectionUndo()
         selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: mask, bytesPerRow: width)
         hasSelection = true
         revision += 1
@@ -1040,6 +1102,7 @@ final class DrawEngine: ObservableObject {
 
     private var selBuf: [UInt8] = []
     private var selBefore: [UInt8] = []
+    private var selBeforeHadSelection = false
     private var selStroke: [SIMD2<Double>] = []
     private var selRadius = 10.0
     private var selSubtract = false
@@ -1047,6 +1110,7 @@ final class DrawEngine: ObservableObject {
 
     /// Starts painting the selection (add or remove). Brushed areas can then snap to the subject under them.
     func beginSelectStroke(at p: SIMD2<Double>, radius: Double, subtract: Bool) {
+        selBeforeHadSelection = hasSelection
         selBefore = hasSelection ? selectionBytes() : [UInt8](repeating: 0, count: width * height)
         selBuf = selBefore
         selStroke = [p]; selRadius = max(2, radius); selSubtract = subtract; selLast = p
@@ -1064,6 +1128,7 @@ final class DrawEngine: ObservableObject {
     }
 
     func endSelectStroke(snapToSubject: Bool) {
+        record(UndoState(layer: nil, selection: selBeforeHadSelection ? selBefore : nil))
         if snapToSubject { snapSelection() }
         uploadSelection()
         hasSelection = selBuf.contains { $0 > 0 }

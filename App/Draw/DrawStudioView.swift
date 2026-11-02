@@ -655,7 +655,7 @@ struct DrawStudioView: View {
             chip("Paste", "doc.on.clipboard") { engine.paste() }
             chip("Delete", "trash") { engine.deleteSelection() }
             chip("Invert", "circle.lefthalf.filled") { engine.invertSelection() }
-            chip("Clear", "xmark") { engine.clearSelection() }
+            chip("Clear", "xmark") { engine.clearSelection(recordUndo: true) }
         }
         .padding(.horizontal, 8)
         }

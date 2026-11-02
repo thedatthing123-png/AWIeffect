@@ -102,6 +102,8 @@ final class EditorState: ObservableObject {
     /// Link mode: the panel steps aside and the next tap on a layer makes it this layer's parent.
     @Published var linkPicking = false
     @Published var isDetectingBeats = false
+    @Published var recoveryNotice: String?
+    @Published var saveError: String?
     @Published var beatStatus: String?
     private var beatTask: Task<Void, Never>?
     /// Typing on the canvas: the timeline and panels step aside for the keyboard, the rest is dimmed.
@@ -169,6 +171,9 @@ final class EditorState: ObservableObject {
     init(project: Project, store: ProjectStore = .shared) {
         self.project = project
         self.store = store
+        if store.recoveredVersions[project.id] != nil {
+            recoveryNotice = "Opened the latest readable saved version. The damaged project file has been kept in its project folder."
+        }
     }
 
     // MARK: Selection
@@ -692,7 +697,9 @@ final class EditorState: ObservableObject {
         do {
             try store.save(project, snapshotVersion: snapshot)
             if snapshot { lastVersionSnapshot = Date() }
+            saveError = nil
         } catch {
+            saveError = "Changes could not be saved: " + error.localizedDescription
             NSLog("AWIeffect autosave failed: \(error)")
         }
         if thumbnail, let r = Renderer.shared {

@@ -69,6 +69,22 @@ struct EditorView: View {
             }
         }
         .onDisappear { if AILink.shared.editor === state { AILink.shared.editor = nil } }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if let message = state.recoveryNotice {
+                HStack {
+                    Text(message).font(.caption)
+                    Button("Dismiss") { state.recoveryNotice = nil }.font(.caption.bold())
+                }.foregroundStyle(Theme.text).padding(10).background(Theme.surface)
+            }
+            if let message = state.saveError {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                    Text(message).font(.caption).frame(maxWidth: .infinity, alignment: .leading)
+                    Button("Retry") { state.saveNow() }.font(.caption.bold())
+                }.foregroundStyle(.white).padding(10).background(Color.red.opacity(0.85))
+                    .accessibilityIdentifier("save-error")
+            }
+        }
         .awiSheet(isPresented: $state.showLightBrowser) { LightBrowser(state: state).presentationDetents([.large]) }
         .environmentObject(mediaLauncher)
         .environmentObject(trackLauncher)

@@ -154,4 +154,65 @@ final class AuditRegressionTests: XCTestCase {
         state.select(parent.id)
         XCTAssertFalse(state.canParent(to: child.id))
     }
+    func testArtTransformMovesOnlySelectionAndUndoRestoresItsMask() throws {
+        let engine = try XCTUnwrap(DrawEngine(width: 64, height: 64))
+        let layer = try XCTUnwrap(engine.activeLayer)
+        var pixels = [UInt8](repeating: 0, count: 64 * 64 * 4)
+        for y in 10..<20 { for x in 10..<20 { pixels[(y * 64 + x) * 4] = 255; pixels[(y * 64 + x) * 4 + 3] = 255 } }
+        for y in 40..<50 { for x in 40..<50 { pixels[(y * 64 + x) * 4 + 1] = 255; pixels[(y * 64 + x) * 4 + 3] = 255 } }
+        engine.setBytes(pixels, of: layer)
+        engine.selectShape(SIMD2(8, 8), SIMD2(22, 22), ellipse: false)
+        engine.transformActive(translate: SIMD2(20, 0), scale: 1, rotation: 0, pivot: SIMD2(15, 15))
+        let moved = engine.bytes(of: layer)
+        XCTAssertEqual(moved[(15 * 64 + 15) * 4 + 3], 0)
+        XCTAssertGreaterThan(moved[(15 * 64 + 35) * 4], 250)
+        XCTAssertGreaterThan(moved[(45 * 64 + 45) * 4 + 1], 250, "Unselected pixels moved")
+        engine.undo(); XCTAssertEqual(engine.bytes(of: layer), pixels)
+        engine.deleteOutsideSelection()
+        let cropped = engine.bytes(of: layer)
+        XCTAssertGreaterThan(cropped[(15 * 64 + 15) * 4 + 3], 250)
+        XCTAssertEqual(cropped[(45 * 64 + 45) * 4 + 3], 0)
+    }
+    func testArtSelectionUndoRedoAndClearAreIndependentOfPaint() throws {
+        let engine = try XCTUnwrap(DrawEngine(width: 32, height: 32))
+        engine.selectShape(SIMD2(2, 2), SIMD2(20, 20), ellipse: false)
+        XCTAssertTrue(engine.hasSelection)
+        engine.undo(); XCTAssertFalse(engine.hasSelection)
+        engine.redo(); XCTAssertTrue(engine.hasSelection)
+        engine.clearSelection(recordUndo: true); XCTAssertFalse(engine.hasSelection)
+        engine.undo(); XCTAssertTrue(engine.hasSelection)
+    }
+    func testVersionRecoveryPreservesCorruptFileAndRapidSnapshots() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = ProjectStore(root: root)
+        var p = project()
+        try store.save(p, snapshotVersion: true)
+        p.name = "latest"; try store.save(p, snapshotVersion: true)
+        XCTAssertEqual(store.versions(for: p.id).count, 2)
+        let json = store.folder(for: p.id).appendingPathComponent("project.json")
+        try Data("broken".utf8).write(to: json)
+        let recovered = try store.load(p.id)
+        XCTAssertEqual(recovered.name, "latest")
+        XCTAssertEqual(store.list().count, 1, "Recoverable project vanished from Home")
+        let files = try FileManager.default.contentsOfDirectory(at: store.folder(for: p.id), includingPropertiesForKeys: nil)
+        let backup = try XCTUnwrap(files.first { $0.lastPathComponent.hasPrefix("project-corrupt-") })
+        XCTAssertEqual(try Data(contentsOf: backup), Data("broken".utf8))
+        try store.save(recovered)
+        XCTAssertEqual(try store.load(p.id).name, "latest")
+    }
+    @MainActor
+    func testSaveFailureIsVisibleAndRetryClearsError() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let store = ProjectStore(root: root)
+        try FileManager.default.removeItem(at: root)
+        try Data("occupied".utf8).write(to: root)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let state = EditorState(project: project(), store: store)
+        state.saveNow(); XCTAssertNotNil(state.saveError)
+        try FileManager.default.removeItem(at: root)
+        state.saveNow(); XCTAssertNil(state.saveError)
+        XCTAssertEqual(try store.load(state.project.id).id, state.project.id)
+    }
+
 }
