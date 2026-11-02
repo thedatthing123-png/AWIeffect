@@ -58,6 +58,7 @@ jobs:
             -only-testing:AWIeffectTests/TextTests \
             -only-testing:AWIeffectTests/ExportTests \
             -only-testing:AWIeffectTests/MediaTests \
+            -only-testing:AWIeffectTests/VideoDecodeTests \
             -only-testing:AWIeffectUITests/EssentialUITests \
             -parallel-testing-enabled NO \
             -test-timeouts-enabled YES -default-test-execution-time-allowance 240 -maximum-test-execution-time-allowance 600 \
