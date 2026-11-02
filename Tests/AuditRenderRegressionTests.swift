@@ -207,8 +207,30 @@ final class AuditRenderRegressionTests: XCTestCase {
             return (0..<3).map { channel in stride(from: channel, to: bytes.count, by: 4).reduce(0) { $0 + Int(bytes[$1]) } }
         }
         let red = channels(readA), green = channels(readB)
+        print("AUDIT-MODEL BGRA red=\(red) green=\(green)")
         XCTAssertGreaterThan(red[2], red[1] + 1000)
         XCTAssertGreaterThan(green[1], green[2] + 1000)
+    }
+
+    func testBackdropDisplacementEdgeModesHaveDistinctDefinedResults() throws {
+        let r = try renderer()
+        var p = Project.new(name: "edges", width: 64, height: 64, fps: 30, duration: 1, background: RGBA(0, 0, 0, 0))
+        var map = p.makeLayer(name: "map", content: .solid, size: Vec2(64, 64)); map.fill = Animated(.white)
+        var effect = EffectRegistry.displacementMap18.makeInstance(); effect.params["target"] = .choice(1); effect.params["h"] = .number(Animated(80)); map.effects = [effect]
+        var left = p.makeLayer(name: "left", content: .solid, size: Vec2(32, 64)); left.fill = Animated(RGBA(1, 0, 0)); left.transform.position = Animated(Vec2(16, 32))
+        var right = left; right.id = UUID(); right.fill = Animated(RGBA(0, 0, 1)); right.transform.position = Animated(Vec2(48, 32))
+        p.layers = [map, left, right]
+        var colors: [[Int]] = []
+        for mode in 0..<4 {
+            p.layers[0].effects[0].params["edges"] = .choice(mode)
+            let px = try XCTUnwrap(r.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+            colors.append([0, 32].map { x in
+                let i = (32 * 64 + x) * 4
+                if px[i + 3] < 10 { return -1 }
+                return px[i] > px[i + 2] ? 0 : 1 // red=0, blue=1
+            })
+        }
+        XCTAssertEqual(colors, [[1, 1], [1, 0], [-1, -1], [0, 1]])
     }
 
 }

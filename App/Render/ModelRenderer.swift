@@ -167,11 +167,19 @@ final class ModelRenderer {
 
         renderer.scene = scene
         renderer.pointOfView = cam
+        guard renderer.prepare(scene, shouldAbortBlock: nil) else { return nil }
+        let depthDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float_stencil8, width: target.width, height: target.height, mipmapped: false)
+        depthDescriptor.storageMode = .private; depthDescriptor.usage = .renderTarget
+        guard let depth = device.makeTexture(descriptor: depthDescriptor) else { return nil }
         let rp = MTLRenderPassDescriptor()
         rp.colorAttachments[0].texture = target
         rp.colorAttachments[0].loadAction = .clear
         rp.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 0)
         rp.colorAttachments[0].storeAction = .store
+        rp.depthAttachment.texture = depth; rp.depthAttachment.loadAction = .clear
+        rp.depthAttachment.storeAction = .dontCare; rp.depthAttachment.clearDepth = 1
+        rp.stencilAttachment.texture = depth; rp.stencilAttachment.loadAction = .clear
+        rp.stencilAttachment.storeAction = .dontCare; rp.stencilAttachment.clearStencil = 0
         renderer.render(atTime: time, viewport: CGRect(x: 0, y: 0, width: width, height: height), commandBuffer: cb, passDescriptor: rp)
         return target
     }

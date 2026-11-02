@@ -7,18 +7,18 @@ import Metal
 /// in order and after jumps, and stay safe when several threads ask at once.
 final class VideoDecodeTests: XCTestCase {
     /// 40 frames at 30 fps: top half red, bottom half blue, left stripe brightness = frame * 6.
-    private func makeVideo(rotated: Bool) throws -> URL {
+    private func makeVideo(rotated: Bool, width: Int = 320, height: Int = 240, frames: Int = 40) throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).mov")
-        let w = 320, h = 240
+        let w = width, h = height
         let writer = try AVAssetWriter(outputURL: url, fileType: .mov)
         let input = AVAssetWriterInput(mediaType: .video, outputSettings: [AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: w, AVVideoHeightKey: h])
         if rotated { input.transform = CGAffineTransform(rotationAngle: .pi / 2) }
         let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA, kCVPixelBufferWidthKey as String: w, kCVPixelBufferHeightKey as String: h])
         writer.add(input)
-        writer.startWriting()
+        guard writer.startWriting() else { throw ExportError.writer(writer.error?.localizedDescription ?? "Cannot create test video") }
         writer.startSession(atSourceTime: .zero)
-        for i in 0..<40 {
+        for i in 0..<frames {
             while !input.isReadyForMoreMediaData { Thread.sleep(forTimeInterval: 0.002) }
             var pb: CVPixelBuffer?
             CVPixelBufferPoolCreatePixelBuffer(nil, adaptor.pixelBufferPool!, &pb)
@@ -169,6 +169,23 @@ final class VideoDecodeTests: XCTestCase {
             XCTAssertLessThanOrEqual(source.cachedBytes, VideoSources.cacheBudgetBytes)
         }
         source.purgeCache(); XCTAssertEqual(source.cachedBytes, 0)
+    }
+
+    func testExportDecodeRetainsNative4KWidthAndSwitchesBackToPreview() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        // A short, wide source exercises the 4K long side without a large test memory footprint.
+        let url = try makeVideo(rotated: false, width: 3840, height: 256, frames: 2)
+        let source = VideoSources.shared
+        defer { source.setFullQuality(false); source.clear(); try? FileManager.default.removeItem(at: url) }
+        source.clear(); source.setFullQuality(false)
+        let proxy = try XCTUnwrap(source.texture(url: url, time: 0, device: r.device))
+        XCTAssertEqual(proxy.width, 1440)
+        source.setFullQuality(true)
+        let full = try XCTUnwrap(source.texture(url: url, time: 0, device: r.device))
+        XCTAssertEqual(full.width, 3840, "4K export was decoding a reduced-resolution proxy")
+        source.setFullQuality(false)
+        let restored = try XCTUnwrap(source.texture(url: url, time: 0, device: r.device))
+        XCTAssertEqual(restored.width, 1440)
     }
 
 }

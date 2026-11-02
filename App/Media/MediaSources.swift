@@ -74,7 +74,7 @@ final class VideoSources {
     static let prefetchAhead = 4
     /// Decode size cap: a lighter "proxy" size while editing, full size while exporting.
     static let previewMaxSide: CGFloat = 1440
-    static let fullMaxSide: CGFloat = 2160
+    static let fullMaxSide: CGFloat = 4096
     private(set) var maxSide: CGFloat = VideoSources.previewMaxSide
 
     /// Export switches to full-size frames (and back afterwards); cached frames of the other size are dropped.
