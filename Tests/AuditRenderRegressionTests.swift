@@ -150,4 +150,27 @@ final class AuditRenderRegressionTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: LUTLibrary.folder.appendingPathComponent(importedName)), old)
     }
 
+    func testBackdropDisplacementMovesSceneAndDoesNotDuplicateAlpha() throws {
+        let r = try renderer()
+        var p = Project.new(name: "displace", width: 64, height: 64, fps: 30, duration: 1, background: RGBA(0, 0, 0, 0))
+        var map = p.makeLayer(name: "map", content: .solid, size: Vec2(64, 64))
+        map.fill = Animated(.white)
+        var effect = EffectRegistry.displacementMap18.makeInstance()
+        effect.params["target"] = .choice(1); effect.params["h"] = .number(Animated(16))
+        map.effects = [effect]
+        var red = p.makeLayer(name: "red", content: .solid, size: Vec2(16, 64))
+        red.fill = Animated(RGBA(1, 0, 0, 0.5)); red.transform.position = Animated(Vec2(40, 32))
+        p.layers = [map, red]
+        func pixels() throws -> [UInt8] { try XCTUnwrap(r.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) })).rgba }
+        let displaced = try pixels()
+        XCTAssertGreaterThan(displaced[(32 * 64 + 24) * 4], 240, "Backdrop did not move under the map")
+        XCTAssertEqual(Double(displaced[(32 * 64 + 24) * 4 + 3]), 128, accuracy: 3)
+        XCTAssertLessThan(displaced[(32 * 64 + 40) * 4 + 3], 3, "Original backdrop was alpha-overlaid instead of replaced")
+        // Neutral map / zero offset must be an exact alpha-preserving identity.
+        p.layers[0].effects[0].params["h"] = .number(Animated(0))
+        let identity = try pixels()
+        XCTAssertEqual(Double(identity[(32 * 64 + 40) * 4 + 3]), 128, accuracy: 3)
+        XCTAssertEqual(identity[(32 * 64 + 24) * 4 + 3], 0)
+    }
+
 }

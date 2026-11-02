@@ -238,11 +238,33 @@ kernel void fxLayerRef(texture2d<half, access::sample> src [[texture(0)]],
         float hy = p.a.z < 0.5 ? lum18(mc) : mc.g;
         // Mid grey = no move (AE): darker pushes one way, brighter the other; transparent map areas don't move.
         float2 d = float2((hx - 0.5) * 2.0 * p.a.x, (hy - 0.5) * 2.0 * p.a.y) * m.a;
-        dst.write(src.sample(sm18, c + d), gid);
+        float2 q = c + d, size = float2(src.get_width(), src.get_height());
+        if (p.i.y == 1) { float2 f = q / size; q = (1.0 - abs(fract(f * 0.5) * 2.0 - 1.0)) * size; }
+        else if (p.i.y == 2 && (any(q < 0.0) || any(q >= size))) { dst.write(half4(0), gid); return; }
+        else if (p.i.y == 3) q = fract(q / size) * size;
+        dst.write(src.sample(sm18, q), gid);
     } else {
         float4 s = float4(src.sample(sm18, c));
         float k = p.a.x < 0.5 ? m.a : lum18(mc) * m.a;
         if (p.a.y > 0.5) k = 1.0 - k;
         dst.write(half4(s * k), gid);
     }
+}
+
+// A backdrop effect replaces covered pixels. Alpha-over would duplicate a translucent backdrop.
+kernel void fxBackdropMix(texture2d<half, access::read_write> backdrop [[texture(0)]],
+                          texture2d<half, access::read> processed [[texture(1)]],
+                          texture2d<half, access::read> coverage [[texture(2)]],
+                          constant EffectParams& p [[buffer(0)]], uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= backdrop.get_width() || gid.y >= backdrop.get_height()) return;
+    float amount = clamp(float(coverage.read(gid).a) * p.a.x, 0.0, 1.0);
+    backdrop.write(half4(mix(float4(backdrop.read(gid)), float4(processed.read(gid)), amount)), gid);
+}
+
+kernel void fxBackdropMask(texture2d<half, access::read> processed [[texture(0)]],
+                           texture2d<half, access::write> output [[texture(1)]],
+                           texture2d<half, access::read> coverage [[texture(2)]],
+                           constant EffectParams& p [[buffer(0)]], uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= output.get_width() || gid.y >= output.get_height()) return;
+    output.write(processed.read(gid) * half(clamp(float(coverage.read(gid).a) * p.a.x, 0.0, 1.0)), gid);
 }

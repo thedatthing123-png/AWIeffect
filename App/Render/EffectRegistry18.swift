@@ -285,7 +285,9 @@ extension EffectRegistry {
         params: [
             .number("h", "Max Horizontal", 30, -500, 500, unit: "px"),
             .number("v", "Max Vertical", 0, -500, 500, unit: "px"),
-            .choice("source", "Use", ["Brightness", "Red (H) / Green (V)"], 0),
+            .choice("source", "Map Channels", ["Brightness", "Red (H) / Green (V)"], 0),
+            .choice("target", "Displace", ["This Layer", "Layers Below"], 0),
+            .choice("edges", "Edges", ["Repeat", "Mirror", "Clear", "Tile"], 0),
         ],
         margin: { e, t in max(abs(e.number("h", t)), abs(e.number("v", t))) },
         stage: .pixels { ctx in
@@ -293,7 +295,7 @@ extension EffectRegistry {
             let out = ctx.temp()
             var p = EffectParams()
             p.a = SIMD4(Float(ctx.num("h") * ctx.unit), Float(ctx.num("v") * ctx.unit), Float(ctx.effect.choice("source")), 0)
-            p.i.x = 0
+            p.i.x = 0; p.i.y = UInt32(max(0, min(3, ctx.effect.choice("edges"))))
             ctx.gpu.run("fxLayerRef", ctx.cb, textures: [ctx.input, out, ref], params: p, grid: out)
             return out
         })

@@ -53,7 +53,7 @@ extension EditorState {
         return parent
     }
 
-    static func descendantIDs(of group: UUID, in project: Project) -> Set<UUID> {
+    nonisolated static func descendantIDs(of group: UUID, in project: Project) -> Set<UUID> {
         var result = Set<UUID>(), parents = Set([group])
         while true {
             let found = Set(project.layers.filter { $0.groupID.map(parents.contains) ?? false }.map(\.id)).subtracting(result).subtracting([group])

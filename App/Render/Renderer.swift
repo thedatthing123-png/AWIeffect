@@ -35,6 +35,9 @@ final class Renderer {
     private let loader: MTKTextureLoader
     let dummy: MTLTexture
     private var imageCache: [String: MTLTexture] = [:]
+    private var imageOrder: [String] = []
+    private var imageCacheBytes = 0
+    private static let imageCacheBudget = 128 * 1024 * 1024
     private let cacheLock = NSLock()
     private let encodeLock = NSRecursiveLock()
 
@@ -82,8 +85,10 @@ final class Renderer {
     private func layerInBuffer(_ ref: Layer, project: Project, time: Double, renderScale: Double, comp: MTLTexture,
                                placement M: simd_double3x3, toLocal: simd_double3x3, size: (Int, Int),
                                cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL) -> MTLTexture? {
+        guard currentDepth < 8 else { return nil }
         let library = precompLibrary, depth = currentDepth, savedParts = groupParts, savedCams = groupCameras
         var sub = project
+        sub.precompDepth = currentDepth + 1
         var one = ref; one.trackMatte = .none; one.isSolo = false; one.isVisible = true; one.groupID = nil
         sub.layers = project.layers.filter { $0.content == .camera } + [one]
         sub.background = RGBA(0, 0, 0, 0)
@@ -101,13 +106,80 @@ final class Renderer {
         return out
     }
 
+    /// Isolated comp-space coverage/reference, retaining group descendants and external parent transforms.
+    private func fullLayer(_ layer: Layer, project: Project, time: Double, renderScale: Double, comp: MTLTexture,
+                           cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL) -> MTLTexture {
+        let out = pool.acquire(width: comp.width, height: comp.height)
+        fx.run("fxClear", cb, textures: [out], grid: out)
+        guard currentDepth < 8 else { return out }
+        var sub = project, one = layer
+        one.trackMatte = .none; one.clipToBelow = false; one.isSolo = false; one.isVisible = true; one.groupID = nil
+        let descendants = layer.isGroup ? EditorState.descendantIDs(of: layer.id, in: project) : []
+        sub.layers = project.layers.filter { $0.content == .camera } + [one] + project.layers.filter { descendants.contains($0.id) }
+        sub.parentContext = project.layers + (project.parentContext ?? [])
+        sub.background = RGBA(0, 0, 0, 0); sub.precompDepth = currentDepth + 1
+        encode(project: sub, time: time, renderScale: renderScale, into: out, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
+        return out
+    }
+
+    private func encodeBackdropDisplacement(_ layer: Layer, matte: Layer?, project: Project, time: Double, renderScale: Double,
+                                           opacity: Double, comp: MTLTexture, cb: MTLCommandBuffer, pool: TexturePool,
+                                           mediaURL: (String) -> URL) {
+        let effects = layer.effects.filter { $0.isEnabled && !(EffectRegistry.definition($0.typeID)?.isTransformEffect ?? false) }
+        guard let index = effects.firstIndex(where: { $0.typeID == "awi18.displacementMap" && $0.choice("target") == 1 }) else { return }
+        var carrier = layer
+        carrier.effects = Array(effects.prefix(index)) + layer.effects.filter { $0.isEnabled && (EffectRegistry.definition($0.typeID)?.isTransformEffect ?? false) }
+        carrier.transform.opacity = Animated(100)
+        carrier.blendMode = .normal
+        if carrier.content == .adjustment { carrier.content = .solid; carrier.fill = Animated(.white) }
+        var coverage = fullLayer(carrier, project: project, time: time, renderScale: renderScale, comp: comp, cb: cb, pool: pool, mediaURL: mediaURL)
+        if let matte {
+            let mask = fullLayer(matte, project: project, time: time, renderScale: renderScale, comp: comp, cb: cb, pool: pool, mediaURL: mediaURL)
+            let mixed = pool.acquire(width: comp.width, height: comp.height)
+            var params = EffectParams(); params.i.x = 6
+            params.i.y = UInt32(TrackMatte.allCases.firstIndex(of: layer.trackMatte == .none ? .alpha : layer.trackMatte) ?? 1) - 1
+            fx.run("fxGlow4", cb, textures: [coverage, mixed, mask], params: params, grid: mixed)
+            coverage = mixed
+        }
+        let copy = pool.acquire(width: comp.width, height: comp.height)
+        fx.run("fxCopy", cb, textures: [comp, copy], grid: copy)
+        var current = copy
+        for effect in effects.dropFirst(index) {
+            guard let definition = EffectRegistry.definition(effect.typeID), case .pixels(let run) = definition.stage else { continue }
+            var context = EffectContext(gpu: fx, cb: cb, input: current, effect: effect, time: time, unit: renderScale, pool: pool)
+            context.layerPixels = SIMD2(Double(comp.width), Double(comp.height))
+            if let id = effect.text?["layer"].flatMap(UUID.init(uuidString:)), id != layer.id,
+               let reference = project.layers.first(where: { $0.id == id }) {
+                context.reference = fullLayer(reference, project: project, time: time, renderScale: renderScale, comp: comp, cb: cb, pool: pool, mediaURL: mediaURL)
+            } else if effect.typeID == "awi18.displacementMap" { context.reference = coverage }
+            current = run(context)
+        }
+        var params = EffectParams(); params.a.x = Float(opacity)
+        if layer.blendMode == .normal {
+            fx.run("fxBackdropMix", cb, textures: [comp, current, coverage], params: params, grid: comp)
+        } else {
+            let masked = pool.acquire(width: comp.width, height: comp.height)
+            fx.run("fxBackdropMask", cb, textures: [current, masked, coverage], params: params, grid: masked)
+            let matrix = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(comp.width) / 2, Double(comp.height) / 2, 1)))
+            drawQuad(cb: cb, target: comp, matrix: matrix, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 0.5,
+                     opacity: 1, layer: layer, time: time, source: .image(masked), premultipliedImage: true, blendOverride: layer.blendMode)
+        }
+    }
+
     /// Renders a group's parts (comp space, transparent) at the layer's density; the group layer then places
     /// this picture with its own transform, masks and effects. The group layer is comp-sized and centered,
     /// so with an untouched group transform the parts land exactly where they are.
     private func renderGroup(_ group: Layer, time: Double, density: Double, cb: MTLCommandBuffer, mediaURL: (String) -> URL) -> MTLTexture? {
         guard currentDepth < 8, let pool = currentPool else { return nil }
         // Parenting is already baked into the parts this frame: drop links so it is not applied twice.
-        let members = (groupParts[group.id] ?? []).map { l -> Layer in var c = l; c.parentID = nil; c.groupID = nil; return c }
+        var members = (groupParts[group.id] ?? []).map { l -> Layer in var c = l; c.parentID = nil; c.groupID = nil; return c }
+        var visited = Set([group.id]), frontier = members.filter(\.isGroup).map(\.id)
+        while let id = frontier.popLast() {
+            guard visited.insert(id).inserted else { continue }
+            let descendants = (groupParts[id] ?? []).filter { !visited.contains($0.id) }
+            members.append(contentsOf: descendants)
+            frontier.append(contentsOf: descendants.filter(\.isGroup).map(\.id))
+        }
         let hs = Self.layerHalfSize(group, time: time)
         let w0 = max(1, Int((hs.x * 2).rounded())), h0 = max(1, Int((hs.y * 2).rounded()))
         let scale = min(2, max(0.05, density))
@@ -280,7 +352,10 @@ final class Renderer {
     func imageTexture(url: URL) -> MTLTexture? {
         let key = url.path
         cacheLock.lock(); defer { cacheLock.unlock() }
-        if let t = imageCache[key] { return t }
+        if let t = imageCache[key] {
+            imageOrder.removeAll { $0 == key }; imageOrder.append(key)
+            return t
+        }
         let t = try? loader.newTexture(URL: url, options: [
             .SRGB: false,
             .textureStorageMode: MTLStorageMode.private.rawValue,
@@ -288,12 +363,19 @@ final class Renderer {
             .allocateMipmaps: true,
             .generateMipmaps: true,
         ])
-        if let t { imageCache[key] = t }
+        if let t {
+            let cost = max(t.allocatedSize, t.width * t.height * 4 * 4 / 3)
+            while !imageOrder.isEmpty && (imageCacheBytes + cost > Self.imageCacheBudget || imageOrder.count >= 64) {
+                let old = imageOrder.removeFirst()
+                if let texture = imageCache.removeValue(forKey: old) { imageCacheBytes -= max(texture.allocatedSize, texture.width * texture.height * 4 * 4 / 3) }
+            }
+            if cost <= Self.imageCacheBudget { imageCache[key] = t; imageOrder.append(key); imageCacheBytes += cost }
+        }
         return t
     }
 
     func clearImageCache() {
-        cacheLock.lock(); imageCache.removeAll(); cacheLock.unlock()
+        cacheLock.lock(); imageCache.removeAll(); imageOrder.removeAll(); imageCacheBytes = 0; cacheLock.unlock()
     }
 
     // MARK: Transforms
@@ -461,6 +543,11 @@ final class Renderer {
             if layer.isNull { continue }
             let opacity = layer.transform.opacity.value(at: time) / 100
             if opacity <= 0 { continue }
+            if layer.effects.contains(where: { $0.isEnabled && $0.typeID == "awi18.displacementMap" && $0.choice("target") == 1 }) {
+                encodeBackdropDisplacement(layer, matte: matteSources[layer.id], project: project, time: time, renderScale: renderScale,
+                                           opacity: opacity, comp: comp, cb: cb, pool: pool, mediaURL: mediaURL)
+                continue
+            }
             if let matte = matteSources[layer.id] {
                 encodeMatted(layer, matte: matte, project: project, time: time, renderScale: renderScale, comp: comp, cb: cb, pool: pool, mediaURL: mediaURL)
                 continue

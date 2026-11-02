@@ -6,7 +6,10 @@ extension EditorState {
     /// Groups the multi-selection (or the selected layer). Parts move right under the new group, in order.
     func groupSelected() {
         let ids = multiSelection ?? selectedLayerID.map { Set([$0]) } ?? []
-        let members = project.layers.filter { ids.contains($0.id) && !$0.isGroup && $0.content != .camera && $0.content != .light }
+        let roots = project.layers.filter { ids.contains($0.id) && $0.content != .camera && $0.content != .light }
+        var included = Set(roots.map(\.id))
+        for group in roots where group.isGroup { included.formUnion(Self.descendantIDs(of: group.id, in: project)) }
+        let members = project.layers.filter { included.contains($0.id) }
         guard !members.isEmpty, let top = project.layers.firstIndex(where: { ids.contains($0.id) }) else { return }
         var gid = UUID()
         mutate("Group \(members.count) Layers") { p in
@@ -21,7 +24,11 @@ extension EditorState {
             let memberIDs = Set(members.map(\.id))
             var rest = p.layers.filter { !memberIDs.contains($0.id) }
             let insertAt = min(top, rest.count)
-            let parts = members.map { m -> Layer in var c = m; c.groupID = g.id; return c }
+            let parts = members.map { m -> Layer in
+                var c = m
+                if c.groupID == nil || !included.contains(c.groupID!) { c.groupID = g.id }
+                return c
+            }
             rest.insert(contentsOf: [g] + parts, at: insertAt)
             p.layers = rest
         }

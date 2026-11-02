@@ -93,15 +93,19 @@ final class EffectThumbnails {
     private let queue = DispatchQueue(label: "awi.thumbnails", qos: .userInitiated)
     private let lock = NSLock()
 
-    func clear() { lock.lock(); cache.removeAll(); frameCache.removeAll(); frameOrder.removeAll(); lock.unlock() }
+    private var generation = 0
+    func clear() { lock.lock(); generation += 1; cache.removeAll(); frameCache.removeAll(); frameOrder.removeAll(); lock.unlock() }
 
     func cached(_ id: String) -> UIImage? { lock.lock(); defer { lock.unlock() }; return cache[id] }
 
     func thumbnail(for def: EffectDefinition, completion: @escaping (UIImage?) -> Void) {
         if let c = cached(def.id) { completion(c); return }
+        lock.lock(); let generation = generation; lock.unlock()
         queue.async {
             let img = Self.render(def)
-            self.lock.lock(); self.cache[def.id] = img; self.lock.unlock()
+            self.lock.lock()
+            guard self.generation == generation else { self.lock.unlock(); return }
+            self.cache[def.id] = img; self.lock.unlock()
             DispatchQueue.main.async { completion(img) }
         }
     }
@@ -113,6 +117,7 @@ final class EffectThumbnails {
     func frames(for def: EffectDefinition, completion: @escaping ([UIImage]) -> Void) {
         lock.lock()
         if let f = frameCache[def.id] { lock.unlock(); completion(f); return }
+        let generation = generation
         lock.unlock()
         queue.async {
             guard let r = Renderer.shared else { return }
@@ -121,6 +126,7 @@ final class EffectThumbnails {
             p.fps = 12
             let imgs = (0..<14).compactMap { i in r.renderImage(project: p, time: 0.1 + Double(i) / 12, maxDimension: 120, mediaURL: { _ in url }) }
             self.lock.lock()
+            guard self.generation == generation else { self.lock.unlock(); return }
             self.frameCache[def.id] = imgs; self.frameOrder.append(def.id)
             while self.frameOrder.count > 48 { self.frameCache[self.frameOrder.removeFirst()] = nil }
             self.lock.unlock()
@@ -312,7 +318,7 @@ struct EffectsPanel: View {
                 Button("None") { setRef(e, nil) }
                 ForEach(others) { l in Button(l.name) { setRef(e, l.id.uuidString) } }
             } label: {
-                Text(others.first { $0.id.uuidString == current }?.name ?? "Choose a layer…")
+                Text(others.first { $0.id.uuidString == current }?.name ?? (e.typeID == "awi18.displacementMap" && e.choice("target") == 1 ? "This layer is the map" : "Choose a layer…"))
                     .font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.accentGlow)
                     .frame(maxWidth: .infinity, minHeight: 32).background(RoundedRectangle(cornerRadius: 9).fill(Theme.surface))
             }

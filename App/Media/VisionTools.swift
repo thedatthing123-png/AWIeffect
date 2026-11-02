@@ -75,9 +75,15 @@ final class CutoutEngine {
     private var raw: [String: (w: Int, h: Int, bytes: [UInt8])] = [:]
     private var rawOrder: [String] = []
 
+    private func sourceKey(_ file: String, mediaURL: (String) -> URL) -> String {
+        let url = mediaURL(file)
+        let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
+        return "\(url.path)|\(attributes?[.size] ?? 0)|\(attributes?[.modificationDate] ?? "")"
+    }
+
     /// One frame's matte as bytes (computed once, cached).
     private func rawMatte(_ layer: Layer, file: String, frame: Int, mode: CutoutMode, pick: Vec2? = nil, mediaURL: (String) -> URL) -> (w: Int, h: Int, bytes: [UInt8])? {
-        let key = "\(file)|\(frame)|\(mode.rawValue)|\(pick.map { "\(Int($0.x * 1000)),\(Int($0.y * 1000))" } ?? "-")"
+        let key = "\(sourceKey(file, mediaURL: mediaURL))|\(frame)|\(mode.rawValue)|\(pick.map { "\(Int($0.x * 1000)),\(Int($0.y * 1000))" } ?? "-")"
         lock.lock()
         if let r = raw[key] { lock.unlock(); return r }
         lock.unlock()
@@ -113,7 +119,7 @@ final class CutoutEngine {
         let stab = isVideo ? min(100, max(0, s.stability)) / 100 : 0
         let frameTime = Double(frameKey) / 30
         let active = s.strokes.filter { st in st.time.map { abs($0 - frameTime) <= st.span } ?? true }
-        let key = "\(file)|\(frameKey)|\(s.mode.rawValue)|\(Int(stab * 100))|\(s.pick.map { "\($0.x),\($0.y)" } ?? "-")|\(active.hashValue)"
+        let key = "\(sourceKey(file, mediaURL: mediaURL))|\(frameKey)|\(s.mode.rawValue)|\(Int(stab * 100))|\(s.pick.map { "\($0.x),\($0.y)" } ?? "-")|\(active.hashValue)"
         lock.lock()
         if let t = cache[key] { lock.unlock(); return t }
         lock.unlock()
@@ -158,7 +164,7 @@ final class CutoutEngine {
         guard let s = layer.cutout, let file = layer.mediaFile else { return nil }
         var frameKey = 0
         if case .video = layer.content { frameKey = Int((sourceTime * 30).rounded(.down)) }
-        let key = "\(file)|\(frameKey)|\(s.mode.rawValue)"
+        let key = "\(sourceKey(file, mediaURL: mediaURL))|\(frameKey)|\(s.mode.rawValue)"
         lock.lock()
         if let t = cache[key] { lock.unlock(); return t }
         lock.unlock()
@@ -187,7 +193,7 @@ final class CutoutEngine {
 
     /// The frame's pixels at the matte's size (for edge-aware refine strokes).
     private func sourcePixels(_ layer: Layer, file: String, frame: Int, w: Int, h: Int, mediaURL: (String) -> URL) -> [UInt8]? {
-        let key = "\(file)|\(frame)|\(w)x\(h)"
+        let key = "\(sourceKey(file, mediaURL: mediaURL))|\(frame)|\(w)x\(h)"
         lock.lock(); if let c = srcCache[key] { lock.unlock(); return c }; lock.unlock()
         let url = mediaURL(file)
         let cg: CGImage?
@@ -339,7 +345,7 @@ final class CutoutEngine {
         return tex
     }
 
-    func clear() { lock.lock(); cache.removeAll(); order.removeAll(); raw.removeAll(); rawOrder.removeAll(); lock.unlock() }
+    func clear() { lock.lock(); cache.removeAll(); order.removeAll(); raw.removeAll(); rawOrder.removeAll(); srcCache.removeAll(); lock.unlock() }
 }
 
 // MARK: - Motion tracking

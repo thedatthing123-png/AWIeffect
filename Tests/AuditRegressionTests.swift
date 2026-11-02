@@ -224,4 +224,28 @@ final class AuditRegressionTests: XCTestCase {
         XCTAssertFalse(engine.canUndo)
     }
 
+    @MainActor
+    func testNestedGroupsRenderAndKeepMembersWhenEditingAndDuplicating() throws {
+        guard let renderer = Renderer.shared else { throw XCTSkip("Metal unavailable") }
+        var p = project()
+        var layer = p.makeLayer(name: "red", content: .solid, size: Vec2(40, 40)); layer.fill = Animated(RGBA(1, 0, 0))
+        p.layers = [layer]
+        let state = EditorState(project: p, store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        state.select(layer.id); state.groupSelected()
+        let inner = try XCTUnwrap(state.selectedLayerID)
+        state.groupSelected()
+        let outer = try XCTUnwrap(state.selectedLayerID)
+        XCTAssertNotEqual(inner, outer)
+        XCTAssertEqual(state.project.layers.first(where: { $0.id == inner })?.groupID, outer)
+        XCTAssertEqual(state.project.layers.first(where: { $0.id == layer.id })?.groupID, inner)
+        let pixels = try XCTUnwrap(renderer.renderPixels(project: state.project, time: 0, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        XCTAssertGreaterThan(pixels[(64 * 128 + 64) * 4], 240, "Nested group content vanished")
+        state.openGroup(); state.select(inner); state.openGroup()
+        state.mutate("inner edit") { $0.layers[0].name = "updated" }
+        XCTAssertEqual(state.rootProject.layers.first(where: { $0.id == layer.id })?.name, "updated")
+        state.closePrecomp(); state.closePrecomp(); state.duplicateGroup(outer)
+        XCTAssertEqual(state.project.layers.filter(\.isGroup).count, 4)
+        XCTAssertEqual(state.project.layers.filter { !$0.isGroup }.count, 2)
+    }
+
 }
