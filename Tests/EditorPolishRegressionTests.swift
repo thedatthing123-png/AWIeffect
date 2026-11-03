@@ -115,6 +115,19 @@ final class EditorPolishRegressionTests: XCTestCase {
         XCTAssertEqual(layer.text!.tracking.keyframeTimes, [4])
     }
 
+    func testReverseAnimationMatchesOriginalAndCanBeRestored() {
+        var original = Animated(0.0)
+        original.insertKeyframe(Keyframe(time: 2, value: 10, interpolation: .bezier, easeOut: EaseHandle(x: 0.2, y: 0.1)))
+        original.insertKeyframe(Keyframe(time: 4, value: 80, interpolation: .hold, easeIn: EaseHandle(x: 0.7, y: 0.9)))
+        original.insertKeyframe(Keyframe(time: 6, value: 30, interpolation: .linear))
+        var reversed = original; reversed.reverseKeys(around: 8)
+        for time in stride(from: 2.05, through: 5.95, by: 0.1) {
+            XCTAssertEqual(reversed.value(at: time), original.value(at: 8 - time), accuracy: 0.001)
+        }
+        reversed.reverseKeys(around: 8)
+        XCTAssertEqual(reversed, original)
+    }
+
     func testSnappingUsesVisibleEdgesAndReleasesAwayFromGuide() {
         let edge = LayerPlacement.snap(features: [42, 62, 82], targets: [0, 64, 128], held: nil, grab: 3)
         XCTAssertEqual(edge.delta, 2); XCTAssertEqual(edge.guide, 64)

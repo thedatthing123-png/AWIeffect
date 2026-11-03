@@ -17,7 +17,7 @@ struct ClipPanel: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
                         if l.timeRemap == nil {
-                            row("Speed", value: l.speed, range: 0.1...4, fmt: "%.2fx") { v in
+                            row("Speed", value: abs(l.speed), range: 0.1...4, fmt: "%.2fx") { v in
                                 state.mutateLayer { layer in
                                     guard v.isFinite, v > 0, layer.speed != 0 else { return }
                                     let factor = abs(layer.speed) / v
@@ -44,6 +44,29 @@ struct ClipPanel: View {
                                 } }
                             }
                         }
+                        HStack {
+                            Button(l.speed < 0 ? "Restore Forward Playback" : "Reverse Playback") {
+                                state.mutate("Reverse Playback") { p in
+                                    guard let i = state.selectedIndex else { return }
+                                    if p.layers[i].timeRemap != nil { p.layers[i].timeRemap?.reverseKeys(around: l.inPoint + l.outPoint) }
+                                    else {
+                                        p.layers[i].sourceStart += (l.outPoint - l.inPoint) * p.layers[i].speed
+                                        p.layers[i].speed = -p.layers[i].speed
+                                    }
+                                }
+                                AudioPreview.shared.invalidate()
+                            }.disabled(!l.isMedia && { if case .precomp = l.content { return false }; return true }())
+                            Button("Reverse Animation") {
+                                state.mutate("Reverse Animation") { p in
+                                    guard let i = state.selectedIndex else { return }
+                                    let remap = p.layers[i].timeRemap
+                                    var visit = AnimationTraversal(operation: .reverse(l.inPoint + l.outPoint))
+                                    p.layers[i].traverseAnimations(&visit)
+                                    p.layers[i].timeRemap = remap
+                                }
+                            }
+                        }.font(.caption).buttonStyle(.bordered)
+                        Text("Reverse Animation flips all keyed properties, including position, around this layer’s start and end. Use either control again to reverse it back.").font(.caption).foregroundStyle(Theme.textDim)
                         if case .video = l.content {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("TWIXTOR · SMOOTH SLOW-MO (AI in-between frames)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)

@@ -2,11 +2,12 @@ import Foundation
 
 /// The single inventory used by timeline indicators, key movement and clip movement.
 struct AnimationTraversal {
-    enum Operation { case inspect, retime(Double, Double), shift(Double), scaleTime(Double, Double) }
+    enum Operation { case inspect, retime(Double, Double), shift(Double), scaleTime(Double, Double), reverse(Double) }
     var operation: Operation
     var times: [Double] = []
     mutating func apply<V: Interpolatable>(_ value: inout Animated<V>) {
         switch operation {
+        case .reverse(let sum): value.reverseKeys(around: sum)
         case .inspect: times += value.keyframeTimes
         case .retime(let from, let to): value.retime(at: from, to: to)
         case .shift(let dt): value.shift(by: dt)

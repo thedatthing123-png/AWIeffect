@@ -92,7 +92,7 @@ struct LayerHomePanel: View {
         if visual && c != .text { move.append(Tile(id: "Puppet", icon: "hand.point.up.braille", panel: .puppet)) }
         if visual { move.append(Tile(id: "Rig", icon: "figure.arms.open", panel: .rig)) }
         if visual && c != .adjustment { move.append(Tile(id: "Physics", icon: "atom", panel: .physics)) }
-        if l.isMedia || l.isAudioOnly { timing.append(Tile(id: "Speed & Volume", icon: "speedometer", panel: .clip)) }
+        if !l.isGroup { timing.append(Tile(id: "Speed & Reverse", icon: "speedometer", panel: .clip)) }
         if case .video = c { timing.append(Tile(id: "Twixtor", icon: "tortoise.fill", panel: .clip)) }
         if visual { timing.append(Tile(id: "Time", icon: "timer", panel: .time)) }
         layer.append(Tile(id: "Duplicate", icon: "plus.square.on.square") { state.duplicateSelected() })

@@ -81,7 +81,7 @@ struct NavStrip: View {
         }
         // Background removal right after Transform for photos and videos, so it's easy to find.
         if l.isImage || (l.isMedia && !l.isAudioOnly) { out.insert(Item(id: "Remove BG", icon: "person.crop.rectangle.badge.plus", panel: .cutout), at: 1) }
-        if l.isMedia || l.isAudioOnly { out.append(Item(id: "Speed & Volume", icon: "speedometer", panel: .clip)) }
+        if !l.isGroup { out.append(Item(id: "Speed & Reverse", icon: "speedometer", panel: .clip)) }
         if visual { out.append(Item(id: "Motion Blur", icon: "wind", panel: .motionBlur)) }
         if visual { out.append(Item(id: "Time", icon: "timer", panel: .time)) }
         if !l.isAudioOnly { out.append(Item(id: c == .camera ? "Lens" : (c == .light ? "Light" : "3D"), icon: c == .camera ? "camera.aperture" : (c == .light ? "lightbulb.fill" : "cube"), panel: .threeD)) }

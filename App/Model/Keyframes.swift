@@ -69,6 +69,7 @@ struct Keyframe<Value: Interpolatable>: Codable, Equatable, Identifiable {
     /// Flow-style math curve for the segment leaving this keyframe (bounce, elastic, back, expo…). When set it
     /// replaces the bezier handles; nil = use the handles.
     var curve: EaseCurve? = nil
+    var reversedSegment: Bool? = nil
 }
 
 /// Easing curves that a single bezier can't draw (Flow-style): real bounces, elastic wobbles, Penner families.
@@ -297,10 +298,10 @@ struct Animated<Value: Interpolatable>: Codable, Equatable {
         guard span > 0 else { return b.value }
         let x = (time - a.time) / span
         switch a.interpolation {
-        case .hold: return a.value
+        case .hold: return a.reversedSegment == true ? b.value : a.value
         case .linear: return Value.lerp(a.value, b.value, x)
         case .bezier:
-            if let c = a.curve { return Value.lerp(a.value, b.value, c.progress(x)) }
+            if let c = a.curve { return Value.lerp(a.value, b.value, (a.reversedSegment == true ? 1 - c.progress(1 - x) : c.progress(x))) }
             return Value.lerp(a.value, b.value, BezierTiming.progress(x: x, p1: a.easeOut, p2: b.easeIn))
         }
     }
@@ -348,4 +349,24 @@ struct Animated<Value: Interpolatable>: Codable, Equatable {
     }
 
     var keyframeTimes: [Double] { keyframes.map(\.time) }
+}
+
+
+extension Animated {
+    mutating func reverseKeys(around sum: Double) {
+        let original = keyframes
+        guard !original.isEmpty else { return }
+        func mirrored(_ handle: EaseHandle) -> EaseHandle { EaseHandle(x: 1 - handle.x, y: 1 - handle.y) }
+        keyframes = original.indices.reversed().map { i in
+            var key = original[i]
+            let segment = original[(i + original.count - 1) % original.count]
+            key.time = sum - key.time
+            key.easeOut = mirrored(original[i].easeIn)
+            key.easeIn = mirrored(original[i].easeOut)
+            key.interpolation = segment.interpolation
+            key.curve = segment.curve
+            key.reversedSegment = segment.reversedSegment == true ? nil : true
+            return key
+        }
+    }
 }
