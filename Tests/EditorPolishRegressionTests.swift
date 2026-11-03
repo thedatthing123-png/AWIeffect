@@ -125,7 +125,17 @@ final class EditorPolishRegressionTests: XCTestCase {
             XCTAssertEqual(reversed.value(at: time), original.value(at: 8 - time), accuracy: 0.001)
         }
         reversed.reverseKeys(around: 8)
-        XCTAssertEqual(reversed, original)
+        XCTAssertEqual(reversed.staticValue, original.staticValue)
+        XCTAssertEqual(reversed.keyframes.count, original.keyframes.count)
+        for (restored, key) in zip(reversed.keyframes, original.keyframes) {
+            XCTAssertEqual(restored.id, key.id); XCTAssertEqual(restored.time, key.time)
+            XCTAssertEqual(restored.value, key.value); XCTAssertEqual(restored.interpolation, key.interpolation)
+            XCTAssertEqual(restored.curve, key.curve); XCTAssertEqual(restored.reversedSegment, key.reversedSegment)
+            XCTAssertEqual(restored.easeOut.x, key.easeOut.x, accuracy: 1e-12)
+            XCTAssertEqual(restored.easeOut.y, key.easeOut.y, accuracy: 1e-12)
+            XCTAssertEqual(restored.easeIn.x, key.easeIn.x, accuracy: 1e-12)
+            XCTAssertEqual(restored.easeIn.y, key.easeIn.y, accuracy: 1e-12)
+        }
     }
 
     func testSnappingUsesVisibleEdgesAndReleasesAwayFromGuide() {
