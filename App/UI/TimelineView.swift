@@ -100,7 +100,8 @@ struct TimelineView: View {
                                     }
                                     state.extendMultiSelect(toRow: Int(drag.location.y / rowHeight))
                                 }
-                                .onEnded { _ in multiDragStart = nil }
+                                .onEnded { _ in multiDragStart = nil },
+                            including: state.isMultiSelecting ? .all : .subviews
                         )
                     }
                     .frame(maxHeight: .infinity)
@@ -250,7 +251,7 @@ struct TimelineView: View {
                 }
                 .frame(width: w, height: rowHeight - 8)
                 // Hold a clip to lift it: up / down reorders, sideways moves it in time (snaps to frames, beats, playhead).
-                .simultaneousGesture(clipHold(layer), including: state.isMultiSelecting ? .subviews : .all)
+                .simultaneousGesture(clipHold(layer), including: editable ? .all : .subviews)
                 .simultaneousGesture(TapGesture().onEnded {
                     guard liftLayer == nil, !state.isMultiSelecting else { return }
                     state.openLayer(layer.id)

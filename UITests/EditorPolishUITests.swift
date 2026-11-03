@@ -14,6 +14,7 @@ final class EditorPolishUITests: XCTestCase {
             if last.isHittable { break }
             timeline.swipeUp()
         }
+        if !last.isHittable { print("TIMELINE-FAILURE " + app.debugDescription) }
         XCTAssertTrue(last.isHittable, "Could not reach the last layer")
         XCTAssertEqual(app.staticTexts["timeline-timecode"].firstMatch.label, before, "Vertical scrolling scrubbed the playhead")
     }
