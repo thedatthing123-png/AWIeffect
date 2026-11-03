@@ -18,14 +18,13 @@ struct ClipPanel: View {
                     VStack(alignment: .leading, spacing: 10) {
                         if l.timeRemap == nil {
                             row("Speed", value: l.speed, range: 0.1...4, fmt: "%.2fx") { v in
-                                let srcLen = mediaDuration(l)
                                 state.mutateLayer { layer in
-                                    let oldLen = layer.outPoint - layer.inPoint
-                                    layer.speed = v
-                                    if srcLen > 0.05 {
-                                        let fits = max(0.1, (srcLen - layer.sourceStart) / v)
-                                        layer.outPoint = layer.inPoint + min(fits, max(oldLen * 4, fits))
-                                    }
+                                    guard v.isFinite, v > 0, layer.speed != 0 else { return }
+                                    let factor = abs(layer.speed) / v
+                                    var traversal = AnimationTraversal(operation: .scaleTime(layer.inPoint, factor))
+                                    layer.traverseAnimations(&traversal)
+                                    layer.outPoint = layer.inPoint + (layer.outPoint - layer.inPoint) * factor
+                                    layer.speed = layer.speed < 0 ? -v : v
                                 }
                             }
                             if l.speed < 0.999, case .video = l.content {

@@ -2,7 +2,7 @@ import Foundation
 
 /// The single inventory used by timeline indicators, key movement and clip movement.
 struct AnimationTraversal {
-    enum Operation { case inspect, retime(Double, Double), shift(Double) }
+    enum Operation { case inspect, retime(Double, Double), shift(Double), scaleTime(Double, Double) }
     var operation: Operation
     var times: [Double] = []
     mutating func apply<V: Interpolatable>(_ value: inout Animated<V>) {
@@ -10,6 +10,9 @@ struct AnimationTraversal {
         case .inspect: times += value.keyframeTimes
         case .retime(let from, let to): value.retime(at: from, to: to)
         case .shift(let dt): value.shift(by: dt)
+        case .scaleTime(let origin, let factor):
+            for i in value.keyframes.indices { value.keyframes[i].time = origin + (value.keyframes[i].time - origin) * factor }
+            value.keyframes.sort { $0.time < $1.time }
         }
     }
     mutating func apply<V: Interpolatable>(_ value: inout Animated<V>?) {
