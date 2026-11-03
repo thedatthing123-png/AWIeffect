@@ -7,6 +7,7 @@ struct EditorView: View {
     let close: () -> Void
     @State private var showExport = false
     @State private var showPasteStyle = false
+    @State private var showKeyframeMover = false
     @ObservedObject private var layerClipboard = LayerClipboard.shared
     @State private var showLayerRename = false
     @State private var renameText = ""
@@ -87,6 +88,7 @@ struct EditorView: View {
                     .accessibilityIdentifier("save-error")
             }
         }
+        .awiSheet(isPresented: $showKeyframeMover) { KeyframeMoverSheet(state: state).presentationDetents([.medium, .large]) }
         .awiSheet(isPresented: $showPasteStyle) { PasteLayerStyleSheet(state: state).presentationDetents([.medium, .large]) }
         .awiSheet(isPresented: $state.showLightBrowser) { LightBrowser(state: state).presentationDetents([.large]) }
         .environmentObject(mediaLauncher)
@@ -233,6 +235,7 @@ struct EditorView: View {
             Menu {
                 Button { renameText = l.name; showLayerRename = true } label: { Label("Rename", systemImage: "character.cursor.ibeam") }
                 Button { state.splitSelected() } label: { Label("Split at Playhead", systemImage: "scissors") }
+                Button { showKeyframeMover = true } label: { Label("Move Keyframes…", systemImage: "diamond") }
                 Button { state.copyKeyframes() } label: { Label("Copy Keyframes", systemImage: "doc.on.doc") }
                 Button { state.pasteKeyframes() } label: { Label("Paste Keyframes", systemImage: "doc.on.clipboard") }
                 Button { state.copyLayer() } label: { Label(layerClipboard.busy ? "Copying…" : "Copy Layer", systemImage: "doc.on.doc") }.disabled(layerClipboard.busy)
