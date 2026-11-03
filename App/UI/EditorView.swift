@@ -742,7 +742,7 @@ struct TransportBar: View {
             Button { state.togglePlay() } label: {
                 Image(systemName: state.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 20, weight: .bold))
-                    .frame(width: 42, height: 40)
+                    .frame(width: 38, height: 40)
             }
             .accessibilityLabel(state.isPlaying ? "Pause" : "Play")
             button("chevron.right") { state.stepFrame(1) }
@@ -761,7 +761,7 @@ struct TransportBar: View {
                 Button("Paste Layer") { state.pasteLayer() }.disabled(clipboard.payload == nil || clipboard.busy)
                 Button("Paste Style…") { showStylePaste = true }.disabled(state.selectedLayer == nil || clipboard.payload == nil || clipboard.busy)
                 Button("Replace Content from Copy") { state.pasteLayer(contentOnly: true) }.disabled(state.selectedLayer == nil || clipboard.payload == nil || clipboard.busy)
-            } label: { Image(systemName: "doc.on.clipboard").frame(width: 31, height: 38) }
+            } label: { Image(systemName: "doc.on.clipboard").frame(width: 27, height: 38) }
             .accessibilityLabel("Layer Clipboard")
             button("clock.arrow.circlepath") { showHistory = true }
         }
@@ -775,7 +775,7 @@ struct TransportBar: View {
     private func button(_ icon: String, enabled: Bool = true, tint: Color? = nil, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon).font(.system(size: 15, weight: .semibold))
-                .frame(width: 31, height: 38)
+                .frame(width: 27, height: 38)
                 .foregroundStyle(tint ?? (enabled ? Theme.text : Theme.textDim.opacity(0.4)))
         }
         .disabled(!enabled)
