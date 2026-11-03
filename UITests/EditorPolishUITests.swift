@@ -9,7 +9,7 @@ final class EditorPolishUITests: XCTestCase {
         let timeline = app.scrollViews["layer-timeline-scroll"].firstMatch
         XCTAssertTrue(timeline.waitForExistence(timeout: 15))
         let before = app.staticTexts["timeline-timecode"].firstMatch.label
-        let last = app.staticTexts["Layer 40"].firstMatch
+        let last = app.otherElements["timeline-row-Layer 40"].firstMatch
         for _ in 0..<16 {
             if last.isHittable { break }
             timeline.swipeUp()

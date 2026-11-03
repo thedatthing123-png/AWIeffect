@@ -175,6 +175,11 @@ final class ModelRenderer {
         renderer.update(atTime: time)
         guard renderer.prepare(scene, shouldAbortBlock: nil) else { return nil }
         // Snapshot owns SceneKit's full frame lifecycle, including first-frame presentation setup.
+        if reusedRenderer == nil {
+            _ = renderer.snapshot(atTime: time, with: CGSize(width: width, height: height), antialiasingMode: .none)
+            SCNTransaction.flush()
+            renderer.update(atTime: time)
+        }
         let image = renderer.snapshot(atTime: time, with: CGSize(width: width, height: height), antialiasingMode: .none)
         guard let cg = image.cgImage,
               let texture = try? MTKTextureLoader(device: device).newTexture(cgImage: cg, options: [.SRGB: false, .textureUsage: NSNumber(value: MTLTextureUsage.shaderRead.rawValue)]) else { return nil }

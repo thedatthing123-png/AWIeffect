@@ -73,6 +73,8 @@ struct TimelineView: View {
                                         .clipped()
                                 }
                                 .frame(height: rowHeight)
+                                .accessibilityElement(children: .contain)
+                                .accessibilityIdentifier("timeline-row-\(layer.name)")
                                 .scaleEffect(lifted ? 1.03 : 1)
                                 .shadow(color: .black.opacity(lifted ? 0.5 : 0), radius: 8, y: 4)
                                 .offset(y: lifted ? liftOffset : 0)
