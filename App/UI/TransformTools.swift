@@ -127,6 +127,7 @@ struct TransformToolBody: View {
     @ObservedObject var state: EditorState
     let layer: Layer
     let tool: TransformPanel.Tool
+    @State private var rawPadPosition: Vec2?
 
     private var t: Double { state.currentTime }
     private var compW: Double { Double(state.project.width) }
@@ -140,11 +141,16 @@ struct TransformToolBody: View {
                           ("Y", p.y, { v in edit("Move") { $0.transform.position.set(Vec2(p.x, v), at: t) } }),
                           ("Z", layer.transform.positionZ.value(at: t), { v in edit("Depth") { $0.transform.positionZ.set(v, at: t) } })])
                 SwipePad(hint: "Swipe here to move the layer", gain: compW) { d in
-                    state.mutateLayer { l in
-                        let q = l.transform.position.value(at: t)
-                        l.transform.position.set(Vec2(((q.x + d.width) * 10).rounded() / 10, ((q.y + d.height) * 10).rounded() / 10), at: t)
-                    }
-                } begin: { state.beginPanelGesture("Move Layer") } end: { state.endPanelGesture() }
+                    let raw = (rawPadPosition ?? layer.transform.position.value(at: t)) + Vec2(d.width, d.height)
+                    rawPadPosition = raw
+                    let snapped = state.snapPositionOnCanvas(raw, layer: layer)
+                    state.mutateLayer { $0.transform.position.set(snapped, at: t) }
+                } begin: {
+                    rawPadPosition = layer.transform.position.value(at: t)
+                    state.beginPanelGesture("Move Layer")
+                } end: {
+                    state.endPanelGesture(); rawPadPosition = nil; state.snapGuides = SnapGuides()
+                }
                 HStack(spacing: 6) {
                     Toggle("Snap", isOn: $state.snappingEnabled).toggleStyle(.button).font(.caption)
                     Menu {

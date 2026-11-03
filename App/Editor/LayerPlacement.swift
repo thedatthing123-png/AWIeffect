@@ -55,6 +55,28 @@ enum LayerPlacement {
 }
 
 extension EditorState {
+    func snapPositionOnCanvas(_ position: Vec2, layer: Layer) -> Vec2 {
+        guard snappingEnabled, !layer.is3D else { return position }
+        var p = live.project ?? project
+        guard let i = p.layers.firstIndex(where: { $0.id == layer.id }) else { return position }
+        p.layers[i].transform.position.set(position, at: currentTime)
+        let matrix = LayerPlacement.positionMatrix(p.layers[i], project: p, time: currentTime)
+        guard abs(matrix.determinant) > 1e-10,
+              let anchor = LayerPlacement.projected(position, by: matrix),
+              let rect = LayerPlacement.bounds(p.layers[i], project: p, time: currentTime) else { return position }
+        var xs = [0.0, Double(p.width) / 2, Double(p.width)], ys = [0.0, Double(p.height) / 2, Double(p.height)]
+        for other in p.layers where other.id != layer.id && other.isActive(at: currentTime) && other.content != .camera && !other.isAudioOnly {
+            if let bounds = LayerPlacement.bounds(other, project: p, time: currentTime) {
+                xs += [bounds.minX, bounds.midX, bounds.maxX]; ys += [bounds.minY, bounds.midY, bounds.maxY]
+            }
+        }
+        let grab = Double(p.width) * 0.005
+        let sx = LayerPlacement.snap(features: [rect.minX, rect.midX, rect.maxX], targets: xs, held: snapGuides.x, grab: grab)
+        let sy = LayerPlacement.snap(features: [rect.minY, rect.midY, rect.maxY], targets: ys, held: snapGuides.y, grab: grab)
+        snapGuides = SnapGuides(x: sx.guide, y: sy.guide)
+        return LayerPlacement.projected(anchor + Vec2(sx.delta, sy.delta), by: matrix.inverse) ?? position
+    }
+
     func alignSelected(_ mode: Int) {
         let ids = multiSelection ?? selectedLayerID.map { Set([$0]) } ?? []
         let original = project, time = currentTime
