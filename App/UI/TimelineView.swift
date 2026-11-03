@@ -87,7 +87,7 @@ struct TimelineView: View {
                     }
                     .frame(maxHeight: .infinity)
                     .accessibilityIdentifier("layer-timeline-scroll")
-                    .scrollDisabled(multiDragStart != nil || liftLayer != nil)
+                    .scrollDisabled(multiDragStart != nil)
                 }
                 // Playhead.
                 Rectangle().fill(.white).frame(width: 1.5)
@@ -233,6 +233,7 @@ struct TimelineView: View {
                     .foregroundStyle(.white)
                     .padding(.leading, editable ? 16 : 8)
                     .offset(x: max(0, -x0))
+                    .allowsHitTesting(false)
                 }
                 .overlay {
                     if layer.hasAudio, let file = layer.mediaFile {
@@ -242,11 +243,15 @@ struct TimelineView: View {
                     }
                 }
                 .frame(width: w, height: rowHeight - 8)
+                .contentShape(Rectangle())
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(layer.name)
                 .accessibilityIdentifier("timeline-clip-\(layer.name)")
                 // Hold a clip to lift it: up / down reorders, sideways moves it in time (snaps to frames, beats, playhead).
                 .gesture(TimelineHold(onMove: { _, delta in
                     guard !state.isMultiSelecting, !layer.isLocked else { return }
                     if liftLayer == nil {
+                        NSLog("TIMELINE-LIFT begin %@", layer.name)
                         liftLayer = layer.id; dragOriginal = layer; state.pause(); state.beginEdit("Move Clip")
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     }
@@ -255,6 +260,7 @@ struct TimelineView: View {
                     let time = original.inPoint + Double(delta.x / zoom)
                     state.moveClip(original, by: state.snapTime(time, tolerance: Double(8 / zoom)) - original.inPoint)
                 }, onEnd: { delta in
+                    NSLog("TIMELINE-LIFT end %@ delta=%f", layer.name, delta.y)
                     defer { liftLayer = nil; liftOffset = 0; dragOriginal = nil; state.endEdit() }
                     if let from = state.project.layers.firstIndex(where: { $0.id == layer.id }) {
                         let to = from + Int((delta.y / rowHeight).rounded())
