@@ -98,6 +98,23 @@ final class EditorPolishRegressionTests: XCTestCase {
         XCTAssertFalse(p.layers[1].is3D)
         XCTAssertEqual(p.layers.first?.content, .camera)
     }
+    func testSpeedTimingScalesEveryAnimationAroundClipStart() {
+        var p = scene()
+        var layer = p.layers[1]; layer.inPoint = 2; layer.outPoint = 6
+        layer.transform.position.insertKeyframe(Keyframe(time: 3, value: Vec2(1, 2), interpolation: .linear))
+        layer.transform.position.insertKeyframe(Keyframe(time: 5, value: Vec2(3, 4), interpolation: .linear))
+        layer.text = TextData(string: "speed")
+        layer.text!.tracking.insertKeyframe(Keyframe(time: 4, value: 12, interpolation: .linear))
+        var traversal = AnimationTraversal(operation: .scaleTime(layer.inPoint, 0.5))
+        layer.traverseAnimations(&traversal)
+        XCTAssertEqual(layer.transform.position.keyframeTimes, [2.5, 3.5])
+        XCTAssertEqual(layer.text!.tracking.keyframeTimes, [3])
+        var restore = AnimationTraversal(operation: .scaleTime(layer.inPoint, 2))
+        layer.traverseAnimations(&restore)
+        XCTAssertEqual(layer.transform.position.keyframeTimes, [3, 5])
+        XCTAssertEqual(layer.text!.tracking.keyframeTimes, [4])
+    }
+
     func testSnappingUsesVisibleEdgesAndReleasesAwayFromGuide() {
         let edge = LayerPlacement.snap(features: [42, 62, 82], targets: [0, 64, 128], held: nil, grab: 3)
         XCTAssertEqual(edge.delta, 2); XCTAssertEqual(edge.guide, 64)
