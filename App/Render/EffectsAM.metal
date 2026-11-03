@@ -45,7 +45,7 @@ kernel void fx20AMWave(texture2d<half, access::sample> src [[texture(0)]],
     if (p.c.y < 0.0) md = 1.0 - far2 * (-p.c.y);
     else if (p.c.y > 0.0) md = 1.0 - (1.0 - far2) * p.c.y;
     float2 warp = float2(cos(p.a.y), -sin(p.a.y)) * (p.a.w * md / 100.0) * sin(ph + p.c.x * 6.2831853);
-    float2 ref = p.i.x != 0 ? size : p.b.zw;
+    float2 ref = p.i.y != 0 && p.d.x > 0.0 ? p.d.xy : (p.i.x != 0 ? size : p.b.zw);
     dst.write(src.sample(sAM, c + warp * ref), gid);
 }
 

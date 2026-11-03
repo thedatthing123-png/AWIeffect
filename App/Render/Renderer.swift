@@ -670,6 +670,7 @@ final class Renderer {
                 guard let def = EffectRegistry.definition(e.typeID), case .pixels(let run) = def.stage else { continue }
                 var ctx = EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: time, unit: density, pool: pool)
                 ctx.layerPixels = SIMD2(hs.x * 2 * density, hs.y * 2 * density)
+                ctx.compositionPixels = SIMD2(Double(project.width) * density, Double(project.height) * density)
                 if EffectRegistry.layerRefIDs.contains(e.typeID), let rid = e.text?["layer"].flatMap(UUID.init(uuidString:)),
                    let refLayer = project.layers.first(where: { $0.id == rid }), rid != layer.id {
                     ctx.reference = layerInBuffer(refLayer, project: project, time: time, renderScale: renderScale, comp: comp,

@@ -56,13 +56,14 @@ extension EffectRegistry {
             .angle("angle", "Angle", 0),
             .number("spacing", "Spacing", 20, 0, 500, step: 0.1),
             .number("magnitude", "Magnitude", 4, 0, 30, step: 0.1),
+            .choice("magnitudeSpace", "Magnitude Space", ["Layer", "Composition"], 1),
             .angle("warpAngle", "Warp Angle", 90),
             .number("damping", "Damping: Magnitude", 0, -100, 100, unit: "%"),
             .number("dampingSpacing", "Damping: Spacing", 0, -100, 100, unit: "%"),
             .number("dampingOrigin", "Damping: Anchor", 50, 0, 100, unit: "%"),
             .toggle("screenSpace", "Screen Space", false),
         ],
-        margin: { e, t in e.number("magnitude", t) * 30 },
+        margin: { e, t in e.number("magnitude", t) * (e.choice("magnitudeSpace") == 1 ? 100 : 30) },
         stage: .pixels { ctx in
             let out = ctx.temp()
             let rad = Double.pi / 180
@@ -70,7 +71,8 @@ extension EffectRegistry {
             p.a = SIMD4(Float(ctx.num("angle") * rad), Float((ctx.num("angle") + ctx.num("warpAngle")) * rad), Float(ctx.num("spacing")), Float(ctx.num("magnitude")))
             p.b = layerRect(ctx)
             p.c = SIMD4(Float(ctx.num("phase")), Float(ctx.num("damping") / 100), Float(ctx.num("dampingSpacing") / 100), Float(ctx.num("dampingOrigin") / 100))
-            p.i = SIMD4(ctx.effect.bool("screenSpace") ? 1 : 0, 0, 0, 0)
+            p.i = SIMD4(ctx.effect.bool("screenSpace") ? 1 : 0, ctx.effect.choice("magnitudeSpace") == 1 ? 1 : 0, 0, 0)
+            if let size = ctx.compositionPixels { p.d = SIMD4(Float(size.x), Float(size.y), 0, 0) }
             ctx.gpu.run("fx20AMWave", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
             return out
         })
