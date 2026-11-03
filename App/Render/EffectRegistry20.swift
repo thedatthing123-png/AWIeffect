@@ -72,7 +72,7 @@ extension EffectRegistry {
             p.a = SIMD4(Float(ctx.num("angle") * rad), Float((ctx.num("angle") + ctx.num("warpAngle")) * rad), Float(ctx.num("spacing")), Float(ctx.num("magnitude")))
             p.b = layerRect(ctx)
             p.c = SIMD4(Float(ctx.num("phase")), Float(ctx.num("damping") / 100), Float(ctx.num("dampingSpacing") / 100), Float(ctx.num("dampingOrigin") / 100))
-            p.i = SIMD4(ctx.effect.bool("screenSpace") ? 1 : 0, ctx.effect.choice("magnitudeSpace") == 1 ? 1 : 0, UInt32(ctx.effect.choice("waveUnits")), 0)
+            p.i = SIMD4(ctx.effect.bool("screenSpace") ? 1 : 0, ctx.effect.choice("magnitudeSpace") == 1 ? 1 : 0, UInt32(ctx.effect.params["waveUnits"] == nil ? 1 : ctx.effect.choice("waveUnits")), 0)
             if let size = ctx.compositionPixels { p.d = SIMD4(Float(size.x), Float(size.y), 0, 0) }
             ctx.gpu.run("fx20AMWave", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
             return out
