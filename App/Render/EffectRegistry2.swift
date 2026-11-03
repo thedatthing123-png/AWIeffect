@@ -35,7 +35,7 @@ extension EffectRegistry {
         id: "ae.waveWarp", name: "Wave Warp", category: .distort, aeMatchNames: ["ADBE Wave Warp"],
         summary: "Rolling waves across the layer.",
         params: [.choice("type", "Wave Type", ["Sine", "Square", "Triangle", "Sawtooth", "Circle", "Semicircle", "Smooth Noise"], 0, ae: 1),
-                 .number("height", "Wave Height", 10, -500, 500, ae: 2), .number("width", "Wave Width", 40, 1, 1000, ae: 3),
+                 .number("height", "Wave Height", 10, -500, 500, ae: 2), .number("width", "Wave Width", 20, 0.1, 1000, step: 0.1, ae: 3),
                  .angle("direction", "Direction", 90, ae: 4), .number("speed", "Wave Speed", 1, -20, 20, step: 0.1, ae: 5),
                  .choice("pinning", "Pinning", ["None", "All Edges", "Top Edge", "Bottom Edge", "Left Edge", "Right Edge", "Top & Bottom", "Left & Right"], 0, ae: 6),
                  .angle("phase", "Phase", 0, ae: 7),
@@ -128,7 +128,7 @@ extension EffectRegistry {
     static let motionTile = EffectDefinition(
         id: "ae.motionTile", name: "Motion Tile", category: .distort, aeMatchNames: ["ADBE Tile"],
         summary: "Repeats the layer in a grid — great with shakes so edges never show.",
-        params: [.point("center", "Tile Center", Vec2(0.5, 0.5), ae: 1), .number("tileW", "Tile Width", 100, 1, 1000, unit: "%", ae: 2),
+        params: [.toggle("manualOutput", "Manual Output Size", false), .point("center", "Tile Center", Vec2(0.5, 0.5), ae: 1), .number("tileW", "Tile Width", 100, 1, 1000, unit: "%", ae: 2),
                  .number("tileH", "Tile Height", 100, 1, 1000, unit: "%", ae: 3),
                  .number("outW", "Output Width", 100, 100, 1000, unit: "%", ae: 4), .number("outH", "Output Height", 100, 100, 1000, unit: "%", ae: 5),
                  .toggle("mirror", "Mirror Edges", true, ae: 6), .number("phase", "Phase", 0, -3600, 3600, unit: "°", ae: 7),
@@ -145,7 +145,8 @@ extension EffectRegistry {
             // Tile center / size are measured on the layer itself, not the grown buffer.
             p.a = SIMD4(f(off.x + c.x * lp.x), f(off.y + c.y * lp.y), f(ctx.num("tileW") / 100 * lp.x), f(ctx.num("tileH") / 100 * lp.y))
             let ow = ctx.num("outW") / 100 * lp.x, oh = ctx.num("outH") / 100 * lp.y
-            p.b = SIMD4(f(Double(ctx.width) / 2), f(Double(ctx.height) / 2), f(ow / 2), f(oh / 2))
+            let output = ctx.effect.bool("manualOutput") ? SIMD2(ow, oh) : SIMD2(Double(ctx.width), Double(ctx.height))
+            p.b = SIMD4(f(Double(ctx.width) / 2), f(Double(ctx.height) / 2), f(output.x / 2), f(output.y / 2))
             p.c = SIMD4(f(ctx.num("phase") / 360), ctx.effect.bool("hphase") ? 1 : 0, 0, 0)
             p.d = SIMD4(f(off.x), f(off.y), f(lp.x), f(lp.y))
             p.i = SIMD4(8, ctx.effect.bool("mirror") ? 1 : 0, 0, 0) } })

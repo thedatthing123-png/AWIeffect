@@ -138,6 +138,17 @@ final class EditorPolishRegressionTests: XCTestCase {
         }
     }
 
+    func testMotionTileDefaultCoversCanvasOutsideSmallLayer() throws {
+        guard let renderer = Renderer.shared else { throw XCTSkip("Metal unavailable") }
+        var p = scene(); p.layers.removeFirst()
+        p.layers[0].size = Animated(Vec2(24, 24)); p.layers[0].transform.position = Animated(Vec2(64, 64))
+        p.layers[0].effects = [EffectRegistry.motionTile.makeInstance()]
+        let pixels = try XCTUnwrap(renderer.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        for (x, y) in [(2, 2), (125, 2), (2, 125), (125, 125)] {
+            XCTAssertGreaterThan(pixels[(y * 128 + x) * 4 + 3], 240)
+        }
+    }
+
     func testSnappingUsesVisibleEdgesAndReleasesAwayFromGuide() {
         let edge = LayerPlacement.snap(features: [42, 62, 82], targets: [0, 64, 128], held: nil, grab: 3)
         XCTAssertEqual(edge.delta, 2); XCTAssertEqual(edge.guide, 64)

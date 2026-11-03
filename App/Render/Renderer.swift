@@ -626,8 +626,11 @@ final class Renderer {
             }
 
             // Effects path: render the layer in its own (local, unrotated) buffer, run the stack, then place it.
-            let rawMargin = pixelFX.reduce(0.0) { acc, e in acc + (EffectRegistry.definition(e.typeID).map { $0.expandedMargin?(e, time, hs * 2) ?? $0.margin(e, time) } ?? 0) }
+            var rawMargin = pixelFX.reduce(0.0) { acc, e in acc + (EffectRegistry.definition(e.typeID).map { $0.expandedMargin?(e, time, hs * 2) ?? $0.margin(e, time) } ?? 0) }
                 + (dof > 0.5 ? dof * 3 / max(pxPerLocal, 1e-4) : 0)
+            if pixelFX.contains(where: { $0.typeID == "ae.motionTile" && !$0.bool("manualOutput") }) {
+                rawMargin = max(rawMargin, Double(max(project.width, project.height)) * renderScale / max(pxPerLocal, 1e-4))
+            }
             // Glow / shadow room beyond what the screen can show is never seen: cap it to the comp size.
             let compReach = Double(max(project.width, project.height)) / max(pxPerLocal, 1e-4)
             // Glow room past half a screen is never visible and only costs memory (big glows crashed phones).

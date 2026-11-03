@@ -37,7 +37,7 @@ kernel void fx20AMWave(texture2d<half, access::sample> src [[texture(0)]],
     float far = clamp(abs(along - p.c.w), 0.0, 1.0);
     if (p.c.z < 0.0) sd = 1.0 - far * (-p.c.z);
     else if (p.c.z > 0.0) sd = 1.0 - (1.0 - far) * p.c.z;
-    float space = p.a.z * sd;
+    float space = (p.i.z == 1 ? 628.31853 / max(p.a.z, 0.1) : p.a.z) * sd;
     float ph = along * space;
     float dist = abs(space) > 1e-5 ? abs(ph / space) : 0.0;
     float md = 1.0;

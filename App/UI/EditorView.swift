@@ -724,6 +724,8 @@ struct SelectionOverlay: View {
 
 struct TransportBar: View {
     @ObservedObject var state: EditorState
+    @ObservedObject private var clipboard = LayerClipboard.shared
+    @State private var showStylePaste = false
     @Binding var showHistory: Bool
     @Binding var viewZoom: CGFloat
     @Binding var zoomBase: CGFloat
@@ -754,12 +756,20 @@ struct TransportBar: View {
                 else if let id = state.selectedLayerID ?? state.project.layers.first?.id { state.beginMultiSelect(id) }
             }
             .accessibilityLabel(state.isMultiSelecting ? "Done Selecting" : "Select Multiple")
+            Menu {
+                Button("Copy Layer") { state.copyLayer() }.disabled(state.selectedLayer == nil || clipboard.busy)
+                Button("Paste Layer") { state.pasteLayer() }.disabled(clipboard.payload == nil || clipboard.busy)
+                Button("Paste Style…") { showStylePaste = true }.disabled(state.selectedLayer == nil || clipboard.payload == nil || clipboard.busy)
+                Button("Replace Content from Copy") { state.pasteLayer(contentOnly: true) }.disabled(state.selectedLayer == nil || clipboard.payload == nil || clipboard.busy)
+            } label: { Image(systemName: "doc.on.clipboard").frame(width: 31, height: 38) }
+            .accessibilityLabel("Layer Clipboard")
             button("clock.arrow.circlepath") { showHistory = true }
         }
         .foregroundStyle(Theme.text)
         .padding(.horizontal, 4)
         .frame(maxWidth: .infinity)
         .frame(height: 44)
+        .awiSheet(isPresented: $showStylePaste) { PasteLayerStyleSheet(state: state).presentationDetents([.medium, .large]) }
     }
 
     private func button(_ icon: String, enabled: Bool = true, tint: Color? = nil, _ action: @escaping () -> Void) -> some View {

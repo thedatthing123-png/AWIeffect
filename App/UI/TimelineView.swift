@@ -23,6 +23,7 @@ struct TimelineView: View {
     @State private var dragOriginal: Layer?
     @State private var reorderFrom: Int?
     /// A clip held and lifted: drag up / down to change its layer order, sideways to move it in time.
+    @State private var keyDragTime: Double?
     @State private var liftLayer: UUID?
     @State private var liftOffset: CGFloat = 0
 
@@ -82,27 +83,7 @@ struct TimelineView: View {
                                 .animation(.interactiveSpring(response: 0.25, dampingFraction: 0.85), value: lifted)
                             }
                         }
-                        // Hold a row, then (without lifting) drag up/down to select a range.
-                        .simultaneousGesture(
-                            LongPressGesture(minimumDuration: 0.3, maximumDistance: 4)
-                                .sequenced(before: DragGesture(minimumDistance: 0))
-                                .onChanged { v in
-                                    guard case .second(true, let drag) = v, let drag else { return }
-                                    // Alight Motion: holding the left column (eye / icon) selects; holding a clip lifts it.
-                                    guard drag.startLocation.x < headerWidth, !compact else { return }
-                                    if multiDragStart == nil {
-                                        let row = Int(drag.startLocation.y / rowHeight)
-                                        if state.project.layers.indices.contains(row) {
-                                            if !state.isMultiSelecting { state.beginMultiSelect(state.project.layers[row].id) }
-                                            else { state.multiAnchor = state.project.layers[row].id }
-                                        }
-                                        multiDragStart = drag.startLocation
-                                    }
-                                    state.extendMultiSelect(toRow: Int(drag.location.y / rowHeight))
-                                }
-                                .onEnded { _ in multiDragStart = nil },
-                            including: state.isMultiSelecting ? .all : .subviews
-                        )
+
                     }
                     .frame(maxHeight: .infinity)
                     .accessibilityIdentifier("layer-timeline-scroll")
@@ -161,9 +142,19 @@ struct TimelineView: View {
         }
         .frame(width: headerWidth, height: rowHeight, alignment: .leading)
         .background(Theme.surface)
+        .accessibilityIdentifier("timeline-header-\(layer.name)")
+        .accessibilityValue(state.multiSelection?.contains(layer.id) == true ? "Selected" : "Not selected")
         .contentShape(Rectangle())
         // Tap in multi-select toggles; otherwise the left column only reacts to a hold (multi-select).
         .onTapGesture { if state.isMultiSelecting { state.toggleInMulti(layer.id) } }
+        .gesture(TimelineHold(onMove: { point, delta in
+            guard !compact, let index = state.project.layers.firstIndex(where: { $0.id == layer.id }) else { return }
+            if multiDragStart == nil {
+                multiDragStart = point; state.beginMultiSelect(layer.id)
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            }
+            state.extendMultiSelect(toRow: index + Int((delta.y / rowHeight).rounded()))
+        }, onEnd: { _ in multiDragStart = nil }))
     }
 
     private func scrubHorizontal(_ translation: CGFloat) {
@@ -251,7 +242,23 @@ struct TimelineView: View {
                 }
                 .frame(width: w, height: rowHeight - 8)
                 // Hold a clip to lift it: up / down reorders, sideways moves it in time (snaps to frames, beats, playhead).
-                .simultaneousGesture(clipHold(layer), including: editable ? .all : .subviews)
+                .gesture(TimelineHold(onMove: { _, delta in
+                    guard !state.isMultiSelecting, !layer.isLocked else { return }
+                    if liftLayer == nil {
+                        liftLayer = layer.id; dragOriginal = layer; state.pause(); state.beginEdit("Move Clip")
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    }
+                    guard let original = dragOriginal else { return }
+                    liftOffset = delta.y
+                    let time = original.inPoint + Double(delta.x / zoom)
+                    state.moveClip(original, by: state.snapTime(time, tolerance: Double(8 / zoom)) - original.inPoint)
+                }, onEnd: { delta in
+                    defer { liftLayer = nil; liftOffset = 0; dragOriginal = nil; state.endEdit() }
+                    if let from = state.project.layers.firstIndex(where: { $0.id == layer.id }) {
+                        let to = from + Int((delta.y / rowHeight).rounded())
+                        if from != to { state.endEdit(); state.reorderLayer(from: from, to: to) }
+                    }
+                }))
                 .simultaneousGesture(TapGesture().onEnded {
                     guard liftLayer == nil, !state.isMultiSelecting else { return }
                     state.openLayer(layer.id)
@@ -325,11 +332,12 @@ struct TimelineView: View {
     private func keyDrag(_ layer: Layer, _ t: Double) -> some Gesture {
         DragGesture(minimumDistance: 3, coordinateSpace: .named("timeline"))
             .onChanged { g in
-                if dragOriginal == nil { dragOriginal = layer; state.pause(); state.beginEdit("Move Keyframes") }
+                if dragOriginal == nil { dragOriginal = layer; keyDragTime = t; state.pause(); state.beginEdit("Move Keyframes") }
                 guard let o = dragOriginal else { return }
-                state.moveKeyframes(of: o, from: t, to: state.snapTime(t + Double(g.translation.width / zoom), tolerance: Double(8 / zoom)))
+                let origin = keyDragTime ?? t
+                state.moveKeyframes(of: o, from: origin, to: state.snapTime(origin + Double(g.translation.width / zoom), tolerance: Double(8 / zoom)))
             }
-            .onEnded { _ in dragOriginal = nil; state.endEdit() }
+            .onEnded { _ in dragOriginal = nil; keyDragTime = nil; state.endEdit() }
     }
 
     private func trimHandle(_ layer: Layer, start: Bool) -> some View {

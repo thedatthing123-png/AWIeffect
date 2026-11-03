@@ -18,4 +18,14 @@ final class EditorPolishUITests: XCTestCase {
         XCTAssertTrue(last.isHittable, "Could not reach the last layer")
         XCTAssertEqual(app.staticTexts["timeline-timecode"].firstMatch.label, before, "Vertical scrolling scrubbed the playhead")
     }
+    func testHeaderHoldStartsRangeSelectionWhileTracksRemainScrollable() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-manyLayers"]; app.launch()
+        let first = app.otherElements["timeline-header-Layer 1"].firstMatch
+        let third = app.otherElements["timeline-header-Layer 3"].firstMatch
+        XCTAssertTrue(first.waitForExistence(timeout: 15))
+        first.press(forDuration: 0.5, thenDragTo: third)
+        XCTAssertEqual(first.value as? String, "Selected")
+        XCTAssertEqual(third.value as? String, "Selected")
+    }
 }
