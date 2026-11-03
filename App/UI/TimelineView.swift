@@ -45,6 +45,10 @@ struct TimelineView: View {
                             .frame(width: headerWidth, height: rulerHeight)
                         ruler(width: trackWidth, offset: offset)
                             .frame(width: trackWidth, height: rulerHeight)
+                            .gesture(TimelineHorizontalPan(
+                canBegin: { multiDragStart == nil && liftLayer == nil && dragOriginal == nil },
+                onChange: scrubHorizontal,
+                onEnd: { scrubStart = nil; scrubAxis = nil }))
                             .clipped()
                     }
                     .contentShape(Rectangle())
@@ -121,10 +125,7 @@ struct TimelineView: View {
             .contentShape(Rectangle())
             .coordinateSpace(name: "timeline")
             // Simultaneous so the layer list can still scroll up / down with many layers.
-            .gesture(TimelineHorizontalPan(
-                canBegin: { multiDragStart == nil && liftLayer == nil && dragOriginal == nil },
-                onChange: scrubHorizontal,
-                onEnd: { scrubStart = nil; scrubAxis = nil }))
+
             .simultaneousGesture(
                 MagnificationGesture()
                     .onChanged { zoom = min(600, max(15, zoomBase * $0)) }

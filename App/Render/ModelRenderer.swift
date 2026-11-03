@@ -1,6 +1,7 @@
 import Foundation
 import SceneKit
 import Metal
+import MetalKit
 import UIKit
 
 /// Settings for 3D model / extruded 3D text layers.
@@ -173,31 +174,12 @@ final class ModelRenderer {
         SCNTransaction.flush()
         renderer.update(atTime: time)
         guard renderer.prepare(scene, shouldAbortBlock: nil) else { return nil }
-        let depthDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float_stencil8, width: target.width, height: target.height, mipmapped: false)
-        depthDescriptor.storageMode = .private; depthDescriptor.usage = .renderTarget
-        guard let depth = device.makeTexture(descriptor: depthDescriptor) else { return nil }
-        let rp = MTLRenderPassDescriptor()
-        rp.colorAttachments[0].texture = target
-        rp.colorAttachments[0].loadAction = .clear
-        rp.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 0)
-        rp.colorAttachments[0].storeAction = .store
-        rp.depthAttachment.texture = depth; rp.depthAttachment.loadAction = .clear
-        rp.depthAttachment.storeAction = .dontCare; rp.depthAttachment.clearDepth = 1
-        rp.stencilAttachment.texture = depth; rp.stencilAttachment.loadAction = .clear
-        rp.stencilAttachment.storeAction = .dontCare; rp.stencilAttachment.clearStencil = 0
-        // SceneKit initializes its offscreen presentation resources on the first render.
-        // Prime a new renderer before the visible pass, at the identical scene time.
-        if reusedRenderer == nil {
-            renderer.render(atTime: time, viewport: CGRect(x: 0, y: 0, width: width, height: height), commandBuffer: modelBuffer, passDescriptor: rp)
-        }
-        renderer.render(atTime: time, viewport: CGRect(x: 0, y: 0, width: width, height: height), commandBuffer: modelBuffer, passDescriptor: rp)
-        modelBuffer.commit()
-        guard completed.wait(timeout: .now() + 10) == .success, modelBuffer.status == .completed else {
-            NSLog("AWIeffect model render failed: %@", modelBuffer.error?.localizedDescription ?? "GPU render timed out")
-            return nil
-        }
+        // Snapshot owns SceneKit's full frame lifecycle, including first-frame presentation setup.
+        let image = renderer.snapshot(atTime: time, with: CGSize(width: width, height: height), antialiasingMode: .none)
+        guard let cg = image.cgImage,
+              let texture = try? MTKTextureLoader(device: device).newTexture(cgImage: cg, options: [.SRGB: false, .textureUsage: NSNumber(value: MTLTextureUsage.shaderRead.rawValue)]) else { return nil }
         renderer.scene = nil; renderer.pointOfView = nil
         if availableRenderers.count < 8 { availableRenderers.append(renderer) }
-        return target
+        return texture
     }
 }
