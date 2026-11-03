@@ -10,7 +10,7 @@ final class EditorPolishUITests: XCTestCase {
         XCTAssertTrue(timeline.waitForExistence(timeout: 15))
         let before = app.staticTexts["timeline-timecode"].firstMatch.label
         let last = app.otherElements["timeline-row-Layer 40"].firstMatch
-        for _ in 0..<16 {
+        for _ in 0..<45 {
             if last.isHittable { break }
             timeline.swipeUp()
         }

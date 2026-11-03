@@ -100,6 +100,9 @@ final class ModelRenderer {
         lock.lock(); defer { lock.unlock() }
         guard width > 0, height > 0, width <= TexturePool.maxSide, height <= TexturePool.maxSide,
               let cached = content(o, mediaURL: mediaURL) else { return nil }
+        // SCNText builds its mesh lazily. Prepare the source before copying its geometry.
+        let preparationRenderer = availableRenderers.last ?? SCNRenderer(device: device, options: nil)
+        guard preparationRenderer.prepare(cached.node, shouldAbortBlock: nil) else { return nil }
         let model = cached.node.clone()
         // Never reuse a render target within a command buffer: motion samples and different layers
         // must retain independent pictures. A per-frame pool reuses storage only after GPU completion.
