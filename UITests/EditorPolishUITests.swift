@@ -30,4 +30,16 @@ final class EditorPolishUITests: XCTestCase {
         XCTAssertEqual(first.value as? String, "Selected")
         XCTAssertEqual(third.value as? String, "Selected")
     }
+    func testTrackHoldCanLiftAndReorderUnselectedClip() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-manyLayers"]; app.launch()
+        let clip = app.descendants(matching: .any)["timeline-clip-Layer 1"].firstMatch
+        let first = app.otherElements["timeline-header-Layer 1"].firstMatch
+        let second = app.otherElements["timeline-header-Layer 2"].firstMatch
+        XCTAssertTrue(clip.waitForExistence(timeout: 15))
+        let start = clip.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0.5)).withOffset(CGVector(dx: 35, dy: 0))
+        let end = start.withOffset(CGVector(dx: 0, dy: 46))
+        start.press(forDuration: 0.5, thenDragTo: end)
+        XCTAssertGreaterThan(first.frame.midY, second.frame.midY)
+    }
 }

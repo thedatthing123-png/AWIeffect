@@ -242,6 +242,7 @@ struct TimelineView: View {
                     }
                 }
                 .frame(width: w, height: rowHeight - 8)
+                .accessibilityIdentifier("timeline-clip-\(layer.name)")
                 // Hold a clip to lift it: up / down reorders, sideways moves it in time (snaps to frames, beats, playhead).
                 .gesture(TimelineHold(onMove: { _, delta in
                     guard !state.isMultiSelecting, !layer.isLocked else { return }
