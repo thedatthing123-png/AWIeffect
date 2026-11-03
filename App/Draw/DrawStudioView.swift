@@ -36,6 +36,7 @@ enum DrawTool: String, CaseIterable, Identifiable {
 /// Shared tool state between the SwiftUI chrome and the UIKit canvas.
 final class DrawSession: ObservableObject {
     let engine: DrawEngine
+    @Published var selectionLayer = false
     @Published var tool: DrawTool = .brush
     @Published var brush = Brush() { didSet { if tool != .eraser { engine.brush = brush } } }
     /// The eraser keeps its own size / opacity / shape (like ibis Paint).
@@ -210,6 +211,10 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         let e = session.engine
         switch session.tool {
         case .brush, .eraser:
+            if session.selectionLayer {
+                e.beginSelectStroke(at: p, radius: session.activeBrush.size / 2, subtract: session.tool == .eraser)
+                return
+            }
             e.erasing = session.tool == .eraser
             e.brush = session.tool == .eraser ? session.eraser : session.brush
             e.beginStroke(at: p, pressure: pressure(t))
@@ -238,6 +243,10 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         cursorPoint = t.location(in: self)
         switch session.tool {
         case .brush, .eraser:
+            if session.selectionLayer {
+                for c in event?.coalescedTouches(for: t) ?? [t] { session.engine.continueSelectStroke(to: toCanvas(c.location(in: self))) }
+                return
+            }
             for c in event?.coalescedTouches(for: t) ?? [t] {
                 session.engine.continueStroke(to: toCanvas(c.location(in: self)), pressure: pressure(c))
             }
@@ -261,7 +270,9 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         drawingTouch = nil
         cursorPoint = nil
         switch session.tool {
-        case .brush, .eraser: session.engine.endStroke()
+        case .brush, .eraser:
+            if session.selectionLayer { session.engine.endSelectStroke(snapToSubject: false) }
+            else { session.engine.endStroke() }
         case .selectBrush: session.engine.endSelectStroke(snapToSubject: session.selectSnap && !session.selectSubtract)
         case .lasso where session.polygonLasso:
             let v = t.location(in: self)
@@ -294,7 +305,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard touches.contains(where: { $0 === drawingTouch }) else { return }
         drawingTouch = nil
-        if session.tool == .brush || session.tool == .eraser { session.engine.cancelStroke() }
+        if session.tool == .brush || session.tool == .eraser { if session.selectionLayer { session.engine.cancelSelectStroke() } else { session.engine.cancelStroke() } }
         if session.tool == .selectBrush { session.engine.cancelSelectStroke() }
         if session.tool == .quickSelect { session.engine.cancelQuickSelect() }
         // Polygon points are committed taps and survive navigation gestures; their overlay is reprojected.
@@ -758,12 +769,21 @@ struct LayersPanel: View {
                 Button { engine.addLayer() } label: { Label("Add", systemImage: "plus") }
                 Button { engine.duplicateActiveLayer() } label: { Label("Copy", systemImage: "plus.square.on.square") }
                 Button { engine.mergeDown() } label: { Label("Merge", systemImage: "arrow.down.to.line.compact") }
-                Button(role: .destructive) { engine.deleteActiveLayer() } label: { Label("Delete", systemImage: "trash") }
+                Button(role: .destructive) { engine.deleteActiveLayer() } label: { Label("Delete", systemImage: "trash") }.disabled(session.selectionLayer)
             }
             .font(.system(size: 11, weight: .semibold)).labelStyle(.titleAndIcon)
             .foregroundStyle(Theme.text)
             ScrollView {
                 VStack(spacing: 4) {
+                    Button { session.selectionLayer = true; session.tool = .brush } label: {
+                        HStack {
+                            Image(systemName: "square.dashed.inset.filled")
+                            Text("Selection Layer").font(.system(size: 12, weight: .semibold))
+                            Spacer(); Image(systemName: "lock.fill")
+                        }.padding(8)
+                        .foregroundStyle(Theme.text)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(session.selectionLayer ? Theme.accent.opacity(0.3) : Theme.surface))
+                    }.accessibilityIdentifier("drawing-selection-layer")
                     ForEach(Array(engine.layers.enumerated().reversed()), id: \.element.id) { i, l in
                         HStack(spacing: 6) {
                             Button { l.visible.toggle(); engine.touch() } label: { Image(systemName: l.visible ? "eye" : "eye.slash") }
@@ -776,7 +796,7 @@ struct LayersPanel: View {
                         .foregroundStyle(Theme.text)
                         .padding(8)
                         .background(RoundedRectangle(cornerRadius: 8).fill(i == engine.activeIndex ? Theme.accent.opacity(0.3) : Theme.surface))
-                        .onTapGesture { engine.activeIndex = i; engine.touch() }
+                        .onTapGesture { session.selectionLayer = false; engine.activeIndex = i; engine.touch() }
                         .contextMenu {
                             Button("Rename") { renaming = l.name; engine.activeIndex = i; showRename = true }
                             Button("Duplicate") { engine.activeIndex = i; engine.duplicateActiveLayer() }
