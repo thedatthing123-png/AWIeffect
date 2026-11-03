@@ -431,7 +431,7 @@ struct DrawStudioView: View {
             ZStack(alignment: .leading) {
                 DrawCanvas(session: session)
                 sideSliders.padding(.leading, 8)
-                if showLayers { HStack { Spacer(); LayersPanel(engine: engine).frame(width: 250).padding(8) }.transition(.move(edge: .trailing)) }
+                if showLayers { HStack { Spacer(); LayersPanel(engine: engine, session: session).frame(width: 250).padding(8) }.transition(.move(edge: .trailing)) }
             }
             if engine.animating { animationBar }
             toolOptions
@@ -758,6 +758,7 @@ struct VerticalSlider: View {
 }
 
 struct LayersPanel: View {
+    @ObservedObject var session: DrawSession
     @ObservedObject var engine: DrawEngine
     @State private var showRename = false
     @State private var renaming = ""
