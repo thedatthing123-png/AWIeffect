@@ -23,8 +23,10 @@ final class EditorPolishUITests: XCTestCase {
         app.launchArguments = ["-uiTesting", "-uiTesting-manyLayers"]; app.launch()
         let first = app.otherElements["timeline-header-Layer 1"].firstMatch
         let third = app.otherElements["timeline-header-Layer 3"].firstMatch
-        XCTAssertTrue(first.waitForExistence(timeout: 15))
+        if !first.waitForExistence(timeout: 15) { print("HEADER-UI " + app.debugDescription) }
+        XCTAssertTrue(first.exists)
         first.press(forDuration: 0.5, thenDragTo: third)
+        print("HEADER-SELECTION first=\(String(describing: first.value)) third=\(String(describing: third.value))")
         XCTAssertEqual(first.value as? String, "Selected")
         XCTAssertEqual(third.value as? String, "Selected")
     }
