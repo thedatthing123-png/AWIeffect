@@ -248,29 +248,7 @@ struct TimelineView: View {
                 .accessibilityLabel(layer.name)
                 .accessibilityIdentifier("timeline-clip-\(layer.name)")
                 // Hold a clip to lift it: up / down reorders, sideways moves it in time (snaps to frames, beats, playhead).
-                .gesture(TimelineHold(onMove: { _, delta in
-                    guard !state.isMultiSelecting, !layer.isLocked else { return }
-                    if liftLayer == nil {
-                        NSLog("TIMELINE-LIFT begin %@", layer.name)
-                        liftLayer = layer.id; dragOriginal = layer; state.pause(); state.beginEdit("Move Clip")
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    }
-                    guard let original = dragOriginal else { return }
-                    liftOffset = delta.y
-                    let time = original.inPoint + Double(delta.x / zoom)
-                    state.moveClip(original, by: state.snapTime(time, tolerance: Double(8 / zoom)) - original.inPoint)
-                }, onEnd: { delta in
-                    NSLog("TIMELINE-LIFT end %@ delta=%f", layer.name, delta.y)
-                    defer { liftLayer = nil; liftOffset = 0; dragOriginal = nil; state.endEdit() }
-                    if let from = state.project.layers.firstIndex(where: { $0.id == layer.id }) {
-                        let to = from + Int((delta.y / rowHeight).rounded())
-                        if from != to { state.endEdit(); state.reorderLayer(from: from, to: to) }
-                    }
-                }))
-                .simultaneousGesture(TapGesture().onEnded {
-                    guard liftLayer == nil, !state.isMultiSelecting else { return }
-                    state.openLayer(layer.id)
-                })
+
                 .offset(x: x0, y: 4)
             if editable {
                 trimHandle(layer, start: true).offset(x: x0 - 13, y: 2)
@@ -293,6 +271,23 @@ struct TimelineView: View {
         .onTapGesture {
             if state.isMultiSelecting { state.toggleInMulti(layer.id) } else { state.openLayer(layer.id) }
         }
+        .gesture(TimelineHold(onMove: { _, delta in
+                    guard !state.isMultiSelecting, !layer.isLocked else { return }
+                    if liftLayer == nil {
+                        liftLayer = layer.id; dragOriginal = layer; state.pause(); state.beginEdit("Move Clip")
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    }
+                    guard let original = dragOriginal else { return }
+                    liftOffset = delta.y
+                    let time = original.inPoint + Double(delta.x / zoom)
+                    state.moveClip(original, by: state.snapTime(time, tolerance: Double(8 / zoom)) - original.inPoint)
+                }, onEnd: { delta in
+                    defer { liftLayer = nil; liftOffset = 0; dragOriginal = nil; state.endEdit() }
+                    if let from = state.project.layers.firstIndex(where: { $0.id == layer.id }) {
+                        let to = from + Int((delta.y / rowHeight).rounded())
+                        if from != to { state.endEdit(); state.reorderLayer(from: from, to: to) }
+                    }
+                }))
     }
 
     private func clipHold(_ layer: Layer) -> some Gesture {

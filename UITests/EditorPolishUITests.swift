@@ -39,7 +39,9 @@ final class EditorPolishUITests: XCTestCase {
         XCTAssertTrue(clip.waitForExistence(timeout: 15))
         let start = clip.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0.5)).withOffset(CGVector(dx: 35, dy: 0))
         let end = start.withOffset(CGVector(dx: 0, dy: 46))
+        print("CLIP-HOLD frame=\(clip.frame) first=\(first.frame) second=\(second.frame)")
         start.press(forDuration: 0.5, thenDragTo: end)
+        print("CLIP-HOLD after " + app.debugDescription)
         XCTAssertGreaterThan(first.frame.midY, second.frame.midY)
     }
 }
