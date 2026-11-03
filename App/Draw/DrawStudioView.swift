@@ -431,7 +431,7 @@ struct DrawStudioView: View {
             ZStack(alignment: .leading) {
                 DrawCanvas(session: session)
                 sideSliders.padding(.leading, 8)
-                if showLayers { HStack { Spacer(); LayersPanel(engine: engine, session: session).frame(width: 250).padding(8) }.transition(.move(edge: .trailing)) }
+                if showLayers { HStack { Spacer(); LayersPanel(session: session, engine: engine).frame(width: 250).padding(8) }.transition(.move(edge: .trailing)) }
             }
             if engine.animating { animationBar }
             toolOptions
