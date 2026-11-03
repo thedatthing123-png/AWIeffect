@@ -142,6 +142,7 @@ struct TimelineView: View {
         }
         .frame(width: headerWidth, height: rowHeight, alignment: .leading)
         .background(Theme.surface)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("timeline-header-\(layer.name)")
         .accessibilityValue(state.multiSelection?.contains(layer.id) == true ? "Selected" : "Not selected")
         .contentShape(Rectangle())
