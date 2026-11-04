@@ -170,12 +170,15 @@ struct MotionBlurPanel: View {
                             state.mutate("Motion Blur") { $0.motionBlurEnabled = b }
                         }))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
-                        slider("Shutter Angle", state.project.shutterAngle, 0...720, "%.0f°") { v in state.mutate("Shutter Angle") { $0.shutterAngle = v } }
-                        slider("Quality (samples)", Double(state.project.blurSamples), 3...32, "%.0f") { v in
+                        slider("Shutter Angle", state.project.shutterAngle, 0...1440, "%.0f°") { v in state.mutate("Shutter Angle") { $0.shutterAngle = v } }
+                        slider("Quality (samples)", Double(state.project.blurSamples), 2...64, "%.0f") { v in
                             state.mutate("Blur Samples") { $0.blurSamples = Int(v) }
                         }
                         Text("Real motion blur: the layer is rendered at several moments inside the shutter and averaged, so fast moves, spins and zooms smear naturally. 180° is the film standard; 360°+ exaggerates for velocity edits.")
                             .font(.caption).foregroundStyle(Theme.textDim)
+                        Divider().overlay(Theme.stroke)
+                        PixelMotionBlurControls(state: state, layer: l)
+
                     }
                     .padding(.horizontal, 12).padding(.bottom, 14)
                 }
@@ -207,11 +210,6 @@ struct TimePanel: View {
                         slider("Copies", Double(fx.echoCount), 0...16, "%.0f") { v in set { $0.echoCount = Int(v) } }
                         slider("Delay", fx.echoDelay, 0.01...0.5, "%.2fs") { v in set { $0.echoDelay = v } }
                         slider("Keep", fx.echoDecay * 100, 5...100, "%.0f%%") { v in set { $0.echoDecay = v / 100 } }
-                        Divider().overlay(Theme.stroke)
-                        Text("PIXEL MOTION BLUR (video & pre-comps)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
-                        slider("Amount", fx.pixelMotionBlur, 0...200, "%.0f%%") { v in set { $0.pixelMotionBlur = v } }
-                        Text("Blurs movement inside the clip itself (fast punches, camera whips), like RSMB. 100% = one frame of motion. To blur a whole group of layers, select them → Pre-compose, then turn this on for the pre-comp.")
-                            .font(.caption).foregroundStyle(Theme.textDim)
                         Divider().overlay(Theme.stroke)
                         Toggle("Frame Blending (smooth slow motion)", isOn: Binding(get: { fx.frameBlend }, set: { b in set { $0.frameBlend = b } }))
                             .tint(Theme.accent).foregroundStyle(Theme.text)

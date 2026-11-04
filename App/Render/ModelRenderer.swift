@@ -64,7 +64,7 @@ final class ModelRenderer {
             front = g.front
             node.name = g.front == nil ? "awiShape" : "awiImage"
         } else if let f = o.fileName {
-            guard let scene = try? SCNScene(url: mediaURL(f), options: [.checkConsistency: true]) else { return nil }
+            guard let scene = try? ModelImport.load(url: mediaURL(f)) else { return nil }
             node = SCNNode()
             for c in scene.rootNode.childNodes { node.addChildNode(c) }
         } else {

@@ -53,7 +53,7 @@ kernel void flowBlur(texture2d<half, access::sample> cur [[texture(0)]],
     float l = length(v);
     if (l > p.a.y) v *= p.a.y / l;
     float4 acc = 0.0;
-    const int N = 12;
+    int N = p.a.z > 0 ? clamp(int(p.a.z), 6, 48) : 12;
     for (int k = 0; k < N; k++) {
         float f = (float(k) / float(N - 1) - 0.5);
         acc += float4(cur.sample(mbs, uv + v * f));

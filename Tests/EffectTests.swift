@@ -185,6 +185,9 @@ final class EffectTests: XCTestCase {
                     if pd.id == "size" { a.params["version"] = .choice(1); b.params["version"] = .choice(1) }
                     if pd.id == "phase" { a.params["phase"] = .number(Animated(-0.2)); b.params["phase"] = .number(Animated(0.35)) }
                 }
+                if d.id == "awi.deepGlow" && pd.id == "softness" {
+                    a.params["threshold"] = .number(Animated(50)); b.params["threshold"] = .number(Animated(50))
+                }
                 // Adjustment layer = effect sees the whole varied scene, not just one flat shape.
                 let adj = !d.isTransformEffect && !Self.alphaShaped.contains(d.id)
                 let ra = try render(r, scene(effect: a, onAdjustment: adj)), rb = try render(r, scene(effect: b, onAdjustment: adj))

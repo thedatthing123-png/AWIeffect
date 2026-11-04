@@ -37,7 +37,10 @@ final class PriorityPolishTests: XCTestCase {
         var e = EffectRegistry.deepGlow.makeInstance()
         e.params["radius"] = .number(Animated(200))
         e.params["exposure"] = .number(Animated(-3))
-        XCTAssertEqual(try render(e, color: .black), try render(nil, color: .black))
+        let bytes = try render(e, color: .black)
+        for y in 0..<128 { for x in 0..<128 where hypot(Double(x) - 63.5, Double(y) - 63.5) > 36 {
+            XCTAssertEqual(bytes[(y * 128 + x) * 4 + 3], 0, "Black pixels must not emit an opaque halo")
+        } }
     }
 
     func testMissingTurbulenceControlsRetainLegacyDefaults() throws {

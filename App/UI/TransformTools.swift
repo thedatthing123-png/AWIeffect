@@ -42,7 +42,7 @@ struct TransformPanel: View {
         }
     }
     @AppStorage("awi.transformTool") private var toolRaw = Tool.position.rawValue
-    private var tool: Tool { Tool(rawValue: toolRaw) ?? .position }
+    private var tool: Tool { let saved = Tool(rawValue: toolRaw) ?? .position; return saved == .depth ? .position : saved }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -117,8 +117,8 @@ struct TransformPanel: View {
 
     private var tools: [Tool] {
         guard let l = state.selectedLayer else { return [] }
-        if l.content == .light { return [.position, .depth, .rotation, .link] }
-        return Tool.allCases
+        if l.content == .light { return [.position, .rotation, .link] }
+        return Tool.allCases.filter { $0 != .depth }
     }
 }
 
@@ -128,6 +128,7 @@ struct TransformToolBody: View {
     let layer: Layer
     let tool: TransformPanel.Tool
     @State private var rawPadPosition: Vec2?
+    @State private var positionAxisZ = false
 
     private var t: Double { state.currentTime }
     private var compW: Double { Double(state.project.width) }
@@ -140,6 +141,15 @@ struct TransformToolBody: View {
                 valueRow([("X", p.x, { v in edit("Move") { $0.transform.position.set(Vec2(v, p.y), at: t) } }),
                           ("Y", p.y, { v in edit("Move") { $0.transform.position.set(Vec2(p.x, v), at: t) } }),
                           ("Z", layer.transform.positionZ.value(at: t), { v in edit("Depth") { $0.transform.positionZ.set(v, at: t) } })])
+                HStack {
+                    Button("XY") { positionAxisZ = false }.tint(positionAxisZ ? Theme.textDim : Theme.accent)
+                    Button("Z") { positionAxisZ = true }.tint(positionAxisZ ? Theme.accent : Theme.textDim)
+                }.buttonStyle(.bordered)
+                if positionAxisZ {
+                    SwipePad(hint: "Swipe to adjust Z position", gain: compW * 2, vertical: true) { delta in
+                        state.mutateLayer { l in l.transform.positionZ.set(l.transform.positionZ.value(at: t) + delta.height, at: t) }
+                    } begin: { state.beginPanelGesture("Position Z") } end: { state.endPanelGesture() }
+                } else {
                 SwipePad(hint: "Swipe here to move the layer", gain: compW) { d in
                     let raw = (rawPadPosition ?? layer.transform.position.value(at: t)) + Vec2(d.width, d.height)
                     rawPadPosition = raw
@@ -150,6 +160,7 @@ struct TransformToolBody: View {
                     state.beginPanelGesture("Move Layer")
                 } end: {
                     state.endPanelGesture(); rawPadPosition = nil; state.snapGuides = SnapGuides()
+                }
                 }
                 HStack(spacing: 6) {
                     Toggle("Snap", isOn: $state.snappingEnabled).toggleStyle(.button).font(.caption)

@@ -18,16 +18,29 @@ struct TrimStrip: View {
                 if inside {
                     button("arrow.right.to.line", "Trim Start") { trim(start: true) }
                     button("scissors", "Split") { state.splitSelected() }
+                        .contextMenu {
+                            Button("Move Start to Playhead") { move(start: true) }
+                            Button("Move End to Playhead") { move(start: false) }
+                        }
                     button("arrow.left.to.line", "Trim End") { trim(start: false) }
                 } else if t < l.inPoint {
+                    button("arrow.right.to.line", "Move Start Here") { move(start: true) }
                     button("arrow.left.and.line.vertical.and.arrow.right", "Extend Start Here") { trim(start: true) }
                 } else {
+                    button("arrow.left.to.line", "Move End Here") { move(start: false) }
                     button("arrow.left.and.line.vertical.and.arrow.right", "Extend End Here") { trim(start: false) }
                 }
             }
             .padding(.horizontal, 10).padding(.vertical, 4)
             .background(Theme.surface)
         }
+    }
+
+    private func move(start: Bool) {
+        guard let layer = state.selectedLayer else { return }
+        state.beginEdit(start ? "Move Start to Playhead" : "Move End to Playhead")
+        state.moveClip(layer, by: state.project.snapToFrame(clock.time) - (start ? layer.inPoint : layer.outPoint))
+        state.endEdit()
     }
 
     private func trim(start: Bool) {

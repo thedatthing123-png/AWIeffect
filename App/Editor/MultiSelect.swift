@@ -85,7 +85,7 @@ extension EditorState {
         if clean != project { mutate("Unlink Parents") { $0 = clean } }
         let picked = project.layers.filter { ids.contains($0.id) }
         guard let firstIndex = project.layers.firstIndex(where: { ids.contains($0.id) }) else { return }
-        var comp = Project.new(name: name ?? "Group \(project.precomps.count + 1)", width: project.width, height: project.height,
+        var comp = Project.new(name: name ?? "Precomp \(project.precomps.count + 1)", width: project.width, height: project.height,
                                fps: project.fps, duration: project.duration, background: RGBA(0, 0, 0, 0))
         comp.layers = picked
         var newID = UUID()

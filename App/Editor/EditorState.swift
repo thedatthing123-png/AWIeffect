@@ -106,6 +106,9 @@ final class EditorState: ObservableObject {
     @Published var recoveryNotice: String?
     @Published var saveError: String?
     @Published var beatStatus: String?
+    var preRenderTask: Task<Void, Never>?
+    var preRenderExporter: Exporter?
+    @Published var preRenderProgress: Double?
     var motionTrackingTask: Task<Void, Never>?
     private var beatTask: Task<Void, Never>?
     /// Typing on the canvas: the timeline and panels step aside for the keyboard, the rest is dimmed.
@@ -237,17 +240,18 @@ final class EditorState: ObservableObject {
     /// Continuous mutation (slider drag / canvas drag): call beginEdit first, endEdit after.
     func mutateLayer(_ change: (inout Layer) -> Void) {
         guard let i = selectedIndex else { return }
-        if liveGesture, var lp = live.project, lp.layers.indices.contains(i) {
-            change(&lp.layers[i])
-            lp.modifiedAt = Date()
-            live.project = lp
-            return
-        }
-        var p = project
+        let before = liveGesture ? (live.project ?? project) : project
+        guard before.layers.indices.contains(i) else { return }
+        var p = before
         change(&p.layers[i])
-        p.fitAutoLength()
+        let old = before.layers[i].transform
+        if p.layers[i].transform.position != old.position || p.layers[i].transform.positionZ != old.positionZ {
+            p.layers[i].transform.pairPositionKeys(previous: old, at: currentTime)
+        }
+        propagateSelectionTransform(before: before, into: &p, primary: before.layers[i].id)
         p.modifiedAt = Date()
-        project = p
+        if liveGesture { live.project = p }
+        else { p.fitAutoLength(); project = p }
     }
 
     var canUndo: Bool { !undoStack.isEmpty }
@@ -517,7 +521,7 @@ final class EditorState: ObservableObject {
         guard let l = selectedLayer else { return false }
         let t = currentTime
         switch key {
-        case .position: return l.transform.position.hasKeyframe(at: t)
+        case .position: return l.transform.position.hasKeyframe(at: t) || l.transform.positionZ.hasKeyframe(at: t)
         case .scale: return l.transform.scale.hasKeyframe(at: t)
         case .rotation: return l.transform.rotation.hasKeyframe(at: t)
         case .opacity: return l.transform.opacity.hasKeyframe(at: t)
@@ -534,7 +538,7 @@ final class EditorState: ObservableObject {
     func isAnimated(_ key: PropertyKey) -> Bool {
         guard let l = selectedLayer else { return false }
         switch key {
-        case .position: return l.transform.position.isAnimated
+        case .position: return l.transform.position.isAnimated || l.transform.positionZ.isAnimated
         case .scale: return l.transform.scale.isAnimated
         case .rotation: return l.transform.rotation.isAnimated
         case .opacity: return l.transform.opacity.isAnimated
@@ -553,7 +557,17 @@ final class EditorState: ObservableObject {
         let t = currentTime
         mutate("Keyframe \(key.title)") { p in
             switch key {
-            case .position: p.layers[i].transform.position.toggleKeyframe(at: t)
+            case .position, .positionZ:
+                var tr = p.layers[i].transform
+                let remove = tr.position.hasKeyframe(at: t) || tr.positionZ.hasKeyframe(at: t)
+                if remove {
+                    if tr.position.hasKeyframe(at: t) { tr.position.toggleKeyframe(at: t) }
+                    if tr.positionZ.hasKeyframe(at: t) { tr.positionZ.toggleKeyframe(at: t) }
+                } else {
+                    tr.position.toggleKeyframe(at: t); tr.positionZ.toggleKeyframe(at: t)
+                    tr.pairPositionKeys(previous: p.layers[i].transform, at: t)
+                }
+                p.layers[i].transform = tr
             case .scale: p.layers[i].transform.scale.toggleKeyframe(at: t)
             case .rotation: p.layers[i].transform.rotation.toggleKeyframe(at: t)
             case .opacity: p.layers[i].transform.opacity.toggleKeyframe(at: t)
@@ -561,7 +575,6 @@ final class EditorState: ObservableObject {
             case .size: p.layers[i].size.toggleKeyframe(at: t)
             case .fill: p.layers[i].fill.toggleKeyframe(at: t)
             case .cornerRadius: p.layers[i].cornerRadius.toggleKeyframe(at: t)
-            case .positionZ: p.layers[i].transform.positionZ.toggleKeyframe(at: t)
             case .rotationX: p.layers[i].transform.rotationX.toggleKeyframe(at: t)
             case .rotationY: p.layers[i].transform.rotationY.toggleKeyframe(at: t)
             }

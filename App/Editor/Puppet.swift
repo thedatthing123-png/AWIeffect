@@ -159,6 +159,12 @@ struct PuppetPanel: View {
                     }
                     ForEach(pins.indices, id: \.self) { k in
                         HStack {
+                            if let j = state.puppetEffectIndex, let effect = state.selectedLayer?.effects[j] {
+                                let status = state.effectParamHasKeyframe(effect.id, "pinD\(k)")
+                                KeyframeDiamond(filled: status.filled, animated: status.animated) {
+                                    state.toggleEffectKeyframe(effect.id, "pinD\(k)")
+                                }.accessibilityLabel("Pin \(k + 1) keyframe")
+                            }
                             Image(systemName: "pin.fill").foregroundStyle(Theme.warning)
                             Text("Pin \(k + 1)").font(.system(size: 13)).foregroundStyle(Theme.text)
                             Spacer()

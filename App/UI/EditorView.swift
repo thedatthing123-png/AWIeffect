@@ -251,9 +251,10 @@ struct EditorView: View {
                 if !state.effectClipboard.isEmpty { Button { state.pasteEffects() } label: { Label("Paste Effects", systemImage: "sparkles") } }
                 Divider()
                 if case .precomp = l.content {
-                    Button { state.openPrecomp() } label: { Label("Open Group", systemImage: "arrow.down.right.and.arrow.up.left") }
+                    Button { state.openPrecomp() } label: { Label("Open Precomp", systemImage: "arrow.down.right.and.arrow.up.left") }
+                    Button { state.unpackSelectedPrecomp() } label: { Label("Un-precompose", systemImage: "square.stack.3d.down.right") }
                 } else {
-                    Button { state.precomposeSelected() } label: { Label("Group (Pre-compose)", systemImage: "square.stack.3d.up") }
+                    Button { state.precomposeSelected() } label: { Label("Pre-compose", systemImage: "square.stack.3d.up") }
                 }
                 if l.isGroup {
                     Button { state.openGroup() } label: { Label("Open Group", systemImage: "folder") }

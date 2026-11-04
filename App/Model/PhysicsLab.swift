@@ -331,20 +331,44 @@ extension EditorState {
     }
 
     func addModelLayer(text: String?, fileURL: URL?) {
-        var opts = Model3DOptions()
-        if let t = text { opts.text = t }
-        if let u = fileURL {
-            let access = u.startAccessingSecurityScopedResource()
-            defer { if access { u.stopAccessingSecurityScopedResource() } }
-            guard let data = try? Data(contentsOf: u),
-                  let name = try? store.importMedia(data: data, ext: u.pathExtension.isEmpty ? "usdz" : u.pathExtension, into: rootProject.id) else { return }
-            opts.fileName = name
+        if let url = fileURL {
+            let projectID = rootProject.id
+            recoveryNotice = "Loading 3D model…"
+            Task {
+                let access = url.startAccessingSecurityScopedResource()
+                defer { if access { url.stopAccessingSecurityScopedResource() } }
+                do {
+                    let archive = try await Task.detached(priority: .userInitiated) {
+                        let scene = try ModelImport.load(url: url)
+                        let output = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".scn")
+                        guard scene.write(to: output, options: nil, delegate: nil, progressHandler: nil) else {
+                            throw CocoaError(.fileWriteUnknown)
+                        }
+                        defer { try? FileManager.default.removeItem(at: output) }
+                        return try Data(contentsOf: output)
+                    }.value
+                    guard rootProject.id == projectID else { return }
+                    let name = try store.importMedia(data: archive, ext: "scn", into: projectID)
+                    var options = Model3DOptions(); options.fileName = name
+                    insertModel(options, name: url.deletingPathExtension().lastPathComponent)
+                    recoveryNotice = nil
+                } catch { recoveryNotice = "Couldn't import this model: \(error.localizedDescription)" }
+            }
+            return
         }
+        var opts = Model3DOptions()
+        if let text { opts.text = text }
+
+        insertModel(opts, name: "3D \(opts.text)")
+    }
+
+    private func insertModel(_ opts: Model3DOptions, name: String) {
         let side = Double(min(project.width, project.height)) * 0.7
-        mutate(fileURL == nil ? "Add 3D Text" : "Add 3D Model") { p in
-            var l = p.makeLayer(name: fileURL?.deletingPathExtension().lastPathComponent ?? "3D \(opts.text)", content: .model,
+        mutate("Add 3D Model") { p in
+            var l = p.makeLayer(name: name, content: .model,
                                 size: Vec2(side, side))
             l.model3D = opts
+            l.is3D = true
             l.fill = Animated(.white)
             p.layers.insert(l, at: 0)
             selectedLayerID = l.id

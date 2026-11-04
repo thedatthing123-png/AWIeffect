@@ -295,55 +295,15 @@ extension EffectRegistry {
 
     static let deepGlow = EffectDefinition(
         id: "awi.deepGlow", name: "AWI Deep Glow", category: .color, aeMatchNames: ["PEDeepGlow", "PEDG2"],
-        summary: "Deep, wide glow from the whole subject that keeps its own colors: halos glow in the subject's hue and never wash out to white. Threshold limits it to the brighter parts if you want.",
-        params: [.number("radius", "Radius", 120, 1, 2000, unit: "px"), .number("exposure", "Exposure", 0, -4, 4, step: 0.01),
-                 .number("threshold", "Threshold", 0, 0, 100, unit: "%"), .color("tint", "Tint", RGBA(1, 1, 1)),
-                 .number("aberration", "Chromatic Aberration", 0, 0, 40, unit: "px"),
-                 .number("saturation", "Glow Saturation", 30, 0, 200, unit: "%")],
+        summary: "Long-tailed multiscale light falloff with soft thresholding, gamma correction and bounded-resolution processing. No random flicker or noise.",
+        params: [.number("radius", "Radius", 120, 0.1, 8000, unit: "px"), .number("exposure", "Exposure", 0, -10, 10, step: 0.01),
+                 .number("threshold", "Threshold", 0, 0, 100, unit: "%"), .number("softness", "Threshold Softness", 8, 0.1, 100, unit: "%"),
+                 .color("tint", "Tint", .white), .number("aberration", "Chromatic Aberration", 0, 0, 200, unit: "px"),
+                 .number("saturation", "Glow Saturation", 30, 0, 300, unit: "%"), .number("falloff", "Falloff", 1, 0.3, 3, step: 0.01),
+                 .toggle("gamma", "Gamma Correction", true), .toggle("glowOnly", "Glow Only", false),
+                 .choice("quality", "Glow Resolution", ["Fast · 256", "Balanced · 512", "High · 1024"], 1), .number("mix", "Mix", 100, 0, 100, unit: "%")],
         margin: { e, t in min(e.number("radius", t) * 1.5, 900) },
-        stage: .pixels { ctx in
-            // Glow source: the whole subject (threshold 0), or only its brighter parts.
-            var source = ctx.input
-            let th = ctx.num("threshold") / 100
-            if th > 0.001 {
-                var tp = EffectParams(); tp.a = SIMD4(f(th), 0.08, 0, 0)
-                let bright = ctx.temp()
-                ctx.gpu.run("fxGlowThreshold", ctx.cb, textures: [ctx.input, bright], params: tp, grid: bright)
-                source = bright
-            }
-            // The glow is soft, so it's built on a smaller copy (half or quarter size): same look, far less memory.
-            let r0 = ctx.num("radius") * ctx.unit
-            let down = r0 > 160 ? 4 : (r0 > 24 ? 2 : 1)
-            if down > 1 {
-                let small = ctx.pool.acquire(width: max(1, source.width / down), height: max(1, source.height / down))
-                ctx.gpu.run("fxResample", ctx.cb, textures: [source, small], grid: small)
-                source = small
-            }
-            let r = r0 / Double(down)
-            // Six octaves of blur summed: tight core + very wide, deep halo.
-            var acc: MTLTexture? = nil
-            for k in 0..<6 {
-                let g = ctx.gpu.gaussian(ctx, input: source, sigma: max(0.6, r / pow(2, Double(5 - k)) / 2))
-                if let a = acc {
-                    let o = ctx.pool.acquire(width: source.width, height: source.height); var add = EffectParams(); add.a = SIMD4(1, 0, 0, 0)
-                    ctx.gpu.run("fxGlowCombine", ctx.cb, textures: [a, g, o], params: add, grid: o); acc = o
-                } else { acc = g }
-            }
-            var glow = acc!
-            let ca = ctx.num("aberration") * ctx.unit / Double(down)
-            if ca > 0.1 {
-                let o = ctx.pool.acquire(width: glow.width, height: glow.height); var p = EffectParams(); p.a = SIMD4(f(ca), 0, 0, 0)
-                ctx.gpu.run("fxRGBSplit", ctx.cb, textures: [glow, o], params: p, grid: o); glow = o
-            }
-            // Color-keeping combine: adds light in the subject's hue; anything past full brightness is scaled as
-            // a whole instead of clipping to white.
-            let out = ctx.temp()
-            var cp = EffectParams()
-            cp.a = SIMD4(f(pow(2, ctx.num("exposure")) / 4), f(ctx.num("saturation") / 100), 0, 0)
-            cp.b = ctx.effect.color("tint", ctx.time).simd
-            ctx.gpu.run("fx19GlowKeep", ctx.cb, textures: [ctx.input, out, glow], params: cp, grid: out)
-            return out
-        })
+        stage: .pixels { DeepGlow.render($0) })
 
     static let saber = EffectDefinition(
         id: "awi.saber", name: "AWI Saber", category: .color, aeMatchNames: ["VIDEOCOPILOT Saber"],

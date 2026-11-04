@@ -64,6 +64,9 @@ final class Exporter {
         guard let r = Renderer.shared else { throw ExportError.noRenderer }
         // Full-resolution footage for the final render (editing uses lighter proxies); restored when done.
         VideoSources.shared.setFullQuality(true)
+        let savedProxy = Renderer.allowPrecompProxy
+        Renderer.allowPrecompProxy = false
+        defer { Renderer.allowPrecompProxy = savedProxy }
         let savedCap = Renderer.blurSampleCap
         Renderer.blurSampleCap = nil
         defer { VideoSources.shared.setFullQuality(false); Renderer.blurSampleCap = savedCap }

@@ -13,6 +13,8 @@ struct LayerTimeFX: Codable, Equatable {
     var frameBlendStore: Bool? = nil
     var frameBlend: Bool { get { frameBlendStore ?? false } set { frameBlendStore = newValue ? true : nil } }
     /// Pixel Motion Blur (RSMB-style) on footage: blur along how pixels move inside the clip, % of one frame.
+    var pixelBlurSamples: Int? = nil
+    var pixelBlurLimit: Double? = nil
     var pixelMotionBlurStore: Double? = nil
     var pixelMotionBlur: Double { get { pixelMotionBlurStore ?? 0 } set { pixelMotionBlurStore = newValue > 0 ? newValue : nil } }
 
@@ -316,6 +318,7 @@ struct Layer: Codable, Equatable, Identifiable {
     var model3D: Model3DOptions? = nil
     /// Alight Motion-style group: this layer is a group container; its parts are the layers whose `groupID` is
     /// this layer's id. The group's transform, masks, effects, blend mode and matte apply to all parts together.
+    var groupCanvasSize: Vec2? = nil
     var isGroup = false
     var groupCollapsed = false
     /// The group this layer is a part of.
@@ -383,6 +386,7 @@ struct Layer: Codable, Equatable, Identifiable {
         extrude = try c.decodeIfPresent(Animated<Double>.self, forKey: .extrude) ?? Animated(0)
         camera = try c.decodeIfPresent(CameraOptions.self, forKey: .camera)
         model3D = try c.decodeIfPresent(Model3DOptions.self, forKey: .model3D)
+        groupCanvasSize = try c.decodeIfPresent(Vec2.self, forKey: .groupCanvasSize)
         isGroup = try c.decodeIfPresent(Bool.self, forKey: .isGroup) ?? false
         groupCollapsed = try c.decodeIfPresent(Bool.self, forKey: .groupCollapsed) ?? false
         groupID = try c.decodeIfPresent(UUID.self, forKey: .groupID)
@@ -418,6 +422,7 @@ struct Project: Codable, Equatable, Identifiable {
     /// Index 0 is the TOP layer (AE order).
     var layers: [Layer] = []
     /// Nested compositions used by `.precomp` layers (optional so older saves still decode).
+    var preRenderProxy: PrecompProxy? = nil
     var precompList: [Project]? = nil
     var precomps: [Project] {
         get { precompList ?? [] }

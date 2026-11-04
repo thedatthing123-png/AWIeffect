@@ -163,6 +163,7 @@ struct AddPanel: View {
                         ForEach(ShapeKind.allCases.filter { $0 != .path }) { k in
                             ToolTile(icon: k.symbol, title: k.title) { state.addShape(k) }
                         }
+                        ToolTile(icon: "circle.dashed", title: "Null") { state.addNull() }
                         ToolTile(icon: "rectangle.fill", title: "Solid") { state.addSolid() }
                         ToolTile(icon: "slider.horizontal.below.rectangle", title: "Adjustment") { state.addAdjustmentLayer() }
                         ToolTile(icon: "sparkles", title: "Particles") { state.addParticleLayer() }

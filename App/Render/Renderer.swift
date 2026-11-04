@@ -65,6 +65,13 @@ final class Renderer {
                                mediaURL: (String) -> URL) -> MTLTexture? {
         guard currentDepth < 6, let pool = currentPool, var comp = precompLibrary.first(where: { $0.id == id }) else { return nil }
         let library = precompLibrary, depth = currentDepth
+        if Self.allowPrecompProxy, let proxy = comp.preRenderProxy,
+           proxy.signature == PrecompRenderCache.signature(comp, library: library),
+           let frame = VideoSources.shared.texture(url: mediaURL(proxy.file), time: layer.sourceTime(at: time), device: device, channel: layer.id.hashValue) {
+            let output = pool.acquire(width: frame.width, height: frame.height)
+            fx.run("fxProxyPremultiply", cb, textures: [frame, output], grid: output)
+            return output
+        }
         let scale = min(2, max(0.05, density))
         let maxSide = Double(max(comp.width, comp.height)) * scale
         let s = maxSide > 4096 ? scale * 4096 / maxSide : scale
@@ -181,7 +188,7 @@ final class Renderer {
             frontier.append(contentsOf: descendants.filter(\.isGroup).map(\.id))
         }
         let hs = Self.layerHalfSize(group, time: time)
-        let w0 = max(1, Int((hs.x * 2).rounded())), h0 = max(1, Int((hs.y * 2).rounded()))
+        let w0 = max(1, Int((group.groupCanvasSize?.x ?? (hs.x * 2)).rounded())), h0 = max(1, Int((group.groupCanvasSize?.y ?? (hs.y * 2)).rounded()))
         let scale = min(2, max(0.05, density))
         let maxSide = Double(max(w0, h0)) * scale
         let s = maxSide > 4096 ? scale * 4096 / maxSide : scale
@@ -305,6 +312,7 @@ final class Renderer {
     }
 
     /// Motion-blur samples allowed in the live preview (nil = the project's full setting, used by export).
+    nonisolated(unsafe) static var allowPrecompProxy = true
     nonisolated(unsafe) static var blurSampleCap: Int? = 8
 
     /// Max side of an offscreen layer buffer.
@@ -356,13 +364,23 @@ final class Renderer {
             imageOrder.removeAll { $0 == key }; imageOrder.append(key)
             return t
         }
-        let t = try? loader.newTexture(URL: url, options: [
+        var t = try? loader.newTexture(URL: url, options: [
             .SRGB: false,
             .textureStorageMode: MTLStorageMode.private.rawValue,
             .origin: MTKTextureLoader.Origin.topLeft,
             .allocateMipmaps: true,
             .generateMipmaps: true,
         ])
+        if t == nil, let image = UIImage(contentsOfFile: url.path) {
+            let format = UIGraphicsImageRendererFormat(); format.scale = 1; format.preferredRange = .standard
+            let pixels = CGSize(width: image.size.width * image.scale, height: image.size.height * image.scale)
+            let factor = min(1, 8192 / max(pixels.width, pixels.height))
+            let size = CGSize(width: max(1, pixels.width * factor), height: max(1, pixels.height * factor))
+            let normalized = UIGraphicsImageRenderer(size: size, format: format).image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
+            if let cg = normalized.cgImage {
+                t = try? loader.newTexture(cgImage: cg, options: [.SRGB: false, .origin: MTKTextureLoader.Origin.topLeft])
+            }
+        }
         if let t {
             let cost = max(t.allocatedSize, t.width * t.height * 4 * 4 / 3)
             while !imageOrder.isEmpty && (imageCacheBytes + cost > Self.imageCacheBudget || imageOrder.count >= 64) {
@@ -866,7 +884,7 @@ final class Renderer {
                     fx.run("flowEstimate", cb, textures: [prev, flow, frame], params: p, grid: flow)
                     let out = pool.acquire(width: frame.width, height: frame.height)
                     var q = EffectParams()
-                    q.a = SIMD4(Float(amt / 100), 0.15, 0, 0)
+                    q.a = SIMD4(Float(amt / 100), Float(layer.timeFX?.pixelBlurLimit ?? 0.15), Float(layer.timeFX?.pixelBlurSamples ?? 12), 0)
                     fx.run("flowBlur", cb, textures: [frame, out, flow], params: q, grid: out)
                     return .image(out)
                 }
@@ -892,7 +910,7 @@ final class Renderer {
                 fx.run("flowEstimate", cb, textures: [prev, flow, tex], params: p, grid: flow)
                 let out = pool.acquire(width: tex.width, height: tex.height)
                 var q = EffectParams()
-                q.a = SIMD4(Float(amt / 100), 0.15, 0, 0)
+                q.a = SIMD4(Float(amt / 100), Float(layer.timeFX?.pixelBlurLimit ?? 0.15), Float(layer.timeFX?.pixelBlurSamples ?? 12), 0)
                 fx.run("flowBlur", cb, textures: [tex, out, flow], params: q, grid: out)
                 return .model(out)
             }

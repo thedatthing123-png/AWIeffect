@@ -17,6 +17,9 @@ struct LayerHomePanel: View {
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: state.selectedLayer?.name ?? "Layer")
+            if let selected = state.selectedLayer, case .precomp = selected.content {
+                PrecompRenderControls(state: state).padding(.horizontal, 12)
+            }
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 10) {
                     ForEach(groups, id: \.0) { g in
@@ -60,13 +63,18 @@ struct LayerHomePanel: View {
         var fx: [Tile] = []
         var timing: [Tile] = []
         var layer: [Tile] = []
-        if l.isGroup { layer.append(Tile(id: "Open Group", icon: "folder") { state.openGroup() }) }
+        if l.isGroup {
+            layer.append(Tile(id: "Open Group", icon: "folder") { state.openGroup() })
+            layer.append(Tile(id: "Ungroup", icon: "folder.badge.minus") { state.ungroupSelected() })
+        }
         if case .video = c { layer.append(Tile(id: "Motion Tracking", icon: "scope") { trackLauncher.active = true }) }
         switch c {
         case .text: look.append(Tile(id: "Text Studio", icon: "textformat", panel: .text))
         case .shape: look.append(Tile(id: "Edit Shape", icon: "skew", panel: .shape))
         case .model: look.append(Tile(id: "3D Model", icon: "cube.transparent", panel: .model))
-        case .precomp: layer.append(Tile(id: "Open Comp", icon: "arrow.down.right.and.arrow.up.left") { state.openPrecomp() })
+        case .precomp:
+            layer.append(Tile(id: "Open Precomp", icon: "arrow.down.right.and.arrow.up.left") { state.openPrecomp() })
+            layer.append(Tile(id: "Un-precompose", icon: "square.stack.3d.down.right") { state.unpackSelectedPrecomp() })
         default: break
         }
         switch c {
