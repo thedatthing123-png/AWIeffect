@@ -186,6 +186,39 @@ final class EditorPolishRegressionTests: XCTestCase {
         XCTAssertGreaterThan(coverage(blurred), coverage(sharp))
     }
 
+    func testLinkedParentMovementProducesMotionBlur() throws {
+        guard let renderer = Renderer.shared else { throw XCTSkip("Metal unavailable") }
+        var p = scene(); p.layers.removeFirst(); p.smoothMotion = false
+        var parent = p.makeLayer(name: "parent", content: .solid, size: Vec2(1, 1)); parent.isNull = true
+        parent.transform.position.insertKeyframe(Keyframe(time: 0, value: Vec2(-500, 64), interpolation: .linear))
+        parent.transform.position.insertKeyframe(Keyframe(time: 1, value: Vec2(628, 64), interpolation: .linear))
+        p.layers[0].size = Animated(Vec2(4, 20)); p.layers[0].transform.position = Animated(.zero)
+        p.layers[0].parentID = parent.id; p.layers[0].motionBlur = true; p.layers.insert(parent, at: 0)
+        p.shutterAngle = 360; p.blurSamples = 16
+        func frame() throws -> [UInt8] { try XCTUnwrap(renderer.renderPixels(project: p, time: 0.5, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) })).rgba }
+        p.motionBlurEnabled = false; let sharp = try frame()
+        p.motionBlurEnabled = true; let blurred = try frame()
+        func coverage(_ pixels: [UInt8]) -> Int { stride(from: 3, to: pixels.count, by: 4).filter { pixels[$0] > 8 }.count }
+        XCTAssertGreaterThan(coverage(blurred), coverage(sharp))
+    }
+
+    @MainActor func testPrecompSplitAndTrimPreserveSourceTiming() {
+        var p = scene()
+        let child = scene(); p.precomps = [child]
+        var layer = p.makeLayer(name: "precomp", content: .precomp(id: child.id), size: Vec2(128, 128))
+        layer.inPoint = 1; layer.outPoint = 5; layer.sourceStart = 2; layer.speed = 0.5; p.layers = [layer]
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let state = EditorState(project: p, store: ProjectStore(root: root))
+        state.select(layer.id); state.currentTime = 3; state.splitSelected()
+        XCTAssertEqual(state.project.layers.count, 2)
+        let second = state.project.layers.first { $0.id != layer.id }!
+        XCTAssertEqual(second.sourceTime(at: 3), layer.sourceTime(at: 3), accuracy: 1e-9)
+        state.trimClip(second, start: true, by: 0.5)
+        let trimmed = state.project.layers.first { $0.id == second.id }!
+        XCTAssertEqual(trimmed.sourceTime(at: 3.5), layer.sourceTime(at: 3.5), accuracy: 1e-9)
+    }
+
     func testSnappingUsesVisibleEdgesAndReleasesAwayFromGuide() {
         let edge = LayerPlacement.snap(features: [42, 62, 82], targets: [0, 64, 128], held: nil, grab: 3)
         XCTAssertEqual(edge.delta, 2); XCTAssertEqual(edge.guide, 64)

@@ -572,7 +572,9 @@ final class Renderer {
             if case .adjustment = layer.content {
                 guard layer.effects.contains(where: { $0.isEnabled }) else { continue }
                 encodeAdjustment(layer, effects: layer.effects.filter(\.isEnabled), time: time, renderScale: renderScale, opacity: opacity,
-                                 comp: comp, cb: cb, pool: pool)
+                                 comp: comp, cb: cb, pool: pool,
+                                 shutter: (project.motionBlurEnabled && layer.motionBlur) ? project.shutterAngle / 360 / max(project.fps, 1) : 0,
+                                 sampleCount: min(project.blurSamples, Renderer.blurSampleCap ?? project.blurSamples))
                 continue
             }
 
@@ -950,32 +952,51 @@ final class Renderer {
     }
 
     private func encodeAdjustment(_ layer: Layer, effects: [EffectInstance], time: Double, renderScale: Double, opacity: Double,
-                                  comp: MTLTexture, cb: MTLCommandBuffer, pool: TexturePool) {
+                                  comp: MTLTexture, cb: MTLCommandBuffer, pool: TexturePool, shutter: Double = 0, sampleCount: Int = 1) {
         let copy = pool.acquire(width: comp.width, height: comp.height)
         fx.run("fxCopy", cb, textures: [comp, copy], grid: copy)
+        func process(at evaluationTime: Double) -> MTLTexture {
         var current = copy
         for e in effects {
             guard let def = EffectRegistry.definition(e.typeID) else { continue }
             switch def.stage {
             case .pixels(let run):
-                current = run(EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: time, unit: renderScale, pool: pool))
+                current = run(EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: evaluationTime, unit: renderScale, pool: pool))
             case .transform:
                 let transformed = pool.acquire(width: comp.width, height: comp.height)
                 fx.run("fxClear", cb, textures: [transformed], grid: transformed)
                 var control = layer; control.effects = [e]
-                let offset = Self.transformOffsets(control, time: time)
+                let offset = Self.transformOffsets(control, time: evaluationTime)
                 var carrier = layer; carrier.fill = Animated(.white)
                 let angle = offset.dr * .pi / 180
                 let matrix = simd_double3x3(columns: (SIMD3(cos(angle) * offset.ds, sin(angle) * offset.ds, 0),
                     SIMD3(-sin(angle) * offset.ds, cos(angle) * offset.ds, 0),
                     SIMD3(Double(comp.width) / 2 + offset.dx * renderScale, Double(comp.height) / 2 + offset.dy * renderScale, 1)))
                 drawQuad(cb: cb, target: transformed, matrix: matrix, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 1,
-                         opacity: 1, layer: carrier, time: time, source: .image(current), premultipliedImage: true, blendOverride: .normal)
+                         opacity: 1, layer: carrier, time: evaluationTime, source: .image(current), premultipliedImage: true, blendOverride: .normal)
                 current = transformed
             }
 
         }
-        let M = Self.layerMatrix(layer, time: time, renderScale: renderScale)
+        return current
+        }
+        var current: MTLTexture
+        let samples = shutter > 0 && effects.contains(where: { EffectRegistry.definition($0.typeID)?.isTransformEffect == true }) ? max(2, min(16, sampleCount)) : 1
+        if samples == 1 { current = process(at: time) }
+        else {
+            let accumulation = pool.acquire(width: comp.width, height: comp.height)
+            fx.run("fxClear", cb, textures: [accumulation], grid: accumulation)
+            var carrier = layer; carrier.fill = Animated(.white)
+            let matrix = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(comp.width) / 2, Double(comp.height) / 2, 1)))
+            for index in 0..<samples {
+                let evaluationTime = time + (Double(index) / Double(samples - 1) - 0.5) * shutter
+                let image = process(at: evaluationTime)
+                drawQuad(cb: cb, target: accumulation, matrix: matrix, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 1,
+                         opacity: 1 / Double(samples), layer: carrier, time: time, source: .image(image), premultipliedImage: true, blendOverride: .add)
+            }
+            current = accumulation
+        }
+        let M = Self.layerMatrix(layer, time: time, renderScale: renderScale, includeEffects: false)
         let inv = M.inverse
         let hs = Self.layerHalfSize(layer, time: time)
         let sc = layer.transform.scale.value(at: time)

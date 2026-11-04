@@ -428,7 +428,8 @@ extension Renderer {
     static func renderTextData(_ layer: Layer, time: Double) -> TextData? {
         guard var text = layer.text?.resolved(at: time) else { return nil }
         for effect in layer.effects where effect.isEnabled && effect.typeID == "awi.textSpacing" {
-            text.tracking = Animated(text.tracking.value(at: time) + effect.number("spacing", time))
+            let spacing = effect.number("spacing", time)
+            if spacing.isFinite { text.tracking = Animated(text.tracking.value(at: time) + min(1000, max(-300, spacing))) }
             let anchor = effect.choice("anchor")
             if anchor > 0 { text.spacingAnchor = anchor - 1 }
         }
