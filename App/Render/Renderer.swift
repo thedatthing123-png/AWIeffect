@@ -1031,6 +1031,28 @@ final class Renderer {
         enc.dispatchThreadgroups(groups, threadsPerThreadgroup: tg)
     }
 
+    /// Font-contour effects use the same glyph transform/color/opacity path as normal text.
+    func contourGlyphTexture(_ glyph: LaidGlyph, effects: [EffectInstance], time: Double, scale: Double,
+                             blur rawBlur: Double, outline rawOutline: Double, cb: MTLCommandBuffer) -> (tex: MTLTexture, pad: Double, scale: Double)? {
+        guard !effects.isEmpty, let pool = currentPool, scale.isFinite, rawBlur.isFinite, rawOutline.isFinite,
+              let contours = FontContourGeometry.paths(glyph) else { return nil }
+        let b = pow(2,(log2(max(scale,0.05))*4).rounded(.up)/4)
+        let blur = min(200,max(0,rawBlur))
+        let width = min(128, effects.reduce(min(80,max(0,rawOutline))) { $0 + min(12,max(0.25,$1.number("width",time))) })
+        let pad = (width/2 + blur*3 + 2)*b
+        let rawW = ceil(glyph.halfSize.x*2*b+pad*2), rawH = ceil(glyph.halfSize.y*2*b+pad*2)
+        guard rawW.isFinite, rawH.isFinite, rawW > 0, rawH > 0, rawW < 4096, rawH < 4096 else { return nil }
+        let texture = pool.acquire(width:Int(rawW),height:Int(rawH))
+        fx.run("fxClear",cb,textures:[texture],grid:texture)
+        let matrix = simd_double3x3(columns:(SIMD3(b,0,0),SIMD3(0,b,0),SIMD3(rawW/2,rawH/2,1)))
+        for path in FontContourGeometry.trimmed(contours,effects:effects,time:time) {
+            PathGPU.shared?.drawPath(cb:cb,target:texture,matrix:matrix,path:path,fill:nil,
+                                     stroke:(color:.white,width:width,trim:(0,100,0)),opacity:1,blend:.normal,aa:1/b)
+        }
+        let context = EffectContext(gpu:fx,cb:cb,input:texture,effect:effects[0],time:time,unit:b,pool:pool)
+        return (fx.gaussian(context,input:texture,sigma:blur*b),pad,b)
+    }
+
     // MARK: Synchronous helpers (thumbnails, tests)
 
     /// Renders a frame and returns RGBA8 pixels composited over black (row-major, top-left origin).

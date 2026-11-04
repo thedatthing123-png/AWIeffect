@@ -1,0 +1,1397 @@
+[
+  {
+    "proposal": 1,
+    "title": "Drawing Progress",
+    "decision": "delivered",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Build 7 Draw Progress; no new slot.",
+    "specification": "Reveal or hide a stroke along its measured length. Controls: Start Trim, End Trim, Offset, Reverse. Preserve brush width, caps and path direction; glow sees only the revealed segment."
+  },
+  {
+    "proposal": 2,
+    "title": "Recorded Brush Replay",
+    "decision": "owner_extension",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Art Studio needs saved stroke events; DrawingDoc currently saves raster layers.",
+    "specification": "Reconstruct newly recorded Art Studio painting in its original order, including pressure and erasing. Controls: progress, playback rate, pause compression. Requires saved stroke events; old flattened PNGs cannot recover this history."
+  },
+  {
+    "proposal": 3,
+    "title": "Sequential Stroke Build",
+    "decision": "owner_extension",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Review Art Studio multi-stroke ordering and path ownership; not a second basic progress effect.",
+    "specification": "Finish one path before beginning the next. Controls: progress, ordering, inter-stroke delay, length-weighted timing. Compare against Drawing Progress's modes before approving a separate catalog entry."
+  },
+  {
+    "proposal": 4,
+    "title": "Stroke Growth from Seeds",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Grow visible segments outward from selected points on a path. Controls: seed positions, growth distance, overlap merging. Multiple seeds can reveal branches simultaneously."
+  },
+  {
+    "proposal": 5,
+    "title": "Moving Stroke Window",
+    "decision": "covered",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Existing ShapeStroke trimStart/trimEnd/trimOffset animate a moving window.",
+    "specification": "Move a finite visible section along a path, like a traveling highlight. Controls: head position, tail length, taper. If Drawing Progress already covers this completely, keep it as a preset instead."
+  },
+  {
+    "proposal": 6,
+    "title": "Variable Width Profile",
+    "decision": "owner_extension",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare raster pressure/taper with vector width profiles; extend stroke model where missing.",
+    "specification": "Shape stroke thickness with an editable curve along its length. Controls: profile, minimum width, pressure blend. Tapers should remain smooth when the path is resampled."
+  },
+  {
+    "proposal": 7,
+    "title": "Animated Dash Flow",
+    "decision": "owner_extension",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Dash sequences belong in shape stroke geometry; check trims and caps.",
+    "specification": "Move a configurable dash-and-gap pattern along a stroke. Controls: dash sequence, phase, cap shape, fit-to-length. Dashes follow actual distance rather than vertex spacing."
+  },
+  {
+    "proposal": 8,
+    "title": "Brush Stamp Along Path",
+    "decision": "owner_extension",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Review brush stamps and path tools before approving a separate effect.",
+    "specification": "Place a chosen image repeatedly along a path. Controls: distance, tangent alignment, scale, seeded variation. Useful for leaves, stitches and decorative borders."
+  },
+  {
+    "proposal": 9,
+    "title": "Calligraphic Nib",
+    "decision": "owner_extension",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Flat Chisel already exists; inspect nib orientation/pressure gap.",
+    "specification": "Change apparent stroke width according to its direction relative to a tilted nib. Controls: nib angle, aspect ratio, pressure influence. This generates geometry rather than merely rotating a texture."
+  },
+  {
+    "proposal": 10,
+    "title": "Brush Bristle Separation",
+    "decision": "owner_extension",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Art Studio brush model, not a renamed paint filter.",
+    "specification": "Split a recorded stroke into fine parallel bristle traces. Controls: bristle count, spread, ink loading, seed. Keep the traces tied to the stroke's local frame."
+  },
+  {
+    "proposal": 11,
+    "title": "Stroke Junction Welding",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Join intersecting stroke outlines into clean continuous shapes. Controls: weld distance, corner handling, hole preservation. Avoid dark overlaps and gaps at crossings."
+  },
+  {
+    "proposal": 12,
+    "title": "Stroke to Ribbon",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Turn a centerline into a shaded ribbon with independently controlled width and twist. Controls: width profile, twist, edge lighting. It must handle tight bends without exploding geometry."
+  },
+  {
+    "proposal": 13,
+    "title": "Path Envelope Deform",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Bend artwork inside two editable boundary curves. Controls: upper/lower guides, mapping resolution, pinning. Unlike point displacement, the guides define the entire deformation region."
+  },
+  {
+    "proposal": 14,
+    "title": "Path Attractor",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Pull path vertices toward a target curve with distance-based falloff. Controls: guide, strength, radius, preserve length. Useful for organizing loose lines around a silhouette."
+  },
+  {
+    "proposal": 15,
+    "title": "Curvature Smooth",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Remove unwanted bumps while protecting deliberate corners. Controls: smoothing scale, iterations, corner threshold. Operate on curve shape rather than blurring its rendered pixels."
+  },
+  {
+    "proposal": 16,
+    "title": "Length-Preserving Path Relax",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Even out kinks while resisting changes in total path length. Controls: relaxation, stiffness, pinned endpoints. Useful for animated ropes and drawn gestures."
+  },
+  {
+    "proposal": 17,
+    "title": "Contour Resample",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Redistribute path samples by arc length or curvature. Controls: spacing, curvature density, corner preservation. Primarily a technical operation; expose as a tool if no useful animatable effect remains."
+  },
+  {
+    "proposal": 18,
+    "title": "Path Boolean Combine",
+    "decision": "owner_extension",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Vector geometry/boolean tooling; compare mask add/subtract/intersect first.",
+    "specification": "Union, intersect, subtract or XOR selected vector contours. Controls: operand layers, operation, tolerance. Check existing shape operations; count once for all boolean modes."
+  },
+  {
+    "proposal": 19,
+    "title": "Skeleton Stroke",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Derive centerlines from a filled silhouette. Controls: minimum branch length, smoothing, width recovery. Useful for turning bold artwork into editable line structures."
+  },
+  {
+    "proposal": 20,
+    "title": "Contour Correspondence Morph",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Morph between two matched paths. Controls: target, progress, landmark pairs, winding. Resolve point correspondence explicitly rather than crossfading two images."
+  },
+  {
+    "proposal": 21,
+    "title": "Shape Medial Inflation",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Expand a silhouette according to its internal thickness, preserving narrow features differently from broad regions. Controls: inflation, thickness weighting, boundary smoothing."
+  },
+  {
+    "proposal": 22,
+    "title": "Silhouette Bridge",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Create controllable vector connections between nearby shapes. Controls: gap distance, bridge width, neck curvature. The result is actual connecting geometry."
+  },
+  {
+    "proposal": 23,
+    "title": "Path Weave",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Alternate which crossing stroke appears above or below. Controls: weave pattern, crossing clearance, gap softness. Determine crossings from geometry, not an arbitrary screen checkerboard."
+  },
+  {
+    "proposal": 24,
+    "title": "Stroke Knot Reveal",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Reveal intersecting paths while preserving the chosen crossing order. Controls: reveal position, crossing order, overlap clearance. Reject as a separate effect if Path Weave plus Drawing Progress fully covers it."
+  },
+  {
+    "proposal": 25,
+    "title": "Contour Travel Markers",
+    "decision": "needs_review",
+    "owner": "Paths / Art Studio",
+    "evidence": "App/Model/ShapeOps.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Move generated markers along a path at uniform distance or time intervals. Controls: marker shape, spacing, progress, tangent orientation. Preserve stable marker identities while animating."
+  },
+  {
+    "proposal": 26,
+    "title": "Copy Background",
+    "decision": "existing_workflow",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Adjustment and Displacement Map Layers Below already process scene content. Prove any missing copy input before adding.",
+    "specification": "Copy the composited layers below into this layer's region for further processing. Controls: sampling space, bounds, opacity. It is a true scene input, not another duplicate image file."
+  },
+  {
+    "proposal": 27,
+    "title": "Difference Matte",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Compare footage with a clean background plate to isolate changed areas. Controls: reference frame/layer, tolerance, softness, despill. Camera alignment and noise strongly affect results."
+  },
+  {
+    "proposal": 28,
+    "title": "Clean Plate Builder",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Estimate an unobstructed background from multiple frames. Controls: time range, motion exclusion, statistic, quality. Requires temporal analysis and cancellable baking."
+  },
+  {
+    "proposal": 29,
+    "title": "Alpha Distance Field",
+    "decision": "candidate_gap",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "No signed-distance data output found in inspected alpha/choke/outline controls; needs measured-distance implementation.",
+    "specification": "Convert transparency into signed distance from the silhouette edge. Controls: distance range, inside/outside display, precision. This is a reusable mask output for downstream effects."
+  },
+  {
+    "proposal": 30,
+    "title": "Distance Bands",
+    "decision": "candidate_gap",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Existing luma contours are not alpha-distance contour bands; reuse the distance foundation.",
+    "specification": "Generate evenly spaced bands around a silhouette. Controls: spacing, band width, phase, inside/outside. Unlike a decorative outline preset, bands use real edge distance."
+  },
+  {
+    "proposal": 31,
+    "title": "Variable Distance Outline",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Expand or contract a silhouette with width driven by another image. Controls: width map, range, direction, smoothing. Audit against existing Border and Minimax before acceptance."
+  },
+  {
+    "proposal": 32,
+    "title": "Matte Hole Fill",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Fill enclosed holes below a chosen size without expanding the external boundary. Controls: hole area, connectivity, feather. Preserve intentionally large openings."
+  },
+  {
+    "proposal": 33,
+    "title": "Matte Island Filter",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Remove isolated connected mask regions by area or selected component. Controls: minimum area, largest-only, connectivity. Useful for cleaning speckled keys."
+  },
+  {
+    "proposal": 34,
+    "title": "Matte Topology Guard",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Clean a mask while resisting accidental merging of separate regions or closure of important holes. Controls: cleanup radius, topology protection, strength."
+  },
+  {
+    "proposal": 35,
+    "title": "Temporal Matte Stabilizer",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Reduce frame-to-frame mask chatter using motion-aligned history. Controls: history, responsiveness, motion rejection. A static blur cannot substitute for temporal stability."
+  },
+  {
+    "proposal": 36,
+    "title": "Motion-Aware Edge Fill",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Reconstruct thin missing edges from neighboring frames after motion alignment. Controls: search range, confidence, edge width. Require rejection of unreliable motion."
+  },
+  {
+    "proposal": 37,
+    "title": "Foreground Color Recovery",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Estimate foreground colors at translucent keyed edges. Controls: background color/plate, recovery strength, edge region. Separate color recovery from merely shrinking alpha."
+  },
+  {
+    "proposal": 38,
+    "title": "Alpha-Aware Decontamination",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Remove background contamination using nearby solid foreground colors. Controls: sample radius, edge width, strength. Audit existing Remove Color Matting and Edge Refine first."
+  },
+  {
+    "proposal": 39,
+    "title": "Matte Frequency Split",
+    "decision": "candidate_gap",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Independent alpha base/detail recombination is not provided by current alpha levels/choke/feather.",
+    "specification": "Separate broad silhouette structure from fine details such as hair. Controls: separation scale, detail gain, base gain. Recombine without making alpha values invalid."
+  },
+  {
+    "proposal": 40,
+    "title": "Channel Route",
+    "decision": "extend_existing",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "RGB Channel Mixer exists; extend alpha/constants routing only if absent.",
+    "specification": "Route any input channel into any output channel, including alpha and constants. Controls: source per output, inversion, premultiplication. Existing Channel Mixer overlap requires a gap check."
+  },
+  {
+    "proposal": 41,
+    "title": "Channel Math",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Apply selected arithmetic operations between channels from two sources. Controls: channel pair, operation, scale, clamp. One effect covers its arithmetic modes."
+  },
+  {
+    "proposal": 42,
+    "title": "Alpha Premultiplication Repair",
+    "decision": "repair_infrastructure",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Integrate alpha interpretation with import/compositor; do not expose unsafe redundant conversion blindly.",
+    "specification": "Correct mismatched straight/premultiplied input interpretation. Controls: input convention, output convention, edge handling. Expose as a repair utility rather than an artistic look."
+  },
+  {
+    "proposal": 43,
+    "title": "Luminance-Preserving Composite",
+    "decision": "existing_workflow",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare Color/Luminosity blend modes; do not count their existing behavior again.",
+    "specification": "Blend color from one source while constraining luminance changes. Controls: blend amount, luminance reference, gamut limit. Compare against existing luminosity/color blend modes."
+  },
+  {
+    "proposal": 44,
+    "title": "Local Contrast Matte",
+    "decision": "candidate_gap",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Current absolute color/luma selection does not expose neighborhood-relative contrast selection.",
+    "specification": "Select details by contrast against their local neighborhood. Controls: radius, contrast range, polarity, softness. This differs from selecting absolute brightness."
+  },
+  {
+    "proposal": 45,
+    "title": "Texture Similarity Matte",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Select regions resembling a reference texture patch. Controls: reference patch, feature scale, tolerance, cleanup. Preview matching confidence before applying alpha."
+  },
+  {
+    "proposal": 46,
+    "title": "Depth Range Matte",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Select a near/far interval from a supplied depth map. Controls: near, far, feather, depth convention. Do not imply ordinary photos contain measured depth automatically."
+  },
+  {
+    "proposal": 47,
+    "title": "Normal Direction Matte",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Select surfaces facing a chosen direction from a normal map. Controls: direction, angular range, softness. Useful for selective lighting and material masks."
+  },
+  {
+    "proposal": 48,
+    "title": "Object ID Matte",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Select explicit object/material IDs from a supplied ID image. Controls: selected IDs, tolerance, edge treatment. Genuine support requires stable IDs and defined anti-aliasing behavior."
+  },
+  {
+    "proposal": 49,
+    "title": "Guided Matte Upscale",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Upscale a low-resolution mask using image edges as guidance. Controls: guidance layer, edge strength, radius. Preserve fine boundaries without simply sharpening the mask."
+  },
+  {
+    "proposal": 50,
+    "title": "Occlusion Composite",
+    "decision": "needs_review",
+    "owner": "Compositor / mattes",
+    "evidence": "App/Render/Renderer.swift;App/Render/EffectRegistry18.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Use explicit depth maps to decide which of two layers is in front per pixel. Controls: depth sources, bias, softness. It cannot infer reliable 3D occlusion from Z sorting alone."
+  },
+  {
+    "proposal": 51,
+    "title": "Edge-Derived Rays",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Emit rays from detected contours instead of all bright pixels. Controls: edge scale, source point, ray length, falloff. Compare against existing Shine and God Rays."
+  },
+  {
+    "proposal": 52,
+    "title": "Diffraction Aperture",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Spread bright points according to an aperture shape's diffraction pattern. Controls: aperture, blade count, rotation, wavelength spread. It must differ from fixed star streaks."
+  },
+  {
+    "proposal": 53,
+    "title": "Spectral Prism Dispersion",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Refract multiple wavelength bands through a configurable prism field. Controls: prism angle, dispersion, thickness. More than independent RGB position offsets."
+  },
+  {
+    "proposal": 54,
+    "title": "Thin-Film Interference",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Create view/thickness-dependent interference colors on a supplied surface field. Controls: film thickness, index, angle map, roughness. Compare existing Holographic Foil."
+  },
+  {
+    "proposal": 55,
+    "title": "Caustic Projector",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Project concentrated light patterns produced by a configurable refractive surface. Controls: surface field, light direction, focus, animation. Avoid relabeling generic noise as caustics."
+  },
+  {
+    "proposal": 56,
+    "title": "Light-Field Occlusion Rays",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Attenuate rays using an explicit occluder layer. Controls: source, occluder, sampling quality, softness. Occlusion must change the light path."
+  },
+  {
+    "proposal": 57,
+    "title": "Anamorphic Flare Ghosts",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Generate linked lens ghosts and directional flare response from tracked highlights. Controls: lens layout, squeeze, coatings, threshold. Audit existing Lens Flare modes."
+  },
+  {
+    "proposal": 58,
+    "title": "Lens Ghost Model",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Place internal reflection images according to a configurable lens element layout. Controls: element positions, reflectance, aperture mask. Combine with entry 57 if the implementations coincide."
+  },
+  {
+    "proposal": 59,
+    "title": "Sensor Microlens Bloom",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Model highlight charge spreading with directional sensor behavior. Controls: saturation threshold, spill direction, radius, recovery. Differentiate from existing Glow before counting."
+  },
+  {
+    "proposal": 60,
+    "title": "Rolling Shutter Exposure",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Integrate motion at different times for different image rows. Controls: scan duration, direction, shutter angle. Requires time samples, not a static slant warp."
+  },
+  {
+    "proposal": 61,
+    "title": "Chromatic Focus Shift",
+    "decision": "extend_existing",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Channel Blur/Lens Blur already exist; depth-dependent focal offsets are the gap, not channel blur itself.",
+    "specification": "Blur wavelength bands according to distinct focus distances. Controls: focus map, channel focal offsets, aperture. This is focus-dependent blur rather than RGB Split."
+  },
+  {
+    "proposal": 62,
+    "title": "Cat-Eye Bokeh",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Shape out-of-focus highlights differently toward frame edges. Controls: aperture, optical vignetting, depth/focus map. Extend existing Bokeh if it already supports this behavior."
+  },
+  {
+    "proposal": 63,
+    "title": "Split Diopter",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Simulate two independently focused image regions with a transition boundary. Controls: regions, focus distances, aperture, seam softness. Requires a depth map for convincing focus behavior."
+  },
+  {
+    "proposal": 64,
+    "title": "Tilted Focal Plane",
+    "decision": "extend_existing",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare existing Tilt Shift and Lens Blur before adding another focus effect.",
+    "specification": "Compute focus from a tilted plane and supplied depth. Controls: plane angle, distance, aperture. A geometric focal plane differs from a simple Tilt-Shift blur band."
+  },
+  {
+    "proposal": 65,
+    "title": "Lens Breathing",
+    "decision": "owner_extension",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Camera focus/zoom behavior belongs in camera/lens controls.",
+    "specification": "Change image magnification and optical center as focus changes. Controls: focus animation, breathing curve, center shift. Match blur changes only when focus inputs are available."
+  },
+  {
+    "proposal": 66,
+    "title": "Anisotropic Surface Reflection",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Shade supplied normals with directionally stretched highlights. Controls: tangent direction, roughness axes, light. Compare existing specular/material effects."
+  },
+  {
+    "proposal": 67,
+    "title": "Subsurface Light Spread",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Spread incident light through a thickness map, preserving a sharper surface component. Controls: thickness, scattering color, radius. Do not present a single tinted blur as full subsurface simulation."
+  },
+  {
+    "proposal": 68,
+    "title": "Transmission Shadow Color",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Tint projected shadows using a translucent occluder's color and alpha. Controls: light, projection, absorption, softness. Needs explicit receiver and occluder inputs."
+  },
+  {
+    "proposal": 69,
+    "title": "Contact Light Spill",
+    "decision": "remake_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Light Wrap exists. Review actual background sampling rather than adding another name.",
+    "specification": "Restrict light spill to the gap between nearby source and receiver silhouettes. Controls: source, receiver, distance falloff. Differentiate from existing Light Wrap."
+  },
+  {
+    "proposal": 70,
+    "title": "Polarization Response",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Attenuate highlights according to orientation from supplied reflection/normal data. Controls: filter angle, polarization strength, surface selection. Without those inputs, label the result an approximation."
+  },
+  {
+    "proposal": 71,
+    "title": "Spectral Absorption",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Attenuate wavelength bands according to a thickness map. Controls: absorption spectrum/preset, thickness, density. Useful for colored glass and liquids."
+  },
+  {
+    "proposal": 72,
+    "title": "Optical Vignetting Map",
+    "decision": "extend_existing",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Vignette exists; data-map output/model variants should be modes where appropriate.",
+    "specification": "Generate aperture-dependent falloff from lens geometry and view position. Controls: aperture, pupil offset, projection. Reject as new if existing Vignette fully covers the intended result."
+  },
+  {
+    "proposal": 73,
+    "title": "Depth Fog Integration",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Accumulate colored scattering through supplied depth. Controls: density, height, falloff, light direction. Differentiate from the existing Clouds & Fog generator."
+  },
+  {
+    "proposal": 74,
+    "title": "Relight from Normal and Depth",
+    "decision": "owner_extension",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Normal Map Lighting and 3D lights exist; inspect normal/depth input support first.",
+    "specification": "Apply controllable lights to supplied normal/depth inputs. Controls: light type, position, color, shadow approximation. Ordinary image luminance is not a substitute for real normals."
+  },
+  {
+    "proposal": 75,
+    "title": "Environment Reflection Lookup",
+    "decision": "needs_review",
+    "owner": "Optics / materials",
+    "evidence": "App/Render/EffectRegistry10.swift;App/Render/EffectRegistry15.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Reflect an environment image using surface normals and a view model. Controls: environment, roughness, orientation, Fresnel. Compare existing Glass Material and Chrome Metal."
+  },
+  {
+    "proposal": 76,
+    "title": "Vector Field Advection",
+    "decision": "needs_review",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Carry pixels through a supplied velocity field for a chosen integration time. Controls: field, strength, steps, boundary mode. Temporal accumulation is optional and explicitly separate."
+  },
+  {
+    "proposal": 77,
+    "title": "Curl Field Warp",
+    "decision": "needs_review",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Generate swirling displacement from a divergence-free curl field. Controls: scale, strength, seed, evolution. Audit existing Fractal Warp and Liquid Warp first."
+  },
+  {
+    "proposal": 78,
+    "title": "Reaction-Diffusion Warp",
+    "decision": "needs_review",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Use a baked reaction-diffusion simulation as the displacement field. Controls: feed, kill, diffusion, simulation time. Deterministic playback requires cached simulation states."
+  },
+  {
+    "proposal": 79,
+    "title": "Harmonic Cage Warp",
+    "decision": "owner_extension",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Inspect Puppet Pins and path handles before adding a cage solver.",
+    "specification": "Deform artwork from an enclosing editable cage with smooth interior interpolation. Controls: cage points, influence, quality. Compare existing Puppet Pins."
+  },
+  {
+    "proposal": 80,
+    "title": "Rigid Region Deform",
+    "decision": "owner_extension",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "ARAP-style rigid regions must improve Puppet/rig deformation, not duplicate pin UI.",
+    "specification": "Preserve selected rigid patches while deforming the surrounding image. Controls: pins, rigid regions, stiffness. Requires a constrained solver, not ordinary mesh interpolation."
+  },
+  {
+    "proposal": 81,
+    "title": "Content-Aware Retarget",
+    "decision": "needs_review",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Resize while protecting important image regions. Controls: target size, protection/removal masks, quality. Bake expensive analysis; avoid promising perfect reconstruction."
+  },
+  {
+    "proposal": 82,
+    "title": "Seam Insertion Stretch",
+    "decision": "merge_proposal",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Merge with #81 content-aware resizing if one seam-carving engine handles insertion/removal.",
+    "specification": "Expand an image through computed low-cost seams rather than uniform scaling. Controls: seam direction, count, energy map. Combine with entry 81 if implemented as its resize mode."
+  },
+  {
+    "proposal": 83,
+    "title": "Conformal Region Warp",
+    "decision": "needs_review",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Deform a region while minimizing local angle changes. Controls: boundary handles, constraints, solver quality. Useful for bending graphic elements without severe local skew."
+  },
+  {
+    "proposal": 84,
+    "title": "Perspective Surface Reproject",
+    "decision": "existing_workflow",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Compare Corner Pin/homography source-target mapping; do not rename an equivalent mapping.",
+    "specification": "Map a source between calibrated planar camera views. Controls: source/target corners or cameras, crop, filtering. Existing Corner Pin may make this a tool rather than a new effect."
+  },
+  {
+    "proposal": 85,
+    "title": "Depth Reprojection",
+    "decision": "needs_review",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Reproject an image using supplied depth and a virtual camera movement. Controls: depth scale, camera, hole-fill policy. Newly exposed areas require explicit reconstruction or transparency."
+  },
+  {
+    "proposal": 86,
+    "title": "Stereo Disparity Shift",
+    "decision": "needs_review",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Produce or adjust a stereo view from a disparity map. Controls: convergence, separation, eye, hole handling. Does not create reliable stereo depth from no input data."
+  },
+  {
+    "proposal": 87,
+    "title": "Equirectangular View Extract",
+    "decision": "overlap_review",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Inspect existing Sphere Map/Skybox projection math and camera controls.",
+    "specification": "Render a perspective view from a 360-degree image. Controls: yaw, pitch, roll, field of view. Compare current Sphere Map and Skybox behavior."
+  },
+  {
+    "proposal": 88,
+    "title": "Projection Converter",
+    "decision": "overlap_review",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Audit projection modes as one family, not a new entry for each conversion.",
+    "specification": "Convert between supported spherical, cylindrical, cubemap and fisheye projections. Controls: input/output projection, orientation, coverage. Count projection modes once."
+  },
+  {
+    "proposal": 89,
+    "title": "Lens Calibration Warp",
+    "decision": "extend_existing",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Lens Distortion already has K1/K2, chromatic fringe, zoom and center. Tangential terms/inversion should extend it.",
+    "specification": "Apply or undo calibrated radial and tangential distortion coefficients. Controls: calibration coefficients, optical center, inverse mode. Existing Lens Distortion must be audited first."
+  },
+  {
+    "proposal": 90,
+    "title": "Mesh UV Distortion",
+    "decision": "extend_existing",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Displacement Map already reads RG; distinguish absolute UV remap from relative displacement before approval.",
+    "specification": "Sample an image with a supplied UV-coordinate map. Controls: UV source, channel layout, wrap, filtering. Useful for authored surfaces and reusable deformation maps."
+  },
+  {
+    "proposal": 91,
+    "title": "Flow Map Painter",
+    "decision": "owner_extension",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Painted vector assets belong in Art Studio and feed displacement; requires vector-field storage.",
+    "specification": "Paint directional vectors that drive local distortion. Controls: field brush, strength, integration, smoothing. Requires an editable vector field asset and a clear bake workflow."
+  },
+  {
+    "proposal": 92,
+    "title": "Distance-Gradient Warp",
+    "decision": "candidate_gap",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Self-silhouette distance-gradient displacement is absent from current reference-image Displacement Map.",
+    "specification": "Move pixels along the gradient of a silhouette distance field. Controls: source matte, displacement, falloff, sign. Creates contour-following deformation rather than radial bulging."
+  },
+  {
+    "proposal": 93,
+    "title": "Voronoi Cell Reassemble",
+    "decision": "extend_existing",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Voronoi Shatter/Crystallize already exist; inspect cell transform controls before adding.",
+    "specification": "Split an image into stable Voronoi cells and move each cell independently. Controls: seeds, transform field, gaps, seed. Compare existing Shatter and Crystallize."
+  },
+  {
+    "proposal": 94,
+    "title": "Topology-Preserving Melt",
+    "decision": "owner_extension",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Plastic soft materials already exist; topology constraints belong in Physics Studio.",
+    "specification": "Deform a silhouette with constraints that resist tearing or unwanted merging. Controls: gravity, viscosity approximation, anchors, duration. Requires mesh/field constraints and may need baking."
+  },
+  {
+    "proposal": 95,
+    "title": "Directional Compression Field",
+    "decision": "overlap_review",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Compare Stretch Segment, Squeeze and RG Displacement Map before accepting.",
+    "specification": "Compress image regions according to a painted or supplied field. Controls: direction map, compression, protected areas. Compare Stretch Segment and Squeeze."
+  },
+  {
+    "proposal": 96,
+    "title": "Elastic Sheet Solver",
+    "decision": "owner_extension",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Elastic simulation/pins belong in Physics Studio; no noise-warp substitute.",
+    "specification": "Treat the layer as an elastic sheet with pins and forces. Controls: stiffness, damping, force field, pin mask. Audit Physics Studio overlap before assigning an effect slot."
+  },
+  {
+    "proposal": 97,
+    "title": "Shock Refraction Field",
+    "decision": "overlap_review",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Compare Ripple/Shockwave plus backdrop displacement and proposed distance bands.",
+    "specification": "Refract the background through a moving, thickness-defined shock front. Controls: front path, width, refractive strength, dispersion. Differentiate from a simple Shockwave Ring generator."
+  },
+  {
+    "proposal": 98,
+    "title": "Gradient-Domain Warp Repair",
+    "decision": "needs_review",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Blend seams created by a warp using a gradient-domain reconstruction. Controls: repair mask, boundary source, solver quality. This is a compositing repair stage, not another warp shape."
+  },
+  {
+    "proposal": 99,
+    "title": "Barycentric Triangle Morph",
+    "decision": "needs_review",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Morph matched triangulations between source and target landmarks. Controls: landmark pairs, progress, triangle constraints. Preserve correct texture correspondence across triangles."
+  },
+  {
+    "proposal": 100,
+    "title": "Folded Surface Refraction",
+    "decision": "extend_existing",
+    "owner": "Warp / scene / physics",
+    "evidence": "App/Render/EffectRegistry6.swift;App/UI/Scene3DPanel.swift;App/Model/PhysicsLab.swift",
+    "reason": "Compare Page Curl/Accordion Fold; transparent refraction is a material extension.",
+    "specification": "Refract an underlying image through a user-defined folded transparent sheet. Controls: crease paths, fold angle, thickness, index. Compare Page Curl and Accordion Fold to avoid duplication."
+  },
+  {
+    "proposal": 101,
+    "title": "Anisotropic Kuwahara",
+    "decision": "needs_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Smooth within locally oriented regions while retaining strong boundaries. Controls: radius, anisotropy, sector weighting. Audit Oil Paint's underlying filter before adding."
+  },
+  {
+    "proposal": 102,
+    "title": "Flow-Guided Line Extraction",
+    "decision": "needs_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Detect and connect lines along a smoothed image orientation field. Controls: flow scale, edge threshold, continuity. Compare current Find Edges and Cartoon Outline."
+  },
+  {
+    "proposal": 103,
+    "title": "Coherent Line Hatching",
+    "decision": "needs_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Lay strokes along the image's local structure rather than fixed screen angles. Controls: density, tone response, flow smoothing. Distinguish from existing Cross Hatch."
+  },
+  {
+    "proposal": 104,
+    "title": "Engraving Plate Simulation",
+    "decision": "overlap_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare Woodcut, line screens and emboss before approving physical plate behavior.",
+    "specification": "Convert tone into etched grooves with relief and ink retention. Controls: groove profile, spacing, pressure, paper. Compare Woodcut and Halftone Lines."
+  },
+  {
+    "proposal": 105,
+    "title": "Lithographic Grain Transfer",
+    "decision": "overlap_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Risograph/Screen Print already exist; establish a pressure/plate transfer gap.",
+    "specification": "Simulate grease/pigment pickup from a textured plate. Controls: plate texture, ink density, pressure, tone threshold. Compare existing Risograph and Screen Print."
+  },
+  {
+    "proposal": 106,
+    "title": "Mezzotint Scrape",
+    "decision": "needs_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Form lighter areas by removing marks from a dense dark texture. Controls: scrape radius, grain density, tonal response. Preserve the subtractive process rather than applying generic noise."
+  },
+  {
+    "proposal": 107,
+    "title": "Drypoint Burr Ink",
+    "decision": "needs_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Add soft ink accumulation beside etched line grooves. Controls: burr width, ink amount, line source. Differentiate from ordinary blur or Ink Bleed."
+  },
+  {
+    "proposal": 108,
+    "title": "Monotype Transfer",
+    "decision": "needs_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Transfer uneven paint from a plate with pressure and residual pigment. Controls: plate texture, pressure map, lift, residual amount. A second pull should differ predictably if history is enabled."
+  },
+  {
+    "proposal": 109,
+    "title": "Gouache Coverage",
+    "decision": "overlap_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Oil Paint and Watercolor already exist; deposition must differ algorithmically.",
+    "specification": "Approximate opaque pigment deposition with thickness and edge texture. Controls: coverage, thickness, dry brush, surface. Compare existing Oil Paint and Watercolor."
+  },
+  {
+    "proposal": 110,
+    "title": "Granulating Pigment",
+    "decision": "needs_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Settle pigment into low parts of a paper-height map. Controls: grain size, settling, pigment separation, paper. Differentiate from simply overlaying paper noise."
+  },
+  {
+    "proposal": 111,
+    "title": "Wet-Pigment Separation",
+    "decision": "owner_extension",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Pigment diffusion requires Art Studio simulation state and reproducible baking.",
+    "specification": "Separate multiple pigment components according to different diffusion rates. Controls: pigment palette, wetness, diffusion, duration. Simulation requires deterministic baking."
+  },
+  {
+    "proposal": 112,
+    "title": "Backrun Bloom Simulation",
+    "decision": "owner_extension",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Actual wet backruns require simulation; current Ink Bleed is not proof of that capability.",
+    "specification": "Create watercolor backruns as a wetter region pushes pigment into an edge. Controls: wetness source, timing, diffusion, drying. Compare existing Ink Bleed's behavior."
+  },
+  {
+    "proposal": 113,
+    "title": "Scratchboard Removal",
+    "decision": "existing_workflow",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Authored scratches/eraser/layers already reveal a substrate; identify missing material behavior first.",
+    "specification": "Reveal a light substrate by scraping a dark coating along paths. Controls: scratch paths, width, pressure, substrate. Requires stroke geometry or recorded input."
+  },
+  {
+    "proposal": 114,
+    "title": "Sgraffito Layers",
+    "decision": "owner_extension",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Multi-coating scratch depth belongs with Art Studio layers/erasing.",
+    "specification": "Scratch through stacked color coatings to reveal lower layers. Controls: coating stack, scratch depth, paths, roughness. Differentiate from a single alpha erase."
+  },
+  {
+    "proposal": 115,
+    "title": "Needle-Felt Texture Synthesis",
+    "decision": "needs_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Construct oriented fibers whose packing follows tone and direction. Controls: fiber length, direction field, density, depth shading. Avoid static texture overlays as the entire implementation."
+  },
+  {
+    "proposal": 116,
+    "title": "Thread Embroidery",
+    "decision": "needs_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Fill regions with discrete stitches following a direction field. Controls: stitch length, density, border, thread relief. Count stitch patterns as modes, not separate effects."
+  },
+  {
+    "proposal": 117,
+    "title": "Woven Image Reconstruction",
+    "decision": "needs_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Rebuild an image using interlaced colored warp and weft threads. Controls: weave pattern, yarn width, palette, lighting. Geometry/occlusion must reflect crossings."
+  },
+  {
+    "proposal": 118,
+    "title": "Mosaic Grout Solver",
+    "decision": "needs_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Fit irregular tiles to contours and fill their gaps with grout. Controls: tile size, contour following, grout, material. Compare existing Mosaic Tiles and Crystallize."
+  },
+  {
+    "proposal": 119,
+    "title": "Vector Region Simplify",
+    "decision": "owner_extension",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Editable vector output requires path assets and simplification tooling.",
+    "specification": "Convert image regions into simplified editable filled contours. Controls: palette, contour tolerance, small-region merge. This needs vector output support, not merely a flattened preview."
+  },
+  {
+    "proposal": 120,
+    "title": "Palette Error-Diffusion Mapper",
+    "decision": "needs_review",
+    "owner": "Illustration / Art Studio",
+    "evidence": "App/Render/EffectRegistry8.swift;App/Render/EffectRegistry16.swift;App/Draw/DrawEngine.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Quantize to a user palette while distributing color error spatially. Controls: palette, diffusion method, strength, serpentine scan. Compare existing Retro Dither and Pixel Art modes."
+  },
+  {
+    "proposal": 121,
+    "title": "Motion-Compensated Temporal Denoise",
+    "decision": "needs_review",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Align neighboring frames before averaging noise. Controls: history, motion confidence, detail retention. Reject ghosting near occlusions."
+  },
+  {
+    "proposal": 122,
+    "title": "Temporal Median Cleanup",
+    "decision": "merge_proposal",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Median is percentile 50; merge with #123 instead of counting twice.",
+    "specification": "Replace short-lived outliers using the median across a time window. Controls: window, motion compensation, rejection mask. Useful for transient speckles and flashes."
+  },
+  {
+    "proposal": 123,
+    "title": "Temporal Percentile Composite",
+    "decision": "needs_review",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Select a configurable temporal brightness percentile per pixel. Controls: window, percentile, channel, motion alignment. Median/min/max are modes within this effect."
+  },
+  {
+    "proposal": 124,
+    "title": "Motion Vector Display",
+    "decision": "owner_extension",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Existing optical-flow pipeline needs a diagnostic/data-output mode, not a second estimator.",
+    "specification": "Visualize actual estimated or supplied motion vectors. Controls: vector source, scale, color encoding, grid. A useful diagnostic and data output for later effects."
+  },
+  {
+    "proposal": 125,
+    "title": "Motion Vector Remap",
+    "decision": "extend_existing",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Integrate signed motion-vector mapping with existing Displacement Map/reference inputs.",
+    "specification": "Modify motion vectors before a reconstruction stage. Controls: scale, rotation, threshold, region mask. Existing optical-flow interpolation must be checked for overlap."
+  },
+  {
+    "proposal": 126,
+    "title": "Motion-Compensated Frame Interpolation",
+    "decision": "covered",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "SlowMotion.swift already invokes optical-flow interpolation; do not add another Twixtor wrapper.",
+    "specification": "Synthesize intermediate frames using forward/backward flow and occlusion handling. Controls: interpolation time, quality, confidence. Audit Twixtor/Time Remap first; improve them instead if already supported."
+  },
+  {
+    "proposal": 127,
+    "title": "Temporal Slice Scan",
+    "decision": "needs_review",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Sample different times along a configurable spatial scan. Controls: time span, scan curve, direction, boundary policy. Different from a single-frame Scan Distort."
+  },
+  {
+    "proposal": 128,
+    "title": "Temporal Depth Scan",
+    "decision": "needs_review",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Choose sample time using a depth map. Controls: depth/time mapping, range, interpolation. Requires valid depth and temporal source frames."
+  },
+  {
+    "proposal": 129,
+    "title": "Temporal Texture Advection",
+    "decision": "needs_review",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Move an applied texture along scene motion over time. Controls: texture, flow source, persistence, reinitialization. Resist slipping and handle newly visible surfaces."
+  },
+  {
+    "proposal": 130,
+    "title": "Motion-Tracked Paint Accumulation",
+    "decision": "owner_extension",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Tracking plus recorded paint accumulation must extend tracking/Art Studio state.",
+    "specification": "Accumulate paint in tracked scene space. Controls: motion source, deposition, decay, confidence. This must follow the object rather than the screen."
+  },
+  {
+    "proposal": 131,
+    "title": "Long Exposure Integrator",
+    "decision": "extend_existing",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Echo/time sampling exists; extend integration/averaging where genuinely absent.",
+    "specification": "Integrate actual frames over a shutter interval. Controls: duration, weighting, exposure normalization, sample count. Compare existing Echo and motion-blur tools."
+  },
+  {
+    "proposal": 132,
+    "title": "Selective Motion Freeze",
+    "decision": "existing_workflow",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Freeze plus masks/layer compositing exists; any automatic motion selection is a workflow extension.",
+    "specification": "Freeze regions with little motion while preserving moving areas, or the reverse. Controls: motion threshold, reference time, feather. Motion classification must be temporally stable."
+  },
+  {
+    "proposal": 133,
+    "title": "Temporal Background Hold",
+    "decision": "needs_review",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Keep a reference background while updating selected moving foreground. Controls: clean plate, motion mask, update rate. Handle camera motion explicitly."
+  },
+  {
+    "proposal": 134,
+    "title": "Motion Cadence Converter",
+    "decision": "owner_extension",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Cadence conversion belongs in media/timeline/export, not a visual filter name.",
+    "specification": "Resample footage into a deliberate exposure cadence with frame holds or blends. Controls: cadence pattern, phase, blending. Compare Posterize Time; count only a real missing cadence feature."
+  },
+  {
+    "proposal": 135,
+    "title": "Field Order Repair",
+    "decision": "owner_extension",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Interlaced repair belongs in media decoding/repair.",
+    "specification": "Detect or explicitly correct interlaced field ordering and reconstruct progressive frames. Controls: field order, deinterlace method, motion threshold. Keep original timing correct."
+  },
+  {
+    "proposal": 136,
+    "title": "Duplicate Frame Repair",
+    "decision": "owner_extension",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Analyze duplicate frames and reuse interpolation; not an extra generic blur.",
+    "specification": "Detect repeated frames and reconstruct or retime the affected interval. Controls: detection threshold, repair strategy, range. Never silently alter clip duration."
+  },
+  {
+    "proposal": 137,
+    "title": "Flash Exposure Equalizer",
+    "decision": "owner_extension",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Brightness analysis should drive existing Exposure keyframes.",
+    "specification": "Detect short exposure spikes and balance them against nearby frames. Controls: detection, correction strength, protected flashes. Expose detected events for review."
+  },
+  {
+    "proposal": 138,
+    "title": "Temporal Color Stabilizer",
+    "decision": "owner_extension",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Temporal color analysis should drive CC Studio rather than duplicate grading.",
+    "specification": "Reduce unwanted color-temperature and exposure drift while preserving intended changes. Controls: analysis range, smoothing, reference, exclusion mask. Bake analysis separately from rendering."
+  },
+  {
+    "proposal": 139,
+    "title": "Occlusion-Aware Motion Trails",
+    "decision": "extend_existing",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Echo already exists; occlusion-aware flow is an advanced time mode.",
+    "specification": "Accumulate moving subjects while respecting foreground occluders. Controls: trail duration, spacing, depth/matte input, decay. Ordinary Echo without occlusion does not qualify."
+  },
+  {
+    "proposal": 140,
+    "title": "Flow-Aligned Motion Texture",
+    "decision": "needs_review",
+    "owner": "Time / media",
+    "evidence": "App/Model/Project.swift;App/Media/SlowMotion.swift;App/UI/ScenePanels.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Stretch procedural texture along measured motion paths. Controls: flow, length, density, lifespan. Compare existing Wind Streaks and Light Trails for a genuine gap."
+  },
+  {
+    "proposal": 141,
+    "title": "Flow Morph Transition",
+    "decision": "needs_review",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Warp matched A/B content toward an intermediate image before blending. Controls: progress, correspondences, flow quality, occlusion. Unrelated shots may require manual landmarks."
+  },
+  {
+    "proposal": 142,
+    "title": "Depth Portal Transition",
+    "decision": "needs_review",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Move through a masked opening while A/B layers are placed at supplied depths. Controls: portal matte, depth, camera path, edge treatment. It must composite both sources correctly."
+  },
+  {
+    "proposal": 143,
+    "title": "Distance-Matte Transition",
+    "decision": "needs_review",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Reveal B according to distance from an arbitrary matte boundary. Controls: seed matte, progress, band width, edge shading. Differentiate from simple linear/radial wipes."
+  },
+  {
+    "proposal": 144,
+    "title": "Object-Matched Transition",
+    "decision": "needs_review",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Align a selected object in A with a selected object in B and transition around it. Controls: landmarks/tracks, alignment, progress, background treatment. This needs correspondence data."
+  },
+  {
+    "proposal": 145,
+    "title": "Motion-Continuation Cut",
+    "decision": "needs_review",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Match incoming movement to outgoing motion around the cut. Controls: tracked direction, velocity matching, blend interval, crop. Expose correction strength rather than promising automatic perfect cuts."
+  },
+  {
+    "proposal": 146,
+    "title": "Luminance-Ordered A/B Reveal",
+    "decision": "needs_review",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Reveal B using a brightness ordering derived from A or a supplied map. Controls: map source, threshold progression, feather, preservation. Audit existing Luma Key plus transitions for overlap."
+  },
+  {
+    "proposal": 147,
+    "title": "Frequency-Separated Dissolve",
+    "decision": "needs_review",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Transition broad structure and fine detail at different rates. Controls: separation scale, phase offset, progress. The decomposition must be real, not two opacity presets."
+  },
+  {
+    "proposal": 148,
+    "title": "Gradient-Domain A/B Blend",
+    "decision": "needs_review",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Blend images by reconstructing their gradients across a transition boundary. Controls: boundary, progress, solver quality, color anchoring. Requires explicit boundary conditions."
+  },
+  {
+    "proposal": 149,
+    "title": "Shared-Edge Peel Transition",
+    "decision": "needs_review",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Peel A away along a guide to reveal B beneath it with consistent contact shadow. Controls: guide, curl radius, progress, lighting. Audit Page Curl and use a transition mode if sufficient."
+  },
+  {
+    "proposal": 150,
+    "title": "Volume Slice Transition",
+    "decision": "needs_review",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Treat A/B and intermediate samples as a time volume, then reveal a moving slice. Controls: slice orientation, thickness, progress, interpolation. Requires defined intermediate data."
+  },
+  {
+    "proposal": 151,
+    "title": "Tracked Surface Replacement Transition",
+    "decision": "needs_review",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Introduce B on a tracked plane in A and expand to the new shot. Controls: planar track, expansion, perspective, timing. Reuse existing tracking rather than duplicating it."
+  },
+  {
+    "proposal": 152,
+    "title": "Particle Correspondence Transition",
+    "decision": "needs_review",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Sample A/B into particles with stable matched identities and animate between them. Controls: particle spacing, correspondence, trajectory, progress. Audit existing particle morph capabilities."
+  },
+  {
+    "proposal": 153,
+    "title": "Silhouette Interlock Transition",
+    "decision": "needs_review",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Grow complementary boundaries from A/B mattes until the new shot fills the frame. Controls: mattes, growth ordering, gap, progress. Require consistent coverage with no unintended transparent cracks."
+  },
+  {
+    "proposal": 154,
+    "title": "Seam-Optimized Transition",
+    "decision": "needs_review",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Compare implementation and controls with existing owner before accepting.",
+    "specification": "Move a low-visibility seam through A/B according to image differences. Controls: progress, seam cost, protected regions, softness. Bake optimization when needed."
+  },
+  {
+    "proposal": 155,
+    "title": "Audio-Driven Transition Timing",
+    "decision": "owner_extension",
+    "owner": "A/B / timeline",
+    "evidence": "App/Render/Renderer.swift;App/Model/Project.swift",
+    "reason": "Audio/beat timing should drive real transition progress; not a separate visual effect.",
+    "specification": "Drive an actual chosen A/B transition's progress with a user-approved beat/envelope curve. Controls: analysis source, event selection, easing, manual override. This may belong as a transition timing controller rather than a counted visual effect."
+  }
+]

@@ -138,6 +138,10 @@ final class EffectThumbnails {
         var p = Project.new(name: "thumb", width: 360, height: 360, fps: 30, duration: 2, background: RGBA(0.05, 0.04, 0.08))
         var l = p.makeLayer(name: "img", content: .image(fileName: "preview", pixelWidth: 720, pixelHeight: 720), size: Vec2(720, 720))
         l.transform.scale = Animated(Vec2(50, 50))
+        if effect?.typeID == "awi24.fontContourReveal" {
+            l.content = .text; l.text = TextData(string: "AWI"); l.text!.fontSize = 100
+            l.size = Animated(Vec2(300,150)); l.transform.scale = Animated(Vec2(100,100))
+        }
         if effect?.typeID == "awi23.drawProgress" {
             l.content = .shape(.path); l.size = Animated(Vec2(300, 250)); l.transform.scale = Animated(Vec2(100, 100))
             l.path = Animated(BezierPath.smoothed([Vec2(-130, 80), Vec2(-80, -90), Vec2(0, 60), Vec2(80, -90), Vec2(130, 80)], closed: false, tolerance: 1))
@@ -163,6 +167,7 @@ final class EffectThumbnails {
         var inst = def.makeInstance()
         // Make subtle defaults visible in a thumbnail.
         switch def.id {
+        case "awi24.fontContourReveal": inst.params["end"] = .number(Animated(65))
         case "awi23.drawProgress":
             var end = Animated(0.0)
             end.insertKeyframe(Keyframe(time: 0, value: 0)); end.insertKeyframe(Keyframe(time: 1.2, value: 100))
@@ -254,7 +259,8 @@ struct EffectsPanel: View {
             }
         }
         .awiSheet(isPresented: $showBrowser) {
-            EffectBrowser(vectorPaths: state.selectedLayer.map { if case .shape = $0.content { return true }; return false } ?? false) { def in
+            EffectBrowser(vectorPaths: state.selectedLayer.map { if case .shape = $0.content { return true }; return false } ?? false,
+                          textLayer: state.selectedLayer.map { if case .text = $0.content { return true }; return false } ?? false) { def in
                 state.addEffect(def)
                 showBrowser = false
             }
@@ -314,6 +320,12 @@ struct EffectsPanel: View {
                         .font(.caption).foregroundStyle(Theme.textDim)
                 }
                 ForEach(def.params.filter { pd in
+                    if def.id == "awi8.cmykHalftone" {
+                        return e.choice("version") == 0 ? ["size","angle","mix","version"].contains(pd.id) : pd.id != "size"
+                    }
+                    if def.id == "awi16.halftoneLines" {
+                        return e.choice("version") == 0 ? ["period","angle","contrast","keep","ink","paper","version"].contains(pd.id) : !["period","contrast","keep"].contains(pd.id)
+                    }
                     guard def.id == "awi.halftone" else { return true }
                     let version = e.choice("version")
                     if version == 0 { return ["size", "angle", "color", "version"].contains(pd.id) }
@@ -462,6 +474,7 @@ extension Array {
 
 struct EffectBrowser: View {
     let vectorPaths: Bool
+    let textLayer: Bool
     let pick: (EffectDefinition) -> Void
     @State private var query = ""
     @State private var tab: Tab = .all
@@ -539,7 +552,7 @@ struct EffectBrowser: View {
                                     }
                             }
                             .buttonStyle(.plain)
-                            .disabled(d.id == "awi23.drawProgress" && !vectorPaths)
+                            .disabled((d.id == "awi23.drawProgress" && !vectorPaths) || (d.id == "awi24.fontContourReveal" && !textLayer))
                             .contextMenu {
                                 Button { toggleFavorite(d.id) } label: {
                                     Label(favorites.contains(d.id) ? "Unfavorite" : "Favorite", systemImage: favorites.contains(d.id) ? "star.slash" : "star")

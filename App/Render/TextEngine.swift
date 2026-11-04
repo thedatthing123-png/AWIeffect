@@ -342,6 +342,7 @@ extension Renderer {
         guard let text = Self.renderTextData(layer, time: time) else { return }
         let lay = TextEngine.shared.layout(text, time: time)
         let states = Self.glyphStates(text, layout: lay, time: time)
+        let contourEffects = layer.effects.filter { $0.isEnabled && $0.typeID == "awi24.fontContourReveal" }
         let chars = Array(text.string)
         // Path for text-on-path (the layer's first mask), measured once per frame.
         let pathTrack: PathTrack? = (text.onPath ?? false) ? layer.masks.first.map {
@@ -365,7 +366,8 @@ extension Renderer {
             let a = opacity * st.opacity * st.color.a
             if a <= 0.001 { continue }
             let glyphScale = density * max(abs(st.scale.x), abs(st.scale.y), 0.05)
-            guard let gt = TextEngine.shared.glyphTexture(g, scale: glyphScale, blur: st.blur, outline: st.outline, device: device) else { continue }
+            let contour = contourGlyphTexture(g,effects:contourEffects,time:time,scale:glyphScale,blur:st.blur,outline:st.outline,cb:cb)
+            guard let gt = contour ?? TextEngine.shared.glyphTexture(g, scale: glyphScale, blur: st.blur, outline: st.outline, device: device) else { continue }
             // Glyph quad half-size including raster padding (local px).
             let hs = Vec2(g.halfSize.x + gt.pad / gt.scale, g.halfSize.y + gt.pad / gt.scale)
             var rot = st.rotation * .pi / 180
@@ -438,7 +440,31 @@ extension Renderer {
 
     static func textBounds(_ layer: Layer, time: Double) -> CGRect? {
         guard let t = renderTextData(layer, time: time) else { return nil }
-        return TextEngine.shared.layout(t, time: time).bounds
+        let layout = TextEngine.shared.layout(t, time: time)
+        let traces = layer.effects.filter { $0.isEnabled && $0.typeID == "awi24.fontContourReveal" }
+        guard !traces.isEmpty else { return layout.bounds }
+        let width = traces.reduce(0.0) { $0 + min(12,max(0.25,$1.number("width",time))) }
+        let states = glyphStates(t,layout:layout,time:time)
+        var bounds = layout.bounds
+        for (i,glyph) in layout.glyphs.enumerated() where !glyph.isSpace {
+            let state = states[i], angle = state.rotation * .pi / 180
+            let pad = width/2 + max(0,state.outline) + max(0,state.blur)*3 + 3
+            let depth = 1000/max(50,1000+state.z)
+            let shear = abs(tan(min(85,max(-85,state.skew)) * .pi / 180))
+            let replacement = abs(state.charOffset) >= 0.5 ? t.fontSize : 0
+            let halfY = (max(glyph.halfSize.y,replacement)+pad)*abs(state.scale.y)*depth
+            let halfX = (max(glyph.halfSize.x,replacement)+pad+shear*(glyph.halfSize.y+pad))*abs(state.scale.x)*depth
+            let x = abs(cos(angle))*halfX+abs(sin(angle))*halfY
+            let y = abs(sin(angle))*halfX+abs(cos(angle))*halfY
+            let center = glyph.center+state.offset
+            bounds = bounds.union(CGRect(x:center.x-x,y:center.y-y,width:x*2,height:y*2))
+        }
+        if t.onPath == true, let mask = layer.masks.first {
+            let path = mask.path.value(at:time).bounds
+            let radius = max(Double(bounds.width),Double(bounds.height),t.fontSize)
+            bounds = bounds.union(CGRect(x:path.min.x-radius,y:path.min.y-radius,width:path.max.x-path.min.x+2*radius,height:path.max.y-path.min.y+2*radius))
+        }
+        return bounds
     }
 }
 
