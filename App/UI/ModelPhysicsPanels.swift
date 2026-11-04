@@ -16,10 +16,11 @@ struct ModelPanel: View {
                         if o.fileName == nil {
                             if o.shapePath == nil && o.imageFile == nil {
                                 HStack {
-                                    TextField("Edit 3D text", text: $draft)
+                                    TextField("Edit 3D text", text: $draft, axis: .vertical)
+                                        .lineLimit(1...6)
                                         .accessibilityLabel("Edit 3D Text").padding(8).glass(radius: 10).foregroundStyle(Theme.text)
                                         // Live: the 3D text updates as you type.
-                                        .onChange(of: draft) { _, d in edit("3D Text") { $0.text = d } }
+                                        .onChange(of: draft) { _, d in if d != state.selectedLayer?.model3D?.text { edit("3D Text") { $0.text = d } } }
                                 }
                             }
                             slider("Extrude", o.extrusion, 1...400) { v in cont { $0.extrusion = v } }
