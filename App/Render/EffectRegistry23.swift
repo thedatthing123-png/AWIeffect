@@ -40,15 +40,15 @@ extension EffectRegistry {
 
     static let timeSliceMask23 = EffectDefinition(
         id: "awi23.timeSliceMask", name: "Time Slice Mask", category: .keying, aeMatchNames: [],
-        summary: "Animated diagonal bands reveal and hide the layer. White Mask output can drive a track matte; this does not offset video time.",
+        summary: "Animated bands reveal or hide the layer. Scene Wipe reveals the scene below; White Mask drives a matte. This does not offset video time.",
         params: [.number("count", "Count", 10, 1, 200, step: 1),
                  .number("smoothness", "Smoothness", 0.5, 0, 1, step: 0.01),
                  .number("speed", "Speed", 1, -5, 5, step: 0.01),
                  .angle("angle", "Angle", 0),
-                 .number("feather", "Feather", 0.02, 0, 1, step: 0.001),
+                 .number("feather", "Feather", 0.02, 0, 100, step: 0.001),
                  .number("phase", "Phase", 0, 0, 1, step: 0.001),
                  .toggle("reverse", "Reverse", false),
-                 .choice("output", "Output", ["Reveal Layer", "White Mask"], 0)],
+                 .choice("output", "Output", ["Reveal Layer", "White Mask", "Scene Wipe"], 0)],
         stage: .pixels { ctx in run23(ctx, mode: 1) { p in
             p.a = SIMD4(Float(ctx.num("count")), Float(ctx.num("smoothness")), Float(ctx.num("feather")), Float(ctx.num("angle") * .pi / 180))
             let phase = ctx.time * ctx.num("speed") + ctx.num("phase")

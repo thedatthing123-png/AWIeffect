@@ -32,7 +32,10 @@ kernel void fx23(texture2d<half, access::sample> src [[texture(0)]],
         float cell = fract(coordinate * p.a.x);
         float coverage = p.a.z > 1e-6 ? smoothstep(threshold, threshold + p.a.z, cell) : step(threshold, cell);
         if (p.i.y != 0) coverage = 1 - coverage;
-        result = p.i.z == 1 ? float4(coverage) : original * coverage;
+        // Scene Wipe transitions from the layer-over-scene to the scene below.
+        // Scaling premultiplied source coverage lets the normal compositor perform
+        // that transition once, avoiding a second copy of a translucent backdrop.
+        result = p.i.z == 1 ? float4(coverage) : original * (p.i.z == 2 ? 1 - coverage : coverage);
     } else {
         // Antialiased print screen. Centering on the layer keeps padding changes from moving dots.
         float ca = cos(p.a.y), sa = sin(p.a.y);

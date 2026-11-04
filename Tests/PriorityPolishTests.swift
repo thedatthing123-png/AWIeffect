@@ -48,4 +48,27 @@ final class PriorityPolishTests: XCTestCase {
     }
 
     func testTransparentVideoIsDefault() { XCTAssertEqual(ExportSettings().format, .transparent) }
+
+    func testSceneWipeComplementsLayerReveal() throws {
+        var e = EffectRegistry.timeSliceMask23.makeInstance()
+        let base = try render(nil), reveal = try render(e)
+        e.params["output"] = .choice(2)
+        let wipe = try render(e)
+        for i in stride(from: 3, to: base.count, by: 4) {
+            XCTAssertEqual(Int(reveal[i]) + Int(wipe[i]), Int(base[i]), accuracy: 1)
+        }
+    }
+
+    func testPriorityPreviewArtifacts() throws {
+        let directory = URL(fileURLWithPath: "/tmp/awi-ui")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        for definition in [EffectRegistry.organicLightSweep, EffectRegistry.lightSweep10, EffectRegistry.deepGlow] {
+            let bytes = try render(definition.makeInstance())
+            let provider = try XCTUnwrap(CGDataProvider(data: Data(bytes) as CFData))
+            let cg = try XCTUnwrap(CGImage(width: 128, height: 128, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: 512,
+                space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.last.rawValue),
+                provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent))
+            try UIImage(cgImage: cg).pngData()?.write(to: directory.appendingPathComponent("priority-\(definition.id).png"))
+        }
+    }
 }
