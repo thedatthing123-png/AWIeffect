@@ -104,7 +104,8 @@ final class TexturePool {
                 let fd = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: format, width: 1, height: 1, mipmapped: false)
                 fd.usage = [.shaderRead, .shaderWrite, .renderTarget]; fd.storageMode = .shared
                 if let blank = device.makeTexture(descriptor: fd) {
-                    let zeros = [UInt8](repeating: 0, count: format == .rgba16Float ? 8 : 4)
+                    let pixelBytes = (format == .rgba16Float || format == .rg32Float) ? 8 : (format == .rgba32Float ? 16 : 4)
+                    let zeros = [UInt8](repeating: 0, count: pixelBytes)
                     blank.replace(region: MTLRegionMake2D(0, 0, 1, 1), mipmapLevel: 0, withBytes: zeros, bytesPerRow: zeros.count)
                     fallbacks[format] = blank
                 }
@@ -152,7 +153,7 @@ final class EffectGPU {
         for name in ["fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
                      "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix", "fxBackdropMix", "fxBackdropMask",
                      "fxWarp", "fxStylize", "fxGlitch", "fxColor2", "fxSaberCore", "fxShine", "fxParticles", "fxPixelSort",
-                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet", "fxGrade", "maskMix", "fxLayerRef", "flowEstimate", "flowBlur", "fx19", "fx19GlowKeep", "fx19KeyInvert", "fx19AlphaOf", "fx19ColorSelect", "fx19Bend", "fx20Flip", "fx20AMWave", "fx20AMFractal", "fx21", "fx22", "fx23"] {
+                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet", "fxGrade", "maskMix", "fxLayerRef", "flowEstimate", "flowBlur", "fx19", "fx19GlowKeep", "fx19KeyInvert", "fx19AlphaOf", "fx19ColorSelect", "fx19Bend", "fx20Flip", "fx20AMWave", "fx20AMFractal", "fx21", "fx22", "fx23", "fxPrintScreens", "fx24Seed", "fx24Jump", "fx24Image"] {
             guard let f = library.makeFunction(name: name) else { throw RenderError.pipeline(name) }
             psos[name] = try device.makeComputePipelineState(function: f)
         }
@@ -239,7 +240,7 @@ enum EffectRegistry {
         gaussianBlur, directionalBlur, radialBlur,
         exposure, brightnessContrast, hueSaturation, tint, levels, invert, fill, vignette,
         glow, rgbSplit, fractalNoise, chromaKey, shake,
-    ] + [letterSpacing] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22 + batch23
+    ] + [letterSpacing] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22 + batch23 + textBatch24 + imageBatch24
 
     private static let byID: [String: EffectDefinition] = Dictionary(uniqueKeysWithValues: all.map { ($0.id, $0) })
     private static let byMatchName: [String: EffectDefinition] = {

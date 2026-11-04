@@ -127,9 +127,13 @@ extension EffectRegistry {
     static let halftoneLines16 = EffectDefinition(
         id: "awi16.halftoneLines", name: "Halftone Lines", category: .stylize, aeMatchNames: [],
         summary: "Line-screen halftone: line thickness follows darkness.",
-        params: [px16("period", "Line Spacing", 6, 2, 30), .angle("angle", "Angle", 30), pct16("contrast", "Contrast", 100, 0, 300),
-                 .toggle("keep", "Keep Color", false), .color("ink", "Ink", ink16), .color("paper", "Paper", paper16)],
-        stage: .pixels { ctx in f16(ctx, 9) { p in
+        params: [px16("period", "Line Spacing", 6, 2, 30), .angle("angle", "Angle", 45), pct16("contrast", "Contrast", 100, 0, 300),
+                 .toggle("keep", "Keep Color", false), .color("ink", "Ink", ink16), .color("paper", "Paper", paper16),
+                 .number("amount", "Amount", 100, 0, 500, step: 0.1), .number("strength", "Strength", 50, 0, 100, unit: "%"),
+                 .number("phase", "Phase", 0, -1000, 1000, step: 0.01), .choice("version", "Rendering", ["Legacy", "AM Lines"], 1)],
+        stage: .pixels { ctx in
+            if ctx.effect.choice("version") == 1 { return printScreen(ctx, lines: true) }
+            return f16(ctx, 9) { p in
             p.a = SIMD4(px16(ctx, "period"), rad16(ctx, "angle"), n16(ctx, "contrast", 0.01), ctx.effect.bool("keep") ? 1 : 0)
             p.b = col16(ctx, "ink"); p.c = col16(ctx, "paper") } })
 

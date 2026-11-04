@@ -178,8 +178,13 @@ extension EffectRegistry {
     static let cmykHalftone = EffectDefinition(
         id: "awi8.cmykHalftone", name: "Comic Halftone CMYK", category: .stylize, aeMatchNames: [],
         summary: "Four rotated ink dot screens (cyan, magenta, yellow, black) like printed comics.",
-        params: [.number("size", "Dot Size", 8, 3, 40, step: 0.1, unit: "px"), .angle("angle", "Screen Angle", 15), pct("mix", "Mix", 100)],
-        stage: .pixels { ctx in f8(ctx, 16) { p in
+        params: [.number("size", "Dot Size", 8, 3, 40, step: 0.1, unit: "px"), .angle("angle", "Screen Angle", 45), pct("mix", "Mix", 100),
+                 .number("amount", "Amount", 100, 0, 500, step: 0.1), .number("strength", "Strength", 50, 0, 100, unit: "%"),
+                 .number("blackWeight", "Black Weight", 0, 0, 100, unit: "%"), .number("phase", "Phase", 0.5, -1000, 1000, step: 0.01),
+                 .choice("version", "Rendering", ["Legacy", "AM Screens"], 1)],
+        stage: .pixels { ctx in
+            if ctx.effect.choice("version") == 1 { return printScreen(ctx, lines: false) }
+            return f8(ctx, 16) { p in
             p.a = SIMD4(px8(ctx, "size"), n8(ctx, "angle", .pi / 180), n8(ctx, "mix", 0.01), 0) } })
 
     static let mosaicTiles = EffectDefinition(

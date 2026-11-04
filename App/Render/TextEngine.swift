@@ -254,7 +254,7 @@ extension Renderer {
         var outline = 0.0
     }
 
-    static func glyphStates(_ text: TextData, layout: TextLayout, time: Double) -> [GlyphState] {
+    static func glyphStates(_ text: TextData, layout: TextLayout, time: Double, effects: [EffectInstance] = []) -> [GlyphState] {
         var states = layout.glyphs.map { g -> GlyphState in
             var s = GlyphState()
             s.color = text.baseColor(forCharacter: g.charIndex, time: time)
@@ -303,6 +303,7 @@ extension Renderer {
                 if let ol { states[gi].outline += (ol - states[gi].outline) * min(1, max(0, amt)) }
             }
         }
+        TextEffectMath.apply(effects, states: &states, layout: layout, time: time)
         // Tracking accumulates along each line, then the line is re-centered for the alignment.
         var lineTotals: [Int: Double] = [:]
         var running: [Int: Double] = [:]
@@ -341,7 +342,7 @@ extension Renderer {
                   layer: Layer, time: Double, opacity: Double, blend: BlendMode) {
         guard let text = Self.renderTextData(layer, time: time) else { return }
         let lay = TextEngine.shared.layout(text, time: time)
-        let states = Self.glyphStates(text, layout: lay, time: time)
+        let states = Self.glyphStates(text, layout: lay, time: time, effects: layer.effects)
         let chars = Array(text.string)
         // Path for text-on-path (the layer's first mask), measured once per frame.
         let pathTrack: PathTrack? = (text.onPath ?? false) ? layer.masks.first.map {
@@ -433,12 +434,37 @@ extension Renderer {
             let anchor = effect.choice("anchor")
             if anchor > 0 { text.spacingAnchor = anchor - 1 }
         }
+        for effect in layer.effects where effect.isEnabled {
+            if effect.typeID == "awi24.textLineSpacing" {
+                text.lineSpacing = Animated(min(5, max(0.2, text.lineSpacing.value(at: time) * TextEffectMath.number(effect, "spacing", time) / 100)))
+            } else if effect.typeID == "awi24.textOutline" {
+                text.outline = TextEffectMath.number(effect, "width", time)
+            }
+        }
         return text
     }
 
     static func textBounds(_ layer: Layer, time: Double) -> CGRect? {
         guard let t = renderTextData(layer, time: time) else { return nil }
-        return TextEngine.shared.layout(t, time: time).bounds
+        let layout = TextEngine.shared.layout(t, time: time)
+        guard layer.effects.contains(where: { $0.isEnabled && $0.typeID.hasPrefix("awi24.") }) else { return layout.bounds }
+        let states = glyphStates(t, layout: layout, time: time, effects: layer.effects)
+        var bounds = layout.bounds
+        for (i, glyph) in layout.glyphs.enumerated() where !glyph.isSpace {
+            let state = states[i], angle = state.rotation * .pi / 180
+            let padding = state.blur * 3 + state.outline + 2
+            let replacementPad = abs(state.charOffset) >= 0.5 ? t.fontSize * 0.75 : 0
+            let halfWidth = max(glyph.halfSize.x, replacementPad), halfHeight = max(glyph.halfSize.y, replacementPad)
+            let depth = 1000 / max(50, 1000 + state.z)
+            let shear = abs(tan(state.skew * .pi / 180))
+            let width = (halfWidth + padding + shear * (halfHeight + padding)) * abs(state.scale.x) * depth
+            let height = (halfHeight + padding) * abs(state.scale.y) * depth
+            let x = abs(cos(angle)) * width + abs(sin(angle)) * height
+            let y = abs(sin(angle)) * width + abs(cos(angle)) * height
+            let center = glyph.center + state.offset
+            bounds = bounds.union(CGRect(x: center.x - x, y: center.y - y, width: x * 2, height: y * 2))
+        }
+        return bounds
     }
 }
 

@@ -4,7 +4,7 @@ import XCTest
 /// Anti-stub tests: every registered effect must visibly change the image, and every control must do something.
 final class EffectTests: XCTestCase {
     /// Effects that work from the layer's alpha shape (no visible change on an opaque adjustment layer, like in AE).
-    static let alphaShaped: Set<String> = ["ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow", "awi11.featherEdges", "awi11.matteChoker", "awi11.alphaLevels", "awi11.edgeRefine", "awi10.bevelAlpha", "awi10.smoothBevel", "awi10.glass", "awi10.edgeAO", "awi10.innerShadow", "awi10.fresnel", "awi16.tornEdges", "awi17.extrudeFlat"]
+    static let alphaShaped: Set<String> = ["ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow", "awi11.featherEdges", "awi11.matteChoker", "awi11.alphaLevels", "awi11.edgeRefine", "awi10.bevelAlpha", "awi10.smoothBevel", "awi10.glass", "awi10.edgeAO", "awi10.innerShadow", "awi10.fresnel", "awi16.tornEdges", "awi17.extrudeFlat", "awi24.matteFrequency"]
 
     private func renderer() throws -> Renderer {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU: no Metal device available; effect tests not run") }
@@ -14,7 +14,7 @@ final class EffectTests: XCTestCase {
     private func textScene(effect: EffectInstance?) -> Project {
         var p = Project.new(name: "text fx", width: 160, height: 160, fps: 30, duration: 2, background: .black)
         var layer = p.makeLayer(name: "text", content: .text, size: Vec2(120, 40))
-        layer.text = TextData(string: "AWI"); layer.text!.fontSize = 28
+        layer.text = TextData(string: "AWI\nEDIT"); layer.text!.fontSize = 24
         layer.effects = effect.map { [$0] } ?? []; p.layers = [layer]
         return p
     }
@@ -183,6 +183,10 @@ final class EffectTests: XCTestCase {
                 }
                 if d.id == "awi.halftone" {
                     if pd.id == "size" { a.params["version"] = .choice(1); b.params["version"] = .choice(1) }
+                    if pd.id == "phase" { a.params["phase"] = .number(Animated(-0.2)); b.params["phase"] = .number(Animated(0.35)) }
+                }
+                if d.id == "awi8.cmykHalftone" || d.id == "awi16.halftoneLines" {
+                    if ["size", "period", "contrast"].contains(pd.id) { a.params["version"] = .choice(0); b.params["version"] = .choice(0) }
                     if pd.id == "phase" { a.params["phase"] = .number(Animated(-0.2)); b.params["phase"] = .number(Animated(0.35)) }
                 }
                 // Adjustment layer = effect sees the whole varied scene, not just one flat shape.
