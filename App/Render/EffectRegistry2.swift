@@ -187,16 +187,18 @@ extension EffectRegistry {
         params: [.number("h", "Horizontal Blocks", 20, 1, 400, step: 1, ae: 1), .number("v", "Vertical Blocks", 20, 1, 400, step: 1, ae: 2)],
         stage: .pixels { ctx in stylize(3, ctx) { p in p.a = SIMD4(f(ctx.num("h")), f(ctx.num("v")), 0, 0) } })
 
-    static let halftone = EffectDefinition(
-        id: "awi.halftone", name: "Halftone", category: .stylize, aeMatchNames: [],
-        summary: "Antialiased print dots with adjustable tone, staggered rows and ink/paper colors. Legacy rendering preserves older projects.",
-        params: [.number("size", "Dot Spacing", 8, 2, 80, unit: "px"), .angle("angle", "Angle", 45), .toggle("color", "Color Dots", false),
+    private static let halftoneParams: [ParamDef] = [.number("size", "Dot Spacing", 8, 2, 80, unit: "px"), .angle("angle", "Angle", 45), .toggle("color", "Color Dots", false),
                  .number("strength", "Strength", 50, 0, 100, unit: "%"),
                  .number("phase", "Row Phase", 0.5, -1000, 1000, step: 0.01),
                  .number("amount", "Amount", 100, 0, 500, step: 0.1),
                  .color("ink", "Ink Color", RGBA(hex: 0x113355)), .color("paper", "Paper Color", RGBA(hex: 0xFFEEDD)),
                  .number("mix", "Effect Mix", 100, 0, 100, unit: "%"),
-                 .choice("version", "Rendering", ["Legacy", "Print Screen", "AM Dots"], 2)],
+                 .choice("version", "Rendering", ["Legacy", "Print Screen", "AM Dots"], 2)]
+
+    static let halftone = EffectDefinition(
+        id: "awi.halftone", name: "Halftone", category: .stylize, aeMatchNames: [],
+        summary: "Antialiased print dots with adjustable tone, staggered rows and ink/paper colors. Legacy rendering preserves older projects.",
+        params: halftoneParams,
         stage: .pixels { ctx in
             // Missing version = the exact earlier renderer, not a silent change to saved edits.
             if ctx.effect.choice("version") == 0 {
@@ -205,7 +207,7 @@ extension EffectRegistry {
             // Switching an older saved instance to a new mode must initialize new controls coherently.
             func value(_ key: String) -> Double {
                 if ctx.effect.params[key] != nil { return ctx.num(key) }
-                return halftone.params.first(where: { $0.id == key })?.defaultValue.number(at: ctx.time) ?? 0
+                return halftoneParams.first(where: { $0.id == key })?.defaultValue.number(at: ctx.time) ?? 0
             }
             return run23(ctx, mode: 2) { p in
                 p.a = SIMD4(f(value("size") * ctx.unit), f(value("angle") * .pi / 180), f(pow(2, (value("strength") - 50) / 25)), f(value("phase")))
