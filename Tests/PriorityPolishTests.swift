@@ -55,7 +55,7 @@ final class PriorityPolishTests: XCTestCase {
         e.params["output"] = .choice(2)
         let wipe = try render(e)
         for i in stride(from: 3, to: base.count, by: 4) {
-            XCTAssertEqual(Int(reveal[i]) + Int(wipe[i]), Int(base[i]), accuracy: 1)
+            XCTAssertLessThanOrEqual(abs(Int(reveal[i]) + Int(wipe[i]) - Int(base[i])), 1)
         }
     }
 

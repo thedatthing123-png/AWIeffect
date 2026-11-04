@@ -242,13 +242,18 @@ enum UserLibrary {
             .sorted { $0.lastPathComponent > $1.lastPathComponent }
     }
     static func isVideo(_ u: URL) -> Bool { ["mov", "mp4", "m4v"].contains(u.pathExtension.lowercased()) }
-    static func save(data: Data, ext: String) {
-        let name = "\(Int(Date().timeIntervalSince1970 * 1000)).\(ext)"
-        try? data.write(to: folder.appendingPathComponent(name))
+    @discardableResult
+    static func save(data: Data, ext: String) -> Bool {
+        let name = "\(Int(Date().timeIntervalSince1970 * 1000))-\(UUID().uuidString).\(ext)"
+        do { try data.write(to: folder.appendingPathComponent(name), options: .atomic); return true }
+        catch { return false }
     }
-    static func save(file: URL) {
+    @discardableResult
+    static func save(file: URL) -> Bool {
         let ext = file.pathExtension.isEmpty ? "mov" : file.pathExtension
-        try? FileManager.default.copyItem(at: file, to: folder.appendingPathComponent("\(Int(Date().timeIntervalSince1970 * 1000)).\(ext)"))
+        let name = "\(Int(Date().timeIntervalSince1970 * 1000))-\(UUID().uuidString).\(ext)"
+        do { try FileManager.default.copyItem(at: file, to: folder.appendingPathComponent(name)); return true }
+        catch { return false }
     }
     static func thumbnail(_ u: URL) -> UIImage? {
         if isVideo(u) {

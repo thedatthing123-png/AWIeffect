@@ -69,6 +69,7 @@ struct MediaPickerView: View {
     @State private var selected: [PHAsset] = []
     @State private var pending: [PHAsset] = []
     @State private var failed = 0
+    @State private var currentAsset: PHAsset?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -161,19 +162,23 @@ struct MediaPickerView: View {
     private func nextImport() {
         guard !pending.isEmpty else { busy = false; if failed == 0 { isPresented = false }; return }
         let asset = pending.removeFirst()
+        currentAsset = asset
         pick(asset)
     }
 
     private func finish(_ success: Bool) {
         if !success { failed += 1 }
+        else if let currentAsset { selected.removeAll { $0.localIdentifier == currentAsset.localIdentifier } }
         nextImport()
     }
 
-    private func addMovie(_ url: URL) {
-        if libraryOnly { UserLibrary.save(file: url) } else { state.addVideo(from: url) }
+    private func addMovie(_ url: URL) -> Bool {
+        if libraryOnly { return UserLibrary.save(file: url) }
+        state.addVideo(from: url); return true
     }
-    private func addImage(_ data: Data, ext: String) {
-        if libraryOnly { UserLibrary.save(data: data, ext: ext) } else { state.addImage(data: data, ext: ext) }
+    private func addImage(_ data: Data, ext: String) -> Bool {
+        if libraryOnly { return UserLibrary.save(data: data, ext: ext) }
+        state.addImage(data: data, ext: ext); return true
     }
 
     private func pick(_ a: PHAsset) {
@@ -187,13 +192,12 @@ struct MediaPickerView: View {
                 guard let av else { Task { @MainActor in finish(false) }; return }
                 let out = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mov")
                 if let u = (av as? AVURLAsset)?.url {
-                    Task { @MainActor in addMovie(u); finish(true) }
+                    Task { @MainActor in finish(addMovie(u)) }
                 } else if let ex = AVAssetExportSession(asset: av, presetName: AVAssetExportPresetHighestQuality) {
                     ex.outputURL = out; ex.outputFileType = .mov
                     ex.exportAsynchronously {
                         Task { @MainActor in
-                            if ex.status == .completed { addMovie(out) }
-                            finish(ex.status == .completed)
+                            finish(ex.status == .completed && addMovie(out))
                         }
                     }
                 } else { Task { @MainActor in finish(false) } }
@@ -204,16 +208,17 @@ struct MediaPickerView: View {
             o.deliveryMode = .highQualityFormat
             PHImageManager.default().requestImageDataAndOrientation(for: a, options: o) { data, uti, _, _ in
                 Task { @MainActor in
+                    var success = false
                     if let data {
                         // HEIC etc. → PNG/JPEG so every part of the app can read it.
                         if let ui = UIImage(data: data), uti?.contains("heic") == true || uti?.contains("heif") == true, let j = ui.jpegData(compressionQuality: 0.95) {
-                            addImage(j, ext: "jpg")
+                            success = addImage(j, ext: "jpg")
                         } else {
                             let ext = (uti?.contains("png") == true) ? "png" : "jpg"
-                            addImage(data, ext: ext)
+                            success = addImage(data, ext: ext)
                         }
                     }
-                    finish(data != nil)
+                    finish(success)
                 }
             }
         }

@@ -146,7 +146,7 @@ extension EffectRegistry {
             p.c = SIMD4(Float(ctx.num("speed")), Float(ctx.num("offset") / 100), Float(ctx.num("softness") / 100), 0) } })
 
     static let organicLightSweep = EffectDefinition(
-        id: "awi10.organicLightSweep", name: "Organic Light Sweep", category: .color,
+        id: "awi10.organicLightSweep", name: "Organic Light Sweep", category: .color, aeMatchNames: [],
         summary: "A curved, flowing highlight clipped to the subject. Irregularity bends the light rather than moving the image.",
         params: [.angle("angle", "Direction", 30), .number("width", "Width", 80, 0.1, 4000, unit: "px"),
                  .number("intensity", "Intensity", 1, 0, 20, step: 0.01),
