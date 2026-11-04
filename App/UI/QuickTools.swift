@@ -292,6 +292,8 @@ struct MyLibrarySection: View {
                     Label(importing ? "Importing…" : "Import", systemImage: "plus.circle.fill").font(.system(size: 13, weight: .semibold))
                 }
                 .accessibilityLabel("Import to My Library")
+                .buttonStyle(.borderless)
+                .disabled(importing)
             }
             if items.isEmpty {
                 Text("Import your own overlays, transitions or clips once — they stay here for every project. Tap adds it exactly as it is (normal blend); hold for a Screen-blend overlay option.")
@@ -302,12 +304,12 @@ struct MyLibrarySection: View {
                     Button { state.addFromLibrary(u, asOverlay: false) } label: {
                         ZStack(alignment: .bottomLeading) {
                             RoundedRectangle(cornerRadius: 10).fill(Theme.raised)
-                            if let t = thumbs[u] { Image(uiImage: t).resizable().scaledToFill() }
+                            if let t = thumbs[u] { Image(uiImage: t).resizable().scaledToFill().allowsHitTesting(false) }
                             if UserLibrary.isVideo(u) {
                                 Image(systemName: "play.fill").font(.system(size: 10)).padding(5).foregroundStyle(.white)
                             }
                         }
-                        .frame(height: 80).clipShape(RoundedRectangle(cornerRadius: 10))
+                        .frame(height: 80).clipped().clipShape(RoundedRectangle(cornerRadius: 10)).contentShape(RoundedRectangle(cornerRadius: 10))
                     }
                     .buttonStyle(.plain)
                     .contextMenu {

@@ -8,7 +8,7 @@ struct ModelPanel: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            PanelHeader(state: state, title: "3D Model")
+            PanelHeader(state: state, title: state.selectedLayer?.model3D.map { $0.fileName == nil && $0.shapePath == nil && $0.imageFile == nil ? "3D Text" : "3D Model" } ?? "3D Model")
             if let o = state.selectedLayer?.model3D {
                 let t = state.currentTime
                 ScrollView {
@@ -16,7 +16,8 @@ struct ModelPanel: View {
                         if o.fileName == nil {
                             if o.shapePath == nil && o.imageFile == nil {
                                 HStack {
-                                    TextField("3D text", text: $draft).padding(8).glass(radius: 10).foregroundStyle(Theme.text)
+                                    TextField("Edit 3D text", text: $draft)
+                                        .accessibilityLabel("Edit 3D Text").padding(8).glass(radius: 10).foregroundStyle(Theme.text)
                                         // Live: the 3D text updates as you type.
                                         .onChange(of: draft) { _, d in edit("3D Text") { $0.text = d } }
                                 }
@@ -39,6 +40,7 @@ struct ModelPanel: View {
                     .padding(.horizontal, 12).padding(.bottom, 14)
                 }
                 .onAppear { draft = o.text }
+                .onChange(of: state.selectedLayerID) { _, _ in draft = state.selectedLayer?.model3D?.text ?? "" }
             }
         }
     }

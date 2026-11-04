@@ -169,7 +169,7 @@ struct AddPanel: View {
                     }
                     section("Draw") {
                         ToolTile(icon: "paintbrush.pointed.fill", title: "Draw Studio") { drawLauncher.open(nil) }
-                        ToolTile(icon: "pencil.tip", title: "Pen Path") { startPen(.newShape, .points) }
+                        ToolTile(icon: "pencil.tip", title: "Vector Shape") { startPen(.newShape, .points) }
                         ToolTile(icon: "scribble", title: "Draw Path") { startPen(.newShape, .freehand) }
                     }
                     section("Media") {

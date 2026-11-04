@@ -239,7 +239,7 @@ enum EffectRegistry {
         gaussianBlur, directionalBlur, radialBlur,
         exposure, brightnessContrast, hueSaturation, tint, levels, invert, fill, vignette,
         glow, rgbSplit, fractalNoise, chromaKey, shake,
-    ] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22
+    ] + [letterSpacing] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22
 
     private static let byID: [String: EffectDefinition] = Dictionary(uniqueKeysWithValues: all.map { ($0.id, $0) })
     private static let byMatchName: [String: EffectDefinition] = {
@@ -602,4 +602,14 @@ enum Wiggle {
         let u = f * f * f * (f * (f * 6 - 15) + 10)
         return hash(i, seed) * (1 - u) + hash(i + 1, seed) * u
     }
+}
+
+
+extension EffectRegistry {
+    static let letterSpacing = EffectDefinition(
+        id: "awi.textSpacing", name: "Letter Spacing", category: .text, aeMatchNames: [],
+        summary: "Spaces the whole text layer without a text animator. Adds to the layer’s existing tracking.",
+        params: [.number("spacing", "Letter Spacing", 0, -300, 1000, unit: "px"),
+                 .choice("anchor", "Spacing From", ["Layer Setting", "Left", "Center", "Right"], 0)],
+        stage: .transform { _, _ in (0, 0, 0, 1) })
 }

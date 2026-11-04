@@ -339,7 +339,7 @@ extension Renderer {
     /// Draws a text layer. `M` maps layer-local px -> target px; `density` = target px per local px.
     func drawText(cb: MTLCommandBuffer, target: MTLTexture, matrix M: simd_double3x3, density: Double,
                   layer: Layer, time: Double, opacity: Double, blend: BlendMode) {
-        guard let text = layer.text?.resolved(at: time) else { return }
+        guard let text = Self.renderTextData(layer, time: time) else { return }
         let lay = TextEngine.shared.layout(text, time: time)
         let states = Self.glyphStates(text, layout: lay, time: time)
         let chars = Array(text.string)
@@ -425,8 +425,18 @@ extension Renderer {
     }
 
     /// Local bounds of a text layer (unanimated layout).
+    static func renderTextData(_ layer: Layer, time: Double) -> TextData? {
+        guard var text = layer.text?.resolved(at: time) else { return nil }
+        for effect in layer.effects where effect.isEnabled && effect.typeID == "awi.textSpacing" {
+            text.tracking = Animated(text.tracking.value(at: time) + effect.number("spacing", time))
+            let anchor = effect.choice("anchor")
+            if anchor > 0 { text.spacingAnchor = anchor - 1 }
+        }
+        return text
+    }
+
     static func textBounds(_ layer: Layer, time: Double) -> CGRect? {
-        guard let t = layer.text?.resolved(at: time) else { return nil }
+        guard let t = renderTextData(layer, time: time) else { return nil }
         return TextEngine.shared.layout(t, time: time).bounds
     }
 }

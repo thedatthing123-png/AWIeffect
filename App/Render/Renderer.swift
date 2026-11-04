@@ -474,6 +474,17 @@ final class Renderer {
         // Echo needs parenting baked over time (costly); everything else bakes just this frame.
         let hasEcho = resolved.layers.contains { ($0.timeFX?.echoCount ?? 0) > 0 }
         let project = hasEcho ? Self.expandEchoes(Self.resolveParentingAnimated(resolved)) : Self.resolveParenting(resolved, time: time)
+        var shutterProjects: [Double: Project] = [:]
+        func samplePlacement(_ layer: Layer, at sampleTime: Double) -> simd_double3x3 {
+            let sample: Project
+            if let cached = shutterProjects[sampleTime] { sample = cached }
+            else {
+                sample = Self.resolveParenting(ExpressionResolver.resolve(rawProject, time: sampleTime), time: sampleTime)
+                shutterProjects[sampleTime] = sample
+            }
+            let sampledLayer = sample.layers.first { $0.id == layer.id } ?? layer
+            return Self.placementMatrix(sampledLayer, camera: Self.activeCamera(sample, time: sampleTime), time: sampleTime, renderScale: renderScale)
+        }
         precompLibrary = project.precomps.isEmpty ? precompLibrary : project.precomps
         currentPool = pool
         currentDepth = project.precompDepth ?? 0
@@ -559,8 +570,8 @@ final class Renderer {
             }
 
             if case .adjustment = layer.content {
-                guard !pixelFX.isEmpty else { continue }
-                encodeAdjustment(layer, effects: pixelFX, time: time, renderScale: renderScale, opacity: opacity,
+                guard layer.effects.contains(where: { $0.isEnabled }) else { continue }
+                encodeAdjustment(layer, effects: layer.effects.filter(\.isEnabled), time: time, renderScale: renderScale, opacity: opacity,
                                  comp: comp, cb: cb, pool: pool)
                 continue
             }
@@ -594,15 +605,15 @@ final class Renderer {
                     let p = m * SIMD3(x, y, 1); return SIMD2(p.x, p.y) / max(p.z, 1e-6)
                 }
                 // Adaptive: as many samples as the motion needs (≈1 per 1.5 px of travel), capped by the quality setting.
-                let m0 = Self.placementMatrix(layer, camera: camera, time: time - shutter / 2, renderScale: renderScale)
-                let m1 = Self.placementMatrix(layer, camera: camera, time: time + shutter / 2, renderScale: renderScale)
+                let m0 = samplePlacement(layer, at: time - shutter / 2)
+                let m1 = samplePlacement(layer, at: time + shutter / 2)
                 let travel = [(-hs.x, -hs.y), (hs.x, hs.y), (hs.x, -hs.y), (-hs.x, hs.y)]
                     .map { c in simd_length(corner(m1, c.0, c.1) - corner(m0, c.0, c.1)) }.max() ?? 0
                 if travel.isFinite, travel > 0.5 {
                     let cap = Renderer.blurSampleCap.map { min($0, project.blurSamples) } ?? project.blurSamples
                     let n = max(2, min(cap, Int(min(Double(max(2, cap)), (travel / 1.5).rounded(.up))) + 1))
                     blurMatrices = (0..<n).map { k in
-                        Self.placementMatrix(layer, camera: camera, time: time + (Double(k) / Double(n - 1) - 0.5) * shutter, renderScale: renderScale)
+                        samplePlacement(layer, at: time + (Double(k) / Double(n - 1) - 0.5) * shutter)
                     }
                 }
             }
@@ -944,8 +955,25 @@ final class Renderer {
         fx.run("fxCopy", cb, textures: [comp, copy], grid: copy)
         var current = copy
         for e in effects {
-            guard let def = EffectRegistry.definition(e.typeID), case .pixels(let run) = def.stage else { continue }
-            current = run(EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: time, unit: renderScale, pool: pool))
+            guard let def = EffectRegistry.definition(e.typeID) else { continue }
+            switch def.stage {
+            case .pixels(let run):
+                current = run(EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: time, unit: renderScale, pool: pool))
+            case .transform:
+                let transformed = pool.acquire(width: comp.width, height: comp.height)
+                fx.run("fxClear", cb, textures: [transformed], grid: transformed)
+                var control = layer; control.effects = [e]
+                let offset = Self.transformOffsets(control, time: time)
+                var carrier = layer; carrier.fill = Animated(.white)
+                let angle = offset.dr * .pi / 180
+                let matrix = simd_double3x3(columns: (SIMD3(cos(angle) * offset.ds, sin(angle) * offset.ds, 0),
+                    SIMD3(-sin(angle) * offset.ds, cos(angle) * offset.ds, 0),
+                    SIMD3(Double(comp.width) / 2 + offset.dx * renderScale, Double(comp.height) / 2 + offset.dy * renderScale, 1)))
+                drawQuad(cb: cb, target: transformed, matrix: matrix, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 1,
+                         opacity: 1, layer: carrier, time: time, source: .image(current), premultipliedImage: true, blendOverride: .normal)
+                current = transformed
+            }
+
         }
         let M = Self.layerMatrix(layer, time: time, renderScale: renderScale)
         let inv = M.inverse

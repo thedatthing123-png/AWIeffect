@@ -149,6 +149,43 @@ final class EditorPolishRegressionTests: XCTestCase {
         }
     }
 
+    func testTextSpacingEffectUsesLayerLayoutWithoutCreatingAnimator() throws {
+        var p = scene()
+        var layer = p.layers[1]; layer.content = .text; layer.text = TextData(string: "AWI")
+        let baseline = try XCTUnwrap(Renderer.textBounds(layer, time: 0))
+        var effect = EffectRegistry.letterSpacing.makeInstance(); effect.params["spacing"] = .number(Animated(30))
+        layer.effects = [effect]
+        let spaced = try XCTUnwrap(Renderer.textBounds(layer, time: 0))
+        XCTAssertGreaterThan(spaced.width, baseline.width)
+        XCTAssertTrue(layer.text!.animators.isEmpty)
+    }
+
+    func testAdjustmentTransformMovesSceneBelowIt() throws {
+        guard let renderer = Renderer.shared else { throw XCTSkip("Metal unavailable") }
+        var p = scene(); p.layers.removeFirst()
+        p.layers[0].size = Animated(Vec2(8, 8)); p.layers[0].transform.position = Animated(Vec2(32, 64))
+        var adjustment = p.makeLayer(name: "adjust", content: .adjustment, size: Vec2(128, 128))
+        var effect = EffectRegistry.transformFX18.makeInstance(); effect.params["x"] = .number(Animated(30))
+        adjustment.effects = [effect]; p.layers.insert(adjustment, at: 0)
+        let pixels = try XCTUnwrap(renderer.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        XCTAssertGreaterThan(pixels[(64 * 128 + 62) * 4 + 3], 240)
+        XCTAssertLessThan(pixels[(64 * 128 + 32) * 4 + 3], 10)
+    }
+
+    func testCameraMovementProducesTransformMotionBlur() throws {
+        guard let renderer = Renderer.shared else { throw XCTSkip("Metal unavailable") }
+        var p = scene(); p.smoothMotion = false
+        p.layers[1].size = Animated(Vec2(4, 20)); p.layers[1].transform.position = Animated(Vec2(64, 64))
+        p.layers[1].motionBlur = true; p.shutterAngle = 360; p.blurSamples = 16
+        p.layers[0].transform.position.insertKeyframe(Keyframe(time: 0, value: Vec2(-500, 64), interpolation: .linear))
+        p.layers[0].transform.position.insertKeyframe(Keyframe(time: 1, value: Vec2(628, 64), interpolation: .linear))
+        func frame() throws -> [UInt8] { try XCTUnwrap(renderer.renderPixels(project: p, time: 0.5, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) })).rgba }
+        p.motionBlurEnabled = false; let sharp = try frame()
+        p.motionBlurEnabled = true; let blurred = try frame()
+        func coverage(_ pixels: [UInt8]) -> Int { stride(from: 3, to: pixels.count, by: 4).filter { pixels[$0] > 8 }.count }
+        XCTAssertGreaterThan(coverage(blurred), coverage(sharp))
+    }
+
     func testSnappingUsesVisibleEdgesAndReleasesAwayFromGuide() {
         let edge = LayerPlacement.snap(features: [42, 62, 82], targets: [0, 64, 128], held: nil, grab: 3)
         XCTAssertEqual(edge.delta, 2); XCTAssertEqual(edge.guide, 64)
