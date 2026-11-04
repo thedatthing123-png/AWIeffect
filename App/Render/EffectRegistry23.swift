@@ -16,15 +16,15 @@ extension EffectRegistry {
     }
 
     static let litRipple23 = EffectDefinition(
-        id: "awi23.litRipple", name: "Lit Ripple", category: .distort, aeMatchNames: [],
+        id: "awi23.litRipple", name: "BCC-style Lit Ripple", category: .distort, aeMatchNames: [],
         summary: "Expanding water rings with bright white crests, radial refraction and adjustable lighting. Separate from ordinary Ripple.",
-        params: [.number("strength", "Distortion", 0.02, 0, 0.2, step: 0.001),
+        params: [.number("strength", "Strength", 0.02, 0, 0.2, step: 0.001),
                  .number("frequency", "Frequency", 20, 1, 100, step: 0.1),
-                 .number("speed", "Speed", 1, -10, 10, step: 0.01),
+                 .number("speed", "Speed", 1, 0, 10, step: 0.01),
                  .number("radius", "Radius Scale", 1, 0.1, 2, step: 0.01),
                  .number("decay", "Decay", 0.5, 0, 2, step: 0.01),
                  .point("center", "Center", Vec2(0.5, 0.5)),
-                 .number("light", "Light Intensity", 0.6, 0, 2, step: 0.01),
+                 .number("light", "Light Intensity", 0.3, 0, 1, step: 0.01),
                  .number("sharpness", "Light Sharpness", 2, 0.1, 10, step: 0.1),
                  .color("tint", "Light Color", .white),
                  .number("mix", "Effect Mix", 100, 0, 100, unit: "%")],
@@ -33,6 +33,7 @@ extension EffectRegistry {
             let center = ctx.effect.point("center", ctx.time)
             p.b = SIMD4(Float(center.x), Float(center.y), Float(ctx.num("decay")), Float(ctx.num("light")))
             let tint = ctx.effect.color("tint", ctx.time)
+            p.b.w *= Float(tint.a)
             p.c = SIMD4(Float(tint.r), Float(tint.g), Float(tint.b), Float(ctx.num("sharpness")))
             p.i.y = UInt32((ctx.num("mix") * 100).rounded())
         } })
@@ -57,9 +58,9 @@ extension EffectRegistry {
 
     static let drawingProgress23 = EffectDefinition(
         id: "awi23.drawProgress", name: "Draw Progress", category: .stylize, aeMatchNames: [],
-        summary: "Draws vector shapes and freehand vector strokes by path length. Start and End remove percentages from each end. Raster paintings have no editable stroke path.",
+        summary: "Draws vector shapes and freehand vector strokes by path length. Start and End mark the visible interval from 0% to 100%. Raster paintings have no editable stroke path.",
         params: [.number("start", "Start", 0, 0, 100, unit: "%"),
-                 .number("end", "End", 0, 0, 100, unit: "%")],
+                 .number("end", "End", 100, 0, 100, unit: "%")],
         stage: .transform { _, _ in (0, 0, 0, 1) })
 
     /// Sequential effects trim the surviving geometry, without modifying saved path/keyframes.
@@ -68,8 +69,8 @@ extension EffectRegistry {
         for effect in effects where effect.isEnabled && effect.typeID == drawingProgress23.id {
             let start = min(100, max(0, effect.number("start", time)))
             let end = min(100, max(0, effect.number("end", time)))
-            guard start + end < 100 else { return [] }
-            result = PathGPU.trimmed(result, start: start, end: 100 - end, offset: 0, closed: false)
+            guard start < end else { return [] }
+            result = PathGPU.trimmed(result, start: start, end: end, offset: 0, closed: false)
         }
         return result
     }

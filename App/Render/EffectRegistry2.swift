@@ -192,10 +192,11 @@ extension EffectRegistry {
         summary: "Antialiased print dots with adjustable tone, staggered rows and ink/paper colors. Legacy rendering preserves older projects.",
         params: [.number("size", "Dot Spacing", 8, 2, 80, unit: "px"), .angle("angle", "Angle", 45), .toggle("color", "Color Dots", false),
                  .number("strength", "Strength", 50, 0, 100, unit: "%"),
-                 .number("phase", "Row Phase", 0.5, -1, 1, step: 0.01),
-                 .color("ink", "Ink Color", .black), .color("paper", "Paper Color", .white),
+                 .number("phase", "Row Phase", 0.5, -1000, 1000, step: 0.01),
+                 .number("amount", "Amount", 100, 0, 500, step: 0.1),
+                 .color("ink", "Ink Color", RGBA(hex: 0x113355)), .color("paper", "Paper Color", RGBA(hex: 0xFFEEDD)),
                  .number("mix", "Effect Mix", 100, 0, 100, unit: "%"),
-                 .choice("version", "Rendering", ["Legacy", "Print Screen"], 1)],
+                 .choice("version", "Rendering", ["Legacy", "Print Screen", "AM Dots"], 2)],
         stage: .pixels { ctx in
             // Missing version = the exact earlier renderer, not a silent change to saved edits.
             if ctx.effect.choice("version") == 0 {
@@ -203,6 +204,11 @@ extension EffectRegistry {
             }
             return run23(ctx, mode: 2) { p in
                 p.a = SIMD4(f(ctx.num("size") * ctx.unit), f(ctx.num("angle") * .pi / 180), f(pow(2, (ctx.num("strength") - 50) / 25)), f(ctx.num("phase")))
+                if ctx.effect.choice("version") == 2 {
+                    p.i.w = 1
+                    p.a.x = f((ctx.compositionPixels?.x ?? Double(ctx.width)) / max(0.001, ctx.num("amount")))
+                    p.a.z = f(ctx.num("strength") / 100)
+                }
                 let ink = ctx.effect.color("ink", ctx.time), paper = ctx.effect.color("paper", ctx.time)
                 p.b = SIMD4(f(ink.r), f(ink.g), f(ink.b), f(ink.a)); p.c = SIMD4(f(paper.r), f(paper.g), f(paper.b), f(paper.a))
                 p.i.y = ctx.effect.bool("color") ? 1 : 0; p.i.z = UInt32((ctx.num("mix") * 100).rounded())

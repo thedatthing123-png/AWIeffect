@@ -119,6 +119,38 @@ enum AMImporter {
         }
         let name = layer.name
         switch base {
+        case "ripplelight":
+            make(EffectRegistry.litRipple23, ["strength": num("strength"), "frequency": num("frequency"), "speed": num("speed"),
+                "radius": num("radius"), "decay": num("decay"), "light": num("lightIntensity"), "sharpness": num("lightSharpness"),
+                "mix": num("blend", scale: 100)])
+            // Combine separately animated center coordinates without discarding either key track.
+            if let index = layer.effects.indices.last {
+                let x = double(props["centerX"], inPoint, length) ?? Animated(0.5)
+                let y = double(props["centerY"], inPoint, length) ?? Animated(0.5)
+                var center = Animated(Vec2(x.staticValue, y.staticValue))
+                let times = Set(x.keyframeTimes + y.keyframeTimes).sorted()
+                for t in times { center.insertKeyframe(Keyframe(time: t, value: Vec2(x.value(at: t), y.value(at: t)))) }
+                layer.effects[index].params["center"] = .point(center)
+            }
+            report.add(name, "BCC-style Lit Ripple", .approximate, "Reference controls retained; independent center easing is sampled at source key times.")
+        case "time_slice_mask":
+            make(EffectRegistry.timeSliceMask23, ["count": num("count"), "smoothness": num("smoothness"), "speed": num("speed"),
+                "angle": num("angle"), "feather": num("feather"), "output": .choice(1),
+                "reverse": .toggle((Double(props["reverse"]?["value"] ?? "0") ?? 0) >= 0.5)])
+            report.add(name, "Time Slice Mask", .approximate, "White mask output; Reverse is implemented rather than ignored.")
+        case "halftonedots":
+            make(EffectRegistry.halftone, ["version": .choice(2), "amount": num("amount"), "strength": num("strength", scale: 100),
+                "angle": num("angle"), "phase": num("phase"),
+                "ink": props["color1"]?["value"].flatMap(color).map { .color(Animated($0)) },
+                "paper": props["color2"]?["value"].flatMap(color).map { .color(Animated($0)) }])
+            report.add(name, "Halftone Dots", .approximate, "AM Dots mode; static colors and numeric keyframes retained.")
+        case "drawing.progress":
+            guard case .shape = layer.content else {
+                report.add(name, "Drawing Progress", .missing, "Requires vector geometry; raster/text outlines are not converted.")
+                return
+            }
+            make(EffectRegistry.drawingProgress23, ["start": num("start"), "end": num("end")])
+            report.add(name, "Drawing Progress", .native)
         case "shake":
             make(EffectRegistry.shake, ["amplitude": num("mag"), "frequency": num("freq"), "rotation": .number(Animated(0))])
             report.add(name, "Shake", .native)
@@ -433,7 +465,7 @@ enum AMImporter {
                 else { report.add(label, node.name, .approximate, "Imported as a solid.") }
             }
             if let g = node.child("gain"), let v = Double(g["value"] ?? "") { l.volume = Animated(v * 100) }
-            for fx in node.all("effect") where fx["id"]?.hasSuffix("drawing.progress") != true {
+            for fx in node.all("effect") {
                 applyEffect(fx, to: &l, project: &project, inPoint: start, length: length, report: &report)
             }
             if let nid = node["id"] { idMap[nid] = l.id }

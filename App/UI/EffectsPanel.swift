@@ -138,6 +138,11 @@ final class EffectThumbnails {
         var p = Project.new(name: "thumb", width: 360, height: 360, fps: 30, duration: 2, background: RGBA(0.05, 0.04, 0.08))
         var l = p.makeLayer(name: "img", content: .image(fileName: "preview", pixelWidth: 720, pixelHeight: 720), size: Vec2(720, 720))
         l.transform.scale = Animated(Vec2(50, 50))
+        if effect?.typeID == "awi23.drawProgress" {
+            l.content = .shape(.path); l.size = Animated(Vec2(300, 250)); l.transform.scale = Animated(Vec2(100, 100))
+            l.path = Animated(BezierPath.smoothed([Vec2(-130, 80), Vec2(-80, -90), Vec2(0, 60), Vec2(80, -90), Vec2(130, 80)], closed: false, tolerance: 1))
+            l.fill = Animated(RGBA(0, 0, 0, 0)); l.stroke.enabled = true; l.stroke.width = Animated(12); l.stroke.color = Animated(.white)
+        }
         if let effect {
             // Shake shows nothing in a still; give the thumbnail a visible offset frame instead.
             l.effects = [effect]
@@ -158,6 +163,10 @@ final class EffectThumbnails {
         var inst = def.makeInstance()
         // Make subtle defaults visible in a thumbnail.
         switch def.id {
+        case "awi23.drawProgress":
+            var end = Animated(0.0)
+            end.insertKeyframe(Keyframe(time: 0, value: 0)); end.insertKeyframe(Keyframe(time: 1.2, value: 100))
+            inst.params["end"] = .number(end)
         case "ae.gaussianBlur": inst.params["blurriness"] = .number(Animated(14))
         case "awi18.grade":
             inst.params["temp"] = .number(Animated(45)); inst.params["contrast"] = .number(Animated(35))
@@ -245,7 +254,7 @@ struct EffectsPanel: View {
             }
         }
         .awiSheet(isPresented: $showBrowser) {
-            EffectBrowser { def in
+            EffectBrowser(vectorPaths: state.selectedLayer.map { if case .shape = $0.content { return true }; return false } ?? false) { def in
                 state.addEffect(def)
                 showBrowser = false
             }
@@ -300,7 +309,16 @@ struct EffectsPanel: View {
                         state.endEdit()
                     }.font(.caption).foregroundStyle(Theme.accentGlow)
                 }
-                ForEach(def.params) { pd in ParamRow(state: state, effect: e, def: pd) }
+                if def.id == "awi23.drawProgress" {
+                    Text("Use on Vector Shape or Freehand paths. Animate End from 0% to 100% to draw on; use Stroke settings for width and color. Raster paintings have no stroke history.")
+                        .font(.caption).foregroundStyle(Theme.textDim)
+                }
+                ForEach(def.params.filter { pd in
+                    guard def.id == "awi.halftone" else { return true }
+                    let version = e.choice("version")
+                    if version == 0 { return ["size", "angle", "color", "version"].contains(pd.id) }
+                    return pd.id != (version == 2 ? "size" : "amount")
+                }) { pd in ParamRow(state: state, effect: e, def: pd) }
             }
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
@@ -443,6 +461,7 @@ extension Array {
 // MARK: - Effect browser
 
 struct EffectBrowser: View {
+    let vectorPaths: Bool
     let pick: (EffectDefinition) -> Void
     @State private var query = ""
     @State private var tab: Tab = .all
@@ -520,6 +539,7 @@ struct EffectBrowser: View {
                                     }
                             }
                             .buttonStyle(.plain)
+                            .disabled(d.id == "awi23.drawProgress" && !vectorPaths)
                             .contextMenu {
                                 Button { toggleFavorite(d.id) } label: {
                                     Label(favorites.contains(d.id) ? "Unfavorite" : "Favorite", systemImage: favorites.contains(d.id) ? "star.slash" : "star")

@@ -181,6 +181,10 @@ final class EffectTests: XCTestCase {
                     // Use visible spacing within this finite text fixture; extreme spacing is covered by stress tests.
                     a.params[pd.id] = .number(Animated(-5)); b.params[pd.id] = .number(Animated(18))
                 }
+                if d.id == "awi.halftone" {
+                    if pd.id == "size" { a.params["version"] = .choice(1); b.params["version"] = .choice(1) }
+                    if pd.id == "phase" { a.params["phase"] = .number(Animated(-0.2)); b.params["phase"] = .number(Animated(0.35)) }
+                }
                 // Adjustment layer = effect sees the whole varied scene, not just one flat shape.
                 let adj = !d.isTransformEffect && !Self.alphaShaped.contains(d.id)
                 let ra = try render(r, scene(effect: a, onAdjustment: adj)), rb = try render(r, scene(effect: b, onAdjustment: adj))
