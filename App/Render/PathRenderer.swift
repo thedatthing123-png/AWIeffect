@@ -59,10 +59,15 @@ final class PathGPU {
     /// Draws a filled/stroked path. `M` maps layer-local px -> target px.
     func drawPath(cb: MTLCommandBuffer, target: MTLTexture, matrix M: simd_double3x3, path: BezierPath,
                   fill: RGBA?, stroke: (color: RGBA, width: Double, trim: (Double, Double, Double))?,
-                  opacity: Double, blend: BlendMode, aa: Double) {
-        let fillSegs = path.segments()
+                  opacity: Double, blend: BlendMode, aa: Double, drawingEffects: [EffectInstance] = [], time: Double = 0) {
+        var fillSegs = EffectRegistry.drawingSegments(path.segments(), effects: drawingEffects, time: time)
         var strokeSegs: [SIMD4<Float>] = []
         if let s = stroke { strokeSegs = Self.trimmed(fillSegs, start: s.trim.0, end: s.trim.1, offset: s.trim.2, closed: path.closed) }
+        // Filled paths close across the visible endpoints; strokes do not gain a closing chord.
+        if path.closed, let first = fillSegs.first, let last = fillSegs.last,
+           first.x != last.z || first.y != last.w {
+            fillSegs.append(SIMD4(last.z, last.w, first.x, first.y))
+        }
         let all = (fill != nil ? fillSegs : []) + strokeSegs
         guard !all.isEmpty else { return }
         // Bounds in target px.

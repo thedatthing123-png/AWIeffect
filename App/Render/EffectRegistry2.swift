@@ -188,10 +188,26 @@ extension EffectRegistry {
         stage: .pixels { ctx in stylize(3, ctx) { p in p.a = SIMD4(f(ctx.num("h")), f(ctx.num("v")), 0, 0) } })
 
     static let halftone = EffectDefinition(
-        id: "awi.halftone", name: "Halftone", category: .stylize, aeMatchNames: ["CC Ball Action"],
-        summary: "Print-style dots (mono or color) — manga & comic looks.",
-        params: [.number("size", "Dot Size", 8, 2, 80, unit: "px"), .angle("angle", "Angle", 45), .toggle("color", "Color Dots", false)],
-        stage: .pixels { ctx in stylize(4, ctx) { p in p.a = SIMD4(f(ctx.num("size") * ctx.unit), f(ctx.num("angle")), 0, 0); p.i.y = ctx.effect.bool("color") ? 1 : 0 } })
+        id: "awi.halftone", name: "Halftone", category: .stylize, aeMatchNames: [],
+        summary: "Antialiased print dots with adjustable tone, staggered rows and ink/paper colors. Legacy rendering preserves older projects.",
+        params: [.number("size", "Dot Spacing", 8, 2, 80, unit: "px"), .angle("angle", "Angle", 45), .toggle("color", "Color Dots", false),
+                 .number("strength", "Strength", 50, 0, 100, unit: "%"),
+                 .number("phase", "Row Phase", 0.5, -1, 1, step: 0.01),
+                 .color("ink", "Ink Color", .black), .color("paper", "Paper Color", .white),
+                 .number("mix", "Effect Mix", 100, 0, 100, unit: "%"),
+                 .choice("version", "Rendering", ["Legacy", "Print Screen"], 1)],
+        stage: .pixels { ctx in
+            // Missing version = the exact earlier renderer, not a silent change to saved edits.
+            if ctx.effect.choice("version") == 0 {
+                return stylize(4, ctx) { p in p.a = SIMD4(f(ctx.num("size") * ctx.unit), f(ctx.num("angle")), 0, 0); p.i.y = ctx.effect.bool("color") ? 1 : 0 }
+            }
+            return run23(ctx, mode: 2) { p in
+                p.a = SIMD4(f(ctx.num("size") * ctx.unit), f(ctx.num("angle") * .pi / 180), f(pow(2, (ctx.num("strength") - 50) / 25)), f(ctx.num("phase")))
+                let ink = ctx.effect.color("ink", ctx.time), paper = ctx.effect.color("paper", ctx.time)
+                p.b = SIMD4(f(ink.r), f(ink.g), f(ink.b), f(ink.a)); p.c = SIMD4(f(paper.r), f(paper.g), f(paper.b), f(paper.a))
+                p.i.y = ctx.effect.bool("color") ? 1 : 0; p.i.z = UInt32((ctx.num("mix") * 100).rounded())
+            }
+        })
 
     static let crt = EffectDefinition(
         id: "awi.crt", name: "CRT / Scanlines", category: .stylize, aeMatchNames: [],

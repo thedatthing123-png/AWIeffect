@@ -19,8 +19,17 @@ final class EffectTests: XCTestCase {
         return p
     }
 
+    private func drawingScene(effect: EffectInstance?) -> Project {
+        var p = Project.new(name: "path fx", width: 160, height: 160, fps: 30, duration: 2, background: .black)
+        var layer = p.makeLayer(name: "freehand", content: .shape(.path), size: Vec2(120, 80))
+        layer.path = Animated(BezierPath(vertices: [PathVertex(point: Vec2(-60, -35)), PathVertex(point: Vec2(0, 35)), PathVertex(point: Vec2(60, -35))], closed: false))
+        layer.fill = Animated(RGBA(0, 0, 0, 0)); layer.stroke.enabled = true; layer.stroke.width = Animated(8); layer.stroke.color = Animated(.white)
+        layer.effects = effect.map { [$0] } ?? []; p.layers = [layer]; return p
+    }
+
     /// Colorful test scene with hard edges, brights, darks and a green "screen" area.
     private func scene(effect: EffectInstance?, onAdjustment: Bool = false) -> Project {
+        if effect?.typeID == "awi23.drawProgress" { return drawingScene(effect: effect) }
         if let effect, EffectRegistry.definition(effect.typeID)?.category == .text { return textScene(effect: effect) }
         var p = Project.new(name: "fx", width: 160, height: 160, fps: 30, duration: 2, background: RGBA(0.08, 0.06, 0.12))
         var bg = p.makeLayer(name: "green", content: .solid, size: Vec2(160, 60))
@@ -81,6 +90,7 @@ final class EffectTests: XCTestCase {
         case "ae.changeToColor": e.params["from"] = .color(Animated(RGBA(0.6, 0.2, 0.9))); n("tolerance", 20)
         case "ae.strobe": n("duration", 0.2)
         case "awi.textSpacing": n("spacing", 25)
+        case "awi23.drawProgress": n("end", 45)
         case "awi18.transform": n("x", 25); n("rotation", 20); n("scale", 120)
         case "awi19.colorSelect":
             // Keep the purple rect: the dark purple background is close in color but not brightness, so the
@@ -128,7 +138,7 @@ final class EffectTests: XCTestCase {
         let base = try render(r, scene(effect: nil))
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" {
             let out = try render(r, scene(effect: visible(d), onAdjustment: !d.isTransformEffect && !Self.alphaShaped.contains(d.id)))
-            let comparison = d.category == .text ? try render(r, textScene(effect: nil)) : base
+            let comparison = d.id == "awi23.drawProgress" ? try render(r, drawingScene(effect: nil)) : (d.category == .text ? try render(r, textScene(effect: nil)) : base)
             XCTAssertGreaterThan(diff(comparison, out), 0.5, "\(d.name) did not visibly change the image")
             XCTAssertTrue(out.contains { $0 > 10 }, "\(d.name) rendered black")
         }
@@ -149,7 +159,7 @@ final class EffectTests: XCTestCase {
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" {
             var e = visible(d)
             e.isEnabled = false
-            let comparison = d.category == .text ? try render(r, textScene(effect: nil)) : base
+            let comparison = d.id == "awi23.drawProgress" ? try render(r, drawingScene(effect: nil)) : (d.category == .text ? try render(r, textScene(effect: nil)) : base)
             XCTAssertLessThan(diff(comparison, try render(r, scene(effect: e))), 0.01, "disabled \(d.name) still changes output")
         }
     }

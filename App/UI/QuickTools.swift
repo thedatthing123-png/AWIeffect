@@ -62,6 +62,7 @@ enum EffectSection: String, CaseIterable, Identifiable {
     static func of(_ d: EffectDefinition) -> EffectSection {
         if d.category == .transition { return .transition }
         if d.category == .text { return .text }
+        if d.id == "awi23.drawProgress" { return .stylize }
         if d.isTransformEffect { return .shake }
         let hay = (d.name + " " + d.id + " " + d.summary).lowercased()
         for s in allCases where s != .other && s != .transition {

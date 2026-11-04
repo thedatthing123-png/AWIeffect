@@ -424,11 +424,13 @@ final class Renderer {
             return base.map { ShapeOpsMath.apply(ops, to: $0, time: time) }
         }
         if k == .path { return layer.path?.value(at: time) }
-        guard layer.stroke.enabled else { return nil }
+        guard layer.stroke.enabled || layer.effects.contains(where: { $0.isEnabled && $0.typeID == "awi23.drawProgress" }) else { return nil }
         let s = layer.size.value(at: time)
         switch k {
         case .ellipse: return .ellipse(size: s)
         case .rectangle: return .rectangle(size: s)
+        case .polygon: return .polygon(size: s, sides: Int(layer.sides.value(at: time).rounded()), inner: nil)
+        case .star: return .polygon(size: s, sides: Int(layer.sides.value(at: time).rounded()), inner: layer.innerRatio.value(at: time))
         default: return nil
         }
     }
@@ -821,12 +823,12 @@ final class Renderer {
             // Repeater: last copy drawn first so copy 1 sits on top (AE "Above").
             for (m, o) in ShapeOpsMath.copies(rep, time: time).reversed() where o > 0.001 {
                 PathGPU.shared?.drawPath(cb: cb, target: target, matrix: matrix * m, path: path, fill: fill.a > 0 ? fill : nil,
-                                         stroke: stroke, opacity: opacity * o, blend: blend, aa: aa)
+                                         stroke: stroke, opacity: opacity * o, blend: blend, aa: aa, drawingEffects: layer.effects, time: time)
             }
             return
         }
         PathGPU.shared?.drawPath(cb: cb, target: target, matrix: matrix, path: path, fill: fill.a > 0 ? fill : nil,
-                                 stroke: stroke, opacity: opacity, blend: blend, aa: aa)
+                                 stroke: stroke, opacity: opacity, blend: blend, aa: aa, drawingEffects: layer.effects, time: time)
     }
 
     private func sourceTexture(_ layer: Layer, sourceTime: Double, time: Double, density: Double, cb: MTLCommandBuffer,
