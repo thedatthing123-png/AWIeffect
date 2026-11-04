@@ -36,6 +36,13 @@ jobs:
           sudo xcode-select -s "$XC"
           xcodebuild -version
 
+      - name: Ensure Metal compiler toolchain
+        run: |
+          if ! xcrun metal --version; then
+            xcodebuild -downloadComponent MetalToolchain
+            xcrun metal --version
+          fi
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
