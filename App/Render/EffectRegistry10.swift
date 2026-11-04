@@ -69,7 +69,7 @@ extension EffectRegistry {
         id: "awi10.bumpMap", name: "Bump Map", category: .stylize, aeMatchNames: [],
         summary: "Relief lighting from the image's own brightness.",
         params: [.number("depth", "Depth", 10, 0, 40, step: 0.1), .number("softness", "Softness", 2, 0, 20, unit: "px"),
-                 .number("intensity", "Intensity", 1, 0, 20, step: 0.01), .number("elevation", "Light Elevation", 45, 5, 85, unit: "°"),
+                 .number("intensity", "Intensity", 1, 0, 3, step: 0.01), .number("elevation", "Light Elevation", 45, 5, 85, unit: "°"),
                  .angle("angle", "Light Angle", 135)],
         stage: .pixels { ctx in
             let h = height10(ctx, luma: 1, soft: ctx.num("softness"))
@@ -277,7 +277,7 @@ extension EffectRegistry {
         id: "awi10.fresnel", name: "Fresnel Edge Glow", category: .color, aeMatchNames: [],
         summary: "Glancing-angle glow on the shape's edges, like light wrapping a 3D surface.",
         params: [.number("width", "Width", 10, 1, 40, unit: "px"), .number("depth", "Depth", 20, 0, 60, step: 0.1),
-                 .number("power", "Falloff", 2, 0.5, 8, step: 0.01), .number("intensity", "Intensity", 1, 0, 20, step: 0.01),
+                 .number("power", "Falloff", 2, 0.5, 8, step: 0.01), .number("intensity", "Intensity", 1, 0, 3, step: 0.01),
                  .color("color", "Color", RGBA(0.3, 0.8, 1))],
         stage: .pixels { ctx in
             let h = height10(ctx, luma: 0, soft: ctx.num("width"))
@@ -316,7 +316,7 @@ extension EffectRegistry {
         id: "awi10.specular", name: "Specular Highlight", category: .color, aeMatchNames: [],
         summary: "Glossy specular hot spots from a directional light on the image's relief.",
         params: [.number("depth", "Depth", 10, 0, 40, step: 0.1), .number("shininess", "Shininess", 32, 1, 128, step: 0.5),
-                 .number("intensity", "Intensity", 1, 0, 20, step: 0.01), .number("elevation", "Light Elevation", 45, 5, 85, unit: "°"),
+                 .number("intensity", "Intensity", 1, 0, 3, step: 0.01), .number("elevation", "Light Elevation", 45, 5, 85, unit: "°"),
                  .number("softness", "Softness", 2, 0, 20, unit: "px"), .angle("angle", "Light Angle", 135),
                  .color("color", "Color", .white)],
         stage: .pixels { ctx in
