@@ -49,16 +49,6 @@ final class PriorityPolishTests: XCTestCase {
 
     func testTransparentVideoIsDefault() { XCTAssertEqual(ExportSettings().format, .transparent) }
 
-    func testSceneWipeComplementsLayerReveal() throws {
-        var e = EffectRegistry.timeSliceMask23.makeInstance()
-        let base = try render(nil), reveal = try render(e)
-        e.params["output"] = .choice(2)
-        let wipe = try render(e)
-        for i in stride(from: 3, to: base.count, by: 4) {
-            XCTAssertLessThanOrEqual(abs(Int(reveal[i]) + Int(wipe[i]) - Int(base[i])), 1)
-        }
-    }
-
     func testPriorityPreviewArtifacts() throws {
         let directory = URL(fileURLWithPath: "/tmp/awi-ui")
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

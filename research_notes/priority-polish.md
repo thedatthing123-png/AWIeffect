@@ -19,7 +19,7 @@ The 125+ expansion is paused. This branch starts from delivered build 7, not the
 
 [Adobe Distort effects](https://helpx.adobe.com/la/after-effects/desktop/apply-effects-and-animation-presets/list-of-effects/distort-effects.html) distinguishes turbulence displacement and evolution. The supplied IPA contains multiple turbulence variants; the shown X/Y/XY controls motivate the axis options, while the existing AWI noise implementation remains its owner.
 
-The supplied IPA's `time_slice_mask.xml` emits grayscale/alpha stripes and does not sample time-offset footage. Its `atimeslice.xml` is a different effect: a striped transition from content to composition. AWI retains Reveal Layer and White Mask, adds Scene Wipe (inverse source coverage through the normal compositor), and expands feather to the supplied range. Reverse remains functional. No temporal-slicing claim is made.
+Time Slice is deferred to a separate deeper pass at the owner's request, after these faster fixes. The supplied IPA's `time_slice_mask.xml` emits grayscale/alpha stripes, while `atimeslice.xml` is a striped transition from content to composition. Neither samples different footage times. The owner rejected another mask variation. [Adobe's Time Displacement documentation](https://helpx.adobe.com/after-effects/desktop/apply-effects-and-animation-presets/list-of-effects/time-effects.html) describes genuine pixel time displacement and slit scanning. The current saved mask stays compatible; this build does not claim a completed Time Slice remake.
 
 ## Verification
 
