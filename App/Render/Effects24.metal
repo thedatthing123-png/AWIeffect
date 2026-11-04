@@ -105,7 +105,8 @@ kernel void fx24Image(texture2d<half, access::sample> src [[texture(0)]], textur
         for (int i=0;i<7;i++) {
             float wavelength=float(i)/6, signedWave=wavelength*2-1;
             float separation=sign(signedWave)*pow(abs(signedWave),p.a.z)*p.a.x;
-            float3 weight=exp(-pow((wavelength-float3(0.85,0.5,0.15))*4.0,float3(2)));
+            float3 spectrum=(wavelength-float3(0.85,0.5,0.15))*4.0;
+            float3 weight=exp(-(spectrum*spectrum));
             float4 sample=float4(src.sample(zero24,xy+direction*separation));
             rgb+=sample.rgb*weight; weights+=weight; alpha=max(alpha,sample.a);
         }

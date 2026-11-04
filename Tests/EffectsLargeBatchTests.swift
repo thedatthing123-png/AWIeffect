@@ -96,6 +96,43 @@ final class EffectsLargeBatchTests: XCTestCase {
             XCTAssertEqual(try pixels(scene(changed)),try pixels(scene(definition.makeInstance())))
         }
     }
+    func testPrintBatchMatchesSuppliedScreenEquations() throws {
+        for definition in [EffectRegistry.cmykHalftone, EffectRegistry.halftoneLines16] {
+            var effect = definition.makeInstance()
+            effect.params["amount"] = .number(Animated(16)); effect.params["angle"] = .number(Animated(0))
+            effect.params["blackWeight"] = .number(Animated(100))
+            var p = scene(effect); p.layers[0].content = .solid; p.layers[0].size = Animated(Vec2(128,128))
+            p.layers[0].fill = Animated(RGBA(0.25,0.25,0.25))
+            let output = try pixels(p)
+            func smooth(_ value: Double) -> Double { let u = min(1,max(0,(value-0.4)/0.2)); return u*u*(3-2*u) }
+            for y in stride(from: 25, through: 100, by: 7) {
+                let expected: [Double]
+                if definition.id == "awi8.cmykHalftone" {
+                    let dx = 64.5-64, dy = Double(y)+0.5-64, c = sqrt(0.5)
+                    let gx = (dx*c-dy*c)/8, gy = (dx*c+dy*c)/8
+                    let row = floor(gy+0.5), shift = Int(row) & 1 != 0 ? 0.5 : 0
+                    let column = floor(gx+shift+0.5)-shift
+                    let black = smooth(max(0,1-hypot(gx-column,gy-row))*0.75)
+                    expected = Array(repeating:(1-black)*255,count:3)
+                } else {
+                    let gridY = (Double(y)+0.5-64)/8
+                    let weight = smooth(0.25+abs(gridY-floor(gridY+0.5)))
+                    expected = zip([17.0,51,85],[255.0,238,221]).map { pair in pair.0*(1-weight)+pair.1*weight }
+                }
+                for channel in 0..<3 { XCTAssertEqual(Double(output[(y*128+64)*4+channel]),expected[channel],accuracy:3,definition.name) }
+            }
+        }
+    }
+    func testTextUtilityDefaultsDoNotMoveOrHideExistingText() throws {
+        for id in ["textTransform","textProgress","characterOffset","textLineSpacing"] {
+            var p = scene(); p.layers[0].content = .text; p.layers[0].text = TextData(string:"AWI\nEDIT")
+            p.layers[0].effects = [try XCTUnwrap(EffectRegistry.definition("awi24."+id)).makeInstance()]
+            let text = try XCTUnwrap(Renderer.renderTextData(p.layers[0],time:0)), layout = TextEngine.shared.layout(text,time:0)
+            let states = Renderer.glyphStates(text,layout:layout,time:0,effects:p.layers[0].effects)
+            XCTAssertTrue(states.allSatisfy { $0.offset == .zero && $0.rotation == 0 && $0.charOffset == 0 && $0.opacity == 1 },id)
+            XCTAssertEqual(text.lineSpacing.value(at:0),1.15,accuracy:1e-9)
+        }
+    }
     func testBatchManifestAndRenderedPreviews() throws {
         guard let renderer = Renderer.shared else { throw XCTSkip("SKIP-GPU: Metal unavailable") }
         let folder = URL(fileURLWithPath:"/tmp/awi-ui",isDirectory:true)
@@ -103,7 +140,7 @@ final class EffectsLargeBatchTests: XCTestCase {
         let manifest = EffectRegistry.all.map { ["id":$0.id,"name":$0.name,"category":$0.category.rawValue] }
         try JSONSerialization.data(withJSONObject:manifest,options:[.prettyPrinted,.sortedKeys]).write(to:folder.appendingPathComponent("effect-manifest.json"))
         for definition in EffectRegistry.textBatch24 + EffectRegistry.imageBatch24 + [EffectRegistry.cmykHalftone,EffectRegistry.halftoneLines16] {
-            var p = scene(definition.makeInstance())
+            var p = scene(EffectThumbnails.showcase(definition))
             if definition.category == .text {
                 p.layers[0].content = .text; p.layers[0].text = TextData(string:"AWI\nEDIT"); p.layers[0].text!.fontSize = 24
             }

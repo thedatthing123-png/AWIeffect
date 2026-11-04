@@ -90,6 +90,10 @@ final class EffectTests: XCTestCase {
         case "ae.changeToColor": e.params["from"] = .color(Animated(RGBA(0.6, 0.2, 0.9))); n("tolerance", 20)
         case "ae.strobe": n("duration", 0.2)
         case "awi.textSpacing": n("spacing", 25)
+        case "awi24.textTransform": n("y", 20)
+        case "awi24.textProgress": n("end", 60)
+        case "awi24.characterOffset": n("offset", 5)
+        case "awi24.textLineSpacing": n("spacing", 140)
         case "awi23.drawProgress": n("end", 45)
         case "awi18.transform": n("x", 25); n("rotation", 20); n("scale", 120)
         case "awi19.colorSelect":

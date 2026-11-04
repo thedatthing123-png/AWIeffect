@@ -10,10 +10,10 @@ extension EffectRegistry {
     private static let textRange: [ParamDef] = [.number("start", "Start", 0, 0, 100, unit: "%"), .number("end", "End", 100, 0, 100, unit: "%"), textUnits]
     static let textBatch24: [EffectDefinition] = [
         textFX("textTransform", "Text Transform", "Offset, rotate, scale and fade a selected range of characters, words or lines. Uses the existing text selector engine.", textRange + [
-            .number("x", "Position X", 0, -200, 200, unit: "px"), .number("y", "Position Y", 20, -200, 200, unit: "px"),
+            .number("x", "Position X", 0, -200, 200, unit: "px"), .number("y", "Position Y", 0, -200, 200, unit: "px"),
             .angle("rotation", "Rotation", 0), .number("scale", "Scale", 100, 10, 300, unit: "%"), .number("opacity", "Opacity", 100, 0, 100, unit: "%")]),
         textFX("textProgress", "Text Progress", "Reveal a range without reflowing the remaining text. Animate End from 0 to 100 for typing; preserves glyph clusters.", [
-            .number("start", "Start", 0, 0, 100, unit: "%"), .number("end", "End", 60, 0, 100, unit: "%"), textUnits, .toggle("reverse", "Reverse Order", false)]),
+            .number("start", "Start", 0, 0, 100, unit: "%"), .number("end", "End", 100, 0, 100, unit: "%"), textUnits, .toggle("reverse", "Reverse Order", false)]),
         textFX("textWave", "Text Wave", "A travelling sine wave through glyph positions and rotation, evaluated from composition time for repeatable seeking.", [
             .number("x", "Horizontal", 0, 0, 100, unit: "px"), .number("y", "Vertical", 20, 0, 100, unit: "px"),
             .number("rotation", "Rotation", 5, 0, 90, unit: "°"), .number("frequency", "Frequency", 1, 0, 10, step: 0.01),
@@ -29,9 +29,9 @@ extension EffectRegistry {
             .number("repeat", "Repeats", 1, 0.25, 5, step: 0.01), .number("phase", "Phase", 0, 0, 1, step: 0.001),
             .number("mix", "Mix", 100, 0, 100, unit: "%"), textUnits]),
         textFX("characterOffset", "Character Offset", "Shift letters through A–Z/a–z and digits through 0–9 in a selected range. Leaves other scripts and emoji intact.", textRange + [
-            .number("offset", "Character Offset", 5, -26, 26, step: 1)]),
+            .number("offset", "Character Offset", 0, -26, 26, step: 1)]),
         textFX("textLineSpacing", "Text Line Spacing", "Multiply the text layer’s existing baseline spacing. Reuses Text Studio layout; affects multiline text.", [
-            .number("spacing", "Line Spacing", 140, 25, 300, unit: "%")]),
+            .number("spacing", "Line Spacing", 100, 25, 300, unit: "%")]),
         textFX("textOutline", "Text Outline", "Animate whole-text hollow glyph outlines using Text Studio’s glyph rasterizer. Width zero returns solid text.", [
             .number("width", "Outline Width", 2, 0, 24, unit: "px")])
     ]

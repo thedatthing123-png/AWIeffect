@@ -167,6 +167,10 @@ final class EffectThumbnails {
         var inst = def.makeInstance()
         // Make subtle defaults visible in a thumbnail.
         switch def.id {
+        case "awi24.textTransform": inst.params["y"] = .number(Animated(20))
+        case "awi24.textProgress": inst.params["end"] = .number(Animated(60))
+        case "awi24.characterOffset": inst.params["offset"] = .number(Animated(5))
+        case "awi24.textLineSpacing": inst.params["spacing"] = .number(Animated(140))
         case "awi23.drawProgress":
             var end = Animated(0.0)
             end.insertKeyframe(Keyframe(time: 0, value: 0)); end.insertKeyframe(Keyframe(time: 1.2, value: 100))

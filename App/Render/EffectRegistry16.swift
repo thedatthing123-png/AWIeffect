@@ -128,7 +128,7 @@ extension EffectRegistry {
         id: "awi16.halftoneLines", name: "Halftone Lines", category: .stylize, aeMatchNames: [],
         summary: "Line-screen halftone: line thickness follows darkness.",
         params: [px16("period", "Line Spacing", 6, 2, 30), .angle("angle", "Angle", 45), pct16("contrast", "Contrast", 100, 0, 300),
-                 .toggle("keep", "Keep Color", false), .color("ink", "Ink", ink16), .color("paper", "Paper", paper16),
+                 .toggle("keep", "Keep Color", false), .color("ink", "Ink", RGBA(hex: 0x113355)), .color("paper", "Paper", RGBA(hex: 0xFFEEDD)),
                  .number("amount", "Amount", 100, 0, 500, step: 0.1), .number("strength", "Strength", 50, 0, 100, unit: "%"),
                  .number("phase", "Phase", 0, -1000, 1000, step: 0.01), .choice("version", "Rendering", ["Legacy", "AM Lines"], 1)],
         stage: .pixels { ctx in
