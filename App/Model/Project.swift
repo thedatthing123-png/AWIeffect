@@ -457,7 +457,7 @@ struct Project: Codable, Equatable, Identifiable {
     var blurSamplesStore: Int? = nil
     var motionBlurEnabled: Bool { get { motionBlurOn ?? false } set { motionBlurOn = newValue } }
     var shutterAngle: Double { get { shutterAngleStore ?? 180 } set { shutterAngleStore = newValue } }
-    var blurSamples: Int { get { blurSamplesStore ?? 12 } set { blurSamplesStore = max(2, min(64, newValue)) } }
+    var blurSamples: Int { get { blurSamplesStore ?? 32 } set { blurSamplesStore = max(2, min(64, newValue)) } }
     var markers: [Double] {
         get { markerTimes ?? [] }
         set { markerTimes = newValue.sorted() }

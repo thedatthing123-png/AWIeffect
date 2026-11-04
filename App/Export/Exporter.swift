@@ -74,8 +74,7 @@ final class Exporter {
         let alpha = settings.format == .transparent
         var project = project
         if alpha { project.background.a = 0 }
-        // Final render quality: denser motion blur than the live preview (silky blur on shakes and fast moves).
-        project.blurSamples = max(project.blurSamples, 32)
+        // Preview may cap samples adaptively; export respects the chosen maximum.
         let fps = settings.fps ?? project.fps
         let (w, h) = Self.outputSize(project, scale: settings.scale)
         let renderScale = Double(w) / Double(project.width)
