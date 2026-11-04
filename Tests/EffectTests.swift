@@ -11,8 +11,17 @@ final class EffectTests: XCTestCase {
         return r
     }
 
+    private func textScene(effect: EffectInstance?) -> Project {
+        var p = Project.new(name: "text fx", width: 160, height: 160, fps: 30, duration: 2, background: .black)
+        var layer = p.makeLayer(name: "text", content: .text, size: Vec2(120, 40))
+        layer.text = TextData(string: "AWI"); layer.text!.fontSize = 28
+        layer.effects = effect.map { [$0] } ?? []; p.layers = [layer]
+        return p
+    }
+
     /// Colorful test scene with hard edges, brights, darks and a green "screen" area.
     private func scene(effect: EffectInstance?, onAdjustment: Bool = false) -> Project {
+        if let effect, EffectRegistry.definition(effect.typeID)?.category == .text { return textScene(effect: effect) }
         var p = Project.new(name: "fx", width: 160, height: 160, fps: 30, duration: 2, background: RGBA(0.08, 0.06, 0.12))
         var bg = p.makeLayer(name: "green", content: .solid, size: Vec2(160, 60))
         bg.fill = Animated(RGBA(0.1, 0.9, 0.2))
@@ -71,6 +80,7 @@ final class EffectTests: XCTestCase {
         case "ae.colorBalance": n("mr", 60); n("sb", 50)
         case "ae.changeToColor": e.params["from"] = .color(Animated(RGBA(0.6, 0.2, 0.9))); n("tolerance", 20)
         case "ae.strobe": n("duration", 0.2)
+        case "awi.textSpacing": n("spacing", 25)
         case "awi18.transform": n("x", 25); n("rotation", 20); n("scale", 120)
         case "awi19.colorSelect":
             // Keep the purple rect: the dark purple background is close in color but not brightness, so the
@@ -118,7 +128,8 @@ final class EffectTests: XCTestCase {
         let base = try render(r, scene(effect: nil))
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" {
             let out = try render(r, scene(effect: visible(d), onAdjustment: !d.isTransformEffect && !Self.alphaShaped.contains(d.id)))
-            XCTAssertGreaterThan(diff(base, out), 0.5, "\(d.name) did not visibly change the image")
+            let comparison = d.category == .text ? try render(r, textScene(effect: nil)) : base
+            XCTAssertGreaterThan(diff(comparison, out), 0.5, "\(d.name) did not visibly change the image")
             XCTAssertTrue(out.contains { $0 > 10 }, "\(d.name) rendered black")
         }
     }
@@ -138,7 +149,8 @@ final class EffectTests: XCTestCase {
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" {
             var e = visible(d)
             e.isEnabled = false
-            XCTAssertLessThan(diff(base, try render(r, scene(effect: e))), 0.01, "disabled \(d.name) still changes output")
+            let comparison = d.category == .text ? try render(r, textScene(effect: nil)) : base
+            XCTAssertLessThan(diff(comparison, try render(r, scene(effect: e))), 0.01, "disabled \(d.name) still changes output")
         }
     }
 
@@ -155,6 +167,10 @@ final class EffectTests: XCTestCase {
                 var a = visible(d), b = visible(d)
                 a.params[pd.id] = .number(Animated(lo + (hi - lo) * 0.02))
                 b.params[pd.id] = .number(Animated(lo + (hi - lo) * 0.6))
+                if d.id == "awi.textSpacing" && pd.id == "spacing" {
+                    // Use visible spacing within this finite text fixture; extreme spacing is covered by stress tests.
+                    a.params[pd.id] = .number(Animated(-5)); b.params[pd.id] = .number(Animated(18))
+                }
                 // Adjustment layer = effect sees the whole varied scene, not just one flat shape.
                 let adj = !d.isTransformEffect && !Self.alphaShaped.contains(d.id)
                 let ra = try render(r, scene(effect: a, onAdjustment: adj)), rb = try render(r, scene(effect: b, onAdjustment: adj))
