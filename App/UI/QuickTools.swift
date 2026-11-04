@@ -7,13 +7,14 @@ import AVFoundation
 /// Browsing sections for the effect picker. Each effect lands in the first section whose keywords match its id, name
 /// or summary, so 400 effects split into short, findable lists ("Shake", "Glow", "Glitch"…).
 enum EffectSection: String, CaseIterable, Identifiable {
-    case shake = "Shake & Motion", glow = "Glow & Light", blur = "Blur", glitch = "Glitch", distort = "Distort & Warp",
+    case text = "Text", shake = "Shake & Motion", glow = "Glow & Light", blur = "Blur", glitch = "Glitch", distort = "Distort & Warp",
          transition = "Transitions", particles = "Particles", backgrounds = "Backgrounds", threeD = "3D",
          stylize = "Stylize & Draw", retro = "Retro & Film", color = "Color & Grade", keying = "Key & Matte", other = "More"
     var id: String { rawValue }
 
     var symbol: String {
         switch self {
+        case .text: return "textformat"
         case .shake: return "waveform.path"
         case .glow: return "sun.max.fill"
         case .blur: return "drop.halffull"
@@ -33,6 +34,7 @@ enum EffectSection: String, CaseIterable, Identifiable {
 
     private var keywords: [String] {
         switch self {
+        case .text: return ["letter spacing", "text spacing", "tracking"]
         case .shake: return ["shake", "wiggle", "jitter", "swing", "oscillate", "pulse", "spin", "bounce", "twitch", "earthquake", "wobble", "elastic", "punch"]
         case .glow: return ["glow", "light", "ray", "bloom", "glint", "shine", "flare", "aura", "saber", "neon", "halation", "rim", "sweep", "spot", "beam", "leak", "sparkle"]
         case .blur: return ["blur", "bokeh", "smear", "sharpen", "clarity", "structure", "diffusion", "frosted", "tilt-shift", "minimax", "smooth"]
@@ -59,12 +61,14 @@ enum EffectSection: String, CaseIterable, Identifiable {
     /// Section an effect is filed under.
     static func of(_ d: EffectDefinition) -> EffectSection {
         if d.category == .transition { return .transition }
+        if d.category == .text { return .text }
         if d.isTransformEffect { return .shake }
         let hay = (d.name + " " + d.id + " " + d.summary).lowercased()
         for s in allCases where s != .other && s != .transition {
             if s.keywords.contains(where: { hay.contains($0) }) { return s }
         }
         switch d.category {
+        case .text: return .text
         case .blur: return .blur
         case .color: return .color
         case .distort: return .distort
