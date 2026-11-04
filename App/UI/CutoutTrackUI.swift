@@ -145,7 +145,7 @@ struct TrackOverlay: View {
                     .font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
                     .padding(.horizontal, 10).padding(.vertical, 6).background(Capsule().fill(.black.opacity(0.6)))
                 HStack {
-                    Text("Smoothing: \(Int(smoothing)) frames").font(.caption)
+                    Text("Smoothing radius: \(Int(smoothing)) frames").font(.caption)
                     Slider(value: $smoothing, in: 0...15, step: 1).frame(width: 120)
                 }.foregroundStyle(.white).disabled(progress != nil)
                 HStack {

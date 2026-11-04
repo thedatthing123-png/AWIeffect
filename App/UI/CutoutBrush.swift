@@ -76,8 +76,8 @@ struct CutoutBrushOverlay: View {
             if let point = points.last, let image = loupeImage {
                 let x = (point.x - fit.minX) / max(1, fit.width) * image.size.width
                 let y = (point.y - fit.minY) / max(1, fit.height) * image.size.height
-                if let crop = image.cgImage?.cropping(to: CGRect(x: x - 24, y: y - 24, width: 48, height: 48)) {
-                    Image(uiImage: UIImage(cgImage: crop)).resizable().interpolation(.none)
+                if let crop = magnifiedCrop(image, center: CGPoint(x: x, y: y)) {
+                    Image(uiImage: crop).resizable().interpolation(.none)
                         .frame(width: 112, height: 112).clipShape(Circle())
                         .overlay(Circle().stroke(.white, lineWidth: 3))
                         .overlay(Image(systemName: "plus").foregroundStyle(.white).shadow(radius: 1))
@@ -90,6 +90,13 @@ struct CutoutBrushOverlay: View {
                 .font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
                 .padding(.horizontal, 10).padding(.vertical, 5).background(Capsule().fill(.black.opacity(0.6)))
                 .padding(.top, 6).allowsHitTesting(false)
+        }
+    }
+    private func magnifiedCrop(_ image: UIImage, center: CGPoint) -> UIImage? {
+        guard center.x.isFinite, center.y.isFinite else { return nil }
+        let format = UIGraphicsImageRendererFormat(); format.scale = 1; format.opaque = false
+        return UIGraphicsImageRenderer(size: CGSize(width: 48, height: 48), format: format).image { _ in
+            image.draw(at: CGPoint(x: 24 - center.x, y: 24 - center.y))
         }
     }
 }
