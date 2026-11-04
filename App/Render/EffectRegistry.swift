@@ -115,12 +115,30 @@ final class TexturePool {
         return t
     }
 
+    /// A layer's scratch resources may be reused by subsequent encoders in the SAME
+    /// command buffer after that layer's final composite. Metal tracks read/write hazards.
+    /// The frame's pool must still never be shared with another in-flight command buffer.
+    func beginEncodingScope() -> Int { used.count }
+    func endEncodingScope(_ mark: Int) {
+        guard mark >= 0, mark <= used.count else { return }
+        for texture in used[mark...] {
+            let key = "\(texture.pixelFormat.rawValue):\(texture.width)x\(texture.height)"
+            free[key, default: []].append(texture)
+        }
+        used.removeSubrange(mark...)
+        trimSpares()
+    }
+
     /// Returns all textures handed out since the last recycle to the free list, then trims memory:
     /// sizes unused for a few frames are released and the spare total stays under the budget.
     func recycle() {
         generation += 1
         for t in used { free["\(t.pixelFormat.rawValue):\(t.width)x\(t.height)", default: []].append(t) }
         used.removeAll()
+        trimSpares()
+    }
+
+    private func trimSpares() {
         for (k, v) in free {
             if generation - (lastUse[k] ?? 0) > 3 { free[k] = nil; lastUse[k] = nil; continue }
             if v.count > 6 { free[k] = Array(v.suffix(6)) }

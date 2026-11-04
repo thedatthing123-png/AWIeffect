@@ -566,6 +566,8 @@ final class Renderer {
         }
         let globalTime = time
         for layer in Self.drawOrder(active, camera: camera, time: time) {
+            let scratchScope = pool.beginEncodingScope()
+            defer { pool.endEncodingScope(scratchScope) }
             // Posterize time / freeze frame evaluate this layer at its own clock.
             let time = layer.timeFX?.localTime(globalTime) ?? globalTime
             if case .audio = layer.content { continue }

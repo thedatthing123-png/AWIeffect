@@ -1,6 +1,7 @@
 #import "NativeModelBridge.h"
 #import <GLTFKit2/GLTFKit2.h>
 #import <ModelIO/ModelIO.h>
+#import <SceneKit/ModelIO.h>
 #import <UIKit/UIKit.h>
 #include "../Vendor/ufbx/ufbx.h"
 

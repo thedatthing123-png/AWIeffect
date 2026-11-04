@@ -15,7 +15,7 @@ final class PriorityEditingTests: XCTestCase {
     }
 
     @MainActor func testMultiScaleResizesBothLayersAndTheirSpacing() {
-        let project = scene(), state = editor(scene())
+        let state = editor(scene())
         state.selectedLayerID = state.project.layers[0].id
         state.multiSelection = Set(state.project.layers.map(\.id))
         state.beginEdit("scale")
@@ -24,7 +24,6 @@ final class PriorityEditingTests: XCTestCase {
         XCTAssertEqual(state.project.layers[0].transform.scale.value(at: 0), Vec2(200,200))
         XCTAssertEqual(state.project.layers[1].transform.scale.value(at: 0), Vec2(200,200))
         XCTAssertEqual(state.project.layers[1].transform.position.value(at: 0).x, 120, accuracy: 0.01)
-        _ = project
     }
 
     @MainActor func testPositionAndDepthShareKeyframeTimesAndUndo() {
@@ -57,6 +56,32 @@ final class PriorityEditingTests: XCTestCase {
         XCTAssertEqual(PrecompRenderCache.signature(comp, library: [comp]), signature)
         comp.layers[0].transform.position.staticValue.x += 1
         XCTAssertNotEqual(PrecompRenderCache.signature(comp, library: [comp]), signature)
+    }
+
+    @MainActor func testSelectedParentAndChildScaleOnlyOnce() throws {
+        var project = scene()
+        project.layers[1].parentID = project.layers[0].id
+        project.layers[1].transform.position = Animated(Vec2(20,0))
+        let state = editor(project); state.selectedLayerID = project.layers[0].id
+        state.multiSelection = Set(project.layers.map(\.id))
+        state.mutateLayer { $0.transform.scale.set(Vec2(200,200), at: 0) }
+        XCTAssertEqual(state.project.layers[1].transform.scale.value(at: 0), Vec2(100,100))
+        let resolved = Renderer.resolveParenting(state.project, time: 0)
+        XCTAssertEqual(resolved.layers[1].transform.scale.value(at: 0), Vec2(200,200))
+    }
+
+    func testLayerScratchReuseDoesNotChangePreviouslyCompositedPixels() throws {
+        guard let renderer = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        var project = scene()
+        project.layers[0].fill = Animated(RGBA(1,0,0))
+        project.layers[1].fill = Animated(RGBA(0,0,1))
+        var blur = EffectRegistry.gaussianBlur.makeInstance()
+        blur.params["blurriness"] = .number(Animated(1))
+        project.layers[0].effects = [blur]; project.layers[1].effects = [blur]
+        let pixels = try XCTUnwrap(renderer.renderPixels(project: project, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        XCTAssertGreaterThan(pixels[(64 * 128 + 40) * 4], 240)
+        XCTAssertLessThan(pixels[(64 * 128 + 40) * 4 + 2], 10)
+        XCTAssertGreaterThan(pixels[(64 * 128 + 80) * 4 + 2], 240)
     }
 
     @MainActor func testUnpackPrecompRestoresEditableMembersWithoutLosingContainerEffects() throws {
@@ -102,7 +127,17 @@ final class PriorityEditingTests: XCTestCase {
             C: "OO",2,0
         }
         """.utf8).write(to: fbx)
-        for file in [gltf,fbx] {
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String:Any])
+        object["buffers"] = [["byteLength":36]]
+        var chunk = try JSONSerialization.data(withJSONObject: object)
+        while chunk.count % 4 != 0 { chunk.append(32) }
+        var glbData = Data()
+        func append(_ number: UInt32) { var value = number.littleEndian; withUnsafeBytes(of: &value) { glbData.append(contentsOf: $0) } }
+        append(0x46546c67); append(2); append(UInt32(12 + 8 + chunk.count + 8 + binary.count))
+        append(UInt32(chunk.count)); append(0x4e4f534a); glbData.append(chunk)
+        append(UInt32(binary.count)); append(0x004e4942); glbData.append(binary)
+        let glb = directory.appendingPathComponent("triangle.glb"); try glbData.write(to: glb)
+        for file in [gltf,glb,fbx] {
             let scene = try ModelImport.load(url: file)
             var count = 0
             scene.rootNode.enumerateHierarchy { node, _ in count += node.geometry?.sources(for: .vertex).first?.vectorCount ?? 0 }
