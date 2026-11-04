@@ -60,7 +60,12 @@ extension EditorState {
 
     /// Drags pin `k` to a comp point (keyframed at the playhead when Animate is on). Use inside beginEdit/endEdit.
     func movePuppetPin(_ k: Int, toComp c: Vec2) {
-        guard let i = selectedIndex, let j = puppetEffectIndex, let local = layerLocal(fromComp: c) else { return }
+        guard let local = layerLocal(fromComp: c) else { return }
+        setPuppetPin(k, local: local)
+    }
+
+    func setPuppetPin(_ k: Int, local: Vec2) {
+        guard selectedIndex != nil, let j = puppetEffectIndex, local.x.isFinite, local.y.isFinite else { return }
         let t = currentTime, animate = puppetAnimate
         mutateLayer { l in
             guard case .point(var a) = l.effects[j].params["pinD\(k)"] else { return }
@@ -68,7 +73,6 @@ extension EditorState {
             else { a = Animated(local) }
             l.effects[j].params["pinD\(k)"] = .point(a)
         }
-        _ = i
     }
 
     /// Starch pin: holds the area around it rigid (AE's Starch pin).
@@ -158,12 +162,18 @@ struct PuppetPanel: View {
                         Button("Reset Pose") { state.resetPuppetPose() }.disabled(pins.isEmpty)
                     }
                     ForEach(pins.indices, id: \.self) { k in
+                        VStack(spacing: 4) {
                         HStack {
                             if let j = state.puppetEffectIndex, let effect = state.selectedLayer?.effects[j] {
                                 let status = state.effectParamHasKeyframe(effect.id, "pinD\(k)")
                                 KeyframeDiamond(filled: status.filled, animated: status.animated) {
                                     state.toggleEffectKeyframe(effect.id, "pinD\(k)")
                                 }.accessibilityLabel("Pin \(k + 1) keyframe")
+                                Button {
+                                    state.graphEffect = GraphEffectTarget(effect: effect.id, key: "pinD\(k)"); state.panel = .graph
+                                } label: { Image(systemName: "point.topleft.down.to.point.bottomright.curvepath") }
+                                .disabled((effect.params["pinD\(k)"]?.keyframeTimes.count ?? 0) < 2)
+                                .accessibilityLabel("Pin \(k + 1) easing")
                             }
                             Image(systemName: "pin.fill").foregroundStyle(Theme.warning)
                             Text("Pin \(k + 1)").font(.system(size: 13)).foregroundStyle(Theme.text)
@@ -176,6 +186,15 @@ struct PuppetPanel: View {
                             }
                             .buttonStyle(.plain)
                             Button(role: .destructive) { state.removePuppetPin(k) } label: { Image(systemName: "trash") }
+                        }
+                        HStack {
+                            NumberField(value: pins[k].current.x, label: "X") { value in
+                                state.beginEdit("Move Pin"); state.setPuppetPin(k, local: Vec2(value,pins[k].current.y)); state.endEdit()
+                            }
+                            NumberField(value: pins[k].current.y, label: "Y") { value in
+                                state.beginEdit("Move Pin"); state.setPuppetPin(k, local: Vec2(pins[k].current.x,value)); state.endEdit()
+                            }
+                        }
                         }
                     }
                 }

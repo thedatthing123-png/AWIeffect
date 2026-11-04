@@ -40,6 +40,22 @@ final class PriorityEditingTests: XCTestCase {
         XCTAssertFalse(state.project.layers[0].transform.positionZ.hasKeyframe(at: 1))
     }
 
+    @MainActor func testPuppetPinKeyframesAndEasingUseExistingGraph() throws {
+        let state = editor(scene()); state.selectedLayerID = state.project.layers[0].id
+        state.ensurePuppet()
+        state.mutateLayer {
+            $0.effects[0].params["pinR0"] = .point(Animated(Vec2.zero))
+            $0.effects[0].params["pinD0"] = .point(Animated(Vec2.zero))
+        }
+        let effect = try XCTUnwrap(state.selectedLayer?.effects.first)
+        state.toggleEffectKeyframe(effect.id, "pinD0")
+        state.currentTime = 1; state.setPuppetPin(0, local: Vec2(20,10))
+        let animated = try XCTUnwrap(state.selectedLayer?.effects.first?.params["pinD0"])
+        XCTAssertEqual(animated.keyframeTimes, [0,1])
+        XCTAssertTrue(state.effectGraphTargets.contains { $0.target.key == "pinD0" })
+        XCTAssertEqual(state.puppetPins[0].current, Vec2(20,10))
+    }
+
     @MainActor func testMoveToPlayheadPreservesLengthAndMovesAnimation() {
         var project = scene(); project.layers[0].inPoint = 1; project.layers[0].outPoint = 3
         project.layers[0].transform.position.insertKeyframe(Keyframe(time: 2, value: Vec2(60,64), interpolation: .linear))
@@ -63,6 +79,16 @@ final class PriorityEditingTests: XCTestCase {
         encoder.dateEncodingStrategy = .iso8601; decoder.dateDecodingStrategy = .iso8601
         let reopened = try decoder.decode(Project.self, from: encoder.encode(comp))
         XCTAssertEqual(PrecompRenderCache.signature(comp, library: [comp]), PrecompRenderCache.signature(reopened, library: [reopened]))
+    }
+
+    func testPixelBlurQualitySurvivesBeingDisabledAndSaved() throws {
+        var settings = LayerTimeFX()
+        settings.pixelBlurSamples = 24; settings.pixelBlurLimit = 0.25
+        settings.pixelMotionBlur = 0
+        XCTAssertFalse(settings.isEmpty)
+        let reopened = try JSONDecoder().decode(LayerTimeFX.self, from: JSONEncoder().encode(settings))
+        XCTAssertEqual(reopened.pixelBlurSamples, 24)
+        XCTAssertEqual(reopened.pixelBlurLimit, 0.25)
     }
 
     @MainActor func testUngroupKeepsTransformedMembersInPlaceAndMovesGroupTimingTogether() throws {
@@ -168,6 +194,12 @@ final class PriorityEditingTests: XCTestCase {
             var count = 0
             scene.rootNode.enumerateHierarchy { node, _ in count += node.geometry?.sources(for: .vertex).first?.vectorCount ?? 0 }
             XCTAssertGreaterThanOrEqual(count, 3, "\(file.pathExtension) imported a blank scene")
+            let archive = directory.appendingPathComponent(file.pathExtension + ".scn")
+            XCTAssertTrue(scene.write(to: archive, options: nil, delegate: nil, progressHandler: nil))
+            let reopened = try ModelImport.load(url: archive)
+            var reopenedCount = 0
+            reopened.rootNode.enumerateHierarchy { node, _ in reopenedCount += node.geometry?.sources(for: .vertex).first?.vectorCount ?? 0 }
+            XCTAssertEqual(reopenedCount, count, "Converting \(file.pathExtension) lost the mesh")
         }
     }
 }

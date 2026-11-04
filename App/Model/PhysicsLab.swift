@@ -332,7 +332,7 @@ extension EditorState {
 
     func addModelLayer(text: String?, fileURL: URL?) {
         if let url = fileURL {
-            let projectID = rootProject.id
+            let projectID = rootProject.id, scopeID = project.id
             recoveryNotice = "Loading 3D model…"
             Task {
                 let access = url.startAccessingSecurityScopedResource()
@@ -347,7 +347,10 @@ extension EditorState {
                         defer { try? FileManager.default.removeItem(at: output) }
                         return try Data(contentsOf: output)
                     }.value
-                    guard rootProject.id == projectID else { return }
+                    guard rootProject.id == projectID, project.id == scopeID else {
+                        recoveryNotice = "Model import cancelled because the composition changed."
+                        return
+                    }
                     let name = try store.importMedia(data: archive, ext: "scn", into: projectID)
                     var options = Model3DOptions(); options.fileName = name
                     insertModel(options, name: url.deletingPathExtension().lastPathComponent)

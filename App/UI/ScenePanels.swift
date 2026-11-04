@@ -171,10 +171,10 @@ struct MotionBlurPanel: View {
                         }))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
                         slider("Shutter Angle", state.project.shutterAngle, 0...1440, "%.0f°") { v in state.mutate("Shutter Angle") { $0.shutterAngle = v } }
-                        slider("Quality (samples)", Double(state.project.blurSamples), 2...64, "%.0f") { v in
+                        slider("Maximum Samples", Double(state.project.blurSamples), 2...64, "%.0f") { v in
                             state.mutate("Blur Samples") { $0.blurSamples = Int(v) }
                         }
-                        Text("Real motion blur: the layer is rendered at several moments inside the shutter and averaged, so fast moves, spins and zooms smear naturally. 180° is the film standard; 360°+ exaggerates for velocity edits.")
+                        Text("Real motion blur: the layer is rendered at several moments inside the shutter and averaged, so fast moves, spins and zooms smear naturally. 180° is the film standard; 360°+ exaggerates for velocity edits. Preview adapts sampling for responsiveness; export uses the chosen maximum.")
                             .font(.caption).foregroundStyle(Theme.textDim)
                         Divider().overlay(Theme.stroke)
                         PixelMotionBlurControls(state: state, layer: l)

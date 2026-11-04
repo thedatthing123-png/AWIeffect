@@ -16,6 +16,11 @@ extension EditorState {
             for pd in d.params where Self.keyCount(e.params[pd.id]) >= 2 {
                 out.append((GraphEffectTarget(effect: e.id, key: pd.id), "\(d.name) · \(pd.name)"))
             }
+            if e.typeID == EffectRegistry.puppet18.id {
+                for key in e.params.keys.filter({ $0.hasPrefix("pinD") && Self.keyCount(e.params[$0]) >= 2 }).sorted(by: { (Int($0.dropFirst(4)) ?? 0) < (Int($1.dropFirst(4)) ?? 0) }) {
+                    out.append((GraphEffectTarget(effect: e.id, key: key), "Puppet · Pin \((Int(key.dropFirst(4)) ?? 0) + 1)"))
+                }
+            }
         }
         return out
     }

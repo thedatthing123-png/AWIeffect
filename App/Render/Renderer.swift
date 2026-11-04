@@ -860,6 +860,7 @@ final class Renderer {
         case .image(let file, _, _): return imageTexture(url: mediaURL(file)).map { .image($0) }
         case .video(let file, _, _, _):
             let url = mediaURL(file)
+            var blendedFrame: MTLTexture?
             if layer.usesFrameBlending, let pool = currentPool {
                 // Between two source frames: blend them (smooth slow motion instead of repeated frames).
                 let fps = VideoSources.shared.fps(url)
@@ -871,10 +872,10 @@ final class Renderer {
                     var p = EffectParams()
                     p.a.x = Float(w)
                     fx.run("frameMix", cb, textures: [ta, out, tb], params: p, grid: out)
-                    return .image(out)
+                    blendedFrame = out
                 }
             }
-            guard let frame = VideoSources.shared.texture(url: url, time: sourceTime, device: device, channel: layer.id.hashValue) else { return nil }
+            guard let frame = blendedFrame ?? VideoSources.shared.texture(url: url, time: sourceTime, device: device, channel: layer.id.hashValue) else { return nil }
             // Pixel Motion Blur: estimate how pixels moved since the previous frame, blur along it.
             if let amt = layer.timeFX?.pixelMotionBlur, amt > 0, let pool = currentPool {
                 let fps = VideoSources.shared.fps(url)

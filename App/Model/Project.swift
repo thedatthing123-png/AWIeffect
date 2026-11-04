@@ -24,7 +24,7 @@ struct LayerTimeFX: Codable, Equatable {
         if posterizeFPS > 0 { return (t * posterizeFPS).rounded(.down) / posterizeFPS }
         return t
     }
-    var isEmpty: Bool { echoCount == 0 && posterizeFPS == 0 && freezeAt == nil && !frameBlend && pixelMotionBlur == 0 }
+    var isEmpty: Bool { echoCount == 0 && posterizeFPS == 0 && freezeAt == nil && !frameBlend && pixelMotionBlur == 0 && pixelBlurSamples == nil && pixelBlurLimit == nil }
 }
 
 /// AE track matte: the layer directly above cuts this one out (and hides itself).
