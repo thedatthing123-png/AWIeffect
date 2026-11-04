@@ -109,12 +109,8 @@ struct ClipPanel: View {
                             if let i = state.selectedIndex { p.layers[i].usesFrameBlending = b }
                         } }))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
-                        if case .video = l.content {
-                            Button { trackLauncher.active = true } label: {
-                                Label("Track Motion", systemImage: "scope")
-                                    .frame(maxWidth: .infinity).padding(.vertical, 10).glass(radius: 12).foregroundStyle(Theme.text)
-                            }
-                        }
+                        Text("Frame Blending mixes neighboring footage frames at fractional times. It can soften slow motion but may produce ghosting; it does not estimate new motion.")
+                            .font(.caption).foregroundStyle(Theme.textDim)
                         CutoutSection(state: state)
                         Divider().overlay(Theme.stroke)
                         Text("Beat Sync").font(.system(size: 13, weight: .bold)).foregroundStyle(Theme.text)

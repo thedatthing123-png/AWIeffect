@@ -8,7 +8,7 @@ import simd
 /// card tilt. Written from scratch on the GPU (kernel `fxLight10`).
 extension EffectRegistry {
     static let batch10: [EffectDefinition] = [
-        bevelAlpha10, smoothBevel10, bumpMap10, normalLight10, chrome10, gold10, glass10, lightSweep10,
+        bevelAlpha10, smoothBevel10, bumpMap10, normalLight10, chrome10, gold10, glass10, lightSweep10, organicLightSweep,
         starGlint10, rainbowGlint10, spotlight10, pointLight10, twoTone10, edgeAO10, innerShadow10, embossColor10,
         fresnel10, holoFoil10, neonTubes10, specular10, beam10, filmBloom10, lensDirt10, cardTilt10,
     ]
@@ -69,7 +69,7 @@ extension EffectRegistry {
         id: "awi10.bumpMap", name: "Bump Map", category: .stylize, aeMatchNames: [],
         summary: "Relief lighting from the image's own brightness.",
         params: [.number("depth", "Depth", 10, 0, 40, step: 0.1), .number("softness", "Softness", 2, 0, 20, unit: "px"),
-                 .number("intensity", "Intensity", 1, 0, 3, step: 0.01), .number("elevation", "Light Elevation", 45, 5, 85, unit: "°"),
+                 .number("intensity", "Intensity", 1, 0, 20, step: 0.01), .number("elevation", "Light Elevation", 45, 5, 85, unit: "°"),
                  .angle("angle", "Light Angle", 135)],
         stage: .pixels { ctx in
             let h = height10(ctx, luma: 1, soft: ctx.num("softness"))
@@ -135,15 +135,37 @@ extension EffectRegistry {
     static let lightSweep10 = EffectDefinition(
         id: "awi10.lightSweep", name: "Light Sweep", category: .color, aeMatchNames: ["CC Light Sweep"],
         summary: "Animated shine band gliding across the layer.",
-        params: [.angle("angle", "Direction", 30), .number("width", "Width", 40, 2, 300, unit: "px"),
-                 .number("intensity", "Intensity", 1, 0, 3, step: 0.01), .number("speed", "Sweeps / sec", 0.6, 0, 4, step: 0.01),
-                 .number("offset", "Offset", 30, 0, 100, unit: "%"), .number("softness", "Softness", 60, 0, 100, unit: "%"),
+        params: [.angle("angle", "Direction", 30), .number("width", "Width", 40, 0.1, 4000, unit: "px"),
+                 .number("intensity", "Intensity", 1, 0, 20, step: 0.01), .number("speed", "Sweeps / sec", 0.6, -20, 20, step: 0.01),
+                 .number("offset", "Offset", 30, -1000, 1000, unit: "%"), .number("softness", "Softness", 60, 0, 100, unit: "%"),
                  .color("color", "Color", .white)],
         stage: .pixels { ctx in r10(ctx, 8) { p in
             let a = ctx.num("angle") * .pi / 180
             p.a = SIMD4(Float(cos(a)), Float(-sin(a)), Float(ctx.num("width") * ctx.unit), Float(ctx.num("intensity")))
             p.b = col10(ctx, "color")
             p.c = SIMD4(Float(ctx.num("speed")), Float(ctx.num("offset") / 100), Float(ctx.num("softness") / 100), 0) } })
+
+    static let organicLightSweep = EffectDefinition(
+        id: "awi10.organicLightSweep", name: "Organic Light Sweep", category: .color,
+        summary: "A curved, flowing highlight clipped to the subject. Irregularity bends the light rather than moving the image.",
+        params: [.angle("angle", "Direction", 30), .number("width", "Width", 80, 0.1, 4000, unit: "px"),
+                 .number("intensity", "Intensity", 1, 0, 20, step: 0.01),
+                 .number("speed", "Sweeps / sec", 0.3, -20, 20, step: 0.01),
+                 .number("offset", "Offset", 40, -1000, 1000, unit: "%"),
+                 .number("softness", "Softness", 80, 0, 100, unit: "%"),
+                 .number("bend", "Curvature", 80, -1000, 1000, unit: "px"),
+                 .number("irregularity", "Irregularity", 35, 0, 500, unit: "px"),
+                 .number("scale", "Contour Scale", 160, 1, 2000, unit: "px"),
+                 .number("evolution", "Evolution", 0, -3600, 3600, unit: "°"), .color("color", "Color", .white)],
+        stage: .pixels { ctx in r10(ctx, 8, sub: 1) { p in
+            let a = ctx.num("angle") * .pi / 180
+            p.a = SIMD4(Float(cos(a)), Float(-sin(a)), Float(ctx.num("width") * ctx.unit), Float(ctx.num("intensity")))
+            p.b = col10(ctx, "color")
+            p.c = SIMD4(Float(ctx.num("speed")), Float(ctx.num("offset") / 100), Float(ctx.num("softness") / 100), Float(ctx.num("bend") * ctx.unit))
+            p.d.y = Float(ctx.num("irregularity") * ctx.unit)
+            p.d.z = Float(ctx.num("scale") * ctx.unit)
+            p.d.w = rad10(ctx.num("evolution"))
+        } })
 
     // MARK: Glints & lights
 
@@ -255,7 +277,7 @@ extension EffectRegistry {
         id: "awi10.fresnel", name: "Fresnel Edge Glow", category: .color, aeMatchNames: [],
         summary: "Glancing-angle glow on the shape's edges, like light wrapping a 3D surface.",
         params: [.number("width", "Width", 10, 1, 40, unit: "px"), .number("depth", "Depth", 20, 0, 60, step: 0.1),
-                 .number("power", "Falloff", 2, 0.5, 8, step: 0.01), .number("intensity", "Intensity", 1, 0, 3, step: 0.01),
+                 .number("power", "Falloff", 2, 0.5, 8, step: 0.01), .number("intensity", "Intensity", 1, 0, 20, step: 0.01),
                  .color("color", "Color", RGBA(0.3, 0.8, 1))],
         stage: .pixels { ctx in
             let h = height10(ctx, luma: 0, soft: ctx.num("width"))
@@ -294,7 +316,7 @@ extension EffectRegistry {
         id: "awi10.specular", name: "Specular Highlight", category: .color, aeMatchNames: [],
         summary: "Glossy specular hot spots from a directional light on the image's relief.",
         params: [.number("depth", "Depth", 10, 0, 40, step: 0.1), .number("shininess", "Shininess", 32, 1, 128, step: 0.5),
-                 .number("intensity", "Intensity", 1, 0, 3, step: 0.01), .number("elevation", "Light Elevation", 45, 5, 85, unit: "°"),
+                 .number("intensity", "Intensity", 1, 0, 20, step: 0.01), .number("elevation", "Light Elevation", 45, 5, 85, unit: "°"),
                  .number("softness", "Softness", 2, 0, 20, unit: "px"), .angle("angle", "Light Angle", 135),
                  .color("color", "Color", .white)],
         stage: .pixels { ctx in

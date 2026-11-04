@@ -9,7 +9,7 @@ extension EditorState {
     }
 
     /// Tracks the object in `compRect` on the selected video layer and makes `targetID` follow it.
-    func trackMotion(compRect: CGRect, targetID: UUID, progress: @escaping (Double) -> Void, done: @escaping (Int) -> Void) {
+    func trackMotion(compRect: CGRect, targetID: UUID, smoothing: Double = 0, progress: @escaping (Double) -> Void, done: @escaping (Int) -> Void) {
         guard let vi = selectedIndex, case .video(let file, _, _, _) = project.layers[vi].content,
               let ti = project.layers.firstIndex(where: { $0.id == targetID }) else { done(0); return }
         motionTrackingTask?.cancel()
@@ -29,12 +29,13 @@ extension EditorState {
         let url = mediaURL(file), fps = project.fps
         let targetStart = (Renderer.resolveParenting(snapshot, time: t0).layers.first(where: { $0.id == target.id }) ?? target).transform.position.value(at: t0)
         motionTrackingTask = Task.detached(priority: .userInitiated) { [weak self] in
-            let samples = MotionTracker.track(url: url, box: box, start: t0, end: t1, fps: fps, sourceTime: { t in
+            let rawSamples = MotionTracker.track(url: url, box: box, start: t0, end: t1, fps: fps, sourceTime: { t in
                 video.sourceTime(at: video.timeFX?.localTime(t) ?? t)
             }) { p in
                 guard !Task.isCancelled else { return }
                 Task { @MainActor in progress(p) }
             }
+            let samples = MotionTracker.smoothed(rawSamples, radius: Int(smoothing.rounded()))
             guard !Task.isCancelled else { return }
             await MainActor.run {
                 guard let self, self.project.id == snapshot.id,
@@ -123,6 +124,7 @@ struct TrackOverlay: View {
     @State private var target: UUID?
     @State private var progress: Double?
     @State private var result: String?
+    @State private var smoothing = 0.0
 
     private var scale: Double { Double(fit.width) / Double(state.project.width) }
     private var rectView: CGRect? {
@@ -142,6 +144,10 @@ struct TrackOverlay: View {
                 Text(progress.map { "Tracking… \(Int($0 * 100))%" } ?? result ?? "Drag a box around what to track")
                     .font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
                     .padding(.horizontal, 10).padding(.vertical, 6).background(Capsule().fill(.black.opacity(0.6)))
+                HStack {
+                    Text("Smoothing: \(Int(smoothing)) frames").font(.caption)
+                    Slider(value: $smoothing, in: 0...15, step: 1).frame(width: 120)
+                }.foregroundStyle(.white).disabled(progress != nil)
                 HStack {
                     Menu {
                         ForEach(state.project.layers.filter { $0.id != state.selectedLayerID }) { l in Button(l.name) { target = l.id } }
@@ -164,7 +170,7 @@ struct TrackOverlay: View {
         guard let r = rectView, let target else { return }
         let comp = CGRect(x: (r.minX - fit.minX) / scale, y: (r.minY - fit.minY) / scale, width: r.width / scale, height: r.height / scale)
         progress = 0
-        state.trackMotion(compRect: comp, targetID: target, progress: { progress = $0 }) { n in
+        state.trackMotion(compRect: comp, targetID: target, smoothing: smoothing, progress: { progress = $0 }) { n in
             progress = nil
             result = n > 1 ? "Tracked \(n) frames ✓" : "Couldn't track that area. Try a bigger, more detailed box."
             if n > 1 { DispatchQueue.main.asyncAfter(deadline: .now() + 1) { done() } }

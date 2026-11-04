@@ -284,7 +284,7 @@ extension EditorState {
 struct MyLibrarySection: View {
     @ObservedObject var state: EditorState
     @State private var items: [URL] = UserLibrary.items()
-    @State private var pick: PhotosPickerItem?
+    @State private var showImport = false
     @State private var thumbs: [URL: UIImage] = [:]
     @State private var importing = false
 
@@ -293,8 +293,8 @@ struct MyLibrarySection: View {
             HStack {
                 Text("MY LIBRARY").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
                 Spacer()
-                PhotosPicker(selection: $pick, matching: .any(of: [.images, .videos])) {
-                    Label(importing ? "Importing…" : "Import", systemImage: "plus.circle.fill").font(.system(size: 13, weight: .semibold))
+                Button { showImport = true } label: {
+                    Label("Import", systemImage: "plus.circle.fill").font(.system(size: 13, weight: .semibold))
                 }
                 .accessibilityLabel("Import to My Library")
                 .buttonStyle(.borderless)
@@ -326,17 +326,8 @@ struct MyLibrarySection: View {
                 }
             }
         }
-        .onChange(of: pick) { _, item in
-            guard let item else { return }
-            importing = true
-            Task {
-                if let movie = try? await item.loadTransferable(type: PickedMovie.self) {
-                    UserLibrary.save(file: movie.url)
-                } else if let data = try? await item.loadTransferable(type: Data.self) {
-                    UserLibrary.save(data: data, ext: UIImage(data: data)?.cgImage?.alphaInfo == .none ? "jpg" : "png")
-                }
-                await MainActor.run { importing = false; pick = nil; reload() }
-            }
+        .awiSheet(isPresented: $showImport) {
+            MediaPickerView(state: state, isPresented: $showImport, libraryOnly: true).onDisappear { reload() }
         }
     }
 

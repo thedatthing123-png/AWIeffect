@@ -64,18 +64,24 @@ struct MediaPickerView: View {
     @ObservedObject var state: EditorState
     @Binding var isPresented: Bool
     @StateObject private var lib = PhotoLibraryModel()
+    var libraryOnly = false
     @State private var busy = false
+    @State private var selected: [PHAsset] = []
+    @State private var pending: [PHAsset] = []
+    @State private var failed = 0
 
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Add Media").font(.system(size: 17, weight: .bold)).foregroundStyle(Theme.text)
+                Text(libraryOnly ? "Import to My Library" : "Add Media").font(.system(size: 17, weight: .bold)).foregroundStyle(Theme.text)
                 Spacer()
                 if busy { ProgressView().tint(Theme.accent) }
+                else { Button("\(libraryOnly ? "Import" : "Add") (\(selected.count)/20)") { beginImport() }.disabled(selected.isEmpty) }
             }
             .padding(.horizontal, 16).padding(.bottom, 8)
             if lib.allowed {
                 tabs
+                if failed > 0 { Text("\(failed) items could not be imported. Check that they are downloaded from iCloud and try again.").font(.caption).foregroundStyle(Theme.danger) }
                 grid
             } else if lib.status == .notDetermined {
                 Spacer(); ProgressView().tint(Theme.accent); Spacer()
@@ -130,16 +136,47 @@ struct MediaPickerView: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 3), count: 4), spacing: 3) {
                 ForEach(lib.assets, id: \.localIdentifier) { a in
                     AssetThumb(asset: a, manager: lib.images)
-                        .onTapGesture { pick(a) }
+                        .overlay(alignment: .topLeading) {
+                            if let i = selected.firstIndex(where: { $0.localIdentifier == a.localIdentifier }) {
+                                Text("\(i + 1)").font(.caption.bold()).padding(7).background(Circle().fill(Theme.accent)).foregroundStyle(.white)
+                            }
+                        }
+                        .onTapGesture {
+                            guard !busy else { return }
+                            if let i = selected.firstIndex(where: { $0.localIdentifier == a.localIdentifier }) { selected.remove(at: i) }
+                            else if selected.count < 20 { selected.append(a) }
+                        }
                 }
             }
             .padding(.horizontal, 3)
         }
     }
 
+    private func beginImport() {
+        guard !busy, !selected.isEmpty else { return }
+        busy = true; failed = 0; pending = selected
+        nextImport()
+    }
+
+    private func nextImport() {
+        guard !pending.isEmpty else { busy = false; if failed == 0 { isPresented = false }; return }
+        let asset = pending.removeFirst()
+        pick(asset)
+    }
+
+    private func finish(_ success: Bool) {
+        if !success { failed += 1 }
+        nextImport()
+    }
+
+    private func addMovie(_ url: URL) {
+        if libraryOnly { UserLibrary.save(file: url) } else { state.addVideo(from: url) }
+    }
+    private func addImage(_ data: Data, ext: String) {
+        if libraryOnly { UserLibrary.save(data: data, ext: ext) } else { state.addImage(data: data, ext: ext) }
+    }
+
     private func pick(_ a: PHAsset) {
-        guard !busy else { return }
-        busy = true
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         if a.mediaType == .video {
             let o = PHVideoRequestOptions()
@@ -147,19 +184,19 @@ struct MediaPickerView: View {
             o.deliveryMode = .highQualityFormat
             PHImageManager.default().requestAVAsset(forVideo: a, options: o) { av, _, _ in
                 // Export to a file the importer can copy (works for slow-mo / edited videos too).
-                guard let av else { Task { @MainActor in busy = false }; return }
+                guard let av else { Task { @MainActor in finish(false) }; return }
                 let out = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mov")
                 if let u = (av as? AVURLAsset)?.url {
-                    Task { @MainActor in state.addVideo(from: u); busy = false; isPresented = false }
+                    Task { @MainActor in addMovie(u); finish(true) }
                 } else if let ex = AVAssetExportSession(asset: av, presetName: AVAssetExportPresetHighestQuality) {
                     ex.outputURL = out; ex.outputFileType = .mov
                     ex.exportAsynchronously {
                         Task { @MainActor in
-                            if ex.status == .completed { state.addVideo(from: out) }
-                            busy = false; isPresented = false
+                            if ex.status == .completed { addMovie(out) }
+                            finish(ex.status == .completed)
                         }
                     }
-                } else { Task { @MainActor in busy = false } }
+                } else { Task { @MainActor in finish(false) } }
             }
         } else {
             let o = PHImageRequestOptions()
@@ -170,13 +207,13 @@ struct MediaPickerView: View {
                     if let data {
                         // HEIC etc. → PNG/JPEG so every part of the app can read it.
                         if let ui = UIImage(data: data), uti?.contains("heic") == true || uti?.contains("heif") == true, let j = ui.jpegData(compressionQuality: 0.95) {
-                            state.addImage(data: j, ext: "jpg")
+                            addImage(j, ext: "jpg")
                         } else {
                             let ext = (uti?.contains("png") == true) ? "png" : "jpg"
-                            state.addImage(data: data, ext: ext)
+                            addImage(data, ext: ext)
                         }
                     }
-                    busy = false; isPresented = false
+                    finish(data != nil)
                 }
             }
         }

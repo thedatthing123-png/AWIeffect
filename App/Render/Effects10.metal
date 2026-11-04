@@ -125,6 +125,12 @@ kernel void fxLight10(texture2d<half, access::sample> src [[texture(0)]],
             float half_ = 0.5 * (abs(dir.x) * size.x + abs(dir.y) * size.y);
             float proj = dot(c - size * 0.5, dir);
             float center = mix(-half_ - w, half_ + w, fract(t * p.c.x + p.c.y));
+            if (p.i.y == 1) {
+                float tangent = dot(c - size * 0.5, float2(-dir.y, dir.x)) / max(p.d.z, 0.1);
+                proj += p.c.w * sin(tangent + p.d.w)
+                      + p.d.y * (0.65 * sin(tangent * 2.17 + p.d.w * 1.31)
+                               + 0.35 * sin(tangent * 4.73 - p.d.w * 0.73));
+            }
             float d = abs(proj - center);
             float band = 1.0 - smoothstep(w * 0.5 * (1.0 - clamp(p.c.z, 0.0, 0.99)), w * 0.5, d);
             float3 light = p.b.rgb * band * p.a.w;

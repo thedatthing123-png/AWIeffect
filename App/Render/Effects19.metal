@@ -248,7 +248,10 @@ kernel void fx19GlowKeep(texture2d<half, access::sample> src [[texture(0)]],
     }
     float k = p.a.x;
     float3 rgb = s.rgb + g.rgb * k;
-    float a = clamp(s.a + g.a * k * (1.0 - s.a), 0.0, 1.0);
+    // Derive halo coverage from emitted light, not summed blur alpha. Dark
+    // source pixels must not create an opaque, muddy silhouette over the scene.
+    float halo = clamp(max(g.r, max(g.g, g.b)) * k, 0.0, 1.0);
+    float a = s.a + halo * (1.0 - s.a);
     // Hue-keeping limit: scale the whole color down instead of clipping channels to white.
     float m = max(rgb.r, max(rgb.g, rgb.b));
     if (m > a && m > 1e-5) rgb *= a / m;

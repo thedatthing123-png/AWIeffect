@@ -73,6 +73,7 @@ struct ExportSheet: View {
                     }
                     section("Format") {
                         chips(ExportFormat.allCases, selected: settings.format, title: { $0.rawValue }) { settings.format = $0 }
+                        Text("MOV (alpha) preserves empty background transparency. MP4 has no alpha channel. Add a background layer when you want an opaque frame.").font(.caption).foregroundStyle(Theme.textDim)
                     }
                     section("Resolution") {
                         let shortSide = Double(min(state.project.width, state.project.height))
@@ -258,7 +259,9 @@ struct ExportSheet: View {
         guard let r = Renderer.shared else { return }
         let pid = state.rootProject.id
         let store = state.store
-        guard let img = r.renderImage(project: state.project, time: state.currentTime,
+        var frameProject = state.project
+        frameProject.background.a = 0
+        guard let img = r.renderImage(project: frameProject, time: state.currentTime,
                                       maxDimension: Double(max(state.project.width, state.project.height)),
                                       mediaURL: { store.mediaURL($0, projectID: pid) }),
               let data = img.pngData() else { message = "Couldn't render frame."; return }

@@ -69,10 +69,10 @@ kernel void fxWarp(texture2d<half, access::sample> src [[texture(0)]],
     bool edge = false;
     switch (p.i.x) {
         case 0: { // a = amount(px), size(px), complexity, evolution
-            float3 np = float3(c / max(p.a.y, 1.0), p.a.w);
+            float3 np = float3((c + p.b.zw) / (max(p.a.y, 1.0) * max(p.b.xy, float2(0.01))), p.a.w);
             int oct = int(clamp(p.a.z, 1.0, 8.0));
             float dx = fbm(np, oct) - 0.5, dy = fbm(np + float3(19.1, 7.3, 3.7), oct) - 0.5;
-            q = c + float2(dx, dy) * 2.0 * p.a.x;
+            q = c + float2(p.i.y == 2 ? 0.0 : dx, p.i.y == 1 ? 0.0 : dy) * 2.0 * p.a.x;
             edge = true;
             break;
         }

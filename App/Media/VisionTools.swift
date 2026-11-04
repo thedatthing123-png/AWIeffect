@@ -351,6 +351,25 @@ final class CutoutEngine {
 // MARK: - Motion tracking
 
 enum MotionTracker {
+    /// Symmetric triangular smoothing avoids the lag of a causal low-pass filter.
+    /// Preserve the first anchor so applying a smoothed track never jumps on frame one.
+    static func smoothed(_ samples: [(Double, CGPoint)], radius: Int) -> [(Double, CGPoint)] {
+        let r = min(15, max(0, radius))
+        guard r > 0, samples.count > 2 else { return samples }
+        return samples.indices.map { i in
+            guard i > 0, i < samples.count - 1 else { return samples[i] }
+            let span = min(r, min(i, samples.count - 1 - i))
+            var x = 0.0, y = 0.0, total = 0.0
+            for j in (i - span)...(i + span) {
+                let weight = Double(span + 1 - abs(i - j))
+                x += Double(samples[j].1.x) * weight
+                y += Double(samples[j].1.y) * weight
+                total += weight
+            }
+            return (samples[i].0, CGPoint(x: x / total, y: y / total))
+        }
+    }
+
     /// Tracks a source-image box in a caller-defined clock. sourceTime maps each sample to footage time,
     /// so reversed and remapped clips return composition times without an invalid inverse-speed formula.
     static func track(url: URL, box: CGRect, start: Double, end: Double, fps: Double,

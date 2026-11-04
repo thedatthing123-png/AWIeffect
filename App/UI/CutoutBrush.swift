@@ -44,6 +44,7 @@ struct CutoutBrushOverlay: View {
     @ObservedObject var state: EditorState
     let fit: CGRect
     @State private var points: [CGPoint] = []
+    @State private var loupeImage: UIImage?
 
     private var scale: Double { Double(fit.width) / Double(max(state.project.width, 1)) }
     private func comp(_ p: CGPoint) -> Vec2 { Vec2(Double(p.x - fit.minX) / scale, Double(p.y - fit.minY) / scale) }
@@ -53,13 +54,16 @@ struct CutoutBrushOverlay: View {
             Color.black.opacity(0.001)
                 .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
                     .onChanged { v in
-                        if state.cutoutTool == .brush { points.append(v.location) }
+                        if state.cutoutTool == .brush {
+                            if points.isEmpty { loupeImage = ScreenEyedropper.capture() }
+                            points.append(v.location)
+                        }
                     }
                     .onEnded { v in
                         if state.cutoutTool == .pick { state.pickCutoutSubject(atComp: comp(v.location)); return }
                         guard !points.isEmpty else { return }
                         state.addCutoutStroke(comp: points.map(comp), radius: state.cutoutBrushSize / 2 / scale)
-                        points = []
+                        points = []; loupeImage = nil
                     })
             // The stroke being painted.
             Canvas { ctx, _ in
@@ -69,6 +73,18 @@ struct CutoutBrushOverlay: View {
                            style: StrokeStyle(lineWidth: state.cutoutBrushSize, lineCap: .round, lineJoin: .round))
             }
             .allowsHitTesting(false)
+            if let point = points.last, let image = loupeImage {
+                let x = (point.x - fit.minX) / max(1, fit.width) * image.size.width
+                let y = (point.y - fit.minY) / max(1, fit.height) * image.size.height
+                if let crop = image.cgImage?.cropping(to: CGRect(x: x - 24, y: y - 24, width: 48, height: 48)) {
+                    Image(uiImage: UIImage(cgImage: crop)).resizable().interpolation(.none)
+                        .frame(width: 112, height: 112).clipShape(Circle())
+                        .overlay(Circle().stroke(.white, lineWidth: 3))
+                        .overlay(Image(systemName: "plus").foregroundStyle(.white).shadow(radius: 1))
+                        .position(x: min(max(62, point.x), max(62, fit.maxX - 62)), y: point.y > 160 ? point.y - 90 : point.y + 90)
+                        .allowsHitTesting(false)
+                }
+            }
             Text(state.cutoutTool == .pick ? "Tap the subject to keep"
                  : (state.cutoutBrushSubtract ? "Paint over what to REMOVE" : "Paint over what to KEEP"))
                 .font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)

@@ -4,6 +4,16 @@ import UIKit
 /// AWIeffect's own color control (replaces the system color sheet everywhere): a swatch that opens a compact
 /// picker beside it — saturation/brightness square, hue + opacity bars, typable HEX / RGB / HSB, recent and
 /// saved swatches, and an eyedropper that picks from anything on screen (canvas, clip, UI).
+@MainActor
+final class CanvasColorPicker: ObservableObject {
+    static let shared = CanvasColorPicker()
+    @Published var active = false
+    var available = false
+    var apply: ((Color) -> Void)?
+    func begin(_ apply: @escaping (Color) -> Void) { self.apply = apply; active = true }
+    func finish(_ color: Color?) { if let color { apply?(color) }; active = false; apply = nil }
+}
+
 struct AWIColorWell: View {
     let title: String
     @Binding var selection: Color
@@ -36,7 +46,10 @@ struct AWIColorWell: View {
                 ColorEditor(color: $selection, supportsOpacity: supportsOpacity, onEyedropper: {
                     // The picker steps out of the way first, so you pick from the real screen (canvas, clips…).
                     open = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { shot = ScreenEyedropper.capture(); picking = true }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                        if CanvasColorPicker.shared.available { CanvasColorPicker.shared.begin { selection = $0 } }
+                        else { shot = ScreenEyedropper.capture(); picking = true }
+                    }
                 })
                 .presentationCompactAdaptation(.popover)
             }
@@ -264,6 +277,7 @@ struct ColorEditor: View {
 struct ScreenEyedropper: View {
     /// The frame of the edit at the playhead.
     let snapshot: UIImage?
+    var canvasRect: CGRect? = nil
     let done: (Color?) -> Void
     @State private var probe: CGPoint?
     /// Renders the edit's current frame (set by the editor). Falls back to the screen only outside the editor.
@@ -271,10 +285,10 @@ struct ScreenEyedropper: View {
 
     var body: some View {
         GeometryReader { g in
-            let frame = imageRect(in: g.size)
+            let frame = canvasRect ?? imageRect(in: g.size)
             ZStack {
-                Color.black
-                if let snapshot { Image(uiImage: snapshot).resizable().frame(width: frame.width, height: frame.height).position(x: frame.midX, y: frame.midY) }
+                if canvasRect == nil { Color.black } else { Color.black.opacity(0.001) }
+                if canvasRect == nil, let snapshot { Image(uiImage: snapshot).resizable().frame(width: frame.width, height: frame.height).position(x: frame.midX, y: frame.midY) }
                 if let p = probe, let c = color(at: p, frame: frame) {
                     loupe(at: p, frame: frame, color: c)
                         .position(x: min(max(70, p.x), g.size.width - 70), y: p.y > 220 ? p.y - 110 : p.y + 110)

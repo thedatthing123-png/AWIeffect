@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 struct EditorView: View {
     @StateObject var state: EditorState
     let close: () -> Void
+    @ObservedObject private var canvasPicker = CanvasColorPicker.shared
     @State private var showExport = false
     @State private var showPasteStyle = false
     @State private var showKeyframeMover = false
@@ -63,6 +64,7 @@ struct EditorView: View {
         // Every slider in the editor keeps its edits live while dragging (smooth, no full-editor rebuilds).
         .environment(\.scrubSession, ScrubSession(begin: { [weak state] in state?.beginScrub() }, end: { [weak state] in state?.endScrub() }))
         .onAppear {
+            canvasPicker.available = true
             AILink.shared.editor = state
             EffectRegistry.softMeshURL = { [weak state] f in state?.mediaURL(f) ?? URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(f) }
             // The eyedropper samples the edit itself (current frame), never the app UI.
@@ -71,7 +73,7 @@ struct EditorView: View {
                 return Renderer.shared?.renderImage(project: state.project, time: state.currentTime, maxDimension: 1600, mediaURL: { state.mediaURL($0) })
             }
         }
-        .onDisappear { if AILink.shared.editor === state { AILink.shared.editor = nil } }
+        .onDisappear { canvasPicker.available = false; canvasPicker.finish(nil); if AILink.shared.editor === state { AILink.shared.editor = nil } }
         .safeAreaInset(edge: .top, spacing: 0) {
             if let message = state.recoveryNotice {
                 HStack {
@@ -376,6 +378,10 @@ struct EditorView: View {
                 }
                 if state.cutoutTool != .none, state.canvasMode == .comp {
                     CutoutBrushOverlay(state: state, fit: fit)
+                }
+                if canvasPicker.active {
+                    ScreenEyedropper(snapshot: ScreenEyedropper.capture(), canvasRect: fit) { canvasPicker.finish($0) }
+                        .zIndex(100)
                 }
                 if trackLauncher.active {
                     TrackOverlay(state: state, fit: fit) { trackLauncher.active = false }

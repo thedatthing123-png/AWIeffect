@@ -25,11 +25,22 @@ extension EffectRegistry {
         id: "ae.turbulentDisplace", name: "Turbulent Displace", category: .distort, aeMatchNames: ["ADBE Turbulent Displace"],
         summary: "Organic, smoky warping driven by fractal noise.",
         params: [.number("amount", "Amount", 50, 0, 1000, ae: 2), .number("size", "Size", 100, 2, 1000, ae: 3),
-                 .number("complexity", "Complexity", 1, 1, 8, step: 1, ae: 5), .number("evolution", "Evolution", 0, -3600, 3600, unit: "°", ae: 6)],
+                 .number("complexity", "Complexity", 1, 1, 8, step: 1, ae: 5), .number("evolution", "Evolution", 0, -3600, 3600, unit: "°", ae: 6),
+                 .choice("axis", "Displacement", ["XY", "X", "Y"], 0),
+                 .number("stretchX", "Horizontal Scale", 100, 1, 1000, unit: "%"),
+                 .number("stretchY", "Vertical Scale", 100, 1, 1000, unit: "%"),
+                 .number("offsetX", "Noise Offset X", 0, -10000, 10000, unit: "px"),
+                 .number("offsetY", "Noise Offset Y", 0, -10000, 10000, unit: "px")],
         margin: { e, t in e.number("amount", t) },
         stage: .pixels { ctx in run("fxWarp", ctx) { p in
             p.a = SIMD4(f(ctx.num("amount") * ctx.unit), f(ctx.num("size") * ctx.unit), f(ctx.num("complexity")), f(ctx.num("evolution") / 360))
-            p.i.x = 0 } })
+            // Missing controls in saved projects preserve the original isotropic noise.
+            func value(_ key: String, _ fallback: Double) -> Double {
+                ctx.effect.params[key] == nil ? fallback : ctx.num(key)
+            }
+            p.b = SIMD4(f(value("stretchX", 100) / 100), f(value("stretchY", 100) / 100),
+                        f(value("offsetX", 0) * ctx.unit), f(value("offsetY", 0) * ctx.unit))
+            p.i.x = 0; p.i.y = UInt32(ctx.effect.choice("axis")) } })
 
     static let waveWarp = EffectDefinition(
         id: "ae.waveWarp", name: "Wave Warp", category: .distort, aeMatchNames: ["ADBE Wave Warp"],

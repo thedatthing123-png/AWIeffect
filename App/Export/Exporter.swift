@@ -20,7 +20,7 @@ enum ExportFormat: String, CaseIterable, Identifiable {
 struct ExportSettings: Equatable {
     var scale: Double = 1
     var codec: VideoCodec = .h264
-    var format: ExportFormat = .mp4
+    var format: ExportFormat = .transparent
     /// Output frame rate (nil = the project's).
     var fps: Double? = nil
     /// Megabits per second.

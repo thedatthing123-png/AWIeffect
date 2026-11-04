@@ -5,6 +5,7 @@ import SwiftUI
 struct LayerHomePanel: View {
     @ObservedObject var state: EditorState
     @EnvironmentObject private var drawLauncher: DrawLauncher
+    @EnvironmentObject private var trackLauncher: TrackLauncher
 
     struct Tile: Identifiable {
         let id: String
@@ -60,6 +61,7 @@ struct LayerHomePanel: View {
         var timing: [Tile] = []
         var layer: [Tile] = []
         if l.isGroup { layer.append(Tile(id: "Open Group", icon: "folder") { state.openGroup() }) }
+        if case .video = c { layer.append(Tile(id: "Motion Tracking", icon: "scope") { trackLauncher.active = true }) }
         switch c {
         case .text: look.append(Tile(id: "Text Studio", icon: "textformat", panel: .text))
         case .shape: look.append(Tile(id: "Edit Shape", icon: "skew", panel: .shape))
