@@ -155,6 +155,12 @@ final class EffectsPhaseOneTests: XCTestCase {
             }
         }
     }
+    func testOlderHalftoneCanSwitchToNewModeWithoutMissingControlDefaults() throws {
+        let fresh = EffectRegistry.halftone.makeInstance()
+        var old = EffectInstance(typeID: "awi.halftone", params: ["size": .number(Animated(8)), "angle": .number(Animated(45)), "color": .toggle(false)])
+        old.params["version"] = .choice(2)
+        XCTAssertEqual(try pixels(scene(old, color: RGBA(0.4, 0.4, 0.4))), try pixels(scene(fresh, color: RGBA(0.4, 0.4, 0.4))))
+    }
 
     func testExportReferencePreviews() throws {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU: Metal unavailable") }

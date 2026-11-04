@@ -202,16 +202,22 @@ extension EffectRegistry {
             if ctx.effect.choice("version") == 0 {
                 return stylize(4, ctx) { p in p.a = SIMD4(f(ctx.num("size") * ctx.unit), f(ctx.num("angle")), 0, 0); p.i.y = ctx.effect.bool("color") ? 1 : 0 }
             }
+            // Switching an older saved instance to a new mode must initialize new controls coherently.
+            func value(_ key: String) -> Double {
+                if ctx.effect.params[key] != nil { return ctx.num(key) }
+                return halftone.params.first(where: { $0.id == key })?.defaultValue.number(at: ctx.time) ?? 0
+            }
             return run23(ctx, mode: 2) { p in
-                p.a = SIMD4(f(ctx.num("size") * ctx.unit), f(ctx.num("angle") * .pi / 180), f(pow(2, (ctx.num("strength") - 50) / 25)), f(ctx.num("phase")))
+                p.a = SIMD4(f(value("size") * ctx.unit), f(value("angle") * .pi / 180), f(pow(2, (value("strength") - 50) / 25)), f(value("phase")))
                 if ctx.effect.choice("version") == 2 {
                     p.i.w = 1
-                    p.a.x = f((ctx.compositionPixels?.x ?? Double(ctx.width)) / max(0.001, ctx.num("amount")))
-                    p.a.z = f(ctx.num("strength") / 100)
+                    p.a.x = f((ctx.compositionPixels?.x ?? Double(ctx.width)) / max(0.001, value("amount")))
+                    p.a.z = f(value("strength") / 100)
                 }
-                let ink = ctx.effect.color("ink", ctx.time), paper = ctx.effect.color("paper", ctx.time)
+                let ink = ctx.effect.params["ink"]?.color(at: ctx.time) ?? RGBA(hex: 0x113355)
+                let paper = ctx.effect.params["paper"]?.color(at: ctx.time) ?? RGBA(hex: 0xFFEEDD)
                 p.b = SIMD4(f(ink.r), f(ink.g), f(ink.b), f(ink.a)); p.c = SIMD4(f(paper.r), f(paper.g), f(paper.b), f(paper.a))
-                p.i.y = ctx.effect.bool("color") ? 1 : 0; p.i.z = UInt32((ctx.num("mix") * 100).rounded())
+                p.i.y = ctx.effect.bool("color") ? 1 : 0; p.i.z = UInt32((value("mix") * 100).rounded())
             }
         })
 
