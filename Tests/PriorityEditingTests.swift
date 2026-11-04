@@ -58,6 +58,32 @@ final class PriorityEditingTests: XCTestCase {
         XCTAssertNotEqual(PrecompRenderCache.signature(comp, library: [comp]), signature)
     }
 
+    func testPreRenderSignatureSurvivesProjectDateEncoding() throws {
+        let comp = scene(), encoder = JSONEncoder(), decoder = JSONDecoder()
+        encoder.dateEncodingStrategy = .iso8601; decoder.dateDecodingStrategy = .iso8601
+        let reopened = try decoder.decode(Project.self, from: encoder.encode(comp))
+        XCTAssertEqual(PrecompRenderCache.signature(comp, library: [comp]), PrecompRenderCache.signature(reopened, library: [reopened]))
+    }
+
+    @MainActor func testUngroupKeepsTransformedMembersInPlaceAndMovesGroupTimingTogether() throws {
+        let state = editor(scene()); state.selectedLayerID = state.project.layers[0].id
+        state.multiSelection = Set(state.project.layers.map(\.id)); state.groupSelected()
+        let group = try XCTUnwrap(state.selectedLayer)
+        state.moveClip(group, by: 1)
+        XCTAssertTrue(state.project.layers.allSatisfy { abs($0.inPoint-1) < 0.00001 })
+        state.mutateLayer {
+            $0.transform.position = Animated(Vec2(80,50))
+            $0.transform.rotation = Animated(30)
+            $0.transform.scale = Animated(Vec2(150,150))
+        }
+        state.ungroupSelected()
+        XCTAssertFalse(state.project.layers.contains(where: \.isGroup))
+        let first = try XCTUnwrap(state.project.layers.first { $0.name == "first" })
+        XCTAssertEqual(first.transform.position.value(at: 1).x, 80-36*cos(.pi/6), accuracy: 0.01)
+        XCTAssertEqual(first.transform.position.value(at: 1).y, 32, accuracy: 0.01)
+        XCTAssertEqual(first.transform.scale.value(at: 1), Vec2(150,150))
+    }
+
     @MainActor func testSelectedParentAndChildScaleOnlyOnce() throws {
         var project = scene()
         project.layers[1].parentID = project.layers[0].id

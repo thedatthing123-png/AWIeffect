@@ -16,7 +16,13 @@ extension EditorState {
         var l = original
         let shift = max(-original.inPoint, dt)
         l.shiftTiming(by: shift, duration: project.duration)
+        let previousStart = (live.project ?? project).layers.first(where: { $0.id == original.id })?.inPoint ?? original.inPoint
+        let delta = l.inPoint - previousStart
+        let members = original.isGroup ? Self.descendantIDs(of: original.id, in: project) : []
         mutateLayer(at: i) { $0 = l }
+        for index in project.layers.indices where members.contains(project.layers[index].id) {
+            mutateLayer(at: index) { $0.shiftTiming(by: delta, duration: project.duration) }
+        }
     }
 
     /// Trims a clip edge. Media keeps playing the same frames under the kept part.

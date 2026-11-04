@@ -13,6 +13,7 @@ enum PrecompRenderCache {
     static func signature(_ comp: Project, library: [Project]) -> String {
         func clean(_ project: Project) -> Project {
             var value = project
+            value.createdAt = Date(timeIntervalSince1970: 0); value.modifiedAt = Date(timeIntervalSince1970: 0)
             value.preRenderProxy = nil; value.precompList = nil
             value.precompDepth = nil; value.parentContext = nil
             return value
