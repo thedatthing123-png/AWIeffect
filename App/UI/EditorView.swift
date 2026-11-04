@@ -73,6 +73,7 @@ struct EditorView: View {
                 return Renderer.shared?.renderImage(project: state.project, time: state.currentTime, maxDimension: 1600, mediaURL: { state.mediaURL($0) })
             }
         }
+        .onChange(of: canvasPicker.active) { _, active in if active { state.pause() } }
         .onDisappear { canvasPicker.available = false; canvasPicker.finish(nil); if AILink.shared.editor === state { AILink.shared.editor = nil } }
         .safeAreaInset(edge: .top, spacing: 0) {
             if let message = state.recoveryNotice {
@@ -446,7 +447,7 @@ struct EditorView: View {
             }
             .clipped()
             .contentShape(Rectangle())
-            .gesture(canvasDrag(fit: fit), including: pen == nil && state.canvasMode == .comp ? .all : .subviews)
+            .gesture(canvasDrag(fit: fit), including: pen == nil && !canvasToolActive && state.canvasMode == .comp ? .all : .subviews)
             // Two fingers, like Alight Motion: with a layer selected, pinch scales it and twisting rotates it (both at
             // once); with nothing selected the pinch zooms the canvas view.
             .simultaneousGesture(MagnificationGesture()
@@ -455,18 +456,18 @@ struct EditorView: View {
                     pinchScale = Double(m); magActive = true
                     updatePinch()
                 }
-                .onEnded { _ in magActive = false; finishPinch() }, including: pen == nil ? .all : .subviews)
+                .onEnded { _ in magActive = false; finishPinch() }, including: pen == nil && !canvasToolActive ? .all : .subviews)
             .simultaneousGesture(RotationGesture()
                 .onChanged { a in
                     guard state.canvasMode == .comp else { return }
                     pinchAngle = a.degrees; rotActive = true
                     updatePinch()
                 }
-                .onEnded { _ in rotActive = false; finishPinch() }, including: pen == nil ? .all : .subviews)
+                .onEnded { _ in rotActive = false; finishPinch() }, including: pen == nil && !canvasToolActive ? .all : .subviews)
             .simultaneousGesture(orbitDrag, including: state.canvasMode == .orbit ? .all : .subviews)
             .simultaneousGesture(orbitZoom, including: state.canvasMode == .orbit ? .all : .subviews)
             .simultaneousGesture(SpatialTapGesture().onEnded { v in
-                guard pen == nil && state.canvasMode == .comp else { return }
+                guard pen == nil && !canvasToolActive && state.canvasMode == .comp else { return }
                 // Link mode: the tapped layer becomes the parent.
                 if state.linkPicking { state.endLinkPick(parent: layerAt(v.location, fit: fit)); return }
                 // Puppet panel open: taps drop pins instead of selecting layers.
@@ -558,9 +559,12 @@ struct EditorView: View {
             .onEnded { _ in orbitZoomStart = nil }
     }
 
+    private var canvasToolActive: Bool { canvasPicker.active || trackLauncher.active || state.cutoutTool != .none }
+
     private func canvasDrag(fit: CGRect) -> some Gesture {
         DragGesture(minimumDistance: 4)
             .onChanged { v in
+                guard !canvasToolActive else { return }
                 // Puppet: drag the nearest pin.
                 // Masks panel: drag a mask point.
                 if state.panel == .masks, canvasDragState == nil, panBase == nil {

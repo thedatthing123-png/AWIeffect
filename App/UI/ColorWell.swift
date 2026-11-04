@@ -47,7 +47,11 @@ struct AWIColorWell: View {
                     // The picker steps out of the way first, so you pick from the real screen (canvas, clips…).
                     open = false
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-                        if CanvasColorPicker.shared.available { CanvasColorPicker.shared.begin { selection = $0 } }
+                        if CanvasColorPicker.shared.available { CanvasColorPicker.shared.begin { picked in
+                            let alpha = UIColor(selection).cgColor.alpha
+                            selection = picked.opacity(Double(alpha))
+                            ColorSwatches.pushRecent(HSBA(picked).hex)
+                        } }
                         else { shot = ScreenEyedropper.capture(); picking = true }
                     }
                 })
