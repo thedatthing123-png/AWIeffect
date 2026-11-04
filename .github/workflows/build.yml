@@ -6,6 +6,11 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
+      runner:
+        description: Hosted macOS architecture (Intel fallback for ARM capacity outages)
+        type: choice
+        options: [macos-26, macos-26-intel]
+        default: macos-26
       validation:
         description: Test scope (audit runs do not publish an IPA)
         type: choice
@@ -18,7 +23,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-26
+    runs-on: ${{ inputs.runner || 'macos-26' }}
     timeout-minutes: 100
     steps:
       - uses: actions/checkout@v4
@@ -41,9 +46,14 @@ jobs:
         run: |
           cat > /tmp/metal.swift <<'EOF'
           import Metal
-          print("Metal device:", MTLCreateSystemDefaultDevice()?.name ?? "NONE")
+          import Foundation
+          guard let device = MTLCreateSystemDefaultDevice() else {
+              fputs("Metal unavailable: refusing an unvalidated GPU build\n", stderr)
+              exit(1)
+          }
+          print("Metal device:", device.name)
           EOF
-          swift /tmp/metal.swift || echo "Metal probe failed"
+          swift /tmp/metal.swift
 
       - name: Parse Swift sources
         run: find App Tests UITests -name '*.swift' -print0 | xargs -0 xcrun swiftc -frontend -parse
