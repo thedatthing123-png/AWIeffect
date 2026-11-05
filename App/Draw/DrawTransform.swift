@@ -36,8 +36,8 @@ final class FloatingPixels {
 
     /// Corners on the canvas, clockwise from top left.
     var corners: [SIMD2<Double>] {
-        [SIMD2(box.minX, box.minY), SIMD2(box.maxX, box.minY), SIMD2(box.maxX, box.maxY), SIMD2(box.minX, box.maxY)]
-            .map { forward(SIMD2(Double($0.x), Double($0.y))) }
+        let x0 = Double(box.minX), y0 = Double(box.minY), x1 = Double(box.maxX), y1 = Double(box.maxY)
+        return [SIMD2(x0, y0), SIMD2(x1, y0), SIMD2(x1, y1), SIMD2(x0, y1)].map(forward)
     }
 }
 
