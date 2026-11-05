@@ -189,8 +189,13 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
 
     private var canvasSize: CGSize { CGSize(width: session.engine.width, height: session.engine.height) }
 
+    private var userNavigated = false
+    private var fittedBounds: CGSize = .zero
+
     private func fitIfNeeded() {
+        if !userNavigated, fittedBounds != bounds.size { fitted = false }
         guard !fitted, bounds.width > 0 else { return }
+        fittedBounds = bounds.size
         let s = min(bounds.width / canvasSize.width, bounds.height / canvasSize.height) * 0.94
         zoom = s
         offset = CGPoint(x: (bounds.width - canvasSize.width * s) / 2, y: (bounds.height - canvasSize.height * s) / 2)
@@ -474,6 +479,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
     // MARK: Navigation gestures
 
     @objc private func onPinch(_ g: UIPinchGestureRecognizer) {
+        userNavigated = true
         let loc = g.location(in: self)
         let before = toCanvas(loc)
         zoom = min(max(zoom * g.scale, 0.05), 40)
@@ -485,6 +491,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
     }
 
     @objc private func onPan(_ g: UIPanGestureRecognizer) {
+        userNavigated = true
         let t = g.translation(in: self)
         offset.x += t.x; offset.y += t.y
         g.setTranslation(.zero, in: self)
@@ -503,7 +510,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
 
     func draw(in view: MTKView) {
-        if session.fitRequested { fitted = false; rotation = 0; session.fitRequested = false }
+        if session.fitRequested { fitted = false; userNavigated = false; rotation = 0; session.fitRequested = false }
         fitIfNeeded()
         updateCursor()
         updateTransformBox()
@@ -754,8 +761,8 @@ struct DrawStudioView: View {
                 HStack(spacing: 8) {
                     labeledPicker($session.selectSubtract, [("Add", false), ("Remove", true)]).frame(width: 140)
                     optionSlider("Edge", value: Binding(get: { engine.quickTolerance }, set: { engine.quickTolerance = $0 }), range: 0.02...0.5)
+                    sourcePicker
                 }
-                sourcePicker
             }
             .padding(.horizontal, 10)
         case .selectBrush:
@@ -768,12 +775,12 @@ struct DrawStudioView: View {
         case .wand:
             VStack(spacing: 6) {
                 optionSlider("Tolerance", value: $session.fillTolerance, range: 0...0.6)
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
+                    selectionModePicker
+                    sourcePicker
                     Toggle("Connected", isOn: $session.wandContiguous).toggleStyle(.button).tint(Theme.accent).font(.system(size: 12, weight: .semibold))
-                    Stepper("Gap \(session.gapClose)px", value: $session.gapClose, in: 0...10).font(.system(size: 12, weight: .semibold))
+                    Spacer(minLength: 0)
                 }
-                sourcePicker
-                selectionModePicker
             }
             .foregroundStyle(Theme.text).padding(.horizontal, 10)
         case .fill:
@@ -782,9 +789,8 @@ struct DrawStudioView: View {
                 optionSlider("Tolerance", value: $session.fillTolerance, range: 0...0.6)
                 HStack(spacing: 8) {
                     Stepper("Gaps \(session.gapClose)", value: $session.gapClose, in: 0...10).font(.system(size: 12, weight: .semibold))
-                    Stepper("Grow \(engine.fillExpand)", value: Binding(get: { engine.fillExpand }, set: { engine.fillExpand = $0; engine.touch() }), in: 0...6).font(.system(size: 12, weight: .semibold))
+                    sourcePicker
                 }
-                sourcePicker
             }
             .foregroundStyle(Theme.text).padding(.horizontal, 10)
         case .lasso:
@@ -793,11 +799,11 @@ struct DrawStudioView: View {
                     labeledPicker($session.lassoFills, [("Select", false), ("Draw", true)])
                     labeledPicker($session.polygonLasso, [("Freehand", false), ("Points", true)])
                 }
-                if !session.lassoFills { selectionModePicker }
+                if !session.lassoFills { HStack { selectionModePicker; Spacer(minLength: 0) } }
             }
             .padding(.horizontal, 10)
         case .rectSelect, .ellipseSelect:
-            selectionModePicker.padding(.horizontal, 10)
+            HStack { selectionModePicker; Spacer(minLength: 0) }.padding(.horizontal, 10)
         case .move:
             transformBar
         case .eyedropper:
@@ -806,11 +812,18 @@ struct DrawStudioView: View {
         }
     }
 
+    private func menuChip(_ title: String) -> some View {
+        HStack(spacing: 3) { Text(title); Image(systemName: "chevron.up.chevron.down").font(.system(size: 9, weight: .bold)) }
+            .font(.system(size: 12, weight: .semibold)).lineLimit(1).fixedSize()
+            .padding(.horizontal, 10).padding(.vertical, 7).background(Capsule().fill(Theme.raised)).foregroundStyle(Theme.text)
+    }
+
     private var sourcePicker: some View {
-        Picker("", selection: Binding(get: { engine.sampleSource }, set: { engine.sampleSource = $0 })) {
-            ForEach(SampleSource.allCases) { Text($0.title).tag($0) }
-        }
-        .pickerStyle(.segmented)
+        Menu {
+            Picker("Look at", selection: Binding(get: { engine.sampleSource }, set: { engine.sampleSource = $0; engine.touch() })) {
+                ForEach(SampleSource.allCases) { Text($0.title).tag($0) }
+            }
+        } label: { menuChip(engine.sampleSource.title) }
     }
 
     private var transformBar: some View {
@@ -831,10 +844,11 @@ struct DrawStudioView: View {
     }
 
     private var selectionModePicker: some View {
-        Picker("", selection: Binding(get: { engine.selectionMode }, set: { engine.selectionMode = $0; engine.touch() })) {
-            ForEach(SelectionMode.allCases) { Text($0.title).tag($0) }
-        }
-        .pickerStyle(.segmented)
+        Menu {
+            Picker("Mode", selection: Binding(get: { engine.selectionMode }, set: { engine.selectionMode = $0; engine.touch() })) {
+                ForEach(SelectionMode.allCases) { Text($0.title).tag($0) }
+            }
+        } label: { menuChip(engine.selectionMode.title) }
     }
 
     private func optionSlider(_ t: String, value: Binding<Double>, range: ClosedRange<Double>) -> some View {

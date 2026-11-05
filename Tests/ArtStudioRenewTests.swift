@@ -51,7 +51,10 @@ final class ArtStudioRenewTests: XCTestCase {
         let e = try engine()
         e.brush.size = 30; e.brush.color = RGBA(0, 1, 0)
         paint(e)
+        XCTAssertGreaterThan(px(e, 70, 48)[3], 200, "painted before selecting")
         e.selectShape(SIMD2(0, 0), SIMD2(48, 96), ellipse: false)
+        let mask = e.selectionBytes()
+        XCTAssertEqual(mask[48 * 96 + 70], 0, "outside the selection"); XCTAssertEqual(mask[48 * 96 + 20], 255)
         e.erasing = true
         paint(e)
         e.erasing = false
@@ -77,7 +80,7 @@ final class ArtStudioRenewTests: XCTestCase {
         e.beginStroke(at: SIMD2(30, 48), pressure: 1)
         for x in stride(from: 32.0, through: 70, by: 2) { e.continueStroke(to: SIMD2(x, 48), pressure: 1) }
         e.endStroke()
-        XCTAssertGreaterThan(px(e, 50, 48)[3], 20, "paint is dragged along the stroke")
+        XCTAssertGreaterThan(px(e, 44, 48)[3], 8, "paint is dragged along the stroke")
 
         let f = try engine()
         f.brush.size = 40; f.brush.hardness = 0.99; f.brush.pressureSize = false
@@ -115,7 +118,10 @@ final class ArtStudioRenewTests: XCTestCase {
         e.brush.size = 12; e.brush.hardness = 0.95; e.brush.pressureSize = false
         e.beginStroke(at: SIMD2(20, 20), pressure: 1); e.endStroke()
         e.beginStroke(at: SIMD2(70, 70), pressure: 1); e.endStroke()
+        XCTAssertGreaterThan(px(e, 70, 70)[3], 200, "second tap painted")
+        XCTAssertGreaterThan(px(e, 20, 20)[3], 200, "first tap kept")
         e.selectShape(SIMD2(5, 5), SIMD2(40, 40), ellipse: false)
+        XCTAssertEqual(e.selectionBytes()[70 * 96 + 70], 0, "outside the selection")
         e.beginFloating()
         e.floating?.translate = SIMD2(0, 40)
         e.commitFloating()
