@@ -250,7 +250,7 @@ final class AuditRegressionTests: XCTestCase {
     }
 
     @MainActor
-    func testAutomaticSaveFailureIsVisibleWithoutExplicitSave() async throws {
+    @MainActor func testAutomaticSaveFailureIsVisibleWithoutExplicitSave() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let store = ProjectStore(root: root)
         try FileManager.default.removeItem(at: root); try Data("occupied".utf8).write(to: root)
