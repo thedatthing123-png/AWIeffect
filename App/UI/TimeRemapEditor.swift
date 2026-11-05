@@ -90,7 +90,7 @@ struct TimeRemapEditor: View {
                 if state.selectedLayer?.timeRemap != nil {
                     Picker("Graph", selection: $speedGraph) {
                         Text("Source Time").tag(false); Text("Playback Speed").tag(true)
-                    }.pickerStyle(.segmented).padding(.horizontal).padding(.vertical, 8)
+                    }.pickerStyle(.segmented).padding(.horizontal).padding(.vertical, 8).background(Theme.background)
                 }
             }
             .navigationTitle("Time & Velocity").navigationBarTitleDisplayMode(.inline)
