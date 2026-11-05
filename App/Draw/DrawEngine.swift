@@ -312,6 +312,8 @@ final class DrawEngine: ObservableObject {
     }
     func restoreSelection(_ mask: [UInt8]?) {
         guard let mask else { clearSelection(); return }
+        // Strokes still on the GPU read the selection, so they must finish before it changes.
+        finishQueuedPainting()
         selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: mask, bytesPerRow: width)
         hasSelection = mask.contains { $0 > 0 }
         if !hasSelection { clearSelection() }
@@ -628,6 +630,8 @@ final class DrawEngine: ObservableObject {
                 }
             }
         }
+        // Strokes still on the GPU read the selection, so they must finish before it changes.
+        finishQueuedPainting()
         selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: out, bytesPerRow: width)
         hasSelection = out.contains { $0 > 0 }
         if !hasSelection { clearSelection() }
@@ -662,6 +666,8 @@ final class DrawEngine: ObservableObject {
 
     func clearSelection(recordUndo: Bool = false) {
         if recordUndo && hasSelection { pushSelectionUndo() }
+        // Strokes still on the GPU read the selection, so they must finish before it changes.
+        finishQueuedPainting()
         let full = [UInt8](repeating: 255, count: width * height)
         selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: full, bytesPerRow: width)
         hasSelection = false

@@ -69,6 +69,15 @@ final class ArtStudioRenewTests: XCTestCase {
         XCTAssertGreaterThan(kept[2], 200); XCTAssertLessThan(kept[1], 40)
     }
 
+    func testSelectingRightAfterAStrokeKeepsTheStroke() throws {
+        let e = try engine()
+        e.brush.size = 12; e.brush.hardness = 0.95; e.brush.pressureSize = false
+        e.beginStroke(at: SIMD2(70, 70), pressure: 1); e.endStroke()
+        // No read-back in between: the selection changes while the stroke may still be on the GPU.
+        e.selectShape(SIMD2(5, 5), SIMD2(40, 40), ellipse: false)
+        XCTAssertGreaterThan(px(e, 70, 70)[3], 200)
+    }
+
     func testSmudgePullsColorAndBlurSoftens() throws {
         let e = try engine()
         e.brush.size = 20; e.brush.hardness = 0.95; e.brush.pressureSize = false; e.brush.stabilizer = 0
