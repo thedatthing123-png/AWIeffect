@@ -56,7 +56,6 @@ struct TimeRemapEditor: View {
                                     Image(systemName: remap.hasKeyframe(at: state.currentTime) ? "diamond.fill" : "diamond")
                                 }.accessibilityLabel("Toggle source time keyframe")
                                 NumberField(value: layer.sourceTime(at: state.currentTime), label: "Source seconds", step: state.project.frameDuration, precision: 3) { state.setRemapValue($0) }
-                                    .accessibilityIdentifier("remap-source-value")
                                 Text(String(format: "%+.2f×", layer.playbackRate(at: state.currentTime))).monospacedDigit()
                             }
                             ForEach(remap.keyframes) { key in

@@ -17,8 +17,8 @@ final class AnimationTimingUITests: XCTestCase {
         let key = app.buttons["Toggle source time keyframe"].firstMatch
         XCTAssertTrue(key.waitForExistence(timeout: 8)); key.tap()
         XCTAssertTrue(app.buttons["1.000s → 1.000s"].waitForExistence(timeout: 3))
-        let source = app.descendants(matching: .any)["remap-source-value"].firstMatch
-        source.coordinate(withNormalizedOffset: CGVector(dx: 0.65,dy: 0.5)).tap()
+        let source = app.descendants(matching: .any)["number-Source seconds"].firstMatch
+        XCTAssertTrue(source.waitForExistence(timeout: 3)); source.tap()
         let field = app.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 3))
         field.tap(); field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12) + "2\n")

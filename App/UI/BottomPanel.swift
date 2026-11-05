@@ -277,6 +277,7 @@ struct NumberField: View {
                     .foregroundStyle(Theme.accentGlow)
                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
+                    .accessibilityIdentifier("number-\(label)")
                     .onTapGesture { text = formattedValue; editing = true }
                     .gesture(DragGesture(minimumDistance: 3)
                         .onChanged { g in
