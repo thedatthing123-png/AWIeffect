@@ -30,6 +30,11 @@ struct EditorView: View {
     @State private var replaceItem: PhotosPickerItem?
 
     init(state: EditorState, close: @escaping () -> Void) {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-animationTiming") {
+            state.select(state.project.layers.first?.id); state.currentTime = 1; state.panel = .clip
+        }
+        #endif
         _state = StateObject(wrappedValue: state)
         self.close = close
     }
@@ -64,11 +69,6 @@ struct EditorView: View {
         // Every slider in the editor keeps its edits live while dragging (smooth, no full-editor rebuilds).
         .environment(\.scrubSession, ScrubSession(begin: { [weak state] in state?.beginScrub() }, end: { [weak state] in state?.endScrub() }))
         .onAppear {
-            #if DEBUG
-            if ProcessInfo.processInfo.arguments.contains("-uiTesting-animationTiming") {
-                state.select(state.project.layers.first?.id); state.currentTime = 1; state.panel = .clip
-            }
-            #endif
             canvasPicker.available = true
             AILink.shared.editor = state
             EffectRegistry.softMeshURL = { [weak state] f in state?.mediaURL(f) ?? URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(f) }
