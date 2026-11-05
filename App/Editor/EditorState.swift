@@ -174,8 +174,9 @@ final class EditorState: ObservableObject {
     private var savedUndo: [(undo: [(label: String, project: Project)], redo: [(label: String, project: Project)])] = []
 
     init(project: Project, store: ProjectStore = .shared) {
-        self.project = project
-        self.project.distinguishContainerTags()
+        var initial = project
+        initial.distinguishContainerTags()
+        self.project = initial
         self.store = store
         if store.recoveredVersions[project.id] != nil {
             recoveryNotice = "Opened the latest readable saved version. The damaged project file has been kept in its project folder."
