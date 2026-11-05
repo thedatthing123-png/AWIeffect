@@ -36,7 +36,7 @@ struct ModelScenePlacement {
     var modelToCamera: simd_float4x4
     /// Vertical field of view of the scene camera.
     var fieldOfView: Double
-    var lights: [LightGPU]
+    var lights: [Renderer.LightGPU]
     /// World -> SceneKit camera space, for the lights.
     var worldToCamera: simd_float4x4
 }
@@ -101,7 +101,7 @@ final class ModelRenderer {
         return cached
     }
 
-    private static func node(for l: LightGPU, worldToCamera: simd_float4x4) -> SCNNode {
+    private static func node(for l: Renderer.LightGPU, worldToCamera: simd_float4x4) -> SCNNode {
         let node = SCNNode(), light = SCNLight()
         let strength = max(l.color.x, max(l.color.y, l.color.z))
         light.color = UIColor(red: CGFloat(l.color.x / max(strength, 1e-3)), green: CGFloat(l.color.y / max(strength, 1e-3)), blue: CGFloat(l.color.z / max(strength, 1e-3)), alpha: 1)
