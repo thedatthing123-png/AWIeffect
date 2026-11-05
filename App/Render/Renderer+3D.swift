@@ -91,6 +91,24 @@ extension Renderer {
         return T * R * S * A
     }
 
+    /// Places a model in the scene: same position, rotation and camera as a flat 3D layer, but with real depth.
+    static func modelPlacement(_ layer: Layer, project: Project, camera: CameraState, time: Double) -> ModelScenePlacement {
+        // Scene space is y down, z away; SceneKit camera space is y up, z toward the viewer.
+        let flip = simd_double4x4(diagonal: SIMD4(1, -1, -1, 1))
+        let size = layer.size.value(at: time), sc = layer.transform.scale.value(at: time)
+        let fit = max(1e-3, min(size.x, size.y) / 2)
+        let depthScale = (abs(sc.x) + abs(sc.y)) / 200
+        let local = simd_double4x4(diagonal: SIMD4(fit, fit, fit * depthScale, 1))
+        let view = flip * camera.view
+        func float(_ m: simd_double4x4) -> simd_float4x4 {
+            simd_float4x4(SIMD4<Float>(m.columns.0), SIMD4<Float>(m.columns.1), SIMD4<Float>(m.columns.2), SIMD4<Float>(m.columns.3))
+        }
+        let height = max(1, camera.center.y * 2)
+        return ModelScenePlacement(modelToCamera: float(view * layerWorld(layer, time: time) * local * flip),
+                                   fieldOfView: 2 * atan(height / 2 / max(1, abs(camera.zoom))) * 180 / .pi,
+                                   lights: lightsGPU(project, time: time), worldToCamera: float(view))
+    }
+
     /// Homography mapping the layer plane (local x, y) to comp pixels at `renderScale`.
     static func layerHomography(_ layer: Layer, camera: CameraState, time: Double, renderScale: Double, localZ: Double = 0) -> simd_double3x3 {
         var MV: simd_double4x4 = camera.view * layerWorld(layer, time: time)

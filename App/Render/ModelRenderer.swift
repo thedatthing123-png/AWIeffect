@@ -29,6 +29,18 @@ struct Model3DOptions: Codable, Equatable {
     var lightIntensity = Animated(1200.0)
 }
 
+/// Where a 3D layer's model sits as seen by the scene camera. With this the model is a real object in the scene:
+/// orbiting the camera or turning the layer shows its other sides, instead of tilting a flat picture of it.
+struct ModelScenePlacement {
+    /// Model space (y up, z toward the viewer, fitted to about 2 units) -> SceneKit camera space.
+    var modelToCamera: simd_float4x4
+    /// Vertical field of view of the scene camera.
+    var fieldOfView: Double
+    var lights: [LightGPU]
+    /// World -> SceneKit camera space, for the lights.
+    var worldToCamera: simd_float4x4
+}
+
 /// Renders model/3D-text layers offscreen with SceneKit into a texture the compositor places like an image.
 final class ModelRenderer {
     static let shared: ModelRenderer? = Renderer.shared.map { ModelRenderer(device: $0.device) }
@@ -89,6 +101,29 @@ final class ModelRenderer {
         return cached
     }
 
+    private static func node(for l: LightGPU, worldToCamera: simd_float4x4) -> SCNNode {
+        let node = SCNNode(), light = SCNLight()
+        let strength = max(l.color.x, max(l.color.y, l.color.z))
+        light.color = UIColor(red: CGFloat(l.color.x / max(strength, 1e-3)), green: CGFloat(l.color.y / max(strength, 1e-3)), blue: CGFloat(l.color.z / max(strength, 1e-3)), alpha: 1)
+        light.intensity = CGFloat(strength * 1000)
+        switch Int(l.posType.w) {
+        case 0: light.type = .omni
+        case 1:
+            light.type = .spot
+            light.spotOuterAngle = CGFloat(acos(min(1, max(-1, Double(l.dirCone.w)))) * 360 / .pi)
+            light.spotInnerAngle = light.spotOuterAngle * CGFloat(1 - l.color.w)
+        case 2: light.type = .directional
+        default: light.type = .ambient
+        }
+        if l.falloff.x > 0 { light.attenuationEndDistance = CGFloat(l.falloff.x) }
+        node.light = light
+        let p = worldToCamera * SIMD4(l.posType.x, l.posType.y, l.posType.z, 1)
+        let d = worldToCamera * SIMD4(l.dirCone.x, l.dirCone.y, l.dirCone.z, 0)
+        node.simdPosition = SIMD3(p.x, p.y, p.z)
+        node.simdLook(at: SIMD3(p.x + d.x, p.y + d.y, p.z + d.z))
+        return node
+    }
+
     static func cameraDistance(radius: Double, aspect: Double, fov: Double = 35) -> Double {
         let vertical = fov * .pi / 360
         let horizontal = atan(tan(vertical) * max(0.01, aspect))
@@ -96,7 +131,8 @@ final class ModelRenderer {
     }
 
     /// Renders the layer at `time` into a premultiplied BGRA texture of `width`×`height`.
-    func render(_ o: Model3DOptions, time: Double, width: Int, height: Int, cb: MTLCommandBuffer, pool: TexturePool? = nil, mediaURL: (String) -> URL) -> MTLTexture? {
+    func render(_ o: Model3DOptions, time: Double, width: Int, height: Int, cb: MTLCommandBuffer, pool: TexturePool? = nil,
+                placement: ModelScenePlacement? = nil, mediaURL: (String) -> URL) -> MTLTexture? {
         lock.lock(); defer { lock.unlock() }
         guard width > 0, height > 0, width <= TexturePool.maxSide, height <= TexturePool.maxSide,
               let cached = content(o, mediaURL: mediaURL) else { return nil }
@@ -146,7 +182,14 @@ final class ModelRenderer {
         }
         let yaw = o.yaw.value(at: time) + o.spin * time
         model.eulerAngles = SCNVector3(Float(o.pitch.value(at: time) * .pi / 180), Float(yaw * .pi / 180), Float(o.roll.value(at: time) * .pi / 180))
-        scene.rootNode.addChildNode(model)
+        if let placement {
+            let holder = SCNNode()
+            holder.simdTransform = placement.modelToCamera
+            holder.addChildNode(model)
+            scene.rootNode.addChildNode(holder)
+        } else {
+            scene.rootNode.addChildNode(model)
+        }
 
         let cam = SCNNode()
         cam.camera = SCNCamera()
@@ -155,6 +198,14 @@ final class ModelRenderer {
         cam.camera?.zNear = max(0.001, distance - cached.radius * 1.5)
         cam.camera?.zFar = distance + cached.radius * 3
         cam.position = SCNVector3(0, 0, Float(distance))
+        if let placement {
+            cam.camera?.fieldOfView = CGFloat(placement.fieldOfView)
+            cam.camera?.projectionDirection = .vertical
+            cam.camera?.zNear = 1
+            cam.camera?.zFar = 200_000
+            cam.position = SCNVector3(0, 0, 0)
+            for light in placement.lights { scene.rootNode.addChildNode(Self.node(for: light, worldToCamera: placement.worldToCamera)) }
+        }
         scene.rootNode.addChildNode(cam)
         let key2 = SCNNode()
         key2.light = SCNLight()
@@ -163,7 +214,8 @@ final class ModelRenderer {
         key2.light?.castsShadow = true
         let a = o.lightAngle.value(at: time) * .pi / 180
         key2.eulerAngles = SCNVector3(Float(-0.6), Float(a), 0)
-        scene.rootNode.addChildNode(key2)
+        // Scene lights replace the built-in key light.
+        if placement?.lights.isEmpty != false { scene.rootNode.addChildNode(key2) }
         let amb = SCNNode()
         amb.light = SCNLight()
         amb.light?.type = .ambient

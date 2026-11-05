@@ -600,6 +600,22 @@ final class Renderer {
                 continue
             }
 
+            // A 3D model is an object in the scene: it renders through the scene camera over the whole frame.
+            if layer.content == .model, layer.is3D, let options = layer.model3D {
+                let placement = Self.modelPlacement(layer, project: project, camera: camera, time: time)
+                if var picture = ModelRenderer.shared?.render(options, time: time, width: min(2048, comp.width), height: min(2048, comp.height), cb: cb,
+                                                              pool: pool, placement: placement, mediaURL: mediaURL) {
+                    for e in layer.effects where e.isEnabled {
+                        guard let d = EffectRegistry.definition(e.typeID), !d.isTransformEffect, case .pixels(let run) = d.stage else { continue }
+                        picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: renderScale, pool: pool))
+                    }
+                    let whole = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(comp.width) / 2, Double(comp.height) / 2, 1)))
+                    drawQuad(cb: cb, target: comp, matrix: whole, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 1, opacity: opacity,
+                             layer: layer, time: time, source: .model(picture), premultipliedImage: true)
+                }
+                continue
+            }
+
             let M = Self.placementMatrix(layer, camera: camera, time: time, renderScale: renderScale)
             if abs(M.determinant) < 1e-12 || !(0..<3).allSatisfy({ column in (0..<3).allSatisfy { M[column][$0].isFinite } }) { continue }
             let hs = Self.layerHalfSize(layer, time: time)
