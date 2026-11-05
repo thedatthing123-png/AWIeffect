@@ -89,7 +89,7 @@ final class ArtStudioRenewTests: XCTestCase {
         e.beginStroke(at: SIMD2(30, 48), pressure: 1)
         for x in stride(from: 32.0, through: 70, by: 2) { e.continueStroke(to: SIMD2(x, 48), pressure: 1) }
         e.endStroke()
-        XCTAssertGreaterThan(px(e, 55, 48)[3], 60, "paint is carried along the stroke")
+        XCTAssertGreaterThan(px(e, 68, 48)[3], 60, "at full strength the paint travels to the end of the stroke")
 
         let f = try engine()
         f.brush.size = 40; f.brush.hardness = 0.99; f.brush.pressureSize = false
@@ -192,7 +192,7 @@ final class ArtStudioRenewTests: XCTestCase {
         var path = PenPath()
         path.anchors = [PenAnchor(point: SIMD2(20, 60)), PenAnchor(point: SIMD2(70, 60), handle: SIMD2(0, -30))]
         let curve = path.flattened()
-        XCTAssertLessThan(curve.map(\.y).min()!, 55, "the handle bends the line")
+        XCTAssertGreaterThan(curve.map(\.y).max()!, 65, "the handle bends the line")
         XCTAssertEqual(curve.last!, SIMD2(70, 60))
         path.anchors.append(PenAnchor(point: SIMD2(45, 20)))
         path.closed = true
