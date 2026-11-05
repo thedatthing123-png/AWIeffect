@@ -135,11 +135,16 @@ extension EditorState {
             guard end - start >= p.frameDuration * 3 else { return }
             let center = min(end - p.frameDuration, max(start + p.frameDuration, t))
             let half = min(max(p.frameDuration / 2, window), (end - start) / 2 - p.frameDuration / 2)
-            let times = [start, max(start + p.frameDuration / 2, center - half),
+            let times: [Double] = [start, max(start + p.frameDuration / 2, center - half),
                          min(end - p.frameDuration / 2, center + half), end]
-            let speeds = [max(0.01, fast), max(0.01, slow), max(0.01, slow), max(0.01, fast)]
+            let speeds: [Double] = [max(0.01, fast), max(0.01, slow), max(0.01, slow), max(0.01, fast)]
             let sourceStart = l.sourceTime(at: start), sourceEnd = l.sourceTime(at: end)
-            let areas = (0..<3).map { (speeds[$0] + speeds[$0 + 1]) * 0.5 * (times[$0 + 1] - times[$0]) }
+            var areas: [Double] = []
+            for index in 0..<3 {
+                let averageSpeed: Double = (speeds[index] + speeds[index + 1]) * 0.5
+                let elapsed: Double = times[index + 1] - times[index]
+                areas.append(averageSpeed * elapsed)
+            }
             let scale = (sourceEnd - sourceStart) / max(areas.reduce(0, +), 1e-9)
             var a = Animated(sourceStart), value = sourceStart
             for k in 0..<4 {
