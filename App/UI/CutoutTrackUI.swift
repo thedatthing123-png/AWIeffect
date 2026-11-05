@@ -77,11 +77,20 @@ extension EditorState {
 /// AI cutout controls (image/video layers).
 struct CutoutSection: View {
     @ObservedObject var state: EditorState
+    @State private var studio: CutoutStudioModel?
     var body: some View {
         if let l = state.selectedLayer, l.mediaFile != nil, !(l.hasAudio && { if case .audio = l.content { return true }; return false }()) {
             let c = l.cutout
             VStack(alignment: .leading, spacing: 8) {
                 Text("AI Background Cutout").font(.system(size: 13, weight: .bold)).foregroundStyle(Theme.text)
+                Button {
+                    state.pause()
+                    if let file = l.mediaFile { studio = CutoutStudioModel(state: state, layer: l, url: state.mediaURL(file)) }
+                } label: {
+                    Label("Open Cutout Studio", systemImage: "scissors").font(.system(size: 14, weight: .bold)).frame(maxWidth: .infinity).padding(.vertical, 10)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Theme.accent)).foregroundStyle(.white)
+                }
+                .fullScreenCover(item: $studio) { CutoutStudioView(model: $0) }
                 Picker("Mode", selection: Binding(get: { c?.mode }, set: { m in
                     if let m { var n = c ?? CutoutSettings(); n.mode = m; state.setCutout(n) } else { state.setCutout(nil) }
                 })) {

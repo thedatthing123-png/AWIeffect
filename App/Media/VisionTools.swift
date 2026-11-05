@@ -50,6 +50,12 @@ struct CutoutSettings: Codable, Equatable {
     var strokes: [CutoutStroke] { get { strokesStore ?? [] } set { strokesStore = newValue.isEmpty ? nil : newValue } }
     /// Tap-picked subject (source UV): only the subject under this point is kept (Object / Drawn modes).
     var pick: Vec2? = nil
+    /// Cutout Studio: this layer's per-frame mattes, the rate they're stored at, and which frames were fixed by hand.
+    var bakeID: String? = nil
+    var bakeRate: Double? = nil
+    var bakeRevision: Int? = nil
+    var manualFramesStore: [Int]? = nil
+    var manualFrames: [Int] { get { manualFramesStore ?? [] } set { manualFramesStore = newValue.isEmpty ? nil : newValue } }
 }
 
 extension VideoSources {
@@ -113,6 +119,7 @@ final class CutoutEngine {
 
     func matte(for layer: Layer, sourceTime: Double, mediaURL: (String) -> URL, device: MTLDevice) -> MTLTexture? {
         guard let s = layer.cutout, let file = layer.mediaFile else { return nil }
+        if let baked = bakedMatte(s, layer: layer, sourceTime: sourceTime, mediaURL: mediaURL, device: device) { return baked }
         var frameKey = 0
         var isVideo = false
         if case .video = layer.content { frameKey = Int((sourceTime * 30).rounded(.down)); isVideo = true }
@@ -151,6 +158,28 @@ final class CutoutEngine {
         d.usage = [.shaderRead]
         guard let tex = device.makeTexture(descriptor: d) else { return nil }
         tex.replace(region: MTLRegionMake2D(0, 0, cur.w, cur.h), mipmapLevel: 0, withBytes: cur.bytes, bytesPerRow: cur.w)
+        lock.lock()
+        cache[key] = tex
+        order.append(key)
+        if order.count > 48 { cache[order.removeFirst()] = nil }
+        lock.unlock()
+        return tex
+    }
+
+    /// A Cutout Studio frame, when this frame has one.
+    private func bakedMatte(_ s: CutoutSettings, layer: Layer, sourceTime: Double, mediaURL: (String) -> URL, device: MTLDevice) -> MTLTexture? {
+        guard let id = s.bakeID else { return nil }
+        var frame = 0
+        if case .video = layer.content { frame = Int((sourceTime * (s.bakeRate ?? 30)).rounded(.down)) }
+        let key = "baked|\(id)|\(frame)|\(s.bakeRevision ?? 0)"
+        lock.lock()
+        if let t = cache[key] { lock.unlock(); return t }
+        lock.unlock()
+        guard let m = CutoutBake.load(mediaURL(CutoutBake.fileName(id, frame: frame))) else { return nil }
+        let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r8Unorm, width: m.width, height: m.height, mipmapped: false)
+        d.usage = [.shaderRead]
+        guard let tex = device.makeTexture(descriptor: d) else { return nil }
+        tex.replace(region: MTLRegionMake2D(0, 0, m.width, m.height), mipmapLevel: 0, withBytes: m.bytes, bytesPerRow: m.width)
         lock.lock()
         cache[key] = tex
         order.append(key)
