@@ -268,6 +268,13 @@ struct TimelineView: View {
             }
         }
         .contentShape(Rectangle())
+        .onTapGesture(count: 2) {
+            guard !state.isMultiSelecting else { return }
+            state.select(layer.id)
+            if layer.isGroup { state.openGroup() }
+            else if case .precomp = layer.content { state.openPrecomp() }
+            else { state.openLayer(layer.id) }
+        }
         .onTapGesture {
             if state.isMultiSelecting { state.toggleInMulti(layer.id) } else { state.openLayer(layer.id) }
         }

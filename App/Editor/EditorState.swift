@@ -931,7 +931,7 @@ extension EditorState {
             pl.outPoint = min(max(p.duration, start + dur), start + dur)
             if start + dur > p.duration { p.duration = start + dur }
             pl.sourceStart = 0
-            pl.tag = .teal
+            pl.tag = p.nextContainerTag()
             newID = pl.id
             p.layers.insert(pl, at: 0)
         }

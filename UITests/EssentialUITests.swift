@@ -62,7 +62,7 @@ final class EssentialUITests: XCTestCase {
     }
     func testGroupOpensItsOwnEditorAndReturnsToParent() {
         createProject(); tap("Add"); tap("Star")
-        tap("Layer Options"); tap("Group (keeps parts in this timeline)")
+        tap("Layer Options"); tap("Group Layers")
         tap("Layer Options"); tap("Open Group")
         XCTAssertTrue(app.buttons["Close Group"].firstMatch.waitForExistence(timeout: 10))
         tap("Add"); tap("Star"); tap("Deselect Layer")
