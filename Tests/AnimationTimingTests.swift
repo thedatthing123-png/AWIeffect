@@ -35,7 +35,7 @@ final class AnimationTimingTests: XCTestCase {
     }
 
     @MainActor func testSelectionClampsAsOneBlockAndMarkerIdentitySurvivesDrag() throws {
-        var p = scene()
+        var p = scene(); p.autoLength = false
         for t in [1.0,3] { p.layers[0].transform.position.insertKeyframe(Keyframe(time: t, value: Vec2(t, 64))) }
         let s = editor(p), original = p.layers[0], ids = original.keyframeMarkers.map(\.id)
         XCTAssertEqual(s.moveKeyframeSelection(of: original, times: [1,3], by: -100), -1)
