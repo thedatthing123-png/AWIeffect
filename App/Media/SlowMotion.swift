@@ -135,14 +135,25 @@ extension EditorState {
     /// Replaces the selected video layer's clip with a smooth slow-motion render (same in point, `factor` x longer).
     func applySmoothSlowMo(factor: Int, progress: @escaping (Double) -> Void) async throws {
         guard let l = selectedLayer, case .video(let file, let pw, let ph, _) = l.content else { return }
+        let rootID = rootProject.id, scopeID = project.id
         let src = mediaURL(file)
         let out = try await SlowMotion.render(url: src, factor: factor, progress: progress)
+        defer { try? FileManager.default.removeItem(at: out) }
+        guard rootProject.id == rootID, project.id == scopeID,
+              project.layers.first(where: { $0.id == l.id }) == l else { throw SlowMotion.Failure.cancelled }
         let data = try Data(contentsOf: out)
         let name = try store.importMedia(data: data, ext: "mov", into: rootProject.id)
         try? FileManager.default.removeItem(at: out)
         guard let i = project.layers.firstIndex(where: { $0.id == l.id }) else { return }
         mutate("Smooth Slow-Mo \(factor)x") { p in
             let old = p.layers[i]
+            var visit = AnimationTraversal(operation: .scaleTime(old.inPoint, Double(factor)))
+            p.layers[i].traverseAnimations(&visit)
+            if var remap = p.layers[i].timeRemap {
+                remap.staticValue *= Double(factor)
+                for key in remap.keyframes.indices { remap.keyframes[key].value *= Double(factor) }
+                p.layers[i].timeRemap = remap
+            }
             p.layers[i].content = .video(fileName: name, pixelWidth: pw, pixelHeight: ph, hasAudio: false)
             p.layers[i].sourceStart = old.sourceStart * Double(factor)
             p.layers[i].speed = old.speed

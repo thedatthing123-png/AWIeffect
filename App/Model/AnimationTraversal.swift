@@ -2,13 +2,24 @@ import Foundation
 
 /// The single inventory used by timeline indicators, key movement and clip movement.
 struct AnimationTraversal {
-    enum Operation { case inspect, retime(Double, Double), shift(Double), scaleTime(Double, Double), reverse(Double) }
+    enum Operation { case inspect, retime(Double, Double), moveTimes([Double], Double), shift(Double), scaleTime(Double, Double), reverse(Double) }
     var operation: Operation
     var times: [Double] = []
+    var markers: [Double: UUID] = [:]
     mutating func apply<V: Interpolatable>(_ value: inout Animated<V>) {
         switch operation {
         case .reverse(let sum): value.reverseKeys(around: sum)
-        case .inspect: times += value.keyframeTimes
+        case .inspect:
+            times += value.keyframeTimes
+            for key in value.keyframes {
+                let time = (key.time * 10000).rounded() / 10000
+                if markers[time] == nil { markers[time] = key.id }
+            }
+        case .moveTimes(let selected, let delta):
+            for i in value.keyframes.indices where selected.contains(where: { abs($0 - value.keyframes[i].time) < keyframeTimeEpsilon }) {
+                value.keyframes[i].time += delta
+            }
+            value.keyframes.sort { $0.time < $1.time }
         case .retime(let from, let to): value.retime(at: from, to: to)
         case .shift(let dt): value.shift(by: dt)
         case .scaleTime(let origin, let factor):
@@ -24,6 +35,14 @@ struct AnimationTraversal {
 
 extension Layer {
     mutating func traverseAnimations(_ visit: inout AnimationTraversal) {
+        if let frozen = timeFX?.freezeAt {
+            switch visit.operation {
+            case .shift(let delta): timeFX?.freezeAt = frozen + delta
+            case .scaleTime(let origin, let factor): timeFX?.freezeAt = origin + (frozen - origin) * factor
+            case .reverse(let sum): timeFX?.freezeAt = sum - frozen
+            default: break
+            }
+        }
         visit.apply(&transform.anchor)
         visit.apply(&transform.position)
         visit.apply(&transform.scale)
@@ -69,7 +88,8 @@ extension Layer {
             visit.apply(&model3D!.lightIntensity)
         }
         for i in effects.indices {
-            for (key, value) in effects[i].params {
+            for key in effects[i].params.keys.sorted() {
+                guard let value = effects[i].params[key] else { continue }
                 switch value {
                 case .number(var a): visit.apply(&a); effects[i].params[key] = .number(a)
                 case .point(var a): visit.apply(&a); effects[i].params[key] = .point(a)

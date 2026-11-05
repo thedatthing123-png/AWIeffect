@@ -629,10 +629,14 @@ final class Renderer {
                     let p = m * SIMD3(x, y, 1); return SIMD2(p.x, p.y) / max(p.z, 1e-6)
                 }
                 // Adaptive: as many samples as the motion needs (≈1 per 1.5 px of travel), capped by the quality setting.
-                let m0 = samplePlacement(layer, at: time - shutter / 2)
-                let m1 = samplePlacement(layer, at: time + shutter / 2)
-                let travel = [(-hs.x, -hs.y), (hs.x, hs.y), (hs.x, -hs.y), (-hs.x, hs.y)]
-                    .map { c in simd_length(corner(m1, c.0, c.1) - corner(m0, c.0, c.1)) }.max() ?? 0
+                // Detect the path through the shutter, not just its endpoints: a full spin or
+                // out-and-back move can have identical start/end placements and still need blur.
+                let probes = (0...4).map { samplePlacement(layer, at: time + (Double($0) / 4 - 0.5) * shutter) }
+                let travel = [(-hs.x, -hs.y), (hs.x, hs.y), (hs.x, -hs.y), (-hs.x, hs.y)].map { c in
+                    (1..<probes.count).reduce(0.0) { distance, k in
+                        distance + simd_length(corner(probes[k], c.0, c.1) - corner(probes[k - 1], c.0, c.1))
+                    }
+                }.max() ?? 0
                 if travel.isFinite, travel > 0.5 {
                     let cap = Renderer.blurSampleCap.map { min($0, project.blurSamples) } ?? project.blurSamples
                     let n = max(2, min(cap, Int(min(Double(max(2, cap)), (travel / 1.5).rounded(.up))) + 1))

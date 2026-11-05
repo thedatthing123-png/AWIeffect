@@ -68,6 +68,16 @@ struct RootView: View {
             p.layers = [group, child, outside]
             _openProject = State(initialValue: p)
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-animationTiming") {
+            var p = Project.new(name: "Timing Interaction Test", width: 128, height: 128, fps: 30, duration: 4)
+            var nested = Project.new(name: "Source", width: 128, height: 128, fps: 30, duration: 4, background: RGBA(0,0,0,0))
+            nested.layers = [nested.makeLayer(name: "shape", content: .solid, size: Vec2(20,20))]
+            p.precomps = [nested]
+            var layer = p.makeLayer(name: "Timing Clip", content: .precomp(id: nested.id), size: Vec2(128,128))
+            layer.transform.position.insertKeyframe(Keyframe(time: 0,value: Vec2(64,64)))
+            layer.transform.position.insertKeyframe(Keyframe(time: 2,value: Vec2(80,64)))
+            p.layers = [layer]; _openProject = State(initialValue: p)
+        }
         #endif
     }
 

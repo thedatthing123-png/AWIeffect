@@ -87,7 +87,7 @@ struct TimelineView: View {
                     }
                     .frame(maxHeight: .infinity)
                     .accessibilityIdentifier("layer-timeline-scroll")
-                    .scrollDisabled(multiDragStart != nil)
+                    .scrollDisabled(multiDragStart != nil || dragOriginal != nil)
                 }
                 // Playhead.
                 Rectangle().fill(.white).frame(width: 1.5)
@@ -254,7 +254,8 @@ struct TimelineView: View {
                 trimHandle(layer, start: true).offset(x: x0 - 13, y: 2)
                 trimHandle(layer, start: false).offset(x: x0 + max(w, 14) - 13, y: 2)
             }
-            ForEach(Array(layer.keyframeTimes.enumerated()), id: \.offset) { _, t in
+            ForEach(layer.keyframeMarkers, id: \.id) { marker in
+                let t = marker.time
                 Image(systemName: "diamond.fill")
                     .font(.system(size: editable ? 12 : 9))
                     .foregroundStyle(editable && abs(t - clock.time) < 1e-3 ? Theme.keyframe : .white)

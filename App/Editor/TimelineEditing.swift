@@ -31,9 +31,9 @@ extension EditorState {
         var l = original
         let minLen = project.frameDuration
         if start {
-            let newIn = min(max(0, original.inPoint + dt), original.outPoint - minLen)
-            if l.timeRemap == nil { l.sourceStart = max(0, original.sourceStart + (newIn - original.inPoint) * original.speed) }
-            l.inPoint = project.snapToFrame(newIn)
+            let newIn = min(max(0, project.snapToFrame(original.inPoint + dt)), original.outPoint - minLen)
+            if l.timeRemap == nil { l.sourceStart = original.sourceStart + (newIn - original.inPoint) * original.speed }
+            l.inPoint = newIn
         } else {
             l.outPoint = project.snapToFrame(max(original.inPoint + minLen, original.outPoint + dt))
         }
@@ -51,10 +51,24 @@ extension EditorState {
 
     /// Moves every keyframe of the selected layer at `from` to `to` (all properties).
     func moveKeyframes(of original: Layer, from: Double, to: Double) {
-        guard let i = project.layers.firstIndex(where: { $0.id == original.id }) else { return }
-        var l = original
-        l.retimeKeys(at: from, to: max(0, project.snapToFrame(to)))
-        mutateLayer(at: i) { $0 = l }
+        _ = moveKeyframeSelection(of: original, times: [from], by: to - from)
+    }
+
+    /// A snapshot and a relative delta keep a drag independent of redraws and finger hit-testing.
+    /// Occupied destinations are rejected; moving keys never silently deletes another key.
+    @discardableResult
+    func moveKeyframeSelection(of original: Layer, times: [Double], by delta: Double) -> Double? {
+        guard delta.isFinite, times.allSatisfy({ $0.isFinite }), !original.isLocked, let earliest = times.min(),
+              let i = project.layers.firstIndex(where: { $0.id == original.id }) else { return nil }
+        let frameDelta = ((earliest + delta) * project.fps).rounded() / project.fps - earliest
+        let shift = max(-earliest, min(frameDelta, (project.autoLength ? 3600 : project.duration) - (times.max() ?? earliest)))
+        let occupied = original.keyframeTimes.filter { t in !times.contains(where: { abs($0 - t) < keyframeTimeEpsilon }) }
+        guard !times.contains(where: { t in occupied.contains(where: { abs($0 - t - shift) < keyframeTimeEpsilon }) }) else { return nil }
+        var layer = original
+        var visit = AnimationTraversal(operation: .moveTimes(times, shift))
+        layer.traverseAnimations(&visit)
+        mutateLayer(at: i) { $0 = layer }
+        return shift
     }
 
     func mutateLayer(at i: Int, _ change: (inout Layer) -> Void) {
@@ -127,6 +141,11 @@ extension Animated {
 }
 
 extension Layer {
+    var keyframeMarkers: [(id: UUID, time: Double)] {
+        var copy = self, visit = AnimationTraversal(operation: .inspect)
+        copy.traverseAnimations(&visit)
+        return visit.markers.map { (id: $0.value, time: $0.key) }.sorted { $0.time < $1.time }
+    }
     /// Moves keys at one time to another across every animatable property.
     mutating func retimeKeys(at from: Double, to: Double) {
         var visit = AnimationTraversal(operation: .retime(from, to))

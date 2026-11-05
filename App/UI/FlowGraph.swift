@@ -8,12 +8,22 @@ struct SavedEase: Codable, Equatable, Identifiable {
     var out: EaseHandle
     var into: EaseHandle
     var curve: EaseCurve?
+    var reversedSegment: Bool? = nil
+
+    func velocity(at x: Double, valueDelta: Double, duration: Double) -> Double {
+        guard duration > 1e-9, interpolation != .hold else { return 0 }
+        let a = max(0, x - 0.0001), b = min(1, x + 0.0001)
+        guard b > a else { return 0 }
+        return (progress(b) - progress(a)) / (b - a) * valueDelta / duration
+    }
 
     func progress(_ x: Double) -> Double {
         switch interpolation {
-        case .hold: return x < 1 ? 0 : 1
+        case .hold: return x >= 1 ? 1 : (reversedSegment == true && x > 0 ? 1 : 0)
         case .linear: return x
-        case .bezier: return curve?.progress(x) ?? BezierTiming.progress(x: x, p1: out, p2: into)
+        case .bezier:
+            if let curve { return reversedSegment == true ? 1 - curve.progress(1 - x) : curve.progress(x) }
+            return BezierTiming.progress(x: x, p1: out, p2: into)
         }
     }
 }
@@ -32,7 +42,7 @@ struct FlowGraphPanel: View {
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: "Graph")
-            if state.animatedKeys.isEmpty && state.effectGraphTargets.isEmpty {
+            if state.animatedKeys.isEmpty && state.effectGraphTargets.isEmpty && state.selectedLayer?.timeRemap == nil {
                 VStack(spacing: 8) {
                     Image(systemName: "point.topleft.down.to.point.bottomright.curvepath").font(.system(size: 28)).foregroundStyle(Theme.textDim)
                     Text("Add two keyframes on a property, then shape its motion here.")
@@ -53,7 +63,11 @@ struct FlowGraphPanel: View {
         }
         .onAppear {
             if let k = key, !state.animatedKeys.contains(k) { key = nil }
-            if state.graphEffect == nil, state.animatedKeys.isEmpty { state.graphEffect = state.effectGraphTargets.first?.target }
+            if state.graphTimeRemap && state.selectedLayer?.timeRemap == nil { state.graphTimeRemap = false }
+            if !state.graphTimeRemap, state.graphEffect == nil, state.animatedKeys.isEmpty {
+                if state.selectedLayer?.timeRemap != nil { state.graphTimeRemap = true }
+                else { state.graphEffect = state.effectGraphTargets.first?.target }
+            }
         }
     }
 
@@ -64,6 +78,7 @@ struct FlowGraphPanel: View {
 
     /// Segments of what the graph shows: a keyframed effect setting, else a transform property.
     private var shownSegs: [EaseSegment] {
+        if state.graphTimeRemap { return state.remapSegments }
         if let g = state.graphEffect { return state.effectSegments(g) }
         return shownKey.map { state.easeSegments($0) } ?? []
     }
@@ -78,17 +93,19 @@ struct FlowGraphPanel: View {
     private var current: SavedEase? {
         guard let i = segmentIndex else { return nil }
         let s = shownSegs[i]
-        return SavedEase(name: "", interpolation: s.interpolation, out: s.out, into: s.into, curve: s.interpolation == .bezier ? s.curve : nil)
+        return SavedEase(name: "", interpolation: s.interpolation, out: s.out, into: s.into, curve: s.interpolation == .bezier ? s.curve : nil, reversedSegment: s.reversedSegment)
     }
 
     private func apply(_ e: SavedEase, continuous: Bool = false) {
-        if let g = state.graphEffect {
-            state.setEffectEase(g, segment: segmentIndex, interpolation: e.interpolation, out: e.out, into: e.into, curve: e.curve, continuous: continuous)
+        if state.graphTimeRemap {
+            state.setRemapEase(segment: segmentIndex, ease: e, continuous: continuous)
+        } else if let g = state.graphEffect {
+            state.setEffectEase(g, segment: segmentIndex, interpolation: e.interpolation, out: e.out, into: e.into, curve: e.curve, reversedSegment: e.reversedSegment, continuous: continuous)
         } else if let k = key {
-            state.setEase(k, segment: segmentIndex, interpolation: e.interpolation, out: e.out, into: e.into, curve: e.curve, continuous: continuous)
+            state.setEase(k, segment: segmentIndex, interpolation: e.interpolation, out: e.out, into: e.into, curve: e.curve, reversedSegment: e.reversedSegment, continuous: continuous)
         } else {
             let t = shownKey.flatMap { k in segmentIndex.map { state.easeSegments(k)[$0].t0 } }
-            state.setEaseAll(segmentAt: t, interpolation: e.interpolation, out: e.out, into: e.into, curve: e.curve)
+            state.setEaseAll(segmentAt: t, interpolation: e.interpolation, out: e.out, into: e.into, curve: e.curve, reversedSegment: e.reversedSegment, continuous: continuous)
         }
         if !continuous { UISelectionFeedbackGenerator().selectionChanged() }
     }
@@ -99,11 +116,14 @@ struct FlowGraphPanel: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 if !state.animatedKeys.isEmpty {
-                    chip("All", selected: key == nil && state.graphEffect == nil) { key = nil; state.graphEffect = nil }
+                    chip("All", selected: key == nil && state.graphEffect == nil && !state.graphTimeRemap) { key = nil; state.graphEffect = nil; state.graphTimeRemap = false }
                 }
-                ForEach(state.animatedKeys) { k in chip(k.title, selected: key == k && state.graphEffect == nil) { key = k; state.graphEffect = nil } }
+                ForEach(state.animatedKeys) { k in chip(k.title, selected: key == k && state.graphEffect == nil && !state.graphTimeRemap) { key = k; state.graphEffect = nil; state.graphTimeRemap = false } }
                 ForEach(state.effectGraphTargets, id: \.target) { e in
-                    chip(e.title, selected: state.graphEffect == e.target) { state.graphEffect = e.target }
+                    chip(e.title, selected: state.graphEffect == e.target && !state.graphTimeRemap) { state.graphEffect = e.target; state.graphTimeRemap = false }
+                }
+                if state.selectedLayer?.timeRemap != nil {
+                    chip("Time Remap", selected: state.graphTimeRemap) { state.graphTimeRemap = true; state.graphEffect = nil }
                 }
                 Divider().frame(height: 20)
                 Button { state.jumpKeyframe(forward: false) } label: { Image(systemName: "chevron.left.to.line") }
@@ -117,6 +137,17 @@ struct FlowGraphPanel: View {
             .padding(.horizontal, 10)
         }
         .frame(height: 36)
+    }
+
+    private var currentSegmentDuration: Double {
+        guard let k = segmentIndex, shownSegs.indices.contains(k) else { return 1 }
+        return shownSegs[k].t1 - shownSegs[k].t0
+    }
+
+    private var remapValueDelta: Double? {
+        guard state.graphTimeRemap, let k = segmentIndex, let a = state.selectedLayer?.timeRemap,
+              k + 1 < a.keyframes.count else { return nil }
+        return a.keyframes[k + 1].value - a.keyframes[k].value
     }
 
     private var segmentLabel: String {
@@ -140,12 +171,13 @@ struct FlowGraphPanel: View {
             ZStack(alignment: .topTrailing) {
                 if e.curve == nil && e.interpolation == .bezier && !speedView {
                     CurveEditor(segment: EaseSegment(t0: 0, t1: 1, interpolation: .bezier, out: e.out, into: e.into)) { out, into, done in
-                        var n = e; n.out = out; n.into = into; n.curve = nil
+                        var n = e; n.out = out; n.into = into; n.curve = nil; n.reversedSegment = nil
                         apply(n, continuous: true)
                         if done { state.endEdit() }
                     }
                 } else {
-                    CurvePlot(ease: e, speed: speedView)
+                    CurvePlot(ease: e, speed: speedView, valueDelta: remapValueDelta,
+                              segmentDuration: currentSegmentDuration)
                 }
                 ReplayDot(ease: e).allowsHitTesting(false)
             }
@@ -251,6 +283,8 @@ struct CurvePlot: View {
     let ease: SavedEase
     var speed: Bool
     var thumb = false
+    var valueDelta: Double? = nil
+    var segmentDuration: Double = 1
 
     var body: some View {
         Canvas { ctx, size in
@@ -268,14 +302,19 @@ struct CurvePlot: View {
             let n = thumb ? 40 : 160
             var ys: [Double] = (0...n).map { ease.progress(Double($0) / Double(n)) }
             if speed {
-                // Speed graph: how fast the value changes along the segment (normalized to its peak).
-                var v = (0...n).map { i -> Double in
-                    let a = ys[max(0, i - 1)], b = ys[min(n, i + 1)]
-                    return abs(b - a) * Double(n) / Double(min(n, i + 1) - max(0, i - 1))
+                let rates = (0...n).map { ease.velocity(at: Double($0) / Double(n), valueDelta: valueDelta ?? 1, duration: segmentDuration) }
+                if valueDelta != nil {
+                    let low = min(0, rates.min() ?? 0), high = max(0.01, rates.max() ?? 0)
+                    ys = rates.map { ($0 - low) / (high - low) }
+                    let y = box.maxY - CGFloat(-low / (high - low)) * box.height
+                    var zero = Path(); zero.move(to: CGPoint(x: box.minX, y: y)); zero.addLine(to: CGPoint(x: box.maxX, y: y))
+                    ctx.stroke(zero, with: .color(Theme.textDim), style: StrokeStyle(lineWidth: 1, dash: [3,3]))
+                    ctx.draw(Text(String(format: "%+.2f× / %+.2f×", low, high)).font(.system(size: 10, design: .monospaced)).foregroundColor(Theme.textDim),
+                             at: CGPoint(x: box.minX, y: 4), anchor: .topLeading)
+                } else {
+                    let peak = max(rates.map { abs($0) }.max() ?? 1, 1e-6)
+                    ys = rates.map { abs($0) / peak }
                 }
-                let peak = max(v.max() ?? 1, 1e-6)
-                v = v.map { $0 / peak }
-                ys = v
             }
             var path = Path()
             for (i, y) in ys.enumerated() {

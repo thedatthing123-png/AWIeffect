@@ -40,7 +40,7 @@ extension EditorState {
             guard a.keyframes.count >= 2 else { return [] }
             return (0..<(a.keyframes.count - 1)).map { k in
                 EaseSegment(t0: a.keyframes[k].time, t1: a.keyframes[k + 1].time, interpolation: a.keyframes[k].interpolation,
-                            out: a.keyframes[k].easeOut, into: a.keyframes[k + 1].easeIn, curve: a.keyframes[k].curve)
+                            out: a.keyframes[k].easeOut, into: a.keyframes[k + 1].easeIn, curve: a.keyframes[k].curve, reversedSegment: a.keyframes[k].reversedSegment)
             }
         }
         switch e.params[g.key] {
@@ -52,16 +52,17 @@ extension EditorState {
     }
 
     func setEffectEase(_ g: GraphEffectTarget, segment: Int?, interpolation: Interpolation, out: EaseHandle, into: EaseHandle,
-                       curve: EaseCurve?, continuous: Bool = false) {
+                       curve: EaseCurve?, reversedSegment: Bool? = nil, continuous: Bool = false) {
         guard let i = selectedIndex else { return }
         func apply<V>(_ a: inout Animated<V>) {
             let n = a.keyframes.count
             guard n >= 2 else { return }
-            for k in segment.map({ [$0] }) ?? Array(0..<(n - 1)) where k + 1 < n {
+            for k in segment.map({ [$0] }) ?? Array(0..<(n - 1)) where k >= 0 && k + 1 < n {
                 a.keyframes[k].interpolation = interpolation
                 a.keyframes[k].easeOut = out
                 a.keyframes[k + 1].easeIn = into
                 a.keyframes[k].curve = curve
+                a.keyframes[k].reversedSegment = reversedSegment
             }
         }
         if continuous { beginEdit("Edit Easing") }

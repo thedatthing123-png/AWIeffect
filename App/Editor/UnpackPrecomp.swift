@@ -21,7 +21,6 @@ extension EditorState {
             var shift = AnimationTraversal(operation: .shift(offset)); member.traverseAnimations(&shift)
             member.sourceStart += (start - original.inPoint - offset) * member.speed
             member.inPoint = start; member.outPoint = end
-            if let frozen = member.timeFX?.freezeAt { member.timeFX?.freezeAt = frozen + offset }
             member.parentID = original.parentID.flatMap { remap[$0] }
             member.groupID = original.groupID.flatMap { remap[$0] } ?? layer.id
             for index in member.effects.indices {

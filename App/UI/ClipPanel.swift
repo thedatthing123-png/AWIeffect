@@ -7,6 +7,7 @@ struct ClipPanel: View {
     @State private var sensitivity = 0.5
     @State private var automaticTempo = true
     @State private var tempo = 120.0
+    @State private var showTiming = false
     @State private var slowMoProgress: Double?
     @State private var slowMoMessage: String?
 
@@ -17,17 +18,10 @@ struct ClipPanel: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
                         if l.timeRemap == nil {
-                            row("Speed", value: abs(l.speed), range: 0.1...4, fmt: "%.2fx") { v in
-                                state.mutateLayer { layer in
-                                    guard v.isFinite, v > 0, layer.speed != 0 else { return }
-                                    let factor = abs(layer.speed) / v
-                                    var traversal = AnimationTraversal(operation: .scaleTime(layer.inPoint, factor))
-                                    layer.traverseAnimations(&traversal)
-                                    layer.outPoint = layer.inPoint + (layer.outPoint - layer.inPoint) * factor
-                                    layer.speed = layer.speed < 0 ? -v : v
-                                }
+                            row("Speed", value: abs(l.speed), range: 0.05...16, fmt: "%.2fx") { v in
+                                state.setLayerSpeed(v)
                             }
-                            if l.speed < 0.999, case .video = l.content {
+                            if abs(l.speed) < 0.999, case .video = l.content {
                                 Toggle("Smooth Slow (blend frames so slow motion doesn't stutter)", isOn: Binding(get: { l.usesFrameBlending }, set: { b in
                                     state.coalescedEdit("Smooth Slow") { layer in
                                         layer.usesFrameBlending = b
@@ -39,23 +33,11 @@ struct ClipPanel: View {
                             HStack {
                                 Label("Time Remap is on", systemImage: "timer").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ok)
                                 Spacer()
-                                Button("Turn Off", role: .destructive) { state.mutate("Disable Time Remap") { p in
-                                    if let i = state.selectedIndex { p.layers[i].timeRemap = nil }
-                                } }
+                                Button("Turn Off", role: .destructive) { state.disableTimeRemap() }
                             }
                         }
                         HStack {
-                            Button(l.speed < 0 ? "Restore Forward Playback" : "Reverse Playback") {
-                                state.mutate("Reverse Playback") { p in
-                                    guard let i = state.selectedIndex else { return }
-                                    if p.layers[i].timeRemap != nil { p.layers[i].timeRemap?.reverseKeys(around: l.inPoint + l.outPoint) }
-                                    else {
-                                        p.layers[i].sourceStart += (l.outPoint - l.inPoint) * p.layers[i].speed
-                                        p.layers[i].speed = -p.layers[i].speed
-                                    }
-                                }
-                                AudioPreview.shared.invalidate()
-                            }.disabled(!l.isMedia && { if case .precomp = l.content { return false }; return true }())
+                            Button("Reverse Playback") { state.reversePlayback() }.disabled(!l.supportsSourceTiming)
                             Button("Reverse Animation") {
                                 state.mutate("Reverse Animation") { p in
                                     guard let i = state.selectedIndex else { return }
@@ -93,12 +75,12 @@ struct ClipPanel: View {
                             }
                         }
                         HStack(spacing: 8) {
-                            ToolTile(icon: "speedometer", title: "Velocity Ramp") { state.applySpeedRamp() }
+                            if l.supportsSourceTiming { ToolTile(icon: "speedometer", title: "Velocity Ramp") { showTiming = true } }
                             if l.hasAudio {
                                 ToolTile(icon: "speaker.wave.1", title: "Fade In") { state.audioFade(in: true) }
                                 ToolTile(icon: "speaker.slash", title: "Fade Out") { state.audioFade(in: false) }
                             }
-                            ToolTile(icon: "timer", title: "Time Remap") { state.enableTimeRemap() }
+                            if l.supportsSourceTiming { ToolTile(icon: "timer", title: "Time Remap") { state.enableTimeRemap(); showTiming = true } }
                             ToolTile(icon: "scissors", title: "Split") { state.splitSelected() }
                         }
                         if l.timeRemap != nil {
@@ -131,26 +113,36 @@ struct ClipPanel: View {
                         Text("\(state.project.markers.count) beat markers").font(.caption).foregroundStyle(Theme.textDim)
                     }
                     .padding(.horizontal, 12).padding(.bottom, 14)
-                }
+                }.accessibilityIdentifier("clip-settings-scroll")
             }
         }
+        .awiSheet(isPresented: $showTiming) { TimeRemapEditor(state: state) }
     }
 
     private func smoothSlowMo(_ factor: Int) {
+        guard let original = state.selectedLayer else { return }
+        let rootID = state.rootProject.id, scopeID = state.project.id
         state.pause()
         slowMoProgress = 0; slowMoMessage = nil
         Task {
             do {
                 try await state.applySmoothSlowMo(factor: factor) { p in Task { @MainActor in slowMoProgress = p } }
                 slowMoMessage = "Done: the clip is now \(factor)x slower with smooth in-between frames."
-            } catch {
-                // No AI interpolation here (older device / simulator): fall back to AE-style frame blending.
+            } catch SlowMotion.Failure.unsupported {
+                guard state.rootProject.id == rootID, state.project.id == scopeID, state.selectedLayer == original else {
+                    slowMoMessage = "Cancelled: the editing context changed."; slowMoProgress = nil; return
+                }
                 state.coalescedEdit("Frame Blending") { l in
                     l.usesFrameBlending = true
+                    var visit = AnimationTraversal(operation: .scaleTime(l.inPoint, Double(factor)))
+                    l.traverseAnimations(&visit)
                     l.speed = l.speed / Double(factor)
                     l.outPoint = l.inPoint + (l.outPoint - l.inPoint) * Double(factor)
                 }
-                slowMoMessage = "\(error.localizedDescription) Used frame blending instead."
+                AudioPreview.shared.invalidate()
+                slowMoMessage = "Motion interpolation is unavailable here. Used frame blending instead."
+            } catch {
+                slowMoMessage = error.localizedDescription
             }
             slowMoProgress = nil
         }

@@ -108,6 +108,11 @@ extension EditorState {
             guardCount += 1
         }
         guard walk == nil else { return }
+        if parent == nil, Renderer.parentChainMoves(child, in: project) {
+            let detached = Renderer.detachedMotion(child, in: project)
+            mutate("Unparent") { $0.layers[i] = detached }
+            return
+        }
         let now = currentTime
         mutate(parent == nil ? "Unparent" : "Parent Layer") { p in
             var tr = p.layers[i].transform

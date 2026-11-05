@@ -118,7 +118,8 @@ final class EditorState: ObservableObject {
     /// Grid over the canvas.
     @Published var showGrid = false
     /// Effect setting the Graph is showing (nil = transform properties).
-    @Published var graphEffect: GraphEffectTarget?
+    @Published var graphTimeRemap = false
+    @Published var graphEffect: GraphEffectTarget? { didSet { if graphEffect != nil { graphTimeRemap = false } } }
     /// True while a canvas drag writes to `live` instead of `project`.
     private(set) var liveGesture = false
     var isLiveGesture: Bool { liveGesture }

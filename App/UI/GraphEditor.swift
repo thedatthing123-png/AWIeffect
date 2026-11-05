@@ -8,6 +8,7 @@ struct EaseSegment: Equatable {
     var out: EaseHandle
     var into: EaseHandle
     var curve: EaseCurve? = nil
+    var reversedSegment: Bool? = nil
 }
 
 /// Easing presets (handle pairs in normalized segment space).
@@ -34,7 +35,7 @@ struct EasePreset: Identifiable {
 
 extension EditorState {
     /// Applies `f` to the Animated property behind `key` on the selected layer.
-    private func editKeyframes(_ key: PropertyKey, label: String, curves: ((inout [EaseCurve?]) -> Void)? = nil,
+    private func editKeyframes(_ key: PropertyKey, label: String, segment: Int?, reversedSegment: Bool?, curves: ((inout [EaseCurve?]) -> Void)? = nil,
                                _ f: (inout [Double], inout [Interpolation], inout [EaseHandle], inout [EaseHandle]) -> Void) {
         guard let i = selectedIndex else { return }
         func apply<V>(_ a: inout Animated<V>) {
@@ -48,6 +49,7 @@ extension EditorState {
                 a.keyframes[k].easeOut = outs[k]
                 a.keyframes[k].easeIn = ins[k]
                 a.keyframes[k].curve = cs[k]
+                if k + 1 < a.keyframes.count && (segment == nil || segment == k) { a.keyframes[k].reversedSegment = reversedSegment }
             }
         }
         mutate(label) { p in
@@ -73,7 +75,7 @@ extension EditorState {
             guard a.keyframes.count >= 2 else { return [] }
             return (0..<(a.keyframes.count - 1)).map { k in
                 EaseSegment(t0: a.keyframes[k].time, t1: a.keyframes[k + 1].time, interpolation: a.keyframes[k].interpolation,
-                            out: a.keyframes[k].easeOut, into: a.keyframes[k + 1].easeIn, curve: a.keyframes[k].curve)
+                            out: a.keyframes[k].easeOut, into: a.keyframes[k + 1].easeIn, curve: a.keyframes[k].curve, reversedSegment: a.keyframes[k].reversedSegment)
             }
         }
         switch key {
@@ -93,12 +95,12 @@ extension EditorState {
 
     /// Sets one segment's easing (segment index k = keyframe k -> k+1). `nil` index = all segments.
     func setEase(_ key: PropertyKey, segment: Int?, interpolation: Interpolation, out: EaseHandle, into: EaseHandle,
-                 curve: EaseCurve? = nil, continuous: Bool = false) {
+                 curve: EaseCurve? = nil, reversedSegment: Bool? = nil, continuous: Bool = false) {
         let body: (inout [Double], inout [Interpolation], inout [EaseHandle], inout [EaseHandle]) -> Void = { _, interps, outs, ins in
             let n = interps.count
             guard n >= 2 else { return }
             let range = segment.map { [$0] } ?? Array(0..<(n - 1))
-            for k in range where k + 1 < n {
+            for k in range where k >= 0 && k + 1 < n {
                 interps[k] = interpolation
                 outs[k] = out
                 ins[k + 1] = into
@@ -107,26 +109,26 @@ extension EditorState {
         let setCurves: (inout [EaseCurve?]) -> Void = { cs in
             let n = cs.count
             guard n >= 2 else { return }
-            for k in segment.map({ [$0] }) ?? Array(0..<(n - 1)) where k + 1 < n { cs[k] = curve }
+            for k in segment.map({ [$0] }) ?? Array(0..<(n - 1)) where k >= 0 && k + 1 < n { cs[k] = curve }
         }
         if continuous {
             beginEdit("Edit Easing")
-            editKeyframes(key, label: "Edit Easing", curves: setCurves, body)
+            editKeyframes(key, label: "Edit Easing", segment: segment, reversedSegment: reversedSegment, curves: setCurves, body)
         } else {
-            editKeyframes(key, label: "Easing", curves: setCurves, body)
+            editKeyframes(key, label: "Easing", segment: segment, reversedSegment: reversedSegment, curves: setCurves, body)
         }
     }
 
     /// Same ease on every animated property of the selected layer (one undo step).
-    func setEaseAll(segmentAt time: Double?, interpolation: Interpolation, out: EaseHandle, into: EaseHandle, curve: EaseCurve?) {
+    func setEaseAll(segmentAt time: Double?, interpolation: Interpolation, out: EaseHandle, into: EaseHandle, curve: EaseCurve?, reversedSegment: Bool? = nil, continuous: Bool = false) {
         beginEdit("Easing")
         for key in animatedKeys {
             let segs = easeSegments(key)
             let k = time.flatMap { t in segs.firstIndex { t >= $0.t0 - 1e-4 && t < $0.t1 - 1e-4 } }
             if time != nil && k == nil { continue }
-            setEase(key, segment: k, interpolation: interpolation, out: out, into: into, curve: curve, continuous: true)
+            setEase(key, segment: k, interpolation: interpolation, out: out, into: into, curve: curve, reversedSegment: reversedSegment, continuous: true)
         }
-        endEdit()
+        if !continuous { endEdit() }
     }
 
     var animatedKeys: [PropertyKey] { PropertyKey.allCases.filter { isAnimated($0) } }
@@ -208,6 +210,8 @@ struct CurveEditor: View {
     let onChange: (EaseHandle, EaseHandle, Bool) -> Void
     @State private var dragOut: EaseHandle?
     @State private var dragIn: EaseHandle?
+    @State private var startOut: EaseHandle?
+    @State private var startIn: EaseHandle?
 
     var body: some View {
         GeometryReader { geo in
@@ -239,21 +243,32 @@ struct CurveEditor: View {
                     p.move(to: CGPoint(x: box.maxX, y: box.minY)); p.addLine(to: Self.pt(into, box))
                 }
                 .stroke(Theme.textDim, lineWidth: 1)
-                knob(Self.pt(out, box)).gesture(DragGesture(minimumDistance: 0).onChanged { v in
-                    let h = Self.handle(from: v.location, box); dragOut = h; onChange(h, into, false)
+                knob(Self.pt(out, box)).gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("easeGraph")).onChanged { v in
+                    if startOut == nil { startOut = out }
+                    let h = Self.translated(startOut ?? out, by: v.translation, box: box)
+                    dragOut = h; onChange(h, into, false)
                 }.onEnded { v in
-                    let h = Self.handle(from: v.location, box); dragOut = nil; onChange(h, into, true)
+                    let h = Self.translated(startOut ?? out, by: v.translation, box: box)
+                    onChange(h, into, true); dragOut = nil; startOut = nil
                 })
-                knob(Self.pt(into, box)).gesture(DragGesture(minimumDistance: 0).onChanged { v in
-                    let h = Self.handle(from: v.location, box); dragIn = h; onChange(out, h, false)
+                knob(Self.pt(into, box)).gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("easeGraph")).onChanged { v in
+                    if startIn == nil { startIn = into }
+                    let h = Self.translated(startIn ?? into, by: v.translation, box: box)
+                    dragIn = h; onChange(out, h, false)
                 }.onEnded { v in
-                    let h = Self.handle(from: v.location, box); dragIn = nil; onChange(out, h, true)
+                    let h = Self.translated(startIn ?? into, by: v.translation, box: box)
+                    onChange(out, h, true); dragIn = nil; startIn = nil
                 })
                 Text(String(format: "out %.2f, %.2f   in %.2f, %.2f", out.x, out.y, into.x, into.y))
                     .font(.system(size: 10, design: .monospaced)).foregroundStyle(Theme.textDim)
                     .position(x: geo.size.width / 2, y: geo.size.height - 12)
-            }
+            }.coordinateSpace(name: "easeGraph")
         }
+    }
+
+    static func translated(_ original: EaseHandle, by delta: CGSize, box: CGRect) -> EaseHandle {
+        EaseHandle(x: min(1, max(0, original.x + Double(delta.width / max(1, box.width)))),
+                   y: min(1.8, max(-0.8, original.y - Double(delta.height / max(1, box.height)))))
     }
 
     static func pt(_ h: EaseHandle, _ box: CGRect) -> CGPoint {

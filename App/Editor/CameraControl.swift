@@ -35,7 +35,11 @@ extension EditorState {
 
     private func mutateCamera(_ id: UUID, _ change: (inout Layer) -> Void) {
         guard var lp = live.project, let i = lp.layers.firstIndex(where: { $0.id == id }) else { return }
+        let previous = lp.layers[i].transform
         change(&lp.layers[i])
+        if lp.layers[i].transform.position != previous.position || lp.layers[i].transform.positionZ != previous.positionZ {
+            lp.layers[i].transform.pairPositionKeys(previous: previous, at: currentTime)
+        }
         lp.modifiedAt = Date()
         live.project = lp
     }
@@ -60,11 +64,19 @@ extension EditorState {
             }
         } else {
             // view2D = scale · rotate(-r) · (world − pos): moving the scene by d means pos −= (S·R)⁻¹ d.
-            let r = s.rz * .pi / 180
-            let sx = max(abs(s.scale.x), 0.01) / 100, sy = max(abs(s.scale.y), 0.01) / 100
+            let world = Renderer.resolveParenting(project, time: t).layers.first(where: { $0.id == s.id })?.transform
+            let worldRotation = world?.rotation.value(at: t) ?? s.rz
+            let worldScale = world?.scale.value(at: t) ?? s.scale
+            let r = worldRotation * .pi / 180
+            let sx = max(abs(worldScale.x), 0.01) / 100, sy = max(abs(worldScale.y), 0.01) / 100
             let ux = d.x / sx, uy = d.y / sy
             let wx = ux * cos(r) - uy * sin(r), wy = ux * sin(r) + uy * cos(r)
-            let p = Vec2(s.position.x - wx, s.position.y - wy)
+            var localDelta = Vec2(wx, wy)
+            if let parent = cam.parentID, let basis = Renderer.parentAffine(parent, in: project, time: t), abs(basis.m.determinant) > 1e-10 {
+                let converted = basis.m.inverse * SIMD3(wx, wy, 0)
+                localDelta = Vec2(converted.x, converted.y)
+            }
+            let p = s.position - localDelta
             mutateCamera(s.id) { l in l.transform.position.set(Vec2((p.x * 10).rounded() / 10, (p.y * 10).rounded() / 10), at: t) }
         }
     }

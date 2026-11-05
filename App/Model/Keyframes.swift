@@ -74,6 +74,7 @@ struct Keyframe<Value: Interpolatable>: Codable, Equatable, Identifiable {
 
 /// Easing curves that a single bezier can't draw (Flow-style): real bounces, elastic wobbles, Penner families.
 struct EaseCurve: Codable, Equatable, Hashable {
+    struct Window: Codable, Equatable, Hashable { var start: Double; var end: Double }
     enum Kind: String, Codable, CaseIterable, Identifiable {
         case sineIn, sineOut, sineInOut, quadIn, quadOut, quadInOut, cubicIn, cubicOut, cubicInOut
         case quartIn, quartOut, quartInOut, quintIn, quintOut, quintInOut, expoIn, expoOut, expoInOut
@@ -138,6 +139,7 @@ struct EaseCurve: Codable, Equatable, Hashable {
     var kind: Kind
     var a: Double
     var b: Double
+    var window: Window? = nil
 
     init(_ kind: Kind) {
         self.kind = kind
@@ -148,6 +150,12 @@ struct EaseCurve: Codable, Equatable, Hashable {
     /// Progress 0…1 (may overshoot) at time fraction x 0…1.
     func progress(_ x: Double) -> Double {
         let x = min(max(x, 0), 1)
+        if let window {
+            var base = self; base.window = nil
+            let a = base.progress(window.start), b = base.progress(window.end)
+            guard abs(b - a) > 1e-9 else { return x }
+            return (base.progress(window.start + (window.end - window.start) * x) - a) / (b - a)
+        }
         func inOut(_ f: (Double) -> Double) -> Double { x < 0.5 ? f(x * 2) / 2 : 1 - f((1 - x) * 2) / 2 }
         func pow_(_ n: Double) -> (Double) -> Double { { pow($0, n) } }
         switch kind {

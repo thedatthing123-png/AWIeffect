@@ -114,7 +114,7 @@ extension EditorState {
 
     /// Enables AE-style Time Remap with keyframes matching the current speed.
     func enableTimeRemap() {
-        guard let i = selectedIndex else { return }
+        guard let i = selectedIndex, project.layers[i].supportsSourceTiming, project.layers[i].timeRemap == nil else { return }
         mutate("Enable Time Remap") { p in
             let l = p.layers[i]
             var a = Animated(l.sourceStart)
@@ -127,22 +127,34 @@ extension EditorState {
     /// Velocity edit preset: fast → slow-mo at the playhead → fast (the classic edit ramp).
     func applySpeedRamp(slow: Double = 0.25, fast: Double = 1.6, window: Double = 0.4) {
         guard let i = selectedIndex else { return }
+        guard project.layers[i].supportsSourceTiming, slow.isFinite, fast.isFinite, window.isFinite else { return }
         let t = currentTime
         mutate("Speed Ramp") { p in
             let l = p.layers[i]
-            let base = l.sourceTime(at: l.inPoint)
-            var a = Animated(base)
-            // Integrate speed over segments: fast until t-window, slow for 2*window, fast after.
-            let t0 = max(l.inPoint, t - window), t1 = min(l.outPoint, t + window)
-            let s0 = base + (t0 - l.inPoint) * fast
-            let s1 = s0 + (t1 - t0) * slow
-            let s2 = s1 + (l.outPoint - t1) * fast
-            a.insertKeyframe(Keyframe(time: l.inPoint, value: base, interpolation: .bezier))
-            a.insertKeyframe(Keyframe(time: t0, value: s0, interpolation: .bezier))
-            a.insertKeyframe(Keyframe(time: t1, value: s1, interpolation: .bezier))
-            a.insertKeyframe(Keyframe(time: l.outPoint, value: s2, interpolation: .linear))
+            let start = l.inPoint, end = l.outPoint
+            guard end - start >= p.frameDuration * 3 else { return }
+            let center = min(end - p.frameDuration, max(start + p.frameDuration, t))
+            let half = min(max(p.frameDuration / 2, window), (end - start) / 2 - p.frameDuration / 2)
+            let times = [start, max(start + p.frameDuration / 2, center - half),
+                         min(end - p.frameDuration / 2, center + half), end]
+            let speeds = [max(0.01, fast), max(0.01, slow), max(0.01, slow), max(0.01, fast)]
+            let sourceStart = l.sourceTime(at: start), sourceEnd = l.sourceTime(at: end)
+            let areas = (0..<3).map { (speeds[$0] + speeds[$0 + 1]) * 0.5 * (times[$0 + 1] - times[$0]) }
+            let scale = (sourceEnd - sourceStart) / max(areas.reduce(0, +), 1e-9)
+            var a = Animated(sourceStart), value = sourceStart
+            for k in 0..<4 {
+                if k > 0 { value += areas[k - 1] * scale }
+                a.insertKeyframe(Keyframe(time: times[k], value: value, interpolation: .bezier))
+            }
+            for k in 0..<3 {
+                let dt = times[k + 1] - times[k], dv = a.keyframes[k + 1].value - a.keyframes[k].value
+                if abs(dv) < 1e-9 { a.keyframes[k].interpolation = .hold; continue }
+                a.keyframes[k].easeOut = EaseHandle(x: 1.0 / 3, y: speeds[k] * scale * dt / (3 * dv))
+                a.keyframes[k + 1].easeIn = EaseHandle(x: 2.0 / 3, y: 1 - speeds[k + 1] * scale * dt / (3 * dv))
+            }
             p.layers[i].timeRemap = a
         }
+        AudioPreview.shared.invalidate()
     }
 }
 

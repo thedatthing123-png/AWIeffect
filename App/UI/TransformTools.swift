@@ -65,7 +65,7 @@ struct TransformPanel: View {
             }
         }
         .onAppear { state.transformTool = tool.canvasTool }
-        .awiSheet(isPresented: $showVelocity) { KeyframeVelocitySheet(state: state).presentationDetents([.medium, .large]) }
+        .awiSheet(isPresented: $showVelocity) { KeyframeVelocitySheet(state: state, property: tool.key).presentationDetents([.medium, .large]) }
     }
 
     /// Keyframe + graph, always in the same spot.
@@ -75,7 +75,7 @@ struct TransformPanel: View {
                 KeyframeDiamond(filled: state.hasKeyframe(key), animated: state.isAnimated(key)) { state.toggleKeyframe(key) }
                     .frame(width: 40, height: 36)
             }
-            Button { state.graphEffect = nil; state.panel = .graph } label: {
+            Button { state.graphTimeRemap = false; state.graphEffect = nil; state.panel = .graph } label: {
                 Image(systemName: "point.topleft.down.to.point.bottomright.curvepath").font(.system(size: 15, weight: .semibold))
                     .frame(width: 40, height: 36)
             }
