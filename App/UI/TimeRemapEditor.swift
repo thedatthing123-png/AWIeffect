@@ -55,7 +55,7 @@ struct TimeRemapEditor: View {
                                 Button { state.toggleRemapKey() } label: {
                                     Image(systemName: remap.hasKeyframe(at: state.currentTime) ? "diamond.fill" : "diamond")
                                 }.accessibilityLabel("Toggle source time keyframe")
-                                NumberField(value: layer.sourceTime(at: state.currentTime), label: "Source seconds") { state.setRemapValue($0) }
+                                NumberField(value: layer.sourceTime(at: state.currentTime), label: "Source seconds", step: state.project.frameDuration, precision: 3) { state.setRemapValue($0) }
                                     .accessibilityIdentifier("remap-source-value")
                                 Text(String(format: "%+.2f×", layer.playbackRate(at: state.currentTime))).monospacedDigit()
                             }
@@ -80,9 +80,9 @@ struct TimeRemapEditor: View {
                         Text("Velocity Ramp").font(.headline)
                         Text("Creates a smooth fast–slow–fast ramp around the playhead, keeping the current source start/end frames and clip length. Fast and slow set the relative speed shape.")
                             .font(.caption).foregroundStyle(Theme.textDim)
-                        NumberField(value: slow, label: "Slow weight") { slow = min(16, max(0.01, $0)) }
-                        NumberField(value: fast, label: "Fast weight") { fast = min(16, max(0.01, $0)) }
-                        NumberField(value: window, label: "Half window (seconds)") { window = min(30, max(0.02, $0)) }
+                        NumberField(value: slow, label: "Slow weight", step: 0.01, precision: 2) { slow = min(16, max(0.01, $0)) }
+                        NumberField(value: fast, label: "Fast weight", step: 0.01, precision: 2) { fast = min(16, max(0.01, $0)) }
+                        NumberField(value: window, label: "Half window (seconds)", step: state.project.frameDuration, precision: 3) { window = min(30, max(0.02, $0)) }
                         Button("Apply Ramp") { state.applySpeedRamp(slow: slow, fast: fast, window: window) }.buttonStyle(.bordered)
                     } else {
                         Text("Select video, audio or a precomp to edit source timing.")

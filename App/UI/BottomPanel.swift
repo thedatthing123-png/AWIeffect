@@ -251,6 +251,7 @@ struct NumberField: View {
     let value: Double
     let label: String
     var step: Double = 1
+    var precision: Int = 1
     var active: Bool? = nil
     var onActivate: (() -> Void)? = nil
     let onCommit: (Double) -> Void
@@ -270,17 +271,19 @@ struct NumberField: View {
                 .font(.system(size: 13, weight: .semibold, design: .monospaced))
                 .foregroundStyle(Theme.accentGlow)
             } else {
-                Text(String(format: "%.1f", value))
+                Text(formattedValue)
                     .font(.system(size: 13, weight: .semibold, design: .monospaced))
                     .lineLimit(1).minimumScaleFactor(0.55)
                     .foregroundStyle(Theme.accentGlow)
                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
-                    .onTapGesture { text = String(format: "%.1f", value); editing = true }
+                    .onTapGesture { text = formattedValue; editing = true }
                     .gesture(DragGesture(minimumDistance: 3)
                         .onChanged { g in
                             if dragBase == nil { onActivate?(); dragBase = value }
-                            onCommit(((dragBase ?? value) + Double(g.translation.width) * step).rounded())
+                            let increment = max(abs(step), 1e-9)
+                            let raw = (dragBase ?? value) + Double(g.translation.width) * increment
+                            onCommit((raw / increment).rounded() * increment)
                         }
                         .onEnded { _ in dragBase = nil })
             }
@@ -291,6 +294,7 @@ struct NumberField: View {
         .contentShape(Rectangle())
         .simultaneousGesture(TapGesture().onEnded { onActivate?() })
     }
+    private var formattedValue: String { String(format: "%.*f", max(0, min(6, precision)), value) }
 }
 
 // MARK: - Fill
