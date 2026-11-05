@@ -7,6 +7,7 @@ import CoreImage
 import Vision
 
 /// Must match DabParams / LayerCompositeParams in Draw.metal.
+struct MergeParams { var color: SIMD4<Float>; var flags: SIMD4<Float>; var region: SIMD4<UInt32> }
 struct DabParams { var color: SIMD4<Float>; var dab: SIMD4<Float>; var extra: SIMD4<Float>; var region: SIMD4<UInt32> }
 struct LayerCompositeParams { var info: SIMD4<Float>; var mode: SIMD4<UInt32> }
 
@@ -50,7 +51,16 @@ struct Brush: Equatable {
     var taperStart = 0.0
     /// Random size variation per dab (0-1).
     var sizeJitter = 0.0
+    /// Stroke end thins out over this many px after lift-off.
+    var taperEnd = 0.0
+    /// Fast movement thins the line (gives finger drawing line weight, 0-1).
+    var speedThin = 0.0
+    /// Random dab offset as a fraction of the radius.
+    var scatter = 0.0
 }
+
+/// What a stroke does to the layer.
+enum StrokeMode { case paint, smudge, blur }
 
 /// Drawing helpers that bend strokes (ibis Paint rulers).
 enum DrawSymmetry: String, CaseIterable, Identifiable {
@@ -140,7 +150,16 @@ final class DrawEngine: ObservableObject {
     var fillExpand = 1
     let canvas: MTLTexture
     private(set) var selection: MTLTexture
+    var strokeMode: StrokeMode = .paint
     private let stampPSO, compositePSO, fillPSO: MTLComputePipelineState
+    private let mergePSO, clearWetPSO, smudgePSO: MTLComputePipelineState
+    let floatPSO: MTLComputePipelineState
+    private let wet: MTLTexture
+    private let strokeBase: MTLTexture
+    private lazy var smudgeSnapshot: MTLTexture? = Self.makeTexture(device, width, height, .rgba8Unorm)
+    /// The transform in progress (lifted pixels, see DrawTransform.swift).
+    var floating: FloatingPixels?
+    @Published var isFloating = false
     let displayPSO: MTLRenderPipelineState
     private struct UndoState {
         var layer: UUID?
@@ -157,6 +176,12 @@ final class DrawEngine: ObservableObject {
     private var strokeStart: SIMD2<Double>?
     private var strokeLength = 0.0
     private var lineDir: SIMD2<Double>?
+    private var pen: SIMD2<Double>?
+    private var lastRaw: SIMD2<Double>?
+    private var lastRadius = 0.0
+    private var lastMoveTime = 0.0
+    private var speed = 0.0
+    private var lastDab: SIMD2<Double>?
     static let maxUndo = 30
 
     init?(width: Int, height: Int) {
@@ -165,8 +190,9 @@ final class DrawEngine: ObservableObject {
         queue = r.queue
         self.width = width; self.height = height
         func pso(_ n: String) -> MTLComputePipelineState? { lib.makeFunction(name: n).flatMap { try? r.device.makeComputePipelineState(function: $0) } }
-        guard let s = pso("stampDab"), let c = pso("compositeDrawLayer"), let f = pso("fillCanvas") else { return nil }
-        stampPSO = s; compositePSO = c; fillPSO = f
+        guard let s = pso("stampWet"), let mg = pso("mergeStroke"), let cw = pso("clearWet"), let sm = pso("smudgeDab"), let fl = pso("composeFloating"),
+              let c = pso("compositeDrawLayer"), let f = pso("fillCanvas") else { return nil }
+        stampPSO = s; compositePSO = c; fillPSO = f; mergePSO = mg; clearWetPSO = cw; smudgePSO = sm; floatPSO = fl
         let rp = MTLRenderPipelineDescriptor()
         rp.vertexFunction = lib.makeFunction(name: "drawDisplayVertex")
         rp.fragmentFunction = lib.makeFunction(name: "drawDisplayFragment")
@@ -174,7 +200,10 @@ final class DrawEngine: ObservableObject {
         guard let dp = try? r.device.makeRenderPipelineState(descriptor: rp) else { return nil }
         displayPSO = dp
         guard let cv = Self.makeTexture(r.device, width, height, .rgba8Unorm),
-              let sel = Self.makeTexture(r.device, width, height, .r8Unorm) else { return nil }
+              let sel = Self.makeTexture(r.device, width, height, .r8Unorm),
+              let wt = Self.makeTexture(r.device, width, height, .r32Float),
+              let sb = Self.makeTexture(r.device, width, height, .rgba8Unorm) else { return nil }
+        wet = wt; strokeBase = sb
         canvas = cv
         selection = sel
         clearSelection()
@@ -260,7 +289,7 @@ final class DrawEngine: ObservableObject {
         l.texture.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: b, bytesPerRow: width * 4)
     }
 
-    private func selectionBytes() -> [UInt8] {
+    func selectionBytes() -> [UInt8] {
         var b = [UInt8](repeating: 0, count: width * height)
         selection.getBytes(&b, bytesPerRow: width, from: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0)
         return b
@@ -275,13 +304,13 @@ final class DrawEngine: ObservableObject {
         while undoStack.count > 1 && (undoStack.count > Self.maxUndo || undoStack.reduce(0, { $0 + $1.cost }) > Self.historyBudget) { undoStack.removeFirst() }
         redoStack.removeAll(); canUndo = true; canRedo = false
     }
-    private func pushUndo(_ l: DrawLayer) {
+    func pushUndo(_ l: DrawLayer) {
         record(UndoState(layer: l.id, bytes: bytes(of: l), selection: hasSelection ? selectionBytes() : nil))
     }
     private func pushSelectionUndo() {
         record(UndoState(layer: nil, selection: hasSelection ? selectionBytes() : nil))
     }
-    private func restoreSelection(_ mask: [UInt8]?) {
+    func restoreSelection(_ mask: [UInt8]?) {
         guard let mask else { clearSelection(); return }
         selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: mask, bytesPerRow: width)
         hasSelection = mask.contains { $0 > 0 }
@@ -299,11 +328,13 @@ final class DrawEngine: ObservableObject {
         return UndoState(layer: nil, selection: currentMask)
     }
     func undo() {
+        if isFloating { cancelFloating(); return }
         while let state = undoStack.popLast() {
             if let inverse = exchange(state) { redoStack.append(inverse); break }
         }
         canUndo = !undoStack.isEmpty; canRedo = !redoStack.isEmpty
     }
+    func dropLastUndo() { _ = undoStack.popLast(); canUndo = !undoStack.isEmpty }
     func redo() {
         while let state = redoStack.popLast() {
             if let inverse = exchange(state) { undoStack.append(inverse); break }
@@ -325,26 +356,45 @@ final class DrawEngine: ObservableObject {
     func beginStroke(at p: SIMD2<Double>, pressure: Double) {
         guard let l = activeLayer else { return }
         pushUndo(l)
-        lastPoint = p
-        smoothed = p
+        lastPoint = p; smoothed = p; pen = p; lastRaw = p; lastDab = p
         residual = 0
         strokeStart = p; strokeLength = 0; lineDir = nil
-        stampBatch([p], pressure: pressure)
+        speed = 0; lastMoveTime = CACurrentMediaTime()
+        lastRadius = radiusFor(pressure)
+        if strokeMode == .paint, let cb = queue.makeCommandBuffer() {
+            if let blit = cb.makeBlitCommandEncoder() { blit.copy(from: l.texture, to: strokeBase); blit.endEncoding() }
+            if let enc = cb.makeComputeCommandEncoder() {
+                enc.setComputePipelineState(clearWetPSO); enc.setTexture(wet, index: 0)
+                dispatch(enc, clearWetPSO); enc.endEncoding()
+            }
+            cb.commit()
+        }
+        stampBatch([(p, lastRadius)], pressure: pressure)
     }
 
     func continueStroke(to raw: SIMD2<Double>, pressure: Double) {
-        guard let last = lastPoint, var s = smoothed else { return }
+        guard let last = lastPoint, var s = smoothed, let m0 = pen else { return }
         var raw = raw
         // Straight-line ruler: the direction locks after a short drag, then the stroke stays on that line.
         if ruler == .line, let o = strokeStart {
             if lineDir == nil, simd_length(raw - o) > 14 { lineDir = simd_normalize(raw - o) }
             if let d = lineDir { raw = o + d * simd_dot(raw - o, d) }
         }
+        let now = CACurrentMediaTime(), dt = max(now - lastMoveTime, 1.0 / 480)
+        speed += (simd_length(raw - (lastRaw ?? raw)) / dt - speed) * 0.25
+        lastMoveTime = now; lastRaw = raw
         // Lazy-mouse stabilizer.
         let k = 1 - min(0.92, brush.stabilizer * 0.92)
         s = s + (raw - s) * k
         smoothed = s
-        let radius = radiusFor(pressure)
+        // Curve through the midpoints, so fast strokes stay round instead of turning into straight segments.
+        walk(from: m0, control: last, to: (last + s) / 2, pressure: pressure)
+        lastPoint = s
+    }
+
+    /// Stamps dabs at even spacing along a quadratic curve; the radius eases from the previous value to the new one.
+    private func walk(from a: SIMD2<Double>, control c: SIMD2<Double>, to b: SIMD2<Double>, pressure: Double) {
+        let target = radiusFor(pressure)
         let k2: Double
         switch brush.kind {
         case .airbrush, .glow, .watercolor: k2 = 0.12
@@ -352,29 +402,54 @@ final class DrawEngine: ObservableObject {
         case .screentone: k2 = 0.3
         default: k2 = 0.22
         }
-        let spacing = max(0.75, radius * (brush.spacing > 0 ? brush.spacing : k2))
-        let d = simd_length(s - last)
-        strokeLength += d
-        var t = spacing - residual
-        var dabs: [SIMD2<Double>] = []
-        while t <= d {
-            dabs.append(last + (s - last) * (t / max(d, 1e-9)))
-            t += spacing
+        let startRadius = lastRadius
+        let steps = max(1, min(64, Int((simd_length(c - a) + simd_length(b - c)) / 3)))
+        var dabs: [(SIMD2<Double>, Double)] = []
+        var prev = a
+        for i in 1...steps {
+            let t = Double(i) / Double(steps), u = 1 - t
+            let q = a * (u * u) + c * (2 * u * t) + b * (t * t)
+            let radius = startRadius + (target - startRadius) * t
+            let spacing = max(0.75, radius * (brush.spacing > 0 ? brush.spacing : k2))
+            let d = simd_length(q - prev)
+            var along = spacing - residual
+            while along <= d {
+                dabs.append((prev + (q - prev) * (along / max(d, 1e-9)), radius))
+                along += spacing
+            }
+            residual = d - (along - spacing)
+            strokeLength += d
+            prev = q
         }
+        lastRadius = target; pen = b
         stampBatch(dabs, pressure: pressure)
-        residual = d - (t - spacing)
-        lastPoint = s
     }
 
     func endStroke() {
-        lastPoint = nil; smoothed = nil
+        // Catch up to the finger: the stabilizer must not leave the line short of where it was lifted.
+        if let last = lastPoint, let m = pen, let raw = lastRaw, simd_length(raw - m) > 0.5 {
+            let direction = simd_normalize(raw - m)
+            walk(from: m, control: last, to: raw, pressure: 1)
+            if brush.taperEnd > 0, lastRadius > 0.6 {
+                var dabs: [(SIMD2<Double>, Double)] = []
+                var along = 0.0
+                while along < brush.taperEnd {
+                    let r = max(0.5, lastRadius * (1 - along / brush.taperEnd))
+                    dabs.append((raw + direction * along, r))
+                    along += max(0.75, r * 0.2)
+                }
+                stampBatch(dabs, pressure: 1)
+            }
+        }
+        lastPoint = nil; smoothed = nil; pen = nil; lastRaw = nil; lastDab = nil
         revision += 1
     }
 
     private func radiusFor(_ pressure: Double) -> Double {
         let p = brush.pressureSize ? (0.25 + 0.75 * min(max(pressure, 0), 1)) : 1
         let taper = brush.taperStart > 0 ? min(1, 0.12 + strokeLength / brush.taperStart) : 1
-        return max(0.5, brush.size / 2 * p * taper)
+        let thin = 1 - brush.speedThin * min(1, speed / 3000) * 0.8
+        return max(0.5, brush.size / 2 * p * taper * thin)
     }
 
     /// A dab and its mirrored copies (symmetry rulers mirror around the canvas center).
@@ -395,10 +470,11 @@ final class DrawEngine: ObservableObject {
     }
 
     /// Stamps every dab of a stroke segment in ONE command buffer (dabs stay in order, so overlaps build up right).
-    private func stampBatch(_ points: [SIMD2<Double>], pressure: Double) {
-        guard !points.isEmpty, let l = activeLayer, let cb = queue.makeCommandBuffer(), let enc = cb.makeComputeCommandEncoder() else { return }
-        let points = points.flatMap(mirrored)
-        let r0 = radiusFor(pressure)
+    private func stampBatch(_ input: [(SIMD2<Double>, Double)], pressure: Double) {
+        guard !input.isEmpty, let l = activeLayer else { return }
+        if strokeMode != .paint { smudgeBatch(input, layer: l); return }
+        guard let cb = queue.makeCommandBuffer(), let enc = cb.makeComputeCommandEncoder() else { return }
+        let dabs = input.flatMap { d in mirrored(d.0).map { ($0, d.1) } }
         let kind = brush.kind
         let flow: Double
         switch kind {
@@ -409,9 +485,8 @@ final class DrawEngine: ObservableObject {
         case .charcoal: flow = 0.6
         default: flow = 1
         }
-        var c = brush.color.simd
         let pOpacity = brush.pressureOpacity ? (0.2 + 0.8 * min(max(pressure, 0), 1)) : 1
-        c.w = Float(brush.opacity * flow * pOpacity)
+        let color = SIMD4<Float>(0, 0, 0, Float(flow * pOpacity))
         let erase = erasing || kind == .eraser
         let texKind: Float
         switch kind {
@@ -427,16 +502,21 @@ final class DrawEngine: ObservableObject {
         }
         let hard = kind == .ink ? 0.95 : (kind == .pencil ? 0.6 : brush.hardness)
         enc.setComputePipelineState(stampPSO)
-        enc.setTexture(l.texture, index: 0)
-        enc.setTexture(selection, index: 1)
+        enc.setTexture(wet, index: 0)
         let tw = stampPSO.threadExecutionWidth, th = max(1, stampPSO.maxTotalThreadsPerThreadgroup / tw)
-        for p in points {
+        var box = (x0: width, y0: height, x1: 0, y1: 0)
+        for (center, r0) in dabs {
             let r = brush.sizeJitter > 0 ? max(0.5, r0 * (1 - brush.sizeJitter * Double.random(in: 0...1))) : r0
+            var p = center
+            if brush.scatter > 0 {
+                p += SIMD2(Double.random(in: -1...1), Double.random(in: -1...1)) * (r0 * brush.scatter)
+            }
             let x0 = max(0, Int(p.x - r - 1)), y0 = max(0, Int(p.y - r - 1))
             let x1 = min(width, Int(p.x + r + 2)), y1 = min(height, Int(p.y + r + 2))
             guard x1 > x0, y1 > y0 else { continue }
-            var params = DabParams(color: c, dab: SIMD4(Float(p.x), Float(p.y), Float(r), Float(hard)),
-                                   extra: SIMD4(erase ? 1 : 0, l.alphaLock && !erase ? 1 : 0, texKind, Float.random(in: 0...100)),
+            box = (min(box.x0, x0), min(box.y0, y0), max(box.x1, x1), max(box.y1, y1))
+            var params = DabParams(color: color, dab: SIMD4(Float(p.x), Float(p.y), Float(r), Float(hard)),
+                                   extra: SIMD4(0, 0, texKind, Float.random(in: 0...100)),
                                    region: SIMD4(UInt32(x0), UInt32(y0), UInt32(x1 - x0), UInt32(y1 - y0)))
             enc.setBytes(&params, length: MemoryLayout<DabParams>.stride, index: 0)
             enc.dispatchThreadgroups(MTLSize(width: (x1 - x0 + tw - 1) / tw, height: (y1 - y0 + th - 1) / th, depth: 1),
@@ -444,7 +524,51 @@ final class DrawEngine: ObservableObject {
             // Each dab reads what the previous one wrote.
             enc.memoryBarrier(scope: .textures)
         }
+        if box.x1 > box.x0, box.y1 > box.y0 {
+            var c = brush.color.simd
+            c.w = Float(brush.opacity)
+            var merge = MergeParams(color: c, flags: SIMD4(erase ? 1 : 0, l.alphaLock && !erase ? 1 : 0, 0, 0),
+                                    region: SIMD4(UInt32(box.x0), UInt32(box.y0), UInt32(box.x1 - box.x0), UInt32(box.y1 - box.y0)))
+            let mw = mergePSO.threadExecutionWidth, mh = max(1, mergePSO.maxTotalThreadsPerThreadgroup / mw)
+            enc.setComputePipelineState(mergePSO)
+            enc.setTexture(l.texture, index: 0); enc.setTexture(strokeBase, index: 1)
+            enc.setTexture(wet, index: 2); enc.setTexture(selection, index: 3)
+            enc.setBytes(&merge, length: MemoryLayout<MergeParams>.stride, index: 0)
+            enc.dispatchThreadgroups(MTLSize(width: (box.x1 - box.x0 + mw - 1) / mw, height: (box.y1 - box.y0 + mh - 1) / mh, depth: 1),
+                                     threadsPerThreadgroup: MTLSize(width: mw, height: mh, depth: 1))
+        }
         enc.endEncoding()
+        cb.commit()
+    }
+
+    /// Smudge and blur read their own previous result, so each dab first copies the box it can sample from.
+    private func smudgeBatch(_ dabs: [(SIMD2<Double>, Double)], layer l: DrawLayer) {
+        guard let snapshot = smudgeSnapshot, let cb = queue.makeCommandBuffer() else { return }
+        let tw = smudgePSO.threadExecutionWidth, th = max(1, smudgePSO.maxTotalThreadsPerThreadgroup / tw)
+        for (p, r) in dabs {
+            let x0 = max(0, Int(p.x - r - 2)), y0 = max(0, Int(p.y - r - 2))
+            let x1 = min(width, Int(p.x + r + 3)), y1 = min(height, Int(p.y + r + 3))
+            let pull = p - (lastDab ?? p)
+            lastDab = p
+            guard x1 > x0, y1 > y0, let blit = cb.makeBlitCommandEncoder() else { continue }
+            let margin = Int(r * 0.25 + simd_length(pull)) + 4
+            let cx = max(0, x0 - margin), cy = max(0, y0 - margin)
+            let size = MTLSize(width: min(width, x1 + margin) - cx, height: min(height, y1 + margin) - cy, depth: 1)
+            let origin = MTLOrigin(x: cx, y: cy, z: 0)
+            blit.copy(from: l.texture, sourceSlice: 0, sourceLevel: 0, sourceOrigin: origin, sourceSize: size,
+                      to: snapshot, destinationSlice: 0, destinationLevel: 0, destinationOrigin: origin)
+            blit.endEncoding()
+            guard let enc = cb.makeComputeCommandEncoder() else { continue }
+            var params = DabParams(color: SIMD4(0, 0, 0, Float(brush.opacity)), dab: SIMD4(Float(p.x), Float(p.y), Float(r), Float(brush.hardness)),
+                                   extra: SIMD4(Float(pull.x), Float(pull.y), strokeMode == .blur ? 1 : 0, 0),
+                                   region: SIMD4(UInt32(x0), UInt32(y0), UInt32(x1 - x0), UInt32(y1 - y0)))
+            enc.setComputePipelineState(smudgePSO)
+            enc.setTexture(l.texture, index: 0); enc.setTexture(snapshot, index: 1); enc.setTexture(selection, index: 2)
+            enc.setBytes(&params, length: MemoryLayout<DabParams>.stride, index: 0)
+            enc.dispatchThreadgroups(MTLSize(width: (x1 - x0 + tw - 1) / tw, height: (y1 - y0 + th - 1) / th, depth: 1),
+                                     threadsPerThreadgroup: MTLSize(width: tw, height: th, depth: 1))
+            enc.endEncoding()
+        }
         cb.commit()
     }
 
@@ -462,7 +586,7 @@ final class DrawEngine: ObservableObject {
         enc.endEncoding()
     }
 
-    private func dispatch(_ enc: MTLComputeCommandEncoder, _ pso: MTLComputePipelineState) {
+    func dispatch(_ enc: MTLComputeCommandEncoder, _ pso: MTLComputePipelineState) {
         let tw = pso.threadExecutionWidth, th = max(1, pso.maxTotalThreadsPerThreadgroup / tw)
         enc.dispatchThreadgroups(MTLSize(width: (width + tw - 1) / tw, height: (height + th - 1) / th, depth: 1),
                                  threadsPerThreadgroup: MTLSize(width: tw, height: th, depth: 1))

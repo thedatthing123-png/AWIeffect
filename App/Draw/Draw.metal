@@ -16,50 +16,6 @@ static float hash12(float2 p) {
     return fract((p3.x + p3.y) * p3.z);
 }
 
-/// Stamps one brush dab. Normal brushes use "over"; the eraser removes alpha; alpha lock keeps coverage.
-kernel void stampDab(texture2d<float, access::read_write> layer [[texture(0)]],
-                     texture2d<float, access::read> selection [[texture(1)]],
-                     constant DabParams& p [[buffer(0)]],
-                     uint2 tid [[thread_position_in_grid]]) {
-    if (tid.x >= p.region.z || tid.y >= p.region.w) return;
-    uint2 gid = tid + p.region.xy;
-    if (gid.x >= layer.get_width() || gid.y >= layer.get_height()) return;
-    float2 c = float2(gid) + 0.5;
-    float r = max(p.dab.z, 0.5);
-    float2 off = c - p.dab.xy;
-    // Flat chisel: a thin slanted tip instead of a round one.
-    float d = p.extra.z == 4.0 ? max(abs(off.x + off.y) / (r * 1.414), abs(off.x - off.y) / (r * 0.35)) : length(off) / r;
-    if (d >= 1.0) return;
-    // Hardness: flat core, smooth falloff to the edge.
-    float h = clamp(p.dab.w, 0.0, 0.99);
-    float a = 1.0 - smoothstep(h, 1.0, d);
-    if (p.extra.z == 1.0) a *= step(0.35, hash12(c + p.extra.w));            // pencil grain
-    if (p.extra.z == 2.0) a *= (1.0 - d) * (1.0 - d);                        // airbrush soft
-    if (p.extra.z == 3.0) a *= step(0.88, hash12(c * 1.37 + p.extra.w));     // spray: scattered specks
-    if (p.extra.z == 5.0) a = pow(1.0 - d, 2.2);                             // glow: wide soft light
-    if (p.extra.z == 6.0) a *= 0.55 + 0.45 * smoothstep(0.55, 0.95, d);      // watercolor: pigment pools at the edge
-    if (p.extra.z == 7.0) {                                                  // screentone: manga dot pattern
-        float2 g = fract(c / 7.0) - 0.5;
-        a *= 1.0 - smoothstep(0.28, 0.34, length(g));
-    }
-    if (p.extra.z == 8.0) a *= smoothstep(0.25, 0.8, hash12(floor(c * 0.6)));  // charcoal: fixed paper grain
-    a *= p.color.a;
-    // Selection restricts painting.
-    a *= selection.read(gid).r;
-    if (a <= 0.0) return;
-    float4 dst = layer.read(gid);
-    float4 o;
-    if (p.extra.x > 0.5) {
-        o = dst * (1.0 - a);                                                // erase
-    } else if (p.extra.y > 0.5) {
-        float3 rgb = mix(dst.a > 0.0 ? dst.rgb / dst.a : float3(0), p.color.rgb, a);
-        o = float4(rgb * dst.a, dst.a);                                     // alpha lock: recolor only
-    } else {
-        o = float4(p.color.rgb * a, a) + dst * (1.0 - a);                   // premultiplied over
-    }
-    layer.write(o, gid);
-}
-
 // Must match LayerCompositeParams in DrawEngine.swift.
 struct LayerCompositeParams {
     float4 info;   // opacity, clipping (1/0), _, _
@@ -190,4 +146,105 @@ fragment float4 drawDisplayFragment(DrawVOut in [[stage_in]],
         }
     }
     return float4(rgb, 1.0);
+}
+
+// ---------- Stroke buffer: dabs build coverage in a float texture, the merge caps it at the brush opacity ----------
+// (one stroke never builds past its opacity, the way pro paint apps behave).
+
+static float dabCoverage(constant DabParams& p, float2 c) {
+    float r = max(p.dab.z, 0.5);
+    float2 off = c - p.dab.xy;
+    float d = p.extra.z == 4.0 ? max(abs(off.x + off.y) / (r * 1.414), abs(off.x - off.y) / (r * 0.35)) : length(off) / r;
+    if (d >= 1.0) return 0.0;
+    float h = clamp(p.dab.w, 0.0, 0.99);
+    float a = 1.0 - smoothstep(h, 1.0, d);
+    if (p.extra.z == 1.0) a *= step(0.35, hash12(c + p.extra.w));
+    if (p.extra.z == 2.0) a *= (1.0 - d) * (1.0 - d);
+    if (p.extra.z == 3.0) a *= step(0.88, hash12(c * 1.37 + p.extra.w));
+    if (p.extra.z == 5.0) a = pow(1.0 - d, 2.2);
+    if (p.extra.z == 6.0) a *= 0.55 + 0.45 * smoothstep(0.55, 0.95, d);
+    if (p.extra.z == 7.0) { float2 g = fract(c / 7.0) - 0.5; a *= 1.0 - smoothstep(0.28, 0.34, length(g)); }
+    if (p.extra.z == 8.0) a *= smoothstep(0.25, 0.8, hash12(floor(c * 0.6)));
+    return a;
+}
+
+kernel void stampWet(texture2d<float, access::read_write> wet [[texture(0)]],
+                     constant DabParams& p [[buffer(0)]],
+                     uint2 tid [[thread_position_in_grid]]) {
+    if (tid.x >= p.region.z || tid.y >= p.region.w) return;
+    uint2 gid = tid + p.region.xy;
+    if (gid.x >= wet.get_width() || gid.y >= wet.get_height()) return;
+    float a = dabCoverage(p, float2(gid) + 0.5) * p.color.a;
+    if (a <= 0.0) return;
+    float w = wet.read(gid).r;
+    wet.write(float4(a + w * (1.0 - a)), gid);
+}
+
+// color = rgb + stroke opacity; flags.x erase, flags.y alpha lock; region = dirty box.
+struct MergeParams { float4 color; float4 flags; uint4 region; };
+
+kernel void mergeStroke(texture2d<float, access::write> layer [[texture(0)]],
+                        texture2d<float, access::read> base [[texture(1)]],
+                        texture2d<float, access::read> wet [[texture(2)]],
+                        texture2d<float, access::read> selection [[texture(3)]],
+                        constant MergeParams& p [[buffer(0)]],
+                        uint2 tid [[thread_position_in_grid]]) {
+    if (tid.x >= p.region.z || tid.y >= p.region.w) return;
+    uint2 gid = tid + p.region.xy;
+    if (gid.x >= layer.get_width() || gid.y >= layer.get_height()) return;
+    float4 dst = base.read(gid);
+    float a = wet.read(gid).r * p.color.a * selection.read(gid).r;
+    float4 o;
+    if (p.flags.x > 0.5) o = dst * (1.0 - a);
+    else if (p.flags.y > 0.5) o = float4(mix(dst.a > 0.0 ? dst.rgb / dst.a : float3(0), p.color.rgb, a) * dst.a, dst.a);
+    else o = float4(p.color.rgb * a, a) + dst * (1.0 - a);
+    layer.write(o, gid);
+}
+
+kernel void clearWet(texture2d<float, access::write> wet [[texture(0)]], uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= wet.get_width() || gid.y >= wet.get_height()) return;
+    wet.write(float4(0), gid);
+}
+
+// Smudge / blur tools. color.a = strength, extra.xy = pull offset (px), extra.z = 0 smudge, 1 blur.
+kernel void smudgeDab(texture2d<float, access::write> layer [[texture(0)]],
+                      texture2d<float, access::sample> snapshot [[texture(1)]],
+                      texture2d<float, access::read> selection [[texture(2)]],
+                      constant DabParams& p [[buffer(0)]],
+                      uint2 tid [[thread_position_in_grid]]) {
+    constexpr sampler s(coord::pixel, address::clamp_to_edge, filter::linear);
+    if (tid.x >= p.region.z || tid.y >= p.region.w) return;
+    uint2 gid = tid + p.region.xy;
+    if (gid.x >= layer.get_width() || gid.y >= layer.get_height()) return;
+    float2 c = float2(gid) + 0.5;
+    float d = length(c - p.dab.xy) / max(p.dab.z, 0.5);
+    if (d >= 1.0) return;
+    float a = (1.0 - smoothstep(clamp(p.dab.w, 0.0, 0.99), 1.0, d)) * p.color.a * selection.read(gid).r;
+    float4 dst = snapshot.sample(s, c), src;
+    if (p.extra.z < 0.5) {
+        src = snapshot.sample(s, c - p.extra.xy);
+    } else {
+        float k = max(1.5, p.dab.z * 0.25);
+        src = dst * 0.2;
+        for (int i = 0; i < 8; i++) {
+            float t = float(i) * 0.7853982;
+            src += snapshot.sample(s, c + float2(cos(t), sin(t)) * k) * 0.1;
+        }
+    }
+    layer.write(mix(dst, src, a), gid);
+}
+
+// Live transform: untouched pixels + the lifted pixels through an inverse affine. Rows are (a, b, tx).
+struct FloatParams { float4 row0; float4 row1; };
+
+kernel void composeFloating(texture2d<float, access::write> layer [[texture(0)]],
+                            texture2d<float, access::read> base [[texture(1)]],
+                            texture2d<float, access::sample> floating [[texture(2)]],
+                            constant FloatParams& p [[buffer(0)]],
+                            uint2 gid [[thread_position_in_grid]]) {
+    constexpr sampler s(coord::pixel, address::clamp_to_zero, filter::linear);
+    if (gid.x >= layer.get_width() || gid.y >= layer.get_height()) return;
+    float3 c = float3(float2(gid) + 0.5, 1.0);
+    float4 f = floating.sample(s, float2(dot(p.row0.xyz, c), dot(p.row1.xyz, c)));
+    layer.write(f + base.read(gid) * (1.0 - f.a), gid);
 }
