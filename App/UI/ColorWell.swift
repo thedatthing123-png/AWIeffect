@@ -303,11 +303,19 @@ struct ScreenEyedropper: View {
                     }
                     .stroke(.white, lineWidth: 1.5).shadow(radius: 1)
                 }
+                // Up top, clear of the frame's middle and of the loupe.
                 VStack {
-                    Text("Drag over the frame · lift to pick").font(.system(size: 13, weight: .semibold)).padding(8)
-                        .background(Capsule().fill(.black.opacity(0.6))).foregroundStyle(.white).padding(.top, 50)
+                    HStack(spacing: 8) {
+                        Text("Drag over the frame · lift to pick").font(.system(size: 13, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
+                            .padding(.horizontal, 12).padding(.vertical, 8)
+                            .background(Capsule().fill(.black.opacity(0.6))).foregroundStyle(.white)
+                        Button { done(nil) } label: {
+                            Text("Cancel").font(.system(size: 13, weight: .bold)).padding(.horizontal, 14).padding(.vertical, 8)
+                                .background(Capsule().fill(Theme.accent)).foregroundStyle(.white)
+                        }
+                    }
+                    .padding(.top, 58)
                     Spacer()
-                    Button("Cancel") { done(nil) }.buttonStyle(PrimaryButtonStyle()).padding(.bottom, 40)
                 }
             }
             .contentShape(Rectangle())
