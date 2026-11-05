@@ -19,11 +19,12 @@ extension Layer {
 extension EditorState {
     /// Uniform speed changes stretch the complete animation inventory around the clip start.
     func setLayerSpeed(_ magnitude: Double) {
+        let snapshot = live.project ?? project
         guard magnitude.isFinite, magnitude >= 0.05, magnitude <= 16,
-              let i = selectedIndex, project.layers[i].timeRemap == nil else { return }
-        let layer = project.layers[i]
+              let i = selectedIndex, snapshot.layers.indices.contains(i), snapshot.layers[i].timeRemap == nil else { return }
+        let layer = snapshot.layers[i]
         let factor = (abs(layer.speed) > 1e-8 ? abs(layer.speed) : 1) / magnitude
-        let members = layer.isGroup ? Self.descendantIDs(of: layer.id, in: project) : []
+        let members = layer.isGroup ? Self.descendantIDs(of: layer.id, in: snapshot) : []
         mutate("Change Speed") { p in
             for index in p.layers.indices where index == i || members.contains(p.layers[index].id) {
                 var visit = AnimationTraversal(operation: .scaleTime(layer.inPoint, factor))

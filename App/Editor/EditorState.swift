@@ -214,7 +214,10 @@ final class EditorState: ObservableObject {
         pushUndo(label)
     }
 
-    func endEdit() { editGroupOpen = false }
+    func endEdit() {
+        editGroupOpen = false
+        coalesceWork?.cancel(); coalesceWork = nil
+    }
 
     private func pushUndo(_ label: String) {
         CrashReporter.note(label)

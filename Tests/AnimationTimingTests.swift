@@ -73,6 +73,32 @@ final class AnimationTimingTests: XCTestCase {
         XCTAssertEqual(member.sourceTime(at: 2), second.sourceTime(at: 3))
     }
 
+    @MainActor func testLiveSpeedScrubUsesCurrentPreviewRateAndCommitsOneUndo() {
+        var p = scene()
+        p.layers[0].transform.rotation.insertKeyframe(Keyframe(time: 3,value: 90))
+        let s = editor(p)
+        s.beginEdit("Speed"); s.beginLiveGesture()
+        s.setLayerSpeed(4); s.setLayerSpeed(2)
+        XCTAssertEqual(s.project.layers[0], p.layers[0])
+        XCTAssertEqual(s.live.project?.layers[0].outPoint, 3)
+        XCTAssertEqual(s.live.project?.layers[0].transform.rotation.keyframeTimes, [2])
+        s.endLiveGesture(); s.endEdit()
+        XCTAssertEqual(s.project.layers[0].speed, 2)
+        s.undo(); XCTAssertEqual(s.project.layers[0], p.layers[0])
+    }
+
+    @MainActor func testAllPropertyGraphDragCommitsAsOneUndo() {
+        var p = scene()
+        for t in [1.0,3] {
+            p.layers[0].transform.position.insertKeyframe(Keyframe(time: t,value: Vec2(t,64)))
+            p.layers[0].transform.rotation.insertKeyframe(Keyframe(time: t,value: t * 10))
+        }
+        let s = editor(p)
+        s.setEaseAll(segmentAt: 1,interpolation: .bezier,out: .easyOut,into: .easyIn,curve: nil,continuous: true)
+        s.setEaseAll(segmentAt: 1,interpolation: .bezier,out: EaseHandle(x: 0.8,y: 0),into: .easyIn,curve: nil,continuous: true)
+        s.endEdit(); s.undo(); XCTAssertEqual(s.project.layers[0], p.layers[0])
+    }
+
     @MainActor func testRampKeepsSourceEndpointsAndSmoothSignedVelocity() throws {
         for direction in [1.0,-1] {
             var p = scene(); p.layers[0].sourceStart = direction > 0 ? 2 : 6; p.layers[0].speed = direction
