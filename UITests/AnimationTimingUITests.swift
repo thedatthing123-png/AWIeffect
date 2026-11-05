@@ -23,6 +23,11 @@ final class AnimationTimingUITests: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 3))
         field.tap(); field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12) + "2\n")
         XCTAssertTrue(app.buttons["1.000s → 2.000s"].waitForExistence(timeout: 5))
+        let point = app.descendants(matching: .any)["Source key at 1.000 seconds"].firstMatch
+        XCTAssertTrue(point.exists)
+        let center = point.coordinate(withNormalizedOffset: CGVector(dx: 0.5,dy: 0.5))
+        center.press(forDuration: 0.1,thenDragTo: center.withOffset(CGVector(dx: 0,dy: -20)))
+        XCTAssertFalse(app.buttons["1.000s → 2.000s"].exists, "Dragging the source key must edit its value, not scroll the sheet")
         save("remap-value")
         app.buttons["Playback Speed"].firstMatch.tap(); save("remap-speed")
         let easing = app.buttons["Edit Segment Easing"].firstMatch

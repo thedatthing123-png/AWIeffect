@@ -88,7 +88,7 @@ struct TimeRemapEditor: View {
                         Text("Select video, audio or a precomp to edit source timing.")
                     }
                 }.padding()
-            }
+            }.scrollDisabled(original != nil)
             .navigationTitle("Time & Velocity").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
@@ -139,7 +139,8 @@ struct TimeRemapEditor: View {
                             .position(x: box.minX + CGFloat((key.time - layer.inPoint) / duration) * box.width,
                                       y: box.maxY - CGFloat((key.value - lower) / (upper - lower)) * box.height)
                             .onTapGesture { selected = key.id; state.seek(key.time) }
-                            .gesture(DragGesture(minimumDistance: 4, coordinateSpace: .named("remapPlot"))
+                            .accessibilityLabel(String(format: "Source key at %.3f seconds", key.time))
+                            .highPriorityGesture(DragGesture(minimumDistance: 4, coordinateSpace: .named("remapPlot"))
                                 .onChanged { drag in
                                     if original == nil { original = remap; dragRange = lower...upper; selected = key.id; state.pause(); state.beginEdit("Move Remap Key") }
                                     guard var a = original, let k = a.keyframes.firstIndex(where: { $0.id == key.id }) else { return }
