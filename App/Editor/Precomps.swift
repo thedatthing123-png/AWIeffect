@@ -75,6 +75,7 @@ extension EditorState {
             return value
         }
         child.parentContext = project.layers.filter { !members.contains($0.id) } + (project.parentContext ?? [])
+        child.distinguishContainerTags()
         compStack.append(CompositionEditContext(project: project, time: currentTime, selected: selectedLayerID, groupID: group.id))
         pushUndoContext()
         project = child
@@ -121,7 +122,7 @@ extension EditorState {
             pl.inPoint = layer.inPoint
             pl.outPoint = layer.outPoint
             pl.sourceStart = layer.inPoint
-            pl.tag = .teal
+            pl.tag = p.nextContainerTag()
             p.layers[i] = pl
             selectedLayerID = pl.id
         }
@@ -136,6 +137,7 @@ extension EditorState {
         let inner = max(0, min(comp.duration, l.sourceTime(at: currentTime)))
         compStack.append(CompositionEditContext(project: project, time: currentTime, selected: selectedLayerID))
         comp.parentContext = nil
+        comp.distinguishContainerTags()
         comp.precompList = library.filter { $0.id != comp.id }
         pushUndoContext()
         project = comp

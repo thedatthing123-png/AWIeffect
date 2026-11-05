@@ -175,6 +175,7 @@ final class EditorState: ObservableObject {
 
     init(project: Project, store: ProjectStore = .shared) {
         self.project = project
+        self.project.distinguishContainerTags()
         self.store = store
         if store.recoveredVersions[project.id] != nil {
             recoveryNotice = "Opened the latest readable saved version. The damaged project file has been kept in its project folder."
@@ -387,16 +388,15 @@ final class EditorState: ObservableObject {
             var copy = p.layers[i]
             copy.id = UUID()
             copy.name += " copy"
+            if copy.isContainer { copy.tag = p.nextContainerTag() }
             p.layers.insert(copy, at: i)
             selectedLayerID = copy.id
         }
     }
 
     func moveSelected(up: Bool) {
-        guard let i = selectedIndex else { return }
-        let j = up ? i - 1 : i + 1
-        guard project.layers.indices.contains(j) else { return }
-        mutate(up ? "Move Layer Up" : "Move Layer Down") { $0.layers.swapAt(i, j) }
+        guard let id = selectedLayerID, let i = project.timelineLayers.firstIndex(where: { $0.id == id }) else { return }
+        reorderTimelineLayer(id, to: up ? i - 1 : i + 1)
     }
 
     func toggleVisibility(_ id: UUID) {

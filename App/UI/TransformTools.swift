@@ -141,10 +141,6 @@ struct TransformToolBody: View {
                 valueRow([("X", p.x, { v in edit("Move") { $0.transform.position.set(Vec2(v, p.y), at: t) } }),
                           ("Y", p.y, { v in edit("Move") { $0.transform.position.set(Vec2(p.x, v), at: t) } }),
                           ("Z", layer.transform.positionZ.value(at: t), { v in edit("Depth") { $0.transform.positionZ.set(v, at: t) } })])
-                HStack {
-                    Button("XY") { positionAxisZ = false }.tint(positionAxisZ ? Theme.textDim : Theme.accent)
-                    Button("Z") { positionAxisZ = true }.tint(positionAxisZ ? Theme.accent : Theme.textDim)
-                }.buttonStyle(.bordered)
                 if positionAxisZ {
                     SwipePad(hint: "Swipe to adjust Z position", gain: compW * 2, vertical: true) { delta in
                         state.mutateLayer { l in l.transform.positionZ.set(l.transform.positionZ.value(at: t) + delta.height, at: t) }
@@ -271,7 +267,11 @@ struct TransformToolBody: View {
     private func valueRow(_ items: [(String, Double, (Double) -> Void)]) -> some View {
         HStack(spacing: 6) {
             ForEach(items.indices, id: \.self) { i in
-                NumberField(value: items[i].1, label: items[i].0, onCommit: items[i].2)
+                NumberField(value: items[i].1, label: items[i].0,
+                            active: tool == .position ? (positionAxisZ == (items[i].0 == "Z")) : nil,
+                            onActivate: tool == .position ? { positionAxisZ = items[i].0 == "Z" } : nil,
+                            onCommit: items[i].2)
+                    .accessibilityIdentifier(tool == .position ? "position-field-\(items[i].0)" : "transform-field-\(items[i].0)")
             }
         }
     }

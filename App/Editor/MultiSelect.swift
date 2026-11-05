@@ -22,9 +22,9 @@ extension EditorState {
 
     /// Selects the contiguous range from the anchor to the row under the finger.
     func extendMultiSelect(toRow row: Int) {
-        guard let anchor = multiAnchor, let a = project.layers.firstIndex(where: { $0.id == anchor }), !project.layers.isEmpty else { return }
-        let b = max(0, min(project.layers.count - 1, row))
-        let ids = Set(project.layers[min(a, b)...max(a, b)].map(\.id))
+        guard let anchor = multiAnchor, let a = project.timelineLayers.firstIndex(where: { $0.id == anchor }), !project.timelineLayers.isEmpty else { return }
+        let b = max(0, min(project.timelineLayers.count - 1, row))
+        let ids = Set(project.timelineLayers[min(a, b)...max(a, b)].map(\.id))
         if ids != multiSelection { multiSelection = ids; UISelectionFeedbackGenerator().selectionChanged() }
     }
 
@@ -35,7 +35,7 @@ extension EditorState {
         if s.isEmpty { endMultiSelect() }
     }
 
-    func selectAllLayers() { if multiSelection == nil { panel = .multi }; multiSelection = Set(project.layers.map(\.id)) }
+    func selectAllLayers() { if multiSelection == nil { panel = .multi }; multiSelection = Set(project.timelineLayers.map(\.id)) }
 
     func endMultiSelect() {
         multiSelection = nil
@@ -44,7 +44,8 @@ extension EditorState {
     }
 
     func deleteMulti() {
-        guard let ids = multiSelection, !ids.isEmpty else { return }
+        guard let selected = multiSelection, !selected.isEmpty else { return }
+        let ids = expandedLayerIDs(selected)
         mutate("Delete \(ids.count) Layers") { p in
             Self.unparentKeepingWorld(&p) { l in l.parentID.map { ids.contains($0) } ?? false }
             p.layers.removeAll { ids.contains($0.id) }
@@ -54,7 +55,8 @@ extension EditorState {
     }
 
     func duplicateMulti() {
-        guard let ids = multiSelection, !ids.isEmpty else { return }
+        guard let selected = multiSelection, !selected.isEmpty else { return }
+        let ids = expandedLayerIDs(selected)
         var newIDs = Set<UUID>()
         mutate("Duplicate \(ids.count) Layers") { p in
             var out: [Layer] = []
@@ -65,7 +67,12 @@ extension EditorState {
                     var c = l; c.id = remap[l.id]!; c.name += " copy"
                     // Copies of a parent+child pair stay linked to each other, not to the originals.
                     if let pid = c.parentID, let np = remap[pid] { c.parentID = np }
-                    out.append(c); newIDs.insert(c.id)
+                    if let gid = c.groupID, let ng = remap[gid] { c.groupID = ng }
+                    if c.isContainer {
+                        var colorProject = p; colorProject.layers += out
+                        c.tag = colorProject.nextContainerTag()
+                    }
+                    out.append(c); if selected.contains(l.id) { newIDs.insert(c.id) }
                 }
                 out.append(l)
             }
@@ -76,7 +83,8 @@ extension EditorState {
 
     /// Groups the selection into one pre-comp, keeping order and timing.
     func precomposeMulti(name: String? = nil) {
-        guard let ids = multiSelection, !ids.isEmpty else { return }
+        guard let selected = multiSelection, !selected.isEmpty else { return }
+        let ids = expandedLayerIDs(selected)
         var clean = project
         Self.unparentKeepingWorld(&clean) { l in
             guard let pid = l.parentID else { return false }
@@ -95,7 +103,7 @@ extension EditorState {
             pl.inPoint = picked.map(\.inPoint).min() ?? 0
             pl.outPoint = picked.map(\.outPoint).max() ?? p.duration
             pl.sourceStart = pl.inPoint
-            pl.tag = .teal
+            pl.tag = p.nextContainerTag()
             newID = pl.id
             p.layers.removeAll { ids.contains($0.id) }
             p.layers.insert(pl, at: min(firstIndex, p.layers.count))

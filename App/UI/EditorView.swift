@@ -260,7 +260,7 @@ struct EditorView: View {
                     Button { state.openGroup() } label: { Label("Open Group", systemImage: "folder") }
                     Button { state.ungroupSelected() } label: { Label("Ungroup", systemImage: "folder.badge.minus") }
                 } else {
-                    Button { state.groupSelected() } label: { Label("Group (keeps parts in this timeline)", systemImage: "folder.badge.plus") }
+                    Button { state.groupSelected() } label: { Label("Group Layers", systemImage: "folder.badge.plus") }
                 }
                 Button { state.moveSelected(up: true) } label: { Label("Move Up", systemImage: "arrow.up") }
                 Button { state.moveSelected(up: false) } label: { Label("Move Down", systemImage: "arrow.down") }

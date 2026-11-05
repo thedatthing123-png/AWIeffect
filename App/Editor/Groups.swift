@@ -1,7 +1,7 @@
 import SwiftUI
 import simd
 
-/// Alight Motion-style groups: parts stay normal layers in the same timeline (indented under the group), and
+/// Alight Motion-style groups: parts stay editable in the project and are shown inside the group, and
 /// the group's transform, masks, effects, blend mode and matte apply to all of them together.
 extension EditorState {
     /// Groups the multi-selection (or the selected layer). Parts move right under the new group, in order.
@@ -18,7 +18,7 @@ extension EditorState {
                                 size: Vec2(Double(p.width), Double(p.height)))
             g.isGroup = true
             g.fill = Animated(RGBA(0, 0, 0, 0))
-            g.tag = .teal
+            g.tag = p.nextContainerTag()
             g.inPoint = members.map(\.inPoint).min() ?? 0
             g.outPoint = members.map(\.outPoint).max() ?? p.duration
             gid = g.id
@@ -38,14 +38,9 @@ extension EditorState {
         panel = .transform
     }
 
-    /// Removes the group container; parts stay where they are in the timeline.
+    /// Dissolve the container and its treatments; retain each child's own effects and editable transforms.
     func ungroupSelected() {
         guard let group = selectedLayer, group.isGroup else { return }
-        guard !group.is3D, group.effects.allSatisfy({ !$0.isEnabled }), group.masks.isEmpty,
-              group.blendMode == .normal, group.trackMatte == .none, !group.clipToBelow else {
-            recoveryNotice = "Keep the group to preserve its 3D projection, masks, blending or effects. Remove those group-wide treatments before ungrouping editable layers."
-            return
-        }
         let snapshot = project, gid = group.id
         let descendants = Self.descendantIDs(of: gid, in: snapshot)
         let roots = snapshot.layers.filter { $0.groupID == gid && !($0.parentID.map(descendants.contains) ?? false) }
@@ -123,6 +118,7 @@ extension EditorState {
             }
             project.layers.removeAll { $0.id == gid }
         }
+        recoveryNotice = nil
         select(nil)
     }
 
@@ -149,7 +145,7 @@ extension EditorState {
             let copies = originals.map { layer -> Layer in
                 var copy = layer
                 copy.id = remap[layer.id]!
-                if layer.id == gid { copy.name += " copy" }
+                if layer.id == gid { copy.name += " copy"; copy.tag = p.nextContainerTag() }
                 if let parent = layer.parentID, let mapped = remap[parent] { copy.parentID = mapped }
                 if let group = layer.groupID, let mapped = remap[group] { copy.groupID = mapped }
                 return copy

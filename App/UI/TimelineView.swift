@@ -65,7 +65,7 @@ struct TimelineView: View {
                                 }
                                 .frame(maxWidth: .infinity).padding(.top, 26)
                             }
-                            ForEach(compact ? state.project.layers.filter { $0.id == state.selectedLayerID } : state.project.layers) { layer in
+                            ForEach(compact ? state.project.layers.filter { $0.id == state.selectedLayerID } : state.project.timelineLayers) { layer in
                                 let lifted = liftLayer == layer.id
                                 HStack(spacing: 0) {
                                     header(layer)
@@ -149,7 +149,7 @@ struct TimelineView: View {
         // Tap in multi-select toggles; otherwise the left column only reacts to a hold (multi-select).
         .onTapGesture { if state.isMultiSelecting { state.toggleInMulti(layer.id) } }
         .gesture(TimelineHold(onMove: { point, delta in
-            guard !compact, let index = state.project.layers.firstIndex(where: { $0.id == layer.id }) else { return }
+            guard !compact, let index = state.project.timelineLayers.firstIndex(where: { $0.id == layer.id }) else { return }
             if multiDragStart == nil {
                 multiDragStart = point; state.beginMultiSelect(layer.id)
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -283,9 +283,9 @@ struct TimelineView: View {
                     state.moveClip(original, by: state.snapTime(time, tolerance: Double(8 / zoom)) - original.inPoint)
                 }, onEnd: { delta in
                     defer { liftLayer = nil; liftOffset = 0; dragOriginal = nil; state.endEdit() }
-                    if let from = state.project.layers.firstIndex(where: { $0.id == layer.id }) {
+                    if let from = state.project.timelineLayers.firstIndex(where: { $0.id == layer.id }) {
                         let to = from + Int((delta.y / rowHeight).rounded())
-                        if from != to { state.endEdit(); state.reorderLayer(from: from, to: to) }
+                        if from != to { state.endEdit(); state.reorderTimelineLayer(layer.id, to: to) }
                     }
                 }))
     }

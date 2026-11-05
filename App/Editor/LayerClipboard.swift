@@ -176,6 +176,11 @@ extension EditorState {
                     let offset = time - (layers.map(\.inPoint).min() ?? 0)
                     for i in layers.indices { layers[i].shiftTiming(by: offset, duration: project.duration); layers[i].isLocked = false }
                     mutate("Paste Layer") { p in
+                        var palette = p
+                        for index in layers.indices where layers[index].isContainer {
+                            layers[index].tag = palette.nextContainerTag()
+                            palette.layers.append(layers[index])
+                        }
                         p.layers.insert(contentsOf: layers, at: selectedIndex ?? 0)
                         p.precomps += imported.comps; p.fitAutoLength()
                     }

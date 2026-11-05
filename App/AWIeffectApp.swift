@@ -58,6 +58,16 @@ struct RootView: View {
             }
             _openProject = State(initialValue: project)
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-containerInteractions") {
+            var p = Project.new(name: "Container Interaction Test", width: 128, height: 128, fps: 30, duration: 3)
+            var group = p.makeLayer(name: "Group Test", content: .solid, size: Vec2(128, 128))
+            group.isGroup = true; group.tag = .teal
+            var child = p.makeLayer(name: "Inside", content: .solid, size: Vec2(30, 30))
+            child.groupID = group.id
+            let outside = p.makeLayer(name: "Outside", content: .solid, size: Vec2(20, 20))
+            p.layers = [group, child, outside]
+            _openProject = State(initialValue: p)
+        }
         #endif
     }
 

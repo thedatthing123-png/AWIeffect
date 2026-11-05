@@ -251,6 +251,8 @@ struct NumberField: View {
     let value: Double
     let label: String
     var step: Double = 1
+    var active: Bool? = nil
+    var onActivate: (() -> Void)? = nil
     let onCommit: (Double) -> Void
     @State private var editing = false
     @State private var text = ""
@@ -258,7 +260,7 @@ struct NumberField: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Text(label).font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.textDim)
+            Text(label).font(.system(size: 10, weight: .bold)).foregroundStyle(active == true ? Theme.accentGlow : Theme.textDim)
             if editing {
                 TextField("", text: $text, onCommit: {
                     if let v = Double(text) { onCommit(v) }
@@ -277,14 +279,17 @@ struct NumberField: View {
                     .onTapGesture { text = String(format: "%.1f", value); editing = true }
                     .gesture(DragGesture(minimumDistance: 3)
                         .onChanged { g in
-                            if dragBase == nil { dragBase = value }
+                            if dragBase == nil { onActivate?(); dragBase = value }
                             onCommit(((dragBase ?? value) + Double(g.translation.width) * step).rounded())
                         }
                         .onEnded { _ in dragBase = nil })
             }
         }
         .padding(.horizontal, 8).frame(minWidth: 0).frame(height: 34)
-        .background(RoundedRectangle(cornerRadius: 9).fill(Theme.surface))
+        .background(RoundedRectangle(cornerRadius: 9).fill(active == true ? Theme.accent.opacity(0.16) : Theme.surface))
+        .overlay(RoundedRectangle(cornerRadius: 9).stroke(active == true ? Theme.accent.opacity(0.7) : .clear, lineWidth: 1).allowsHitTesting(false))
+        .contentShape(Rectangle())
+        .simultaneousGesture(TapGesture().onEnded { onActivate?() })
     }
 }
 
