@@ -10,7 +10,7 @@ extension EffectRegistry {
     static let batch11: [EffectDefinition] = [
         repeatGrid11, repeatLine11, repeatRadial11, scatterField11, mirrorTile11, zoomTunnel11, echoOffset11,
         blink11, pulseOpacity11, randomDissolve11, featherEdges11, vignetteAlpha11, linearAlphaFade11, opacityFlicker11,
-        advancedChromaKey11, spillCleaner11, matteChoker11, colorRangeKey11, lumaMatteSoft11,
+        advancedChromaKey11, spillCleaner11, matteChoker11, unmultiply11, colorRangeKey11, lumaMatteSoft11,
         alphaLevels11, edgeRefine11, removeColorMatting11,
     ]
 
@@ -199,7 +199,7 @@ extension EffectRegistry {
         })
 
     static let unmultiply11 = EffectDefinition(
-        id: "awi11.unmultiply", name: "Unmultiply", category: .keying, aeMatchNames: [],
+        id: "awi11.unmultiply", name: "Unmult", category: .keying, aeMatchNames: [],
         summary: "Turns black into transparency (for flares, fire and light footage shot on black).",
         params: [.number("amount", "Amount", 100, 0, 100, unit: "%"), .number("gamma", "Alpha Gamma", 1, 0.2, 3, step: 0.01)],
         stage: .pixels { ctx in r11(ctx, 15) { p in
