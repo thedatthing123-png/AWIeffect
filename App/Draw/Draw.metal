@@ -248,3 +248,27 @@ kernel void composeFloating(texture2d<float, access::write> layer [[texture(0)]]
     float4 f = floating.sample(s, float2(dot(p.row0.xyz, c), dot(p.row1.xyz, c)));
     layer.write(f + base.read(gid) * (1.0 - f.a), gid);
 }
+
+// Smudge with a carried tip. color.a = strength, extra.x = 1 on the stroke's first dab (the tip just picks up).
+kernel void smudgeCarry(texture2d<float, access::read_write> layer [[texture(0)]],
+                        texture2d<float, access::read_write> tip [[texture(1)]],
+                        texture2d<float, access::read> selection [[texture(2)]],
+                        constant DabParams& p [[buffer(0)]],
+                        uint2 tid [[thread_position_in_grid]]) {
+    if (tid.x >= p.region.z || tid.y >= p.region.w) return;
+    uint2 gid = tid + p.region.xy;
+    if (gid.x >= layer.get_width() || gid.y >= layer.get_height()) return;
+    float2 off = float2(gid) + 0.5 - p.dab.xy;
+    float r = max(p.dab.z, 0.5);
+    float d = length(off) / r;
+    if (d >= 1.0) return;
+    // 1:1 for tips that fit, scaled down for bigger ones.
+    uint2 t = uint2(clamp(off * min(1.0, 127.0 / r) + 128.0, 0.0, 255.0));
+    float4 under = layer.read(gid);
+    if (p.extra.x > 0.5) { tip.write(under, t); return; }
+    float4 carried = tip.read(t);
+    float a = (1.0 - smoothstep(clamp(p.dab.w, 0.0, 0.99), 1.0, d)) * p.color.a * selection.read(gid).r;
+    layer.write(mix(under, carried, a), gid);
+    // Low strength picks up more of what is underneath, so the paint runs out sooner.
+    tip.write(mix(carried, under, (1.0 - p.color.a) * 0.5 + 0.02), t);
+}

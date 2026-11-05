@@ -89,7 +89,7 @@ final class ArtStudioRenewTests: XCTestCase {
         e.beginStroke(at: SIMD2(30, 48), pressure: 1)
         for x in stride(from: 32.0, through: 70, by: 2) { e.continueStroke(to: SIMD2(x, 48), pressure: 1) }
         e.endStroke()
-        XCTAssertGreaterThan(px(e, 44, 48)[3], 8, "paint is dragged along the stroke")
+        XCTAssertGreaterThan(px(e, 55, 48)[3], 60, "paint is carried along the stroke")
 
         let f = try engine()
         f.brush.size = 40; f.brush.hardness = 0.99; f.brush.pressureSize = false
@@ -153,6 +153,103 @@ final class ArtStudioRenewTests: XCTestCase {
         e.undo()
         e.drawShape(square, filled: true)
         XCTAssertGreaterThan(px(e, 45, 45)[3], 200)
+    }
+
+    func testQuickSelectStaysInsideItsPartAndReach() throws {
+        let e = try engine()
+        let l = try XCTUnwrap(e.activeLayer)
+        var b = [UInt8](repeating: 0, count: 96 * 96 * 4)
+        // A white field split by a black line at x = 40.
+        for y in 0..<96 { for x in 0..<96 {
+            let v: UInt8 = x == 40 ? 0 : 255
+            b[(y * 96 + x) * 4] = v; b[(y * 96 + x) * 4 + 1] = v; b[(y * 96 + x) * 4 + 2] = v; b[(y * 96 + x) * 4 + 3] = 255
+        } }
+        e.setBytes(b, of: l)
+        e.beginQuickSelect(at: SIMD2(60, 48), subtract: false, reach: 24)
+        e.endQuickSelect()
+        let m = e.selectionBytes()
+        XCTAssertGreaterThan(m[48 * 96 + 70], 200); XCTAssertLessThan(m[48 * 96 + 30], 30, "stops at the line")
+        XCTAssertLessThan(m[5 * 96 + 60], 30, "stops at its reach")
+    }
+
+    func testAIBrushSnapsToThePartItWasPaintedOn() throws {
+        let e = try engine()
+        let l = try XCTUnwrap(e.activeLayer)
+        var b = [UInt8](repeating: 255, count: 96 * 96 * 4)
+        // A red square on white.
+        for y in 30..<60 { for x in 30..<60 { b[(y * 96 + x) * 4 + 1] = 0; b[(y * 96 + x) * 4 + 2] = 0 } }
+        e.setBytes(b, of: l)
+        e.beginSelectStroke(at: SIMD2(45, 45), radius: 20, subtract: false)
+        e.endSelectStroke(snapToSubject: false, snapToEdges: true)
+        let m = e.selectionBytes()
+        XCTAssertGreaterThan(m[35 * 96 + 35], 200, "fills to the edge of the part")
+        XCTAssertLessThan(m[45 * 96 + 62], 60, "the stroke spilled here, but that is not the part")
+        e.undo()
+        XCTAssertFalse(e.hasSelection)
+    }
+
+    func testPenPathCurvesAndClosesAndApplies() throws {
+        var path = PenPath()
+        path.anchors = [PenAnchor(point: SIMD2(20, 60)), PenAnchor(point: SIMD2(70, 60), handle: SIMD2(0, -30))]
+        let curve = path.flattened()
+        XCTAssertLessThan(curve.map(\.y).min()!, 55, "the handle bends the line")
+        XCTAssertEqual(curve.last!, SIMD2(70, 60))
+        path.anchors.append(PenAnchor(point: SIMD2(45, 20)))
+        path.closed = true
+        XCTAssertEqual(path.flattened().last!, SIMD2(20, 60))
+        let e = try engine()
+        e.brush.hardness = 0.95
+        e.applyPath(path, filled: true)
+        XCTAssertGreaterThan(px(e, 45, 50)[3], 200)
+        e.undo()
+        e.selectPath(path)
+        XCTAssertGreaterThan(e.selectionBytes()[50 * 96 + 45], 200)
+        XCTAssertEqual(e.selectionBytes()[5 * 96 + 5], 0)
+    }
+
+    func testLiveFilterPreviewsCancelsAndCommitsWithOneUndo() throws {
+        let e = try engine()
+        e.brush.size = 40; e.brush.hardness = 0.95; e.brush.color = RGBA(1, 0, 0)
+        e.beginStroke(at: SIMD2(48, 48), pressure: 1); e.endStroke()
+        let before = px(e, 48, 48)
+        var f = DrawFilter(); f.saturation = 0
+        e.beginFilter()
+        e.updateFilter(f)
+        let shown = expectation(description: "preview")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { shown.fulfill() }
+        wait(for: [shown], timeout: 5)
+        XCTAssertGreaterThan(px(e, 48, 48)[1], 40, "gray now, while the slider is live")
+        e.cancelFilter()
+        XCTAssertEqual(px(e, 48, 48), before)
+        e.beginFilter(); e.commitFilter(f)
+        XCTAssertGreaterThan(px(e, 48, 48)[1], 40)
+        e.undo()
+        XCTAssertEqual(px(e, 48, 48), before)
+    }
+
+    func testLayerDeleteMergeAndReorderUndo() throws {
+        let e = try engine()
+        e.brush.size = 20; e.brush.hardness = 0.95
+        e.beginStroke(at: SIMD2(20, 20), pressure: 1); e.endStroke()
+        let bottom = try XCTUnwrap(e.activeLayer)
+        let top = try XCTUnwrap(e.addLayer())
+        e.beginStroke(at: SIMD2(70, 70), pressure: 1); e.endStroke()
+        e.deleteActiveLayer()
+        XCTAssertEqual(e.layers.count, 1)
+        e.undo()
+        XCTAssertEqual(e.layers.map(\.id), [bottom.id, top.id])
+        XCTAssertGreaterThan(px(e, 70, 70)[3], 200, "the deleted layer came back with its paint")
+        e.moveLayer(from: 0, to: 1)
+        XCTAssertEqual(e.layers.map(\.id), [top.id, bottom.id])
+        e.undo()
+        XCTAssertEqual(e.layers.map(\.id), [bottom.id, top.id])
+        e.mergeLayers([bottom.id, top.id])
+        XCTAssertEqual(e.layers.count, 1)
+        XCTAssertGreaterThan(px(e, 70, 70)[3], 200); XCTAssertGreaterThan(px(e, 20, 20)[3], 200)
+        e.undo()
+        XCTAssertEqual(e.layers.count, 2)
+        e.activeIndex = 0
+        XCTAssertEqual(px(e, 70, 70)[3], 0, "the merged paint left the bottom layer")
     }
 
     @MainActor func testEveryBrushPresetPaintsItsPreview() throws {

@@ -59,6 +59,11 @@ struct Brush: Equatable {
     var scatter = 0.0
 }
 
+/// Live layer filter values.
+struct DrawFilter: Equatable {
+    var brightness = 0.0, contrast = 1.0, saturation = 1.0, hue = 0.0, blur = 0.0, sharpen = 0.0
+}
+
 /// What a stroke does to the layer.
 enum StrokeMode { case paint, smudge, blur }
 
@@ -152,7 +157,9 @@ final class DrawEngine: ObservableObject {
     private(set) var selection: MTLTexture
     var strokeMode: StrokeMode = .paint
     private let stampPSO, compositePSO, fillPSO: MTLComputePipelineState
-    private let mergePSO, clearWetPSO, smudgePSO: MTLComputePipelineState
+    private let mergePSO, clearWetPSO, smudgePSO, carryPSO: MTLComputePipelineState
+    private lazy var smudgeTip: MTLTexture? = Self.makeTexture(device, 256, 256, .rgba8Unorm)
+    private var tipFresh = true
     let floatPSO: MTLComputePipelineState
     private let wet: MTLTexture
     private let strokeBase: MTLTexture
@@ -165,6 +172,9 @@ final class DrawEngine: ObservableObject {
         var layer: UUID?
         var bytes: [UInt8] = []
         var selection: [UInt8]?
+        /// The layer stack before a delete or merge (textures are kept alive, so nothing is copied).
+        var structure: [DrawLayer]?
+        var activeIndex = 0
         var cost: Int { bytes.count + (selection?.count ?? 0) }
     }
     private var undoStack: [UndoState] = []
@@ -190,9 +200,9 @@ final class DrawEngine: ObservableObject {
         queue = r.queue
         self.width = width; self.height = height
         func pso(_ n: String) -> MTLComputePipelineState? { lib.makeFunction(name: n).flatMap { try? r.device.makeComputePipelineState(function: $0) } }
-        guard let s = pso("stampWet"), let mg = pso("mergeStroke"), let cw = pso("clearWet"), let sm = pso("smudgeDab"), let fl = pso("composeFloating"),
+        guard let s = pso("stampWet"), let mg = pso("mergeStroke"), let cw = pso("clearWet"), let sm = pso("smudgeDab"), let fl = pso("composeFloating"), let ca = pso("smudgeCarry"),
               let c = pso("compositeDrawLayer"), let f = pso("fillCanvas") else { return nil }
-        stampPSO = s; compositePSO = c; fillPSO = f; mergePSO = mg; clearWetPSO = cw; smudgePSO = sm; floatPSO = fl
+        stampPSO = s; compositePSO = c; fillPSO = f; mergePSO = mg; clearWetPSO = cw; smudgePSO = sm; floatPSO = fl; carryPSO = ca
         let rp = MTLRenderPipelineDescriptor()
         rp.vertexFunction = lib.makeFunction(name: "drawDisplayVertex")
         rp.fragmentFunction = lib.makeFunction(name: "drawDisplayFragment")
@@ -236,6 +246,7 @@ final class DrawEngine: ObservableObject {
 
     func deleteActiveLayer() {
         guard layers.count > 1, layers.indices.contains(activeIndex) else { return }
+        recordStructure()
         layers.remove(at: activeIndex)
         activeIndex = max(0, activeIndex - 1)
         revision += 1
@@ -245,6 +256,45 @@ final class DrawEngine: ObservableObject {
         guard let l = activeLayer else { return }
         let copy = addLayer(name: l.name + " copy", bytes: bytes(of: l))
         copy?.opacity = l.opacity; copy?.blend = l.blend
+    }
+
+    private func recordStructure(changing layer: DrawLayer? = nil) {
+        record(UndoState(layer: layer?.id, bytes: layer.map { bytes(of: $0) } ?? [], selection: hasSelection ? selectionBytes() : nil,
+                         structure: layers, activeIndex: activeIndex))
+    }
+
+    /// Drag-to-reorder in the layers panel. Indices are stack positions (0 = bottom).
+    func moveLayer(from: Int, to: Int) {
+        guard layers.indices.contains(from), layers.indices.contains(to), from != to else { return }
+        recordStructure()
+        let active = activeLayer?.id
+        let l = layers.remove(at: from)
+        layers.insert(l, at: to)
+        activeIndex = layers.firstIndex { $0.id == active } ?? to
+        revision += 1
+    }
+
+    /// Deletes several layers as one undo step (at least one always stays).
+    func deleteLayers(_ ids: Set<UUID>) {
+        let remaining = layers.filter { !ids.contains($0.id) }
+        guard !remaining.isEmpty, remaining.count != layers.count else { return }
+        recordStructure()
+        let active = activeLayer?.id
+        layers = remaining
+        activeIndex = layers.firstIndex { $0.id == active } ?? layers.count - 1
+        revision += 1
+    }
+
+    /// Merges several layers into the lowest one, in stack order, as one undo step.
+    func mergeLayers(_ ids: Set<UUID>) {
+        let picked = layers.filter { ids.contains($0.id) }
+        guard picked.count > 1, let bottom = picked.first, let cb = queue.makeCommandBuffer() else { return }
+        recordStructure(changing: bottom)
+        for l in picked.dropFirst() where l.visible { composite(l, onto: bottom.texture, clipBase: bottom.texture, cb: cb) }
+        cb.commit(); cb.waitUntilCompleted()
+        layers = layers.filter { $0.id == bottom.id || !ids.contains($0.id) }
+        activeIndex = layers.firstIndex { $0.id == bottom.id } ?? 0
+        revision += 1
     }
 
     func moveActiveLayer(up: Bool) {
@@ -259,7 +309,7 @@ final class DrawEngine: ObservableObject {
     func mergeDown() {
         guard activeIndex > 0, let top = activeLayer else { return }
         let below = layers[activeIndex - 1]
-        pushUndo(below)
+        recordStructure(changing: below)
         guard let cb = queue.makeCommandBuffer() else { return }
         composite(top, onto: below.texture, clipBase: below.texture, cb: cb)
         cb.commit(); cb.waitUntilCompleted()
@@ -320,6 +370,16 @@ final class DrawEngine: ObservableObject {
     }
     private func exchange(_ state: UndoState) -> UndoState? {
         let currentMask = hasSelection ? selectionBytes() : nil
+        if let stack = state.structure {
+            var inverse = UndoState(layer: nil, selection: currentMask, structure: layers, activeIndex: activeIndex)
+            if let id = state.layer, let l = stack.first(where: { $0.id == id }) {
+                inverse.layer = id; inverse.bytes = bytes(of: l)
+                setBytes(state.bytes, of: l)
+            }
+            layers = stack; activeIndex = min(state.activeIndex, stack.count - 1)
+            restoreSelection(state.selection); revision += 1
+            return inverse
+        }
         if let id = state.layer {
             guard let l = layers.first(where: { $0.id == id }) else { return nil }
             let inverse = UndoState(layer: id, bytes: bytes(of: l), selection: currentMask)
@@ -361,7 +421,7 @@ final class DrawEngine: ObservableObject {
         lastPoint = p; smoothed = p; pen = p; lastRaw = p; lastDab = p
         residual = 0
         strokeStart = p; strokeLength = 0; lineDir = nil
-        speed = 0; lastMoveTime = CACurrentMediaTime()
+        speed = 0; lastMoveTime = CACurrentMediaTime(); tipFresh = true
         lastRadius = radiusFor(pressure)
         if strokeMode == .paint, let cb = queue.makeCommandBuffer() {
             if let blit = cb.makeBlitCommandEncoder() { blit.copy(from: l.texture, to: strokeBase); blit.endEncoding() }
@@ -545,6 +605,7 @@ final class DrawEngine: ObservableObject {
 
     /// Smudge and blur read their own previous result, so each dab first copies the box it can sample from.
     private func smudgeBatch(_ dabs: [(SIMD2<Double>, Double)], layer l: DrawLayer) {
+        if strokeMode == .smudge { carryBatch(dabs, layer: l); return }
         guard let snapshot = smudgeSnapshot, let cb = queue.makeCommandBuffer() else { return }
         let tw = smudgePSO.threadExecutionWidth, th = max(1, smudgePSO.maxTotalThreadsPerThreadgroup / tw)
         for (p, r) in dabs {
@@ -571,6 +632,29 @@ final class DrawEngine: ObservableObject {
                                      threadsPerThreadgroup: MTLSize(width: tw, height: th, depth: 1))
             enc.endEncoding()
         }
+        cb.commit()
+    }
+
+    /// Smudge: the tip picks up paint and carries it along the stroke, like a finger through wet paint.
+    private func carryBatch(_ dabs: [(SIMD2<Double>, Double)], layer l: DrawLayer) {
+        guard let tip = smudgeTip, let cb = queue.makeCommandBuffer(), let enc = cb.makeComputeCommandEncoder() else { return }
+        enc.setComputePipelineState(carryPSO)
+        enc.setTexture(l.texture, index: 0); enc.setTexture(tip, index: 1); enc.setTexture(selection, index: 2)
+        let tw = carryPSO.threadExecutionWidth, th = max(1, carryPSO.maxTotalThreadsPerThreadgroup / tw)
+        for (p, r) in dabs {
+            let x0 = max(0, Int(p.x - r - 1)), y0 = max(0, Int(p.y - r - 1))
+            let x1 = min(width, Int(p.x + r + 2)), y1 = min(height, Int(p.y + r + 2))
+            guard x1 > x0, y1 > y0 else { continue }
+            var params = DabParams(color: SIMD4(0, 0, 0, Float(brush.opacity)), dab: SIMD4(Float(p.x), Float(p.y), Float(r), Float(brush.hardness)),
+                                   extra: SIMD4(tipFresh ? 1 : 0, 0, 0, 0),
+                                   region: SIMD4(UInt32(x0), UInt32(y0), UInt32(x1 - x0), UInt32(y1 - y0)))
+            tipFresh = false
+            enc.setBytes(&params, length: MemoryLayout<DabParams>.stride, index: 0)
+            enc.dispatchThreadgroups(MTLSize(width: (x1 - x0 + tw - 1) / tw, height: (y1 - y0 + th - 1) / th, depth: 1),
+                                     threadsPerThreadgroup: MTLSize(width: tw, height: th, depth: 1))
+            enc.memoryBarrier(scope: .textures)
+        }
+        enc.endEncoding()
         cb.commit()
     }
 
@@ -753,7 +837,11 @@ final class DrawEngine: ObservableObject {
     private var quickBefore: [UInt8]?
     var quickTolerance = 0.18
 
-    func beginQuickSelect(at p: SIMD2<Double>, subtract: Bool) {
+    private var quickReach = 120
+
+    /// `reach` limits how far one touch can spread, so a touch on a part never leaks over the whole picture.
+    func beginQuickSelect(at p: SIMD2<Double>, subtract: Bool, reach: Double = 120) {
+        quickReach = max(24, Int(reach))
         quickBefore = hasSelection ? selectionBytes() : nil
         pushSelectionUndo()
         quickPixels = samplePixels()
@@ -774,15 +862,47 @@ final class DrawEngine: ObservableObject {
         quickSeeds.append(p)
         // Already covered: nothing new to flood.
         if !quickSubtract, quickBase[y * width + x] > 200 { return }
-        let region = Self.floodMask(quickPixels, width, height, x, y, quickTolerance, gapClose: 1)
-        for i in quickBase.indices where region[i] > 0 {
+        Self.floodRegion(quickPixels, width, height, seeds: [(x, y)], tolerance: quickTolerance, reach: quickReach) { i in
             quickBase[i] = quickSubtract ? 0 : 255
         }
-        var show = quickBase
-        Self.soften(&show, width, height)
-        selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: show, bytesPerRow: width)
+        selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: quickBase, bytesPerRow: width)
         hasSelection = true
         revision += 1
+    }
+
+    /// Spreads from the seeds through similar colors, inside a box `reach` px around them. Stops at line art and color edges.
+    /// Colors under the seeds set the target; more varied seeds widen the tolerance (shaded or striped parts).
+    static func floodRegion(_ px: [UInt8], _ w: Int, _ h: Int, seeds: [(Int, Int)], tolerance: Double, reach: Int, visit: (Int) -> Void) {
+        let valid = seeds.filter { $0.0 >= 0 && $0.1 >= 0 && $0.0 < w && $0.1 < h }
+        guard !valid.isEmpty else { return }
+        var sum = (0, 0, 0, 0)
+        for (x, y) in valid {
+            let o = (y * w + x) * 4
+            sum.0 += Int(px[o]); sum.1 += Int(px[o + 1]); sum.2 += Int(px[o + 2]); sum.3 += Int(px[o + 3])
+        }
+        let n = valid.count
+        let target = (sum.0 / n, sum.1 / n, sum.2 / n, sum.3 / n)
+        func distance(_ o: Int) -> Int {
+            abs(Int(px[o]) - target.0) + abs(Int(px[o + 1]) - target.1) + abs(Int(px[o + 2]) - target.2) + abs(Int(px[o + 3]) - target.3)
+        }
+        var spread = 0
+        for (x, y) in valid { spread = max(spread, distance((y * w + x) * 4)) }
+        let limit = Int(tolerance * 765) + min(150, spread)
+        let x0 = max(0, valid.map(\.0).min()! - reach), x1 = min(w - 1, valid.map(\.0).max()! + reach)
+        let y0 = max(0, valid.map(\.1).min()! - reach), y1 = min(h - 1, valid.map(\.1).max()! + reach)
+        var seen = [Bool](repeating: false, count: w * h)
+        var stack = valid.map { $0.1 * w + $0.0 }
+        while let i = stack.popLast() {
+            if seen[i] { continue }
+            seen[i] = true
+            if distance(i * 4) > limit { continue }
+            visit(i)
+            let x = i % w, y = i / w
+            if x > x0 { stack.append(i - 1) }
+            if x < x1 { stack.append(i + 1) }
+            if y > y0 { stack.append(i - w) }
+            if y < y1 { stack.append(i + w) }
+        }
     }
 
     func cancelQuickSelect() {
@@ -794,7 +914,11 @@ final class DrawEngine: ObservableObject {
 
     func endQuickSelect() {
         hasSelection = quickBase.contains { $0 > 0 }
-        if !hasSelection { clearSelection() }
+        if hasSelection {
+            var show = quickBase
+            Self.soften(&show, width, height)
+            selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: show, bytesPerRow: width)
+        } else { clearSelection() }
         quickPixels = []
         revision += 1
     }
@@ -1090,6 +1214,81 @@ final class DrawEngine: ObservableObject {
     }
 
     /// Color adjustments / filters on the active layer (Core Image), baked in one undo step.
+    private static let filterContext = CIContext()
+    private let filterQueue = DispatchQueue(label: "awi.draw.filter", qos: .userInteractive)
+    private var filterBase: (layer: DrawLayer, bytes: [UInt8], mask: [UInt8]?, image: CGImage)?
+    private var filterPending: DrawFilter?
+    private var filterBusy = false
+    var isFiltering: Bool { filterBase != nil }
+
+    /// Starts a live filter on the active layer: the canvas updates while the sliders move.
+    func beginFilter() {
+        guard filterBase == nil, let l = activeLayer else { return }
+        let b = bytes(of: l)
+        guard let cg = cgImage(b) else { return }
+        pushUndo(l)
+        filterBase = (l, b, hasSelection ? selectionBytes() : nil, cg)
+    }
+
+    /// Only the newest slider value is rendered, so dragging never queues up work.
+    func updateFilter(_ f: DrawFilter) {
+        guard filterBase != nil else { return }
+        filterPending = f
+        if !filterBusy { renderNextFilter() }
+    }
+
+    private func renderNextFilter() {
+        guard let f = filterPending, let base = filterBase else { filterBusy = false; return }
+        filterPending = nil; filterBusy = true
+        let w = width, h = height
+        filterQueue.async { [weak self] in
+            let out = Self.filtered(base.image, base.bytes, mask: base.mask, f, w, h)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if self.filterBase != nil { self.setBytes(out, of: base.layer) }
+                self.renderNextFilter()
+            }
+        }
+    }
+
+    func commitFilter(_ f: DrawFilter) {
+        guard let base = filterBase else { return }
+        filterPending = nil
+        filterQueue.sync {}
+        setBytes(Self.filtered(base.image, base.bytes, mask: base.mask, f, width, height), of: base.layer)
+        filterBase = nil
+        revision += 1
+    }
+
+    func cancelFilter() {
+        guard let base = filterBase else { return }
+        filterPending = nil
+        filterQueue.sync {}
+        setBytes(base.bytes, of: base.layer)
+        dropLastUndo()
+        filterBase = nil
+        revision += 1
+    }
+
+    private static func filtered(_ cg: CGImage, _ original: [UInt8], mask: [UInt8]?, _ f: DrawFilter, _ w: Int, _ h: Int) -> [UInt8] {
+        let extent = CGRect(x: 0, y: 0, width: w, height: h)
+        var img = CIImage(cgImage: cg)
+        img = img.applyingFilter("CIColorControls", parameters: [kCIInputBrightnessKey: f.brightness, kCIInputContrastKey: f.contrast, kCIInputSaturationKey: f.saturation])
+        if abs(f.hue) > 0.001 { img = img.applyingFilter("CIHueAdjust", parameters: [kCIInputAngleKey: f.hue]) }
+        if f.blur > 0.1 { img = img.clampedToExtent().applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: f.blur]).cropped(to: extent) }
+        if f.sharpen > 0.01 { img = img.applyingFilter("CISharpenLuminance", parameters: [kCIInputSharpnessKey: f.sharpen]).cropped(to: extent) }
+        var out = [UInt8](repeating: 0, count: w * h * 4)
+        filterContext.render(img, toBitmap: &out, rowBytes: w * 4, bounds: extent, format: .RGBA8, colorSpace: CGColorSpaceCreateDeviceRGB())
+        if let mask {
+            // A selection limits the filter.
+            for i in 0..<(w * h) where mask[i] < 255 {
+                let m = Int(mask[i])
+                for c in 0..<4 { out[i * 4 + c] = UInt8((Int(out[i * 4 + c]) * m + Int(original[i * 4 + c]) * (255 - m)) / 255) }
+            }
+        }
+        return out
+    }
+
     func adjustActive(brightness: Double = 0, contrast: Double = 1, saturation: Double = 1, hue: Double = 0, blur: Double = 0) {
         guard let l = activeLayer, let cg = cgImage(bytes(of: l)) else { return }
         pushUndo(l)
@@ -1247,7 +1446,8 @@ final class DrawEngine: ObservableObject {
     }
 
     private func beginSubjectSelection(brush: Bool) {
-        guard let layer = activeLayer, let image = cgImage(bytes(of: layer)) else { return }
+        // Reads the picture you see (or just this layer, with This Layer on).
+        guard let layer = activeLayer, let image = cgImage(samplePixels()) else { return }
         cancelSubjectSelection()
         selectionMessage = nil
         let generation = selectionGeneration, expectedRevision = revision
@@ -1339,15 +1539,36 @@ final class DrawEngine: ObservableObject {
         uploadSelection()
     }
 
-    func endSelectStroke(snapToSubject: Bool) {
+    func endSelectStroke(snapToSubject: Bool, snapToEdges: Bool = false) {
         guard selLast != nil else { return }
         record(UndoState(layer: nil, selection: selBeforeHadSelection ? selBefore : nil))
+        if snapToEdges { snapStrokeToEdges() }
         uploadSelection()
         hasSelection = selBuf.contains { $0 > 0 }
         if !hasSelection { clearSelection() }
         selLast = nil
         revision += 1
         if snapToSubject { beginSubjectSelection(brush: true) }
+    }
+
+    /// The stroke becomes the part it was painted on: spreads to that part's edges and drops what spilled over them.
+    private func snapStrokeToEdges() {
+        let px = samplePixels()
+        // Dense seeds: the color under the whole stroke, not just where touch events landed.
+        var seeds: [(Int, Int)] = []
+        for (a, b) in zip(selStroke, selStroke.dropFirst() + [selStroke.last ?? .zero]) {
+            let steps = max(1, Int(simd_length(b - a) / 3))
+            for k in 0..<steps {
+                let q = a + (b - a) * (Double(k) / Double(steps))
+                seeds.append((Int(q.x), Int(q.y)))
+            }
+        }
+        var out = selBefore
+        Self.floodRegion(px, width, height, seeds: seeds, tolerance: 0.1, reach: Int(selRadius * 2.5)) { i in
+            out[i] = selSubtract ? 0 : 255
+        }
+        Self.soften(&out, width, height)
+        selBuf = out
     }
 
     private func paintSelection(at p: SIMD2<Double>) {
