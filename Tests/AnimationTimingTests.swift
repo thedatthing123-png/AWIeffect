@@ -232,6 +232,20 @@ final class AnimationTimingTests: XCTestCase {
         s.undo(); XCTAssertEqual(s.project.layers, p.layers)
     }
 
+    func testNullTransformEffectCarriesChildRotationAndScaleAsWellAsPosition() throws {
+        var p = scene(); p.layers[0].content = .solid
+        var parent = p.makeLayer(name: "Null",content: .solid,size: Vec2(1,1)); parent.isNull = true
+        var effect = EffectRegistry.transformFX18.makeInstance()
+        effect.params["rotation"] = .number(Animated(90)); effect.params["scale"] = .number(Animated(200))
+        parent.effects = [effect]
+        p.layers[0].parentID = parent.id; p.layers[0].transform.position = Animated(Vec2(10,0)); p.layers.append(parent)
+        let child = Renderer.resolveParenting(p,time: 2).layers[0]
+        XCTAssertEqual(child.transform.rotation.value(at: 2),90,accuracy: 1e-8)
+        XCTAssertEqual(child.transform.scale.value(at: 2),Vec2(200,200))
+        XCTAssertEqual(child.transform.position.value(at: 2).x,64,accuracy: 1e-8)
+        XCTAssertEqual(child.transform.position.value(at: 2).y,84,accuracy: 1e-8)
+    }
+
     @MainActor func testLinkedCameraDragPreservesWorldDirectionAndPairsXYZKeys() throws {
         var p = scene(); p.layers[0].content = .camera; p.layers[0].camera = CameraOptions(); p.layers[0].camera?.affects2D = true
         p.layers[0].transform.position = Animated(Vec2(64,64))

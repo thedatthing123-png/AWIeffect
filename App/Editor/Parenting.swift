@@ -9,8 +9,9 @@ extension Renderer {
     static func parentAffine(_ id: UUID, in p: Project, time: Double, depth: Int = 0) -> (m: simd_double3x3, rot: Double, scale: Vec2)? {
         guard depth < 16, let parent = (p.layers + (p.parentContext ?? [])).first(where: { $0.id == id }) else { return nil }
         let own = layerMatrix(parent, time: time, renderScale: 1)
-        let rot = parent.transform.rotation.value(at: time)
-        let sc = parent.transform.scale.value(at: time) * 0.01
+        let fx = transformOffsets(parent, time: time)
+        let rot = parent.transform.rotation.value(at: time) + fx.dr
+        let sc = parent.transform.scale.value(at: time) * (fx.ds * 0.01)
         // The parent's anchor is its local origin for children (AE behaviour).
         let anc = parent.transform.anchor.value(at: time)
         let toAnchor = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(anc.x, anc.y, 1)))
@@ -27,24 +28,13 @@ extension Renderer {
         guard p.layers.contains(where: { $0.parentID != nil }) else { return p }
         var q = p
         EditorState.unparentKeepingWorld(&q) { _ in true }
-        // Children whose own position is static still move with an animated parent: sample the parent's keys.
-        for i in q.layers.indices {
-            guard let pid = p.layers[i].parentID, let parent = p.layers.first(where: { $0.id == pid }) else { continue }
-            let keyTimes = Set(parent.keyframeTimes + p.layers[i].keyframeTimes).sorted()
-            guard !keyTimes.isEmpty else { continue }
-            var pos = Animated(q.layers[i].transform.position.staticValue), rot = Animated(q.layers[i].transform.rotation.staticValue)
-            var sc = Animated(q.layers[i].transform.scale.staticValue)
-            let fps = max(p.fps, 1)
-            var t = max(0, (keyTimes.first ?? 0) - 1 / fps)
-            let end = min(p.duration, (keyTimes.last ?? 0) + 1 / fps)
-            while t <= end + 1e-9 {
-                let single = resolveParenting(p, time: t).layers[i].transform
-                pos.insertKeyframe(Keyframe(time: t, value: single.position.value(at: t), interpolation: .linear))
-                rot.insertKeyframe(Keyframe(time: t, value: single.rotation.value(at: t), interpolation: .linear))
-                sc.insertKeyframe(Keyframe(time: t, value: single.scale.value(at: t), interpolation: .linear))
-                t += 1 / fps
-            }
-            q.layers[i].transform.position = pos; q.layers[i].transform.rotation = rot; q.layers[i].transform.scale = sc
+        // Reuse the same inherited-motion bake used by Unparent, including ancestors and Z.
+        for i in q.layers.indices where p.layers[i].parentID != nil && parentChainMoves(p.layers[i], in: p) {
+            let baked = detachedMotion(p.layers[i], in: p).transform
+            q.layers[i].transform.position = baked.position
+            q.layers[i].transform.rotation = baked.rotation
+            q.layers[i].transform.scale = baked.scale
+            q.layers[i].transform.positionZ = baked.positionZ
         }
         return q
     }
