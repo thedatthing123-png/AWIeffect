@@ -44,9 +44,6 @@ struct TimeRemapEditor: View {
                 VStack(alignment: .leading, spacing: 14) {
                     if let layer = state.selectedLayer, layer.supportsSourceTiming {
                         if let remap = layer.timeRemap {
-                            Picker("Graph", selection: $speedGraph) {
-                                Text("Source Time").tag(false); Text("Playback Speed").tag(true)
-                            }.pickerStyle(.segmented)
                             plot(layer, remap: remap).frame(height: 220)
                             Text(speedGraph ? "Speed in ×: positive plays forward, zero holds, negative reverses. Change easing to shape speed between keys."
                                  : "Horizontal = composition time; vertical = source time in seconds. Drag a key to change its timing and source frame.")
@@ -88,6 +85,14 @@ struct TimeRemapEditor: View {
                     }
                 }.padding()
             }.scrollDisabled(original != nil)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                // Pinned so scrolled content can't slide the picker under the title.
+                if state.selectedLayer?.timeRemap != nil {
+                    Picker("Graph", selection: $speedGraph) {
+                        Text("Source Time").tag(false); Text("Playback Speed").tag(true)
+                    }.pickerStyle(.segmented).padding(.horizontal).padding(.vertical, 8)
+                }
+            }
             .navigationTitle("Time & Velocity").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
@@ -153,7 +158,7 @@ struct TimeRemapEditor: View {
                                 }.onEnded { _ in original = nil; dragRange = nil; state.endEdit(); AudioPreview.shared.invalidate() })
                     }
                 }
-                VStack { HStack { Text(String(format: "%.2f%@", upper).replacingOccurrences(of: "%@", with: speedGraph ? "×" : "s")); Spacer() }; Spacer()
+                VStack { HStack { Text(String(format: "%.2f", upper) + (speedGraph ? "×" : "s")); Spacer() }; Spacer()
                     HStack { Text(String(format: "%.2f", lower)); Spacer(); Text(String(format: "%.2fs", layer.outPoint)) }
                 }.font(.system(size: 10, design: .monospaced)).foregroundStyle(Theme.textDim).padding(5).allowsHitTesting(false)
             }.coordinateSpace(name: "remapPlot")

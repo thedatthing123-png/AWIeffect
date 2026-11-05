@@ -29,7 +29,11 @@ final class AnimationTimingUITests: XCTestCase {
         center.press(forDuration: 0.1,thenDragTo: center.withOffset(CGVector(dx: 0,dy: -20)))
         XCTAssertFalse(app.buttons["1.000s → 2.000s"].exists, "Dragging the source key must edit its value, not scroll the sheet")
         save("remap-value")
-        app.buttons["Playback Speed"].firstMatch.tap(); save("remap-speed")
+        let speed = app.buttons["Playback Speed"].firstMatch
+        XCTAssertTrue(speed.isHittable, "The graph picker must not sit under the title")
+        speed.tap()
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH 'Speed in'")).firstMatch.waitForExistence(timeout: 3))
+        save("remap-speed")
         let easing = app.buttons["Edit Segment Easing"].firstMatch
         if !easing.isHittable { app.scrollViews.firstMatch.swipeUp() }
         easing.tap()
