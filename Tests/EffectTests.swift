@@ -133,10 +133,29 @@ final class EffectTests: XCTestCase {
         }
     }
 
+    /// Unmult keeps premultiplied color, so it only shows over a background that isn't black.
+    func testUnmultTurnsBlackIntoTransparency() throws {
+        let r = try renderer()
+        func pixel(_ gray: Double, amount: Double, gamma: Double = 1) throws -> [UInt8] {
+            var p = Project.new(name: "unmult", width: 32, height: 32, fps: 30, duration: 1, background: .white)
+            var l = p.makeLayer(name: "light", content: .solid, size: Vec2(32, 32))
+            l.fill = Animated(RGBA(gray, gray, gray))
+            var e = try XCTUnwrap(EffectRegistry.definition("awi11.unmultiply")).makeInstance()
+            e.params["amount"] = .number(Animated(amount)); e.params["gamma"] = .number(Animated(gamma))
+            l.effects = [e]; p.layers = [l]
+            let out = try render(r, p)
+            return Array(out[(16 * 32 + 16) * 4..<(16 * 32 + 16) * 4 + 4])
+        }
+        XCTAssertGreaterThan(try pixel(0, amount: 100)[0], 245, "black is gone: the white background shows")
+        XCTAssertLessThan(try pixel(0, amount: 0)[0], 10, "amount 0 changes nothing")
+        XCTAssertGreaterThan(try pixel(1, amount: 100)[3], 250, "full brightness stays solid")
+        XCTAssertNotEqual(try pixel(0.25, amount: 100, gamma: 0.4)[0], try pixel(0.25, amount: 100, gamma: 2)[0], "gamma shapes the alpha")
+    }
+
     func testEveryEffectChangesTheImage() throws {
         let r = try renderer()
         let base = try render(r, scene(effect: nil))
-        for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" {
+        for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
             let out = try render(r, scene(effect: visible(d), onAdjustment: !d.isTransformEffect && !Self.alphaShaped.contains(d.id)))
             let comparison = d.id == "awi23.drawProgress" ? try render(r, drawingScene(effect: nil)) : (d.category == .text ? try render(r, textScene(effect: nil)) : base)
             XCTAssertGreaterThan(diff(comparison, out), 0.5, "\(d.name) did not visibly change the image")
@@ -147,7 +166,7 @@ final class EffectTests: XCTestCase {
     func testEveryEffectWorksOnAdjustmentLayer() throws {
         let r = try renderer()
         let base = try render(r, scene(effect: nil))
-        for d in EffectRegistry.all where !d.isTransformEffect && !Self.alphaShaped.contains(d.id) && !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" {
+        for d in EffectRegistry.all where !d.isTransformEffect && !Self.alphaShaped.contains(d.id) && !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
             let out = try render(r, scene(effect: visible(d), onAdjustment: true))
             XCTAssertGreaterThan(diff(base, out), 0.5, "\(d.name) did nothing on an adjustment layer")
         }
@@ -171,7 +190,7 @@ final class EffectTests: XCTestCase {
         let modal: Set<String> = ["ae.hueSaturation/colorizeSat", "awi18.negativeFlash/threshold", "awi18.grade/lutStrength", "awi18.transform/x", "awi18.transform/y",
                                    // Whole-number phases line up (loops), and the tile output only shows past the layer bounds.
                                    "awi20.amWaveWarp/phase", "ae.motionTile/outW", "ae.motionTile/outH"]
-        for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" {
+        for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
             for pd in d.params {
                 guard case .number(let lo, let hi, _, _) = pd.kind, !modal.contains("\(d.id)/\(pd.id)") else { continue }
                 var a = visible(d), b = visible(d)
