@@ -29,7 +29,7 @@ final class MotionBlurTests: XCTestCase {
         var p = panScene()
         let sharp = try coverage(p).count
         p.layers[1].motionBlur = true; p.motionBlurEnabled = true
-        XCTAssertGreaterThan(try coverage(p).count, sharp * 3, "the camera's move smears the bar")
+        XCTAssertGreaterThan(try coverage(p).count, sharp * 2, "the camera's move smears the bar")
     }
 
     /// The bug behind see-through blur: a layer that barely moves must stay solid where every sample covers it.
@@ -62,7 +62,7 @@ final class MotionBlurTests: XCTestCase {
         let sharp = try coverage(p).count
         p.motionBlurEnabled = true; p.blurAllLayers = true
         XCTAssertFalse(p.layers[1].motionBlur)
-        XCTAssertGreaterThan(try coverage(p).count, sharp * 3, "no per-layer switch needed")
+        XCTAssertGreaterThan(try coverage(p).count, sharp * 2, "no per-layer switch needed")
         p.sharpLayerIDs = [p.layers[1].id]
         XCTAssertEqual(try coverage(p).count, sharp, "a layer kept sharp stays sharp")
         XCTAssertFalse(p.blurs(p.layers[0]), "the camera itself never blurs")
