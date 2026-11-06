@@ -29,7 +29,7 @@ Rules for every item: read the existing system first, improve what's there befor
 11. **New preset system and previews.** After the effects are done.
 12. **Media and export.** Proxies for heavy footage, high frame rate and HDR clips, quality presets, ProRes and transparent video, exports that match the preview.
 13. **Workflow speed.** Own presets and rigs, templates, fast duplicate and replace.
-14. **Performance pass.** Final optimization. Crashes are fixed whenever they appear, not only here.
+14. **Performance pass.** Build on the existing precomp pre-render (faster to make, never stale after edits, used for heavy 3D). Final optimization. Crashes are fixed whenever they appear, not only here.
 15. **SAM 2 cutout model.** After the app is done; train on saved hand-fixed frames if needed.
 
 ## How effects are chosen
