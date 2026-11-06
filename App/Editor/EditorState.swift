@@ -160,6 +160,8 @@ final class EditorState: ObservableObject {
     @Published var snapGuides = SnapGuides()
     @Published var previewQuality: PreviewQuality = .full
     @Published var orbit = OrbitCamera.home
+    /// A 3D-view handle is being dragged (the view itself must not orbit meanwhile).
+    @Published var orbitHandleDrag = false
     /// Parents of the currently open pre-comp (empty at the top level).
     @Published var compStack: [CompositionEditContext] = []
 

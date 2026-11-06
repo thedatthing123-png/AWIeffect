@@ -365,6 +365,12 @@ struct EditorView: View {
                         ClockReader(clock: state.clock) { t in OrbitGrid(project: lp ?? state.project, orbit: state.orbit, time: t, fit: fit) }
                     }
                     .allowsHitTesting(false)
+                    LiveReader(live: state.live) { lp in
+                        ClockReader(clock: state.clock) { t in
+                            OrbitGizmo(state: state, project: lp ?? state.project, time: t, fit: fit, mode: $gizmoMode)
+                        }
+                    }
+                    VStack { OrbitToolbar(state: state, mode: $gizmoMode); Spacer() }
                 }
                 if state.canvasMode == .comp, !state.cameraView {
                     LiveReader(live: state.live) { lp in
@@ -472,7 +478,10 @@ struct EditorView: View {
                 .onEnded { _ in rotActive = false; finishPinch() }, including: pen == nil && !canvasToolActive ? .all : .subviews)
             .simultaneousGesture(orbitDrag, including: state.canvasMode == .orbit ? .all : .subviews)
             .simultaneousGesture(orbitZoom, including: state.canvasMode == .orbit ? .all : .subviews)
+            .simultaneousGesture(TwoFingerPan(onChange: { t in orbitPan(t, fit: fit) }, onEnd: { orbitPanStart = nil }),
+                                 including: state.canvasMode == .orbit ? .all : .subviews)
             .simultaneousGesture(SpatialTapGesture().onEnded { v in
+                if state.canvasMode == .orbit, pen == nil, !canvasToolActive { state.orbitSelect(at: v.location, fit: fit); return }
                 guard pen == nil && !canvasToolActive && state.canvasMode == .comp else { return }
                 // Link mode: the tapped layer becomes the parent.
                 if state.linkPicking { state.endLinkPick(parent: layerAt(v.location, fit: fit)); return }
@@ -540,6 +549,17 @@ struct EditorView: View {
     }
 
     @State private var orbitStart: OrbitCamera?
+    @State private var orbitPanStart: Vec2?
+    @State private var gizmoMode = GizmoMode.move
+
+    /// Two fingers slide the 3D view (screen movement turned into scene movement at the pivot's distance).
+    private func orbitPan(_ t: CGPoint, fit: CGRect) {
+        if orbitPanStart == nil { orbitPanStart = state.orbit.pan; orbitStart = nil }
+        guard let p = orbitPanStart else { return }
+        let k = state.orbit.distance * Double(state.project.width) / Double(max(1, fit.width))
+        let yaw = state.orbit.yaw * .pi / 180
+        state.orbit.pan = Vec2(p.x - Double(t.x) * k * cos(yaw), p.y - Double(t.y) * k)
+    }
     @State private var puppetDragPin: Int?
     @State private var maskDrag: [Int]?
     @State private var orbitZoomStart: Double?
@@ -548,6 +568,7 @@ struct EditorView: View {
     private var orbitDrag: some Gesture {
         DragGesture(minimumDistance: 2)
             .onChanged { v in
+                guard !state.orbitHandleDrag, orbitPanStart == nil else { orbitStart = nil; return }
                 if orbitStart == nil { orbitStart = state.orbit }
                 guard let o = orbitStart else { return }
                 state.orbit.yaw = o.yaw - Double(v.translation.width) * 0.4
