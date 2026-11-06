@@ -179,7 +179,7 @@ kernel void fxFractalNoise29(texture2d<half, access::sample> src [[texture(0)]],
     v = (v - 0.5) * (p.a.x / 100.0) + 0.5 + p.a.y / 100.0;
     if ((p.i.w & 1u) != 0u) v = 1.0 - v;
     switch (p.i.z) {
-        case 1: v = 0.5 + 0.5 * tanh((v - 0.5) * 2.2); break;                 // soft clamp
+        case 1: v = 0.5 + 0.5 * tanh(clamp((v - 0.5) * 2.2, -8.0, 8.0)); break;                 // soft clamp
         case 2: v = 1.0 - abs(fract(v * 0.5) * 2.0 - 1.0); break;             // wrap back
         case 3: v = clamp(v, 0.0, 16.0); break;                                // allow HDR
         default: v = clamp(v, 0.0, 1.0); break;                                // clip

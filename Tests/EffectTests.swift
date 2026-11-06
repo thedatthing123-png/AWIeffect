@@ -92,6 +92,8 @@ final class EffectTests: XCTestCase {
         case "awi.textSpacing": n("spacing", 25)
         case "awi23.drawProgress": n("end", 45)
         case "awi18.transform": n("x", 25); n("rotation", 20); n("scale", 120)
+        // Lines alone are thin on the small test shapes; on paper the whole look shows.
+        case "awi.inkSketch": n("paper", 1)
         case "awi19.colorSelect":
             // Keep the purple rect: the dark purple background is close in color but not brightness, so the
             // brightness and softness controls decide how much of it stays.
@@ -192,7 +194,9 @@ final class EffectTests: XCTestCase {
                                    "awi20.amWaveWarp/phase", "ae.motionTile/outW", "ae.motionTile/outH",
                                    // Cycle length only applies with Cycle Evolution on; tolerance only in Similar/Dissimilar;
                                    // edge cleaning only touches the few soft key-edge pixels (covered in BackgroundColorRemakeTests).
-                                   "ae.fractalNoise/cycles", "ae.lumaKey/tolerance", "ae.lumaKey/edgeClean"]
+                                   "ae.fractalNoise/cycles", "ae.lumaKey/tolerance", "ae.lumaKey/edgeClean",
+                                   // Same: cycle length only applies with Cycle Evolution on.
+                                   "ae.turbulentDisplace/cycleLen"]
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
             for pd in d.params {
                 guard case .number(let lo, let hi, _, _) = pd.kind, !modal.contains("\(d.id)/\(pd.id)") else { continue }

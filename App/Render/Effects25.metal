@@ -61,7 +61,7 @@ static float4 addLight25(float4 s, float3 g, float burn) {
         float x = m / a;
         float mb = s.a > 1e-5 ? maxc25(s.rgb) / s.a : 0.0;
         float k = clamp(mb, 0.7, 0.98);
-        float y = x <= k ? x : k + (1.0 - k) * tanh((x - k) / (1.0 - k));
+        float y = x <= k ? x : k + (1.0 - k) * tanh(min((x - k) / (1.0 - k), 8.0));
         rgb *= y / x;
         float over = max(x - 1.0, 0.0);
         float w = clamp(burn, 0.0, 1.0) * (1.0 - exp(-over * 0.7));

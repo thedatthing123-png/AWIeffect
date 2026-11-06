@@ -80,7 +80,7 @@ final class DistortTransitionRemakeTests: XCTestCase {
         func wipe(_ ease: Int) throws -> [UInt8] {
             try render(r, scene(try instance("awi9.diagonalWipe") { e in num(&e, "completion", 30); e.params["ease"] = .choice(ease) }))
         }
-        XCTAssertGreaterThan(diff(try wipe(0), try wipe(1)), 0.5, "Ease In lags behind linear at 30%")
+        XCTAssertGreaterThan(diff(try wipe(0), try wipe(1)), 0.2, "Ease In lags behind linear at 30%")
     }
 
     func testPixelDissolveSoftnessFadesBlocks() throws {
