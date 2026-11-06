@@ -345,25 +345,24 @@ extension EffectRegistry {
         summary: "Digital damage: slice offsets, RGB splits and inverted blocks that change every frame.",
         params: [.number("amount", "Amount", 50, 0, 100, unit: "%"), .number("block", "Block Height", 16, 2, 200, unit: "px"),
                  .number("rgb", "RGB Shift", 10, 0, 100, unit: "px"), .number("rate", "Changes / Second", 12, 1, 60)],
-        stage: .pixels { ctx in run("fxGlitch", ctx) { p in
-            p.a = SIMD4(f(ctx.num("amount") / 100), f(ctx.num("block") * ctx.unit), f(ctx.num("rgb") * ctx.unit), f((ctx.time * ctx.num("rate")).rounded(.down)))
-            p.i.x = 0 } })
+        stage: .pixels { ctx in gx(ctx, 0, rate: ctx.num("rate")) { p in
+            p.a = SIMD4(f(ctx.num("amount") / 100), f(ctx.num("block") * ctx.unit), f(ctx.num("rgb") * ctx.unit), 0) } })
 
     static let vhs = EffectDefinition(
         id: "awi.vhs", name: "AWI VHS", category: .stylize, aeMatchNames: ["RG Universe VHS"],
         summary: "Tape look: chroma bleed, wobble, noise and tracking band.",
         params: [.number("amount", "Bleed", 60, 0, 100, unit: "%"), .number("noise", "Noise", 20, 0, 100, unit: "%"),
                  .number("wobble", "Wobble", 30, 0, 100, unit: "%")],
-        stage: .pixels { ctx in run("fxGlitch", ctx) { p in
-            p.a = SIMD4(f(ctx.num("amount") / 100), f(ctx.num("noise") / 100), f(ctx.num("wobble") / 100), f(ctx.time)); p.i.x = 1 } })
+        stage: .pixels { ctx in gx(ctx, 12) { p in
+            p.a = SIMD4(f(ctx.num("amount") / 100), f(ctx.num("noise") / 100), f(ctx.num("wobble") / 100), 0) } })
 
     static let pixelSort = EffectDefinition(
         id: "awi.pixelSort", name: "AWI Pixel Sort", category: .stylize, aeMatchNames: ["Pixel Sorter"],
         summary: "Bright runs of pixels stretch into sorted-looking streaks.",
         params: [.number("threshold", "Threshold", 55, 0, 100, unit: "%"), .number("length", "Length", 120, 1, 1000, unit: "px"),
                  .angle("direction", "Direction", 90)],
-        stage: .pixels { ctx in run("fxPixelSort", ctx) { p in
-            p.a = SIMD4(f(ctx.num("threshold") / 100), f(ctx.num("length") * ctx.unit), f(ctx.num("direction")), 0); p.i.x = 64 } })
+        stage: .pixels { ctx in gx(ctx, 11) { p in
+            p.a = SIMD4(f(ctx.num("threshold") / 100), f(ctx.num("length") * ctx.unit), f(ctx.num("direction") * .pi / 180), 0) } })
 
     static let particles = EffectDefinition(
         id: "awi.particles", name: "AWI Particles", category: .generate, aeMatchNames: ["CC Particle World", "tc Particular"],

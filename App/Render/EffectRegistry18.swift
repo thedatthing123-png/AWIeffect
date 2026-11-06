@@ -205,8 +205,8 @@ extension EffectRegistry {
             .number("rate", "Changes Per Second", 12, 1, 30, step: 1),
             .number("seed", "Random Seed", 1, 0, 1000, step: 1),
         ],
-        stage: .pixels { ctx in run18(ctx, 5) { p in
-            p.a = SIMD4(Float(ctx.num("block") * ctx.unit), Float(ctx.num("chance") / 100), Float(ctx.num("rate")), Float(ctx.num("seed")))
+        stage: .pixels { ctx in gx(ctx, 8, rate: ctx.num("rate"), seed: ctx.num("seed")) { p in
+            p.a = SIMD4(Float(ctx.num("block") * ctx.unit), Float(ctx.num("chance") / 100), 0, 0)
         } })
 
     static let channelSmear18 = EffectDefinition(

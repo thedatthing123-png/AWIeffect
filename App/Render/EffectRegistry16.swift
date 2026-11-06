@@ -259,6 +259,6 @@ extension EffectRegistry {
         summary: "Random horizontal bands get shifted, hue-rotated and channel-swapped, re-rolling over time.",
         params: [px16("band", "Band Height", 12, 2, 60), pct16("amount", "Amount", 50), px16("shift", "Shift", 20, 0, 80),
                  .number("speed", "Speed", 6, 0, 20, step: 0.1)],
-        stage: .pixels { ctx in f16(ctx, 24) { p in
-            p.a = SIMD4(px16(ctx, "band"), n16(ctx, "amount", 0.01), px16(ctx, "shift"), n16(ctx, "speed")) } })
+        stage: .pixels { ctx in gx(ctx, 7, rate: ctx.num("speed")) { p in
+            p.a = SIMD4(px16(ctx, "band"), n16(ctx, "amount", 0.01), px16(ctx, "shift"), 0) } })
 }

@@ -104,8 +104,8 @@ extension EffectRegistry {
         id: "awi13.jpegArtifacts", name: "JPEG Artifacts", category: .stylize, aeMatchNames: [],
         summary: "Over-compressed look: blocky quantization, ringing and smeared chroma.",
         params: [pct13("quality", "Quality", 15), .number("block", "Block Size", 8, 4, 32, unit: "px")],
-        stage: .pixels { ctx in f13(ctx, 10) { p in
-            p.a = SIMD4(n13(ctx, "quality", 0.01), px13(ctx, "block"), 0, 0) } })
+        stage: .pixels { ctx in gx(ctx, 5) { p in
+            p.a = SIMD4(1 - n13(ctx, "quality", 0.01), px13(ctx, "block"), px13(ctx, "block") * 0.5, 0) } })
 
     static let bitCrush13 = EffectDefinition(
         id: "awi13.bitCrush", name: "Bit Crush", category: .stylize, aeMatchNames: [],
@@ -118,7 +118,7 @@ extension EffectRegistry {
         id: "awi13.teletext", name: "Teletext Mosaic", category: .stylize, aeMatchNames: [],
         summary: "Broadcast teletext look: 2x3 block graphics in the 8-color palette.",
         params: [.number("cell", "Cell Width", 8, 2, 40, unit: "px"), pct13("threshold", "Threshold", 50)],
-        stage: .pixels { ctx in f13(ctx, 16) { p in
+        stage: .pixels { ctx in gx(ctx, 6) { p in
             p.a = SIMD4(px13(ctx, "cell"), n13(ctx, "threshold", 0.01), 0, 0) } })
 
     static let thermalPrinter13 = EffectDefinition(

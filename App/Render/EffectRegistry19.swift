@@ -55,28 +55,37 @@ extension EffectRegistry {
                          margin: margin, stage: .pixels { ctx in glitch(ctx, mode) { fill(ctx, &$0) } })
     }
 
+    /// Same as `g`, but the effect runs on the shared glitch engine (Effects24.metal).
+    private static func gEngine(_ id: String, _ name: String, _ summary: String, _ params: [ParamDef], margin: @escaping (EffectInstance, Double) -> Double = { _, _ in 0 },
+                                _ mode: UInt32, option: UInt32 = 0, _ fill: @escaping (EffectContext, inout EffectParams) -> Void) -> EffectDefinition {
+        EffectDefinition(id: "awi19." + id, name: name, category: .glitch, aeMatchNames: [], summary: summary, params: params + timing,
+                         margin: margin, stage: .pixels { ctx in
+                             gx(ctx, mode, rate: 12, seed: ctx.num("seed"), burst: gxBurst(ctx), option: option) { fill(ctx, &$0) } })
+    }
+
     static let sliceGlitch19 = g("slice", "Slice Glitch", "Horizontal slices jump sideways with a color split, in bursts.",
         [.number("offset", "Slice Offset", 60, 0, 400, unit: "px"), .number("slices", "Slices", 16, 2, 80, step: 1), .number("rgb", "RGB Split", 10, 0, 80, unit: "px")],
         margin: { e, t in e.number("offset", t) }, 0) { ctx, p in
         p.a = SIMD4(Float(ctx.num("offset") * ctx.unit), Float(ctx.num("slices")), Float(ctx.num("rgb") * ctx.unit), 0)
     }
 
-    static let datamosh19 = g("datamosh", "Datamosh", "Blocks smear their pixels along a motion field and freeze like broken video compression.",
+    static let datamosh19 = gEngine("datamosh", "Datamosh", "Blocks smear their pixels along a motion field and freeze like broken video compression.",
         [.number("smear", "Smear", 40, 0, 300, unit: "px"), .number("block", "Block Size", 16, 4, 80, step: 1, unit: "px"), .number("stuck", "Frozen Blocks", 40, 0, 100, unit: "%")],
-        margin: { e, t in e.number("smear", t) }, 1) { ctx, p in
-        p.a = SIMD4(Float(ctx.num("smear") * ctx.unit), Float(ctx.num("block") * ctx.unit), Float(ctx.num("stuck") / 100), 0)
+        margin: { e, t in e.number("smear", t) }, 4, option: 1) { ctx, p in
+        p.a = SIMD4(Float(ctx.num("smear") * ctx.unit), Float(ctx.num("block") * ctx.unit), 1, 0)
+        p.b.x = Float(ctx.num("stuck") / 100)
     }
 
-    static let pixelSort19 = g("pixelSort", "Pixel Sort", "Bright runs of pixels stretch into streaks along a direction.",
+    static let pixelSort19 = gEngine("pixelSort", "Pixel Sort", "Bright runs of pixels stretch into streaks along a direction.",
         [.number("streak", "Streak Length", 60, 0, 400, unit: "px"), .number("threshold", "Brightness Threshold", 45, 0, 100, unit: "%"), .angle("angle", "Direction", 90)],
-        margin: { e, t in e.number("streak", t) }, 2) { ctx, p in
-        p.a = SIMD4(Float(ctx.num("streak") * ctx.unit), Float(ctx.num("threshold") / 100), Float(ctx.num("angle") * .pi / 180), 0)
+        margin: { e, t in e.number("streak", t) }, 11) { ctx, p in
+        p.a = SIMD4(Float(ctx.num("threshold") / 100), Float(ctx.num("streak") * ctx.unit), Float(ctx.num("angle") * .pi / 180), 0)
     }
 
-    static let jpeg19 = g("jpeg", "JPEG Corruption", "Blocky compression damage, ringing, color bleed and hue-shifted blocks.",
+    static let jpeg19 = gEngine("jpeg", "JPEG Corruption", "Blocky compression damage, ringing, color bleed and hue-shifted blocks.",
         [.number("damage", "Damage", 70, 0, 100, unit: "%"), .number("block", "Block Size", 8, 2, 48, step: 1, unit: "px"), .number("bleed", "Color Bleed", 8, 0, 60, unit: "px")],
-        margin: { e, t in e.number("bleed", t) }, 3) { ctx, p in
-        p.a = SIMD4(Float(ctx.num("damage") / 100), Float(ctx.num("block") * ctx.unit), Float(ctx.num("bleed") * ctx.unit), 0)
+        margin: { e, t in e.number("bleed", t) }, 5) { ctx, p in
+        p.a = SIMD4(Float(ctx.num("damage") / 100), Float(ctx.num("block") * ctx.unit), Float(ctx.num("bleed") * ctx.unit), 1)
     }
 
     static let vhsTracking19 = g("vhs", "VHS Tracking", "A rolling tracking band warps the picture, with chroma bleed, tape noise and bright tape lines.",
@@ -87,9 +96,9 @@ extension EffectRegistry {
         p.c.x = Float(ctx.num("bleed") * ctx.unit)
     }
 
-    static let signalLoss19 = g("signalLoss", "Signal Loss", "The picture drops into static and color bars, then snaps back.",
-        [.number("static", "Static", 70, 0, 100, unit: "%"), .number("bars", "Color Bars", 30, 0, 100, unit: "%"), .number("drop", "Drop Strength", 80, 0, 100, unit: "%")],
-        5) { ctx, p in
+    static let signalLoss19 = gEngine("signalLoss", "Signal Loss", "The signal slips: lines lose sync, the picture rolls and drops into gray static, then snaps back.",
+        [.number("static", "Static", 70, 0, 100, unit: "%"), .number("bars", "Sync Bars", 30, 0, 100, unit: "%"), .number("drop", "Drop Strength", 80, 0, 100, unit: "%")],
+        9) { ctx, p in
         p.a = SIMD4(Float(ctx.num("static") / 100), Float(ctx.num("bars") / 100), Float(ctx.num("drop") / 100), 0)
     }
 
@@ -99,9 +108,9 @@ extension EffectRegistry {
         p.a = SIMD4(Float(ctx.num("split") * ctx.unit), Float(ctx.num("wobble") * ctx.unit), Float(ctx.num("scan") / 100), 0)
     }
 
-    static let blockCorrupt19 = g("blockCorrupt", "Block Corruption", "Blocks fill with frozen pixels and wrong colors.",
+    static let blockCorrupt19 = gEngine("blockCorrupt", "Block Corruption", "Codec blocks of mixed sizes freeze, smear, slip and swap colors.",
         [.number("amount", "Amount", 60, 0, 100, unit: "%"), .number("block", "Block Size", 18, 4, 100, step: 1, unit: "px"), .number("shift", "Color Shift", 60, 0, 100, unit: "%")],
-        7) { ctx, p in
+        10) { ctx, p in
         p.a = SIMD4(Float(ctx.num("amount") / 100), Float(ctx.num("block") * ctx.unit), Float(ctx.num("shift") / 100), 0)
     }
 

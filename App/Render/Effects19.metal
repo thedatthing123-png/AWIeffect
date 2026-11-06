@@ -173,7 +173,8 @@ kernel void fx19(texture2d<half, access::sample> src [[texture(0)]],
         if (r < f * 0.5) local.x = tile.x - local.x;
         else if (r < f) local.y = tile.y - local.y;
         float2 sh = (float2(h192(id * 2.0 + fr), h192(id * 3.0 + fr)) - 0.5) * p.a.z * k * step(0.6, r);
-        o = S(src, id * tile + local + sh);
+        // Stay inside the tile so shifted tiles never open black gaps.
+        o = S(src, id * tile + clamp(local + sh, float2(0.5), tile - 0.5));
         break; }
     case 10: {
         // Slit Scan: a = (stretch px, frequency, speed, angle rad) — rows slide by a traveling wave.

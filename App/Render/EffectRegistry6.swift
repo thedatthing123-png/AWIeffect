@@ -168,9 +168,8 @@ extension EffectRegistry {
         params: [.number("amount", "Displacement", 20, 0, 100, unit: "px"), .number("block", "Block Size", 14, 3, 120, unit: "px"),
                  .number("probability", "Amount of Blocks", 40, 0, 100, unit: "%"), .number("rate", "Rate", 8, 0, 30, step: 0.5, unit: "fps"),
                  .number("split", "RGB Split", 4, 0, 30, unit: "px"), .number("seed", "Random Seed", 1, 0, 100, step: 1)],
-        stage: .pixels { ctx in d6(ctx, 14) { p in
-            p.a = SIMD4(px6(ctx, "amount"), px6(ctx, "block"), n6(ctx, "probability", 0.01), n6(ctx, "rate"))
-            p.c = SIMD4(n6(ctx, "seed"), px6(ctx, "split"), 0, 0) } })
+        stage: .pixels { ctx in gx(ctx, 1, rate: ctx.num("rate"), seed: ctx.num("seed")) { p in
+            p.a = SIMD4(px6(ctx, "amount"), px6(ctx, "block"), n6(ctx, "probability", 0.01), px6(ctx, "split")) } })
 
     static let glitchLines6 = EffectDefinition(
         id: "awi6.glitchLines", name: "Glitch Lines", category: .stylize, aeMatchNames: [],
@@ -178,17 +177,16 @@ extension EffectRegistry {
         params: [.number("amount", "Tear", 25, 0, 120, unit: "px"), .number("height", "Line Height", 3, 1, 40, unit: "px"),
                  .number("density", "Density", 50, 0, 100, unit: "%"), .number("rate", "Rate", 10, 0, 30, step: 0.5, unit: "fps"),
                  .number("chroma", "Color Shift", 3, 0, 20, unit: "px"), .number("seed", "Random Seed", 1, 0, 100, step: 1)],
-        stage: .pixels { ctx in d6(ctx, 15) { p in
-            p.a = SIMD4(px6(ctx, "amount"), px6(ctx, "height"), n6(ctx, "density", 0.01), n6(ctx, "rate"))
-            p.c = SIMD4(n6(ctx, "seed"), px6(ctx, "chroma"), 0, 0) } })
+        stage: .pixels { ctx in gx(ctx, 2, rate: ctx.num("rate"), seed: ctx.num("seed")) { p in
+            p.a = SIMD4(px6(ctx, "amount"), px6(ctx, "height"), n6(ctx, "density", 0.01), px6(ctx, "chroma")) } })
 
     static let digitalNoise6 = EffectDefinition(
         id: "awi6.digitalNoise", name: "Digital Noise Glitch", category: .stylize, aeMatchNames: [],
         summary: "Corrupted-signal zones of posterized pixel noise and sparks.",
         params: [.number("intensity", "Intensity", 50, 0, 100, unit: "%"), .number("block", "Pixel Size", 5, 1, 40, unit: "px"),
                  .number("rate", "Rate", 12, 0, 30, step: 0.5, unit: "fps"), .number("seed", "Random Seed", 1, 0, 100, step: 1)],
-        stage: .pixels { ctx in d6(ctx, 16) { p in
-            p.a = SIMD4(n6(ctx, "intensity", 0.01), px6(ctx, "block"), n6(ctx, "rate"), n6(ctx, "seed")) } })
+        stage: .pixels { ctx in gx(ctx, 3, rate: ctx.num("rate"), seed: ctx.num("seed")) { p in
+            p.a = SIMD4(n6(ctx, "intensity", 0.01), px6(ctx, "block"), 0, 0) } })
 
     static let datamosh6 = EffectDefinition(
         id: "awi6.datamosh", name: "Datamosh Smear", category: .stylize, aeMatchNames: [],
@@ -196,8 +194,8 @@ extension EffectRegistry {
         params: [.number("length", "Smear Length", 30, 0, 200, unit: "px"), .angle("angle", "Direction", 0),
                  .number("block", "Block Size", 16, 2, 100, unit: "px"), .number("chaos", "Chaos", 50, 0, 100, unit: "%"),
                  .number("seed", "Random Seed", 1, 0, 100, step: 1)],
-        stage: .pixels { ctx in d6(ctx, 17) { p in
-            p.a = SIMD4(px6(ctx, "length"), rad6(ctx, "angle"), px6(ctx, "block"), n6(ctx, "chaos", 0.01)); p.c.x = n6(ctx, "seed") } })
+        stage: .pixels { ctx in gx(ctx, 4, rate: 12, seed: ctx.num("seed")) { p in
+            p.a = SIMD4(px6(ctx, "length"), px6(ctx, "block"), n6(ctx, "chaos", 0.01), rad6(ctx, "angle")); p.b.x = 0.3 } })
 
     static let pixelStretch6 = EffectDefinition(
         id: "awi6.pixelStretch", name: "Pixel Stretch", category: .stylize, aeMatchNames: [],
@@ -241,9 +239,9 @@ extension EffectRegistry {
         params: [.number("strength", "Strength", 10, 0, 60, unit: "px"), .number("bands", "Bands", 4, 0.5, 30, step: 0.1),
                  .number("speed", "Speed", 1, 0, 10, step: 0.05), .number("chroma", "Color Shift", 3, 0, 20, unit: "px"),
                  .number("noise", "Line Noise", 20, 0, 100, unit: "%"), .number("seed", "Random Seed", 1, 0, 100, step: 1)],
-        stage: .pixels { ctx in d6(ctx, 22) { p in
+        stage: .pixels { ctx in gx(ctx, 13, seed: ctx.num("seed")) { p in
             p.a = SIMD4(px6(ctx, "strength"), n6(ctx, "bands"), n6(ctx, "speed"), px6(ctx, "chroma"))
-            p.b.x = n6(ctx, "noise", 0.01); p.c.x = n6(ctx, "seed") } })
+            p.b.x = n6(ctx, "noise", 0.01) } })
 
     static let scanDistort6 = EffectDefinition(
         id: "awi6.scanDistort", name: "Scan Distort", category: .stylize, aeMatchNames: [],
