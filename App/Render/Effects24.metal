@@ -356,3 +356,29 @@ kernel void fxGX(texture2d<half, access::sample> src [[texture(0)]],
     }
     dst.write(half4(o), gid);
 }
+
+
+/// Inner Glow: light that comes in from the layer's edges, frame edges included (outside the layer counts as
+/// edge, so a full-frame layer glows from the borders). textures: 0 src, 1 dst, 2 blurred alpha of the layer.
+/// a = (intensity, choke 0-1, blend 0 add / 1 screen / 2 normal, -), b = color (straight)
+kernel void fxInnerGlow24(texture2d<half, access::sample> src [[texture(0)]],
+                          texture2d<half, access::write> dst [[texture(1)]],
+                          texture2d<half, access::sample> blurred [[texture(2)]],
+                          constant EffectParams& p [[buffer(0)]],
+                          uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    constexpr sampler z(address::clamp_to_zero, filter::linear, coord::pixel);
+    float2 c = float2(gid) + 0.5;
+    float4 s = float4(src.sample(z, c));
+    float2 bs = float2(blurred.get_width(), blurred.get_height()) / float2(dst.get_width(), dst.get_height());
+    float inside = float(blurred.sample(z, c * bs).a);
+    // 1 at the edge, fading inward. Choke pushes the solid part of the glow further in.
+    float edge = clamp((1.0 - inside) / max(1.0 - p.a.y * 0.95, 0.05), 0.0, 1.0);
+    float g = clamp(edge * p.a.x, 0.0, 1.0) * s.a;
+    float3 col = p.b.rgb * g;
+    float3 rgb;
+    if (p.a.z < 0.5) rgb = s.rgb + col;
+    else if (p.a.z < 1.5) rgb = s.rgb + col - s.rgb * col / max(s.a, 1e-4);
+    else rgb = mix(s.rgb, p.b.rgb * s.a, g / max(s.a, 1e-4));
+    dst.write(half4(float4(min(rgb, float3(s.a)), s.a)), gid);
+}

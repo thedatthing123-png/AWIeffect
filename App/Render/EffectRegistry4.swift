@@ -116,14 +116,21 @@ extension EffectRegistry {
 
     static let innerGlow = EffectDefinition(
         id: "awi.innerGlow", name: "Inner Glow", category: .stylize, aeMatchNames: [],
-        summary: "Light glowing inward from the layer's edges.",
+        summary: "Light glowing inward from the layer's edges (the frame's edges too, for full-frame layers).",
         params: [.color("color", "Color", RGBA(hex: 0xFFF2B0)), .number("size", "Size", 20, 0, 300, unit: "px"),
-                 .number("intensity", "Intensity", 1, 0, 6, step: 0.01)],
+                 .number("intensity", "Intensity", 1, 0, 6, step: 0.01),
+                 .number("choke", "Choke", 0, 0, 100, unit: "%"),
+                 .choice("blend", "Blend", ["Add", "Screen", "Normal"], 0)],
         stage: .pixels { ctx in
-            let outside = g4(ctx, 2, src: ctx.input, side: 1) { p in p.a.x = 1; p.b = ctx.effect.color("color", ctx.time).simd }
-            let blur = ctx.gpu.gaussian(ctx, input: outside, sigma: max(0.5, ctx.num("size") * ctx.unit / 2))
-            let inner = g4(ctx, 4, src: blur, aux: ctx.input)
-            return g4(ctx, 1, src: ctx.input, aux: inner) { $0.a.x = Float(ctx.num("intensity")) }
+            // Blur the layer's own shape with transparent surroundings: near any edge it drops below full.
+            let shape = g4(ctx, 2, src: ctx.input) { p in p.a.x = 1; p.b = SIMD4(1, 1, 1, 1) }
+            let blur = ctx.gpu.gaussian(ctx, input: shape, sigma: max(0.5, ctx.num("size") * ctx.unit / 2))
+            let out = ctx.temp()
+            var p = EffectParams()
+            p.a = SIMD4(Float(ctx.num("intensity")), Float(ctx.num("choke") / 100), Float(max(0, ctx.effect.choice("blend"))), 0)
+            p.b = ctx.effect.color("color", ctx.time).simd
+            ctx.gpu.run("fxInnerGlow24", ctx.cb, textures: [ctx.input, out, blur], params: p, grid: out)
+            return out
         })
 
     static let border = EffectDefinition(
