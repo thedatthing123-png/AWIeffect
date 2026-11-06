@@ -86,7 +86,7 @@ extension EffectRegistry {
         p.b = SIMD4(pc29(ctx, "subInfluence"), pc29(ctx, "subScaling"), Float(evo), Float(v29(ctx, "rotation") * .pi / 180))
         p.c = SIMD4(Float(ox), Float(oy), Float(v29(ctx, "subRotation") * .pi / 180), pc29(ctx, "opacity"))
         p.d = SIMD4(px29(ctx, "subOffsetX"), px29(ctx, "subOffsetY"), Float(cycles), Float(sh / sw))
-        let flags = (b29(ctx, "invert") ? 1 : 0) | (b29(ctx, "keepAlpha") ? 2 : 0) | (UInt32(ch29(ctx, "blend")) << 8)
+        let flags: UInt32 = (b29(ctx, "invert") ? UInt32(1) : 0) | (b29(ctx, "keepAlpha") ? UInt32(2) : 0) | (UInt32(ch29(ctx, "blend")) << 8)
         p.i = SIMD4(UInt32(ch29(ctx, "type")), UInt32(ch29(ctx, "noiseType")), UInt32(ch29(ctx, "overflow")), UInt32(flags))
         ctx.gpu.run("fxFractalNoise29", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
         return out

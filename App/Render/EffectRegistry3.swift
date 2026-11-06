@@ -369,7 +369,7 @@ extension EffectRegistry {
         stage: .pixels { ctx in key29(ctx, 0) { p in
             p.a = SIMD4(pc29(ctx, "threshold"), pc29(ctx, "tolerance"), Float(max(0.005, v29(ctx, "feather") / 100)), pc29(ctx, "edgeClean"))
             p.i.y = UInt32(ch29(ctx, "type"))
-            p.i.z = (b29(ctx, "invert") ? 1 : 0) | (b29(ctx, "viewMatte") ? 2 : 0) } })
+            p.i.z = (b29(ctx, "invert") ? UInt32(1) : 0) | (b29(ctx, "viewMatte") ? UInt32(2) : 0) } })
 }
 
 /// 4-point homography solver (for Corner Pin).

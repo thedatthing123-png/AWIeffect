@@ -217,7 +217,7 @@ extension EffectRegistry {
             var h = ctx.num("hue").truncatingRemainder(dividingBy: 360); if h < 0 { h += 360 }
             p.a = SIMD4(Float(h), Float(ctx.num("width")), Float(ctx.num("satMin") / 100), Float(ctx.num("valMin") / 100))
             p.b = SIMD4(f29(ctx, "softness"), pc29(ctx, "spill"), 0, 0)
-            p.i.z = (ctx.effect.bool("invert") ? 1 : 0) | (b29(ctx, "viewMatte") ? 2 : 0) } })
+            p.i.z = (ctx.effect.bool("invert") ? UInt32(1) : 0) | (b29(ctx, "viewMatte") ? UInt32(2) : 0) } })
 
     static let lumaMatteSoft11 = EffectDefinition(
         id: "awi11.lumaMatteSoft", name: "Luma Matte Soft", category: .keying, aeMatchNames: [],
