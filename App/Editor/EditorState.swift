@@ -157,6 +157,8 @@ final class EditorState: ObservableObject {
     @Published var keyClipboard: KeyClipboard?
     /// Effect stack copied with "Copy Effects" (pasted onto any layer).
     @Published var effectClipboard: [EffectInstance] = []
+    /// Where the copied effects' layer started, so pasted keyframes keep their place relative to the new layer.
+    var effectClipboardStart = 0.0
     @Published var snapGuides = SnapGuides()
     @Published var previewQuality: PreviewQuality = .full
     @Published var orbit = OrbitCamera.home
@@ -456,13 +458,24 @@ final class EditorState: ObservableObject {
     func copyEffects(_ ids: [UUID]? = nil) {
         guard let l = selectedLayer else { return }
         effectClipboard = ids.map { set in l.effects.filter { set.contains($0.id) } } ?? l.effects
+        effectClipboardStart = l.inPoint
         UINotificationFeedbackGenerator().notificationOccurred(.success)
     }
 
     func pasteEffects() {
         guard let i = selectedIndex, !effectClipboard.isEmpty else { return }
         let items = effectClipboard.map { e -> EffectInstance in var c = e; c.id = UUID(); return c }
-        mutate(items.count == 1 ? "Paste Effect" : "Paste \(items.count) Effects") { $0.layers[i].effects.append(contentsOf: items) }
+        // Keyframes move with the effect: a key 0.5 s into the copied layer lands 0.5 s into this one.
+        let delta = project.layers[i].inPoint - effectClipboardStart
+        mutate(items.count == 1 ? "Paste Effect" : "Paste \(items.count) Effects") { p in
+            var carrier = p.layers[i]
+            carrier.effects = items
+            if abs(delta) > 1e-9 {
+                var shift = AnimationTraversal(operation: .shift(delta))
+                carrier.traverseAnimations(&shift)
+            }
+            p.layers[i].effects.append(contentsOf: carrier.effects)
+        }
     }
 
     func duplicateEffect(_ id: UUID) {
