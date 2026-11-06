@@ -110,10 +110,17 @@ extension EffectRegistry {
 
     static let lensFlare = EffectDefinition(
         id: "ae.lensFlare", name: "Lens Flare", category: .generate, aeMatchNames: ["ADBE Lens Flare"],
-        summary: "Bright flare with ring, ghosts and streak.",
-        params: [.point("center", "Flare Center", Vec2(0.3, 0.3), ae: 1), .number("brightness", "Flare Brightness", 100, 0, 300, unit: "%", ae: 2)],
-        stage: .pixels { ctx in k("fxGenerate", 6, ctx) { p in
-            let c = px(ctx, ctx.effect.point("center", ctx.time)); p.a = SIMD4(c.x, c.y, f(ctx.num("brightness")), 0) } })
+        summary: "Photographic lens flare: hot core, shimmering starburst, chromatic halo ring, anamorphic streak and ghosts along the lens axis (move the center to animate).",
+        params: [.point("center", "Flare Center", Vec2(0.3, 0.3), ae: 1), .number("brightness", "Flare Brightness", 100, 0, 300, unit: "%", ae: 2),
+                 .number("scale", "Flare Scale", 100, 20, 400, unit: "%"), .color("color", "Flare Color", RGBA(1, 0.88, 0.7)),
+                 .number("ghosts", "Ghosts", 100, 0, 300, unit: "%"), .number("streak", "Streak", 100, 0, 300, unit: "%"),
+                 .number("rays", "Starburst", 100, 0, 300, unit: "%"), .number("halo", "Halo Ring", 100, 0, 300, unit: "%")],
+        stage: .pixels { ctx in lightGen25(ctx, 1) { p in
+            let c = px(ctx, ctx.effect.point("center", ctx.time))
+            p.a = SIMD4(c.x, c.y, Float(ctx.num("brightness") / 100), Float(opt25(ctx, "scale", 100) / 100))
+            p.b = optColor25(ctx, "color", RGBA(1, 0.88, 0.7))
+            p.c = SIMD4(Float(opt25(ctx, "ghosts", 100) / 100), Float(opt25(ctx, "streak", 100) / 100),
+                        Float(opt25(ctx, "rays", 100) / 100), Float(opt25(ctx, "halo", 100) / 100)) } })
 
     // MARK: Stylize
 

@@ -18,15 +18,13 @@ extension EffectRegistry {
         return out
     }
 
-    /// Additive glow: the edge light blurred at a few radii (tight core + wide bloom), added onto `base`.
+    /// Additive glow: the edge light plus blurs at a few radii (tight core + wide bloom), summed and added onto
+    /// `base` with the hue-keeping light limit (Effects25), so stacked radii keep the glow color instead of clipping to white.
     private static func bloom(_ ctx: EffectContext, base: MTLTexture, light: MTLTexture, size: Double, gain: Double) -> MTLTexture {
-        var out = g4(ctx, 1, src: base, aux: light) { $0.a.x = Float(gain) }
-        guard size > 0.5 else { return out }
-        for (k, frac) in [0.12, 0.4, 1.0].enumerated() {
-            let g = ctx.gpu.gaussian(ctx, input: light, sigma: max(0.6, size * frac / 2))
-            out = g4(ctx, 1, src: out, aux: g) { $0.a.x = Float(gain * [1.0, 0.8, 0.6][k]) }
-        }
-        return out
+        guard size > 0.5 else { return lightComp25(ctx, base: base, glow: light, intensity: gain, burn: 0.2) }
+        let levels = [0.12, 0.4, 1.0].map { ctx.gpu.gaussian(ctx, input: light, sigma: max(0.6, size * $0 / 2)) }
+        let sum = lightSum25(ctx, [light] + levels, [1.0, 1.0, 0.8, 0.6])
+        return lightComp25(ctx, base: base, glow: sum, intensity: gain, burn: 0.2)
     }
 
     private static func cleared(_ ctx: EffectContext) -> MTLTexture {
@@ -103,15 +101,16 @@ extension EffectRegistry {
 
     static let outerGlow = EffectDefinition(
         id: "awi.outerGlow", name: "Outer Glow", category: .stylize, aeMatchNames: [],
-        summary: "Soft colored halo around the layer (Photoshop layer style).",
+        summary: "Colored light around the layer's outline: bright right at the edge, falling off smoothly outward, keeping its color.",
         params: [.color("color", "Color", RGBA(hex: 0xFF5CA8)), .number("size", "Size", 30, 0, 400, unit: "px"),
-                 .number("intensity", "Intensity", 1.2, 0, 6, step: 0.01), .number("spread", "Spread", 0, 0, 100, unit: "%")],
+                 .number("intensity", "Intensity", 1.2, 0, 6, step: 0.01), .number("spread", "Spread", 0, 0, 100, unit: "%"),
+                 .number("falloff", "Falloff", 50, 0, 100, unit: "%")],
         margin: { e, t in e.number("size", t) * 1.5 },
         stage: .pixels { ctx in
-            let solid = g4(ctx, 2, src: ctx.input) { p in p.a.x = Float(1 + ctx.num("spread") / 25); p.b = ctx.effect.color("color", ctx.time).simd }
-            let blur = ctx.gpu.gaussian(ctx, input: solid, sigma: max(0.5, ctx.num("size") * ctx.unit / 2))
-            let halo = g4(ctx, 4, src: blur, aux: ctx.input, side: 1)
-            return g4(ctx, 1, src: ctx.input, aux: halo) { $0.a.x = Float(ctx.num("intensity")) }
+            let col = ctx.effect.color("color", ctx.time).simd
+            let solid = lightPrep25(ctx, source: .solid, threshold: 0.02, knee: 0.04, gain: 1 + ctx.num("spread") / 25, tint: col)
+            let g = lightBloom25(ctx, solid, radius: ctx.num("size") * ctx.unit, falloff: opt25(ctx, "falloff", 50) / 100)
+            return lightComp25(ctx, base: ctx.input, glow: g, intensity: ctx.num("intensity"), burn: 0.1, mask: .outside)
         })
 
     static let innerGlow = EffectDefinition(

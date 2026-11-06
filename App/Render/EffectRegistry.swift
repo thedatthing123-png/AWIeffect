@@ -456,7 +456,7 @@ enum EffectRegistry {
     static let glow = EffectDefinition(
         id: "ae.glow", name: "Glow", category: .color,
         aeMatchNames: ["ADBE Glo2", "ADBE Glow"],
-        summary: "Finds bright areas and makes them glow (multi-radius, HDR).",
+        summary: "Only the bright parts emit light: a tight core plus a wide falloff halo that keeps its color instead of blowing out to white.",
         params: [
             .choice("basedOn", "Glow Based On", ["Color Channels", "Alpha Channel"], 0, ae: 1),
             .number("threshold", "Glow Threshold", 60, 0, 100, unit: "%", ae: 2),
@@ -467,33 +467,20 @@ enum EffectRegistry {
             .choice("colors", "Glow Colors", ["Original Colors", "A & B Colors"], 0, ae: 7),
             .color("colorA", "Color A", .white, ae: 11),
             .color("colorB", "Color B", RGBA(hex: 0x9B5CFF), ae: 12),
+            .number("falloff", "Halo Falloff", 40, 0, 100, unit: "%"),
+            .number("burn", "Hot Core", 30, 0, 100, unit: "%"),
         ],
         margin: { e, t in e.number("radius", t) * 2 },
         stage: .pixels { ctx in
-            var tp = EffectParams()
-            tp.a = SIMD4(Float(ctx.num("threshold") / 100), 0.05, 0, 0)
-            tp.i.x = UInt32(ctx.effect.choice("basedOn"))
-            let bright = ctx.temp()
-            ctx.gpu.run("fxGlowThreshold", ctx.cb, textures: [ctx.input, bright], params: tp, grid: bright)
-            // Multi-scale: sum of blurs at r, r/2, r/4 gives AE-like tight core + wide falloff.
-            let r = ctx.num("radius") * ctx.unit
-            let g1 = ctx.gpu.gaussian(ctx, input: bright, sigma: r / 2)
-            let g2 = ctx.gpu.gaussian(ctx, input: bright, sigma: r / 5)
-            let g3 = ctx.gpu.gaussian(ctx, input: bright, sigma: r / 12)
-            let sum1 = ctx.temp(), sum2 = ctx.temp()
-            var add = EffectParams()
-            add.a = SIMD4(1, 0, 0, 0)
-            ctx.gpu.run("fxGlowCombine", ctx.cb, textures: [g1, g2, sum1], params: add, grid: sum1)
-            ctx.gpu.run("fxGlowCombine", ctx.cb, textures: [sum1, g3, sum2], params: add, grid: sum2)
-            let out = ctx.temp()
-            var cp = EffectParams()
-            cp.a = SIMD4(Float(ctx.num("intensity") / 2), 0, 0, 0)
-            cp.i = SIMD4(UInt32(ctx.effect.choice("operation")), UInt32(ctx.effect.choice("composite") == 2 ? 2 : 0),
-                         UInt32(ctx.effect.choice("colors")), 0)
-            cp.b = ctx.effect.color("colorA", ctx.time).simd
-            cp.c = ctx.effect.color("colorB", ctx.time).simd
-            ctx.gpu.run("fxGlowCombine", ctx.cb, textures: [ctx.input, sum2, out], params: cp, grid: out)
-            return out
+            let alpha = ctx.effect.choice("basedOn") == 1
+            let light = lightPrep25(ctx, source: alpha ? .alpha : .color, threshold: ctx.num("threshold") / 100,
+                                    knee: alpha ? 0.3 : 0.12)
+            let g = lightBloom25(ctx, light, radius: ctx.num("radius") * ctx.unit, falloff: opt25(ctx, "falloff", 40) / 100)
+            let comp: LightComposite25 = [LightComposite25.behind, .over, .glowOnly][min(max(ctx.effect.choice("composite"), 0), 2)]
+            var ab: (SIMD4<Float>, SIMD4<Float>)? = nil
+            if ctx.effect.choice("colors") == 1 { ab = (ctx.effect.color("colorA", ctx.time).simd, ctx.effect.color("colorB", ctx.time).simd) }
+            return lightComp25(ctx, base: ctx.input, glow: g, intensity: ctx.num("intensity"), burn: opt25(ctx, "burn", 30) / 100,
+                               op: ctx.effect.choice("operation") == 1 ? .screen : .add, composite: comp, colors: ab)
         })
 
     static let rgbSplit = EffectDefinition(

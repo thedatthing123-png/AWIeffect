@@ -248,25 +248,36 @@ extension EffectRegistry {
 
     static let starStreaks = EffectDefinition(
         id: "awi8.starStreaks", name: "Star Streaks", category: .blur, aeMatchNames: [],
-        summary: "Star-filter streaks radiating from the highlights.",
+        summary: "Star-filter streaks radiating from the highlights: bright at the source, thinning out along each ray.",
         params: [.choice("points", "Points", ["4 Points", "6 Points", "8 Points"], 0), .number("length", "Length", 40, 0, 200, unit: "px"),
                  pct("threshold", "Threshold", 60, 0, 95), .number("intensity", "Intensity", 2, 0, 6, step: 0.01),
-                 .angle("rotation", "Rotation", 45), .color("tint", "Tint", RGBA(1, 0.95, 0.85))],
+                 .angle("rotation", "Rotation", 45), .color("tint", "Tint", RGBA(1, 0.95, 0.85)),
+                 pct("falloff", "Falloff", 45, 0, 100)],
         margin: { e, t in e.number("length", t) },
-        stage: .pixels { ctx in f8(ctx, 22) { p in
-            p.a = SIMD4(px8(ctx, "length"), n8(ctx, "threshold", 0.01), n8(ctx, "intensity"), n8(ctx, "rotation", .pi / 180))
-            p.b = col8(ctx, "tint"); p.i.y = UInt32(4 + 2 * ctx.effect.choice("points")) } })
+        stage: .pixels { ctx in
+            let light = lightPrep25(ctx, threshold: ctx.num("threshold") / 100, knee: 0.1, saturation: 0.8)
+            let st = streak25(ctx, light: light, mode: .star, length: ctx.num("length") * ctx.unit, rays: 4 + 2 * ctx.effect.choice("points"),
+                              rotation: ctx.num("rotation") * .pi / 180, decay: 0.3 + opt25(ctx, "falloff", 45) / 100 * 2.5,
+                              intensity: ctx.num("intensity") * 0.8, tintA: col8(ctx, "tint"))
+            return lightComp25(ctx, base: ctx.input, glow: st, intensity: 1, burn: 0.35)
+        })
 
     static let lightStreaks = EffectDefinition(
         id: "awi8.lightStreaks", name: "Light Streaks", category: .blur, aeMatchNames: [],
-        summary: "Anamorphic horizontal flare streaks stretched out of the highlights.",
+        summary: "Anamorphic flare streaks: a thin tinted line stretched out of each highlight, hot in the middle with a long fading tail.",
         params: [pct("threshold", "Threshold", 50, 0, 95), .number("length", "Length", 80, 0, 400, unit: "px"),
-                 .number("intensity", "Intensity", 1.5, 0, 6, step: 0.01), .color("tint", "Tint", RGBA(0.35, 0.6, 1))],
+                 .number("intensity", "Intensity", 1.5, 0, 6, step: 0.01), .color("tint", "Tint", RGBA(0.35, 0.6, 1)),
+                 .angle("angle", "Angle", 0)],
         margin: { e, t in e.number("length", t) * 1.5 },
         stage: .pixels { ctx in
-            let hi = f8(ctx, 23) { p in p.a.x = n8(ctx, "threshold", 0.01); p.b = col8(ctx, "tint") }
-            let s = ctx.gpu.gaussian(ctx, input: hi, sigma: max(0.5, ctx.num("length") * ctx.unit / 2), vertical: false)
-            return f8(ctx, 24, aux: s) { p in p.a.x = n8(ctx, "intensity") }
+            let light = lightPrep25(ctx, threshold: ctx.num("threshold") / 100, knee: 0.1, tint: col8(ctx, "tint"), tintAmount: 0.8)
+            let ang = opt25(ctx, "angle", 0) * .pi / 180
+            let long = streak25(ctx, light: light, mode: .linear, length: ctx.num("length") * ctx.unit * 1.5, rotation: ang,
+                                decay: 0.9, intensity: ctx.num("intensity"), tintA: SIMD4(1, 1, 1, 1))
+            let core = streak25(ctx, light: light, mode: .linear, length: ctx.num("length") * ctx.unit * 0.3, rotation: ang,
+                                decay: 1.5, intensity: ctx.num("intensity") * 0.5, tintA: SIMD4(1, 1, 1, 1))
+            let sum = lightSum25(ctx, [long, core], [1, 1])
+            return lightComp25(ctx, base: ctx.input, glow: sum, intensity: 1, saturation: 1.2, burn: 0.3)
         })
 
     static let frostedGlass = EffectDefinition(

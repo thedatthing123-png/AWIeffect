@@ -318,27 +318,33 @@ extension EffectRegistry {
                 p.a = SIMD4(f(ctx.num("core") / 100), 0, f(ctx.num("flicker") / 100), f(ctx.time)); p.b = col.simd }
             let s = ctx.num("spread") * ctx.unit
             let g1 = ctx.gpu.gaussian(ctx, input: core, sigma: s / 4), g2 = ctx.gpu.gaussian(ctx, input: core, sigma: s)
-            let sum = ctx.temp(); var add = EffectParams(); add.a = SIMD4(1, 0, 0, 0)
-            ctx.gpu.run("fxGlowCombine", ctx.cb, textures: [g1, g2, sum], params: add, grid: sum)
-            let out = ctx.temp()
+            let g3 = ctx.gpu.gaussian(ctx, input: core, sigma: s * 2.5)
+            let sum = lightSum25(ctx, [g1, g2, g3], [1, 1, 0.45])
             // Flicker pulses the whole beam (glow included), not just the core.
             let pulse = 0.5 + 0.5 * sin(ctx.time * 53) * cos(ctx.time * 17 + 1.3)
             let flick = 1 - ctx.num("flicker") / 100 * 0.8 * pulse
-            var cp = EffectParams(); cp.a = SIMD4(f(ctx.num("intensity") / 100 * 2 * flick), 0, 0, 0); cp.i = SIMD4(0, 0, 1, 0)
-            cp.b = col.simd; cp.c = col.simd
-            ctx.gpu.run("fxGlowCombine", ctx.cb, textures: [core, sum, out], params: cp, grid: out)
-            return out
+            // The glow is the saber color, going white-hot only right at the core (hue-keeping limit, no flat white).
+            let hot = col.simd * 0.4 + SIMD4<Float>(0.6, 0.6, 0.6, 0.6)
+            return lightComp25(ctx, base: core, glow: sum, intensity: ctx.num("intensity") / 100 * 2 * flick, saturation: 1.15,
+                               burn: 0.45, colors: (hot, col.simd))
         })
 
     static let shine = EffectDefinition(
         id: "awi.shine", name: "AWI Shine", category: .color, aeMatchNames: ["tc Shine", "TCShine"],
-        summary: "Volumetric light rays bursting from a point.",
+        summary: "Trapcode Shine-style volumetric rays bursting from a point: only bright parts emit, rays fade with distance and keep the source colors.",
         params: [.point("source", "Source Point", Vec2(0.5, 0.35)), .number("length", "Ray Length", 50, 0, 100, unit: "%"),
-                 .number("intensity", "Boost Light", 0.6, 0, 10, step: 0.1), .color("color", "Ray Color", RGBA(1, 0.9, 0.7))],
-        stage: .pixels { ctx in run("fxShine", ctx) { p in
+                 .number("intensity", "Boost Light", 0.6, 0, 10, step: 0.1), .color("color", "Ray Color", RGBA(1, 0.9, 0.7)),
+                 .number("threshold", "Source Threshold", 45, 0, 95, unit: "%"), .number("colorize", "Colorize", 60, 0, 100, unit: "%"),
+                 .number("falloff", "Falloff", 30, 0, 100, unit: "%")],
+        stage: .pixels { ctx in
             let s = ctx.effect.point("source", ctx.time)
-            p.a = SIMD4(f(s.x * Double(ctx.width)), f(s.y * Double(ctx.height)), f(ctx.num("length") / 100), f(ctx.num("intensity")))
-            p.b = ctx.effect.color("color", ctx.time).simd; p.i.x = 48 } })
+            let light = lightPrep25(ctx, threshold: opt25(ctx, "threshold", 45) / 100, knee: 0.2, tint: ctx.effect.color("color", ctx.time).simd,
+                                    tintAmount: opt25(ctx, "colorize", 60) / 100)
+            let rays = streak25(ctx, light: light, mode: .godRays, length: ctx.num("length") / 100,
+                                center: SIMD2(f(s.x * Double(ctx.width)), f(s.y * Double(ctx.height))),
+                                decay: 0.1 + opt25(ctx, "falloff", 30) / 100 * 2.5, intensity: ctx.num("intensity") * 1.6)
+            return lightComp25(ctx, base: ctx.input, glow: rays, intensity: 1, burn: 0.3)
+        })
 
     static let glitch = EffectDefinition(
         id: "awi.glitch", name: "AWI Glitch", category: .stylize, aeMatchNames: ["S_DigitalDamage", "RG Universe Glitch"],

@@ -139,7 +139,7 @@ extension EffectRegistry {
                  .number("intensity", "Intensity", 1, 0, 20, step: 0.01), .number("speed", "Sweeps / sec", 0.6, -20, 20, step: 0.01),
                  .number("offset", "Offset", 30, -1000, 1000, unit: "%"), .number("softness", "Softness", 60, 0, 100, unit: "%"),
                  .color("color", "Color", .white)],
-        stage: .pixels { ctx in r10(ctx, 8) { p in
+        stage: .pixels { ctx in lightGen25(ctx, 0) { p in
             let a = ctx.num("angle") * .pi / 180
             p.a = SIMD4(Float(cos(a)), Float(-sin(a)), Float(ctx.num("width") * ctx.unit), Float(ctx.num("intensity")))
             p.b = col10(ctx, "color")
@@ -157,7 +157,7 @@ extension EffectRegistry {
                  .number("irregularity", "Irregularity", 35, 0, 500, unit: "px"),
                  .number("scale", "Contour Scale", 160, 1, 2000, unit: "px"),
                  .number("evolution", "Evolution", 0, -3600, 3600, unit: "°"), .color("color", "Color", .white)],
-        stage: .pixels { ctx in r10(ctx, 8, sub: 1) { p in
+        stage: .pixels { ctx in lightGen25(ctx, 0, sub: 1) { p in
             let a = ctx.num("angle") * .pi / 180
             p.a = SIMD4(Float(cos(a)), Float(-sin(a)), Float(ctx.num("width") * ctx.unit), Float(ctx.num("intensity")))
             p.b = col10(ctx, "color")
@@ -170,11 +170,16 @@ extension EffectRegistry {
     // MARK: Glints & lights
 
     private static func glint10(_ ctx: EffectContext, mode: UInt32) -> MTLTexture {
-        let lines = UInt32([2, 3, 4][min(max(ctx.effect.choice("points"), 0), 2)])
-        return r10(ctx, mode, sub: lines) { p in
-            let rot = ctx.num("rotation") + ctx.num("spin") * ctx.time
-            p.a = SIMD4(Float(ctx.num("threshold") / 100), Float(ctx.num("length") * ctx.unit), Float(ctx.num("intensity")), rad10(rot))
-            p.b = col10(ctx, "color") }
+        // Star-filter glints: rays with a hot core and exponential falloff, twinkling as they turn (Effects25 streaks).
+        let rays = [4, 6, 8][min(max(ctx.effect.choice("points"), 0), 2)]
+        let rot = (ctx.num("rotation") + ctx.num("spin") * ctx.time) * .pi / 180
+        let light = lightPrep25(ctx, threshold: ctx.num("threshold") / 100, knee: 0.1, saturation: 0.6)
+        let twinkle = 0.85 + 0.15 * sin(ctx.time * 5.3)
+        let st = streak25(ctx, light: light, mode: .star, length: ctx.num("length") * ctx.unit, rays: rays, rotation: rot,
+                          decay: 1.4, intensity: ctx.num("intensity") * twinkle, tintA: col10(ctx, "color"), rainbow: mode == 10)
+        let core = lightBloom25(ctx, light, radius: ctx.num("length") * ctx.unit * 0.25, falloff: 0.2)
+        let lit = lightComp25(ctx, base: ctx.input, glow: core, intensity: ctx.num("intensity") * 0.35, tint: col10(ctx, "color"), burn: 0.3)
+        return lightComp25(ctx, base: lit, glow: st, intensity: 1, burn: 0.4)
     }
     private static func glintParams10(_ color: RGBA) -> [ParamDef] {
         [.number("threshold", "Threshold", 60, 0, 95, unit: "%"), .number("length", "Ray Length", 30, 2, 200, unit: "px"),
@@ -308,8 +313,10 @@ extension EffectRegistry {
             let h = height10(ctx, luma: 0.5, soft: ctx.num("thickness"))
             let tube = r10(ctx, 19, aux: h) { p in p.a.x = Float(ctx.num("colorize") / 100); p.b = col10(ctx, "color") }
             guard ctx.num("glow") > 0.3 else { return tube }
-            let g = ctx.gpu.gaussian(ctx, input: tube, sigma: max(0.5, ctx.num("glow") * ctx.unit / 2))
-            return r10(ctx, 25, src: tube, aux: g) { p in p.a.x = Float(ctx.num("intensity")) }
+            // The gas glow keeps the tube's color: core-to-halo pyramid with the hue-keeping limit (no white clipping).
+            let light = lightPrep25(ctx, src: tube, threshold: 0.05, knee: 0.1, saturation: 1.2)
+            let g = lightBloom25(ctx, light, radius: ctx.num("glow") * ctx.unit * 1.5, falloff: 0.5)
+            return lightComp25(ctx, base: tube, glow: g, intensity: ctx.num("intensity") * 0.9, saturation: 1.1, burn: 0.1)
         })
 
     static let specular10 = EffectDefinition(
@@ -344,20 +351,16 @@ extension EffectRegistry {
 
     static let filmBloom10 = EffectDefinition(
         id: "awi10.filmBloom", name: "Film Glow Bloom", category: .color, aeMatchNames: [],
-        summary: "Multi-radius filmic bloom with a warm tint on the highlights.",
+        summary: "Filmic bloom: highlights above the threshold spread a tight core and a wide warm halo, rolling off like film instead of clipping.",
         params: [.number("threshold", "Threshold", 50, 0, 95, unit: "%"), .number("radius", "Radius", 30, 2, 200, unit: "px"),
                  .number("intensity", "Intensity", 1, 0, 4, step: 0.01), .number("tintAmount", "Tint Amount", 40, 0, 100, unit: "%"),
-                 .color("tint", "Tint", RGBA(1, 0.75, 0.5))],
-        margin: { e, t in e.number("radius", t) },
+                 .color("tint", "Tint", RGBA(1, 0.75, 0.5)), .number("falloff", "Halo Falloff", 60, 0, 100, unit: "%")],
+        margin: { e, t in e.number("radius", t) * 2 },
         stage: .pixels { ctx in
-            let hi = r10(ctx, 26) { p in
-                p.a = SIMD4(Float(ctx.num("threshold") / 100), Float(ctx.num("tintAmount") / 100), 0, 0); p.b = col10(ctx, "tint") }
-            var out = ctx.input
-            for (frac, gain) in [(0.15, 0.9), (0.4, 0.7), (1.0, 0.55)] {
-                let g = ctx.gpu.gaussian(ctx, input: hi, sigma: max(0.6, ctx.num("radius") * ctx.unit * frac / 2))
-                out = r10(ctx, 25, src: out, aux: g) { p in p.a.x = Float(ctx.num("intensity") * gain) }
-            }
-            return out
+            let hi = lightPrep25(ctx, threshold: ctx.num("threshold") / 100, knee: 0.2, tint: col10(ctx, "tint"),
+                                 tintAmount: ctx.num("tintAmount") / 100)
+            let g = lightBloom25(ctx, hi, radius: ctx.num("radius") * ctx.unit * 2, falloff: opt25(ctx, "falloff", 60) / 100)
+            return lightComp25(ctx, base: ctx.input, glow: g, intensity: ctx.num("intensity"), burn: 0.4)
         })
 
     static let lensDirt10 = EffectDefinition(

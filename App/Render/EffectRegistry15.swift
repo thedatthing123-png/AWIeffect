@@ -152,15 +152,17 @@ extension EffectRegistry {
 
     static let radialStreaks15 = EffectDefinition(
         id: "awi15.radialStreaks", name: "Radial Streaks", category: .blur, aeMatchNames: [],
-        summary: "Zoom-burst light streaks shooting outward from the highlights.",
+        summary: "Zoom-burst light streaks shooting outward from the highlights, fading smoothly along their length.",
         params: [.point("center", "Center", Vec2(0.5, 0.5)), pct15("length", "Length", 30),
                  pct15("threshold", "Threshold", 50, 0, 95), .number("intensity", "Intensity", 1.5, 0, 5, step: 0.01),
-                 .color("tint", "Tint", RGBA(1, 0.95, 0.85))],
+                 .color("tint", "Tint", RGBA(1, 0.95, 0.85)), pct15("falloff", "Falloff", 50)],
         margin: { e, t in e.number("length", t) * 2 },
-        stage: .pixels { ctx in r15(ctx, 12) { p in
-            let ce = pt15(ctx, "center")
-            p.a = SIMD4(ce.x, ce.y, n15(ctx, "length", 0.01), n15(ctx, "threshold", 0.01))
-            p.b.x = n15(ctx, "intensity"); p.c = col15(ctx, "tint") } })
+        stage: .pixels { ctx in
+            let light = lightPrep25(ctx, threshold: ctx.num("threshold") / 100, knee: 0.15)
+            let st = streak25(ctx, light: light, mode: .zoom, length: ctx.num("length") / 100, center: pt15(ctx, "center"),
+                              decay: 0.3 + opt25(ctx, "falloff", 50) / 100 * 2.5, intensity: ctx.num("intensity"), tintA: col15(ctx, "tint"))
+            return lightComp25(ctx, base: ctx.input, glow: st, intensity: 1, burn: 0.3)
+        })
 
     static let spinStreaks15 = EffectDefinition(
         id: "awi15.spinStreaks", name: "Spin Streaks", category: .blur, aeMatchNames: [],
@@ -175,14 +177,18 @@ extension EffectRegistry {
 
     static let linearStreaks15 = EffectDefinition(
         id: "awi15.linearStreaks", name: "Linear Streaks", category: .blur, aeMatchNames: [],
-        summary: "Straight two-sided light streaks through the highlights at any angle.",
+        summary: "Straight two-sided light streaks through the highlights at any angle, bright at the source and fading out.",
         params: [.number("length", "Length", 60, 0, 300, unit: "px"), .angle("angle", "Angle", 0),
                  pct15("threshold", "Threshold", 50, 0, 95), .number("intensity", "Intensity", 1.5, 0, 5, step: 0.01),
-                 .color("tint", "Tint", RGBA(1, 0.9, 0.8))],
+                 .color("tint", "Tint", RGBA(1, 0.9, 0.8)), pct15("falloff", "Falloff", 50)],
         margin: { e, t in e.number("length", t) },
-        stage: .pixels { ctx in r15(ctx, 14) { p in
-            let d = dir15(ctx, "angle", "length")
-            p.a = SIMD4(d.x, d.y, n15(ctx, "threshold", 0.01), n15(ctx, "intensity")); p.c = col15(ctx, "tint") } })
+        stage: .pixels { ctx in
+            let light = lightPrep25(ctx, threshold: ctx.num("threshold") / 100, knee: 0.15)
+            let st = streak25(ctx, light: light, mode: .linear, length: ctx.num("length") * ctx.unit,
+                              rotation: ctx.num("angle") * .pi / 180, decay: 0.3 + opt25(ctx, "falloff", 50) / 100 * 2.5,
+                              intensity: ctx.num("intensity"), tintA: col15(ctx, "tint"))
+            return lightComp25(ctx, base: ctx.input, glow: st, intensity: 1, burn: 0.3)
+        })
 
     // MARK: Glows
 
@@ -197,13 +203,13 @@ extension EffectRegistry {
 
     static let prismGlow15 = EffectDefinition(
         id: "awi15.prismGlow", name: "Prism Glow", category: .stylize, aeMatchNames: [],
-        summary: "Glow whose red and blue parts split apart like light through a prism.",
+        summary: "Bright parts glow with a halo whose red and blue edges fan apart like light through a prism.",
         params: [.number("size", "Size", 15, 0, 100, step: 0.1, unit: "px"), pct15("threshold", "Threshold", 40, 0, 95),
                  .number("intensity", "Intensity", 1.5, 0, 5, step: 0.01), .number("spread", "Prism Spread", 6, 0, 40, step: 0.1, unit: "px")],
-        margin: { e, t in e.number("size", t) * 1.5 + e.number("spread", t) },
+        margin: { e, t in e.number("size", t) * 2 + e.number("spread", t) },
         stage: .pixels { ctx in
-            let hi = blur15(ctx, extract15(ctx, threshold: ctx.num("threshold") / 100), ctx.num("size"))
-            return addGlow15(ctx, ctx.input, hi, ctx.num("intensity"), prism: max(0.01, ctx.num("spread")))
+            glow25(ctx, threshold: ctx.num("threshold") / 100, radius: ctx.num("size") * ctx.unit * 2, intensity: ctx.num("intensity") * 0.8,
+                   falloff: 0.5, saturation: 1.15, prism: max(0.01, ctx.num("spread") * ctx.unit))
         })
 
     static let dreamBloom15 = EffectDefinition(
@@ -219,13 +225,13 @@ extension EffectRegistry {
 
     static let softGlow15 = EffectDefinition(
         id: "awi15.softGlow", name: "Soft Glow", category: .stylize, aeMatchNames: [],
-        summary: "A blurred copy of the brighter areas screened back over the image.",
+        summary: "Gentle diffused glow from the brighter areas, screened back so highlights bloom without washing out.",
         params: [.number("radius", "Radius", 20, 0, 100, step: 0.1, unit: "px"), pct15("intensity", "Intensity", 70, 0, 200),
                  pct15("threshold", "Threshold", 20, 0, 95)],
-        margin: { e, t in e.number("radius", t) * 1.5 },
+        margin: { e, t in e.number("radius", t) * 2 },
         stage: .pixels { ctx in
-            let g = blur15(ctx, extract15(ctx, threshold: ctx.num("threshold") / 100), ctx.num("radius"))
-            return r15(ctx, 18, aux: g) { p in p.a.x = n15(ctx, "intensity", 0.01) }
+            glow25(ctx, threshold: ctx.num("threshold") / 100, radius: ctx.num("radius") * ctx.unit * 2,
+                   intensity: ctx.num("intensity") / 100 * 1.2, falloff: 0.8, burn: 0.1, op: .screen)
         })
 
     static let darkGlow15 = EffectDefinition(
@@ -246,10 +252,10 @@ extension EffectRegistry {
         margin: { e, t in e.number("size", t) * 1.5 },
         stage: .pixels { ctx in
             let h = ctx.num("hue") / 360
-            let key = r15(ctx, 15) { p in
-                p.a = SIMD4(0, 1.2, 0, 0)
-                p.b = SIMD4(Float(h - floor(h)), n15(ctx, "range", 1.0 / 360), 0.04, 0); p.i.y = 1 }
-            return addGlow15(ctx, ctx.input, blur15(ctx, key, ctx.num("size")), ctx.num("intensity"))
+            let key = lightPrep25(ctx, source: .hue, threshold: 0, saturation: 1.25,
+                                  hueKey: SIMD3(Float(h - floor(h)), n15(ctx, "range", 1.0 / 360), 0.04))
+            let g = lightBloom25(ctx, key, radius: ctx.num("size") * ctx.unit * 2, falloff: 0.45)
+            return lightComp25(ctx, base: ctx.input, glow: g, intensity: ctx.num("intensity") * 0.7, saturation: 1.1, burn: 0.2)
         })
 
     static let neonBloom15 = EffectDefinition(
@@ -259,25 +265,32 @@ extension EffectRegistry {
                  pct15("saturation", "Saturation", 150, 0, 300), .number("intensity", "Intensity", 1.5, 0, 5, step: 0.01)],
         margin: { e, t in e.number("size", t) * 4 },
         stage: .pixels { ctx in
-            let hi = extract15(ctx, threshold: ctx.num("threshold") / 100, saturation: ctx.num("saturation") / 100)
-            var out = ctx.input
-            for (k, f) in [1.0, 2.0, 4.0].enumerated() {
-                let g = blur15(ctx, hi, ctx.num("size") * f)
-                out = addGlow15(ctx, out, g, ctx.num("intensity") * [0.6, 0.45, 0.35][k])
-            }
-            return out
+            // Neon keeps its color: saturated emission, a hue-keeping limit and almost no white burn.
+            let hi = lightPrep25(ctx, threshold: ctx.num("threshold") / 100, saturation: ctx.num("saturation") / 100)
+            let g = lightBloom25(ctx, hi, radius: ctx.num("size") * ctx.unit * 4, falloff: 0.55)
+            return lightComp25(ctx, base: ctx.input, glow: g, intensity: ctx.num("intensity") * 0.9,
+                               saturation: max(1, ctx.num("saturation") / 100), burn: 0.08)
         })
 
     static let starglow15 = EffectDefinition(
         id: "awi15.starglow", name: "Starglow", category: .stylize, aeMatchNames: [],
-        summary: "Eight-direction streak glow from the highlights with alternating colors.",
+        summary: "Eight-direction streaks from the highlights: long and short rays in alternating colors over a soft glow body.",
         params: [.number("length", "Streak Length", 40, 0, 200, unit: "px"), pct15("threshold", "Threshold", 60, 0, 95),
                  .number("intensity", "Intensity", 1.5, 0, 5, step: 0.01), .angle("rotation", "Rotation", 0),
-                 .color("colorA", "Color A", RGBA(1, 0.85, 0.6)), .color("colorB", "Color B", RGBA(0.6, 0.8, 1))],
+                 .color("colorA", "Color A", RGBA(1, 0.85, 0.6)), .color("colorB", "Color B", RGBA(0.6, 0.8, 1)),
+                 pct15("falloff", "Falloff", 50), pct15("glow", "Glow Body", 40)],
         margin: { e, t in e.number("length", t) },
-        stage: .pixels { ctx in r15(ctx, 20) { p in
-            p.a = SIMD4(px15(ctx, "length"), n15(ctx, "threshold", 0.01), n15(ctx, "intensity"), rad15(ctx, "rotation"))
-            p.b = col15(ctx, "colorA"); p.c = col15(ctx, "colorB") } })
+        stage: .pixels { ctx in
+            let light = lightPrep25(ctx, threshold: ctx.num("threshold") / 100, knee: 0.12)
+            let a = col15(ctx, "colorA"), b = col15(ctx, "colorB")
+            let st = streak25(ctx, light: light, mode: .star, length: ctx.num("length") * ctx.unit, rays: 8,
+                              rotation: ctx.num("rotation") * .pi / 180, decay: 0.3 + opt25(ctx, "falloff", 50) / 100 * 2.5,
+                              intensity: ctx.num("intensity"), tintA: a, tintB: b)
+            let body = lightBloom25(ctx, light, radius: ctx.num("length") * ctx.unit * 0.35, falloff: 0.3)
+            let lit = lightComp25(ctx, base: ctx.input, glow: body, intensity: opt25(ctx, "glow", 40) / 100 * ctx.num("intensity") * 0.5,
+                                  tint: (a + b) * 0.5, burn: 0.2)
+            return lightComp25(ctx, base: lit, glow: st, intensity: 1, burn: 0.3)
+        })
 
     static let lightWrap15 = EffectDefinition(
         id: "awi15.lightWrap", name: "Light Wrap", category: .stylize, aeMatchNames: [],

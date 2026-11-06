@@ -39,21 +39,26 @@ extension EffectRegistry {
 
     static let godRays = EffectDefinition(
         id: "awi.godRays", name: "God Rays", category: .color, aeMatchNames: ["CC Light Rays"],
-        summary: "Volumetric light streaming out of the bright parts toward a source point.",
+        summary: "Volumetric shafts streaming out of the bright parts away from a source point, fading with distance and keeping the light's color.",
         params: [.point("center", "Source", Vec2(0.5, 0.3)), .number("length", "Ray Length", 50, 0, 100, unit: "%"),
                  .number("intensity", "Intensity", 1.5, 0, 6, step: 0.01), .number("threshold", "Threshold", 30, 0, 95, unit: "%"),
-                 .color("color", "Color", RGBA(1, 0.92, 0.75))],
-        stage: .pixels { ctx in l5(ctx, 1) { p in
-            let c = pt(ctx, "center")
-            p.a = SIMD4(c.x, c.y, Float(ctx.num("length") / 100), Float(ctx.num("intensity")))
-            p.b = ctx.effect.color("color", ctx.time).simd; p.c.x = Float(ctx.num("threshold") / 100) } })
+                 .color("color", "Color", RGBA(1, 0.92, 0.75)), .number("falloff", "Falloff", 40, 0, 100, unit: "%"),
+                 .number("colorize", "Colorize", 50, 0, 100, unit: "%")],
+        stage: .pixels { ctx in
+            let col = ctx.effect.color("color", ctx.time).simd
+            let light = lightPrep25(ctx, threshold: ctx.num("threshold") / 100, knee: 0.15, tint: col,
+                                    tintAmount: opt25(ctx, "colorize", 50) / 100)
+            let rays = streak25(ctx, light: light, mode: .godRays, length: ctx.num("length") / 100, center: pt(ctx, "center"),
+                                decay: 0.2 + opt25(ctx, "falloff", 40) / 100 * 2.5, intensity: ctx.num("intensity"))
+            return lightComp25(ctx, base: ctx.input, glow: rays, intensity: 1, burn: 0.25)
+        })
 
     static let lightLeak = EffectDefinition(
         id: "awi.lightLeak", name: "Light Leak", category: .generate, aeMatchNames: [],
         summary: "Drifting warm film light leaks (animated).",
         params: [.number("intensity", "Intensity", 0.9, 0, 2, step: 0.01), .number("speed", "Speed", 1, 0, 6, step: 0.05),
                  .number("scale", "Size", 260, 30, 1200, unit: "px"), .angle("hue", "Hue Shift", 0), .number("seed", "Random Seed", 1, 0, 100, step: 1)],
-        stage: .pixels { ctx in l5(ctx, 2) { p in
+        stage: .pixels { ctx in lightGen25(ctx, 2) { p in
             p.a = SIMD4(Float(ctx.num("intensity")), Float(ctx.num("speed")), Float(ctx.num("scale") * ctx.unit), Float(ctx.num("hue") * .pi / 180))
             p.c.x = Float(ctx.num("seed")) } })
 
@@ -69,14 +74,19 @@ extension EffectRegistry {
 
     static let halation = EffectDefinition(
         id: "awi.halation", name: "Halation", category: .color, aeMatchNames: [],
-        summary: "Film halation: a warm red glow bleeding around highlights.",
+        summary: "Film halation: a red-orange fringe bleeding into the dark just around highlights, not a wash over them.",
         params: [.number("threshold", "Threshold", 30, 0, 99, unit: "%"), .number("size", "Size", 20, 0, 200, unit: "px"),
                  .number("intensity", "Intensity", 1, 0, 4, step: 0.01), .color("tint", "Tint", RGBA(1, 0.25, 0.1))],
-        margin: { e, t in e.number("size", t) },
+        margin: { e, t in e.number("size", t) * 1.5 },
         stage: .pixels { ctx in
-            let hi = l5(ctx, 4) { p in p.a.x = Float(ctx.num("threshold") / 100); p.b = ctx.effect.color("tint", ctx.time).simd }
-            let blur = ctx.gpu.gaussian(ctx, input: hi, sigma: max(0.5, ctx.num("size") * ctx.unit / 2))
-            return l5(ctx, 5, aux: blur) { p in p.a.x = Float(ctx.num("intensity")) }
+            // Light scattered back from the film base: tinted, wide, and pulled off the highlight itself.
+            let hi = lightPrep25(ctx, threshold: ctx.num("threshold") / 100, knee: 0.15, saturation: 0,
+                                 tint: ctx.effect.color("tint", ctx.time).simd, tintAmount: 1)
+            let r = max(1, ctx.num("size") * ctx.unit)
+            let near = ctx.gpu.gaussian(ctx, input: hi, sigma: max(0.6, r * 0.25))
+            let wide = ctx.gpu.gaussian(ctx, input: hi, sigma: max(0.6, r * 0.6))
+            let fringe = lightSum25(ctx, [near, wide, hi], [0.9, 0.8, -0.75])
+            return lightComp25(ctx, base: ctx.input, glow: fringe, intensity: ctx.num("intensity"), saturation: 1.1, burn: 0.05)
         })
 
     static let gradientMap = EffectDefinition(
