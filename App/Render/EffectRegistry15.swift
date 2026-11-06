@@ -56,20 +56,20 @@ extension EffectRegistry {
 
     static let vortexBlur15 = EffectDefinition(
         id: "awi15.vortexBlur", name: "Vortex Blur", category: .blur, aeMatchNames: [],
-        summary: "Rotational blur that is strongest at the center and fades out like a whirlpool.",
+        summary: "Whirlpool blur: pixels streak along an inward spiral that twists hardest at the eye and fades outward.",
         params: [.point("center", "Center", Vec2(0.5, 0.5)), .number("angle", "Angle", 60, 0, 360, step: 0.1, unit: "°"),
-                 .number("radius", "Falloff Radius", 80, 5, 400, unit: "px")],
-        stage: .pixels { ctx in r15(ctx, 1) { p in
+                 .number("radius", "Falloff Radius", 80, 5, 400, unit: "px"), pct15("pull", "Inward Pull", 35)],
+        stage: .pixels { ctx in blur26(ctx, 2) { p in
             let ce = pt15(ctx, "center")
-            p.a = SIMD4(ce.x, ce.y, rad15(ctx, "angle"), px15(ctx, "radius")) } })
+            p.a = SIMD4(ce.x, ce.y, rad15(ctx, "angle"), px15(ctx, "radius")); p.b.x = n15(ctx, "pull", 0.01) } })
 
     static let smear15 = EffectDefinition(
         id: "awi15.smear", name: "Smear", category: .blur, aeMatchNames: [],
-        summary: "Drags bright pixels along a direction like wet paint (luminance-driven smear).",
+        summary: "Drags bright paint one way like a wet brush: smooth trails out of the highlights that fade with distance.",
         params: [.number("length", "Length", 30, 0, 200, unit: "px"), .angle("angle", "Direction", 0),
                  pct15("decay", "Decay", 40), pct15("threshold", "Threshold", 30, 0, 95)],
         margin: { e, t in e.number("length", t) },
-        stage: .pixels { ctx in r15(ctx, 2) { p in
+        stage: .pixels { ctx in blur26(ctx, 3) { p in
             let d = dir15(ctx, "angle", "length")
             p.a = SIMD4(d.x, d.y, n15(ctx, "decay", 0.01), n15(ctx, "threshold", 0.01)) } })
 
@@ -84,30 +84,19 @@ extension EffectRegistry {
 
     static let edgeBlur15 = EffectDefinition(
         id: "awi15.edgeBlur", name: "Edge Blur", category: .blur, aeMatchNames: [],
-        summary: "Softens only the edges (detected contrast) and leaves flat areas sharp.",
+        summary: "Softens edges across their direction only (feathered lines and outlines), leaving flat areas untouched.",
         params: [.number("radius", "Radius", 6, 0, 50, step: 0.1, unit: "px"), pct15("threshold", "Edge Threshold", 20, 0, 200),
                  .number("width", "Detect Width", 2, 0.5, 8, step: 0.1, unit: "px"), pct15("amount", "Amount", 100)],
         margin: { e, t in e.number("radius", t) },
-        stage: .pixels { ctx in
-            let edges = r15(ctx, 4) { p in p.a = SIMD4(px15(ctx, "width"), n15(ctx, "threshold", 0.01), 0, 0) }
-            let soft = blur15(ctx, edges, ctx.num("radius"))
-            let b = blur15(ctx, ctx.input, ctx.num("radius"))
-            return r15(ctx, 5, aux: b, mask: soft) { p in p.a.x = n15(ctx, "amount", 0.02) }
-        })
+        stage: .pixels { ctx in edgeBlur26(ctx) })
 
     static let maskBlur15 = EffectDefinition(
         id: "awi15.maskBlur", name: "Luma Mask Blur", category: .blur, aeMatchNames: [],
-        summary: "Blurs only the bright (or, inverted, the dark) parts of the image.",
+        summary: "Blurs only the bright (or, inverted, the dark) parts: only those pixels feed the blur, so they melt softly while the rest stays crisp.",
         params: [.number("radius", "Radius", 8, 0, 50, step: 0.1, unit: "px"), pct15("threshold", "Threshold", 50),
                  pct15("softness", "Softness", 15), .toggle("invert", "Blur Darks", false)],
         margin: { e, t in e.number("radius", t) },
-        stage: .pixels { ctx in
-            let m = r15(ctx, 6) { p in
-                p.a = SIMD4(n15(ctx, "threshold", 0.01), n15(ctx, "softness", 0.01), 0, 0)
-                p.i.y = ctx.effect.bool("invert") ? 1 : 0 }
-            let b = blur15(ctx, ctx.input, ctx.num("radius"))
-            return r15(ctx, 5, aux: b, mask: m) { p in p.a.x = 1 }
-        })
+        stage: .pixels { ctx in lumaMaskBlur26(ctx) })
 
     static let minimax15 = EffectDefinition(
         id: "awi15.minimax", name: "Minimax", category: .blur, aeMatchNames: [],
@@ -141,12 +130,12 @@ extension EffectRegistry {
 
     static let shakeBlur15 = EffectDefinition(
         id: "awi15.shakeBlur", name: "Camera Shake Blur", category: .blur, aeMatchNames: [],
-        summary: "Motion blur along a wandering hand-held camera path (animated).",
+        summary: "The smear a shaky hand-held camera leaves: blur along a smooth wandering path (with roll) that changes over time. The image itself stays put, so nothing crops.",
         params: [.number("amplitude", "Amplitude", 12, 0, 60, step: 0.1, unit: "px"), pct15("shutter", "Shutter", 50),
-                 .number("speed", "Speed", 4, 0, 20, step: 0.01, unit: "Hz")],
+                 .number("speed", "Speed", 4, 0, 20, step: 0.01, unit: "Hz"),
+                 .number("roll", "Roll", 1.5, 0, 10, step: 0.01, unit: "°"), .number("seed", "Random Seed", 1, 0, 1000, step: 1)],
         margin: { e, t in e.number("amplitude", t) * 1.2 },
-        stage: .pixels { ctx in r15(ctx, 11) { p in
-            p.a = SIMD4(px15(ctx, "amplitude"), n15(ctx, "shutter", 0.01), n15(ctx, "speed"), 0) } })
+        stage: .pixels { ctx in cameraShakeBlur26(ctx) })
 
     // MARK: Streaks
 

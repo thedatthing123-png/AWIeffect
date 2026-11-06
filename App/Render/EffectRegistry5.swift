@@ -110,12 +110,14 @@ extension EffectRegistry {
 
     static let lensBlur = EffectDefinition(
         id: "awi.lensBlur", name: "Lens Blur (Bokeh)", category: .blur, aeMatchNames: ["ADBE Camera Lens Blur"],
-        summary: "Camera-style defocus with bright bokeh discs.",
+        summary: "Camera defocus computed in linear light: bright highlights bloom into solid bokeh discs or iris polygons with a bright rim.",
         params: [.number("radius", "Blur Radius", 12, 0, 80, unit: "px"), .number("boost", "Highlight Boost", 1, 0, 4, step: 0.01),
-                 .angle("rotation", "Iris Rotation", 0)],
+                 .angle("rotation", "Iris Rotation", 0),
+                 .number("threshold", "Highlight Threshold", 70, 0, 100, unit: "%"),
+                 .choice("blades", "Iris Shape", ["Circle", "5 Blades", "6 Blades", "8 Blades"], 0),
+                 .number("rim", "Bokeh Rim", 25, 0, 100, unit: "%")],
         margin: { e, t in e.number("radius", t) },
-        stage: .pixels { ctx in l5(ctx, 8) { p in
-            p.a = SIMD4(Float(ctx.num("radius") * ctx.unit), Float(ctx.num("boost")), Float(ctx.num("rotation") * .pi / 180), 0) } })
+        stage: .pixels { ctx in lensBlur26(ctx) })
 
     static let chromaticZoom = EffectDefinition(
         id: "awi.chromaticZoom", name: "Chromatic Zoom Blur", category: .blur, aeMatchNames: [],

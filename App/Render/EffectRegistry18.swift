@@ -23,7 +23,7 @@ extension EffectRegistry {
     static let shakePro18 = EffectDefinition(
         id: "awi18.shakePro", name: "Shake Pro", category: .motion,
         aeMatchNames: [],
-        summary: "Every kind of edit shake in one: smooth wiggle, twitchy jumps, handheld camera, earthquake, impact hits and vibration. Choppy hold frames for anime shakes, direction lock and fade-out. Motion blur turns on by itself.",
+        summary: "Every kind of edit shake in one: smooth wiggle for tension, twitchy snap-and-hold jumps, handheld camera, earthquake rumble with surges, impact hits that ring out like a spring and settle, and vibration. Choppy hold frames for anime shakes, direction lock and fade-out. Motion blur turns on by itself.",
         params: [
             .choice("mode", "Shake Type", ["Smooth (Wiggle)", "Twitch (Jumps)", "Handheld Camera", "Earthquake", "Impact Hits", "Vibrate"], 0),
             .number("amount", "Position Amount", 40, 0, 600, unit: "px"),
@@ -34,49 +34,13 @@ extension EffectRegistry {
             .choice("direction", "Direction", ["Both", "Horizontal Only", "Vertical Only"], 0),
             .number("fade", "Fade Out", 0, 0, 10, step: 0.1, unit: "/s"),
             .number("seed", "Random Seed", 1, 0, 1000, step: 1),
+            .number("fadeIn", "Ease In", 0, 0, 3, step: 0.01, unit: "s"),
         ],
         stage: .transform { e, raw in
             let t = held(raw, e.number("hold", raw))
             let f = e.number("speed", raw), seed = e.number("seed", raw)
-            let env = exp(-max(0, e.number("fade", raw)) * max(0, raw))
-            var x = 0.0, y = 0.0, r = 0.0, z = 0.0
-            switch e.choice("mode") {
-            case 1:
-                // Twitch: random jumps (no easing), occasional bigger kicks.
-                let slot = (t * f).rounded(.down)
-                let kick = hash18(slot * 0.37 + seed) > 0.6 ? 1.8 : 1
-                x = hash18(slot + seed * 7.1) * kick; y = hash18(slot * 1.3 + seed * 3.7) * kick
-                r = hash18(slot * 2.1 + seed); z = hash18(slot * 0.7 + seed * 5.3)
-            case 2:
-                // Handheld: slow, layered drift with more rotation.
-                x = Wiggle.value(t: t, freq: f * 0.12, octaves: 3, seed: seed * 13 + 1)
-                y = Wiggle.value(t: t, freq: f * 0.1, octaves: 3, seed: seed * 13 + 2)
-                r = Wiggle.value(t: t, freq: f * 0.08, octaves: 2, seed: seed * 13 + 3) * 1.5
-                z = Wiggle.value(t: t, freq: f * 0.05, octaves: 2, seed: seed * 13 + 4)
-            case 3:
-                // Earthquake: fast, detailed, mostly vertical rumble.
-                x = Wiggle.value(t: t, freq: f * 1.8, octaves: 4, seed: seed * 13 + 1) * 0.6
-                y = Wiggle.value(t: t, freq: f * 2.2, octaves: 4, seed: seed * 13 + 2)
-                r = Wiggle.value(t: t, freq: f * 1.4, octaves: 3, seed: seed * 13 + 3) * 0.5
-                z = Wiggle.value(t: t, freq: f, octaves: 2, seed: seed * 13 + 4) * 0.5
-            case 4:
-                // Impact hits: a hit every (8 / speed) s that rings out fast.
-                let period = 8 / max(f, 0.01)
-                let ph = t.truncatingRemainder(dividingBy: period)
-                let ring = exp(-ph * 9) * sin(ph * 70)
-                let n = (t / period).rounded(.down)
-                x = ring * hash18(n + seed); y = ring * hash18(n * 1.7 + seed)
-                r = ring * hash18(n * 2.3 + seed); z = abs(ring)
-            case 5:
-                // Vibrate: tight, regular buzz.
-                x = sin(t * f * 6 * .pi + seed) ; y = sin(t * f * 6.6 * .pi + seed * 2)
-                r = sin(t * f * 5 * .pi + seed * 3) * 0.3; z = sin(t * f * 4 * .pi) * 0.3
-            default:
-                x = Wiggle.value(t: t, freq: f, octaves: 2, seed: seed * 13 + 1)
-                y = Wiggle.value(t: t, freq: f, octaves: 2, seed: seed * 13 + 2)
-                r = Wiggle.value(t: t, freq: f, octaves: 2, seed: seed * 13 + 3)
-                z = Wiggle.value(t: t, freq: f, octaves: 2, seed: seed * 13 + 4)
-            }
+            let env = exp(-max(0, e.number("fade", raw)) * max(0, raw)) * easeIn26(raw, e.number("fadeIn", raw))
+            var (x, y, r, z) = shake26(mode: e.choice("mode"), t: t, f: f, seed: seed)
             switch e.choice("direction") {
             case 1: y = 0
             case 2: x = 0
