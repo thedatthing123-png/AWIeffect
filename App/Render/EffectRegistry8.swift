@@ -241,10 +241,12 @@ extension EffectRegistry {
 
     static let spinBlur = EffectDefinition(
         id: "awi8.spinBlur", name: "Spin Blur", category: .blur, aeMatchNames: [],
-        summary: "Rotational blur around a center point.",
-        params: [.point("center", "Center", Vec2(0.5, 0.5)), .number("angle", "Spin Angle", 15, 0, 90, step: 0.1, unit: "°")],
-        stage: .pixels { ctx in f8(ctx, 21) { p in
-            let c = pt8(ctx, "center"); p.a = SIMD4(c.x, c.y, n8(ctx, "angle", .pi / 180), 0) } })
+        summary: "Rotational (wheel / spin) blur around a center: smooth arcs at any angle, with an optional sharp center.",
+        params: [.point("center", "Center", Vec2(0.5, 0.5)), .number("angle", "Spin Angle", 15, 0, 90, step: 0.1, unit: "°"),
+                 .number("sharp", "Sharp Center", 0, 0, 400, unit: "px")],
+        stage: .pixels { ctx in blur26(ctx, 1) { p in
+            let c = pt26(ctx, "center")
+            p.a = SIMD4(c.x, c.y, Float(ctx.num("angle") * .pi / 180), Float(ctx.num("sharp") * ctx.unit)) } })
 
     static let starStreaks = EffectDefinition(
         id: "awi8.starStreaks", name: "Star Streaks", category: .blur, aeMatchNames: [],
@@ -271,27 +273,20 @@ extension EffectRegistry {
 
     static let frostedGlass = EffectDefinition(
         id: "awi8.frostedGlass", name: "Frosted Glass", category: .blur, aeMatchNames: [],
-        summary: "Diffused, grainy blur like looking through frosted glass.",
-        params: [.number("amount", "Amount", 6, 0, 40, step: 0.1, unit: "px"), .number("grain", "Grain Size", 2, 1, 20, step: 0.1, unit: "px")],
+        summary: "Looking through frosted glass: a soft blur refracted by the glass's grainy relief, with a cool milky haze.",
+        params: [.number("amount", "Amount", 6, 0, 40, step: 0.1, unit: "px"), .number("grain", "Grain Size", 2, 1, 20, step: 0.1, unit: "px"),
+                 .number("haze", "Frost Haze", 20, 0, 100, unit: "%")],
         margin: { e, t in e.number("amount", t) },
-        stage: .pixels { ctx in f8(ctx, 25) { p in p.a = SIMD4(px8(ctx, "amount"), px8(ctx, "grain"), 0, 0) } })
+        stage: .pixels { ctx in frostedGlass26(ctx) })
 
     static let tiltShift = EffectDefinition(
         id: "awi8.tiltShift", name: "Tilt-Shift", category: .blur, aeMatchNames: [],
-        summary: "Miniature look: sharp band in focus, blur growing outside it, boosted color.",
+        summary: "Miniature look: a sharp focus band, blur that grows progressively with distance from it, punchier color.",
         params: [.point("center", "Focus Center", Vec2(0.5, 0.5)), .angle("angle", "Band Angle", 0),
                  pct("width", "Focus Width", 15), pct("falloff", "Falloff", 20),
                  .number("blur", "Blur", 10, 0, 60, unit: "px"), pct("saturation", "Saturation Boost", 25)],
         margin: { e, t in e.number("blur", t) * 1.5 },
-        stage: .pixels { ctx in
-            let blur = ctx.gpu.gaussian(ctx, input: ctx.input, sigma: ctx.num("blur") * ctx.unit / 2)
-            let h = Double(ctx.height)
-            return f8(ctx, 26, aux: blur) { p in
-                let c = pt8(ctx, "center")
-                p.a = SIMD4(c.x, c.y, Float(ctx.num("width") / 100 * h * 0.5), Float(ctx.num("falloff") / 100 * h * 0.5))
-                p.b = SIMD4(n8(ctx, "angle", .pi / 180), n8(ctx, "saturation", 0.01), 0, 0)
-            }
-        })
+        stage: .pixels { ctx in tiltShift26(ctx) })
 
     static let sharpenPro = EffectDefinition(
         id: "awi8.sharpenPro", name: "Sharpen Pro", category: .blur, aeMatchNames: [],
