@@ -51,7 +51,8 @@ extension EditorState {
         let projector = OrbitProjector(project: project, orbit: orbit, time: t, fit: fit)
         var best: (id: UUID, depth: Double)?
         for l in view.layers where l.isVisible && l.isActive(at: t) && project.layers.contains(where: { $0.id == l.id }) {
-            switch l.content { case .camera, .light, .audio, .adjustment: continue; default: break }
+            if l.isAudioOnly { continue }
+            switch l.content { case .camera, .light, .adjustment: continue; default: break }
             let hs = Renderer.layerHalfSize(l, time: t), W = Renderer.layerWorld(l, time: t), a = l.transform.anchor.value(at: t)
             let corners = [(-hs.x, -hs.y), (hs.x, -hs.y), (hs.x, hs.y), (-hs.x, hs.y)].map { c -> SIMD3<Double> in
                 let q = W * SIMD4(a.x + c.0, a.y + c.1, 0, 1); return SIMD3(q.x, q.y, q.z)
@@ -123,7 +124,7 @@ struct OrbitGizmo: View {
     private let colors: [Color] = [Color(red: 1, green: 0.32, blue: 0.36), Color(red: 0.42, green: 0.9, blue: 0.4), Color(red: 0.35, green: 0.6, blue: 1)]
 
     var body: some View {
-        if let l = project.layers.first(where: { $0.id == state.selectedLayerID }), l.content != .audio {
+        if let l = project.layers.first(where: { $0.id == state.selectedLayerID }), !l.isAudioOnly {
             let projector = OrbitProjector(project: project, orbit: state.orbit, time: time, fit: fit)
             let pivot = EditorState.scenePivot(l, time: time)
             if let origin = projector.point(pivot) {
