@@ -151,8 +151,14 @@ extension EffectRegistry {
     static let oilPaint = EffectDefinition(
         id: "awi8.oilPaint", name: "Oil Paint", category: .stylize, aeMatchNames: [],
         summary: "Kuwahara brush smoothing that keeps edges crisp, like thick paint.",
-        params: [.number("radius", "Brush Size", 5, 1, 12, step: 0.1, unit: "px"), pct("strength", "Strength", 100)],
-        stage: .pixels { ctx in f8(ctx, 13) { p in p.a = SIMD4(px8(ctx, "radius"), n8(ctx, "strength", 0.01), 0, 0) } })
+        params: [.number("radius", "Brush Size", 8, 1, 40, step: 0.1, unit: "px"), pct("strength", "Strength", 100),
+                 pct("impasto", "Thick Paint", 60)],
+        stage: .pixels { ctx in
+            let r = max(1, ctx.num("radius") * ctx.unit)
+            let k = art(ctx, 0) { $0.a.x = Float(r) }
+            return art(ctx, 1, aux: k) { p in
+                p.a = SIMD4(n8(ctx, "strength", 0.01), n8(ctx, "impasto", 0.01), Float(r), 0) }
+        })
 
     static let watercolor = EffectDefinition(
         id: "awi8.watercolor", name: "Watercolor", category: .stylize, aeMatchNames: [],
@@ -161,8 +167,9 @@ extension EffectRegistry {
                  .number("paper", "Paper Texture", 0.4, 0, 1, step: 0.01), .number("wobble", "Wobble", 3, 0, 20, unit: "px")],
         margin: { e, t in e.number("size", t) * 1.5 + e.number("wobble", t) },
         stage: .pixels { ctx in
-            let blur = ctx.gpu.gaussian(ctx, input: ctx.input, sigma: ctx.num("size") * ctx.unit / 2)
-            return f8(ctx, 14, aux: blur) { p in p.a = SIMD4(n8(ctx, "edges"), n8(ctx, "paper"), px8(ctx, "wobble"), 0) }
+            // Flatten into washes first (edge-keeping), then pool pigment at the edges and add paper grain.
+            let flat = art(ctx, 0) { $0.a.x = Float(max(1.5, ctx.num("size") * ctx.unit)) }
+            return art(ctx, 2, aux: flat) { p in p.a = SIMD4(n8(ctx, "edges"), n8(ctx, "paper"), px8(ctx, "wobble"), 0) }
         })
 
     static let pencilSketch = EffectDefinition(
@@ -195,7 +202,7 @@ extension EffectRegistry {
         summary: "Breaks the image into flat-colored voronoi crystals.",
         params: [.number("size", "Cell Size", 14, 4, 80, step: 0.5, unit: "px"), pct("jitter", "Irregularity", 100),
                  pct("edge", "Cell Borders", 15)],
-        stage: .pixels { ctx in f8(ctx, 18) { p in
+        stage: .pixels { ctx in art(ctx, 3) { p in
             p.a = SIMD4(px8(ctx, "size"), n8(ctx, "jitter", 0.01), n8(ctx, "edge", 0.01), 0) } })
 
     static let pointillism = EffectDefinition(
@@ -203,7 +210,7 @@ extension EffectRegistry {
         summary: "Painted with saturated dots of color on paper.",
         params: [.number("size", "Dot Spacing", 6, 2, 30, step: 0.1, unit: "px"), pct("jitter", "Jitter", 80),
                  pct("dot", "Dot Size", 90, 20, 150), .color("paper", "Paper", RGBA(0.95, 0.93, 0.88))],
-        stage: .pixels { ctx in f8(ctx, 19) { p in
+        stage: .pixels { ctx in art(ctx, 4) { p in
             p.a = SIMD4(px8(ctx, "size"), n8(ctx, "jitter", 0.01), n8(ctx, "dot", 0.01), 0); p.b = col8(ctx, "paper") } })
 
     static let longShadow = EffectDefinition(

@@ -387,3 +387,152 @@ kernel void fxInnerGlow24(texture2d<half, access::sample> src [[texture(0)]],
     else rgb = mix(s.rgb, p.b.rgb * s.a, g / max(s.a, 1e-4));
     dst.write(half4(float4(min(rgb, float3(s.a)), s.a)), gid);
 }
+
+
+// MARK: - Paint and art looks (fxArt24)
+// a, b = mode settings, d = (time, -, seed, -), i.x = mode. textures: 0 src, 1 dst, 2 aux (an earlier pass).
+constexpr sampler arz(address::clamp_to_zero, filter::linear, coord::pixel);
+static inline float4 artS(texture2d<half, access::sample> t, float2 p) { return float4(t.sample(gxs, p)); }
+
+/// Generalized Kuwahara (8 sectors): every pixel takes the average of the calmest wedge around it, so flat areas
+/// become smooth strokes and edges stay sharp.
+static inline float4 kuwahara8(texture2d<half, access::sample> t, float2 c, float R) {
+    float4 best = artS(t, c); float bestV = 1e9;
+    const int rings = 6;
+    for (int k = 0; k < 8; k++) {
+        float4 m = float4(0.0); float3 m2 = float3(0.0); float n = 0.0;
+        for (int r = 1; r <= rings; r++) {
+            float rr = R * float(r) / float(rings);
+            for (int j = 0; j < 2; j++) {
+                float a = (float(k) + 0.25 + 0.5 * float(j)) * 0.7853982;
+                float4 q = artS(t, c + float2(cos(a), sin(a)) * rr);
+                m += q; m2 += q.rgb * q.rgb; n += 1.0;
+            }
+        }
+        // The centre belongs to every wedge.
+        float4 s0 = artS(t, c); m += s0; m2 += s0.rgb * s0.rgb; n += 1.0;
+        m /= n;
+        float3 v = m2 / n - m.rgb * m.rgb;
+        float var = v.r + v.g + v.b;
+        if (var < bestV) { bestV = var; best = m; }
+    }
+    return best;
+}
+
+static inline float artH(float2 p) { return gxH(p, 3.0); }
+static inline float artNoise(float2 p) {
+    float2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(artH(i), artH(i + float2(1, 0)), f.x), mix(artH(i + float2(0, 1)), artH(i + float2(1, 1)), f.x), f.y);
+}
+
+kernel void fxArt24(texture2d<half, access::sample> src [[texture(0)]],
+                    texture2d<half, access::write> dst [[texture(1)]],
+                    texture2d<half, access::sample> aux [[texture(2)]],
+                    constant EffectParams& p [[buffer(0)]],
+                    uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    float2 c = float2(gid) + 0.5;
+    float4 s = artS(src, c);
+    float4 o = s;
+    switch (p.i.x) {
+    case 0: {
+        // Kuwahara pass. a.x = radius px.
+        o = kuwahara8(src, c, max(p.a.x, 1.0));
+        o.a = s.a; o.rgb = min(o.rgb, float3(o.a));
+        break; }
+    case 1: {
+        // Oil Paint finish: aux = Kuwahara result. a = (strength 0-1, impasto 0-1, brush px, -)
+        float4 k = artS(aux, c);
+        float b = max(p.a.z, 1.0);
+        // Brush strokes follow the local edge direction (perpendicular to the color gradient).
+        float lx = gxLum(artS(aux, c + float2(b, 0)).rgb) - gxLum(artS(aux, c - float2(b, 0)).rgb);
+        float ly = gxLum(artS(aux, c + float2(0, b)).rgb) - gxLum(artS(aux, c - float2(0, b)).rgb);
+        float2 g = float2(lx, ly);
+        float2 tang = length(g) > 1e-4 ? normalize(float2(-g.y, g.x)) : float2(1, 0);
+        float2 nrm = float2(-tang.y, tang.x);
+        float bristle = artNoise(float2(dot(c, nrm) / (b * 0.35), dot(c, tang) / (b * 4.0)));
+        // Impasto: thick paint catches light from the top-left.
+        float h = gxLum(k.rgb) + (bristle - 0.5) * 0.12;
+        float hx = gxLum(artS(aux, c + float2(1.5, 0)).rgb) - gxLum(artS(aux, c - float2(1.5, 0)).rgb);
+        float hy = gxLum(artS(aux, c + float2(0, 1.5)).rgb) - gxLum(artS(aux, c - float2(0, 1.5)).rgb);
+        float light = clamp(0.5 - (hx + hy) * 2.5 + (bristle - 0.5) * 0.3, 0.0, 1.0);
+        float3 rgb = k.rgb * (1.0 + (light - 0.5) * 0.7 * p.a.y);
+        o = float4(clamp(rgb, 0.0, k.a), k.a);
+        o = mix(s, o, p.a.x);
+        break; }
+    case 2: {
+        // Watercolor: aux = Kuwahara-flattened picture. a = (edge darkening 0-3, paper 0-1, wobble px, -)
+        float w = p.a.z;
+        float2 wob = (float2(artNoise(c / 23.0), artNoise(c / 23.0 + 9.1)) - 0.5) * 2.0 * w;
+        float4 k = artS(aux, c + wob);
+        float a = k.a;
+        float3 col = a > 1e-4 ? k.rgb / a : float3(0.0);
+        // Washes: soft value steps, lighter and a bit less saturated than the source.
+        float y = gxLum(col);
+        float stepY = floor(y * 6.0 + artNoise(c / 40.0)) / 6.0;
+        col = mix(col, col * (stepY / max(y, 1e-3)), 0.35);
+        col = mix(float3(gxLum(col)), col, 0.85);
+        col = mix(col, float3(1.0), 0.12);
+        // Pigment pools at the edges of each wash.
+        float e = 0.0;
+        for (int i = 0; i < 4; i++) {
+            float2 d = float2(cos(float(i) * 1.5708), sin(float(i) * 1.5708)) * 2.5;
+            e += length(artS(aux, c + wob + d).rgb - k.rgb);
+        }
+        col *= 1.0 - clamp(e * 0.6 * p.a.x, 0.0, 0.55);
+        // Paper grain: pigment settles in the valleys.
+        float grain = artNoise(c / 2.2) * 0.6 + artNoise(c / 7.0) * 0.4;
+        col *= 1.0 - p.a.y * 0.22 * (1.0 - grain) * (1.0 - y * 0.6);
+        o = float4(clamp(col, 0.0, 1.0) * a, a);
+        break; }
+    case 3: {
+        // Crystallize: a = (cell px, irregularity 0-1, borders 0-1, -). Each crystal takes the average color of
+        // its own area (5 taps), with thin soft borders.
+        float n = max(p.a.x, 2.0);
+        float2 g = c / n;
+        float2 cell = floor(g);
+        float d1 = 1e9, d2 = 1e9; float2 site = c;
+        for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+            float2 cc = cell + float2(x, y);
+            float2 pt = cc + 0.5 + (float2(gxH(cc, 1.0), gxH(cc, 2.0)) - 0.5) * p.a.y;
+            float d = distance(g, pt);
+            if (d < d1) { d2 = d1; d1 = d; site = pt * n; } else if (d < d2) { d2 = d; }
+        }
+        float r = n * 0.3;
+        float4 col = (artS(src, site) * 2.0 + artS(src, site + float2(r, 0)) + artS(src, site - float2(r, 0)) +
+                      artS(src, site + float2(0, r)) + artS(src, site - float2(0, r))) / 6.0;
+        float edge = 1.0 - smoothstep(0.0, 0.06, (d2 - d1));
+        col.rgb *= 1.0 - edge * p.a.z * 0.8;
+        o = float4(min(col.rgb, float3(col.a)), col.a);
+        break; }
+    default: {
+        // Pointillism: a = (spacing px, jitter 0-1, dot size 0-1.5, -), b = paper (straight).
+        float n = max(p.a.x, 2.0);
+        float2 g = c / n;
+        float2 cell = floor(g);
+        float3 col = p.b.rgb;
+        float bestH = -1.0;
+        for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+            for (int layer = 0; layer < 2; layer++) {
+                float2 cc = cell + float2(x, y);
+                float sl = float(layer) * 17.0;
+                float2 pt = cc + 0.5 + (float2(gxH(cc, 4.0 + sl), gxH(cc, 5.0 + sl)) - 0.5) * p.a.y;
+                float rad = 0.5 * p.a.z * (0.75 + 0.5 * gxH(cc, 6.0 + sl));
+                float d = distance(g, pt);
+                float cover = 1.0 - smoothstep(rad - 0.08, rad, d);
+                float order = gxH(cc, 7.0 + sl);
+                if (cover > 0.0 && order > bestH) {
+                    float4 q = artS(src, pt * n);
+                    float3 qc = q.a > 1e-4 ? q.rgb / q.a : p.b.rgb;
+                    // Painters push saturation; each dot also varies a little in value.
+                    qc = mix(float3(gxLum(qc)), qc, 1.35) * (0.92 + 0.16 * gxH(cc, 8.0 + sl));
+                    col = mix(col, clamp(qc, 0.0, 1.0), cover);
+                    bestH = order;
+                }
+            }
+        }
+        o = float4(col * s.a, s.a);
+        break; }
+    }
+    dst.write(half4(o), gid);
+}
