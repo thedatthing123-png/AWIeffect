@@ -20,3 +20,5 @@ local-assets/
 !Tests/Fixtures/aep/*.aep
 dist/
 build_out/
+
+.claude/worktrees/
