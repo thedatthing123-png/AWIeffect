@@ -287,9 +287,9 @@ extension EffectRegistry {
 
     static let vibrance = EffectDefinition(
         id: "ae.vibrance", name: "Vibrance", category: .color, aeMatchNames: ["ADBE Vibrance"],
-        summary: "Boosts muted colors more than saturated ones.",
+        summary: "Boosts muted colors more than saturated ones, protects skin tones and saturates up to the gamut edge without clipping.",
         params: [.number("vibrance", "Vibrance", 30, -100, 100, ae: 1), .number("saturation", "Saturation", 0, -100, 100, ae: 2)],
-        stage: .pixels { ctx in col(1, ctx) { p in p.a = SIMD4(f(ctx.num("vibrance") / 100), f(ctx.num("saturation") / 100), 0, 0) } })
+        stage: .pixels { ctx in color29(ctx, 2) { p in p.a = SIMD4(f(ctx.num("vibrance") / 100), f(ctx.num("saturation") / 100), 0, 0) } })
 
     static let blackWhite = EffectDefinition(
         id: "ae.blackWhite", name: "Black & White", category: .color, aeMatchNames: ["ADBE Black&White"],
@@ -349,13 +349,16 @@ extension EffectRegistry {
 
     static let lumaKey = EffectDefinition(
         id: "ae.lumaKey", name: "Luma Key", category: .keying, aeMatchNames: ["ADBE Luma Key"],
-        summary: "Removes dark (or bright) areas — black backgrounds, fire, smoke.",
-        params: [.choice("type", "Key Type", ["Key Out Darker", "Key Out Brighter"], 0, ae: 1),
-                 .number("threshold", "Threshold", 20, 0, 100, unit: "%", ae: 2), .number("tolerance", "Tolerance", 5, 0, 100, unit: "%", ae: 3),
-                 .number("feather", "Edge Feather", 8, 0, 100, unit: "%", ae: 5)],
-        stage: .pixels { ctx in k("fxMatte", 0, ctx) { p in
-            p.a = SIMD4(f(ctx.num("threshold") / 100), f(ctx.num("tolerance") / 100), f(max(0.005, ctx.num("feather") / 100)), 0)
-            p.i.y = UInt32(ctx.effect.choice("type")) } })
+        summary: "Removes dark (or bright, similar, dissimilar) areas — black backgrounds, fire, smoke — with clean, fringe-free edges.",
+        params: [.choice("type", "Key Type", ["Key Out Darker", "Key Out Brighter", "Key Out Similar", "Key Out Dissimilar"], 0, ae: 1),
+                 .number("threshold", "Threshold", 20, 0, 100, unit: "%", ae: 2), .number("tolerance", "Tolerance (Similar)", 5, 0, 100, unit: "%", ae: 3),
+                 .number("feather", "Edge Feather", 8, 0, 100, unit: "%", ae: 5),
+                 .number("edgeClean", "Clean Edges", 100, 0, 100, unit: "%"),
+                 .toggle("invert", "Invert", false), .toggle("viewMatte", "View Matte", false)],
+        stage: .pixels { ctx in key29(ctx, 0) { p in
+            p.a = SIMD4(pc29(ctx, "threshold"), pc29(ctx, "tolerance"), Float(max(0.005, v29(ctx, "feather") / 100)), pc29(ctx, "edgeClean"))
+            p.i.y = UInt32(ch29(ctx, "type"))
+            p.i.z = (b29(ctx, "invert") ? 1 : 0) | (b29(ctx, "viewMatte") ? 2 : 0) } })
 }
 
 /// 4-point homography solver (for Corner Pin).
