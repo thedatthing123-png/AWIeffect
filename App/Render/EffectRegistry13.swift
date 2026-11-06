@@ -60,10 +60,10 @@ extension EffectRegistry {
 
     static let filmBurn13 = EffectDefinition(
         id: "awi13.filmBurn", name: "Film Burn", category: .stylize, aeMatchNames: [],
-        summary: "Animated burning light creeping in from the frame edges, like film melting in the gate.",
+        summary: "Animated film burn creeping in from the sides of the frame: deep red into orange with a white-hot core at the border, the middle of the picture stays.",
         params: [pct13("intensity", "Intensity", 100, 0, 200), .number("speed", "Speed", 1, 0, 5, step: 0.01),
                  pct13("size", "Size", 45)],
-        stage: .pixels { ctx in f13(ctx, 5) { p in
+        stage: .pixels { ctx in film27(ctx, mode: 0) { p in
             p.a = SIMD4(n13(ctx, "intensity", 0.01), n13(ctx, "speed"), n13(ctx, "size", 0.01), 0) } })
 
     static let lightDamage13 = EffectDefinition(
@@ -183,10 +183,10 @@ extension EffectRegistry {
 
     static let analogTV13 = EffectDefinition(
         id: "awi13.analogTV", name: "Analog TV", category: .stylize, aeMatchNames: [],
-        summary: "Broadcast-TV reception: snow noise, vertical roll with a hum bar and smeared chroma.",
+        summary: "Broadcast-TV reception: monochrome snow, vertical roll with a black blanking bar and hum bar, delayed soft chroma and a faint ghost.",
         params: [pct13("noise", "Noise", 30), .number("roll", "Roll Speed", 0.3, 0, 2, step: 0.01),
                  .number("bleed", "Chroma Bleed", 6, 0, 30, unit: "px")],
-        stage: .pixels { ctx in f13(ctx, 15) { p in
+        stage: .pixels { ctx in film27(ctx, mode: 1) { p in
             p.a = SIMD4(n13(ctx, "noise", 0.01), n13(ctx, "roll"), px13(ctx, "bleed"), 0) } })
 
     static let neonSign13 = EffectDefinition(

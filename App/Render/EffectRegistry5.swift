@@ -133,11 +133,14 @@ extension EffectRegistry {
 
     static let inkSketch = EffectDefinition(
         id: "awi.inkSketch", name: "Ink Sketch", category: .stylize, aeMatchNames: [],
-        summary: "Anime line-art: dark ink outlines traced from the image, optional paper look.",
+        summary: "Manga ink: clean tapered lines on the dark side of every edge plus optional solid blacks, over the image or on paper.",
         params: [.number("strength", "Line Strength", 1, 0, 1, step: 0.01), .number("threshold", "Detail", 0.2, 0.02, 1, step: 0.01),
-                 .number("paper", "Paper", 0, 0, 1, step: 0.01), .number("width", "Line Width", 1.5, 0.5, 6, step: 0.1, unit: "px")],
-        stage: .pixels { ctx in l5(ctx, 12) { p in
-            p.a = SIMD4(Float(ctx.num("strength")), Float(ctx.num("threshold")), Float(ctx.num("paper")), Float(ctx.num("width") * ctx.unit)) } })
+                 .number("paper", "Paper", 0, 0, 1, step: 0.01), .number("width", "Line Width", 1.5, 0.5, 6, step: 0.1, unit: "px"),
+                 .number("blacks", "Solid Blacks", 0, 0, 100, unit: "%"),
+                 .color("ink", "Ink", RGBA(0.05, 0.04, 0.06)), .color("paperColor", "Paper Color", RGBA(0.97, 0.95, 0.9))],
+        stage: .pixels { ctx in ink27(ctx, mode: 0, sigma: ctx.num("width") * 0.6 * ctx.unit) { p in
+            p.a = SIMD4(Float(ctx.num("strength")), Float(ctx.num("threshold")), Float(ctx.num("paper")), Float(v27(ctx, "blacks", 0) / 100))
+            p.b = col27(ctx, "ink", RGBA(0.05, 0.04, 0.06)); p.c = col27(ctx, "paperColor", RGBA(0.97, 0.95, 0.9)) } })
 
     static let retroDither = EffectDefinition(
         id: "awi.retroDither", name: "Retro Dither", category: .stylize, aeMatchNames: [],

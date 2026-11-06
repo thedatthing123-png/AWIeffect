@@ -63,7 +63,7 @@ extension EffectRegistry {
                              gx(ctx, mode, rate: 12, seed: ctx.num("seed"), burst: gxBurst(ctx), option: option) { fill(ctx, &$0) } })
     }
 
-    static let sliceGlitch19 = g("slice", "Slice Glitch", "Horizontal slices jump sideways with a color split, in bursts.",
+    static let sliceGlitch19 = g27("slice", "Slice Glitch", "Slices of mixed heights jump sideways with a color split in bursts; a few freeze on one row.",
         [.number("offset", "Slice Offset", 60, 0, 400, unit: "px"), .number("slices", "Slices", 16, 2, 80, step: 1), .number("rgb", "RGB Split", 10, 0, 80, unit: "px")],
         margin: { e, t in e.number("offset", t) }, 0) { ctx, p in
         p.a = SIMD4(Float(ctx.num("offset") * ctx.unit), Float(ctx.num("slices")), Float(ctx.num("rgb") * ctx.unit), 0)
@@ -102,9 +102,9 @@ extension EffectRegistry {
         p.a = SIMD4(Float(ctx.num("static") / 100), Float(ctx.num("bars") / 100), Float(ctx.num("drop") / 100), 0)
     }
 
-    static let interlace19 = g("interlace", "Interlace / Bad TV", "Odd and even lines tear apart with a CRT wobble and scanlines.",
+    static let interlace19 = g27("interlace", "Interlace / Bad TV", "The two video fields comb apart with a lagging ghost field, line groups tear on bursts, with wobble and scanlines.",
         [.number("split", "Line Split", 12, 0, 120, unit: "px"), .number("wobble", "Wobble", 10, 0, 120, unit: "px"), .number("scan", "Scanlines", 50, 0, 100, unit: "%")],
-        margin: { e, t in e.number("split", t) + e.number("wobble", t) }, 6) { ctx, p in
+        margin: { e, t in e.number("split", t) + e.number("wobble", t) }, 1) { ctx, p in
         p.a = SIMD4(Float(ctx.num("split") * ctx.unit), Float(ctx.num("wobble") * ctx.unit), Float(ctx.num("scan") / 100), 0)
     }
 
@@ -144,10 +144,10 @@ extension EffectRegistry {
         p.a = SIMD4(Float(ctx.num("invert") / 100), Float(ctx.num("shift") * ctx.unit), Float(ctx.num("flash") / 100), 0)
     }
 
-    static let displaceGlitch19 = g("displace", "Displacement Glitch", "Blocky noise pushes the layer around in steps.",
+    static let displaceGlitch19 = g27("displace", "Displacement Glitch", "Codec blocks of mixed sizes jump in quantized steps with a slight color split.",
         [.number("amount", "Amount", 30, 0, 300, unit: "px"), .number("block", "Block Size", 12, 2, 80, step: 1, unit: "px"),
          .number("steps", "Steps Per Second", 12, 1, 30, step: 1), .number("vertical", "Vertical", 30, 0, 100, unit: "%")],
-        margin: { e, t in e.number("amount", t) }, 13) { ctx, p in
+        margin: { e, t in e.number("amount", t) }, 2) { ctx, p in
         p.a = SIMD4(Float(ctx.num("amount") * ctx.unit), Float(ctx.num("block") * ctx.unit), Float(ctx.num("steps")), Float(ctx.num("vertical") / 100))
     }
 }

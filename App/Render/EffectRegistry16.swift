@@ -52,12 +52,17 @@ extension EffectRegistry {
 
     static let mangaScreentone16 = EffectDefinition(
         id: "awi16.mangaScreentone", name: "Manga Screentone", category: .stylize, aeMatchNames: [],
-        summary: "Black-and-white manga dot tone: dot size follows darkness on a rotated screen.",
+        summary: "Manga screentone: flat printed tone sheets (paper, dot tones, solid black) with crisp antialiased dots on a rotated screen.",
         params: [px16("size", "Dot Size", 6, 2, 30), .angle("angle", "Screen Angle", 45), pct16("tone", "Tone", 0, -100, 100),
-                 .color("ink", "Ink", ink16), .color("paper", "Paper", paper16), pct16("strength", "Strength", 100)],
-        stage: .pixels { ctx in f16(ctx, 1) { p in
-            p.a = SIMD4(px16(ctx, "size"), rad16(ctx, "angle"), n16(ctx, "tone", 0.005), n16(ctx, "strength", 0.01))
-            p.b = col16(ctx, "ink"); p.c = col16(ctx, "paper") } })
+                 .color("ink", "Ink", ink16), .color("paper", "Paper", paper16), pct16("strength", "Strength", 100),
+                 .number("levels", "Flat Tones (0 = smooth)", 4, 0, 6, step: 1), .choice("shape", "Dot Shape", printShapes27, 0),
+                 pct16("contrast", "Contrast", 120, 0, 300)],
+        stage: .pixels { ctx in
+            let lv = Int(v27(ctx, "levels", 4).rounded())
+            return print27(ctx, mode: 0, cell: ctx.num("size") * ctx.unit, angle: ctx.num("angle") * .pi / 180,
+                           contrast: v27(ctx, "contrast", 120) / 100, mix: ctx.num("strength") / 100,
+                           ink: col16(ctx, "ink"), paper: col16(ctx, "paper"), shape: ctx.effect.choice("shape"),
+                           levels: lv >= 2 ? lv : 0, bias: ctx.num("tone") * 0.005) })
 
     static let mangaSpeedHatch16 = EffectDefinition(
         id: "awi16.mangaSpeedHatch", name: "Manga Speed Hatch", category: .stylize, aeMatchNames: [],
@@ -70,11 +75,11 @@ extension EffectRegistry {
 
     static let cartoonOutline16 = EffectDefinition(
         id: "awi16.cartoonOutline", name: "Cartoon Outline", category: .stylize, aeMatchNames: [],
-        summary: "Thick ink lines traced from luminance edges, with a color boost on the fills.",
+        summary: "Thick tapered ink lines on the dark side of every edge (difference-of-Gaussians), with a color boost on the fills.",
         params: [px16("width", "Line Width", 3, 0.5, 12), .number("threshold", "Edge Threshold", 0.15, 0, 1, step: 0.01),
                  pct16("boost", "Color Boost", 30, 0, 100), .color("ink", "Ink Color", ink16)],
-        stage: .pixels { ctx in f16(ctx, 3) { p in
-            p.a = SIMD4(px16(ctx, "width"), n16(ctx, "threshold"), n16(ctx, "boost", 0.01), 0); p.b = col16(ctx, "ink") } })
+        stage: .pixels { ctx in ink27(ctx, mode: 3, sigma: ctx.num("width") * 0.6 * ctx.unit) { p in
+            p.a = SIMD4(0, n16(ctx, "threshold"), n16(ctx, "boost", 0.01), 0); p.b = col16(ctx, "ink") } })
 
     static let contourLines16 = EffectDefinition(
         id: "awi16.contourLines", name: "Contour Lines", category: .stylize, aeMatchNames: [],
@@ -126,30 +131,34 @@ extension EffectRegistry {
 
     static let halftoneLines16 = EffectDefinition(
         id: "awi16.halftoneLines", name: "Halftone Lines", category: .stylize, aeMatchNames: [],
-        summary: "Line-screen halftone: line thickness follows darkness.",
+        summary: "Antialiased line-screen halftone: each line swells continuously with the darkness under it.",
         params: [px16("period", "Line Spacing", 6, 2, 30), .angle("angle", "Angle", 30), pct16("contrast", "Contrast", 100, 0, 300),
                  .toggle("keep", "Keep Color", false), .color("ink", "Ink", ink16), .color("paper", "Paper", paper16)],
-        stage: .pixels { ctx in f16(ctx, 9) { p in
-            p.a = SIMD4(px16(ctx, "period"), rad16(ctx, "angle"), n16(ctx, "contrast", 0.01), ctx.effect.bool("keep") ? 1 : 0)
-            p.b = col16(ctx, "ink"); p.c = col16(ctx, "paper") } })
+        stage: .pixels { ctx in
+            print27(ctx, mode: 1, cell: ctx.num("period") * ctx.unit, angle: ctx.num("angle") * .pi / 180,
+                    contrast: ctx.num("contrast") / 100, ink: col16(ctx, "ink"), paper: col16(ctx, "paper"),
+                    keep: ctx.effect.bool("keep") ? 1 : 0) })
 
     static let crossHatch16 = EffectDefinition(
         id: "awi16.crossHatch", name: "Cross Hatch", category: .stylize, aeMatchNames: [],
         summary: "Pen-and-ink hatching: up to four layers of strokes build up in darker areas.",
         params: [px16("spacing", "Spacing", 6, 2, 30), px16("width", "Line Width", 1, 0.3, 4), pct16("color", "Keep Color", 0),
-                 .color("ink", "Ink", ink16), .color("paper", "Paper", paper16)],
-        stage: .pixels { ctx in f16(ctx, 10) { p in
-            p.a = SIMD4(px16(ctx, "spacing"), px16(ctx, "width"), n16(ctx, "color", 0.01), 0)
-            p.b = col16(ctx, "ink"); p.c = col16(ctx, "paper") } })
+                 .color("ink", "Ink", ink16), .color("paper", "Paper", paper16), .angle("angle", "Stroke Angle", 0),
+                 pct16("contrast", "Contrast", 110, 0, 300)],
+        stage: .pixels { ctx in
+            print27(ctx, mode: 3, cell: ctx.num("spacing") * ctx.unit, angle: v27(ctx, "angle", 0) * .pi / 180,
+                    contrast: v27(ctx, "contrast", 110) / 100, ink: col16(ctx, "ink"), paper: col16(ctx, "paper"),
+                    keep: ctx.num("color") / 100, extra: SIMD2(px16(ctx, "width"), 0)) })
 
     static let stipple16 = EffectDefinition(
         id: "awi16.stipple", name: "Stipple", category: .stylize, aeMatchNames: [],
-        summary: "Stippled ink dots scattered more densely in the darks.",
+        summary: "Pen stippling: crisp scattered ink dots whose density follows darkness, merging only in the deepest shadows.",
         params: [px16("cell", "Dot Spacing", 4, 2, 16), pct16("density", "Density", 100, 0, 200), pct16("color", "Keep Color", 0),
                  .color("ink", "Ink", ink16), .color("paper", "Paper", paper16)],
-        stage: .pixels { ctx in f16(ctx, 11) { p in
-            p.a = SIMD4(px16(ctx, "cell"), n16(ctx, "density", 0.01), n16(ctx, "color", 0.01), 0)
-            p.b = col16(ctx, "ink"); p.c = col16(ctx, "paper") } })
+        stage: .pixels { ctx in
+            print27(ctx, mode: 4, cell: ctx.num("cell") * ctx.unit, angle: 0, contrast: 1.15,
+                    ink: col16(ctx, "ink"), paper: col16(ctx, "paper"), keep: ctx.num("color") / 100,
+                    extra: SIMD2(n16(ctx, "density", 0.01), 0)) })
 
     static let charcoal16 = EffectDefinition(
         id: "awi16.charcoal", name: "Charcoal", category: .stylize, aeMatchNames: [],
@@ -241,10 +250,12 @@ extension EffectRegistry {
         id: "awi16.woodcut", name: "Woodcut", category: .stylize, aeMatchNames: [],
         summary: "Carved woodblock print: warped gouge lines whose thickness follows darkness.",
         params: [px16("period", "Line Spacing", 7, 2, 30), px16("warp", "Warp", 6, 0, 30), pct16("bias", "Darkness", 0, -100, 100),
-                 pct16("edges", "Edge Ink", 100), .color("ink", "Ink", RGBA(0.08, 0.05, 0.03)), .color("paper", "Paper", RGBA(0.95, 0.9, 0.78))],
-        stage: .pixels { ctx in f16(ctx, 22) { p in
-            p.a = SIMD4(px16(ctx, "period"), px16(ctx, "warp"), n16(ctx, "bias", 0.005), n16(ctx, "edges", 0.01))
-            p.b = col16(ctx, "ink"); p.c = col16(ctx, "paper") } })
+                 pct16("edges", "Edge Ink", 100), .color("ink", "Ink", RGBA(0.08, 0.05, 0.03)), .color("paper", "Paper", RGBA(0.95, 0.9, 0.78)),
+                 .angle("angle", "Cut Angle", -20)],
+        stage: .pixels { ctx in
+            print27(ctx, mode: 5, cell: ctx.num("period") * ctx.unit, angle: v27(ctx, "angle", -20) * .pi / 180, contrast: 1.2,
+                    ink: col16(ctx, "ink"), paper: col16(ctx, "paper"), bias: ctx.num("bias") * 0.005,
+                    extra: SIMD2(px16(ctx, "warp"), n16(ctx, "edges", 0.01))) })
 
     static let graffitiSpray16 = EffectDefinition(
         id: "awi16.graffitiSpray", name: "Graffiti Spray", category: .stylize, aeMatchNames: [],
