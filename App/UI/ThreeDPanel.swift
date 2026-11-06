@@ -42,8 +42,8 @@ extension EditorState {
 }
 
 extension EditorState {
-    static func zoom(forFocalLength mm: Double, compWidth: Int) -> Double { Double(compWidth) * mm / 36 }
-    static func focalLength(zoom: Double, compWidth: Int) -> Double { zoom * 36 / Double(max(1, compWidth)) }
+    nonisolated static func zoom(forFocalLength mm: Double, compWidth: Int) -> Double { Double(compWidth) * mm / 36 }
+    nonisolated static func focalLength(zoom: Double, compWidth: Int) -> Double { zoom * 36 / Double(max(1, compWidth)) }
 
     /// Sets the selected camera's focus distance to how far the layer is from it right now.
     func focusCamera(on id: UUID) {
