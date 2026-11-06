@@ -79,13 +79,14 @@ extension EffectRegistry {
 
     static let bubbles12 = EffectDefinition(
         id: "awi12.bubbles", name: "Bubbles", category: .generate, aeMatchNames: [],
-        summary: "Glossy soap bubbles rising and swaying.",
+        summary: "Soap bubbles rising and swaying in three depth layers: thin-film iridescent shells, wobbling membranes and glossy reflections.",
         params: p12([.number("spacing", "Spacing", 36, 10, 200, unit: "px"), .number("size", "Bubble Size", 9, 2, 60, step: 0.1, unit: "px"),
                   .number("speed", "Rise Speed", 50, 0, 400, unit: "px/s"), .number("wobble", "Sway", 0.6, 0, 2, step: 0.01),
-                  .color("color", "Color", RGBA(0.7, 0.9, 1)), seed12]),
-        stage: .pixels { ctx in g12(ctx, 3, over: false) { p in
-            p.a = SIMD4(px12(ctx, "spacing"), px12(ctx, "size"), px12(ctx, "speed"), n12(ctx, "wobble"))
-            p.b = col12(ctx, "color"); p.c.x = n12(ctx, "seed") } })
+                  .color("color", "Color", RGBA(0.7, 0.9, 1)), seed12,
+                  .number("iridescence", "Iridescence", 70, 0, 100, unit: "%"), .number("depth", "Depth Blur", 50, 0, 100, unit: "%")]),
+        stage: .pixels { ctx in gen29(ctx, 7, over: false) { p in
+            p.a = SIMD4(px29(ctx, "spacing"), px29(ctx, "size"), px29(ctx, "speed"), f29(ctx, "wobble"))
+            p.b = col29(ctx, "color"); p.c = SIMD4(f29(ctx, "seed"), pc29(ctx, "iridescence"), pc29(ctx, "depth"), 0) } })
 
     static let rainRipples12 = EffectDefinition(
         id: "awi12.rainRipples", name: "Rain Ripples", category: .generate, aeMatchNames: [],
@@ -263,13 +264,13 @@ extension EffectRegistry {
 
     static let crystalShards12 = EffectDefinition(
         id: "awi12.crystalShards", name: "Crystal Shards", category: .generate, aeMatchNames: [],
-        summary: "Faceted crystal shards catching a moving light, with glowing edges.",
-        params: p12([.number("size", "Shard Size", 34, 8, 250, unit: "px"), .number("speed", "Light Speed", 1, 0, 5, step: 0.01),
+        summary: "Faceted glass shards: ridged two-facet crystals refracting the layer, a light sweeping across them, crisp antialiased glowing edges.",
+        params: p12([.number("size", "Shard Size", 60, 8, 400, unit: "px"), .number("speed", "Light Speed", 1, 0, 5, step: 0.01),
                   .number("edge", "Edge Glow", 1, 0, 3, step: 0.01), .number("contrast", "Facet Contrast", 70, 0, 100, unit: "%"),
                   .number("refraction", "Refraction", 50, 0, 100, unit: "%"), .color("color", "Tint", RGBA(0.55, 0.75, 1)), seed12]),
-        stage: .pixels { ctx in g12(ctx, 20, over: true) { p in
-            p.a = SIMD4(px12(ctx, "size"), n12(ctx, "speed"), n12(ctx, "edge"), pc12(ctx, "contrast"))
-            p.b = col12(ctx, "color"); p.c.x = n12(ctx, "seed"); p.c.y = pc12(ctx, "refraction") } })
+        stage: .pixels { ctx in gen29(ctx, 3, over: true) { p in
+            p.a = SIMD4(px29(ctx, "size"), f29(ctx, "speed"), f29(ctx, "edge"), pc29(ctx, "contrast"))
+            p.b = col29(ctx, "color"); p.c.x = f29(ctx, "seed"); p.c.y = pc29(ctx, "refraction") } })
 
     static let spiralGalaxy12 = EffectDefinition(
         id: "awi12.spiralGalaxy", name: "Spiral Galaxy", category: .generate, aeMatchNames: [],

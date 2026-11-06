@@ -351,23 +351,33 @@ enum EffectRegistry {
     static let exposure = EffectDefinition(
         id: "ae.exposure", name: "Exposure", category: .color,
         aeMatchNames: ["ADBE Exposure2", "ADBE Exposure"],
-        summary: "Brighten or darken in camera stops.",
+        summary: "Brighten or darken in camera stops, computed in linear (scene-referred) values like a real camera, with a soft shoulder instead of hard clipping.",
         params: [
             .number("exposure", "Exposure", 0, -10, 10, step: 0.01, ae: 3),
             .number("offset", "Offset", 0, -1, 1, step: 0.001, ae: 4),
             .number("gamma", "Gamma Correction", 1, 0.1, 5, step: 0.01, ae: 5),
+            .toggle("bypass", "Bypass Linear Light Conversion", false),
+            .number("rolloff", "Highlight Rolloff", 50, 0, 100, unit: "%"),
         ],
-        stage: colorOp(0) { ctx, p in p.a = SIMD4(Float(ctx.num("exposure")), Float(ctx.num("offset")), Float(ctx.num("gamma")), 0) })
+        stage: .pixels { ctx in color29(ctx, 0) { p in
+            // Instances saved before the linear-light remake (and the 3D extrude wall shading) have no "bypass":
+            // they keep the earlier gamma-space math with no shoulder, so existing edits look unchanged.
+            let older = ctx.effect.params["bypass"] == nil
+            p.a = SIMD4(f29(ctx, "exposure"), f29(ctx, "offset"), f29(ctx, "gamma"), older ? 0 : pc29(ctx, "rolloff"))
+            p.i.y = (older || b29(ctx, "bypass")) ? 1 : 0 } })
 
     static let brightnessContrast = EffectDefinition(
         id: "ae.brightnessContrast", name: "Brightness & Contrast", category: .color,
         aeMatchNames: ["ADBE Brightness & Contrast 2", "ADBE Brightness & Contrast"],
-        summary: "Classic brightness and contrast controls.",
+        summary: "Brightness and contrast that bend the tone curve (like the current AE version) so whites and shadows never clip.",
         params: [
             .number("brightness", "Brightness", 0, -150, 150, ae: 1),
             .number("contrast", "Contrast", 0, -100, 100, ae: 2),
+            .toggle("legacy", "Use Legacy (clips)", false, ae: 3),
         ],
-        stage: colorOp(1) { ctx, p in p.a = SIMD4(Float(ctx.num("brightness")), Float(ctx.num("contrast")), 0, 0) })
+        stage: .pixels { ctx in color29(ctx, 1) { p in
+            p.a = SIMD4(f29(ctx, "brightness"), f29(ctx, "contrast"), 0, 0)
+            p.i.y = b29(ctx, "legacy") ? 1 : 0 } })
 
     static let hueSaturation = EffectDefinition(
         id: "ae.hueSaturation", name: "Hue/Saturation", category: .color,
@@ -506,28 +516,36 @@ enum EffectRegistry {
     static let fractalNoise = EffectDefinition(
         id: "ae.fractalNoise", name: "Fractal Noise", category: .generate,
         aeMatchNames: ["ADBE Fractal Noise"],
-        summary: "Animated organic noise for textures, smoke and flicker.",
+        summary: "After Effects-style fractal noise: fractal and noise types, contrast, overflow, transform, complexity, sub settings, evolution with cycling, and blending with the layer.",
         params: [
-            .choice("type", "Noise Type", ["Basic", "Turbulent"], 0, ae: 1),
+            .choice("type", "Fractal Type", ["Basic", "Turbulent", "Turbulent Smooth", "Turbulent Sharp", "Dynamic", "Dynamic Twist",
+                                             "Max", "Rocky", "Strings", "Smeary"], 0, ae: 1),
+            .choice("noiseType", "Noise Type", ["Block", "Linear", "Soft Linear", "Spline"], 2),
             .toggle("invert", "Invert", false, ae: 3),
             .number("contrast", "Contrast", 100, 0, 1000, ae: 4),
             .number("brightness", "Brightness", 0, -200, 200, ae: 5),
+            .choice("overflow", "Overflow", ["Clip", "Soft Clamp", "Wrap Back", "Allow HDR Results"], 0),
+            .angle("rotation", "Rotation", 0),
             .number("scale", "Scale", 100, 10, 2000, ae: 9),
-            .number("complexity", "Complexity", 6, 1, 10, step: 1, ae: 14),
+            .number("scaleWidth", "Scale Width", 100, 10, 1000, unit: "%"),
+            .number("scaleHeight", "Scale Height", 100, 10, 1000, unit: "%"),
+            .point("offset", "Offset Turbulence", Vec2(0.5, 0.5)),
+            .number("complexity", "Complexity", 6, 1, 20, step: 0.1, ae: 14),
             .number("subInfluence", "Sub Influence", 70, 0, 100, unit: "%", ae: 16),
             .number("subScaling", "Sub Scaling", 56, 10, 100, unit: "%", ae: 17),
+            .angle("subRotation", "Sub Rotation", 0),
+            .number("subOffsetX", "Sub Offset X", 0, -2000, 2000, unit: "px"),
+            .number("subOffsetY", "Sub Offset Y", 0, -2000, 2000, unit: "px"),
             .number("evolution", "Evolution", 0, -3600, 3600, unit: "°", ae: 21),
+            .number("evoSpeed", "Evolution Speed", 0, -5, 5, step: 0.01, unit: "rev/s"),
+            .toggle("cycle", "Cycle Evolution", false),
+            .number("cycles", "Cycle (in Revolutions)", 1, 1, 30, step: 1),
+            .number("seed", "Random Seed", 0, 0, 1000, step: 1),
+            .number("opacity", "Opacity", 100, 0, 100, unit: "%"),
+            .choice("blend", "Blending Mode", ["None", "Add", "Multiply", "Screen", "Overlay", "Soft Light"], 0),
             .toggle("keepAlpha", "Use Layer Alpha", true),
         ],
-        stage: .pixels { ctx in
-            let out = ctx.temp()
-            var p = EffectParams()
-            p.a = SIMD4(Float(ctx.num("contrast")), Float(ctx.num("brightness")), Float(ctx.num("scale") * ctx.unit), Float(ctx.num("complexity")))
-            p.b = SIMD4(Float(ctx.num("subInfluence")), Float(ctx.num("subScaling")), Float(ctx.num("evolution") / 360), 0)
-            p.i = SIMD4(UInt32(ctx.effect.choice("type")), ctx.effect.bool("invert") ? 1 : 0, ctx.effect.bool("keepAlpha") ? 1 : 0, 0)
-            ctx.gpu.run("fxFractalNoise", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
-            return out
-        })
+        stage: .pixels { ctx in fractalNoise29(ctx) })
 
     static let chromaKey = EffectDefinition(
         id: "awi.chromaKey", name: "Chroma Key", category: .keying,

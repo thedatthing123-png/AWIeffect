@@ -207,14 +207,17 @@ extension EffectRegistry {
 
     static let colorRangeKey11 = EffectDefinition(
         id: "awi11.colorRangeKey", name: "Color Range Key", category: .keying, aeMatchNames: [],
-        summary: "Keys out a hue range above minimum saturation and brightness.",
+        summary: "Keys out a hue range above minimum saturation and brightness, with soft hue falloff, spill suppression and a matte view.",
         params: [.angle("hue", "Hue", 120), .number("width", "Hue Width", 40, 0, 180, unit: "°"),
                  .number("satMin", "Min Saturation", 20, 0, 100, unit: "%"), .number("valMin", "Min Brightness", 10, 0, 100, unit: "%"),
-                 .toggle("invert", "Invert", false)],
-        stage: .pixels { ctx in r11(ctx, 16) { p in
+                 .toggle("invert", "Invert", false),
+                 .number("softness", "Hue Softness", 15, 0, 90, unit: "°"), .number("spill", "Spill Suppression", 50, 0, 100, unit: "%"),
+                 .toggle("viewMatte", "View Matte", false)],
+        stage: .pixels { ctx in key29(ctx, 1) { p in
             var h = ctx.num("hue").truncatingRemainder(dividingBy: 360); if h < 0 { h += 360 }
             p.a = SIMD4(Float(h), Float(ctx.num("width")), Float(ctx.num("satMin") / 100), Float(ctx.num("valMin") / 100))
-            p.i.y = ctx.effect.bool("invert") ? 1 : 0 } })
+            p.b = SIMD4(f29(ctx, "softness"), pc29(ctx, "spill"), 0, 0)
+            p.i.z = (ctx.effect.bool("invert") ? 1 : 0) | (b29(ctx, "viewMatte") ? 2 : 0) } })
 
     static let lumaMatteSoft11 = EffectDefinition(
         id: "awi11.lumaMatteSoft", name: "Luma Matte Soft", category: .keying, aeMatchNames: [],

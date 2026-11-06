@@ -60,24 +60,25 @@ extension EffectRegistry {
 
     static let snow = EffectDefinition(
         id: "awi7.snow", name: "Snow", category: .generate, aeMatchNames: [],
-        summary: "Falling snowflakes in three depth layers with wind and sway.",
+        summary: "Falling snow in up to five depth layers: small sharp dim flakes far away, big defocused flakes up close, each with its own speed, wind and sway.",
         params: p7([.number("spacing", "Spacing", 28, 8, 120, unit: "px"), .number("size", "Flake Size", 3, 0.5, 12, step: 0.1, unit: "px"),
                  .number("speed", "Fall Speed", 90, 0, 600, unit: "px/s"), .number("wind", "Wind", 20, -300, 300, unit: "px/s"),
-                 .number("wobble", "Sway", 0.8, 0, 2, step: 0.01), .color("color", "Color", RGBA(1, 1, 1)), seed7]),
-        stage: .pixels { ctx in g7(ctx, 2, over: true) { p in
-            p.a = SIMD4(px7(ctx, "spacing"), px7(ctx, "size"), px7(ctx, "speed"), px7(ctx, "wind"))
-            p.b = col7(ctx, "color"); p.c = SIMD4(n7(ctx, "seed"), n7(ctx, "wobble"), 0, 0) } })
+                 .number("wobble", "Sway", 0.8, 0, 2, step: 0.01), .color("color", "Color", RGBA(1, 1, 1)), seed7,
+                 .number("depth", "Depth Blur", 60, 0, 100, unit: "%"), .number("layers", "Depth Layers", 4, 1, 5, step: 1)]),
+        stage: .pixels { ctx in gen29(ctx, 4, over: true) { p in
+            p.a = SIMD4(px29(ctx, "spacing"), px29(ctx, "size"), px29(ctx, "speed"), px29(ctx, "wind"))
+            p.b = col29(ctx, "color"); p.c = SIMD4(f29(ctx, "seed"), f29(ctx, "wobble"), pc29(ctx, "depth"), f29(ctx, "layers")) } })
 
     static let rain = EffectDefinition(
         id: "awi7.rain", name: "Rain", category: .generate, aeMatchNames: [],
-        summary: "Slanted rain streaks in parallax layers.",
+        summary: "Slanted rain in depth layers: thin faint far streaks, long soft near ones, each drop with its own speed and a bright leading head.",
         params: p7([.angle("angle", "Angle", 15), .number("speed", "Speed", 900, 0, 3000, unit: "px/s"),
                  .number("length", "Drop Length", 18, 2, 100, unit: "px"), .number("spacing", "Spacing", 10, 3, 60, unit: "px"),
                  .number("width", "Width", 1.2, 0.3, 6, step: 0.1, unit: "px"), .number("amount", "Amount", 60, 0, 100, unit: "%"),
-                 .color("color", "Color", RGBA(0.75, 0.82, 0.95)), seed7], 80),
-        stage: .pixels { ctx in g7(ctx, 3, over: true) { p in
-            p.a = SIMD4(Float(ctx.num("angle") * .pi / 180), px7(ctx, "speed"), px7(ctx, "length"), px7(ctx, "spacing"))
-            p.b = col7(ctx, "color"); p.c = SIMD4(px7(ctx, "width"), n7(ctx, "seed"), pc7(ctx, "amount"), 0) } })
+                 .color("color", "Color", RGBA(0.75, 0.82, 0.95)), seed7, .number("layers", "Depth Layers", 4, 1, 5, step: 1)], 80),
+        stage: .pixels { ctx in gen29(ctx, 5, over: true) { p in
+            p.a = SIMD4(Float(v29(ctx, "angle") * .pi / 180), px29(ctx, "speed"), px29(ctx, "length"), px29(ctx, "spacing"))
+            p.b = col29(ctx, "color"); p.c = SIMD4(px29(ctx, "width"), f29(ctx, "seed"), pc29(ctx, "amount"), f29(ctx, "layers")) } })
 
     static let embers = EffectDefinition(
         id: "awi7.embers", name: "Embers & Sparks", category: .generate, aeMatchNames: [],
@@ -189,33 +190,40 @@ extension EffectRegistry {
 
     static let clouds = EffectDefinition(
         id: "awi7.clouds", name: "Clouds & Fog", category: .generate, aeMatchNames: [],
-        summary: "Drifting, slowly evolving fractal clouds or fog.",
+        summary: "Billowing fbm clouds or fog curling into themselves, drifting and evolving, lit from above with soft shadowed undersides and silver edges.",
         params: p7([.number("scale", "Scale", 80, 10, 800, unit: "px"), .number("coverage", "Coverage", 55, 0, 100, unit: "%"),
                  .number("softness", "Softness", 35, 0, 100, unit: "%"), .number("drift", "Drift", 30, -300, 300, unit: "px/s"),
-                 .number("evolve", "Evolve", 0.3, 0, 3, step: 0.01), .color("color", "Color", RGBA(0.92, 0.94, 1)), seed7], 85),
-        stage: .pixels { ctx in g7(ctx, 14, over: true) { p in
-            p.a = SIMD4(px7(ctx, "scale"), pc7(ctx, "coverage"), pc7(ctx, "softness"), px7(ctx, "drift"))
-            p.b = col7(ctx, "color"); p.c = SIMD4(n7(ctx, "evolve"), n7(ctx, "seed"), 0, 0) } })
+                 .number("evolve", "Evolve", 0.3, 0, 3, step: 0.01), .color("color", "Color", RGBA(0.92, 0.94, 1)), seed7,
+                 .number("warp", "Billow (Domain Warp)", 100, 0, 300, unit: "%"), .number("detail", "Detail", 6, 2, 8, step: 1),
+                 .number("shading", "Shading", 60, 0, 100, unit: "%"), .color("shadow", "Shadow Color", RGBA(0.5, 0.55, 0.68))], 85),
+        stage: .pixels { ctx in gen29(ctx, 0, over: true) { p in
+            p.a = SIMD4(px29(ctx, "scale"), pc29(ctx, "coverage"), pc29(ctx, "softness"), px29(ctx, "drift"))
+            p.b = col29(ctx, "color"); p.c = SIMD4(f29(ctx, "evolve"), f29(ctx, "seed"), pc29(ctx, "warp"), pc29(ctx, "shading"))
+            p.i.z = pack29(ctx, "shadow"); p.i.w = UInt32(max(2, min(8, Int(v29(ctx, "detail"))))) } })
 
     static let smoke = EffectDefinition(
         id: "awi7.smoke", name: "Smoke", category: .generate, aeMatchNames: [],
-        summary: "Turbulent smoke rising from the bottom and thinning out.",
+        summary: "Rising smoke advected through layered turbulence: dense at the base, curling and breaking into wisps as it climbs, lit from above.",
         params: p7([.number("scale", "Scale", 70, 10, 600, unit: "px"), .number("speed", "Rise Speed", 60, 0, 400, unit: "px/s"),
                  .number("turbulence", "Turbulence", 1, 0, 3, step: 0.01), .number("height", "Height", 70, 0, 100, unit: "%"),
-                 .number("density", "Density", 100, 0, 200, unit: "%"), .color("color", "Color", RGBA(0.7, 0.7, 0.75)), seed7]),
-        stage: .pixels { ctx in g7(ctx, 15, over: true) { p in
-            p.a = SIMD4(px7(ctx, "scale"), px7(ctx, "speed"), n7(ctx, "turbulence"), pc7(ctx, "height"))
-            p.b = col7(ctx, "color"); p.c = SIMD4(n7(ctx, "seed"), pc7(ctx, "density"), 0, 0) } })
+                 .number("density", "Density", 100, 0, 200, unit: "%"), .color("color", "Color", RGBA(0.7, 0.7, 0.75)), seed7,
+                 .number("detail", "Detail", 6, 2, 8, step: 1), .number("shading", "Shading", 60, 0, 100, unit: "%")]),
+        stage: .pixels { ctx in gen29(ctx, 1, over: true) { p in
+            p.a = SIMD4(px29(ctx, "scale"), px29(ctx, "speed"), f29(ctx, "turbulence"), pc29(ctx, "height"))
+            p.b = col29(ctx, "color"); p.c = SIMD4(f29(ctx, "seed"), pc29(ctx, "density"), pc29(ctx, "shading"), 0)
+            p.i.w = UInt32(max(2, min(8, Int(v29(ctx, "detail"))))) } })
 
     static let fire = EffectDefinition(
         id: "awi7.fire", name: "Fire", category: .generate, aeMatchNames: [],
-        summary: "Stylized flames licking up from the bottom of the frame.",
+        summary: "Flames licking up from the bottom: churning rising turbulence with a blackbody ramp from deep red through the tint to a white-hot base.",
         params: p7([.number("height", "Height", 45, 0, 100, unit: "%"), .number("scale", "Scale", 40, 5, 400, unit: "px"),
                  .number("speed", "Speed", 2, 0, 10, step: 0.05), .number("turbulence", "Turbulence", 0.6, 0, 2, step: 0.01),
-                 .number("intensity", "Intensity", 1.2, 0, 3, step: 0.01), .color("tint", "Tint", RGBA(1, 0.45, 0.1)), seed7]),
-        stage: .pixels { ctx in g7(ctx, 16, over: false) { p in
-            p.a = SIMD4(pc7(ctx, "height"), px7(ctx, "scale"), n7(ctx, "speed"), n7(ctx, "turbulence"))
-            p.b = col7(ctx, "tint"); p.c = SIMD4(n7(ctx, "seed"), n7(ctx, "intensity"), 0, 0) } })
+                 .number("intensity", "Intensity", 1.2, 0, 3, step: 0.01), .color("tint", "Tint", RGBA(1, 0.45, 0.1)), seed7,
+                 .number("detail", "Detail", 5, 2, 8, step: 1)]),
+        stage: .pixels { ctx in gen29(ctx, 2, over: false) { p in
+            p.a = SIMD4(pc29(ctx, "height"), px29(ctx, "scale"), f29(ctx, "speed"), f29(ctx, "turbulence"))
+            p.b = col29(ctx, "tint"); p.c = SIMD4(f29(ctx, "seed"), f29(ctx, "intensity"), 0, 0)
+            p.i.w = UInt32(max(2, min(8, Int(v29(ctx, "detail"))))) } })
 
     static let electricArcs = EffectDefinition(
         id: "awi7.electricArcs", name: "Electric Arcs", category: .generate, aeMatchNames: [],
@@ -288,11 +296,12 @@ extension EffectRegistry {
 
     static let confetti = EffectDefinition(
         id: "awi7.confetti", name: "Confetti", category: .generate, aeMatchNames: [],
-        summary: "Colorful paper confetti tumbling down.",
+        summary: "Paper confetti (strips and dots) flipping in 3D as it flutters down in three depth layers, lit on the front, darker on the back.",
         params: p7([.number("spacing", "Spacing", 34, 10, 150, unit: "px"), .number("size", "Size", 5, 1, 30, step: 0.1, unit: "px"),
                  .number("speed", "Fall Speed", 110, 0, 600, unit: "px/s"), .number("spin", "Spin", 3, 0, 15, step: 0.05),
-                 .number("sway", "Sway", 0.8, 0, 2, step: 0.01), .number("saturation", "Saturation", 80, 0, 100, unit: "%"), seed7]),
-        stage: .pixels { ctx in g7(ctx, 23, over: true) { p in
-            p.a = SIMD4(px7(ctx, "spacing"), px7(ctx, "size"), px7(ctx, "speed"), n7(ctx, "spin"))
-            p.c = SIMD4(n7(ctx, "seed"), pc7(ctx, "saturation"), n7(ctx, "sway"), 0) } })
+                 .number("sway", "Sway", 0.8, 0, 2, step: 0.01), .number("saturation", "Saturation", 80, 0, 100, unit: "%"), seed7,
+                 .number("depth", "Depth Blur", 50, 0, 100, unit: "%")]),
+        stage: .pixels { ctx in gen29(ctx, 6, over: true) { p in
+            p.a = SIMD4(px29(ctx, "spacing"), px29(ctx, "size"), px29(ctx, "speed"), f29(ctx, "spin"))
+            p.c = SIMD4(f29(ctx, "seed"), pc29(ctx, "saturation"), f29(ctx, "sway"), pc29(ctx, "depth")) } })
 }

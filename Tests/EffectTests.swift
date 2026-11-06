@@ -189,7 +189,10 @@ final class EffectTests: XCTestCase {
         // Params that only matter in a mode not active in this test (documented, not silent).
         let modal: Set<String> = ["ae.hueSaturation/colorizeSat", "awi18.negativeFlash/threshold", "awi18.grade/lutStrength", "awi18.transform/x", "awi18.transform/y",
                                    // Whole-number phases line up (loops), and the tile output only shows past the layer bounds.
-                                   "awi20.amWaveWarp/phase", "ae.motionTile/outW", "ae.motionTile/outH"]
+                                   "awi20.amWaveWarp/phase", "ae.motionTile/outW", "ae.motionTile/outH",
+                                   // Cycle length only applies with Cycle Evolution on; tolerance only in Similar/Dissimilar;
+                                   // edge cleaning only touches the few soft key-edge pixels (covered in BackgroundColorRemakeTests).
+                                   "ae.fractalNoise/cycles", "ae.lumaKey/tolerance", "ae.lumaKey/edgeClean"]
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
             for pd in d.params {
                 guard case .number(let lo, let hi, _, _) = pd.kind, !modal.contains("\(d.id)/\(pd.id)") else { continue }
