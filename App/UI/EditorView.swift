@@ -370,6 +370,9 @@ struct EditorView: View {
                             OrbitGizmo(state: state, project: lp ?? state.project, time: t, fit: fit, mode: $gizmoMode)
                         }
                     }
+                    // The app's existing two-finger watcher slides the 3D view.
+                    TwoFingerPan(onBegan: { orbitPanStart = nil }, onChanged: { d in orbitPan(CGPoint(x: d.width, y: d.height), fit: fit) },
+                                 onEnded: { orbitPanStart = nil })
                     VStack { OrbitToolbar(state: state, mode: $gizmoMode); Spacer() }
                 }
                 if state.canvasMode == .comp, !state.cameraView {
@@ -478,8 +481,6 @@ struct EditorView: View {
                 .onEnded { _ in rotActive = false; finishPinch() }, including: pen == nil && !canvasToolActive ? .all : .subviews)
             .simultaneousGesture(orbitDrag, including: state.canvasMode == .orbit ? .all : .subviews)
             .simultaneousGesture(orbitZoom, including: state.canvasMode == .orbit ? .all : .subviews)
-            .simultaneousGesture(TwoFingerPan(onChange: { t in orbitPan(t, fit: fit) }, onEnd: { orbitPanStart = nil }),
-                                 including: state.canvasMode == .orbit ? .all : .subviews)
             .simultaneousGesture(SpatialTapGesture().onEnded { v in
                 if state.canvasMode == .orbit, pen == nil, !canvasToolActive { state.orbitSelect(at: v.location, fit: fit); return }
                 guard pen == nil && !canvasToolActive && state.canvasMode == .comp else { return }

@@ -190,26 +190,6 @@ struct OrbitGizmo: View {
     }
 }
 
-/// Two-finger drag (UIKit, so it can coexist with one-finger orbit and pinch).
-struct TwoFingerPan: UIGestureRecognizerRepresentable {
-    var onChange: (CGPoint) -> Void
-    var onEnd: () -> Void
-
-    func makeUIGestureRecognizer(context: Context) -> UIPanGestureRecognizer {
-        let g = UIPanGestureRecognizer()
-        g.minimumNumberOfTouches = 2
-        g.maximumNumberOfTouches = 2
-        return g
-    }
-
-    func handleUIGestureRecognizerAction(_ recognizer: UIPanGestureRecognizer, context: Context) {
-        switch recognizer.state {
-        case .began, .changed: onChange(recognizer.translation(in: recognizer.view))
-        default: onEnd()
-        }
-    }
-}
-
 /// View presets and handle mode for the 3D view.
 struct OrbitToolbar: View {
     @ObservedObject var state: EditorState
