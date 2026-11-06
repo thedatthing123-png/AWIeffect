@@ -34,11 +34,11 @@ Rules for every item: read the existing system first, improve what's there befor
 
 ## How effects are chosen
 
-Many AE Motion effects are a simple effect with a texture or overlay baked in (a ripple with its own light overlay, for example). Once the app's building blocks are strong, the owner can make those looks by stacking layers and effects, and the preset system can save them. So the effects expansion favors:
+Many AE Motion effects are a simple effect with a texture or overlay baked in (a ripple with its own light overlay, for example). Once the app's building blocks are strong, the owner can make those looks by stacking layers and effects,. So the effects expansion favors:
 
 - **Building blocks that do something new**, not one family copied with small changes.
 - **Real quality on each one**, matched to how AE and AM behave.
-- **Combined looks as presets**, not as separate effects, unless the combination needs something stacking can't do.
+- **No combo effects.** AE Motion's combos (like a ripple with an overlay baked in) are skipped; the owner builds those by stacking.
 ## Ideas from research
 
 What the big tools added recently, and what's worth bringing to a phone editor:
