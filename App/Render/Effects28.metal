@@ -1,4 +1,4 @@
-#include <metal_stdlib>
+﻿#include <metal_stdlib>
 using namespace metal;
 
 // Batch 28: Distort & Transitions remakes.
@@ -1144,7 +1144,7 @@ static float4 distort6at28(texture2d<half, access::sample> src, float2 c, float2
             float wav = sin(y * 0.35 + t * 20.0);
             q.x += (bar * 1.0 + 0.15) * wav * p.a.y;
             float inside = step(0.0, q.x) * step(q.x, size.x) * step(abs(uv.y), 1.0) * step(abs(uv.x), 1.0);
-            float4 s = float4(src.sample(s6Zero, float2(q.x, y))) * inside;
+            float4 s = float4(src.sample(s28Zero, float2(q.x, y))) * inside;
             float scan = 1.0 - p.a.z * 0.6 * (0.5 + 0.5 * sin(c.y * 3.1415926));
             s.rgb *= scan * (1.0 + 0.25 * bar);
             o = s;
