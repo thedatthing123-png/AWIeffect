@@ -18,7 +18,8 @@ extension EffectRegistry {
     }
     /// Kernel edge-mode code for a choice from `edgeRepeatFirst28`.
     static func edgeRepeatCode28(_ ctx: EffectContext, _ key: String = "edge") -> UInt32 {
-        [1, 0, 2, 3][min(3, max(0, ctx.effect.choice(key)))]
+        let codes: [UInt32] = [1, 0, 2, 3]
+        return codes[min(3, max(0, ctx.effect.choice(key)))]
     }
     /// Supersampling grid (1, 2 or 3 per axis) for an Antialiasing choice.
     static func aaGrid28(_ ctx: EffectContext, _ key: String = "aa") -> UInt32 {
@@ -119,5 +120,22 @@ extension EffectRegistry {
             p.b = SIMD4(Float(ctx.num("feather") * ctx.unit), Float(num28(ctx, "opacity", 100) / 100),
                         Float(max(0, ctx.effect.choice("shape"))), Float(max(0, ctx.effect.choice("blend"))))
         }
+    }
+
+    // MARK: Batch 6 / 14 warps
+
+    /// Antialiasing + Edge Behavior for the remade batch 6 / 14 warps. Edge "Default" keeps each warp's own edges.
+    static let warpExtras28: [ParamDef] = [
+        .choice("aa", "Antialiasing", aaOptions28, 1),
+        .choice("edge", "Edge Behavior", ["Default", "Transparent", "Repeat Edge Pixels", "Tile", "Mirror"], 0),
+    ]
+
+    /// Supersampling grid and edge code when the effect carries the remake controls (nil = original kernel).
+    static func warpAA28(_ ctx: EffectContext) -> (grid: UInt32, edge: UInt32)? {
+        guard ctx.effect.params["aa"] != nil || ctx.effect.params["edge"] != nil else { return nil }
+        let edge = UInt32(min(4, max(0, ctx.effect.choice("edge"))))
+        let grid = aaGrid28(ctx)
+        if grid == 1 && edge == 0 { return nil }
+        return (grid, edge)
     }
 }

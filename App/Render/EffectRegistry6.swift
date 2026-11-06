@@ -18,7 +18,12 @@ extension EffectRegistry {
         fill(&p)
         p.i.x = mode
         p.d.x = Float(ctx.time)
-        ctx.gpu.run("fxDistort6", ctx.cb, textures: [ctx.input, out, ctx.input], params: p, grid: out)
+        if let aa = warpAA28(ctx) {
+            p.i.z = aa.grid; p.i.w = aa.edge
+            ctx.gpu.run("fxDistort6AA28", ctx.cb, textures: [ctx.input, out, ctx.input], params: p, grid: out)
+        } else {
+            ctx.gpu.run("fxDistort6", ctx.cb, textures: [ctx.input, out, ctx.input], params: p, grid: out)
+        }
         return out
     }
     private static func pt6(_ ctx: EffectContext, _ key: String) -> SIMD2<Float> {
@@ -33,7 +38,7 @@ extension EffectRegistry {
         id: "awi6.fisheye", name: "Fisheye", category: .distort, aeMatchNames: [],
         summary: "Wide-angle fisheye magnification (negative = anti-fisheye pinch).",
         params: [.number("amount", "Amount", 60, -100, 100, unit: "%"), .number("radius", "Radius", 110, 5, 150, unit: "%"),
-                 .point("center", "Center", Vec2(0.5, 0.5))],
+                 .point("center", "Center", Vec2(0.5, 0.5))] + warpExtras28,
         stage: .pixels { ctx in d6(ctx, 0) { p in
             let c = pt6(ctx, "center"); p.a = SIMD4(n6(ctx, "amount", 0.01), n6(ctx, "radius", 0.01), c.x, c.y) } })
 
@@ -42,7 +47,7 @@ extension EffectRegistry {
         summary: "Barrel / pincushion lens distortion with edge color fringing.",
         params: [.number("k1", "Distortion", 0.4, -1, 1, step: 0.01), .number("k2", "Edge Distortion", 0.2, -1, 1, step: 0.01),
                  .number("chroma", "Chromatic Fringe", 30, 0, 100, unit: "%"), .number("zoom", "Zoom", 100, 50, 200, unit: "%"),
-                 .point("center", "Center", Vec2(0.5, 0.5))],
+                 .point("center", "Center", Vec2(0.5, 0.5))] + warpExtras28,
         stage: .pixels { ctx in d6(ctx, 1) { p in
             let c = pt6(ctx, "center")
             p.a = SIMD4(n6(ctx, "k1"), n6(ctx, "k2"), n6(ctx, "chroma", 0.01), n6(ctx, "zoom", 0.01)); p.b = SIMD4(c.x, c.y, 0, 0) } })
@@ -58,17 +63,17 @@ extension EffectRegistry {
     static let liquid6 = EffectDefinition(
         id: "awi6.liquid", name: "Liquid Warp", category: .distort, aeMatchNames: [],
         summary: "Flowing, melting fluid distortion (animated domain warp).",
-        params: [.number("amount", "Amount", 20, 0, 120, unit: "px"), .number("scale", "Scale", 70, 5, 500, unit: "px"),
-                 .number("speed", "Speed", 1, 0, 6, step: 0.05), .number("seed", "Random Seed", 1, 0, 100, step: 1)],
+        params: [.number("amount", "Amount", 35, 0, 120, unit: "px"), .number("scale", "Scale", 70, 5, 500, unit: "px"),
+                 .number("speed", "Speed", 1, 0, 6, step: 0.05), .number("seed", "Random Seed", 1, 0, 100, step: 1)] + warpExtras28,
         stage: .pixels { ctx in d6(ctx, 3) { p in
             p.a = SIMD4(px6(ctx, "amount"), px6(ctx, "scale"), n6(ctx, "speed"), n6(ctx, "seed")) } })
 
     static let ripples6 = EffectDefinition(
         id: "awi6.ripples", name: "Water Ripples", category: .distort, aeMatchNames: [],
         summary: "Concentric water rings spreading from a point (animated).",
-        params: [.number("amplitude", "Amplitude", 6, 0, 40, unit: "px"), .number("wavelength", "Wavelength", 18, 3, 200, unit: "px"),
+        params: [.number("amplitude", "Amplitude", 10, 0, 40, unit: "px"), .number("wavelength", "Wavelength", 18, 3, 200, unit: "px"),
                  .number("speed", "Speed", 1.5, 0, 8, step: 0.05), .number("decay", "Decay", 30, 0, 100, unit: "%"),
-                 .point("center", "Center", Vec2(0.5, 0.5))],
+                 .point("center", "Center", Vec2(0.5, 0.5))] + warpExtras28,
         stage: .pixels { ctx in d6(ctx, 4) { p in
             let c = pt6(ctx, "center")
             p.a = SIMD4(px6(ctx, "amplitude"), px6(ctx, "wavelength"), n6(ctx, "speed"), n6(ctx, "decay", 0.01)); p.b = SIMD4(c.x, c.y, 0, 0) } })
@@ -78,15 +83,15 @@ extension EffectRegistry {
         summary: "Water droplets on a window, refracting the scene and sliding down.",
         params: [.number("cell", "Droplet Spacing", 22, 6, 120, unit: "px"), .number("size", "Droplet Size", 70, 0, 100, unit: "%"),
                  .number("refraction", "Refraction", 1.2, 0, 3, step: 0.01), .number("speed", "Slide Speed", 1, 0, 5, step: 0.05),
-                 .number("seed", "Random Seed", 1, 0, 100, step: 1)],
+                 .number("seed", "Random Seed", 1, 0, 100, step: 1)] + warpExtras28,
         stage: .pixels { ctx in d6(ctx, 5) { p in
             p.a = SIMD4(px6(ctx, "cell"), n6(ctx, "size", 0.01), n6(ctx, "refraction"), n6(ctx, "speed")); p.c.x = n6(ctx, "seed") } })
 
     static let heatHaze6 = EffectDefinition(
         id: "awi6.heatHaze", name: "Heat Haze", category: .distort, aeMatchNames: [],
         summary: "Shimmering rising hot-air distortion (animated).",
-        params: [.number("amount", "Amount", 6, 0, 40, unit: "px"), .number("scale", "Scale", 20, 3, 200, unit: "px"),
-                 .number("speed", "Rise Speed", 2, 0, 10, step: 0.05), .number("seed", "Random Seed", 1, 0, 100, step: 1)],
+        params: [.number("amount", "Amount", 10, 0, 40, unit: "px"), .number("scale", "Scale", 20, 3, 200, unit: "px"),
+                 .number("speed", "Rise Speed", 2, 0, 10, step: 0.05), .number("seed", "Random Seed", 1, 0, 100, step: 1)] + warpExtras28,
         stage: .pixels { ctx in d6(ctx, 6) { p in
             p.a = SIMD4(px6(ctx, "amount"), px6(ctx, "scale"), n6(ctx, "speed"), n6(ctx, "seed")) } })
 
@@ -94,7 +99,7 @@ extension EffectRegistry {
         id: "awi6.bulge", name: "Bulge / Pinch", category: .distort, aeMatchNames: [],
         summary: "Inflate (positive) or pinch (negative) a round area.",
         params: [.number("amount", "Amount", 70, -100, 100, unit: "%"), .number("radius", "Radius", 80, 5, 150, unit: "%"),
-                 .point("center", "Center", Vec2(0.5, 0.5))],
+                 .point("center", "Center", Vec2(0.5, 0.5))] + warpExtras28,
         stage: .pixels { ctx in d6(ctx, 7) { p in
             let c = pt6(ctx, "center"); p.a = SIMD4(n6(ctx, "amount", 0.01), n6(ctx, "radius", 0.01), c.x, c.y) } })
 
@@ -102,7 +107,7 @@ extension EffectRegistry {
         id: "awi6.squeeze", name: "Squeeze", category: .distort, aeMatchNames: [],
         summary: "Squash or stretch the middle of the frame with a curved profile.",
         params: [.number("amount", "Amount", 50, -100, 100, unit: "%"), .number("curve", "Curve", 1.5, 0.2, 5, step: 0.05),
-                 .choice("direction", "Direction", ["Horizontal", "Vertical"], 0)],
+                 .choice("direction", "Direction", ["Horizontal", "Vertical"], 0)] + warpExtras28,
         stage: .pixels { ctx in d6(ctx, 8) { p in
             p.a = SIMD4(n6(ctx, "amount", 0.01), n6(ctx, "curve"), 0, 0); p.i.y = UInt32(max(0, ctx.effect.choice("direction"))) } })
 
@@ -141,7 +146,7 @@ extension EffectRegistry {
         summary: "Break the image into hex tiles, each randomly rotated and shifted.",
         params: [.number("size", "Tile Size", 24, 4, 200, unit: "px"), .number("rotation", "Rotation", 25, 0, 180, unit: "°"),
                  .number("offset", "Offset", 4, 0, 50, unit: "px"), .number("gap", "Grout", 1.5, 0, 10, step: 0.1, unit: "px"),
-                 .number("seed", "Random Seed", 1, 0, 100, step: 1)],
+                 .number("seed", "Random Seed", 1, 0, 100, step: 1)] + warpExtras28,
         stage: .pixels { ctx in d6(ctx, 11) { p in
             p.a = SIMD4(px6(ctx, "size"), rad6(ctx, "rotation"), px6(ctx, "offset"), n6(ctx, "seed")); p.b.x = px6(ctx, "gap") } })
 
@@ -150,7 +155,7 @@ extension EffectRegistry {
         summary: "Crack into Voronoi shards that fly outward as Progress rises.",
         params: [.number("progress", "Progress", 35, 0, 100, unit: "%"), .number("cell", "Shard Size", 30, 8, 200, unit: "px"),
                  .number("spread", "Spread", 100, 0, 200, unit: "%"), .number("seed", "Random Seed", 1, 0, 100, step: 1),
-                 .point("center", "Origin", Vec2(0.5, 0.5))],
+                 .point("center", "Origin", Vec2(0.5, 0.5))] + warpExtras28,
         stage: .pixels { ctx in d6(ctx, 12) { p in
             let c = pt6(ctx, "center")
             p.a = SIMD4(n6(ctx, "progress", 0.01), px6(ctx, "cell"), n6(ctx, "spread", 0.01), n6(ctx, "seed")); p.b = SIMD4(c.x, c.y, 0, 0) } })
@@ -158,7 +163,7 @@ extension EffectRegistry {
     static let slice6 = EffectDefinition(
         id: "awi6.slice", name: "Perfect Slice", category: .distort, aeMatchNames: [],
         summary: "Cut the image along a line and slide the halves apart.",
-        params: [.number("offset", "Slide", 24, -200, 200, unit: "px"), .angle("angle", "Angle", 30), .point("center", "Cut Point", Vec2(0.5, 0.5))],
+        params: [.number("offset", "Slide", 48, -200, 200, unit: "px"), .angle("angle", "Angle", 30), .point("center", "Cut Point", Vec2(0.5, 0.5))] + warpExtras28,
         stage: .pixels { ctx in d6(ctx, 13) { p in
             let c = pt6(ctx, "center"); p.a = SIMD4(px6(ctx, "offset"), rad6(ctx, "angle"), c.x, c.y) } })
 
@@ -209,8 +214,8 @@ extension EffectRegistry {
     static let lumaDisplace6 = EffectDefinition(
         id: "awi6.lumaDisplace", name: "Luma Displace", category: .distort, aeMatchNames: [],
         summary: "Push pixels by their own brightness (brights move, darks stay).",
-        params: [.number("amount", "Amount", 25, -100, 100, unit: "px"), .angle("angle", "Direction", 45),
-                 .choice("mode", "Mode", ["Along Direction", "Radial"], 0)],
+        params: [.number("amount", "Amount", 50, -100, 100, unit: "px"), .angle("angle", "Direction", 45),
+                 .choice("mode", "Mode", ["Along Direction", "Radial"], 0)] + warpExtras28,
         stage: .pixels { ctx in d6(ctx, 19) { p in
             p.a = SIMD4(px6(ctx, "amount"), rad6(ctx, "angle"), 0, 0); p.i.y = UInt32(max(0, ctx.effect.choice("mode"))) } })
 

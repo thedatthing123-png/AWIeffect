@@ -18,7 +18,13 @@ extension EffectRegistry {
         fill(&p)
         p.i.x = mode
         p.d.x = Float(ctx.time)
-        ctx.gpu.run("fxWarp14", ctx.cb, textures: [ctx.input, out, ctx.input], params: p, grid: out)
+        if let aa = warpAA28(ctx) {
+            // Remade warps: supersampled antialiasing and AE-style edge behavior (Low + Default = the original look).
+            p.i.y = aa.grid; p.i.z = aa.edge
+            ctx.gpu.run("fxWarp14AA28", ctx.cb, textures: [ctx.input, out, ctx.input], params: p, grid: out)
+        } else {
+            ctx.gpu.run("fxWarp14", ctx.cb, textures: [ctx.input, out, ctx.input], params: p, grid: out)
+        }
         return out
     }
     private static func pt14(_ ctx: EffectContext, _ key: String) -> SIMD2<Float> {
@@ -44,7 +50,7 @@ extension EffectRegistry {
         summary: "Recursive picture-in-picture spiral that zooms forever.",
         params: [.number("scale", "Recursion Scale", 3, 1.5, 8, step: 0.05), .number("twist", "Spiral Twist", 1, 0, 3, step: 0.05),
                  .number("speed", "Zoom Speed", 0.3, 0, 2, step: 0.01), .number("rotation", "Rotation", 0, -180, 180, unit: "°"),
-                 .point("center", "Center", Vec2(0.5, 0.5))],
+                 .point("center", "Center", Vec2(0.5, 0.5))] + warpExtras28,
         stage: .pixels { ctx in d14(ctx, 1) { p in
             let c = pt14(ctx, "center")
             p.a = SIMD4(n14(ctx, "scale"), n14(ctx, "twist"), n14(ctx, "speed"), rad14(ctx, "rotation")); p.b = SIMD4(c.x, c.y, 0, 0) } })
@@ -63,7 +69,7 @@ extension EffectRegistry {
         id: "awi14.pageCurl", name: "Page Curl", category: .distort, aeMatchNames: [],
         summary: "Peels the layer back like a sheet of paper from a corner.",
         params: [.number("progress", "Progress", 40, 0, 100, unit: "%"), .number("angle", "Direction", 30, -180, 180, unit: "°"),
-                 .number("radius", "Curl Radius", 15, 2, 60, unit: "%"), .number("shadow", "Shadow", 60, 0, 100, unit: "%")],
+                 .number("radius", "Curl Radius", 15, 2, 60, unit: "%"), .number("shadow", "Shadow", 60, 0, 100, unit: "%")] + warpExtras28,
         stage: .pixels { ctx in d14(ctx, 3) { p in
             p.a = SIMD4(pc14(ctx, "progress"), rad14(ctx, "angle"), pc14(ctx, "radius"), pc14(ctx, "shadow")) } })
 
@@ -71,7 +77,7 @@ extension EffectRegistry {
         id: "awi14.fold", name: "Accordion Fold", category: .distort, aeMatchNames: [],
         summary: "Compresses the image into shaded accordion folds.",
         params: [.number("folds", "Folds", 5, 1, 20, step: 1), .number("depth", "Fold Depth", 50, 0, 100, unit: "%"),
-                 .number("angle", "Fold Direction", 0, -180, 180, unit: "°"), .number("shading", "Shading", 60, 0, 100, unit: "%")],
+                 .number("angle", "Fold Direction", 0, -180, 180, unit: "°"), .number("shading", "Shading", 60, 0, 100, unit: "%")] + warpExtras28,
         stage: .pixels { ctx in d14(ctx, 4) { p in
             p.a = SIMD4(n14(ctx, "folds"), pc14(ctx, "depth"), rad14(ctx, "angle"), pc14(ctx, "shading")) } })
 
@@ -79,7 +85,7 @@ extension EffectRegistry {
         id: "awi14.skew", name: "Skew / Shear", category: .distort, aeMatchNames: [],
         summary: "Slants the image horizontally and/or vertically around an anchor.",
         params: [.number("skewX", "Horizontal Skew", 20, -60, 60, unit: "°"), .number("skewY", "Vertical Skew", 0, -60, 60, unit: "°"),
-                 .point("anchor", "Anchor", Vec2(0.5, 0.5))],
+                 .point("anchor", "Anchor", Vec2(0.5, 0.5))] + warpExtras28,
         stage: .pixels { ctx in d14(ctx, 5) { p in
             let c = pt14(ctx, "anchor")
             p.a = SIMD4(Float(tan(ctx.num("skewX") * .pi / 180)), Float(tan(ctx.num("skewY") * .pi / 180)), 0, 0)
@@ -96,8 +102,8 @@ extension EffectRegistry {
     static let stretchSegment14 = EffectDefinition(
         id: "awi14.stretchSegment", name: "Stretch Segment", category: .distort, aeMatchNames: [],
         summary: "Stretches a band of the image and pushes the rest aside.",
-        params: [.number("position", "Position", 50, 0, 100, unit: "%"), .number("width", "Band Width", 10, 1, 40, unit: "%"),
-                 .number("stretch", "Stretch", 2.5, 1, 5, step: 0.05), .number("angle", "Direction", 0, -180, 180, unit: "°")],
+        params: [.number("position", "Position", 50, 0, 100, unit: "%"), .number("width", "Band Width", 20, 1, 40, unit: "%"),
+                 .number("stretch", "Stretch", 2.5, 1, 5, step: 0.05), .number("angle", "Direction", 0, -180, 180, unit: "°")] + warpExtras28,
         stage: .pixels { ctx in d14(ctx, 7) { p in
             p.a = SIMD4(pc14(ctx, "position"), n14(ctx, "width", 0.005), n14(ctx, "stretch"), rad14(ctx, "angle")) } })
 
@@ -106,7 +112,7 @@ extension EffectRegistry {
         summary: "A packet of waves traveling across the image in one direction.",
         params: [.number("amplitude", "Amplitude", 12, 0, 50, unit: "%"), .number("wavelength", "Wavelength", 15, 2, 100, unit: "%"),
                  .number("speed", "Speed", 1, 0, 3, step: 0.01), .number("angle", "Direction", 0, -180, 180, unit: "°"),
-                 .number("packet", "Packet Width", 25, 2, 100, unit: "%")],
+                 .number("packet", "Packet Width", 25, 2, 100, unit: "%")] + warpExtras28,
         stage: .pixels { ctx in d14(ctx, 8) { p in
             p.a = SIMD4(pc14(ctx, "amplitude"), pc14(ctx, "wavelength"), n14(ctx, "speed"), rad14(ctx, "angle"))
             p.b = SIMD4(pc14(ctx, "packet"), 0, 0, 0) } })
@@ -115,7 +121,7 @@ extension EffectRegistry {
         id: "awi14.twistColumns", name: "Twist Columns", category: .distort, aeMatchNames: [],
         summary: "Slices the image into columns that twist like rotating cylinders.",
         params: [.number("columns", "Columns", 6, 1, 30, step: 1), .number("twist", "Twist", 180, -720, 720, unit: "°"),
-                 .number("speed", "Spin Speed", 1, -10, 10, step: 0.05), .number("shading", "Shading", 60, 0, 100, unit: "%")],
+                 .number("speed", "Spin Speed", 1, -10, 10, step: 0.05), .number("shading", "Shading", 60, 0, 100, unit: "%")] + warpExtras28,
         stage: .pixels { ctx in d14(ctx, 9) { p in
             p.a = SIMD4(n14(ctx, "columns"), rad14(ctx, "twist"), n14(ctx, "speed"), pc14(ctx, "shading")) } })
 
@@ -161,7 +167,7 @@ extension EffectRegistry {
         summary: "Wraps the image onto a log-polar tunnel that flies toward you.",
         params: [.number("speed", "Fly Speed", 0.5, -3, 3, step: 0.01), .number("twist", "Twist", 0.5, -3, 3, step: 0.01),
                  .number("repeats", "Repeats", 2, 0.5, 8, step: 0.05), .number("fade", "Depth Fade", 1, 0, 3, step: 0.01),
-                 .point("center", "Center", Vec2(0.5, 0.5))],
+                 .point("center", "Center", Vec2(0.5, 0.5))] + warpExtras28,
         stage: .pixels { ctx in d14(ctx, 14) { p in
             let c = pt14(ctx, "center")
             p.a = SIMD4(n14(ctx, "speed"), n14(ctx, "twist"), n14(ctx, "repeats"), n14(ctx, "fade")); p.b = SIMD4(c.x, c.y, 0, 0) } })
@@ -170,7 +176,7 @@ extension EffectRegistry {
         id: "awi14.puff", name: "Puff / Inflate", category: .distort, aeMatchNames: [],
         summary: "Swells bright shapes outward like they were inflated.",
         params: [.number("amount", "Amount", 1.5, 0, 3, step: 0.01), .number("radius", "Radius", 15, 2, 60, unit: "%"),
-                 .number("highlight", "Highlight", 40, 0, 100, unit: "%")],
+                 .number("highlight", "Highlight", 40, 0, 100, unit: "%")] + warpExtras28,
         stage: .pixels { ctx in d14(ctx, 15) { p in
             p.a = SIMD4(n14(ctx, "amount"), pc14(ctx, "radius"), pc14(ctx, "highlight"), 0) } })
 
@@ -179,7 +185,7 @@ extension EffectRegistry {
         summary: "Rotating lobes that alternately pinch and bulge around a center.",
         params: [.number("amount", "Amount", 50, -100, 100, unit: "%"), .number("lobes", "Lobes", 5, 1, 16, step: 1),
                  .number("speed", "Speed", 0.5, -3, 3, step: 0.01), .number("radius", "Radius", 90, 10, 200, unit: "%"),
-                 .point("center", "Center", Vec2(0.5, 0.5))],
+                 .point("center", "Center", Vec2(0.5, 0.5))] + warpExtras28,
         stage: .pixels { ctx in d14(ctx, 16) { p in
             let c = pt14(ctx, "center")
             p.a = SIMD4(pc14(ctx, "amount"), n14(ctx, "lobes"), n14(ctx, "speed"), pc14(ctx, "radius")); p.b = SIMD4(c.x, c.y, 0, 0) } })
@@ -189,7 +195,7 @@ extension EffectRegistry {
         summary: "Rings that twist back and forth around a center (rotational ripples).",
         params: [.number("angle", "Twist Amount", 20, 0, 90, unit: "°"), .number("wavelength", "Wavelength", 20, 2, 100, unit: "%"),
                  .number("speed", "Speed", 1, -5, 5, step: 0.01), .number("decay", "Decay", 30, 0, 100, unit: "%"),
-                 .point("center", "Center", Vec2(0.5, 0.5))],
+                 .point("center", "Center", Vec2(0.5, 0.5))] + warpExtras28,
         stage: .pixels { ctx in d14(ctx, 17) { p in
             let c = pt14(ctx, "center")
             p.a = SIMD4(rad14(ctx, "angle"), pc14(ctx, "wavelength"), n14(ctx, "speed"), pc14(ctx, "decay")); p.b = SIMD4(c.x, c.y, 0, 0) } })
@@ -208,7 +214,7 @@ extension EffectRegistry {
         id: "awi14.glassBlocks", name: "Glass Blocks", category: .distort, aeMatchNames: [],
         summary: "Seen through a wall of square refracting glass bricks.",
         params: [.number("size", "Block Size", 18, 3, 80, unit: "%"), .number("refraction", "Refraction", 50, 0, 100, unit: "%"),
-                 .number("bevel", "Bevel", 15, 0, 50, unit: "%"), .number("highlight", "Highlight", 50, 0, 100, unit: "%")],
+                 .number("bevel", "Bevel", 15, 0, 50, unit: "%"), .number("highlight", "Highlight", 50, 0, 100, unit: "%")] + warpExtras28,
         stage: .pixels { ctx in d14(ctx, 19) { p in
             p.a = SIMD4(pc14(ctx, "size"), pc14(ctx, "refraction"), pc14(ctx, "bevel"), pc14(ctx, "highlight")) } })
 
@@ -236,7 +242,7 @@ extension EffectRegistry {
         summary: "Desert heat shimmer in horizontal bands with a wobbling reflection below the horizon.",
         params: [.number("amount", "Shimmer", 4, 0, 20, unit: "%"), .number("band", "Band Height", 6, 1, 40, unit: "%"),
                  .number("speed", "Speed", 1, 0, 5, step: 0.01), .number("horizon", "Horizon", 60, 0, 100, unit: "%"),
-                 .number("reflection", "Reflection", 60, 0, 100, unit: "%")],
+                 .number("reflection", "Reflection", 60, 0, 100, unit: "%")] + warpExtras28,
         stage: .pixels { ctx in d14(ctx, 22) { p in
             p.a = SIMD4(pc14(ctx, "amount"), pc14(ctx, "band"), n14(ctx, "speed"), pc14(ctx, "horizon"))
             p.b = SIMD4(pc14(ctx, "reflection"), 0, 0, 0) } })
@@ -256,7 +262,7 @@ extension EffectRegistry {
         summary: "Concentric bands alternately zoomed in, out and twisted, drifting outward.",
         params: [.number("width", "Ring Width", 15, 2, 60, unit: "%"), .number("zoom", "Zoom", 40, -100, 100, unit: "%"),
                  .number("speed", "Speed", 0.4, -3, 3, step: 0.01), .number("twist", "Twist", 10, -90, 90, unit: "°"),
-                 .point("center", "Center", Vec2(0.5, 0.5))],
+                 .point("center", "Center", Vec2(0.5, 0.5))] + warpExtras28,
         stage: .pixels { ctx in d14(ctx, 24) { p in
             let c = pt14(ctx, "center")
             p.a = SIMD4(pc14(ctx, "width"), pc14(ctx, "zoom"), n14(ctx, "speed"), rad14(ctx, "twist")); p.b = SIMD4(c.x, c.y, 0, 0) } })

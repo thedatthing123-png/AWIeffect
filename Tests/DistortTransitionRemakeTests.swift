@@ -15,7 +15,7 @@ final class DistortTransitionRemakeTests: XCTestCase {
         star.sides = Animated(5)
         var rect = p.makeLayer(name: "rect", content: .shape(.rectangle), size: Vec2(160, 160))
         rect.fill = Animated(RGBA(0.6, 0.2, 0.9))
-        if let effect { rect.effects = [effect] }
+        if let effect { star.effects = [effect] }
         p.layers = [star, rect]
         return p
     }
@@ -114,5 +114,22 @@ final class DistortTransitionRemakeTests: XCTestCase {
         XCTAssertGreaterThan(diff(base, polar), 0.5)
         let ripple = try render(r, scene(try instance("ae.ripple") { e in e.params["conversion"] = .choice(0); num(&e, "height", 20) }))
         XCTAssertGreaterThan(diff(base, ripple), 0.2)
+    }
+
+    /// Batch 6 / 14 warps: Low + Default edges matches the original kernel; High antialiasing smooths it;
+    /// Mirror edges fill the empty corners a skew leaves.
+    func testWarpAntialiasingAndEdgeBehavior() throws {
+        let r = try renderer()
+        func twist(_ aa: Int) throws -> [UInt8] {
+            try render(r, scene(try instance("awi14.twistColumns") { e in e.params["aa"] = .choice(aa) }))
+        }
+        var legacy = try instance("awi14.twistColumns")
+        legacy.params["aa"] = nil; legacy.params["edge"] = nil
+        XCTAssertLessThan(diff(try render(r, scene(legacy)), try twist(0)), 0.3, "Low antialiasing keeps the original look")
+        XCTAssertGreaterThan(diff(try twist(0), try twist(2)), 0.05, "High antialiasing changes jagged column edges")
+
+        let skewDefault = try render(r, scene(try instance("awi14.skew") { e in num(&e, "skewX", 40) }))
+        let skewMirror = try render(r, scene(try instance("awi14.skew") { e in num(&e, "skewX", 40); e.params["edge"] = .choice(4) }))
+        XCTAssertGreaterThan(diff(skewDefault, skewMirror), 0.1)
     }
 }
