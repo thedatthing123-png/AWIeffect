@@ -33,14 +33,14 @@ final class Model3DSceneTests: XCTestCase {
     /// A flat picture turned 90° is a line. A real object shows its side, which is deep here.
     func testTurningAModelShowsItsSideInsteadOfALine() throws {
         let front = try litColumns(scene()).count
-        guard front > 0 else { throw XCTSkip("SceneKit offscreen rendering unavailable in this simulator") }
+        XCTAssertGreaterThan(front, 0, "the model must render")
         let side = try litColumns(scene(rotationY: 90)).count
         XCTAssertGreaterThan(side, 20, "edge-on, a flat plane would be only a few pixels wide")
     }
 
     func testCameraMoveSeesTheModelFromAnotherAngle() throws {
         let center = try litColumns(scene(cameraX: 120))
-        guard center.count > 0 else { throw XCTSkip("SceneKit offscreen rendering unavailable in this simulator") }
+        XCTAssertGreaterThan(center.count, 0, "the model must render")
         let moved = try litColumns(scene(cameraX: 220))
         XCTAssertNotEqual(center.pixels, moved.pixels)
         XCTAssertGreaterThan(moved.count, 0, "the model stays in view")
@@ -66,7 +66,37 @@ final class Model3DSceneTests: XCTestCase {
         var p = scene()
         p.layers[0].is3D = false
         let flat = try litColumns(p)
-        guard flat.count > 0 else { throw XCTSkip("SceneKit offscreen rendering unavailable in this simulator") }
+        XCTAssertGreaterThan(flat.count, 0, "the model must render")
         XCTAssertGreaterThan(flat.count, 3)
+    }
+
+    func testLensPresetsMatchRealFocalLengths() {
+        XCTAssertEqual(EditorState.zoom(forFocalLength: 50, compWidth: 1920), 2666.67, accuracy: 0.01)
+        XCTAssertEqual(EditorState.focalLength(zoom: EditorState.zoom(forFocalLength: 85, compWidth: 1080), compWidth: 1080), 85, accuracy: 1e-9)
+    }
+
+    @MainActor func testFocusOnALayerSetsItsDistance() throws {
+        var p = scene()
+        var cam = p.makeLayer(name: "cam", content: .camera, size: Vec2(240, 240))
+        cam.camera = CameraOptions(); cam.camera?.zoom = Animated(330)
+        cam.transform.position = Animated(Vec2(120, 120)); cam.transform.positionZ = Animated(-330)
+        p.layers.insert(cam, at: 0)
+        p.layers[1].transform.positionZ = Animated(170)
+        let s = EditorState(project: p, store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        s.selectedLayerID = cam.id
+        s.focusCamera(on: p.layers[1].id)
+        XCTAssertEqual(try XCTUnwrap(s.project.layers[0].camera).focusDistance.value(at: 0), 500, accuracy: 1)
+        XCTAssertTrue(s.project.layers[0].camera?.depthOfField == true)
+    }
+
+    func testImportedMaterialsStayUnlessOverridden() {
+        var o = Model3DOptions()
+        XCTAssertNil(o.overrideMaterial)
+        o.overrideMaterial = true; o.emission = 0.5
+        let data = try? JSONEncoder().encode(o)
+        let back = data.flatMap { try? JSONDecoder().decode(Model3DOptions.self, from: $0) }
+        XCTAssertEqual(back?.overrideMaterial, true); XCTAssertEqual(back?.emission, 0.5)
+        let plain = (try? JSONEncoder().encode(Model3DOptions())).flatMap { try? JSONDecoder().decode(Model3DOptions.self, from: $0) }
+        XCTAssertNil(plain?.emission); XCTAssertNil(plain?.overrideMaterial)
     }
 }

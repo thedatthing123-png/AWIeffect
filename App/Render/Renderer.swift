@@ -630,6 +630,12 @@ final class Renderer {
                         guard let d = EffectRegistry.definition(e.typeID), !d.isTransformEffect, case .pixels(let run) = d.stage else { continue }
                         picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: renderScale, pool: pool))
                     }
+                    // Camera depth of field: the model blurs by how far it is from the focus distance.
+                    let dofModel = Self.dofSigma(layer, camera: camera, time: time) * renderScale
+                    if dofModel > 0.5, let blur = EffectRegistry.definition("ae.gaussianBlur"), case .pixels(let run) = blur.stage {
+                        let e = EffectInstance(typeID: "ae.gaussianBlur", params: ["blurriness": .number(Animated(dofModel))])
+                        picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: 1, pool: pool))
+                    }
                     let whole = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(comp.width) / 2, Double(comp.height) / 2, 1)))
                     drawQuad(cb: cb, target: comp, matrix: whole, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 1, opacity: opacity,
                              layer: layer, time: time, source: .model(picture), premultipliedImage: true)

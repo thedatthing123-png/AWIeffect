@@ -31,6 +31,20 @@ struct ModelPanel: View {
                             slider("Metal", o.metalness, 0...1) { v in cont { $0.metalness = v } }
                             slider("Roughness", o.roughness, 0...1) { v in cont { $0.roughness = v } }
                         }
+                        if o.fileName != nil {
+                            Toggle("Replace Model's Materials", isOn: Binding(get: { o.overrideMaterial == true }, set: { b in edit("Material") { $0.overrideMaterial = b ? true : nil } }))
+                                .tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13))
+                            if o.overrideMaterial == true {
+                                AWIColorWell("Color", selection: Binding(get: { Color(o.color.value(at: t)) }, set: { c in
+                                    edit("3D Color") { $0.color.set(c.rgba, at: t) }
+                                })).foregroundStyle(Theme.text)
+                                slider("Metal", o.metalness, 0...1) { v in cont { $0.metalness = v } }
+                                slider("Roughness", o.roughness, 0...1) { v in cont { $0.roughness = v } }
+                            }
+                        }
+                        if o.fileName == nil || o.overrideMaterial == true {
+                            slider("Glow", o.emission ?? 0, 0...1) { v in cont { $0.emission = v > 0.001 ? v : nil } }
+                        }
                         animRow("Yaw", o.yaw.value(at: t), -360...360, set: { v in cont { $0.yaw.set(v, at: t) } }, key: { edit("Yaw Key") { $0.yaw.toggleKeyframe(at: t) } })
                         animRow("Pitch", o.pitch.value(at: t), -180...180, set: { v in cont { $0.pitch.set(v, at: t) } }, key: { edit("Pitch Key") { $0.pitch.toggleKeyframe(at: t) } })
                         animRow("Roll", o.roll.value(at: t), -180...180, set: { v in cont { $0.roll.set(v, at: t) } }, key: { edit("Roll Key") { $0.roll.toggleKeyframe(at: t) } })

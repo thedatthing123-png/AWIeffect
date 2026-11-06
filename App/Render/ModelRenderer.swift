@@ -27,6 +27,10 @@ struct Model3DOptions: Codable, Equatable {
     /// Light angle (degrees) and strength.
     var lightAngle = Animated(35.0)
     var lightIntensity = Animated(1200.0)
+    /// Imported models: replace their own materials with the color / metal / roughness above.
+    var overrideMaterial: Bool? = nil
+    /// The surface glows in its own color (0-1), on top of lighting.
+    var emission: Double? = nil
 }
 
 /// Where a 3D layer's model sits as seen by the scene camera. With this the model is a real object in the scene:
@@ -166,13 +170,18 @@ final class ModelRenderer {
         // Materials: PBR so lights/reflections read as real 3D.
         let col = o.color.value(at: time)
         model.enumerateHierarchy { n, _ in
-            guard let original = n.geometry, o.fileName == nil, let g = original.copy() as? SCNGeometry else { return }
+            // Imported models keep their own materials unless the layer overrides them.
+            guard let original = n.geometry, o.fileName == nil || o.overrideMaterial == true, let g = original.copy() as? SCNGeometry else { return }
             n.geometry = g
             let m = SCNMaterial()
             m.lightingModel = .physicallyBased
             m.diffuse.contents = UIColor(red: col.r, green: col.g, blue: col.b, alpha: col.a)
             m.metalness.contents = min(1, max(0, o.metalness))
             m.roughness.contents = min(1, max(0, o.roughness))
+            if let glow = o.emission, glow > 0 {
+                m.emission.contents = UIColor(red: col.r, green: col.g, blue: col.b, alpha: 1)
+                m.emission.intensity = CGFloat(glow)
+            }
             if o.imageFile != nil, let front = cached.front {
                 // SCNShape elements: front, back, sides, front chamfer, back chamfer.
                 g.materials = [front, front, m, m, m]
@@ -229,15 +238,30 @@ final class ModelRenderer {
         SCNTransaction.flush()
         renderer.update(atTime: time)
         guard renderer.prepare(scene, shouldAbortBlock: nil) else { return nil }
-        // Snapshot owns SceneKit's full frame lifecycle, including first-frame presentation setup.
-        if reusedRenderer == nil {
-            _ = renderer.snapshot(atTime: time, with: CGSize(width: width, height: height), antialiasingMode: .none)
-            SCNTransaction.flush()
-            renderer.update(atTime: time)
-        }
-        let image = renderer.snapshot(atTime: time, with: CGSize(width: width, height: height), antialiasingMode: .none)
-        guard let cg = image.cgImage,
-              let texture = try? MTKTextureLoader(device: device).newTexture(cgImage: cg, options: [.SRGB: false, .textureUsage: NSNumber(value: MTLTextureUsage.shaderRead.rawValue)]) else { return nil }
+        // Render straight into a GPU texture. The old path took a snapshot image, copied it to the CPU and uploaded
+        // it again every frame, which made the 3D camera heavy. SceneKit writes linear light into an sRGB target;
+        // a plain view of the same memory gives the compositor the display values it expects.
+        let colorDesc = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm_srgb, width: width, height: height, mipmapped: false)
+        colorDesc.usage = [.renderTarget, .shaderRead, .pixelFormatView]
+        colorDesc.storageMode = .private
+        let depthDesc = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float, width: width, height: height, mipmapped: false)
+        depthDesc.usage = [.renderTarget]
+        depthDesc.storageMode = .private
+        guard let color = device.makeTexture(descriptor: colorDesc), let depth = device.makeTexture(descriptor: depthDesc),
+              let texture = color.makeTextureView(pixelFormat: .bgra8Unorm) else { return nil }
+        let pass = MTLRenderPassDescriptor()
+        pass.colorAttachments[0].texture = color
+        pass.colorAttachments[0].loadAction = .clear
+        pass.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 0)
+        pass.colorAttachments[0].storeAction = .store
+        pass.depthAttachment.texture = depth
+        pass.depthAttachment.loadAction = .clear
+        pass.depthAttachment.clearDepth = 1
+        pass.depthAttachment.storeAction = .dontCare
+        renderer.render(atTime: time, viewport: CGRect(x: 0, y: 0, width: width, height: height), commandBuffer: modelBuffer, passDescriptor: pass)
+        modelBuffer.commit()
+        _ = completed.wait(timeout: .now() + 2)
+        _ = target
         renderer.scene = nil; renderer.pointOfView = nil
         if availableRenderers.count < 8 { availableRenderers.append(renderer) }
         return texture

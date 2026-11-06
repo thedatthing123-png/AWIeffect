@@ -41,6 +41,26 @@ extension EditorState {
     }
 }
 
+extension EditorState {
+    static func zoom(forFocalLength mm: Double, compWidth: Int) -> Double { Double(compWidth) * mm / 36 }
+    static func focalLength(zoom: Double, compWidth: Int) -> Double { zoom * 36 / Double(max(1, compWidth)) }
+
+    /// Sets the selected camera's focus distance to how far the layer is from it right now.
+    func focusCamera(on id: UUID) {
+        guard let ci = selectedIndex, project.layers[ci].content == .camera, let target = project.layers.first(where: { $0.id == id }) else { return }
+        let t = currentTime
+        let resolved = Renderer.resolveParenting(project, time: t)
+        let camera = Renderer.activeCamera(resolved, time: t)
+        let at = resolved.layers.first { $0.id == id } ?? target
+        let d = Renderer.layerDepth(at, camera: camera, time: t)
+        guard d.isFinite, d > 1 else { return }
+        mutate("Focus on \(target.name)") { p in
+            p.layers[ci].camera?.depthOfField = true
+            p.layers[ci].camera?.focusDistance.set(d, at: t)
+        }
+    }
+}
+
 /// 3D layer switch + Z / X / Y controls, and camera options for camera layers.
 struct ThreeDPanel: View {
     @ObservedObject var state: EditorState
@@ -151,6 +171,22 @@ struct ThreeDPanel: View {
                                     set: { v in state.mutateLayer { $0.camera?.zoom.set(v, at: t) } },
                                     keyed: { state.mutateLayer { $0.camera?.zoom.toggleKeyframe(at: t) } })
                                 Text("Low = wide angle, high = telephoto (zoomed in, flatter depth).").font(.caption).foregroundStyle(Theme.textDim)
+                        // Like a real lens on a full-frame camera (AE uses the same 36 mm film width).
+                        HStack(spacing: 6) {
+                            ForEach([18.0, 35, 50, 85, 135], id: \.self) { mm in
+                                Button {
+                                    state.mutate("Lens \(Int(mm)) mm") { p in
+                                        if let i = state.selectedIndex { p.layers[i].camera?.zoom.set(EditorState.zoom(forFocalLength: mm, compWidth: p.width), at: t) }
+                                    }
+                                } label: {
+                                    Text("\(Int(mm))mm").font(.system(size: 11, weight: .bold)).frame(maxWidth: .infinity, minHeight: 30)
+                                        .background(RoundedRectangle(cornerRadius: 8).fill(abs(EditorState.focalLength(zoom: c.zoom.value(at: t), compWidth: state.project.width) - mm) < 0.5 ? Theme.accent : Theme.raised))
+                                        .foregroundStyle(Theme.text)
+                                }
+                            }
+                        }
+                        Text(String(format: "%.0f mm lens", EditorState.focalLength(zoom: c.zoom.value(at: t), compWidth: state.project.width)))
+                            .font(.caption).foregroundStyle(Theme.textDim)
                             }
                             Text("Effects on this camera (shake, glitch, grade…) apply to the whole shot.")
                                 .font(.caption).foregroundStyle(Theme.textDim)
@@ -162,7 +198,15 @@ struct ThreeDPanel: View {
                                 row("Focus Distance", c.focusDistance.value(at: t), 10...10000, anim: c.focusDistance,
                                     set: { v in state.mutateLayer { $0.camera?.focusDistance.set(v, at: t) } },
                                     keyed: { state.mutateLayer { $0.camera?.focusDistance.toggleKeyframe(at: t) } })
-                                row("Aperture", c.aperture.value(at: t), 0...400, anim: c.aperture,
+                                Menu {
+                            ForEach(state.project.layers.filter { $0.is3D && $0.content != .camera && $0.content != .light }) { target in
+                                Button(target.name) { state.focusCamera(on: target.id) }
+                            }
+                        } label: {
+                            Label("Focus on a Layer", systemImage: "scope").font(.system(size: 13, weight: .semibold))
+                                .frame(maxWidth: .infinity, minHeight: 34).background(RoundedRectangle(cornerRadius: 9).fill(Theme.raised)).foregroundStyle(Theme.text)
+                        }
+                        row("Aperture", c.aperture.value(at: t), 0...400, anim: c.aperture,
                                     set: { v in state.mutateLayer { $0.camera?.aperture.set(v, at: t) } },
                                     keyed: { state.mutateLayer { $0.camera?.aperture.toggleKeyframe(at: t) } })
                                 row("Blur Level", c.blurLevel.value(at: t), 0...300, anim: c.blurLevel,

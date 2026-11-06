@@ -131,6 +131,7 @@ struct OrbitGizmo: View {
                 // Handles stay the same size on screen at any distance.
                 let reach = handleReach(projector, pivot)
                 ZStack {
+                    motionPath(l, projector)
                     ForEach(0..<3, id: \.self) { axis in
                         let dir = axisVector(axis)
                         if let tip = projector.point(pivot + dir * reach) {
@@ -141,6 +142,25 @@ struct OrbitGizmo: View {
                     }
                     Circle().fill(.white).frame(width: 12, height: 12).position(origin).allowsHitTesting(false)
                 }
+            }
+        }
+    }
+
+    /// Where the layer travels over its clip, through depth too, with a dot at each position keyframe.
+    @ViewBuilder private func motionPath(_ l: Layer, _ projector: OrbitProjector) -> some View {
+        let t = l.transform
+        if t.position.isAnimated || t.positionZ.isAnimated {
+            let span = max(1e-3, l.outPoint - l.inPoint)
+            let points = (0...120).compactMap { k -> CGPoint? in
+                projector.point(EditorState.scenePivot(l, time: l.inPoint + span * Double(k) / 120))
+            }
+            let keys = Set(t.position.keyframeTimes + t.positionZ.keyframeTimes).sorted().compactMap { k in
+                projector.point(EditorState.scenePivot(l, time: k))
+            }
+            Path { p in if let f = points.first { p.move(to: f); points.dropFirst().forEach { p.addLine(to: $0) } } }
+                .stroke(Theme.accentGlow.opacity(0.8), style: StrokeStyle(lineWidth: 2, dash: [5, 4])).allowsHitTesting(false)
+            ForEach(keys.indices, id: \.self) { i in
+                Rectangle().fill(Theme.keyframe).frame(width: 9, height: 9).rotationEffect(.degrees(45)).position(keys[i]).allowsHitTesting(false)
             }
         }
     }
