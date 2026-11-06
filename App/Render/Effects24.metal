@@ -80,6 +80,9 @@ static inline float4 gxCorrupt(texture2d<half, access::sample> t, float2 c, floa
         q = floor(q / cell) * cell + cell * 0.5;
     }
     float4 o = gxSplit(t, q, float2(g.rgb * (0.5 + r3), 0.0));
+    // Tiny blocks don't swap colors: on a sky they read as stray colored specks, not damage.
+    float tiny = step(min(blk.z, blk.w), 10.0);
+    if (tiny > 0.5) return o;
     if (r5 < g.swap) o.rgb = (r1 < 0.5) ? o.gbr : o.brg;
     else if (r5 < g.swap + g.inv) o.rgb = o.a - o.rgb;
     return o;
@@ -272,7 +275,9 @@ kernel void fxGX(texture2d<half, access::sample> src [[texture(0)]],
         pic = mix(pic, float3(0.5 * px.a), drop * 0.35);
         float st = gxH(floor(c / float2(2.0, 1.0)), fr * 11.0 + seed);
         float3 stat = float3(st * st) * a;
-        o = float4(mix(pic, stat, drop * p.a.x), a);
+        // Static breaks through in waves; the picture stays readable underneath.
+        float wave = 0.55 + 0.45 * sin(c.y / size.y * 9.0 - t * 14.0);
+        o = float4(mix(pic, stat, drop * p.a.x * 0.65 * wave), a);
         float bar = smoothstep(0.0, 0.12, abs(fract(c.y / size.y - t * 0.35) - 0.5) - 0.32);
         o.rgb *= mix(1.0, 0.25 + 0.75 * bar, p.a.y * drop);
         break; }
