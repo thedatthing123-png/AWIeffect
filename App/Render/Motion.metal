@@ -41,7 +41,8 @@ kernel void flowEstimate(texture2d<half, access::sample> prev [[texture(0)]],
     flow.write(half4(half2(-bestD), 0.0h, 1.0h), gid);
 }
 
-// a.x = amount (shutter, 1 = one frame of motion), a.y = max blur in uv.
+// a.x = amount (shutter, 1 = one frame of motion), a.y = max blur in uv, a.z samples,
+// a.w = 1 keeps each pixel's own coverage (footage: blur the picture, never make the layer see-through).
 kernel void flowBlur(texture2d<half, access::sample> cur [[texture(0)]],
                      texture2d<half, access::write> dst [[texture(1)]],
                      texture2d<half, access::sample> flow [[texture(2)]],
@@ -58,5 +59,10 @@ kernel void flowBlur(texture2d<half, access::sample> cur [[texture(0)]],
         float f = (float(k) / float(N - 1) - 0.5);
         acc += float4(cur.sample(mbs, uv + v * f));
     }
-    dst.write(half4(acc / float(N)), gid);
+    float4 o = acc / float(N);
+    if (p.a.w > 0.5) {
+        float a = float(cur.sample(mbs, uv).a);
+        o = o.a > 1e-4 ? float4(o.rgb / o.a * a, a) : float4(cur.sample(mbs, uv));
+    }
+    dst.write(half4(o), gid);
 }

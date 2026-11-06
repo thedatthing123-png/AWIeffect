@@ -457,6 +457,25 @@ struct Project: Codable, Equatable, Identifiable {
     var blurSamplesStore: Int? = nil
     var motionBlurEnabled: Bool { get { motionBlurOn ?? false } set { motionBlurOn = newValue } }
     var shutterAngle: Double { get { shutterAngleStore ?? 180 } set { shutterAngleStore = newValue } }
+    /// Every layer blurs (set from the camera), except the ones kept sharp.
+    var blurAllLayersStore: Bool? = nil
+    var blurAllLayers: Bool { get { blurAllLayersStore ?? false } set { blurAllLayersStore = newValue ? true : nil } }
+    var sharpLayerIDs: [UUID]? = nil
+    /// AE shutter phase in degrees: where the shutter opens relative to the frame. nil = centered on the frame.
+    var shutterPhaseStore: Double? = nil
+    var shutterPhase: Double { get { shutterPhaseStore ?? -shutterAngle / 2 } set { shutterPhaseStore = newValue } }
+
+    /// Whether a layer gets motion blur: the scene switch, plus its own switch or "every layer".
+    func blurs(_ layer: Layer) -> Bool {
+        guard motionBlurEnabled, layer.content != .camera, layer.content != .light, !layer.isAudioOnly else { return false }
+        if layer.motionBlur { return true }
+        return blurAllLayers && !(sharpLayerIDs ?? []).contains(layer.id)
+    }
+    /// Shutter in seconds: when it opens (relative to the frame) and how long it stays open.
+    var shutterOpen: (start: Double, length: Double) {
+        let frame = 1 / max(fps, 1)
+        return (shutterPhase / 360 * frame, shutterAngle / 360 * frame)
+    }
     var blurSamples: Int { get { blurSamplesStore ?? 32 } set { blurSamplesStore = max(2, min(64, newValue)) } }
     var markers: [Double] {
         get { markerTimes ?? [] }

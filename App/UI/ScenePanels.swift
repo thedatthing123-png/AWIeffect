@@ -157,28 +157,36 @@ struct MotionBlurPanel: View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: "Motion Blur", showKeyNav: false)
             if let l = state.selectedLayer {
+                let p = state.project
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
-                        Toggle("Motion blur on this layer", isOn: Binding(get: { l.motionBlur }, set: { b in
-                            state.mutate("Layer Motion Blur") { p in
-                                if let i = state.selectedIndex { p.layers[i].motionBlur = b }
-                                if b { p.motionBlurEnabled = true }
-                            }
-                        }))
-                        .tint(Theme.accent).foregroundStyle(Theme.text)
-                        Toggle("Enable for the whole scene", isOn: Binding(get: { state.project.motionBlurEnabled }, set: { b in
+                        Toggle("Motion Blur", isOn: Binding(get: { p.motionBlurEnabled }, set: { b in
                             state.mutate("Motion Blur") { $0.motionBlurEnabled = b }
                         }))
+                        .font(.system(size: 15, weight: .bold)).tint(Theme.accent).foregroundStyle(Theme.text)
+                        Text("The master switch for this scene. Off, nothing blurs.").font(.caption).foregroundStyle(Theme.textDim)
+                        Toggle("Every layer", isOn: Binding(get: { p.blurAllLayers }, set: { b in
+                            state.mutate("Blur Every Layer") { $0.blurAllLayers = b; if b { $0.motionBlurEnabled = true } }
+                        }))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
-                        slider("Shutter Angle", state.project.shutterAngle, 0...1440, "%.0f°") { v in state.mutate("Shutter Angle") { $0.shutterAngle = v } }
-                        slider("Maximum Samples", Double(state.project.blurSamples), 2...64, "%.0f") { v in
-                            state.mutate("Blur Samples") { $0.blurSamples = Int(v) }
+                        if l.content != .camera { layerRow(l, p) }
+                        if !p.motionBlurEnabled {
+                            Text("Turn Motion Blur on to see it. Camera moves, parents, nulls and shake effects all count as motion.")
+                                .font(.caption).foregroundStyle(Theme.warning)
                         }
-                        Text("Real motion blur: the layer is rendered at several moments inside the shutter and averaged, so fast moves, spins and zooms smear naturally. 180° is the film standard; 360°+ exaggerates for velocity edits. Preview adapts sampling for responsiveness; export uses the chosen maximum.")
-                            .font(.caption).foregroundStyle(Theme.textDim)
                         Divider().overlay(Theme.stroke)
-                        PixelMotionBlurControls(state: state, layer: l)
-
+                        slider("Shutter Angle", p.shutterAngle, 0...1440, "°") { v in state.mutate("Shutter Angle") { $0.shutterAngle = v } }
+                        slider("Shutter Phase", p.shutterPhase, -720...720, "°") { v in state.mutate("Shutter Phase") { $0.shutterPhase = v } }
+                        HStack(spacing: 6) {
+                            preset("Film 180°", 180, -90); preset("Smooth 360°", 360, -180); preset("Velocity 720°", 720, -360)
+                        }
+                        slider("Quality (samples)", Double(p.blurSamples), 2...64, "") { v in state.mutate("Blur Samples") { $0.blurSamples = Int(v) } }
+                        Text("Shutter Angle sets the trail length (180° is film, past 360° exaggerates for velocity edits). Phase sets where it starts: half the angle, negative, centers the trail on the frame like AE. Preview uses fewer samples while you scrub; export uses all of them.")
+                            .font(.caption).foregroundStyle(Theme.textDim)
+                        if l.content != .camera {
+                            Divider().overlay(Theme.stroke)
+                            PixelMotionBlurControls(state: state, layer: l)
+                        }
                     }
                     .padding(.horizontal, 12).padding(.bottom, 14)
                 }
@@ -186,10 +194,44 @@ struct MotionBlurPanel: View {
         }
     }
 
-    private func slider(_ t: String, _ v: Double, _ r: ClosedRange<Double>, _ fmt: String, _ set: @escaping (Double) -> Void) -> some View {
+    /// With "Every layer" on, a layer can stay sharp; otherwise it opts in on its own.
+    @ViewBuilder private func layerRow(_ l: Layer, _ p: Project) -> some View {
+        if p.blurAllLayers {
+            Toggle("Keep this layer sharp", isOn: Binding(get: { (p.sharpLayerIDs ?? []).contains(l.id) }, set: { b in
+                state.mutate("Keep Layer Sharp") { proj in
+                    var ids = proj.sharpLayerIDs ?? []
+                    ids.removeAll { $0 == l.id }
+                    if b { ids.append(l.id) }
+                    proj.sharpLayerIDs = ids.isEmpty ? nil : ids
+                    if let i = state.selectedIndex, b { proj.layers[i].motionBlur = false }
+                }
+            }))
+            .tint(Theme.accent).foregroundStyle(Theme.text)
+        } else {
+            Toggle("This layer", isOn: Binding(get: { l.motionBlur }, set: { b in
+                state.mutate("Layer Motion Blur") { proj in
+                    if let i = state.selectedIndex { proj.layers[i].motionBlur = b }
+                    if b { proj.motionBlurEnabled = true }
+                }
+            }))
+            .tint(Theme.accent).foregroundStyle(Theme.text)
+        }
+    }
+
+    private func preset(_ title: String, _ angle: Double, _ phase: Double) -> some View {
+        Button {
+            state.mutate("Shutter Preset") { $0.shutterAngle = angle; $0.shutterPhase = phase; $0.motionBlurEnabled = true }
+        } label: {
+            Text(title).font(.system(size: 11, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
+                .padding(.horizontal, 8).padding(.vertical, 7).frame(maxWidth: .infinity)
+                .background(Capsule().fill(Theme.raised)).foregroundStyle(Theme.text)
+        }
+    }
+
+    private func slider(_ t: String, _ v: Double, _ r: ClosedRange<Double>, _ unit: String, _ set: @escaping (Double) -> Void) -> some View {
         HStack {
             Text(t).font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 120, alignment: .leading)
-            ValueScrubber(value: v, range: r, step: 1, unit: fmt.hasSuffix("°") ? "°" : "", onBegin: { state.beginEdit(t) }, onChange: set, onEnd: { state.endEdit() })
+            ValueScrubber(value: v, range: r, step: 1, unit: unit, onBegin: { state.beginEdit(t) }, onChange: set, onEnd: { state.endEdit() })
         }
     }
 }

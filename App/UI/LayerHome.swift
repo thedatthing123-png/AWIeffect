@@ -93,7 +93,7 @@ struct LayerHomePanel: View {
         if visual || c == .adjustment { fx.append(Tile(id: "CC Studio", icon: "camera.filters", panel: .ccStudio)) }
         if visual { fx.append(Tile(id: "Presets", icon: "wand.and.rays", panel: .presets)) }
         if visual && c != .adjustment { fx.append(Tile(id: "Masks", icon: "theatermask.and.paintbrush", panel: .masks)) }
-        if visual { fx.append(Tile(id: "Motion Blur", icon: "wind", panel: .motionBlur)) }
+        if visual || c == .camera { fx.append(Tile(id: "Motion Blur", icon: "wind", panel: .motionBlur)) }
         move.append(Tile(id: "Graph", icon: "point.topleft.down.to.point.bottomright.curvepath", panel: .graph))
         if !l.isAudioOnly {
             move.append(Tile(id: c == .camera ? "Lens & 3D" : (c == .light ? "Light" : "3D"),

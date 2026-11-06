@@ -595,7 +595,7 @@ final class Renderer {
                 guard layer.effects.contains(where: { $0.isEnabled }) else { continue }
                 encodeAdjustment(layer, effects: layer.effects.filter(\.isEnabled), time: time, renderScale: renderScale, opacity: opacity,
                                  comp: comp, cb: cb, pool: pool,
-                                 shutter: (project.motionBlurEnabled && layer.motionBlur) ? project.shutterAngle / 360 / max(project.fps, 1) : 0,
+                                 shutter: project.blurs(layer) ? project.shutterAngle / 360 / max(project.fps, 1) : 0,
                                  sampleCount: min(project.blurSamples, Renderer.blurSampleCap ?? project.blurSamples))
                 continue
             }
@@ -639,15 +639,17 @@ final class Renderer {
             // Motion blur: placements across the shutter interval (empty when the layer doesn't move).
             var blurMatrices: [simd_double3x3] = []
             let autoSmooth = project.smoothMotion && layer.effects.contains { $0.isEnabled && (EffectRegistry.definition($0.typeID)?.isTransformEffect ?? false) }
-            if ((project.motionBlurEnabled && layer.motionBlur) || autoSmooth) && extrude <= 0.5 {
+            if (project.blurs(layer) || autoSmooth) && extrude <= 0.5 {
                 let shutter = project.shutterAngle / 360 / max(project.fps, 1)
+                // Automatic smoothing stays centered; real motion blur follows the shutter phase.
+                let open = project.blurs(layer) ? project.shutterOpen.start : -shutter / 2
                 func corner(_ m: simd_double3x3, _ x: Double, _ y: Double) -> SIMD2<Double> {
                     let p = m * SIMD3(x, y, 1); return SIMD2(p.x, p.y) / max(p.z, 1e-6)
                 }
                 // Adaptive: as many samples as the motion needs (≈1 per 1.5 px of travel), capped by the quality setting.
                 // Detect the path through the shutter, not just its endpoints: a full spin or
                 // out-and-back move can have identical start/end placements and still need blur.
-                let probes = (0...4).map { samplePlacement(layer, at: time + (Double($0) / 4 - 0.5) * shutter) }
+                let probes = (0...4).map { samplePlacement(layer, at: time + open + Double($0) / 4 * shutter) }
                 let travel = [(-hs.x, -hs.y), (hs.x, hs.y), (hs.x, -hs.y), (-hs.x, hs.y)].map { c in
                     (1..<probes.count).reduce(0.0) { distance, k in
                         distance + simd_length(corner(probes[k], c.0, c.1) - corner(probes[k - 1], c.0, c.1))
@@ -657,7 +659,7 @@ final class Renderer {
                     let cap = Renderer.blurSampleCap.map { min($0, project.blurSamples) } ?? project.blurSamples
                     let n = max(2, min(cap, Int(min(Double(max(2, cap)), (travel / 1.5).rounded(.up))) + 1))
                     blurMatrices = (0..<n).map { k in
-                        samplePlacement(layer, at: time + (Double(k) / Double(n - 1) - 0.5) * shutter)
+                        samplePlacement(layer, at: time + open + Double(k) / Double(n - 1) * shutter)
                     }
                 }
             }
@@ -899,7 +901,7 @@ final class Renderer {
             // Pixel Motion Blur: estimate how pixels moved since the previous frame, blur along it.
             if let amt = layer.timeFX?.pixelMotionBlur, amt > 0, let pool = currentPool {
                 let fps = VideoSources.shared.fps(url)
-                if let prev = VideoSources.shared.texture(url: url, time: max(0, sourceTime - 1 / fps), device: device, channel: layer.id.hashValue), prev !== frame {
+                if let prev = VideoSources.shared.texture(url: url, time: max(0, sourceTime - 1 / fps), device: device, channel: layer.id.hashValue &+ 1), prev !== frame {
                     let fw = max(8, frame.width / 4), fh = max(8, frame.height / 4)
                     let flow = pool.acquire(width: fw, height: fh)
                     var p = EffectParams()
@@ -907,7 +909,7 @@ final class Renderer {
                     fx.run("flowEstimate", cb, textures: [prev, flow, frame], params: p, grid: flow)
                     let out = pool.acquire(width: frame.width, height: frame.height)
                     var q = EffectParams()
-                    q.a = SIMD4(Float(amt / 100), Float(layer.timeFX?.pixelBlurLimit ?? 0.15), Float(layer.timeFX?.pixelBlurSamples ?? 12), 0)
+                    q.a = SIMD4(Float(amt / 100), Float(layer.timeFX?.pixelBlurLimit ?? 0.15), Float(layer.timeFX?.pixelBlurSamples ?? 12), 1)
                     fx.run("flowBlur", cb, textures: [frame, out, flow], params: q, grid: out)
                     return .image(out)
                 }
