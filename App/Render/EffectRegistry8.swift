@@ -142,11 +142,11 @@ extension EffectRegistry {
 
     static let celShading = EffectDefinition(
         id: "awi8.celShading", name: "Cel Shading", category: .stylize, aeMatchNames: [],
-        summary: "Cartoon look: flat posterized color with dark ink outlines.",
+        summary: "Anime cel look: brightness snaps to flat bands while hue stays, with clean tapered ink outlines.",
         params: [.number("levels", "Color Levels", 4, 2, 12, step: 1), .number("threshold", "Edge Threshold", 0.3, 0, 2, step: 0.01),
                  .number("width", "Line Width", 1.5, 0.5, 6, step: 0.1, unit: "px"), .color("lineColor", "Line Color", RGBA(0.05, 0.04, 0.06))],
-        stage: .pixels { ctx in f8(ctx, 12) { p in
-            p.a = SIMD4(n8(ctx, "levels"), n8(ctx, "threshold"), px8(ctx, "width"), 0); p.b = col8(ctx, "lineColor") } })
+        stage: .pixels { ctx in ink27(ctx, mode: 2, sigma: ctx.num("width") * 0.6 * ctx.unit) { p in
+            p.a = SIMD4(n8(ctx, "levels"), n8(ctx, "threshold"), 0, 0); p.b = col8(ctx, "lineColor") } })
 
     static let oilPaint = EffectDefinition(
         id: "awi8.oilPaint", name: "Oil Paint", category: .stylize, aeMatchNames: [],
@@ -174,20 +174,24 @@ extension EffectRegistry {
 
     static let pencilSketch = EffectDefinition(
         id: "awi8.pencilSketch", name: "Pencil Sketch", category: .stylize, aeMatchNames: [],
-        summary: "Cross-hatched pencil shading on paper with traced outlines.",
+        summary: "Graphite on paper: soft directional hatching that builds in the shadows, paper tooth and traced outlines.",
         params: [.number("strength", "Strength", 1, 0, 2, step: 0.01), .number("spacing", "Hatch Spacing", 5, 2, 20, step: 0.1, unit: "px"),
                  .number("edges", "Outlines", 1, 0, 3, step: 0.01),
                  .color("paper", "Paper", RGBA(0.96, 0.94, 0.89)), .color("pencil", "Pencil", RGBA(0.18, 0.18, 0.22))],
-        stage: .pixels { ctx in f8(ctx, 15) { p in
+        stage: .pixels { ctx in ink27(ctx, mode: 1, sigma: 1.1 * ctx.unit) { p in
             p.a = SIMD4(n8(ctx, "strength"), px8(ctx, "spacing"), n8(ctx, "edges"), 0)
             p.b = col8(ctx, "paper"); p.c = col8(ctx, "pencil") } })
 
     static let cmykHalftone = EffectDefinition(
         id: "awi8.cmykHalftone", name: "Comic Halftone CMYK", category: .stylize, aeMatchNames: [],
-        summary: "Four rotated ink dot screens (cyan, magenta, yellow, black) like printed comics.",
-        params: [.number("size", "Dot Size", 8, 3, 40, step: 0.1, unit: "px"), .angle("angle", "Screen Angle", 15), pct("mix", "Mix", 100)],
-        stage: .pixels { ctx in f8(ctx, 16) { p in
-            p.a = SIMD4(px8(ctx, "size"), n8(ctx, "angle", .pi / 180), n8(ctx, "mix", 0.01), 0) } })
+        summary: "Four antialiased process-ink screens (cyan, magenta, yellow, black) at print angles, overprinting on paper like a comic.",
+        params: [.number("size", "Dot Size", 8, 3, 40, step: 0.1, unit: "px"), .angle("angle", "Screen Angle", 15), pct("mix", "Mix", 100),
+                 .choice("shape", "Dot Shape", printShapes27, 0), .color("paper", "Paper", RGBA(0.97, 0.96, 0.92)),
+                 .number("contrast", "Contrast", 100, 0, 300, unit: "%")],
+        stage: .pixels { ctx in
+            print27(ctx, mode: 2, cell: ctx.num("size") * ctx.unit, angle: ctx.num("angle") * .pi / 180,
+                    contrast: v27(ctx, "contrast", 100) / 100, mix: ctx.num("mix") / 100,
+                    ink: SIMD4(0, 0, 0, 1), paper: col27(ctx, "paper", RGBA(0.97, 0.96, 0.92)), shape: ctx.effect.choice("shape")) })
 
     static let mosaicTiles = EffectDefinition(
         id: "awi8.mosaicTiles", name: "Mosaic Tiles", category: .stylize, aeMatchNames: [],

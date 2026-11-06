@@ -204,7 +204,8 @@ extension EffectRegistry {
                  .number("amount", "Amount", 100, 0, 500, step: 0.1),
                  .color("ink", "Ink Color", RGBA(hex: 0x113355)), .color("paper", "Paper Color", RGBA(hex: 0xFFEEDD)),
                  .number("mix", "Effect Mix", 100, 0, 100, unit: "%"),
-                 .choice("version", "Rendering", ["Legacy", "Print Screen", "AM Dots"], 2)]
+                 .choice("version", "Rendering", ["Legacy", "Print Screen", "AM Dots"], 2),
+                 .choice("shape", "Dot Shape", printShapes27, 0)]
 
     static let halftone = EffectDefinition(
         id: "awi.halftone", name: "Halftone", category: .stylize, aeMatchNames: [],
@@ -219,6 +220,17 @@ extension EffectRegistry {
             func value(_ key: String) -> Double {
                 if ctx.effect.params[key] != nil { return ctx.num(key) }
                 return halftoneParams.first(where: { $0.id == key })?.defaultValue.number(at: ctx.time) ?? 0
+            }
+            // Round dots keep the established renderers; other shapes use the shared print screen.
+            let shape = ctx.effect.choice("shape")
+            if shape > 0 {
+                let cell = ctx.effect.choice("version") == 2
+                    ? (ctx.compositionPixels?.x ?? Double(ctx.width)) / max(0.001, value("amount"))
+                    : value("size") * ctx.unit
+                return print27(ctx, mode: 0, cell: cell, angle: value("angle") * .pi / 180,
+                               contrast: pow(2, (value("strength") - 50) / 25), mix: value("mix") / 100,
+                               ink: col27(ctx, "ink", RGBA(hex: 0x113355)), paper: col27(ctx, "paper", RGBA(hex: 0xFFEEDD)),
+                               shape: shape, colorDots: ctx.effect.bool("color"))
             }
             return run23(ctx, mode: 2) { p in
                 p.a = SIMD4(f(value("size") * ctx.unit), f(value("angle") * .pi / 180), f(pow(2, (value("strength") - 50) / 25)), f(value("phase")))
@@ -236,10 +248,12 @@ extension EffectRegistry {
 
     static let crt = EffectDefinition(
         id: "awi.crt", name: "CRT / Scanlines", category: .stylize, aeMatchNames: [],
-        summary: "Old monitor: scanlines, RGB grille and screen curve.",
+        summary: "Old monitor: Gaussian scanline beams that widen on bright areas, a white-balanced RGB grille, soft halo and curved glass.",
         params: [.number("strength", "Strength", 60, 0, 100, unit: "%"), .number("line", "Line Size", 3, 1, 20, unit: "px"),
                  .number("curve", "Curvature", 30, 0, 100, unit: "%")],
-        stage: .pixels { ctx in stylize(5, ctx) { p in p.a = SIMD4(f(ctx.num("strength") / 100), f(ctx.num("line") * ctx.unit), f(ctx.num("curve") / 100), 0) } })
+        stage: .pixels { ctx in
+            let halo = ctx.gpu.gaussian(ctx, input: ctx.input, sigma: max(1, ctx.num("line") * ctx.unit * 1.5), repeatEdges: true)
+            return film27(ctx, mode: 3, aux: halo) { p in p.a = SIMD4(f(ctx.num("strength") / 100), f(ctx.num("line") * ctx.unit), f(ctx.num("curve") / 100), 0) } })
 
     static let mangaFX = EffectDefinition(
         id: "awi.manga", name: "AWI Manga FX", category: .stylize, aeMatchNames: [],
@@ -284,12 +298,11 @@ extension EffectRegistry {
 
     static let grain = EffectDefinition(
         id: "ae.noise", name: "Noise / Grain", category: .color, aeMatchNames: ["ADBE Noise", "ADBE Add Grain"],
-        summary: "Film grain or digital noise, animated per frame.",
+        summary: "Soft clumped film grain, strongest in the midtones and new every frame. Color grain makes dye-cloud grain, never rainbow digital noise.",
         params: [.number("amount", "Amount of Noise", 15, 0, 100, unit: "%", ae: 1), .number("size", "Grain Size", 1, 0.5, 8, step: 0.1),
                  .toggle("color", "Use Color Noise", false, ae: 3)],
-        stage: .pixels { ctx in run("fxColor2", ctx) { p in
-            p.a = SIMD4(f(ctx.num("amount") / 100), f(ctx.num("size") * ctx.unit), ctx.effect.bool("color") ? 1 : 0, f((ctx.time * 30).rounded()))
-            p.i.x = 2 } })
+        stage: .pixels { ctx in film27(ctx, mode: 4) { p in
+            p.a = SIMD4(f(ctx.num("amount") / 100), f(ctx.num("size") * ctx.unit), ctx.effect.bool("color") ? 1 : 0, f((ctx.time * 30).rounded())) } })
 
     // MARK: AWI plugins
 

@@ -245,9 +245,9 @@ extension EffectRegistry {
 
     static let scanDistort6 = EffectDefinition(
         id: "awi6.scanDistort", name: "Scan Distort", category: .stylize, aeMatchNames: [],
-        summary: "Old CRT: rolling picture, wavy sync bar, scanlines and curved glass.",
+        summary: "Old CRT: rolling picture with a black blanking bar, smooth sync wobble under a moving bar, scanlines and curved glass.",
         params: [.number("roll", "Roll Speed", 0.5, 0, 3, step: 0.01), .number("bar", "Sync Wobble", 10, 0, 60, unit: "px"),
                  .number("scanlines", "Scanlines", 40, 0, 100, unit: "%"), .number("curvature", "Curvature", 25, 0, 100, unit: "%")],
-        stage: .pixels { ctx in d6(ctx, 23) { p in
+        stage: .pixels { ctx in film27(ctx, mode: 2) { p in
             p.a = SIMD4(n6(ctx, "roll"), px6(ctx, "bar"), n6(ctx, "scanlines", 0.01), n6(ctx, "curvature", 0.01)) } })
 }
