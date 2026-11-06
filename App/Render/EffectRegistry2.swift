@@ -23,24 +23,23 @@ extension EffectRegistry {
 
     static let turbulentDisplace = EffectDefinition(
         id: "ae.turbulentDisplace", name: "Turbulent Displace", category: .distort, aeMatchNames: ["ADBE Turbulent Displace"],
-        summary: "Organic, smoky warping driven by fractal noise.",
+        summary: "Organic, smoky warping driven by smooth fractal noise. AE displacement types (Turbulent, Smoother, Bulge, Twist, Cross), looping evolution, pinning, edge behavior and antialiasing.",
         params: [.number("amount", "Amount", 50, 0, 1000, ae: 2), .number("size", "Size", 100, 2, 1000, ae: 3),
                  .number("complexity", "Complexity", 1, 1, 8, step: 1, ae: 5), .number("evolution", "Evolution", 0, -3600, 3600, unit: "°", ae: 6),
                  .choice("axis", "Displacement", ["XY", "X", "Y"], 0),
                  .number("stretchX", "Horizontal Scale", 100, 1, 1000, unit: "%"),
                  .number("stretchY", "Vertical Scale", 100, 1, 1000, unit: "%"),
                  .number("offsetX", "Noise Offset X", 0, -10000, 10000, unit: "px"),
-                 .number("offsetY", "Noise Offset Y", 0, -10000, 10000, unit: "px")],
+                 .number("offsetY", "Noise Offset Y", 0, -10000, 10000, unit: "px"),
+                 .choice("dispType", "Displacement Type", ["Turbulent", "Turbulent Smoother", "Bulge", "Twist", "Cross"], 0),
+                 .toggle("cycle", "Cycle Evolution", false),
+                 .number("cycleLen", "Cycle (Revolutions)", 1, 1, 20, step: 1),
+                 .choice("pinning", "Pinning", ["None", "All Edges", "Top Edge", "Bottom Edge", "Left Edge", "Right Edge", "Top & Bottom", "Left & Right"], 0),
+                 .number("pinSoft", "Pin Falloff", 60, 1, 100, unit: "%"),
+                 .choice("edge", "Edge Behavior", edgeRepeatFirst28, 0),
+                 .choice("aa", "Antialiasing", aaOptions28, 0)],
         margin: { e, t in e.number("amount", t) },
-        stage: .pixels { ctx in run("fxWarp", ctx) { p in
-            p.a = SIMD4(f(ctx.num("amount") * ctx.unit), f(ctx.num("size") * ctx.unit), f(ctx.num("complexity")), f(ctx.num("evolution") / 360))
-            // Missing controls in saved projects preserve the original isotropic noise.
-            func value(_ key: String, _ fallback: Double) -> Double {
-                ctx.effect.params[key] == nil ? fallback : ctx.num(key)
-            }
-            p.b = SIMD4(f(value("stretchX", 100) / 100), f(value("stretchY", 100) / 100),
-                        f(value("offsetX", 0) * ctx.unit), f(value("offsetY", 0) * ctx.unit))
-            p.i.x = 0; p.i.y = UInt32(ctx.effect.choice("axis")) } })
+        stage: .pixels { ctx in turbulent28(ctx) })
 
     static let waveWarp = EffectDefinition(
         id: "ae.waveWarp", name: "Wave Warp", category: .distort, aeMatchNames: ["ADBE Wave Warp"],
@@ -50,16 +49,13 @@ extension EffectRegistry {
                  .angle("direction", "Direction", 90, ae: 4), .number("speed", "Wave Speed", 1, -20, 20, step: 0.1, ae: 5),
                  .choice("pinning", "Pinning", ["None", "All Edges", "Top Edge", "Bottom Edge", "Left Edge", "Right Edge", "Top & Bottom", "Left & Right"], 0, ae: 6),
                  .angle("phase", "Phase", 0, ae: 7),
-                 .number("pinSoft", "Pin Falloff", 60, 1, 100, unit: "%")],
+                 .number("pinSoft", "Pin Falloff", 60, 1, 100, unit: "%"),
+                 .choice("aa", "Antialiasing", aaOptions28, 0),
+                 .choice("edge", "Edge Behavior", edgeOptions28, 0)],
         margin: { e, t in abs(e.number("height", t)) },
         // Like AE / Alight Motion: Phase can be keyframed (hair sway), Pinning holds the roots still, and pixels past
         // the layer edge stay transparent instead of smearing.
-        stage: .pixels { ctx in run("fxWarp", ctx) { p in
-            p.a = SIMD4(f(ctx.num("height") * ctx.unit), f(ctx.num("width") * ctx.unit), f(ctx.num("direction")),
-                        f(ctx.time * ctx.num("speed") * 2 * .pi + ctx.num("phase") * .pi / 180))
-            p.b = layerRect(ctx)
-            p.c = SIMD4(f(ctx.num("pinSoft") / 100), 0, 0, 0)
-            p.i = SIMD4(1, UInt32(ctx.effect.choice("type")), UInt32(ctx.effect.choice("pinning")), 0) } })
+        stage: .pixels { ctx in waveWarp28(ctx) })
 
     /// Alight Motion-style Fractal Warp: organic noise displacement (hair, smoke, cloth, liquid wobble).
     static let fractalWarp = EffectDefinition(
@@ -130,11 +126,11 @@ extension EffectRegistry {
 
     static let polarCoordinates = EffectDefinition(
         id: "ae.polarCoordinates", name: "Polar Coordinates", category: .distort, aeMatchNames: ["ADBE Polar Coordinates"],
-        summary: "Wraps the image into a circle (or unwraps it).",
+        summary: "Wraps the image into a circle (or unwraps it). Seamless at 12 o'clock and supersampled so the pinched center stays smooth.",
         params: [.number("interp", "Interpolation", 100, 0, 100, unit: "%", ae: 1),
-                 .choice("type", "Type of Conversion", ["Rect to Polar", "Polar to Rect"], 0, ae: 2)],
-        stage: .pixels { ctx in run("fxWarp", ctx) { p in
-            p.a = SIMD4(f(ctx.num("interp") / 100), 0, 0, 0); p.i.x = ctx.effect.choice("type") == 0 ? 6 : 7 } })
+                 .choice("type", "Type of Conversion", ["Rect to Polar", "Polar to Rect"], 0, ae: 2),
+                 .choice("aa", "Antialiasing", aaOptions28, 1)],
+        stage: .pixels { ctx in polar28(ctx) })
 
     static let motionTile = EffectDefinition(
         id: "ae.motionTile", name: "Motion Tile", category: .distort, aeMatchNames: ["ADBE Tile"],

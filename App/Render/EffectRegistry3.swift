@@ -201,14 +201,15 @@ extension EffectRegistry {
 
     static let ripple = EffectDefinition(
         id: "ae.ripple", name: "Ripple", category: .distort, aeMatchNames: ["ADBE Ripple"],
-        summary: "Water ripples from a center.",
+        summary: "Water ripples from a center, fading smoothly into the still area. Ripple Phase can be keyframed; Asymmetric adds AE's swirling cross-wave.",
         params: [.number("radius", "Radius", 60, 1, 100, unit: "%", ae: 1), .point("center", "Center of Ripple", Vec2(0.5, 0.5), ae: 2),
                  .number("width", "Wave Width", 40, 2, 500, unit: "px", ae: 5), .number("height", "Wave Height", 12, 0, 200, unit: "px", ae: 6),
-                 .number("speed", "Wave Speed", 1, -10, 10, step: 0.1, ae: 4)],
-        stage: .pixels { ctx in k("fxDistort2", 0, ctx) { p in
-            let c = px(ctx, ctx.effect.point("center", ctx.time))
-            p.a = SIMD4(c.x, c.y, f(ctx.num("radius") / 100 * Double(max(ctx.width, ctx.height))), f(ctx.num("width") * ctx.unit))
-            p.b = SIMD4(f(ctx.num("height") * ctx.unit), f(ctx.time * ctx.num("speed") * 2 * .pi), 0, 0) } })
+                 .number("speed", "Wave Speed", 1, -10, 10, step: 0.1, ae: 4),
+                 .choice("conversion", "Type of Conversion", ["Asymmetric", "Symmetric"], 1),
+                 .angle("phase", "Ripple Phase", 0),
+                 .choice("aa", "Antialiasing", aaOptions28, 1),
+                 .choice("edge", "Edge Behavior", edgeOptions28, 0)],
+        stage: .pixels { ctx in ripple28(ctx) })
 
     static let spherize = EffectDefinition(
         id: "ae.spherize", name: "Spherize", category: .distort, aeMatchNames: ["ADBE Spherize"],
@@ -220,11 +221,14 @@ extension EffectRegistry {
 
     static let magnify = EffectDefinition(
         id: "ae.magnify", name: "Magnify", category: .distort, aeMatchNames: ["ADBE Magnify"],
-        summary: "Zoomed loupe circle.",
+        summary: "Zoomed loupe (circle or square) with an antialiased, featherable rim, opacity and blending like AE's Magnify.",
         params: [.point("center", "Center", Vec2(0.5, 0.5), ae: 2), .number("mag", "Magnification", 200, 100, 1000, unit: "%", ae: 3),
-                 .number("size", "Size", 120, 4, 2000, unit: "px", ae: 5)],
-        stage: .pixels { ctx in k("fxDistort2", 2, ctx) { p in
-            let c = px(ctx, ctx.effect.point("center", ctx.time)); p.a = SIMD4(c.x, c.y, f(ctx.num("mag") / 100), f(ctx.num("size") * ctx.unit)) } })
+                 .number("size", "Size", 120, 4, 2000, unit: "px", ae: 5),
+                 .choice("shape", "Shape", ["Circle", "Square"], 0),
+                 .number("feather", "Feather", 0, 0, 500, unit: "px"),
+                 .number("opacity", "Opacity", 100, 0, 100, unit: "%"),
+                 .choice("blend", "Blending Mode", ["Normal", "Add", "Screen"], 0)],
+        stage: .pixels { ctx in magnify28(ctx) })
 
     static let cornerPin = EffectDefinition(
         id: "ae.cornerPin", name: "Corner Pin", category: .distort, aeMatchNames: ["ADBE Corner Pin"],

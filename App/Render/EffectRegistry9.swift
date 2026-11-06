@@ -16,11 +16,17 @@ extension EffectRegistry {
     private static func tr9(_ ctx: EffectContext, _ mode: UInt32, _ fill: (inout EffectParams) -> Void) -> MTLTexture {
         let out = ctx.temp()
         var p = EffectParams()
-        p.a.x = Float(ctx.num("completion") / 100)
+        // Easing shapes the progress curve (Linear keeps saved projects identical).
+        p.a.x = Float(ease28(ctx.num("completion") / 100, ctx.effect.choice("ease")))
         fill(&p)
         p.i.x = mode
         p.d.x = Float(ctx.time)
-        ctx.gpu.run("fxTrans9", ctx.cb, textures: [ctx.input, out, ctx.input], params: p, grid: out)
+        if trans28Modes.contains(mode) {
+            // Pattern wipes: supersampled, antialiased masks (no stair-stepped seams); pixel dissolve can fade blocks.
+            ctx.gpu.run("fxTrans28", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
+        } else {
+            ctx.gpu.run("fxTrans9", ctx.cb, textures: [ctx.input, out, ctx.input], params: p, grid: out)
+        }
         return out
     }
     private static func n9(_ ctx: EffectContext, _ key: String) -> Float { Float(ctx.num(key)) }
@@ -32,13 +38,14 @@ extension EffectRegistry {
     }
     private static let completion9 = ParamDef.number("completion", "Completion", 50, 0, 100, unit: "%")
     private static func feather9(_ def: Double = 12) -> ParamDef { .number("feather", "Feather", def, 0, 200, unit: "px") }
+    private static let ease9 = ParamDef.choice("ease", "Easing", ["Linear", "Ease In", "Ease Out", "Ease In-Out"], 0)
     private static let center9Def = ParamDef.point("center", "Center", Vec2(0.5, 0.5))
 
     private static func trans9(_ id: String, _ name: String, _ summary: String, _ params: [ParamDef],
                                _ mode: UInt32, _ fill: @escaping (EffectContext, inout EffectParams) -> Void) -> EffectDefinition {
         EffectDefinition(id: "awi9." + id, name: name, category: .transition, aeMatchNames: [],
                          summary: summary + " Completion 0% = fully visible, 100% = fully hidden.",
-                         params: [completion9] + params,
+                         params: [completion9, ease9] + params,
                          stage: .pixels { ctx in tr9(ctx, mode) { p in fill(ctx, &p) } })
     }
 
@@ -76,9 +83,10 @@ extension EffectRegistry {
         let c = center9(ctx)
         p.a.y = px9(ctx, "feather"); p.a.z = rad9(ctx, "rotation"); p.a.w = Float(ctx.effect.choice("shape")); p.c.z = c.x; p.c.w = c.y }
 
-    static let pixelDissolve9 = trans9("pixelDissolve", "Pixel Dissolve", "Random square blocks blink out one by one.",
-        [.number("block", "Block Size", 8, 1, 64, unit: "px"), .number("seed", "Random Seed", 1, 0, 100, step: 1)], 7) { ctx, p in
-        p.a.y = max(1, px9(ctx, "block")); p.a.z = n9(ctx, "seed") }
+    static let pixelDissolve9 = trans9("pixelDissolve", "Pixel Dissolve", "Random square blocks blink out one by one (Softness fades each block instead).",
+        [.number("block", "Block Size", 8, 1, 64, unit: "px"), .number("seed", "Random Seed", 1, 0, 100, step: 1),
+         .number("softness", "Softness", 0, 0, 100, unit: "%")], 7) { ctx, p in
+        p.a.y = max(1, px9(ctx, "block")); p.a.z = n9(ctx, "seed"); p.b.x = Float(ctx.num("softness") / 100) }
 
     static let noiseDissolve9 = trans9("noiseDissolve", "Noise Dissolve", "Fractal-noise holes eat the layer with a glowing burn edge.",
         [.number("scale", "Noise Scale", 40, 5, 400, unit: "px"), .number("edge", "Edge Width", 0.1, 0, 0.5, step: 0.01),
