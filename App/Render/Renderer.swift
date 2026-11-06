@@ -630,6 +630,16 @@ final class Renderer {
                         guard let d = EffectRegistry.definition(e.typeID), !d.isTransformEffect, case .pixels(let run) = d.stage else { continue }
                         picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: renderScale, pool: pool))
                     }
+                    // Masks cut the model like any layer: they live in the layer's own plane.
+                    let modelMasks = layer.masks.filter { $0.mode != .none && !$0.effectsOnly }
+                    if !modelMasks.isEmpty {
+                        let cut = pool.acquire(width: picture.width, height: picture.height)
+                        fx.run("fxCopy", cb, textures: [picture, cut], grid: cut)
+                        let M = Self.placementMatrix(layer, camera: camera, time: time, renderScale: renderScale)
+                        let scaleToPicture = simd_double3x3(diagonal: SIMD3(Double(picture.width) / Double(comp.width), Double(picture.height) / Double(comp.height), 1))
+                        PathGPU.shared?.applyMasks(cb: cb, layer: cut, masks: modelMasks, time: time, matrix: scaleToPicture * M, aa: 1, pool: pool)
+                        picture = cut
+                    }
                     // Camera depth of field: the model blurs by how far it is from the focus distance.
                     let dofModel = Self.dofSigma(layer, camera: camera, time: time) * renderScale
                     if dofModel > 0.5, let blur = EffectRegistry.definition("ae.gaussianBlur"), case .pixels(let run) = blur.stage {

@@ -99,4 +99,25 @@ final class Model3DSceneTests: XCTestCase {
         let plain = (try? JSONEncoder().encode(Model3DOptions())).flatMap { try? JSONDecoder().decode(Model3DOptions.self, from: $0) }
         XCTAssertNil(plain?.emission); XCTAssertNil(plain?.overrideMaterial)
     }
+
+    func testMaskCutsAThreeDModel() throws {
+        var p = scene()
+        let whole = try litColumns(p).count
+        XCTAssertGreaterThan(whole, 0, "the model must render")
+        // Keep only the left half of the layer's own plane.
+        let mask = LayerMask(path: Animated(BezierPath(vertices: [PathVertex(point: Vec2(-200, -200)), PathVertex(point: Vec2(0, -200)),
+                                                   PathVertex(point: Vec2(0, 200)), PathVertex(point: Vec2(-200, 200))], closed: true)))
+        p.layers[0].masks = [mask]
+        let cut = try litColumns(p).count
+        XCTAssertGreaterThan(cut, 0)
+        XCTAssertLessThan(cut, whole, "the mask removes part of the model")
+    }
+
+    func testAnimationSettingsSaveAndOldModelsStillPlay() {
+        var o = Model3DOptions(); o.fileName = "robot.usdz"
+        XCTAssertNil(o.playAnimation, "imported animations play unless turned off")
+        o.playAnimation = false; o.animationSpeed = 2; o.animationOffset = 1.5
+        let back = (try? JSONEncoder().encode(o)).flatMap { try? JSONDecoder().decode(Model3DOptions.self, from: $0) }
+        XCTAssertEqual(back?.playAnimation, false); XCTAssertEqual(back?.animationSpeed, 2); XCTAssertEqual(back?.animationOffset, 1.5)
+    }
 }

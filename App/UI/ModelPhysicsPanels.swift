@@ -32,6 +32,12 @@ struct ModelPanel: View {
                             slider("Roughness", o.roughness, 0...1) { v in cont { $0.roughness = v } }
                         }
                         if o.fileName != nil {
+                            Toggle("Play Model's Animation", isOn: Binding(get: { o.playAnimation != false }, set: { b in edit("Model Animation") { $0.playAnimation = b ? nil : false } }))
+                                .tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13))
+                            if o.playAnimation != false {
+                                slider("Anim Speed", o.animationSpeed ?? 1, 0...4) { v in cont { $0.animationSpeed = abs(v - 1) < 0.001 ? nil : v } }
+                                slider("Start At (s)", o.animationOffset ?? 0, 0...30) { v in cont { $0.animationOffset = v > 0.001 ? v : nil } }
+                            }
                             Toggle("Replace Model's Materials", isOn: Binding(get: { o.overrideMaterial == true }, set: { b in edit("Material") { $0.overrideMaterial = b ? true : nil } }))
                                 .tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13))
                             if o.overrideMaterial == true {

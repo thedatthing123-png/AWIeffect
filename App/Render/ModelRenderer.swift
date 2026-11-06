@@ -31,6 +31,10 @@ struct Model3DOptions: Codable, Equatable {
     var overrideMaterial: Bool? = nil
     /// The surface glows in its own color (0-1), on top of lighting.
     var emission: Double? = nil
+    /// Imported models: play the animation that came with the file, at this speed, starting this many seconds in.
+    var playAnimation: Bool? = nil
+    var animationSpeed: Double? = nil
+    var animationOffset: Double? = nil
 }
 
 /// Where a 3D layer's model sits as seen by the scene camera. With this the model is a real object in the scene:
@@ -83,6 +87,15 @@ final class ModelRenderer {
             guard let scene = try? ModelImport.load(url: mediaURL(f)) else { return nil }
             node = SCNNode()
             for c in scene.rootNode.childNodes { node.addChildNode(c) }
+            // Animations in the file follow the timeline, not the wall clock, so scrubbing and export match.
+            node.enumerateHierarchy { n, _ in
+                for key in n.animationKeys {
+                    guard let player = n.animationPlayer(forKey: key) else { continue }
+                    player.animation.usesSceneTimeBase = true
+                    player.animation.repeatCount = .greatestFiniteMagnitude
+                    player.play()
+                }
+            }
         } else {
             let t = SCNText(string: o.text, extrusionDepth: CGFloat(o.extrusion))
             t.font = UIFont(name: o.fontName, size: 100) ?? .boldSystemFont(ofSize: 100)
@@ -144,6 +157,7 @@ final class ModelRenderer {
         let preparationRenderer = availableRenderers.last ?? SCNRenderer(device: device, options: nil)
         guard preparationRenderer.prepare(cached.node, shouldAbortBlock: nil) else { return nil }
         let model = cached.node.clone()
+        let animated = o.fileName != nil && o.playAnimation != false
         // Never reuse a render target within a command buffer: motion samples and different layers
         // must retain independent pictures. A per-frame pool reuses storage only after GPU completion.
         let target: MTLTexture
@@ -236,6 +250,7 @@ final class ModelRenderer {
         renderer.scene = scene
         renderer.pointOfView = cam
         SCNTransaction.flush()
+        renderer.sceneTime = animated ? max(0, time * (o.animationSpeed ?? 1) + (o.animationOffset ?? 0)) : 0
         renderer.update(atTime: time)
         guard renderer.prepare(scene, shouldAbortBlock: nil) else { return nil }
         // Render straight into a GPU texture. The old path took a snapshot image, copied it to the CPU and uploaded
