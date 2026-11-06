@@ -196,7 +196,7 @@ final class EffectTests: XCTestCase {
                                    // edge cleaning only touches the few soft key-edge pixels (covered in BackgroundColorRemakeTests).
                                    "ae.fractalNoise/cycles", "ae.lumaKey/tolerance", "ae.lumaKey/edgeClean",
                                    // Same: cycle length only applies with Cycle Evolution on.
-                                   "ae.turbulentDisplace/cycleLen", "ae.turbulentDisplace/pinFalloff"]
+                                   "ae.turbulentDisplace/cycleLen", "ae.turbulentDisplace/pinSoft"]
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
             for pd in d.params {
                 guard case .number(let lo, let hi, _, _) = pd.kind, !modal.contains("\(d.id)/\(pd.id)") else { continue }
