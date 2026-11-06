@@ -27,6 +27,7 @@ Rules for every item: read the existing system first, improve what's there befor
 9. **Particles.** A real emitter for sparks, debris, dust and energy.
 10. **Expressions.** Easy wiggle, loopOut and property linking on a phone.
 11. **New preset system and previews.** After the effects are done.
+12. **CC Studio renewal.** Look-type color effects (Cross Process, Bleach Bypass, Infrared, Day for Night, Cyberpunk, Lomo, Vintage Fade, Sepia, film stocks) are really LUTs: move them into CC Studio as LUTs, add many more LUTs, and give CC Studio finer grading settings.
 12. **Media and export.** Proxies for heavy footage, high frame rate and HDR clips, quality presets, ProRes and transparent video, exports that match the preview.
 13. **Workflow speed.** Own presets and rigs, templates, fast duplicate and replace.
 14. **Performance pass.** Build on the existing precomp pre-render (faster to make, never stale after edits, used for heavy 3D). Final optimization. Crashes are fixed whenever they appear, not only here.

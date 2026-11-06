@@ -94,6 +94,8 @@ final class EffectTests: XCTestCase {
         case "awi18.transform": n("x", 25); n("rotation", 20); n("scale", 120)
         // Lines alone are thin on the small test shapes; on paper the whole look shows.
         case "awi.inkSketch": n("paper", 1)
+        // Key the purple rect (the test image has no green), so saturation and brightness limits matter.
+        case "awi11.colorRangeKey": n("hue", 268); n("width", 30)
         case "awi19.colorSelect":
             // Keep the purple rect: the dark purple background is close in color but not brightness, so the
             // brightness and softness controls decide how much of it stays.
