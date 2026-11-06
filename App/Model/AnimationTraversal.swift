@@ -6,6 +6,8 @@ struct AnimationTraversal {
     var operation: Operation
     var times: [Double] = []
     var markers: [Double: UUID] = [:]
+    /// Only this effect's keyframes are visited (keyframe focus while an effect is open).
+    var onlyEffect: UUID? = nil
     mutating func apply<V: Interpolatable>(_ value: inout Animated<V>) {
         switch operation {
         case .reverse(let sum): value.reverseKeys(around: sum)
@@ -16,9 +18,14 @@ struct AnimationTraversal {
                 if markers[time] == nil { markers[time] = key.id }
             }
         case .moveTimes(let selected, let delta):
+            var moved = Set<UUID>()
             for i in value.keyframes.indices where selected.contains(where: { abs($0 - value.keyframes[i].time) < keyframeTimeEpsilon }) {
                 value.keyframes[i].time += delta
+                moved.insert(value.keyframes[i].id)
             }
+            // A key dropped exactly on another key of the same property replaces it (After Effects does the same).
+            let landed = value.keyframes.filter { moved.contains($0.id) }.map(\.time)
+            value.keyframes.removeAll { k in !moved.contains(k.id) && landed.contains { abs($0 - k.time) < keyframeTimeEpsilon } }
             value.keyframes.sort { $0.time < $1.time }
         case .retime(let from, let to): value.retime(at: from, to: to)
         case .shift(let dt): value.shift(by: dt)
@@ -35,6 +42,10 @@ struct AnimationTraversal {
 
 extension Layer {
     mutating func traverseAnimations(_ visit: inout AnimationTraversal) {
+        if let only = visit.onlyEffect {
+            for i in effects.indices where effects[i].id == only { traverseEffect(i, &visit) }
+            return
+        }
         if let frozen = timeFX?.freezeAt {
             switch visit.operation {
             case .shift(let delta): timeFX?.freezeAt = frozen + delta
@@ -87,7 +98,12 @@ extension Layer {
             visit.apply(&model3D!.lightAngle)
             visit.apply(&model3D!.lightIntensity)
         }
-        for i in effects.indices {
+        for i in effects.indices { traverseEffect(i, &visit) }
+        traverseText(&visit)
+    }
+
+    private mutating func traverseEffect(_ i: Int, _ visit: inout AnimationTraversal) {
+        do {
             for key in effects[i].params.keys.sorted() {
                 guard let value = effects[i].params[key] else { continue }
                 switch value {
@@ -98,6 +114,9 @@ extension Layer {
                 }
             }
         }
+    }
+
+    private mutating func traverseText(_ visit: inout AnimationTraversal) {
         if text != nil {
             visit.apply(&text!.fill)
             visit.apply(&text!.tracking)

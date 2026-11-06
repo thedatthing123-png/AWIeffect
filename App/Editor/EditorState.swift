@@ -138,10 +138,15 @@ final class EditorState: ObservableObject {
         didSet { if isPlaying != oldValue { CrashReporter.note(isPlaying ? "Play" : "Pause") } }
     }
     @Published var loop = true
-    @Published var selectedLayerID: UUID?
+    @Published var selectedLayerID: UUID? { didSet { if selectedLayerID != oldValue { keyframeFocusEffect = nil } } }
     @Published var panel: ToolPanel = .none {
-        didSet { if panel != oldValue { CrashReporter.note("Opened \(panel)") } }
+        didSet {
+            if panel != oldValue { CrashReporter.note("Opened \(panel)") }
+            if panel != .effects && panel != .graph { keyframeFocusEffect = nil }
+        }
     }
+    /// The open effect: the timeline highlights only its keyframes, and only those can be dragged.
+    @Published var keyframeFocusEffect: UUID?
     @Published private(set) var undoStack: [(label: String, project: Project)] = []
     @Published private(set) var redoStack: [(label: String, project: Project)] = []
     @Published var redrawToken = 0

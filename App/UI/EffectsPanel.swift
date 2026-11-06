@@ -269,6 +269,7 @@ struct EffectsPanel: View {
             HStack(spacing: 8) {
                 Button {
                     if isOpen { expanded.remove(e.id) } else { expanded.insert(e.id) }
+                        state.keyframeFocusEffect = isOpen ? (state.keyframeFocusEffect == e.id ? expanded.first : state.keyframeFocusEffect) : e.id
                 } label: {
                     Image(systemName: "chevron.right").rotationEffect(.degrees(isOpen ? 90 : 0))
                         .frame(width: 24, height: 30)

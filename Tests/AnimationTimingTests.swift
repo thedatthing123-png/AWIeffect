@@ -29,8 +29,11 @@ final class AnimationTimingTests: XCTestCase {
         XCTAssertEqual(moved.volume.keyframeTimes, [2])
         XCTAssertEqual(moved.transform.rotation.keyframes[0].id, original.transform.rotation.keyframes[0].id)
         XCTAssertEqual(moved.transform.rotation.keyframes[0].curve, original.transform.rotation.keyframes[0].curve)
-        XCTAssertNil(s.moveKeyframeSelection(of: moved, times: [2,3], by: 1), "Do not overwrite the unselected key at 4")
-        XCTAssertEqual(s.project.layers[0], moved)
+        // Dropping onto the key at 4: the moved key takes that spot, like After Effects.
+        XCTAssertEqual(s.moveKeyframeSelection(of: moved, times: [2,3], by: 1), 1)
+        XCTAssertEqual(s.project.layers[0].transform.rotation.keyframeTimes, [3,4])
+        XCTAssertEqual(s.project.layers[0].transform.rotation.keyframes[1].value, 30, "the moved key wins")
+        s.undo(); XCTAssertEqual(s.project.layers[0], moved)
         s.undo(); XCTAssertEqual(s.project.layers[0], original)
     }
 

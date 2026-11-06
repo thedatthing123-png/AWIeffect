@@ -50,22 +50,22 @@ extension EditorState {
     }
 
     /// Moves every keyframe of the selected layer at `from` to `to` (all properties).
-    func moveKeyframes(of original: Layer, from: Double, to: Double) {
-        _ = moveKeyframeSelection(of: original, times: [from], by: to - from)
+    func moveKeyframes(of original: Layer, from: Double, to: Double, effect: UUID? = nil) {
+        _ = moveKeyframeSelection(of: original, times: [from], by: to - from, effect: effect)
     }
 
     /// A snapshot and a relative delta keep a drag independent of redraws and finger hit-testing.
     /// Occupied destinations are rejected; moving keys never silently deletes another key.
     @discardableResult
-    func moveKeyframeSelection(of original: Layer, times: [Double], by delta: Double) -> Double? {
+    func moveKeyframeSelection(of original: Layer, times: [Double], by delta: Double, effect: UUID? = nil) -> Double? {
         guard delta.isFinite, times.allSatisfy({ $0.isFinite }), !original.isLocked, let earliest = times.min(),
               let i = project.layers.firstIndex(where: { $0.id == original.id }) else { return nil }
         let frameDelta = ((earliest + delta) * project.fps).rounded() / project.fps - earliest
         let shift = max(-earliest, min(frameDelta, (project.autoLength ? 3600 : project.duration) - (times.max() ?? earliest)))
-        let occupied = original.keyframeTimes.filter { t in !times.contains(where: { abs($0 - t) < keyframeTimeEpsilon }) }
-        guard !times.contains(where: { t in occupied.contains(where: { abs($0 - t - shift) < keyframeTimeEpsilon }) }) else { return nil }
+        // Keys may land on other keys: different properties share the time, the same property takes the moved key.
         var layer = original
         var visit = AnimationTraversal(operation: .moveTimes(times, shift))
+        visit.onlyEffect = effect
         layer.traverseAnimations(&visit)
         mutateLayer(at: i) { $0 = layer }
         return shift
@@ -141,8 +141,12 @@ extension Animated {
 }
 
 extension Layer {
-    var keyframeMarkers: [(id: UUID, time: Double)] {
+    var keyframeMarkers: [(id: UUID, time: Double)] { keyframeMarkers(effect: nil) }
+
+    /// Keyframe times as timeline markers; with `effect`, only that effect's keys.
+    func keyframeMarkers(effect: UUID?) -> [(id: UUID, time: Double)] {
         var copy = self, visit = AnimationTraversal(operation: .inspect)
+        visit.onlyEffect = effect
         copy.traverseAnimations(&visit)
         return visit.markers.map { (id: $0.value, time: $0.key) }.sorted { $0.time < $1.time }
     }
