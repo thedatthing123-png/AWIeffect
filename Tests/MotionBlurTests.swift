@@ -42,9 +42,11 @@ final class MotionBlurTests: XCTestCase {
         sq.transform.position.insertKeyframe(Keyframe(time: 1, value: Vec2(110, 60)))
         p.layers = [sq]; p.motionBlurEnabled = true; p.smoothMotion = false; p.shutterAngle = 180; p.blurSamples = 16
         let px = try XCTUnwrap(r.renderPixels(project: p, time: 0.5, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) })).rgba
-        XCTAssertGreaterThan(px[(60 * 120 + 60) * 4 + 3], 250, "the middle is covered by every sample, so it stays opaque")
-        XCTAssertGreaterThan(px[(60 * 120 + 60) * 4], 250)
-        let edge = px[(60 * 120 + 30) * 4 + 3]
+        let middle: Int = (60 * 120 + 60) * 4
+        XCTAssertGreaterThan(px[middle + 3], 250, "the middle is covered by every sample, so it stays opaque")
+        XCTAssertGreaterThan(px[middle], 250)
+        let edgeIndex: Int = (60 * 120 + 30) * 4 + 3
+        let edge: UInt8 = px[edgeIndex]
         XCTAssertTrue(edge > 10 && edge < 245, "the leading and trailing edges are where the blur lives (\(edge))")
     }
 
