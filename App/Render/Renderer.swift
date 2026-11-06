@@ -636,8 +636,10 @@ final class Renderer {
                         let cut = pool.acquire(width: picture.width, height: picture.height)
                         fx.run("fxCopy", cb, textures: [picture, cut], grid: cut)
                         let M = Self.placementMatrix(layer, camera: camera, time: time, renderScale: renderScale)
+                        // Mask paths are drawn with an affine map: scale the projection so the layer's center sits at depth 1 (exact head-on, close when turned).
+                        let w0 = max(1e-6, (M * SIMD3(0, 0, 1)).z)
                         let scaleToPicture = simd_double3x3(diagonal: SIMD3(Double(picture.width) / Double(comp.width), Double(picture.height) / Double(comp.height), 1))
-                        PathGPU.shared?.applyMasks(cb: cb, layer: cut, masks: modelMasks, time: time, matrix: scaleToPicture * M, aa: 1, pool: pool)
+                        PathGPU.shared?.applyMasks(cb: cb, layer: cut, masks: modelMasks, time: time, matrix: scaleToPicture * (M * (1 / w0)), aa: 1, pool: pool)
                         picture = cut
                     }
                     // Camera depth of field: the model blurs by how far it is from the focus distance.

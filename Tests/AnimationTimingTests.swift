@@ -32,7 +32,7 @@ final class AnimationTimingTests: XCTestCase {
         // Dropping onto the key at 4: the moved key takes that spot, like After Effects.
         XCTAssertEqual(s.moveKeyframeSelection(of: moved, times: [2,3], by: 1), 1)
         XCTAssertEqual(s.project.layers[0].transform.rotation.keyframeTimes, [3,4])
-        XCTAssertEqual(s.project.layers[0].transform.rotation.keyframes[1].value, 30, "the moved key wins")
+        XCTAssertEqual(s.project.layers[0].transform.rotation.keyframes[1].value, 20, "the moved key (20) wins over the one that was at 4 (40)")
         s.undo(); XCTAssertEqual(s.project.layers[0], moved)
         s.undo(); XCTAssertEqual(s.project.layers[0], original)
     }
