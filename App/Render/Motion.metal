@@ -66,3 +66,13 @@ kernel void flowBlur(texture2d<half, access::sample> cur [[texture(0)]],
     }
     dst.write(half4(o), gid);
 }
+
+// Motion blur: running sum of shutter samples. dst = acc + sample * a.x (a.x = 1 / sample count).
+kernel void fxAccumulate(texture2d<half, access::read> acc [[texture(0)]],
+                         texture2d<half, access::read> sample [[texture(1)]],
+                         texture2d<half, access::write> dst [[texture(2)]],
+                         constant MotionParams& p [[buffer(0)]],
+                         uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    dst.write(half4(float4(acc.read(gid)) + float4(sample.read(gid)) * p.a.x), gid);
+}

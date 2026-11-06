@@ -603,7 +603,28 @@ final class Renderer {
             // A 3D model is an object in the scene: it renders through the scene camera over the whole frame.
             if layer.content == .model, layer.is3D, let options = layer.model3D {
                 let placement = Self.modelPlacement(layer, project: project, camera: camera, time: time)
-                if var picture = ModelRenderer.shared?.render(options, time: time, width: min(2048, comp.width), height: min(2048, comp.height), cb: cb,
+                let mw = min(2048, comp.width), mh = min(2048, comp.height)
+                var blurred: MTLTexture?
+                if project.blurs(layer) {
+                    // Each sample renders the model where it is at that moment of the shutter (camera included).
+                    let open = project.shutterOpen
+                    let n = max(2, min(Renderer.blurSampleCap.map { min($0, 8) } ?? 8, project.blurSamples))
+                    let shots: [MTLTexture] = (0..<n).compactMap { k in
+                        let t = time + open.start + open.length * Double(k) / Double(n - 1)
+                        let sample = Self.resolveParenting(ExpressionResolver.resolve(rawProject, time: t), time: t)
+                        let at = sample.layers.first { $0.id == layer.id } ?? layer
+                        let p = Self.modelPlacement(at, project: sample, camera: Self.activeCamera(sample, time: t), time: t)
+                        return ModelRenderer.shared?.render(options, time: t, width: mw, height: mh, cb: cb, pool: pool, placement: p, mediaURL: mediaURL)
+                    }
+                    if shots.count == n {
+                        let whole = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(mw) / 2, Double(mh) / 2, 1)))
+                        blurred = shutterAverage(n, comp: comp, pool: pool, cb: cb) { k, target in
+                            drawQuad(cb: cb, target: target, matrix: whole, halfSize: Vec2(Double(mw) / 2, Double(mh) / 2), aa: 1, opacity: 1,
+                                     layer: layer, time: time, source: .model(shots[k]), premultipliedImage: true, blendOverride: .normal)
+                        }
+                    }
+                }
+                if var picture = blurred ?? ModelRenderer.shared?.render(options, time: time, width: mw, height: mh, cb: cb,
                                                               pool: pool, placement: placement, mediaURL: mediaURL) {
                     for e in layer.effects where e.isEnabled {
                         guard let d = EffectRegistry.definition(e.typeID), !d.isTransformEffect, case .pixels(let run) = d.stage else { continue }
@@ -783,13 +804,11 @@ final class Renderer {
             // Place the processed buffer like an image layer covering `ext`.
             let compAA = 1 / pxPerLocal
             if !blurMatrices.isEmpty {
-                // Average the layer over the shutter: additive samples at 1/n opacity, then composite once.
-                let acc = pool.acquire(width: comp.width, height: comp.height)
-                fx.run("fxClear", cb, textures: [acc], grid: acc)
-                let w = 1 / Double(blurMatrices.count)
-                for Mk in blurMatrices {
-                    drawQuad(cb: cb, target: acc, matrix: Mk, halfSize: ext, aa: compAA, opacity: w,
-                             layer: layer, time: time, source: .image(current), premultipliedImage: true, blendOverride: .add)
+                // A true average of the layer over the shutter. Drawing the samples on top of each other at 1/n
+                // opacity left a still layer only about 63% opaque, which is why blurred layers turned see-through.
+                let acc = shutterAverage(blurMatrices.count, comp: comp, pool: pool, cb: cb) { k, target in
+                    drawQuad(cb: cb, target: target, matrix: blurMatrices[k], halfSize: ext, aa: compAA, opacity: 1,
+                             layer: layer, time: time, source: .image(current), premultipliedImage: true, blendOverride: .normal)
                 }
                 let I = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(comp.width) / 2, Double(comp.height) / 2, 1)))
                 drawQuad(cb: cb, target: comp, matrix: I, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 0.5,
@@ -942,6 +961,24 @@ final class Renderer {
             return .model(tex)
         case .adjustment, .text, .audio, .camera, .light: return nil
         }
+    }
+
+    /// Averages `count` renders: each sample is drawn alone, then added at weight 1/count.
+    func shutterAverage(_ count: Int, comp: MTLTexture, pool: TexturePool, cb: MTLCommandBuffer,
+                        draw: (Int, MTLTexture) -> Void) -> MTLTexture {
+        var acc = pool.acquire(width: comp.width, height: comp.height)
+        fx.run("fxClear", cb, textures: [acc], grid: acc)
+        let sample = pool.acquire(width: comp.width, height: comp.height)
+        var p = EffectParams()
+        p.a.x = Float(1 / Double(max(1, count)))
+        for k in 0..<count {
+            fx.run("fxClear", cb, textures: [sample], grid: sample)
+            draw(k, sample)
+            let next = pool.acquire(width: comp.width, height: comp.height)
+            fx.run("fxAccumulate", cb, textures: [acc, sample, next], params: p, grid: next)
+            acc = next
+        }
+        return acc
     }
 
     /// Draws one layer quad into `target` with the drawLayer kernel. `matrix` maps layer-local px -> target px.
