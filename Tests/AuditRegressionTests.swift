@@ -255,12 +255,14 @@ final class AuditRegressionTests: XCTestCase {
         let store = ProjectStore(root: root)
         try FileManager.default.removeItem(at: root); try Data("occupied".utf8).write(to: root)
         defer { try? FileManager.default.removeItem(at: root) }
+        // Earlier tests leave their own autosaves queued on the shared save queue; let those finish first.
+        EditorState.saveQueue.sync {}
         let state = EditorState(project: project(), store: store)
         XCTAssertThrowsError(try store.save(project(), snapshotVersion: false), "the store must refuse to write here")
         let reported = expectation(description: "Automatic save reports its write failure")
         let subscription = state.$saveError.compactMap { $0 }.first().sink { _ in reported.fulfill() }
         state.mutate("edit") { $0.name = "unsaved" }
-        await fulfillment(of: [reported], timeout: 10)
+        await fulfillment(of: [reported], timeout: 30)
         XCTAssertEqual(state.project.name, "unsaved")
         withExtendedLifetime(subscription) {}
         XCTAssertNotNil(state.saveError)

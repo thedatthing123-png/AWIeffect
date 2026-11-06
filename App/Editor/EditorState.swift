@@ -688,7 +688,7 @@ final class EditorState: ObservableObject {
 
     // MARK: Saving
 
-    private static let saveQueue = DispatchQueue(label: "awi.autosave", qos: .utility)
+    static let saveQueue = DispatchQueue(label: "awi.autosave", qos: .utility)
 
     private var saveGeneration = 0
     private func scheduleAutosave() {
