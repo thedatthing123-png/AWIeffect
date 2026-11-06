@@ -138,15 +138,17 @@ final class EditorState: ObservableObject {
         didSet { if isPlaying != oldValue { CrashReporter.note(isPlaying ? "Play" : "Pause") } }
     }
     @Published var loop = true
-    @Published var selectedLayerID: UUID? { didSet { if selectedLayerID != oldValue { keyframeFocusEffect = nil } } }
+    @Published var selectedLayerID: UUID? { didSet { if selectedLayerID != oldValue { keyframeFocusEffects = [] } } }
     @Published var panel: ToolPanel = .none {
         didSet {
             if panel != oldValue { CrashReporter.note("Opened \(panel)") }
-            if panel != .effects && panel != .graph { keyframeFocusEffect = nil }
+            if panel != .effects && panel != .graph { keyframeFocusEffects = [] }
         }
     }
-    /// The open effect: the timeline highlights only its keyframes, and only those can be dragged.
-    @Published var keyframeFocusEffect: UUID?
+    /// Open effects, in the order they were opened: the timeline shows only their keyframes, each effect in its own
+    /// color, and only those can be dragged.
+    @Published var keyframeFocusEffects: [UUID] = []
+    static let focusColors: [Color] = [Theme.ok, Color(red: 0.35, green: 0.75, blue: 1), Theme.warning, Color(red: 1, green: 0.45, blue: 0.75), Color(red: 0.75, green: 0.55, blue: 1)]
     @Published private(set) var undoStack: [(label: String, project: Project)] = []
     @Published private(set) var redoStack: [(label: String, project: Project)] = []
     @Published var redrawToken = 0

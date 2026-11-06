@@ -45,13 +45,13 @@ import XCTest
     func testFocusClearsWhenLeavingEffectsOrChangingLayer() {
         let (s, effect) = setup()
         s.panel = .effects
-        s.keyframeFocusEffect = effect
+        s.keyframeFocusEffects = [effect]
         s.panel = .graph
-        XCTAssertEqual(s.keyframeFocusEffect, effect, "the graph editor keeps the focus")
+        XCTAssertEqual(s.keyframeFocusEffects, [effect], "the graph editor keeps the focus")
         s.panel = .transform
-        XCTAssertNil(s.keyframeFocusEffect)
-        s.keyframeFocusEffect = effect
+        XCTAssertTrue(s.keyframeFocusEffects.isEmpty)
+        s.keyframeFocusEffects = [effect]
         s.selectedLayerID = nil
-        XCTAssertNil(s.keyframeFocusEffect)
+        XCTAssertTrue(s.keyframeFocusEffects.isEmpty)
     }
 }

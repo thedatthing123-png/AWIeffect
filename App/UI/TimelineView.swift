@@ -254,29 +254,23 @@ struct TimelineView: View {
                 trimHandle(layer, start: true).offset(x: x0 - 13, y: 2)
                 trimHandle(layer, start: false).offset(x: x0 + max(w, 14) - 13, y: 2)
             }
-            // With an effect open, its keys are highlighted and are the only ones that move; the rest fade back.
-            let focus = editable ? state.keyframeFocusEffect.flatMap { id in layer.effects.contains { $0.id == id } ? id : nil } : nil
-            let focusMarkers = focus.map { layer.keyframeMarkers(effect: $0) } ?? []
-            if focus != nil {
+            // Open effects: each one's keys show in its own color and only those move; the rest fade back.
+            let focused = editable ? state.keyframeFocusEffects.filter { id in layer.effects.contains { $0.id == id } } : []
+            if focused.isEmpty {
+                ForEach(layer.keyframeMarkers, id: \.id) { marker in
+                    keyMarker(layer, marker.time, offset: offset, color: editable && abs(marker.time - clock.time) < 1e-3 ? Theme.keyframe : .white, effect: nil)
+                }
+            } else {
                 ForEach(layer.keyframeMarkers, id: \.id) { marker in
                     Image(systemName: "diamond.fill").font(.system(size: 9)).foregroundStyle(.white.opacity(0.3))
                         .frame(width: 22, height: 22).position(x: offset + CGFloat(marker.time) * zoom, y: rowHeight / 2)
                         .allowsHitTesting(false)
                 }
-            }
-            ForEach(focus == nil ? layer.keyframeMarkers : focusMarkers, id: \.id) { marker in
-                let t = marker.time
-                Image(systemName: "diamond.fill")
-                    .font(.system(size: editable ? 12 : 9))
-                    .foregroundStyle(focus != nil ? Theme.ok : (editable && abs(t - clock.time) < 1e-3 ? Theme.keyframe : .white))
-                    .shadow(color: .black.opacity(0.5), radius: 1)
-                    .frame(width: 22, height: 22)
-                    .contentShape(Rectangle())
-                    .position(x: offset + CGFloat(t) * zoom, y: rowHeight / 2)
-                    // Drag keyframes (every property keyed at that time moves together, or just the open effect's); tap jumps to it.
-                    .highPriorityGesture(keyDrag(layer, t, effect: focus), including: editable ? .all : .subviews)
-                    .onTapGesture { if editable { state.seek(t) } else { state.select(layer.id) } }
-                    .accessibilityLabel(focus != nil ? "Effect keyframe at \(String(format: "%.2f", t)) seconds" : "Keyframe at \(String(format: "%.2f", t)) seconds")
+                ForEach(Array(focused.enumerated()), id: \.element) { k, effect in
+                    ForEach(layer.keyframeMarkers(effect: effect), id: \.id) { marker in
+                        keyMarker(layer, marker.time, offset: offset, color: EditorState.focusColors[k % EditorState.focusColors.count], effect: effect)
+                    }
+                }
             }
         }
         .contentShape(Rectangle())
@@ -349,6 +343,21 @@ struct TimelineView: View {
                 state.moveClip(o, by: state.snapTime(raw, tolerance: Double(8 / zoom)) - o.inPoint)
             }
             .onEnded { _ in dragOriginal = nil; state.endEdit() }
+    }
+
+    /// A keyframe diamond: drag moves every property keyed at that time (or just `effect`'s keys); tap jumps to it.
+    private func keyMarker(_ layer: Layer, _ t: Double, offset: CGFloat, color: Color, effect: UUID?) -> some View {
+        let editable = state.selectedLayerID == layer.id
+        return Image(systemName: "diamond.fill")
+            .font(.system(size: editable ? 12 : 9))
+            .foregroundStyle(color)
+            .shadow(color: .black.opacity(0.5), radius: 1)
+            .frame(width: 22, height: 22)
+            .contentShape(Rectangle())
+            .position(x: offset + CGFloat(t) * zoom, y: rowHeight / 2)
+            .highPriorityGesture(keyDrag(layer, t, effect: effect), including: editable ? .all : .subviews)
+            .onTapGesture { if editable { state.seek(t) } else { state.select(layer.id) } }
+            .accessibilityLabel(effect != nil ? "Effect keyframe at \(String(format: "%.2f", t)) seconds" : "Keyframe at \(String(format: "%.2f", t)) seconds")
     }
 
     private func keyDrag(_ layer: Layer, _ t: Double, effect: UUID? = nil) -> some Gesture {
