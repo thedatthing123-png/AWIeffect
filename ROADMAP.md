@@ -32,6 +32,13 @@ Rules for every item: read the existing system first, improve what's there befor
 14. **Performance pass.** Final optimization. Crashes are fixed whenever they appear, not only here.
 15. **SAM 2 cutout model.** After the app is done; train on saved hand-fixed frames if needed.
 
+## How effects are chosen
+
+Many AE Motion effects are a simple effect with a texture or overlay baked in (a ripple with its own light overlay, for example). Once the app's building blocks are strong, the owner can make those looks by stacking layers and effects, and the preset system can save them. So the effects expansion favors:
+
+- **Building blocks that do something new**, not one family copied with small changes.
+- **Real quality on each one**, matched to how AE and AM behave.
+- **Combined looks as presets**, not as separate effects, unless the combination needs something stacking can't do.
 ## Ideas from research
 
 What the big tools added recently, and what's worth bringing to a phone editor:
