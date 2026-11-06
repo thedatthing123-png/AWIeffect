@@ -260,6 +260,8 @@ struct TransformToolBody: View {
     }
 
     private func edit(_ label: String, _ change: (inout Layer) -> Void) {
+        // Mid-drag on a number: the drag already owns the undo step and the live copy.
+        if state.isLiveGesture { state.mutateLayer(change); return }
         state.beginEdit(label); state.mutateLayer(change); state.endEdit()
     }
 
@@ -270,6 +272,8 @@ struct TransformToolBody: View {
                 NumberField(value: items[i].1, label: items[i].0,
                             active: tool == .position ? (positionAxisZ == (items[i].0 == "Z")) : nil,
                             onActivate: tool == .position ? { positionAxisZ = items[i].0 == "Z" } : nil,
+                            onDragBegin: { state.beginPanelGesture("Edit \(items[i].0)") },
+                            onDragEnd: { state.endPanelGesture() },
                             onCommit: items[i].2)
                     .accessibilityIdentifier(tool == .position ? "position-field-\(items[i].0)" : "transform-field-\(items[i].0)")
             }

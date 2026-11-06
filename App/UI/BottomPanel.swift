@@ -254,10 +254,16 @@ struct NumberField: View {
     var precision: Int = 1
     var active: Bool? = nil
     var onActivate: (() -> Void)? = nil
+    /// Called when a drag starts / ends (one undo step and live edits for the whole drag).
+    var onDragBegin: (() -> Void)? = nil
+    var onDragEnd: (() -> Void)? = nil
     let onCommit: (Double) -> Void
     @State private var editing = false
     @State private var text = ""
     @State private var dragBase: Double?
+    /// The dragged value, shown right away so the number always follows the finger.
+    @State private var dragValue: Double?
+    @GestureState private var touching = false
 
     var body: some View {
         HStack(spacing: 4) {
@@ -280,13 +286,17 @@ struct NumberField: View {
                     .accessibilityIdentifier("number-\(label)")
                     .onTapGesture { text = formattedValue; editing = true }
                     .gesture(DragGesture(minimumDistance: 3)
+                        .updating($touching) { _, s, _ in s = true }
                         .onChanged { g in
-                            if dragBase == nil { onActivate?(); dragBase = value }
+                            if dragBase == nil { onActivate?(); dragBase = value; onDragBegin?() }
                             let increment = max(abs(step), 1e-9)
                             let raw = (dragBase ?? value) + Double(g.translation.width) * increment
-                            onCommit((raw / increment).rounded() * increment)
+                            let v = (raw / increment).rounded() * increment
+                            dragValue = v
+                            onCommit(v)
                         }
-                        .onEnded { _ in dragBase = nil })
+                        .onEnded { _ in finishDrag() })
+                    .onChange(of: touching) { _, down in if !down { finishDrag() } }
             }
         }
         .padding(.horizontal, 8).frame(minWidth: 0).frame(height: 34)
@@ -295,7 +305,13 @@ struct NumberField: View {
         .contentShape(Rectangle())
         .simultaneousGesture(TapGesture().onEnded { onActivate?() })
     }
-    private var formattedValue: String { String(format: "%.*f", max(0, min(6, precision)), value) }
+    private var formattedValue: String { String(format: "%.*f", max(0, min(6, precision)), dragValue ?? value) }
+
+    private func finishDrag() {
+        guard dragBase != nil else { return }
+        dragBase = nil; dragValue = nil
+        onDragEnd?()
+    }
 }
 
 // MARK: - Fill

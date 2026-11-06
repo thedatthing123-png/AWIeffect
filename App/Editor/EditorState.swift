@@ -141,7 +141,7 @@ final class EditorState: ObservableObject {
     @Published var selectedLayerID: UUID? { didSet { if selectedLayerID != oldValue { keyframeFocusEffects = [] } } }
     @Published var panel: ToolPanel = .none {
         didSet {
-            if panel != oldValue { CrashReporter.note("Opened \(panel)") }
+            if panel != oldValue { CrashReporter.note("Opened \(panel)"); endScrub() }
             if panel != .effects && panel != .graph { keyframeFocusEffects = [] }
         }
     }
@@ -298,6 +298,7 @@ final class EditorState: ObservableObject {
         guard scrubbing else { return }
         scrubbing = false
         endLiveGesture()
+        endEdit()
     }
 
     /// Canvas drags: edits go to the lightweight live copy until `endLiveGesture`.
@@ -439,6 +440,7 @@ final class EditorState: ObservableObject {
     // MARK: Effects
 
     func addEffect(_ def: EffectDefinition) {
+        endScrub()
         guard let i = selectedIndex else { return }
         mutate("Add \(def.name)") { $0.layers[i].effects.append(def.makeInstance()) }
         panel = .effects

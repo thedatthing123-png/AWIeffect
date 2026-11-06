@@ -35,6 +35,9 @@ struct ValueScrubber: View {
     @State private var text = ""
     @FocusState private var focused: Bool
     @Environment(\.scrubSession) private var session
+    /// True only while a finger is down. iOS cancels a drag without calling onEnded when a scroll view takes the
+    /// touch over; this resets anyway, so the drag is always finished (otherwise edits stayed in the live copy).
+    @GestureState private var touching = false
     /// Value shown: the dragged one while the finger is down (the project only updates when it lifts).
     private var shown: Double { dragBase.map(quantize) ?? value }
 
@@ -87,6 +90,7 @@ struct ValueScrubber: View {
                 focused = true
             }
             .gesture(DragGesture(minimumDistance: 2)
+                .updating($touching) { _, s, _ in s = true }
                 .onChanged { g in
                     if dragBase == nil {
                         dragBase = value; lastX = g.translation.width
@@ -103,7 +107,9 @@ struct ValueScrubber: View {
                     dragBase = min(max(next, range.lowerBound), range.upperBound)
                     onChange(quantize(dragBase ?? value))
                 }
-                .onEnded { _ in dragBase = nil; onEnd(); session.end() }, including: editing ? .none : .all)
+                .onEnded { _ in finishDrag() }, including: editing ? .none : .all)
+            .onChange(of: touching) { _, down in if !down { finishDrag() } }
+            .onDisappear { finishDrag() }
         }
         .frame(height: 32)
         .accessibilityElement()
@@ -112,6 +118,11 @@ struct ValueScrubber: View {
             let d = (step > 0 ? step : span / 100) * (dir == .increment ? 1 : -1)
             onBegin(); onChange(quantize(value + d)); onEnd()
         }
+    }
+
+    private func finishDrag() {
+        guard dragBase != nil else { return }
+        dragBase = nil; onEnd(); session.end()
     }
 
     private func commitText() {
