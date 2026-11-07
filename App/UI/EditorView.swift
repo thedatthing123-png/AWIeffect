@@ -807,38 +807,60 @@ struct TransportBar: View {
     @Binding var viewPan: CGSize
 
     var body: some View {
+        // Seven primary controls; everything else lives in the More menu.
         HStack(spacing: 0) {
-            button("arrow.uturn.backward", enabled: state.canUndo) { state.undo() }
-            button("arrow.uturn.forward", enabled: state.canRedo) { state.redo() }
-            ViewMenuButton(state: state, viewZoom: $viewZoom, zoomBase: $zoomBase, viewPan: $viewPan)
-            Spacer()
-            button("backward.end.fill") { state.pause(); state.seek(0) }
-            button("chevron.left") { state.stepFrame(-1) }
+            button("arrow.uturn.backward", label: "Undo", enabled: state.canUndo) { state.undo() }
+            button("arrow.uturn.forward", label: "Redo", enabled: state.canRedo) { state.redo() }
+            Spacer(minLength: 0)
+            button("chevron.left", label: "Previous Frame") { state.stepFrame(-1) }
             Button { state.togglePlay() } label: {
                 Image(systemName: state.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 20, weight: .bold))
-                    .frame(width: 38, height: 40)
+                    .frame(width: 48, height: 44)
             }
             .accessibilityLabel(state.isPlaying ? "Pause" : "Play")
-            button("chevron.right") { state.stepFrame(1) }
-            button("forward.end.fill") { state.pause(); state.seek(state.project.duration) }
-            Spacer()
-            button("diamond.fill", enabled: state.selectedLayer != nil, tint: state.selectedLayer != nil ? Theme.keyframe : nil) { state.keyAllTransform() }
-                .accessibilityLabel("Key All")
-            button(state.loop ? "repeat" : "repeat.1", tint: state.loop ? Theme.accentGlow : Theme.textDim) { state.loop.toggle() }
-            button("checklist", tint: state.isMultiSelecting ? Theme.accentGlow : nil) {
-                if state.isMultiSelecting { state.endMultiSelect() }
-                else if let id = state.selectedLayerID ?? state.project.layers.first?.id { state.beginMultiSelect(id) }
-            }
-            .accessibilityLabel(state.isMultiSelecting ? "Done Selecting" : "Select Multiple")
+            button("chevron.right", label: "Next Frame") { state.stepFrame(1) }
+            Spacer(minLength: 0)
+            button("diamond.fill", label: "Key All", enabled: state.selectedLayer != nil, tint: state.selectedLayer != nil ? Theme.keyframe : nil) { state.keyAllTransform() }
             Menu {
-                Button("Copy Layer") { state.copyLayer() }.disabled(state.selectedLayer == nil || clipboard.busy)
-                Button("Paste Layer") { state.pasteLayer() }.disabled(clipboard.payload == nil || clipboard.busy)
-                Button("Paste Style…") { showStylePaste = true }.disabled(state.selectedLayer == nil || clipboard.payload == nil || clipboard.busy)
-                Button("Replace Content from Copy") { state.pasteLayer(contentOnly: true) }.disabled(state.selectedLayer == nil || clipboard.payload == nil || clipboard.busy)
-            } label: { Image(systemName: "doc.on.clipboard").frame(width: 27, height: 38) }
-            .accessibilityLabel("Layer Clipboard")
-            button("clock.arrow.circlepath") { showHistory = true }
+                Section("Playback") {
+                    Button { state.pause(); state.seek(0) } label: { Label("Go to Start", systemImage: "backward.end.fill") }
+                    Button { state.pause(); state.seek(state.project.duration) } label: { Label("Go to End", systemImage: "forward.end.fill") }
+                    Toggle(isOn: $state.loop) { Label("Loop", systemImage: "repeat") }
+                }
+                Section("View") {
+                    Picker(selection: $state.cameraView) {
+                        Text("Camera View").tag(true)
+                        Text("Free View").tag(false)
+                    } label: { Label("View", systemImage: "video") }
+                    Toggle(isOn: $state.showGrid) { Label("Grid", systemImage: "grid") }
+                    Button { setZoom(viewZoom * 1.25) } label: { Label("Zoom In", systemImage: "plus.magnifyingglass") }
+                    Button { setZoom(viewZoom / 1.25) } label: { Label("Zoom Out", systemImage: "minus.magnifyingglass") }
+                    Button { setZoom(1); viewPan = .zero } label: { Label("Fit (\(Int((viewZoom * 100).rounded()))%)", systemImage: "arrow.up.left.and.down.right.magnifyingglass") }
+                }
+                Section("Timeline") {
+                    Button {
+                        if state.isMultiSelecting { state.endMultiSelect() }
+                        else if let id = state.selectedLayerID ?? state.project.layers.first?.id { state.beginMultiSelect(id) }
+                    } label: { Label(state.isMultiSelecting ? "Done Selecting" : "Select Multiple", systemImage: "checklist") }
+                    Button(role: .destructive) { state.rippleDeleteSelected() } label: { Label("Ripple Delete", systemImage: "delete.backward") }
+                        .disabled(state.selectedLayer == nil || state.selectedLayer?.isLocked == true)
+                    Button { state.closeGapAtPlayhead() } label: { Label("Close Gap at Playhead", systemImage: "arrow.right.and.line.vertical.and.arrow.left") }
+                        .disabled(state.gapAtPlayhead() == nil)
+                }
+                Section("Layer Clipboard") {
+                    Button("Copy Layer") { state.copyLayer() }.disabled(state.selectedLayer == nil || clipboard.busy)
+                    Button("Paste Layer") { state.pasteLayer() }.disabled(clipboard.payload == nil || clipboard.busy)
+                    Button("Paste Style…") { showStylePaste = true }.disabled(state.selectedLayer == nil || clipboard.payload == nil || clipboard.busy)
+                    Button("Replace Content from Copy") { state.pasteLayer(contentOnly: true) }.disabled(state.selectedLayer == nil || clipboard.payload == nil || clipboard.busy)
+                }
+                Button { showHistory = true } label: { Label("History…", systemImage: "clock.arrow.circlepath") }
+            } label: {
+                Image(systemName: "ellipsis.circle").font(.system(size: 17, weight: .semibold))
+                    .frame(width: 44, height: 44)
+                    .foregroundStyle(state.isMultiSelecting ? Theme.accentGlow : Theme.text)
+            }
+            .accessibilityLabel("More")
         }
         .foregroundStyle(Theme.text)
         .padding(.horizontal, 4)
@@ -847,13 +869,16 @@ struct TransportBar: View {
         .awiSheet(isPresented: $showStylePaste) { PasteLayerStyleSheet(state: state).presentationDetents([.medium, .large]) }
     }
 
-    private func button(_ icon: String, enabled: Bool = true, tint: Color? = nil, _ action: @escaping () -> Void) -> some View {
+    private func setZoom(_ z: CGFloat) { withAnimation(.easeOut(duration: 0.18)) { viewZoom = min(8, max(0.25, z)); zoomBase = viewZoom } }
+
+    private func button(_ icon: String, label: String, enabled: Bool = true, tint: Color? = nil, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: icon).font(.system(size: 15, weight: .semibold))
-                .frame(width: 27, height: 38)
+            Image(systemName: icon).font(.system(size: 16, weight: .semibold))
+                .frame(width: 44, height: 44)
                 .foregroundStyle(tint ?? (enabled ? Theme.text : Theme.textDim.opacity(0.4)))
         }
         .disabled(!enabled)
+        .accessibilityLabel(label)
     }
 }
 
@@ -871,10 +896,15 @@ struct HistorySheet: View {
                             dismiss()
                         } label: {
                             HStack {
-                                Text(entry.label).foregroundStyle(Theme.text)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(entry.label).foregroundStyle(Theme.text)
+                                    Text(state.historyDate(at: i), format: .dateTime.hour().minute().second())
+                                        .font(.caption.monospacedDigit()).foregroundStyle(Theme.textDim)
+                                }
                                 Spacer()
                                 Text("Undo to here").font(.caption).foregroundStyle(Theme.textDim)
                             }
+                            .frame(minHeight: 44)
                         }
                     }
                 } header: { Text("History") }
