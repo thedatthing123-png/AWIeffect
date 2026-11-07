@@ -64,7 +64,10 @@ final class TimelineEditTests: XCTestCase {
 
     func testCopyPasteKeys() {
         let s = state()
-        s.mutateLayer { $0.transform.position = Animated(Vec2(10, 20)) }
+        s.mutateLayer { l in
+            var a = Animated(Vec2(10, 20)); a.insertKeyframe(Keyframe(time: 0, value: Vec2(10, 20)))
+            l.transform.position = a
+        }
         s.copyKeyframes()
         s.select(s.project.layers[1].id)
         s.seek(4)

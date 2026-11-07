@@ -199,6 +199,8 @@ final class EffectTests: XCTestCase {
                                    "ae.fractalNoise/cycles", "ae.lumaKey/tolerance", "ae.lumaKey/edgeClean",
                                    // Same: cycle length only applies with Cycle Evolution on.
                                    "ae.turbulentDisplace/cycleLen", "ae.turbulentDisplace/pinSoft",
+                                   // Curve point positions only matter once the curve is bent (flat by default).
+                                   "awi18.grade/m25x", "awi18.grade/m50x", "awi18.grade/m75x", "awi18.grade/r25x", "awi18.grade/r50x", "awi18.grade/r75x", "awi18.grade/g25x", "awi18.grade/g50x", "awi18.grade/g75x", "awi18.grade/b25x", "awi18.grade/b50x", "awi18.grade/b75x",
                                    // Hue softness and spill only act on colors at the edge of the keyed hue range (the test shapes are flat colors).
                                    "awi11.colorRangeKey/softness", "awi11.colorRangeKey/spill"]
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
