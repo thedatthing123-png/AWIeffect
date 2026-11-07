@@ -110,7 +110,7 @@ extension AILink {
         switch type {
         case "text":
             e.addText(); e.endTyping()
-            if let s = a["text"] as? String { e.editText("AI Text") { $0.string = s } }
+            if let s = a["text"] as? String { e.editText("AI Text") { $0.setString(s) } }
         case "shape": e.addShape(ShapeKind(rawValue: (a["shape"] as? String) ?? "rectangle") ?? .rectangle)
         case "solid": e.addSolid()
         case "adjustment": e.addAdjustmentLayer()
@@ -171,7 +171,7 @@ extension AILink {
                 case "visible": if let b = v as? Bool { l.isVisible = b }
                 case "motionBlur": if let b = v as? Bool { l.motionBlur = b }
                 case "clip", "clipToBelow": if let b = v as? Bool { l.clipToBelow = b }
-                case "text": if let s = v as? String { l.text?.string = s }
+                case "text": if let s = v as? String { l.text?.setString(s) }
                 case "font":
                     // A font family from the library (e.g. "Unbounded") downloads first if needed; else a PostScript name.
                     if let s = v as? String {

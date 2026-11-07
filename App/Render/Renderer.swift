@@ -29,6 +29,8 @@ final class Renderer {
     let fx: EffectGPU
     private let clearPSO: MTLComputePipelineState
     let drawPSO: MTLComputePipelineState
+    /// Text Studio glyph pass (fills / gradients / strokes / shadows / glow, color emoji).
+    let glyphPSO: MTLComputePipelineState
     private let lightPSO: MTLComputePipelineState
     private let toBGRAPSO: MTLComputePipelineState
     let displayPSO: MTLRenderPipelineState
@@ -44,7 +46,9 @@ final class Renderer {
     static let compFormat: MTLPixelFormat = .rgba16Float
     /// Nested comps available while encoding (root project's library), the pool and nesting depth in use.
     private var precompLibrary: [Project] = []
-    private var currentPool: TexturePool?
+    private(set) var currentPool: TexturePool?
+    /// Beat / marker times of the project being encoded (text beat selectors).
+    var textBeats: [Double] = []
     private var currentDepth = 0
     /// 3D layers casting shadows this frame (only filled when a light casts shadows).
     private var shadowCasters: [(id: UUID, gpu: ShadowCasterGPU, tex: MTLTexture)] = []
@@ -329,6 +333,7 @@ final class Renderer {
         }
         clearPSO = try compute("clearComp")
         drawPSO = try compute("drawLayer")
+        glyphPSO = try compute("drawGlyphTxt1")
         lightPSO = try compute("applyLights")
         toBGRAPSO = try compute("compToBGRA")
         fx = try EffectGPU(device: device, library: lib)
@@ -482,10 +487,10 @@ final class Renderer {
         // Preview, preset thumbnails, and export share this renderer. Protect per-frame state and
         // restore it after recursive group/precomp renders as well as after top-level renders.
         encodeLock.lock()
-        let savedLibrary = precompLibrary, savedPool = currentPool, savedDepth = currentDepth
+        let savedLibrary = precompLibrary, savedPool = currentPool, savedDepth = currentDepth, savedBeats = textBeats
         let savedCasters = shadowCasters, savedParts = groupParts, savedCameras = groupCameras
         defer {
-            precompLibrary = savedLibrary; currentPool = savedPool; currentDepth = savedDepth
+            precompLibrary = savedLibrary; currentPool = savedPool; currentDepth = savedDepth; textBeats = savedBeats
             shadowCasters = savedCasters; groupParts = savedParts; groupCameras = savedCameras
             encodeLock.unlock()
         }
@@ -507,6 +512,7 @@ final class Renderer {
         }
         precompLibrary = project.precomps.isEmpty ? precompLibrary : project.precomps
         currentPool = pool
+        textBeats = project.markers + (project.detectedBeatTimes ?? [])
         currentDepth = project.precompDepth ?? 0
         var bg = project.background.simd
         if let enc = cb.makeComputeCommandEncoder() {
@@ -659,6 +665,13 @@ final class Renderer {
             if abs(M.determinant) < 1e-12 || !(0..<3).allSatisfy({ column in (0..<3).allSatisfy { M[column][$0].isFinite } }) { continue }
             let hs = Self.layerHalfSize(layer, time: time)
             guard hs.x.isFinite, hs.y.isFinite else { continue }
+            // Text: the buffer and motion-blur checks cover the animated letters (+ stroke / glow / shadow / letter
+            // effect room), so nothing clips. `hs` stays the layout size (effects measure the layer by it).
+            var reach = hs
+            if case .text = layer.content, let rb = Self.textRenderBounds(layer, time: time, beats: textBeats) {
+                let rx = max(abs(Double(rb.minX)), abs(Double(rb.maxX))), ry = max(abs(Double(rb.minY)), abs(Double(rb.maxY)))
+                if rx.isFinite, ry.isFinite { reach = Vec2(max(hs.x, rx), max(hs.y, ry)) }
+            }
             // A 3D layer behind (or touching) the camera isn't drawn, like AE: projecting it would explode its bounds.
             if layer.is3D {
                 let near = 1.0
@@ -689,7 +702,7 @@ final class Renderer {
                 // Detect the path through the shutter, not just its endpoints: a full spin or
                 // out-and-back move can have identical start/end placements and still need blur.
                 let probes = (0...4).map { samplePlacement(layer, at: time + open + Double($0) / 4 * shutter) }
-                let travel = [(-hs.x, -hs.y), (hs.x, hs.y), (hs.x, -hs.y), (-hs.x, hs.y)].map { c in
+                let travel = [(-reach.x, -reach.y), (reach.x, reach.y), (reach.x, -reach.y), (-reach.x, reach.y)].map { c in
                     (1..<probes.count).reduce(0.0) { distance, k in
                         distance + simd_length(corner(probes[k], c.0, c.1) - corner(probes[k - 1], c.0, c.1))
                     }
@@ -746,7 +759,7 @@ final class Renderer {
             let marginLimit = hasExpandedOutput ? 20000 : compReach * 0.5
             let margin = rawMargin.isFinite ? min(max(0, rawMargin), 20000, marginLimit) : 0
             guard hs.x.isFinite, hs.y.isFinite, pxPerLocal.isFinite else { continue }
-            let ext = Vec2(min(max(hs.x, 0.5), 1e6) + margin, min(max(hs.y, 0.5), 1e6) + margin)
+            let ext = Vec2(min(max(reach.x, 0.5), 1e6) + margin, min(max(reach.y, 0.5), 1e6) + margin)
             var density = min(1.5, max(0.05, pxPerLocal))
             let maxSide = max(ext.x, ext.y) * 2 * density
             if maxSide > Double(Self.maxLayerTexture) { density *= Double(Self.maxLayerTexture) / maxSide }
@@ -889,7 +902,7 @@ final class Renderer {
         }
     }
 
-    private enum Source { case shape, solid, image(MTLTexture), model(MTLTexture) }
+    enum Source { case shape, solid, image(MTLTexture), model(MTLTexture) }
 
 
     private func drawShapePath(cb: MTLCommandBuffer, target: MTLTexture, matrix: simd_double3x3, layer: Layer, path: BezierPath,
@@ -1000,7 +1013,7 @@ final class Renderer {
     }
 
     /// Draws one layer quad into `target` with the drawLayer kernel. `matrix` maps layer-local px -> target px.
-    private func drawQuad(cb: MTLCommandBuffer, target: MTLTexture, matrix M: simd_double3x3, halfSize hs: Vec2, aa: Double,
+    func drawQuad(cb: MTLCommandBuffer, target: MTLTexture, matrix M: simd_double3x3, halfSize hs: Vec2, aa: Double,
                           opacity: Double, layer: Layer, time: Double, source: Source, premultipliedImage: Bool,
                           blendOverride: BlendMode? = nil) {
         let inv = M.inverse

@@ -1,3 +1,40 @@
+// DEVELOPER NOTE — Text Studio engine API (Part 1). Everything new is Optional so old projects decode unchanged.
+//
+// Model
+// - TextData.style: TextStyleStack? — fills [TextFillLayer] (solid / linear / radial, colors + angle + opacity Animated,
+//   space .glyph/.text), strokes [TextStrokeLayer] (color/width/opacity Animated, position outside/center/inside, join;
+//   strokes[0] sits directly under the fill, later ones stack behind), shadows [TextShadowLayer] (.drop/.inner, color,
+//   opacity, angle, distance, blur Animated), glow TextGlowLayer? (color, radius, intensity). When `style.fills` is empty
+//   the legacy `fill` / color spans draw the letters. TextStyleStack.margin(at:) = draw reach beyond the outlines.
+// - Stable character ids: TextData.charIDs ([UInt32] parallel to Array(string)) + nextCharID. ALWAYS change the string
+//   through `edit(replacing: Range<Int>, with: String)` or `setString(_:)` so untouched letters keep their ids.
+//   `resolvedCharIDs`, `ensureCharIDs()`, `migrateToCharIDs()` (runs automatically when a project loads).
+//   Color spans carry `ids`; TextSelector.targetIDs selects exact letters (the Letters section's "✦ " letter styles and
+//   "◆ " split parts are migrated to ids on load and on every edit).
+// - Per-character overrides: TextData.charStyles [UInt32: TextCharStyle] (fontName, sizePercent, fill, strokeColor,
+//   strokeWidth, baselineShift). Use `setCharStyle(range) { $0.fill = … }` and `charStyle(at:)`.
+// - Paragraph: boxWidth (wrap width px), autoFit (shrink to fit boxWidth instead of wrapping), vertical (columns
+//   top→bottom, right→left; CJK upright, Latin rotated), baselineShift (Animated, px up).
+// - TextAnimator: `selector` is the first selector, `selectors` are ADDITIONAL ones stacked below it; use
+//   `allSelectors` (get/set) or `setSelector(k) { … }` for the whole list. Each selector has `mode: SelectorMode?`
+//   (add/subtract/intersect/min/max/difference, nil = add) combining it with the result above. Kinds: range, wiggly,
+//   wave, random (per-unit random in min...max, seed), beat (pulses on project markers; beatAttack / beatDecay s).
+//   Animated replacements: easeHighAnim, easeLowAnim, minAmountAnim, maxAmountAnim, seedAnim (read with
+//   easeHighValue(at:), easeLowValue(at:), minAmountValue(at:), maxAmountValue(at:), seedValue(at:)).
+//   `letterEffects: [EffectInstance]?` — pixel effects applied only to the letters the selectors pick (amount = mix).
+//   `group: String?` — tag for preset-made animators (remove a preset by group).
+// - TextAnimatorProperties new: anchor (Vec2 px), fillOpacity (%), strokeWidth (px added), strokeColor, baselineShift
+//   (px up), glow (amount %), hueShift (deg), directionalBlur (px) + directionalBlurAngle (deg), scramble (% of letters
+//   shown as random characters; they settle as it falls to 0), lineSpacing (px added per line), motionBlur (reserved).
+// Engine
+// - TextEngine.shared.layout(_ t: TextData, time: Double) -> TextLayout (LaidGlyph has charID, baseRotation).
+// - TextEngine.glyphStates(_ t: TextData, layout: TextLayout, time: Double, beats: [Double] = []) -> [Renderer.GlyphState]
+// - TextEngine.animatedBounds(_ t: TextData, layout: TextLayout, time: Double, beats: [Double] = [], track: PathTrack? = nil) -> CGRect —
+//   bounds of the animated letters incl. style / blur / letter-effect margins (no clipping).
+// - Renderer.textBounds(layer, time:) = unanimated layout bounds (handles, UI);
+//   Renderer.textRenderBounds(layer, time:, beats:) = animated bounds used for buffers and motion blur.
+// - SelectorMath.combinedAmount(_ a: TextAnimator, units: (TextSelector) -> (index: Int, count: Int), charID: UInt32,
+//   time: Double, beats: [Double]) -> Double
 import Foundation
 
 enum TextAlignment: String, Codable, CaseIterable { case left, center, right }
@@ -9,6 +46,8 @@ struct TextColorSpan: Codable, Equatable, Identifiable {
     var start: Int
     var end: Int
     var color: RGBA
+    /// Stable character ids this span colors (preferred over start/end once present).
+    var ids: [UInt32]? = nil
 }
 
 struct TextData: Codable, Equatable {
@@ -30,6 +69,26 @@ struct TextData: Codable, Equatable {
     var outline: Double? = nil
     /// Where spacing grows from: 0 = left, 1 = center, 2 = right (nil = same as the alignment).
     var spacingAnchor: Int? = nil
+    /// Style stack (multiple fills, strokes, shadows, glow). nil = legacy single fill.
+    var style: TextStyleStack? = nil
+    /// Stable ids parallel to the string's Characters (see DEVELOPER NOTE).
+    var charIDs: [UInt32]? = nil
+    var nextCharID: UInt32? = nil
+    /// Per-character overrides keyed by character id.
+    var charStyles: [UInt32: TextCharStyle]? = nil
+    /// Paragraph box width in px (wrap). nil = no box.
+    var boxWidth: Double? = nil
+    /// Shrink the text to fit `boxWidth` instead of wrapping.
+    var autoFit: Bool? = nil
+    /// Vertical text: columns top→bottom, right→left.
+    var vertical: Bool? = nil
+    /// Whole-text baseline shift, px (+ = up).
+    var baselineShift: Animated<Double>? = nil
+
+    enum CodingKeys: String, CodingKey {
+        case string, fontName, fontSize, fill, tracking, lineSpacing, alignment, colorSpans, animators, onPath, pathOffset
+        case counter, outline, spacingAnchor, style, charIDs, nextCharID, charStyles, boxWidth, autoFit, vertical, baselineShift
+    }
 
     /// The text as drawn at `time` (the counter's value when counting).
     func resolved(at time: Double) -> TextData {
@@ -40,8 +99,49 @@ struct TextData: Codable, Equatable {
     }
 
     func baseColor(forCharacter i: Int, time: Double) -> RGBA {
-        if let span = colorSpans.last(where: { i >= $0.start && i < $0.end }) { return span.color }
-        return fill.value(at: time)
+        baseColorOverride(forCharacter: i, ids: resolvedCharIDs) ?? fill.value(at: time)
+    }
+
+    /// The per-character color (char style fill, then color span), nil = the text fill.
+    func baseColorOverride(forCharacter i: Int, ids: [UInt32]) -> RGBA? {
+        let id: UInt32? = i >= 0 && i < ids.count ? ids[i] : nil
+        if let id, let f = charStyles?[id]?.fill { return f }
+        if let span = colorSpans.last(where: { sp in
+            if let sIDs = sp.ids, let id { return sIDs.contains(id) }
+            return i >= sp.start && i < sp.end
+        }) { return span.color }
+        return nil
+    }
+}
+
+extension TextData {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        string = try c.decode(String.self, forKey: .string)
+        fontName = try c.decodeIfPresent(String.self, forKey: .fontName) ?? "Helvetica-Bold"
+        fontSize = try c.decodeIfPresent(Double.self, forKey: .fontSize) ?? 120
+        fill = try c.decodeIfPresent(Animated<RGBA>.self, forKey: .fill) ?? Animated(RGBA.white)
+        tracking = try c.decodeIfPresent(Animated<Double>.self, forKey: .tracking) ?? Animated(0.0)
+        lineSpacing = try c.decodeIfPresent(Animated<Double>.self, forKey: .lineSpacing) ?? Animated(1.15)
+        alignment = try c.decodeIfPresent(TextAlignment.self, forKey: .alignment) ?? .center
+        colorSpans = try c.decodeIfPresent([TextColorSpan].self, forKey: .colorSpans) ?? []
+        animators = try c.decodeIfPresent([TextAnimator].self, forKey: .animators) ?? []
+        onPath = try c.decodeIfPresent(Bool.self, forKey: .onPath)
+        pathOffset = try c.decodeIfPresent(Animated<Double>.self, forKey: .pathOffset)
+        counter = try c.decodeIfPresent(TextCounter.self, forKey: .counter)
+        outline = try c.decodeIfPresent(Double.self, forKey: .outline)
+        spacingAnchor = try c.decodeIfPresent(Int.self, forKey: .spacingAnchor)
+        style = try c.decodeIfPresent(TextStyleStack.self, forKey: .style)
+        charIDs = try c.decodeIfPresent([UInt32].self, forKey: .charIDs)
+        nextCharID = try c.decodeIfPresent(UInt32.self, forKey: .nextCharID)
+        charStyles = try c.decodeIfPresent([UInt32: TextCharStyle].self, forKey: .charStyles)
+        boxWidth = try c.decodeIfPresent(Double.self, forKey: .boxWidth)
+        autoFit = try c.decodeIfPresent(Bool.self, forKey: .autoFit)
+        vertical = try c.decodeIfPresent(Bool.self, forKey: .vertical)
+        baselineShift = try c.decodeIfPresent(Animated<Double>.self, forKey: .baselineShift)
+        // Older saves: give letters ids and move index / percent targets onto them. Counter text changes every
+        // frame, so it keeps index targeting.
+        if counter == nil { migrateToCharIDs() }
     }
 }
 
@@ -84,6 +184,10 @@ enum SelectorKind: String, Codable, CaseIterable {
     case wiggly
     /// Sine wave travelling across units (common "wave" text, AE does it with an Expression Selector).
     case wave
+    /// Per-unit random amount between min and max (seeded, steady over time).
+    case random
+    /// Amount pulses on the project's beat markers (attack / decay).
+    case beat
 }
 
 struct TextSelector: Codable, Equatable {
@@ -104,6 +208,28 @@ struct TextSelector: Codable, Equatable {
     var spread = Animated(3.0)         // wave: units per cycle; wiggly: correlation (unused = 0)
     var minAmount = -100.0
     var maxAmount = 100.0
+    /// How this selector combines with the selectors above it (nil = add).
+    var mode: SelectorMode? = nil
+    /// Exact letters by stable character id (overrides start/end/offset/basedOn when set).
+    var targetIDs: [UInt32]? = nil
+    /// Animated replacements for the fixed values above (nil = use the fixed value).
+    var easeHighAnim: Animated<Double>? = nil
+    var easeLowAnim: Animated<Double>? = nil
+    var minAmountAnim: Animated<Double>? = nil
+    var maxAmountAnim: Animated<Double>? = nil
+    var seedAnim: Animated<Double>? = nil
+    /// Beat selector: seconds to rise before a beat / to fall after it.
+    var beatAttack: Animated<Double>? = nil
+    var beatDecay: Animated<Double>? = nil
+
+    func easeHighValue(at t: Double) -> Double { easeHighAnim?.value(at: t) ?? easeHigh }
+    func easeLowValue(at t: Double) -> Double { easeLowAnim?.value(at: t) ?? easeLow }
+    func minAmountValue(at t: Double) -> Double { minAmountAnim?.value(at: t) ?? minAmount }
+    func maxAmountValue(at t: Double) -> Double { maxAmountAnim?.value(at: t) ?? maxAmount }
+    func seedValue(at t: Double) -> Int {
+        guard let v = seedAnim?.value(at: t), v.isFinite else { return seed }
+        return Int(max(-1e9, min(1e9, v)).rounded(.down))
+    }
 }
 
 /// Properties an animator offsets. nil = not used (like AE's "Add Property" list).
@@ -125,6 +251,28 @@ struct TextAnimatorProperties: Codable, Equatable {
     var positionZ: Animated<Double>? = nil
     /// Outline only: letters become hollow outlines this thick (px). 0 = solid.
     var outline: Animated<Double>? = nil
+    /// Pivot offset (px) for scale / rotation / 3D of each letter.
+    var anchor: Animated<Vec2>? = nil
+    /// Fill-only opacity target, percent (strokes / shadows stay).
+    var fillOpacity: Animated<Double>? = nil
+    /// px added to every stroke layer's width.
+    var strokeWidth: Animated<Double>? = nil
+    var strokeColor: Animated<RGBA>? = nil
+    /// px, + = up.
+    var baselineShift: Animated<Double>? = nil
+    /// Per-letter glow amount, percent.
+    var glow: Animated<Double>? = nil
+    /// Degrees.
+    var hueShift: Animated<Double>? = nil
+    /// Directional blur length px and its angle (degrees, 0 = horizontal).
+    var directionalBlur: Animated<Double>? = nil
+    var directionalBlurAngle: Animated<Double>? = nil
+    /// Percent of letters replaced by random characters (they settle as this goes to 0).
+    var scramble: Animated<Double>? = nil
+    /// px added between lines.
+    var lineSpacing: Animated<Double>? = nil
+    /// Reserved: per-letter motion blur.
+    var motionBlur: Bool? = nil
 }
 
 struct TextAnimator: Codable, Equatable, Identifiable {
@@ -133,24 +281,53 @@ struct TextAnimator: Codable, Equatable, Identifiable {
     var isEnabled = true
     var selector = TextSelector()
     var properties = TextAnimatorProperties()
+    /// Additional selectors stacked under `selector` (each combines by its `mode`).
+    var selectors: [TextSelector]? = nil
+    /// Pixel effects applied only to the letters this animator selects (selection amount = mix).
+    var letterEffects: [EffectInstance]? = nil
+    /// Preset group tag (presets add animators with a group so they can be removed together).
+    var group: String? = nil
+
+    /// Every selector, first = `selector`.
+    var allSelectors: [TextSelector] {
+        get { [selector] + (selectors ?? []) }
+        set {
+            if let f = newValue.first { selector = f }
+            let rest = Array(newValue.dropFirst())
+            selectors = rest.isEmpty ? nil : rest
+        }
+    }
+
+    mutating func setSelector(_ k: Int, _ change: (inout TextSelector) -> Void) {
+        var all = allSelectors
+        guard k >= 0, k < all.count else { return }
+        change(&all[k])
+        allSelectors = all
+    }
 }
 
 // MARK: - Selector math
 
 enum SelectorMath {
     /// Selection amount (−1...1, usually 0...1) for unit `index` of `count` at `time`.
-    static func amount(_ s: TextSelector, index: Int, count: Int, time: Double) -> Double {
+    static func amount(_ s: TextSelector, index: Int, count: Int, time: Double, beats: [Double] = []) -> Double {
         guard count > 0 else { return 0 }
         let amt = s.amount.value(at: time) / 100
         switch s.kind {
         case .range:
-            let order = s.randomize ? randomOrder(count: count, seed: s.seed)[index] : index
+            let order = s.randomize ? randomOrder(count: count, seed: s.seedValue(at: time))[min(max(0, index), count - 1)] : index
             return rangeCoverage(s, unit: order, count: count, time: time) * amt
         case .wiggly:
             let f = s.frequency.value(at: time)
-            let n = Wiggle.value(t: time, freq: max(0.01, f), octaves: 1, seed: Double(index) * 7.13 + Double(s.seed))
-            let lo = s.minAmount / 100, hi = s.maxAmount / 100
+            let n = Wiggle.value(t: time, freq: max(0.01, f), octaves: 1, seed: Double(index) * 7.13 + Double(s.seedValue(at: time)))
+            let lo = s.minAmountValue(at: time) / 100, hi = s.maxAmountValue(at: time) / 100
             return (lo + (n * 0.5 + 0.5) * (hi - lo)) * amt
+        case .random:
+            let lo = s.minAmountValue(at: time) / 100, hi = s.maxAmountValue(at: time) / 100
+            return (lo + hash01(index, s.seedValue(at: time)) * (hi - lo)) * amt
+        case .beat:
+            return beatEnvelope(time, beats: beats, attack: s.beatAttack?.value(at: time) ?? 0.03,
+                                decay: s.beatDecay?.value(at: time) ?? 0.25) * amt
         case .wave:
             let f = s.frequency.value(at: time)
             let spread = max(0.1, s.spread.value(at: time))
@@ -182,7 +359,7 @@ enum SelectorMath {
             case .round: v = (t <= 0 || t >= 1) ? 0 : (1 - pow(2 * t - 1, 2)).squareRoot()
             default: v = (t <= 0 || t >= 1) ? 0 : 0.5 - 0.5 * cos(2 * .pi * t)
             }
-            return ease(v, high: s.easeHigh / 100, low: s.easeLow / 100)
+            return ease(v, high: s.easeHighValue(at: time) / 100, low: s.easeLowValue(at: time) / 100)
         }
     }
 
@@ -193,6 +370,46 @@ enum SelectorMath {
         let p2 = EaseHandle(x: 1 - max(0, high) / 3, y: 1)
         return BezierTiming.progress(x: v, p1: low >= 0 ? p1 : EaseHandle(x: 1.0 / 3, y: 1.0 / 3 - low / 3),
                                      p2: high >= 0 ? p2 : EaseHandle(x: 2.0 / 3, y: 2.0 / 3 + high / 3))
+    }
+
+    /// Stable 0...1 hash of a unit and seed.
+    static func hash01(_ i: Int, _ seed: Int) -> Double {
+        var x = UInt64(bitPattern: Int64((i &* 73856093) ^ (seed &* 19349663))) &+ 0x9E3779B97F4A7C15
+        x = (x ^ (x >> 30)) &* 0xBF58476D1CE4E5B9
+        x = (x ^ (x >> 27)) &* 0x94D049BB133111EB
+        x = x ^ (x >> 31)
+        return Double(x >> 11) / 9007199254740992.0
+    }
+
+    /// 0...1 pulse: rises over `attack` s up to each beat, decays exponentially over `decay` s after it.
+    static func beatEnvelope(_ t: Double, beats: [Double], attack: Double, decay: Double) -> Double {
+        let a = max(0.001, attack), d = max(0.001, decay)
+        var best = 0.0
+        for b in beats {
+            let dt = t - b
+            if dt < -a || dt > d * 4 { continue }
+            let v = dt < 0 ? 1 + dt / a : exp(-dt / d * 3)
+            best = max(best, v)
+        }
+        return best
+    }
+
+    /// The combined selection of every selector on an animator for one letter.
+    /// `units` returns the (index, count) of the letter in the selector's Based On units.
+    static func combinedAmount(_ a: TextAnimator, units: (TextSelector) -> (index: Int, count: Int), charID: UInt32,
+                               time: Double, beats: [Double] = []) -> Double {
+        var v = 0.0
+        for (k, s) in a.allSelectors.enumerated() {
+            let x: Double
+            if let ids = s.targetIDs {
+                x = ids.contains(charID) ? s.amount.value(at: time) / 100 : 0
+            } else {
+                let u = units(s)
+                x = amount(s, index: u.index, count: u.count, time: time, beats: beats)
+            }
+            v = k == 0 ? x : (s.mode ?? .add).combine(v, x)
+        }
+        return v.isFinite ? v : 0
     }
 
     static func randomOrder(count: Int, seed: Int) -> [Int] {

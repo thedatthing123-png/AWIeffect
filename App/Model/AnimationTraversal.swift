@@ -123,26 +123,17 @@ extension Layer {
             visit.apply(&text!.lineSpacing)
             visit.apply(&text!.pathOffset)
             if text!.counter != nil { visit.apply(&text!.counter!.value) }
+            visit.apply(&text!.baselineShift)
+            if text!.style != nil { text!.style!.traverse(&visit) }
             for i in text!.animators.indices {
-                visit.apply(&text!.animators[i].selector.start)
-                visit.apply(&text!.animators[i].selector.end)
-                visit.apply(&text!.animators[i].selector.offset)
-                visit.apply(&text!.animators[i].selector.amount)
-                visit.apply(&text!.animators[i].selector.frequency)
-                visit.apply(&text!.animators[i].selector.spread)
-                visit.apply(&text!.animators[i].properties.position)
-                visit.apply(&text!.animators[i].properties.scale)
-                visit.apply(&text!.animators[i].properties.rotation)
-                visit.apply(&text!.animators[i].properties.opacity)
-                visit.apply(&text!.animators[i].properties.fill)
-                visit.apply(&text!.animators[i].properties.tracking)
-                visit.apply(&text!.animators[i].properties.skew)
-                visit.apply(&text!.animators[i].properties.blur)
-                visit.apply(&text!.animators[i].properties.characterOffset)
-                visit.apply(&text!.animators[i].properties.rotationX)
-                visit.apply(&text!.animators[i].properties.rotationY)
-                visit.apply(&text!.animators[i].properties.positionZ)
-                visit.apply(&text!.animators[i].properties.outline)
+                var sels = text!.animators[i].allSelectors
+                for k in sels.indices { sels[k].traverse(&visit) }
+                text!.animators[i].allSelectors = sels
+                text!.animators[i].properties.traverse(&visit)
+                if var fx = text!.animators[i].letterEffects {
+                    for k in fx.indices { fx[k].traverseParams(&visit) }
+                    text!.animators[i].letterEffects = fx
+                }
             }
         }
         if shapeOps != nil {
@@ -164,6 +155,99 @@ extension Layer {
             if shapeOps!.zigzag != nil {
                 visit.apply(&shapeOps!.zigzag!.size)
                 visit.apply(&shapeOps!.zigzag!.ridges)
+            }
+        }
+    }
+}
+
+
+// MARK: - Text Studio fields (every Animated value, so keyframe tools see them)
+
+extension TextSelector {
+    mutating func traverse(_ visit: inout AnimationTraversal) {
+        visit.apply(&start)
+        visit.apply(&end)
+        visit.apply(&offset)
+        visit.apply(&amount)
+        visit.apply(&frequency)
+        visit.apply(&spread)
+        visit.apply(&easeHighAnim)
+        visit.apply(&easeLowAnim)
+        visit.apply(&minAmountAnim)
+        visit.apply(&maxAmountAnim)
+        visit.apply(&seedAnim)
+        visit.apply(&beatAttack)
+        visit.apply(&beatDecay)
+    }
+}
+
+extension TextAnimatorProperties {
+    mutating func traverse(_ visit: inout AnimationTraversal) {
+        visit.apply(&position)
+        visit.apply(&scale)
+        visit.apply(&rotation)
+        visit.apply(&opacity)
+        visit.apply(&fill)
+        visit.apply(&tracking)
+        visit.apply(&skew)
+        visit.apply(&blur)
+        visit.apply(&characterOffset)
+        visit.apply(&rotationX)
+        visit.apply(&rotationY)
+        visit.apply(&positionZ)
+        visit.apply(&outline)
+        visit.apply(&anchor)
+        visit.apply(&fillOpacity)
+        visit.apply(&strokeWidth)
+        visit.apply(&strokeColor)
+        visit.apply(&baselineShift)
+        visit.apply(&glow)
+        visit.apply(&hueShift)
+        visit.apply(&directionalBlur)
+        visit.apply(&directionalBlurAngle)
+        visit.apply(&scramble)
+        visit.apply(&lineSpacing)
+    }
+}
+
+extension TextStyleStack {
+    mutating func traverse(_ visit: inout AnimationTraversal) {
+        for i in fills.indices {
+            for k in fills[i].colors.indices { visit.apply(&fills[i].colors[k]) }
+            visit.apply(&fills[i].angle)
+            visit.apply(&fills[i].opacity)
+            visit.apply(&fills[i].radialScale)
+        }
+        for i in strokes.indices {
+            visit.apply(&strokes[i].color)
+            visit.apply(&strokes[i].width)
+            visit.apply(&strokes[i].opacity)
+        }
+        for i in shadows.indices {
+            visit.apply(&shadows[i].color)
+            visit.apply(&shadows[i].opacity)
+            visit.apply(&shadows[i].angle)
+            visit.apply(&shadows[i].distance)
+            visit.apply(&shadows[i].blur)
+        }
+        if glow != nil {
+            visit.apply(&glow!.color)
+            visit.apply(&glow!.radius)
+            visit.apply(&glow!.intensity)
+        }
+    }
+}
+
+extension EffectInstance {
+    /// Visits this effect's animated parameters (letter effects inside text animators).
+    mutating func traverseParams(_ visit: inout AnimationTraversal) {
+        for key in params.keys.sorted() {
+            guard let value = params[key] else { continue }
+            switch value {
+            case .number(var a): visit.apply(&a); params[key] = .number(a)
+            case .point(var a): visit.apply(&a); params[key] = .point(a)
+            case .color(var a): visit.apply(&a); params[key] = .color(a)
+            default: break
             }
         }
     }

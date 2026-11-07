@@ -18,12 +18,8 @@ extension EditorState {
     func setTextLive(_ s: String) {
         guard let i = selectedIndex, project.layers[i].text != nil else { return }
         mutate("Type Text") { p in
-            p.layers[i].text?.string = s
-            let n = s.count
-            if var t = p.layers[i].text {
-                t.colorSpans = t.colorSpans.filter { $0.start < n }.map { var c = $0; c.end = min(c.end, n); return c }
-                p.layers[i].text = t
-            }
+            // Keeps the ids of untouched letters, so colors / letter styles / split parts stay on their letters.
+            p.layers[i].text?.setString(s)
         }
     }
 

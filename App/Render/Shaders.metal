@@ -254,3 +254,87 @@ fragment half4 displayFragment(VOut in [[stage_in]],
     float3 rgb = c.rgb + float3(check) * (1.0 - c.a);
     return half4(half3(clamp(rgb, 0.0, 1.0)), 1.0h);
 }
+
+// ---------- Text Studio glyph pass (Part 1) ----------
+// Must match GlyphParamsTxt1 in TextEngine.swift (16-byte members only).
+struct GlyphParamsTxt1 {
+    float4 invRow0;   // target px -> glyph quad local px (homography rows)
+    float4 invRow1;
+    float4 invRow2;
+    float4 geom;      // quad halfSize.xy, opacity, aa (local px per target px)
+    float4 gradA;     // kind (0 solid, 1 linear, 2 radial), dir.x, dir.y, color count
+    float4 gradB;     // quad center relative to the gradient box center (xy), box half size (zw)
+    float4 stops;     // stop positions 0...1
+    float4 c0;        // straight colors
+    float4 c1;
+    float4 c2;
+    float4 c3;
+    float4 tint;      // rgb + mix toward it (per-letter color override)
+    float4 extra;     // x: rgba glyph texture (color emoji), y: radial scale, zw: unused
+    uint4  modes;     // x: blend mode
+    uint4  region;    // origin.x, origin.y, width, height
+};
+
+static float4 gradientColorTxt1(constant GlyphParamsTxt1& p, float t) {
+    int n = clamp(int(p.gradA.w), 1, 4);
+    float4 cs[4] = { p.c0, p.c1, p.c2, p.c3 };
+    float st[4] = { p.stops.x, p.stops.y, p.stops.z, p.stops.w };
+    if (n == 1 || t <= st[0]) return cs[0];
+    for (int i = 1; i < n; i++) {
+        if (t <= st[i]) {
+            float f = (t - st[i - 1]) / max(st[i] - st[i - 1], 1e-5);
+            return mix(cs[i - 1], cs[i], clamp(f, 0.0, 1.0));
+        }
+    }
+    return cs[n - 1];
+}
+
+kernel void drawGlyphTxt1(texture2d<half, access::read_write> comp [[texture(0)]],
+                          texture2d<half, access::sample> image [[texture(1)]],
+                          constant GlyphParamsTxt1& p [[buffer(0)]],
+                          uint2 tid [[thread_position_in_grid]]) {
+    if (tid.x >= p.region.z || tid.y >= p.region.w) return;
+    uint2 gid = tid + p.region.xy;
+    if (gid.x >= comp.get_width() || gid.y >= comp.get_height()) return;
+    float3 hc = float3(float2(gid) + 0.5, 1.0);
+    float w = dot(p.invRow2.xyz, hc);
+    if (w <= 1e-6) return;
+    float2 q = float2(dot(p.invRow0.xyz, hc), dot(p.invRow1.xyz, hc)) / w;
+    float2 hs = p.geom.xy;
+    float aa = max(p.geom.w, 1e-4);
+    float d = sdRoundBox(q, hs, 0.0);
+    float coverage = clamp(0.5 - d / aa, 0.0, 1.0);
+    if (coverage <= 0.0) return;
+    constexpr sampler gs(address::clamp_to_zero, filter::linear);
+    float2 uv = q / (2.0 * hs) + 0.5;
+    float4 tex = float4(image.sample(gs, uv));
+    float4 color;
+    if (p.extra.x > 0.5) {
+        // Color glyph (premultiplied RGBA raster).
+        coverage *= tex.a;
+        color = float4(tex.a > 1e-5 ? tex.rgb / tex.a : float3(0.0), 1.0);
+    } else {
+        coverage *= tex.r;
+        uint kind = uint(p.gradA.x);
+        if (kind == 0u) {
+            color = p.c0;
+        } else {
+            float2 pos = q + p.gradB.xy;
+            float2 half_ = max(p.gradB.zw, float2(1e-3));
+            float t;
+            if (kind == 1u) {
+                float2 dir = p.gradA.yz;
+                float ext = abs(dir.x) * half_.x + abs(dir.y) * half_.y;
+                t = dot(pos, dir) / max(2.0 * ext, 1e-3) + 0.5;
+            } else {
+                t = length(pos / half_) / (1.41421356 * max(p.extra.y, 1e-3));
+            }
+            color = gradientColorTxt1(p, clamp(t, 0.0, 1.0));
+        }
+        color.rgb = mix(color.rgb, p.tint.rgb, clamp(p.tint.w, 0.0, 1.0));
+    }
+    if (coverage <= 0.0) return;
+    float a = clamp(color.a * coverage * p.geom.z, 0.0, 1.0);
+    if (a <= 0.0) return;
+    comp.write(composite(comp.read(gid), float4(color.rgb * a, a), p.modes.x), gid);
+}
