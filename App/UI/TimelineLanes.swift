@@ -66,6 +66,14 @@ extension Layer {
         add("c.timeRemap", "Time Remap", "Time", .scalar(get: { $0.timeRemap }, set: { $0.timeRemap = $1 })) { l, v in v.apply(&l.timeRemap) }
         add("c.path", "Path", "Shape") { l, v in v.apply(&l.path) }
 
+        for item in shapeContents ?? [] where item.component != nil {
+            let id = item.id
+            add("shape.\(id)", item.name, "Shape Paths") { l, v in
+                guard let i = l.shapeContents?.firstIndex(where: { $0.id == id }) else { return }
+                l.shapeContents?[i].component?.traverse(&v)
+            }
+        }
+        add("c.stroke", "Stroke & Trim", "Shape") { l, v in l.stroke.traverse(&v) }
         for mask in masks {
             let mid = mask.id
             add("mask.\(mid)", mask.name.isEmpty ? "Mask" : mask.name, "Masks") { l, v in

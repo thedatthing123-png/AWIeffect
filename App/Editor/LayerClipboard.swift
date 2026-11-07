@@ -169,6 +169,7 @@ extension EditorState {
                         // Content uses the preset's logical bounds. Position, scale keys, masks and effects stay intact.
                         p.layers[i].content = source.content; p.layers[i].drawingID = source.drawingID
                         p.layers[i].model3D = source.model3D; p.layers[i].path = source.path
+                        p.layers[i].shapeContents = source.shapeContents
                         if source.content == .text { p.layers[i].text = source.text }
                         p.precomps += imported.comps
                     }

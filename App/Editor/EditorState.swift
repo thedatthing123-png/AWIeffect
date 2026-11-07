@@ -155,7 +155,8 @@ final class EditorState: ObservableObject {
         didSet { if isPlaying != oldValue { CrashReporter.note(isPlaying ? "Play" : "Pause") } }
     }
     @Published var loop = true
-    @Published var selectedLayerID: UUID? { didSet { if selectedLayerID != oldValue { keyframeFocusEffects = []; maskSelection = nil } } }
+    @Published var selectedShapeContentID: UUID? = nil
+    @Published var selectedLayerID: UUID? { didSet { if selectedLayerID != oldValue { keyframeFocusEffects = []; maskSelection = nil; selectedShapeContentID = nil } } }
     /// Mask point being edited on the canvas (Masks panel). R2.
     @Published var maskSelection: MaskSelection?
     @Published var panel: ToolPanel = .none {

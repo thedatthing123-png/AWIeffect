@@ -50,6 +50,14 @@ struct RootView: View {
 
     init() {
         #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-shapeContents") {
+            var p = Project.new(name: "Shape Contents Test", width: 256, height: 256, fps: 30, duration: 3)
+            var l = p.makeLayer(name: "Logo", content: .shape(.ellipse), size: Vec2(160,160))
+            var a = ShapeComponent(); a.kind = .ellipse; a.fillGradient = ShapeGradient()
+            var b = ShapeComponent(); b.kind = .rectangle; b.size = Animated(Vec2(80,80)); b.position = Animated(Vec2(40,0))
+            l.shapeContents = [ShapeContent(name: "Ring", component: a), ShapeContent(name: "Accent", component: b)]
+            p.layers = [l]; _openProject = State(initialValue: p)
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-manyLayers") {
             var project = Project.new(name: "Timeline Scroll Test", width: 128, height: 128, fps: 30, duration: 8, background: .black)
             for n in 1...40 {

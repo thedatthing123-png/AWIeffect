@@ -13,6 +13,11 @@ struct PathParams {
     var info = SIMD4<UInt32>(repeating: 0)
     var info2 = SIMD4<UInt32>(repeating: 0)
     var region = SIMD4<UInt32>(repeating: 0)
+    var fillEnd = SIMD4<Float>(repeating: 0)
+    var strokeEnd = SIMD4<Float>(repeating: 0)
+    var fillLine = SIMD4<Float>(repeating: 0)
+    var strokeLine = SIMD4<Float>(repeating: 0)
+    var gradients = SIMD4<UInt32>(repeating: 0)
 }
 
 /// GPU path rasterizer: shape-layer fills/strokes and AE-style masks.
@@ -60,18 +65,35 @@ final class PathGPU {
     func drawPath(cb: MTLCommandBuffer, target: MTLTexture, matrix M: simd_double3x3, path: BezierPath,
                   fill: RGBA?, stroke: (color: RGBA, width: Double, trim: (Double, Double, Double))?,
                   opacity: Double, blend: BlendMode, aa: Double, drawingEffects: [EffectInstance] = [], time: Double = 0) {
-        var fillSegs = EffectRegistry.drawingSegments(path.segments(), effects: drawingEffects, time: time)
+        drawCompound(cb: cb, target: target, matrix: M, paths: [path], fill: fill, stroke: stroke,
+                     opacity: opacity, blend: blend, aa: aa, drawingEffects: drawingEffects, time: time)
+    }
+
+    func drawCompound(cb: MTLCommandBuffer, target: MTLTexture, matrix M: simd_double3x3, paths: [BezierPath],
+                      fill: RGBA?, stroke: (color: RGBA, width: Double, trim: (Double, Double, Double))?,
+                      opacity: Double, blend: BlendMode, aa: Double, drawingEffects: [EffectInstance] = [], time: Double = 0,
+                      trimMode: ShapeTrimMode = .simultaneous, fillGradient: ShapeGradient? = nil, strokeGradient: ShapeGradient? = nil) {
+        let perPath = paths.map { EffectRegistry.drawingSegments($0.segments(), effects: drawingEffects, time: time) }
+        var fillSegs: [SIMD4<Float>] = []
+        for (i, segments) in perPath.enumerated() {
+            fillSegs += segments
+            if paths[i].closed, let first = segments.first, let last = segments.last, first.x != last.z || first.y != last.w {
+                fillSegs.append(SIMD4(last.z, last.w, first.x, first.y))
+            }
+        }
         var strokeSegs: [SIMD4<Float>] = []
-        if let s = stroke { strokeSegs = Self.trimmed(fillSegs, start: s.trim.0, end: s.trim.1, offset: s.trim.2, closed: path.closed) }
-        // Filled paths close across the visible endpoints; strokes do not gain a closing chord.
-        if path.closed, let first = fillSegs.first, let last = fillSegs.last,
-           first.x != last.z || first.y != last.w {
-            fillSegs.append(SIMD4(last.z, last.w, first.x, first.y))
+        if let st = stroke {
+            if trimMode == .simultaneous {
+                strokeSegs = perPath.flatMap { Self.trimmed($0, start: st.trim.0, end: st.trim.1, offset: st.trim.2, closed: true) }
+            } else {
+                strokeSegs = Self.trimmed(perPath.flatMap { $0 }, start: st.trim.0, end: st.trim.1, offset: st.trim.2, closed: true)
+            }
         }
         let all = (fill != nil ? fillSegs : []) + strokeSegs
-        guard !all.isEmpty else { return }
-        // Bounds in target px.
-        let b = path.bounds
+        guard !all.isEmpty, abs(M.determinant) > 1e-12 else { return }
+        let bounds = paths.map(\.bounds)
+        let b = (min: Vec2(bounds.map { $0.min.x }.min() ?? 0, bounds.map { $0.min.y }.min() ?? 0),
+                 max: Vec2(bounds.map { $0.max.x }.max() ?? 0, bounds.map { $0.max.y }.max() ?? 0))
         let pad = (stroke?.width ?? 0) / 2 + 2 * aa
         var lo = SIMD2<Double>(.infinity, .infinity), hi = SIMD2<Double>(-.infinity, -.infinity)
         for x in [b.min.x - pad, b.max.x + pad] { for y in [b.min.y - pad, b.max.y + pad] {
@@ -85,6 +107,16 @@ final class PathGPU {
         (p.invRow0, p.invRow1) = Self.inverseRows(M)
         p.fill = fill?.simd ?? SIMD4(0, 0, 0, 0)
         p.stroke = stroke?.color.simd ?? SIMD4(0, 0, 0, 0)
+        if let g = fillGradient {
+            p.fill = g.first.value(at: time).simd; p.fillEnd = g.last.value(at: time).simd
+            let a = g.start.value(at: time), b = g.end.value(at: time)
+            p.fillLine = SIMD4(Float(a.x), Float(a.y), Float(b.x), Float(b.y)); p.gradients.x = g.radial ? 2 : 1
+        }
+        if let g = strokeGradient, stroke != nil {
+            p.stroke = g.first.value(at: time).simd; p.strokeEnd = g.last.value(at: time).simd
+            let a = g.start.value(at: time), b = g.end.value(at: time)
+            p.strokeLine = SIMD4(Float(a.x), Float(a.y), Float(b.x), Float(b.y)); p.gradients.y = g.radial ? 2 : 1
+        }
         p.geom = SIMD4(Float(stroke?.width ?? 0), Float(opacity), Float(aa), 0)
         let fillCount = fill != nil ? fillSegs.count : 0
         p.info = SIMD4(UInt32(fillCount), UInt32(fillCount), UInt32(strokeSegs.count), blend.shaderIndex)

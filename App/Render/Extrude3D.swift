@@ -105,6 +105,13 @@ enum Extrude3D {
 
     /// Extruded SceneKit geometry for an options set (shape outline or image silhouette), or nil for text/models.
     static func geometry(_ o: Model3DOptions, mediaURL: (String) -> URL) -> (geometry: SCNGeometry, front: SCNMaterial?)? {
+        if let contours = o.shapeContours {
+            let u = UIBezierPath()
+            for p in contours { u.append(uiPath(p)) }
+            let s = SCNShape(path: u, extrusionDepth: CGFloat(o.extrusion))
+            s.chamferRadius = CGFloat(min(o.chamfer, o.extrusion / 2))
+            return (s, nil)
+        }
         if let p = o.shapePath {
             let s = SCNShape(path: uiPath(p), extrusionDepth: CGFloat(o.extrusion))
             s.chamferRadius = CGFloat(min(o.chamfer, o.extrusion / 2))
@@ -143,8 +150,19 @@ extension EditorState {
         o.metalness = 0.15; o.roughness = 0.45
         switch l.content {
         case .shape:
-            guard let p = Extrude3D.outline(l, time: t) else { return }
-            o.shapePath = p
+            if let items = l.shapeContents {
+                let paths = ShapeContentsRenderer.evaluate(items, time: t).flatMap { draw in
+                    draw.paths.map { path in
+                        let p = path.mapped(draw.matrix)
+                        return l.shapeOps.map { ShapeOpsMath.apply($0, to: p, time: t) } ?? p
+                    }
+                }
+                let copies = l.shapeOps?.repeater.map { ShapeOpsMath.copies($0, time: t) } ?? [(matrix_identity_double3x3, 1.0)]
+                o.shapeContours = copies.flatMap { m, opacity in opacity > 0 ? paths.map { $0.mapped(m) } : [] }
+            } else {
+                guard let p = Extrude3D.outline(l, time: t) else { return }
+                o.shapePath = p
+            }
             o.color = Animated(l.fill.value(at: t))
             o.extrusion = max(10, min(l.size.value(at: t).x, l.size.value(at: t).y) * 0.25)
             o.chamfer = o.extrusion * 0.12

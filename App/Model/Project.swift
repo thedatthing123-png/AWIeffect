@@ -277,6 +277,8 @@ struct Layer: Codable, Equatable, Identifiable {
     /// Bezier path for `.shape(.path)` layers (layer-local px, origin at center).
     var path: Animated<BezierPath>? = nil
     var stroke = ShapeStroke()
+    /// Ordered paths and merge operators. Nil retains the exact legacy single-shape renderer.
+    var shapeContents: [ShapeContent]? = nil
     /// Draw Studio document behind this image layer (live link for re-editing).
     var drawingID: UUID? = nil
     /// Media timing: playback speed (1 = normal, 0.5 = slow-mo), trim offset into the source (s), optional AE-style
@@ -373,6 +375,7 @@ struct Layer: Codable, Equatable, Identifiable {
         effects = try c.decodeIfPresent([EffectInstance].self, forKey: .effects) ?? []
         text = try c.decodeIfPresent(TextData.self, forKey: .text)
         masks = try c.decodeIfPresent([LayerMask].self, forKey: .masks) ?? []
+        shapeContents = try c.decodeIfPresent([ShapeContent].self, forKey: .shapeContents)
         path = try c.decodeIfPresent(Animated<BezierPath>.self, forKey: .path)
         stroke = try c.decodeIfPresent(ShapeStroke.self, forKey: .stroke) ?? ShapeStroke()
         drawingID = try c.decodeIfPresent(UUID.self, forKey: .drawingID)

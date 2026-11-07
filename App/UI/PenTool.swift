@@ -4,6 +4,7 @@ import simd
 /// What a pen session creates.
 enum PenTarget: Equatable {
     case newShape
+    case shapePath(UUID, UUID)
     case mask(UUID)
 }
 
@@ -114,6 +115,7 @@ struct PenOverlay: View {
     @State private var broken = false
     @State private var dragHandle: MaskHandleSide?
 
+    private var isMask: Bool { if case .mask = target { return true }; return false }
     private var scale: Double { Double(fit.width) / Double(state.project.width) }
     private func comp(_ p: CGPoint) -> Vec2 { Vec2(Double(p.x - fit.minX) / scale, Double(p.y - fit.minY) / scale) }
     private func view(_ v: Vec2) -> CGPoint { CGPoint(x: fit.minX + v.x * scale, y: fit.minY + v.y * scale) }
@@ -171,6 +173,13 @@ struct PenOverlay: View {
             if style == .points {
                 VStack { Spacer(); controls }
             }
+        }.onAppear { loadShapePath() }
+    }
+
+    private func loadShapePath() {
+        if case .shapePath(let layer, let content) = target,
+           let p = state.shapePenPath(layer: layer, content: content) {
+            vertices = p.vertices; closed = p.closed
         }
     }
 
@@ -369,15 +378,16 @@ struct PenOverlay: View {
         if style == .freehand {
             guard freehand.count >= 3 else { done(); return }
             let first = freehand.first!, last = freehand.last!
-            let autoClose = target != .newShape || hypot(first.x - last.x, first.y - last.y) < 30 / scale
+            let autoClose = isMask || hypot(first.x - last.x, first.y - last.y) < 30 / scale
             path = BezierPath.smoothed(freehand, closed: autoClose, tolerance: 4 / scale)
         } else {
             guard vertices.count >= 2 else { done(); return }
             // Masks are always closed; shapes close only when you chose Close.
-            path = BezierPath(vertices: vertices, closed: target != .newShape ? true : closed)
+            path = BezierPath(vertices: vertices, closed: isMask ? true : closed)
         }
         switch target {
         case .newShape: state.addPathLayer(path)
+        case .shapePath(let layer, let content): state.commitShapePen(path, layer: layer, content: content)
         case .mask(let id): state.addMask(path, to: id)
         }
         done()
@@ -491,16 +501,22 @@ struct MasksPanel: View {
 /// Stroke + Trim Paths controls for shape layers.
 struct StrokeSection: View {
     @ObservedObject var state: EditorState
+    var contentID: UUID? = nil
+    private var layer: Layer? {
+        guard var l = state.selectedLayer else { return nil }
+        if let id = contentID, let c = l.editableShapeContents.first(where: { $0.id == id })?.component { l.stroke = c.stroke }
+        return l
+    }
 
     var body: some View {
-        if let l = state.selectedLayer, case .shape(let k) = l.content, k == .path || k == .rectangle || k == .ellipse {
+        if let l = layer, case .shape = l.content {
             let t = state.currentTime
             VStack(spacing: 6) {
                 Toggle("Stroke", isOn: Binding(get: { l.stroke.enabled }, set: { b in edit("Stroke") { $0.stroke.enabled = b } }))
                     .tint(Theme.accent).foregroundStyle(Theme.text)
                 if l.stroke.enabled {
                     AWIColorWell("Stroke Color", selection: Binding(get: { Color(l.stroke.color.value(at: t)) }, set: { c in
-                        state.coalescedEdit("Stroke Color") { $0.stroke.color.set(c.rgba, at: t) }
+                        state.beginEdit("Stroke Color"); state.editShapeStyle(contentID) { $0.stroke.color.set(c.rgba, at: t) }; state.endEdit()
                     })).foregroundStyle(Theme.text)
                     row("Width", l.stroke.width, \.stroke.width, 0...200, t)
                     Text("Trim Paths").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textDim)
@@ -514,7 +530,7 @@ struct StrokeSection: View {
     }
 
     private func edit(_ label: String, _ change: (inout Layer) -> Void) {
-        state.beginEdit(label); state.mutateLayer(change); state.endEdit()
+        state.beginEdit(label); state.editShapeStyle(contentID, change); state.endEdit()
     }
 
     /// Diamond + label + scrubber: every stroke / trim value keys at the playhead.
@@ -527,7 +543,7 @@ struct StrokeSection: View {
             Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 60, alignment: .leading)
             ValueScrubber(value: a.value(at: t), range: r, step: 1,
                           onBegin: { state.beginEdit("Edit Stroke") },
-                          onChange: { v in state.mutateLayer { $0[keyPath: key].set(v, at: t) } },
+                          onChange: { v in state.editShapeStyle(contentID) { $0[keyPath: key].set(v, at: t) } },
                           onEnd: { state.endEdit() })
         }
     }
@@ -537,10 +553,11 @@ struct StrokeSection: View {
 /// runs (move it up / down), every value has its keyframe diamond. Repeater always runs last (it copies the result).
 struct ShapeOpsSection: View {
     @ObservedObject var state: EditorState
+    var contentID: UUID? = nil
 
     var body: some View {
         if let l = state.selectedLayer, case .shape = l.content {
-            let ops = l.shapeOps ?? ShapeOps()
+            let ops = (contentID.flatMap { id in l.editableShapeContents.first(where: { $0.id == id })?.component?.ops } ?? (contentID == nil ? l.shapeOps : nil)) ?? ShapeOps()
             let t = state.currentTime
             let active = ops.activeOrder
             VStack(alignment: .leading, spacing: 8) {
@@ -648,9 +665,14 @@ struct ShapeOpsSection: View {
 
     private func apply(_ change: (inout ShapeOps) -> Void) {
         state.mutateLayer { l in
-            var o = l.shapeOps ?? ShapeOps()
-            change(&o)
-            l.shapeOps = o.isEmpty ? nil : o
+            if let id = contentID {
+                var items = l.editableShapeContents
+                guard let i = items.firstIndex(where: { $0.id == id }), var c = items[i].component else { return }
+                var o = c.ops ?? ShapeOps(); change(&o); c.ops = o.isEmpty ? nil : o
+                items[i].component = c; l.shapeContents = items
+            } else {
+                var o = l.shapeOps ?? ShapeOps(); change(&o); l.shapeOps = o.isEmpty ? nil : o
+            }
         }
     }
 

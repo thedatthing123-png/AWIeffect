@@ -13,6 +13,8 @@ struct PathParams {
     uint4  info;      // segCount, strokeSegStart, strokeSegCount, mode/blend
     uint4  info2;     // inverted, region.x, region.y, _
     uint4  region;    // x0, y0, w, h
+    float4 fillEnd, strokeEnd, fillLine, strokeLine;
+    uint4 gradients;
 };
 
 // Signed distance (negative inside) to the path using even-odd/nonzero winding.
@@ -105,6 +107,13 @@ static float3 blendPath(float3 Cb, float3 Cs, uint mode) {
     }
 }
 
+static float4 pathGradient(float4 first, float4 last, float4 line, uint mode, float2 q) {
+    if (mode == 0) return first;
+    float2 d = line.zw - line.xy;
+    float f = mode == 2 ? length(q - line.xy) / max(length(d), 1e-5) : dot(q - line.xy, d) / max(dot(d, d), 1e-5);
+    return mix(first, last, clamp(f, 0.0, 1.0));
+}
+
 kernel void drawPath(texture2d<half, access::read_write> target [[texture(0)]],
                      device const float4* segs [[buffer(1)]],
                      constant PathParams& p [[buffer(0)]],
@@ -117,17 +126,19 @@ kernel void drawPath(texture2d<half, access::read_write> target [[texture(0)]],
     float aa = max(p.geom.z, 1e-4);
     int wind;
     float d = pathDistance(q, segs, p.info.x, wind);
-    float fillCov = (p.fill.a > 0.0) ? clamp((wind != 0 ? 0.5 + d / aa : 0.5 - d / aa), 0.0, 1.0) : 0.0;
+    float4 fill = pathGradient(p.fill, p.fillEnd, p.fillLine, p.gradients.x, q);
+    float4 stroke = pathGradient(p.stroke, p.strokeEnd, p.strokeLine, p.gradients.y, q);
+    float fillCov = (fill.a > 0.0) ? clamp((wind != 0 ? 0.5 + d / aa : 0.5 - d / aa), 0.0, 1.0) : 0.0;
     float strokeCov = 0.0;
-    if (p.stroke.a > 0.0 && p.geom.x > 0.0 && p.info.z > 0) {
+    if (stroke.a > 0.0 && p.geom.x > 0.0 && p.info.z > 0) {
         float sd = strokeDistance(q, segs, p.info.y, p.info.z);
         strokeCov = clamp(0.5 - (sd - p.geom.x * 0.5) / aa, 0.0, 1.0);
     }
     // Stroke over fill.
-    float fa = p.fill.a * fillCov, sa = p.stroke.a * strokeCov;
+    float fa = fill.a * fillCov, sa = stroke.a * strokeCov;
     float a = sa + fa * (1.0 - sa);
     if (a <= 0.0) return;
-    float3 rgb = (p.stroke.rgb * sa + p.fill.rgb * fa * (1.0 - sa)) / a;
+    float3 rgb = (stroke.rgb * sa + fill.rgb * fa * (1.0 - sa)) / a;
     a *= p.geom.y;
     float4 src = float4(rgb * a, a);
     float4 dst = float4(target.read(gid));

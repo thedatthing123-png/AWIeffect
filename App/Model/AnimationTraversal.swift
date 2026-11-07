@@ -76,6 +76,10 @@ extension Layer {
         visit.apply(&extrude)
         visit.apply(&timeRemap)
         visit.apply(&path)
+        stroke.traverse(&visit)
+        if shapeContents != nil {
+            for i in shapeContents!.indices { shapeContents![i].component?.traverse(&visit) }
+        }
         for i in masks.indices {
             visit.apply(&masks[i].path)
             visit.apply(&masks[i].feather)

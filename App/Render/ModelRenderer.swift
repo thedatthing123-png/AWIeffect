@@ -10,6 +10,7 @@ struct Model3DOptions: Codable, Equatable {
     var fileName: String? = nil
     /// Extruded 2D shape outline (layer-local px, y down) — "Make 3D Object" on shape layers.
     var shapePath: BezierPath? = nil
+    var shapeContours: [BezierPath]? = nil
     /// Image / drawing whose alpha silhouette is extruded, with the picture on the front face.
     var imageFile: String? = nil
     var text: String = "AWI"
@@ -94,13 +95,14 @@ final class ModelRenderer {
     private func content(_ o: Model3DOptions, mediaURL: (String) -> URL) -> CachedContent? {
         let key: String
         if let f = o.fileName { key = "file|\(mediaURL(f).path)" }
+        else if let paths = o.shapeContours { key = "compound|\((try? JSONEncoder().encode(paths))?.base64EncodedString() ?? "")|\(o.extrusion)|\(o.chamfer)" }
         else if let p = o.shapePath { key = "shape|\(p.vertices.map { "\($0.point.x),\($0.point.y),\($0.inTangent.x),\($0.inTangent.y),\($0.outTangent.x),\($0.outTangent.y)" }.joined(separator: ";"))|\(o.extrusion)|\(o.chamfer)" }
         else if let f = o.imageFile { key = "image|\(mediaURL(f).path)|\(o.extrusion)|\(o.chamfer)|\(o.roughness)" }
         else { key = "text|\(o.text)|\(o.fontName)|\(o.extrusion)|\(o.chamfer)" }
         if let n = scenes[key] { return n }
         let node: SCNNode
         var front: SCNMaterial?
-        if o.shapePath != nil || o.imageFile != nil {
+        if o.shapeContours != nil || o.shapePath != nil || o.imageFile != nil {
             guard let g = Extrude3D.geometry(o, mediaURL: mediaURL) else { return nil }
             node = SCNNode(geometry: g.geometry)
             front = g.front

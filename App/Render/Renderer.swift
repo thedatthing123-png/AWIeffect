@@ -433,6 +433,7 @@ final class Renderer {
     /// Path drawn for a shape layer: its own bezier, or the primitive converted when a stroke is on.
     static func shapePath(_ layer: Layer, time: Double) -> BezierPath? {
         guard case .shape(let k) = layer.content else { return nil }
+        if layer.shapeContents != nil { return BezierPath(vertices: []) } // compound path drawn by drawShapePath
         // Shape operators need a real path for every kind.
         if let ops = layer.shapeOps, !ops.isEmpty {
             let s = layer.size.value(at: time)
@@ -459,6 +460,20 @@ final class Renderer {
     }
 
     static func layerHalfSize(_ layer: Layer, time: Double) -> Vec2 {
+        if let contents = layer.shapeContents, case .shape = layer.content {
+            var reach = Vec2(0.5, 0.5)
+            for draw in ShapeContentsRenderer.evaluate(contents, time: time) {
+                for p in draw.paths {
+                    let operated = layer.shapeOps.map { ShapeOpsMath.apply($0, to: p.mapped(draw.matrix), time: time) } ?? p.mapped(draw.matrix)
+                    let b = operated.bounds
+                    let sw = draw.style.stroke.enabled ? draw.style.stroke.width.value(at: time) / 2 : 0
+                    let sc = max(simd_length(draw.matrix.columns.0), simd_length(draw.matrix.columns.1))
+                    reach = Vec2(max(reach.x, max(abs(b.min.x), abs(b.max.x)) + sw * sc),
+                                 max(reach.y, max(abs(b.min.y), abs(b.max.y)) + sw * sc))
+                }
+            }
+            return layer.shapeOps?.repeater.map { ShapeOpsMath.reach($0, base: reach, time: time) } ?? reach
+        }
         if let ops = layer.shapeOps, !ops.isEmpty, case .shape = layer.content, let path = shapePath(layer, time: time) {
             let b = path.bounds
             let sw = layer.stroke.enabled ? layer.stroke.width.value(at: time) / 2 : 0
@@ -951,6 +966,26 @@ final class Renderer {
 
     private func drawShapePath(cb: MTLCommandBuffer, target: MTLTexture, matrix: simd_double3x3, layer: Layer, path: BezierPath,
                                time: Double, opacity: Double, blend: BlendMode, aa: Double) {
+        if let contents = layer.shapeContents {
+            let groupCopies = layer.shapeOps?.repeater.map { ShapeOpsMath.copies($0, time: time) } ?? [(matrix_identity_double3x3, 1.0)]
+            for (copy, copyOpacity) in groupCopies.reversed() {
+                for draw in ShapeContentsRenderer.evaluate(contents, time: time).reversed() {
+                    let c = draw.style, st = c.stroke
+                    let stroke = st.enabled ? (color: st.color.value(at: time), width: st.width.value(at: time),
+                                              trim: (st.trimStart.value(at: time), st.trimEnd.value(at: time), st.trimOffset.value(at: time))) : nil
+                    // Whole-layer operators run after path-local operators and transforms.
+                    let useGroup = layer.shapeOps?.changesGeometry == true
+                    let paths = useGroup ? draw.paths.map { ShapeOpsMath.apply(layer.shapeOps!, to: $0.mapped(draw.matrix), time: time) } : draw.paths
+                    PathGPU.shared?.drawCompound(cb: cb, target: target,
+                        matrix: matrix * copy * (useGroup ? matrix_identity_double3x3 : draw.matrix), paths: paths,
+                        fill: c.fillOn ? c.fill.value(at: time) : nil, stroke: stroke,
+                        opacity: opacity * copyOpacity * draw.opacity, blend: blend, aa: aa,
+                        drawingEffects: layer.effects, time: time, trimMode: c.trimMode,
+                        fillGradient: c.fillOn ? c.fillGradient : nil, strokeGradient: c.strokeGradient)
+                }
+            }
+            return
+        }
         let st = layer.stroke
         let stroke = st.enabled ? (color: st.color.value(at: time), width: st.width.value(at: time),
                                    trim: (st.trimStart.value(at: time), st.trimEnd.value(at: time), st.trimOffset.value(at: time))) : nil

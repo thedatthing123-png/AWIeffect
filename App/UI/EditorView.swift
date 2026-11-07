@@ -32,6 +32,9 @@ struct EditorView: View {
 
     init(state: EditorState, close: @escaping () -> Void) {
         #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-shapeContents") {
+            state.select(state.project.layers.first?.id); state.panel = .shape
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-animationTiming") {
             state.select(state.project.layers.first?.id); state.currentTime = 1; state.panel = .clip
         }
@@ -395,6 +398,9 @@ struct EditorView: View {
                         let k = Double(state.project.width) / Double(max(fit.width, 1))
                         state.updateCameraPan(c, delta: Vec2(Double(d.width) * k, Double(d.height) * k))
                     }, onEnded: { if panCamera != nil { panCamera = nil; if pinchCamera == nil { state.endCameraGesture() } } })
+                }
+                if pen == nil, state.canvasMode == .comp, state.panel == .shape {
+                    ShapePathOverlay(state: state, fit: fit)
                 }
                 if let pen {
                     PenOverlay(state: state, target: pen.target, style: pen.style, fit: fit) { self.pen = nil }

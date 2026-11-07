@@ -58,7 +58,7 @@ struct BottomPanel: View {
                 case .transform: TransformPanel(state: state)
                 case .fill: FillPanel(state: state)
                 case .blending: BlendingPanel(state: state)
-                case .shape: ShapePanel(state: state)
+                case .shape: ShapePanel(state: state, startPen: startPen)
                 case .layerMenu: LayerMenuPanel(state: state)
                 case .effects: EffectsPanel(state: state)
                 case .text: TextPanel(state: state)
@@ -323,7 +323,14 @@ struct FillPanel: View {
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: "Color & Fill")
-            if let layer = state.selectedLayer {
+            if state.selectedLayer?.shapeContents != nil, let item = state.selectedShapeContent, let c = item.component {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(item.name).foregroundStyle(Theme.textDim)
+                        ShapeComponentControls(state: state, id: item.id, component: c, fillOnly: true)
+                    }.padding(.horizontal, 12)
+                }
+            } else if let layer = state.selectedLayer {
                 let t = state.currentTime
                 let c = layer.text?.fill.value(at: t) ?? layer.fill.value(at: t)
                 VStack(spacing: 12) {
@@ -432,49 +439,15 @@ struct BlendingPanel: View {
 
 struct ShapePanel: View {
     @ObservedObject var state: EditorState
-
+    var startPen: (PenTarget, PenStyle) -> Void = { _, _ in }
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: "Edit Shape")
-            if let layer = state.selectedLayer, case .shape(let kind) = layer.content {
-                let t = state.currentTime
-                let size = layer.size.value(at: t)
-                ScrollView {
-                    VStack(spacing: 8) {
-                        PropertyRow(state: state, key: .size) {
-                            NumberField(value: size.x, label: "W") { v in edit { $0.size.set(Vec2(max(1, v), size.y), at: t) } }
-                            NumberField(value: size.y, label: "H") { v in edit { $0.size.set(Vec2(size.x, max(1, v)), at: t) } }
-                        }
-                        if kind == .rectangle {
-                            SliderRow(state: state, key: .cornerRadius, value: layer.cornerRadius.value(at: t),
-                                      range: 0...max(1, min(size.x, size.y) / 2), unit: "") { v in
-                                state.mutateLayer { $0.cornerRadius.set(v, at: t) }
-                            }
-                        }
-                        if kind == .polygon || kind == .star {
-                            Stepper("Points: \(Int(layer.sides.value(at: t)))", value: Binding(
-                                get: { Int(layer.sides.value(at: t)) },
-                                set: { v in edit { $0.sides.set(Double(v), at: t) } }), in: 3...24)
-                            .foregroundStyle(Theme.text)
-                        }
-                        StrokeSection(state: state)
-                        ShapeOpsSection(state: state)
-                        if kind == .star {
-                            HStack {
-                                Text("Inner radius").font(.system(size: 13)).foregroundStyle(Theme.text)
-                                ValueScrubber(value: layer.innerRatio.value(at: t), range: 0.1...0.95, onBegin: { state.beginEdit("Inner Radius") },
-                                              onChange: { v in state.mutateLayer { $0.innerRatio.set(v, at: t) } }, onEnd: { state.endEdit() })
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                }
-            }
+            ScrollView {
+                ShapeContentsSection(state: state, startPen: startPen)
+                    .padding(.horizontal, 12).padding(.bottom, 12)
+            }.accessibilityIdentifier("shape-contents-scroll")
         }
-    }
-
-    private func edit(_ change: (inout Layer) -> Void) {
-        state.coalescedEdit("Edit Shape", change)
     }
 }
 
