@@ -208,8 +208,8 @@ final class EffectTests: XCTestCase {
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
             for pd in d.params {
                 guard case .number(let lo, let hi, _, _) = pd.kind, !modal.contains("\(d.id)/\(pd.id)"),
-                      // Hue-vs curves only move pixels of their own hue (checked on a color wheel in the R4 grade tests).
-                      !(d.id == "awi18.grade" && pd.id.hasPrefix("hue")) else { continue }
+                      // Hue-vs curves and their qualifiers (softness, sat/luma range) only move pixels of their own hue (checked on a color wheel in the R4 grade tests).
+                      !(d.id == "awi18.grade" && (pd.id.hasPrefix("hue") || pd.id.hasPrefix("q"))) else { continue }
                 var a = visible(d), b = visible(d)
                 a.params[pd.id] = .number(Animated(lo + (hi - lo) * 0.02))
                 b.params[pd.id] = .number(Animated(lo + (hi - lo) * 0.6))
