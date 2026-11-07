@@ -91,7 +91,11 @@ final class Text3DTests: XCTestCase {
 
     func testChromeLetterRendersLitAndDiffersFromPlastic() throws {
         let chrome = try pixels(Text3DOptions(material: .chrome))
-        let lit = stride(from: 0, to: chrome.count, by: 4).filter { chrome[$0 + 3] > 0 && max(chrome[$0], chrome[$0 + 1], chrome[$0 + 2]) > 40 }.count
+        var lit = 0
+        for i in stride(from: 0, to: chrome.count, by: 4) {
+            let brightest: UInt8 = max(chrome[i], max(chrome[i + 1], chrome[i + 2]))
+            if chrome[i + 3] > 0 && brightest > 40 { lit += 1 }
+        }
         XCTAssertGreaterThan(lit, 100, "the chrome A shows lit pixels")
         let plastic = try pixels(Text3DOptions(material: .plastic))
         XCTAssertGreaterThan(difference(chrome, plastic), 96 * 96 * 2, "chrome and plastic look different")
