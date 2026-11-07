@@ -341,6 +341,7 @@ struct SelectorEditor: View {
     let count: Int
     let selector: TextSelector
     let text: TextData
+    @State private var graphTargets: [TextEaseTarget] = []
 
     private var ed: AnimatorEdits { AnimatorEdits(state: state, animatorID: animatorID) }
 
@@ -428,6 +429,7 @@ struct SelectorEditor: View {
         number("Start", s.start, -100...200, unit: "%", k) { $0.start }
         number("End", s.end, -100...200, unit: "%", k) { $0.end }
         number("Offset", s.offset, -200...200, unit: "%", k) { $0.offset }
+        timingGraphButton(s, k)
         TSMenuRow(title: "Shape", options: SelectorShape.allCases.map { ($0, $0.title) }, selection: s.shape) { v in
             ed.edit("Selector Shape") { $0.setSelector(k) { $0.shape = v } }
         }
@@ -471,6 +473,20 @@ struct SelectorEditor: View {
                            onBegin: { state.beginEdit(title) },
                            onChange: { v in ed.live { $0.setSelector(k) { sel in Self.apply(path, &sel) { $0.set(v, at: t) } } } },
                            onEnd: { state.endEdit() })
+    }
+
+    /// Opens the graph editor for whichever of Start / End / Offset / Amount have keyframes.
+    @ViewBuilder private func timingGraphButton(_ s: TextSelector, _ k: Int) -> some View {
+        let keyed = TextEaseTarget.SelectorValue.allCases.filter { s[keyPath: $0.path].keyframes.count >= 2 }
+        TSButton(title: "Timing Graph", icon: "point.topleft.down.curvedto.point.bottomright.up") {
+            graphTargets = keyed.map { .selector(k, $0) }
+        }
+        .disabled(keyed.isEmpty)
+        .accessibilityLabel("Timing graph for selector \(k + 1)")
+        .sheet(isPresented: Binding(get: { !graphTargets.isEmpty }, set: { if !$0 { graphTargets = [] } })) {
+            TextGraphEditorSheet(state: state, animatorID: animatorID, targets: graphTargets)
+                .presentationDetents([.medium, .large])
+        }
     }
 
     private static func path(_ title: String) -> WritableKeyPath<TextSelector, Animated<Double>> {
@@ -659,6 +675,7 @@ struct PropertyEditor: View {
     let animatorID: UUID
     let key: TextPropKey
     let props: TextAnimatorProperties
+    @State private var showGraph = false
 
     private var ed: AnimatorEdits { AnimatorEdits(state: state, animatorID: animatorID) }
 
@@ -669,17 +686,19 @@ struct PropertyEditor: View {
                 Text(key.title).font(.system(size: 13, weight: .bold)).foregroundStyle(Theme.text)
                     .lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 4)
-                Menu {
-                    Button("Linear") { setInterp(.linear) }
-                    Button("Ease (smooth)") { setInterp(.bezier) }
-                    Button("Hold (jump)") { setInterp(.hold) }
-                } label: {
-                    Label("Ease", systemImage: "point.topleft.down.curvedto.point.bottomright.up").font(.system(size: 12, weight: .semibold))
+                // The real graph editor (drag the bezier handles, presets), same as for layer properties.
+                Button { showGraph = true } label: {
+                    Label("Graph", systemImage: "point.topleft.down.curvedto.point.bottomright.up").font(.system(size: 12, weight: .semibold))
                         .padding(.horizontal, 10).frame(minHeight: TS.tap)
                         .background(RoundedRectangle(cornerRadius: 10).fill(Theme.surface)).foregroundStyle(Theme.text)
                 }
+                .buttonStyle(.plain)
                 .disabled(!key.isAnimated(props))
-                .accessibilityLabel("Ease \(key.title)")
+                .accessibilityLabel("Easing graph for \(key.title)")
+                .sheet(isPresented: $showGraph) {
+                    TextGraphEditorSheet(state: state, animatorID: animatorID, targets: [.property(key)])
+                        .presentationDetents([.medium, .large])
+                }
                 TSIconButton(icon: "minus.circle", label: "Remove \(key.title)", tint: Theme.danger) {
                     ed.edit("Remove \(key.title)") { key.remove(from: &$0.properties) }
                 }

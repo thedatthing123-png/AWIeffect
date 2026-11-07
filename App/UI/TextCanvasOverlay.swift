@@ -42,21 +42,47 @@ import simd
         let em = max(4, text.fontSize)
         var out: [Glyph] = []
         var shape = Path()
+        // Text on a path: letters sit along the layer's first mask (same track the renderer uses).
+        let track: PathTrack? = (text.onPath ?? false) ? layer.masks.first.map {
+            PathTrack($0.path.value(at: time), offsetPercent: text.pathOffset?.value(at: time) ?? 0)
+        } : nil
         for (gi, g) in lay.glyphs.enumerated() {
             let st = gi < states.count ? states[gi] : Renderer.GlyphState()
             let off = st.offset.x.isFinite && st.offset.y.isFinite ? st.offset : .zero
             let c = g.center + off
             let hx = max(g.halfSize.x, em * 0.14), hy = max(g.halfSize.y, em * 0.32)
-            let quad = [Vec2(c.x - hx, c.y - hy), Vec2(c.x + hx, c.y - hy), Vec2(c.x + hx, c.y + hy), Vec2(c.x - hx, c.y + hy)].map(screen)
-            let padded = [Vec2(c.x - hx - pad, c.y - hy - pad), Vec2(c.x + hx + pad, c.y - hy - pad),
-                          Vec2(c.x + hx + pad, c.y + hy + pad), Vec2(c.x - hx - pad, c.y + hy + pad)].map(screen)
-            shape.addLines(padded); shape.closeSubpath()
-            let baseY = g.origin.y + off.y
-            let leftX = (g.isSpace ? c.x - hx : g.origin.x + off.x), rightX = c.x + hx
             let id = g.charIndex < ids.count ? ids[g.charIndex] : g.charID
-            out.append(Glyph(charIndex: g.charIndex, id: id, quad: quad, center: screen(c),
-                             left: (screen(Vec2(leftX, baseY - em * 0.8)), screen(Vec2(leftX, baseY + em * 0.2))),
-                             right: (screen(Vec2(rightX, baseY - em * 0.8)), screen(Vec2(rightX, baseY + em * 0.2)))))
+            // The letter's real placement (path, rotation, skew, per-letter 3D turn and depth), so the selection box
+            // and caret follow the letter wherever it is drawn. Falls back to the flat box when it's behind the eye.
+            if let H = TextEngine.placement(g, st, layout: lay, track: track, halfSize: Vec2(g.halfSize.x, g.halfSize.y)) {
+                let sx = hx / max(g.halfSize.x, 1e-6), sy = hy / max(g.halfSize.y, 1e-6)
+                func local(_ x: Double, _ y: Double) -> Vec2 {
+                    let q = H * SIMD3(x * g.halfSize.x * sx, y * g.halfSize.y * sy, 1)
+                    let z = abs(q.z) > 1e-9 ? q.z : 1e-9
+                    return Vec2(q.x / z, q.y / z)
+                }
+                let corners = [local(-1, -1), local(1, -1), local(1, 1), local(-1, 1)]
+                let quad = corners.map(screen)
+                // Pad outward from the letter's center in screen space (finger-sized hit area).
+                let cs = screen(local(0, 0))
+                let padPts: [CGPoint] = quad.map { q in
+                    let dx = q.x - cs.x, dy = q.y - cs.y, l = max(1, hypot(dx, dy))
+                    return CGPoint(x: q.x + dx / l * 10, y: q.y + dy / l * 10)
+                }
+                shape.addLines(padPts); shape.closeSubpath()
+                out.append(Glyph(charIndex: g.charIndex, id: id, quad: quad, center: cs,
+                                 left: (quad[0], quad[3]), right: (quad[1], quad[2])))
+            } else {
+                let quad = [Vec2(c.x - hx, c.y - hy), Vec2(c.x + hx, c.y - hy), Vec2(c.x + hx, c.y + hy), Vec2(c.x - hx, c.y + hy)].map(screen)
+                let padded = [Vec2(c.x - hx - pad, c.y - hy - pad), Vec2(c.x + hx + pad, c.y - hy - pad),
+                              Vec2(c.x + hx + pad, c.y + hy + pad), Vec2(c.x - hx - pad, c.y + hy + pad)].map(screen)
+                shape.addLines(padded); shape.closeSubpath()
+                let baseY = g.origin.y + off.y
+                let leftX = (g.isSpace ? c.x - hx : g.origin.x + off.x), rightX = c.x + hx
+                out.append(Glyph(charIndex: g.charIndex, id: id, quad: quad, center: screen(c),
+                                 left: (screen(Vec2(leftX, baseY - em * 0.8)), screen(Vec2(leftX, baseY + em * 0.2))),
+                                 right: (screen(Vec2(rightX, baseY - em * 0.8)), screen(Vec2(rightX, baseY + em * 0.2)))))
+            }
         }
         glyphs = out
         hitShape = shape
@@ -130,7 +156,7 @@ struct TextCanvasOverlay: View {
         let t = state.currentTime
         if let id = state.selectedLayerID,
            let layer = Renderer.resolveParenting(p, time: t).layers.first(where: { $0.id == id }), layer.isActive(at: t),
-           layer.text?.counter == nil, layer.text?.onPath != true, layer.text?.text3D == nil,
+           layer.text?.counter == nil,
            let text = Renderer.renderTextData(layer, time: t) {
             let geo = TextCanvasGeometry(layer: layer, project: p, text: text, time: t, fit: fit)
             let selected = Set(session.selectedIDs)
