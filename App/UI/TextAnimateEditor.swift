@@ -319,7 +319,7 @@ struct AnimatorEditor: View {
 }
 
 /// Animator-addressed edits shared by the editors below.
-struct AnimatorEdits {
+@MainActor struct AnimatorEdits {
     let state: EditorState
     let animatorID: UUID
 

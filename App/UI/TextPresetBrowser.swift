@@ -207,7 +207,7 @@ struct TextPresetBrowserTile: View {
                 } else if frames.count == 1 || isUITesting {
                     Image(uiImage: frames[0]).resizable().scaledToFit()
                 } else {
-                    TimelineView(.periodic(from: .now, by: 1.0 / 12)) { ctx in
+                    SwiftUI.TimelineView(.periodic(from: .now, by: 1.0 / 12)) { ctx in
                         let i = Int(ctx.date.timeIntervalSinceReferenceDate * 12) % frames.count
                         Image(uiImage: frames[max(0, i)]).resizable().scaledToFit()
                     }
