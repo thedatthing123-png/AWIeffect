@@ -46,7 +46,7 @@ final class EssentialUITests: XCTestCase {
         let expand = app.buttons["effect-expand-ae.gaussianBlur"]
         XCTAssertTrue(expand.exists)
         expand.tap()
-        XCTAssertFalse(slider.exists)
+        XCTAssertTrue(slider.waitForNonExistence(timeout: 3), "Collapsing must hide the settings")
         let header = expand.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0.5)).withOffset(CGVector(dx: 200, dy: 0))
         header.press(forDuration: 0.1, thenDragTo: header.withOffset(CGVector(dx: -270, dy: 0)))
         XCTAssertTrue(expand.waitForNonExistence(timeout: 5), "Collapsed effect swipe should still delete")
