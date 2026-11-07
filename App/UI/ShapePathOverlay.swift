@@ -8,7 +8,8 @@ struct ShapePathOverlay: View {
     @State private var original: ShapeComponent?
     var body: some View {
         if let l = state.selectedLayer, let item = state.selectedShapeContent, item.visible,
-           let c = item.component, let placement = state.displayPlacement(of: l.id) {
+           let c = item.component, let placement = state.displayPlacement(of: l.id),
+           abs(c.matrix(at: state.currentTime).determinant) > 1e-10 {
             let t = state.currentTime
             let base = c.base(at: t), m = placement * c.matrix(at: t)
             let scale = Double(fit.width) / Double(state.project.width)

@@ -81,6 +81,17 @@ final class PathGPU {
                 fillSegs.append(SIMD4(last.z, last.w, first.x, first.y))
             }
         }
+        // Nonzero fills have no edge where two contours overlap. Keep those edges for strokes (Merge),
+        // but normalize only the fill outline so antialiasing cannot draw a hairline through a solid interior.
+        if paths.count > 1, fill != nil {
+            let contours = perPath.enumerated().compactMap { i, segments -> BezierPath? in
+                guard let last = segments.last else { return nil }
+                var vertices = segments.map { PathVertex(point: Vec2(Double($0.x), Double($0.y))) }
+                if !paths[i].closed { vertices.append(PathVertex(point: Vec2(Double(last.z), Double(last.w)))) }
+                return BezierPath(vertices: vertices, closed: true)
+            }
+            fillSegs = ShapeBoolean.contours(ShapeBoolean.cgPath(contours).normalized(using: .winding)).flatMap { $0.segments() }
+        }
         var strokeSegs: [SIMD4<Float>] = []
         if let st = stroke {
             if trimMode == .simultaneous {

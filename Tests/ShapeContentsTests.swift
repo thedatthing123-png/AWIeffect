@@ -126,13 +126,16 @@ final class ShapeContentsTests: XCTestCase {
     func testCompoundHoleAndGradientRenderWithEffectsAndMotion() throws {
         guard let renderer = Renderer.shared else { throw XCTSkip("SKIP-GPU: no Metal") }
         var p = logo()
-        let before = try XCTUnwrap(renderer.renderPixels(project: p, time: 0, mediaURL: { URL(fileURLWithPath: $0) }))
-        let after = try XCTUnwrap(renderer.renderPixels(project: p, time: 0.7, mediaURL: { URL(fileURLWithPath: $0) }))
+        let before = try XCTUnwrap(renderer.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) }))
+        let after = try XCTUnwrap(renderer.renderPixels(project: p, time: 0.7, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) }))
         XCTAssertNotEqual(before.rgba, after.rgba)
         let center = (128 * 256 + 128) * 4
         XCTAssertEqual(before.rgba[center + 3], 0, "Subtraction hole must remain transparent")
+        var merged = p; merged.layers[0].shapeContents?[2].merge = .merge
+        let solid = try XCTUnwrap(renderer.renderPixels(project: merged, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) }))
+        for x in 174...180 { XCTAssertEqual(solid.rgba[(128 * 256 + x) * 4 + 3], 255, "Internal contour must not create a fill seam") }
         p.layers[0].effects = [EffectRegistry.gaussianBlur.makeInstance()]
-        let fx = try XCTUnwrap(renderer.renderPixels(project: p, time: 0, mediaURL: { URL(fileURLWithPath: $0) }))
+        let fx = try XCTUnwrap(renderer.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) }))
         XCTAssertTrue(fx.rgba.enumerated().contains { $0.offset % 4 == 3 && $0.element > 0 })
     }
     func logo() -> Project {

@@ -8,6 +8,7 @@ final class ShapeContentsUITests: XCTestCase {
         app.launch()
         let ring = app.buttons["Select Ring"].firstMatch
         XCTAssertTrue(ring.waitForExistence(timeout: 15))
+        save("shape-contents-list")
         XCTAssertGreaterThanOrEqual(ring.frame.height, 44)
         let accent = app.buttons["Select Accent"].firstMatch
         XCTAssertTrue(accent.exists); XCTAssertGreaterThanOrEqual(accent.frame.height, 44)
@@ -22,6 +23,10 @@ final class ShapeContentsUITests: XCTestCase {
         save("shape-selected-pen")
         app.buttons["Cancel"].firstMatch.tap()
         XCTAssertTrue(app.buttons["Select Accent"].firstMatch.waitForExistence(timeout: 5))
+        for page in 0..<7 {
+            scroll.swipeUp()
+            save("shape-settings-\(page)")
+        }
     }
 
     private func save(_ name: String) {

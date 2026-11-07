@@ -38,8 +38,8 @@ struct ShapeContentsSection: View {
                                 Image(systemName: item.component == nil ? "square.on.square" : "line.3.horizontal")
                                 Text(item.name).multilineTextAlignment(.leading)
                                 Spacer(minLength: 0)
-                            }.frame(maxWidth: .infinity, minHeight: 44)
-                        }.buttonStyle(.plain).accessibilityLabel("Select \(item.name)")
+                            }.frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
+                        }.buttonStyle(.plain).frame(minHeight: 44).accessibilityLabel("Select \(item.name)")
                         Button {
                             state.editShapeContent(item.id, "Path Visibility") { $0.visible.toggle() }
                         } label: { Image(systemName: item.visible ? "eye" : "eye.slash").frame(width: 44, height: 44) }
