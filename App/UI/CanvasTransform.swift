@@ -29,6 +29,9 @@ struct CanvasDrag {
     let inverse: simd_double3x3   // comp -> layer local at drag start
     let positionProjection: simd_double3x3
     let rawPosition: Vec2
+    /// The layer's own (unparented) transform at drag start: edits write these values.
+    var raw: LayerTransform? = nil
+    var is3D = false
 }
 
 enum CanvasHandles {
@@ -50,6 +53,18 @@ enum CanvasHandles {
         let a = layer.transform.anchor.value(at: time)
         return (corners, edges, rotate, pt(a.x, a.y))
     }
+
+    /// Pan Behind (AE): the position that keeps the layer exactly where it is when its anchor moves to `newAnchor`.
+    /// Works in the layer's own (parent) space, so parenting, 3D rotation and cameras don't make it jump.
+    static func pivotCompensated(_ tr: LayerTransform, is3D: Bool, newAnchor: Vec2, time: Double) -> (position: Vec2, z: Double) {
+        let p = tr.position.value(at: time), a = tr.anchor.value(at: time), sc = tr.scale.value(at: time)
+        let d = SIMD4<Double>(newAnchor.x - a.x, newAnchor.y - a.y, 0, 0)
+        let S = simd_double4x4(diagonal: SIMD4<Double>(sc.x / 100, sc.y / 100, 1, 1))
+        let R = is3D ? CameraState.rotation(x: tr.rotationX.value(at: time), y: tr.rotationY.value(at: time), z: tr.rotation.value(at: time))
+                     : CameraState.rotation(x: 0, y: 0, z: tr.rotation.value(at: time))
+        let w = R * S * d
+        return (Vec2(p.x + w.x, p.y + w.y), tr.positionZ.value(at: time) + (is3D ? w.z : 0))
+    }
 }
 
 extension EditorState {
@@ -59,9 +74,11 @@ extension EditorState {
         // A selected camera is moved with camera gestures (the scene follows the finger), not like a layer.
         if raw.content == .camera { return nil }
         let t = currentTime
+        // Free view shows the scene without the camera: handles and projections must use the same view.
+        let view = canvasViewProject(project)
         // Handles are where the layer is drawn (parenting baked); edits still go to its own values.
-        let l = displayProject.layers.first { $0.id == raw.id } ?? raw
-        let h = CanvasHandles.handles(l, project: project, time: t, fit: fit)
+        let l = Renderer.resolveParenting(view, time: t).layers.first { $0.id == raw.id } ?? raw
+        let h = CanvasHandles.handles(l, project: view, time: t, fit: fit)
         // Nearest handle within reach wins (small layers have handles close together).
         func dist(_ p: CGPoint) -> CGFloat { hypot(p.x - screen.x, p.y - screen.y) }
         var best: (d: CGFloat, kind: CanvasDrag.Kind)?
@@ -79,8 +96,11 @@ extension EditorState {
             case .pivot: kind = .pivot
             }
         }
-        let M = Renderer.placementMatrix(l, camera: Renderer.activeCamera(project, time: t), time: t, renderScale: 1)
-        let tr = l.transform
+        let M = Renderer.placementMatrix(l, camera: Renderer.activeCamera(view, time: t), time: t, renderScale: 1)
+        let tr = raw.transform
+        let projection = LayerPlacement.positionMatrix(raw, project: view, time: t)
+        // Scale / rotate turn around the anchor where it is drawn (the same projection the Move tool uses).
+        let screenAnchor = LayerPlacement.projected(tr.position.value(at: t), by: projection) ?? tr.position.value(at: t)
         let label: String
         switch kind {
         case .move: label = "Move Layer"
@@ -97,10 +117,23 @@ extension EditorState {
         }
         UISelectionFeedbackGenerator().selectionChanged()
         if motionSketch, case .move = kind { beginMotionSketch() }
-        return CanvasDrag(kind: kind, startComp: comp, pivot: tr.position.value(at: t), position: tr.position.value(at: t),
-                          scale: tr.scale.value(at: t), rotation: tr.rotation.value(at: t), anchor: tr.anchor.value(at: t), inverse: M.inverse,
-                          positionProjection: LayerPlacement.positionMatrix(raw, project: project, time: t), rawPosition: raw.transform.position.value(at: t))
+        // `rotation` is the drawn rotation (stretch axes follow what you see); scale and `raw` are the values edits write.
+        return CanvasDrag(kind: kind, startComp: comp, pivot: screenAnchor, position: tr.position.value(at: t),
+                          scale: tr.scale.value(at: t), rotation: l.transform.rotation.value(at: t), anchor: tr.anchor.value(at: t), inverse: M.inverse,
+                          positionProjection: projection, rawPosition: tr.position.value(at: t), raw: tr, is3D: raw.is3D)
     }
+
+    /// Screen distance from `screen` to the nearest transform handle of the selected layer (nil without one).
+    func nearestHandleDistance(at screen: CGPoint, fit: CGRect) -> CGFloat? {
+        guard let raw = selectedLayer, raw.content != .camera else { return nil }
+        let view = canvasViewProject(project)
+        guard let l = Renderer.resolveParenting(view, time: currentTime).layers.first(where: { $0.id == raw.id }) else { return nil }
+        let h = CanvasHandles.handles(l, project: view, time: currentTime, fit: fit)
+        return ([h.rotate] + h.corners + h.edges).map { hypot($0.x - screen.x, $0.y - screen.y) }.min()
+    }
+
+    /// The project as the canvas shows it: free view hides cameras (you look at the scene itself).
+    func canvasViewProject(_ p: Project) -> Project { cameraView ? p : freeViewProject(p) }
 
     func updateCanvasDrag(_ d: CanvasDrag, comp c: Vec2) {
         let t = currentTime
@@ -110,13 +143,16 @@ extension EditorState {
             // for simplicity: children follow their parents anyway).
             let delta = c - d.startComp
             guard liveGesture, var lp = live.project else { return }
+            let view = canvasViewProject(project)
             for i in lp.layers.indices {
                 guard let s = multiDragStarts[lp.layers[i].id] else { continue }
                 if let pid = lp.layers[i].parentID, multiDragStarts[pid] != nil { continue }
                 var original = project.layers.first { $0.id == lp.layers[i].id } ?? lp.layers[i]
                 original.transform.position = Animated(s)
-                guard let p = LayerPlacement.movedPosition(original, project: project, time: t, screenDelta: delta) else { continue }
-                lp.layers[i].transform.position.set(Vec2((p.x * 10).rounded() / 10, (p.y * 10).rounded() / 10), at: t)
+                guard let p = LayerPlacement.movedPosition(original, project: view, time: t, screenDelta: delta) else { continue }
+                let moved = Vec2((p.x * 10).rounded() / 10, (p.y * 10).rounded() / 10)
+                if sketchStartTime != nil { recordMotionSketch(moved, layer: original.id) }
+                lp.layers[i].transform.position.set(moved, at: t)
             }
             lp.modifiedAt = Date()
             live.project = lp
@@ -129,8 +165,12 @@ extension EditorState {
             // Depth, rotation and parenting are removed together so the layer follows the finger exactly.
             if selectedLayer?.is3D == true || !snappingEnabled {
                 snapGuides = SnapGuides(x: nil, y: nil)
-                mutateLayer { $0.transform.position.set(p, at: t) }; return
+                let free = Vec2((p.x * 10).rounded() / 10, (p.y * 10).rounded() / 10)
+                // Motion Sketch records here too (Snap off and 3D layers used to record nothing).
+                if sketchStartTime != nil, let id = selectedLayerID { recordMotionSketch(free, layer: id) }
+                mutateLayer { $0.transform.position.set(free, at: t) }; return
             }
+            let view = canvasViewProject(project)
             // Snap to the frame center / edges and to other layers' positions (guides show while snapped).
             // Small grab zone + stickiness: it grabs only when really close and lets go once you clearly pull
             // away, so the layer never flickers between snapped and free.
@@ -139,13 +179,13 @@ extension EditorState {
             p = projectedCandidate
             var gx: Double?, gy: Double?
             var xs = [Double(project.width) / 2, 0, Double(project.width)], ys = [Double(project.height) / 2, 0, Double(project.height)]
-            for o in project.layers where o.id != selectedLayerID && o.isActive(at: t) && o.content != .camera && !o.isAudioOnly {
-                if let rect = LayerPlacement.bounds(o, project: project, time: t) {
+            for o in view.layers where o.id != selectedLayerID && o.isActive(at: t) && o.content != .camera && !o.isAudioOnly {
+                if let rect = LayerPlacement.bounds(o, project: view, time: t) {
                     xs += [rect.minX, rect.midX, rect.maxX]; ys += [rect.minY, rect.midY, rect.maxY]
                 }
             }
             var xFeatures = [p.x], yFeatures = [p.y]
-            if let layer = selectedLayer, let rect = LayerPlacement.bounds(layer, project: project, time: t) {
+            if let layer = selectedLayer, let rect = LayerPlacement.bounds(layer, project: view, time: t) {
                 xFeatures += [rect.minX, rect.midX, rect.maxX].map { $0 + p.x - start.x }
                 yFeatures += [rect.minY, rect.midY, rect.maxY].map { $0 + p.y - start.y }
             }
@@ -159,7 +199,7 @@ extension EditorState {
             // Sub-pixel positions: smooth motion under the finger (no whole-pixel stepping).
             guard let localPosition = LayerPlacement.projected(p, by: d.positionProjection.inverse) else { return }
             let rounded = Vec2((localPosition.x * 10).rounded() / 10, (localPosition.y * 10).rounded() / 10)
-            if sketchStartTime != nil { recordMotionSketch(rounded) }
+            if sketchStartTime != nil, let id = selectedLayerID { recordMotionSketch(rounded, layer: id) }
             mutateLayer { $0.transform.position.set(rounded, at: t) }
         case .scale:
             let r0 = hypot(d.startComp.x - d.pivot.x, d.startComp.y - d.pivot.y)
@@ -177,25 +217,32 @@ extension EditorState {
         case .rotate:
             let a0 = atan2(d.startComp.y - d.pivot.y, d.startComp.x - d.pivot.x)
             let a1 = atan2(c.y - d.pivot.y, c.x - d.pivot.x)
-            var r = d.rotation + (a1 - a0) * 180 / .pi
+            // Own rotation (a parent's turn is added on top when drawn).
+            var r = (d.raw?.rotation.value(at: t) ?? d.rotation) + (a1 - a0) * 180 / .pi
             // Gentle snapping to 45° steps.
             let snap = (r / 45).rounded() * 45
             if abs(r - snap) < 2.5 { r = snap }
             mutateLayer { $0.transform.rotation.set((r * 10).rounded() / 10, at: t) }
         case .pivot:
             // Move the anchor under the finger and compensate position so the layer stays put (AE Pan Behind).
-            let q = d.inverse * SIMD3(c.x, c.y, 1)
-            let newAnchor = d.anchor + Vec2(q.x, q.y) - d.anchor
+            // The finger is un-projected through the drawn placement (parenting, 3D, camera) and the position is
+            // compensated in the layer's own space, so nothing jumps.
+            guard let raw = d.raw, let q = LayerPlacement.projected(c, by: d.inverse) else { return }
+            let newAnchor = Vec2((q.x * 10).rounded() / 10, (q.y * 10).rounded() / 10)
+            let moved = CanvasHandles.pivotCompensated(raw, is3D: d.is3D, newAnchor: newAnchor, time: t)
             mutateLayer { l in
-                l.transform.anchor.set(Vec2(newAnchor.x.rounded(), newAnchor.y.rounded()), at: t)
-                l.transform.position.set(Vec2(c.x.rounded(), c.y.rounded()), at: t)
+                l.transform.anchor.set(newAnchor, at: t)
+                l.transform.position.set(moved.position, at: t)
+                if d.is3D { l.transform.positionZ.set(moved.z, at: t) }
             }
         }
     }
 
     func endCanvasDrag() {
-        endLiveGesture(); endEdit(); snapGuides = SnapGuides(); multiDragStarts = [:]
+        endLiveGesture()
+        // The sketch's keys land in the drag's own undo step.
         if sketchStartTime != nil { endMotionSketch() }
+        endEdit(); snapGuides = SnapGuides(); multiDragStarts = [:]
     }
 
     // MARK: Two-finger pinch / twist on the selected layer
@@ -221,39 +268,6 @@ extension EditorState {
     func endLayerPinch(ownsEdit: Bool) {
         pinchStart = nil
         if ownsEdit { endLiveGesture(); endEdit() }
-    }
-}
-
-/// Mode buttons + scale link toggle shown above the transform properties.
-struct TransformToolBar: View {
-    @ObservedObject var state: EditorState
-    var body: some View {
-        HStack(spacing: 6) {
-            ForEach(TransformTool.allCases) { tool in
-                Button { state.transformTool = tool } label: {
-                    VStack(spacing: 2) {
-                        Image(systemName: tool.symbol).font(.system(size: 14, weight: .semibold))
-                        Text(tool.title).font(.system(size: 9, weight: .semibold))
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 40)
-                    .foregroundStyle(state.transformTool == tool ? Theme.accentGlow : Theme.text)
-                    .background(RoundedRectangle(cornerRadius: 9).fill(state.transformTool == tool ? Theme.accent.opacity(0.25) : Theme.surface))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(tool.title) tool")
-            }
-            Button { state.scaleLinked.toggle() } label: {
-                VStack(spacing: 2) {
-                    Image(systemName: state.scaleLinked ? "link" : "link.badge.plus").font(.system(size: 14, weight: .semibold))
-                    Text(state.scaleLinked ? "Linked" : "Stretch").font(.system(size: 9, weight: .semibold))
-                }
-                .frame(width: 58, height: 40)
-                .foregroundStyle(state.scaleLinked ? Theme.text : Theme.warning)
-                .background(RoundedRectangle(cornerRadius: 9).fill(Theme.surface))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(state.scaleLinked ? "Scale linked" : "Scale unlinked (stretch)")
-        }
     }
 }
 

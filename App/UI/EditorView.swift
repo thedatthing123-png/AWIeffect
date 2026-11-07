@@ -443,7 +443,9 @@ struct EditorView: View {
                 if pen == nil, state.canvasMode == .comp, let id = state.selectedLayerID {
                     LiveReader(live: state.live) { lp in
                         ClockReader(clock: state.clock) { t in
-                            let shown = lp ?? state.project
+                            let raw = lp ?? state.project
+                            // Free view draws without the camera: handles must use the same view (a camera keeps its own).
+                            let shown = raw.layers.first(where: { $0.id == id })?.content == .camera ? raw : state.canvasViewProject(raw)
                             if let layer = Renderer.resolveParenting(shown, time: t).layers.first(where: { $0.id == id }), layer.isActive(at: t) {
                                 SelectionOverlay(layer: layer, time: t, fit: fit,
                                                  compWidth: shown.width, project: shown, tool: state.transformTool)
@@ -614,7 +616,18 @@ struct EditorView: View {
                 if state.panel == .masks, canvasDragState == nil, panBase == nil {
                     if maskDrag == nil {
                         let reach = 28 * Double(state.project.width) / Double(max(fit.width, 1))
-                        maskDrag = state.maskPoint(nearComp: toComp(v.startLocation, fit: fit), reach: reach).map { [$0.0, $0.1] } ?? []
+                        var hit = state.maskPoint(nearComp: toComp(v.startLocation, fit: fit), reach: reach).map { [$0.0, $0.1] } ?? []
+                        // A transform handle closer to the finger than the mask point wins (masks don't cover handles).
+                        if hit.count == 2, let hd = state.nearestHandleDistance(at: v.startLocation, fit: fit),
+                           let l = state.selectedLayer, l.masks.indices.contains(hit[0]) {
+                            let verts = l.masks[hit[0]].path.value(at: state.currentTime).vertices
+                            if verts.indices.contains(hit[1]), let c = state.compPoint(fromLocal: verts[hit[1]].point) {
+                                let k = fit.width / CGFloat(max(state.project.width, 1))
+                                let md = hypot(fit.minX + CGFloat(c.x) * k - v.startLocation.x, fit.minY + CGFloat(c.y) * k - v.startLocation.y)
+                                if hd < md { hit = [] }
+                            }
+                        }
+                        maskDrag = hit
                         if maskDrag?.count == 2 { state.beginEdit("Move Mask Point") }
                     }
                     if let m = maskDrag, m.count == 2 { state.moveMaskPoint(mask: m[0], vertex: m[1], toComp: toComp(v.location, fit: fit)); return }
@@ -672,7 +685,7 @@ struct EditorView: View {
         for layer in state.displayProject.layers where layer.isActive(at: state.currentTime) && layer.id != state.selectedLayerID
             && (!state.linkPicking || state.canParent(to: layer.id))
             && layer.content != .camera && layer.content != .light && !layer.isAudioOnly {
-            let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(state.project, time: state.currentTime),
+            let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(state.canvasViewProject(state.project), time: state.currentTime),
                                              time: state.currentTime, renderScale: 1)
             let h = M.inverse * SIMD3(c.x, c.y, 1)
             let hs = Renderer.layerHalfSize(layer, time: state.currentTime)
@@ -686,7 +699,7 @@ struct EditorView: View {
         let c = toComp(point, fit: fit)
         for layer in state.displayProject.layers where layer.isActive(at: state.currentTime) && !layer.isLocked
             && layer.content != .adjustment && layer.content != .camera && layer.content != .light && !layer.isAudioOnly {
-            let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(state.project, time: state.currentTime),
+            let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(state.canvasViewProject(state.project), time: state.currentTime),
                                              time: state.currentTime, renderScale: 1)
             let h = M.inverse * SIMD3(c.x, c.y, 1)
             let local = SIMD3(h.x / h.z, h.y / h.z, 1)

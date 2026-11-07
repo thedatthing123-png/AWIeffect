@@ -1,4 +1,5 @@
 import Foundation
+import simd
 
 /// 2D rigid-body physics (impulse solver) baked into position/rotation keyframes, so results stay editable.
 /// Bodies collide as circles (radius from the layer size); walls are the comp edges.
@@ -276,7 +277,11 @@ extension EditorState {
         let staticIDs = staticIDs + project.layers.filter { $0.isCollider && !dynamicIDs.contains($0.id) && !staticIDs.contains($0.id) }.map(\.id)
         var bodies: [PhysicsLab.Body] = []
         var anchors: [UUID: (anchor: Vec2, scale: Vec2)] = [:]
-        for l in project.layers where dynamicIDs.contains(l.id) || staticIDs.contains(l.id) {
+        // Simulate where the layers really are: parenting baked into comp space (a linked layer's own values are in
+        // its parent's space, which made bodies start in the wrong place).
+        let world0 = Renderer.resolveParenting(project, time: t0)
+        let worldPrev = Renderer.resolveParenting(project, time: t0 - 1 / max(project.fps, 1))
+        for l in world0.layers where dynamicIDs.contains(l.id) || staticIDs.contains(l.id) {
             let hs = Renderer.layerHalfSize(l, time: t0)
             let sc = l.transform.scale.value(at: t0) * 0.01
             let ex = Vec2(max(2, hs.x * abs(sc.x)), max(2, hs.y * abs(sc.y)))
@@ -304,13 +309,15 @@ extension EditorState {
             var v0 = Vec2.zero, w0 = 0.0
             if settings.keepMotion, !isStatic {
                 let h = 1 / max(project.fps, 1)
-                v0 = (l.transform.position.value(at: t0) - l.transform.position.value(at: t0 - h)) * (1 / h)
-                w0 = (l.transform.rotation.value(at: t0) - l.transform.rotation.value(at: t0 - h)) / h
+                let prev = worldPrev.layers.first { $0.id == l.id } ?? l
+                v0 = (l.transform.position.value(at: t0) - prev.transform.position.value(at: t0 - h)) * (1 / h)
+                w0 = (l.transform.rotation.value(at: t0) - prev.transform.rotation.value(at: t0 - h)) / h
             }
             bodies.append(.init(id: l.id, p: center, v: v0, angle: l.transform.rotation.value(at: t0),
                                 w: w0, r: r, invMass: isStatic ? 0 : 1, isStatic: isStatic, shape: shape))
         }
         let result = PhysicsLab.simulate(bodies, width: Double(project.width), height: Double(project.height), settings: settings, fps: project.fps)
+        let source = project
         mutate("Bake Physics") { p in
             for (id, samples) in result where dynamicIDs.contains(id) {
                 guard let i = p.layers.firstIndex(where: { $0.id == id }) else { continue }
@@ -318,16 +325,29 @@ extension EditorState {
                 pos.keyframes.removeAll { $0.time >= t0 - 1e-6 && $0.time <= t0 + settings.duration + 1e-6 }
                 rot.keyframes.removeAll { $0.time >= t0 - 1e-6 && $0.time <= t0 + settings.duration + 1e-6 }
                 let ac = anchors[id] ?? (Vec2.zero, Vec2(1, 1))
-                for s in samples where t0 + s.time <= p.duration {
+                let parentID = p.layers[i].parentID
+                // Every simulated frame is kept (results past the comp's end used to be dropped, cutting the motion).
+                for s in samples {
                     let a = s.rotation * .pi / 180, off = Vec2(ac.anchor.x * ac.scale.x, ac.anchor.y * ac.scale.y)
-                    let position = s.position + Vec2(off.x * cos(a) - off.y * sin(a), off.x * sin(a) + off.y * cos(a))
-                    pos.insertKeyframe(Keyframe(time: p.snapToFrame(t0 + s.time), value: position, interpolation: .linear))
-                    rot.insertKeyframe(Keyframe(time: p.snapToFrame(t0 + s.time), value: s.rotation, interpolation: .linear))
+                    let world = s.position + Vec2(off.x * cos(a) - off.y * sin(a), off.x * sin(a) + off.y * cos(a))
+                    let time = p.snapToFrame(t0 + s.time)
+                    let local = Self.physicsLocal(world: world, rotation: s.rotation, parent: parentID, in: source, time: time)
+                    pos.insertKeyframe(Keyframe(time: time, value: local.position, interpolation: .linear))
+                    rot.insertKeyframe(Keyframe(time: time, value: local.rotation, interpolation: .linear))
                 }
                 p.layers[i].transform.position = pos
                 p.layers[i].transform.rotation = rot
             }
         }
+    }
+
+    /// Comp-space body pose -> the layer's own position / rotation (in its parent's space at `time`).
+    nonisolated static func physicsLocal(world: Vec2, rotation: Double, parent: UUID?, in p: Project, time: Double) -> (position: Vec2, rotation: Double) {
+        guard let pid = parent, let a = Renderer.parentAffine(pid, in: p, time: time), abs(a.m.determinant) > 1e-12 else {
+            return (world, rotation)
+        }
+        let q = a.m.inverse * SIMD3(world.x, world.y, 1)
+        return (Vec2(q.x, q.y), rotation - a.rot)
     }
 
     func addModelLayer(text: String?, fileURL: URL?) {

@@ -26,7 +26,7 @@ struct ModelPanel: View {
                             slider("Extrude", o.extrusion, 1...400) { v in cont { $0.extrusion = v } }
                             slider("Bevel", o.chamfer, 0...60) { v in cont { $0.chamfer = v } }
                             AWIColorWell("Color", selection: Binding(get: { Color(o.color.value(at: t)) }, set: { c in
-                                edit("3D Color") { $0.color.set(c.rgba, at: t) }
+                                state.coalescedEdit("3D Color") { l in if l.model3D != nil { l.model3D!.color.set(c.rgba, at: t) } }
                             })).foregroundStyle(Theme.text)
                             slider("Metal", o.metalness, 0...1) { v in cont { $0.metalness = v } }
                             slider("Roughness", o.roughness, 0...1) { v in cont { $0.roughness = v } }
@@ -42,7 +42,7 @@ struct ModelPanel: View {
                                 .tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13))
                             if o.overrideMaterial == true {
                                 AWIColorWell("Color", selection: Binding(get: { Color(o.color.value(at: t)) }, set: { c in
-                                    edit("3D Color") { $0.color.set(c.rgba, at: t) }
+                                    state.coalescedEdit("3D Color") { l in if l.model3D != nil { l.model3D!.color.set(c.rgba, at: t) } }
                                 })).foregroundStyle(Theme.text)
                                 slider("Metal", o.metalness, 0...1) { v in cont { $0.metalness = v } }
                                 slider("Roughness", o.roughness, 0...1) { v in cont { $0.roughness = v } }

@@ -19,16 +19,23 @@ extension EditorState {
 
     /// Comp point -> the selected layer's local px (where its pixels are, before the puppet warp).
     func layerLocal(fromComp c: Vec2) -> Vec2? {
-        guard let id = selectedLayerID, let l = displayProject.layers.first(where: { $0.id == id }) else { return nil }
-        let M = Renderer.placementMatrix(l, camera: Renderer.activeCamera(project, time: currentTime), time: currentTime, renderScale: 1)
+        guard let id = selectedLayerID, let M = displayPlacement(of: id) else { return nil }
         let h = M.inverse * SIMD3(c.x, c.y, 1)
         guard abs(h.z) > 1e-9 else { return nil }
         return Vec2(h.x / h.z, h.y / h.z)
     }
 
+    /// Local -> canvas placement of a layer as it is drawn: parenting, 3D and the camera of the current view
+    /// (free view has none), so taps and handles line up with the picture.
+    func displayPlacement(of id: UUID) -> simd_double3x3? {
+        let view = canvasViewProject(project)
+        guard let l = Renderer.resolveParenting(view, time: currentTime).layers.first(where: { $0.id == id }) else { return nil }
+        let M = Renderer.placementMatrix(l, camera: Renderer.activeCamera(view, time: currentTime), time: currentTime, renderScale: 1)
+        return abs(M.determinant) > 1e-12 ? M : nil
+    }
+
     func compPoint(fromLocal p: Vec2) -> Vec2? {
-        guard let id = selectedLayerID, let l = displayProject.layers.first(where: { $0.id == id }) else { return nil }
-        let M = Renderer.placementMatrix(l, camera: Renderer.activeCamera(project, time: currentTime), time: currentTime, renderScale: 1)
+        guard let id = selectedLayerID, let M = displayPlacement(of: id) else { return nil }
         let h = M * SIMD3(p.x, p.y, 1)
         guard abs(h.z) > 1e-9 else { return nil }
         return Vec2(h.x / h.z, h.y / h.z)
@@ -273,20 +280,44 @@ struct MaskPointsOverlay: View {
     var body: some View {
         let s = fit.width / CGFloat(max(state.project.width, 1))
         Canvas { ctx, _ in
-            guard let l = state.selectedLayer else { return }
+            guard let l = state.selectedLayer, let id = state.selectedLayerID, let M = state.displayPlacement(of: id) else { return }
+            func toScreen(_ v: Vec2) -> CGPoint { CGPoint(x: fit.minX + CGFloat(v.x) * s, y: fit.minY + CGFloat(v.y) * s) }
+            let project: (Vec2) -> Vec2? = { LayerPlacement.projected($0, by: M) }
             for m in l.masks {
-                let pts = m.path.value(at: state.currentTime).vertices.compactMap { state.compPoint(fromLocal: $0.point) }
-                    .map { CGPoint(x: fit.minX + CGFloat($0.x) * s, y: fit.minY + CGFloat($0.y) * s) }
-                guard pts.count > 1 else { continue }
-                var outline = Path(); outline.addLines(pts); outline.closeSubpath()
+                let path = m.path.value(at: state.currentTime)
+                let pts = path.vertices.compactMap { project($0.point) }.map(toScreen)
+                // The outline follows the mask's curves (sampled through the layer's placement, so 3D is right too).
+                let curve = Self.outline(path, project: project).map(toScreen)
+                guard curve.count > 1 else { continue }
+                var outline = Path(); outline.addLines(curve); if path.closed { outline.closeSubpath() }
                 ctx.stroke(outline, with: .color(m.effectsOnly ? Theme.warning : Theme.accentGlow), style: StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
                 for p in pts {
-                    let r: CGFloat = 7
+                    // Small squares: they must not hide the layer's transform handles.
+                    let r: CGFloat = 5
                     ctx.fill(Path(CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2)), with: .color(.white))
                     ctx.stroke(Path(CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2)), with: .color(.black), lineWidth: 1.5)
                 }
             }
         }
         .allowsHitTesting(false)
+    }
+
+    /// Mask path sampled along its bezier segments (local px -> `project`), closing back to the first point.
+    static func outline(_ path: BezierPath, project: (Vec2) -> Vec2?, steps: Int = 16) -> [Vec2] {
+        let v = path.vertices
+        guard v.count > 1 else { return v.compactMap { project($0.point) } }
+        var out: [Vec2] = []
+        let segments = path.closed ? v.count : v.count - 1
+        for i in 0..<segments {
+            let a = v[i], b = v[(i + 1) % v.count]
+            let p0 = a.point, p1 = a.point + a.outTangent, p2 = b.point + b.inTangent, p3 = b.point
+            for k in 0..<steps {
+                let t = Double(k) / Double(steps), u = 1 - t
+                let q = p0 * (u * u * u) + p1 * (3 * u * u * t) + p2 * (3 * u * t * t) + p3 * (t * t * t)
+                if let w = project(q) { out.append(w) }
+            }
+        }
+        if !path.closed, let last = v.last, let w = project(last.point) { out.append(w) }
+        return out
     }
 }

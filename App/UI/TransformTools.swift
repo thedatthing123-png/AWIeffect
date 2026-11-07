@@ -6,6 +6,13 @@ import SwiftUI
 struct TransformPanel: View {
     @ObservedObject var state: EditorState
     @State private var showVelocity = false
+    /// Position tool: the Z field is the active one (its background is lit), so the diamond keys Z.
+    @State private var positionAxisZ = false
+
+    /// The property the keyframe diamond keys for a tool (the active Z field keys Z, not X/Y).
+    static func diamondKey(tool: Tool, axisZ: Bool) -> PropertyKey? {
+        tool == .position && axisZ ? .positionZ : tool.key
+    }
 
     enum Tool: String, CaseIterable, Identifiable {
         case position = "Position", depth = "Z", rotation = "Rotate", scale = "Scale", opacity = "Opacity", anchor = "Anchor", link = "Link"
@@ -55,7 +62,7 @@ struct TransformPanel: View {
                     leftRail
                     LiveReader(live: state.live) { lp in
                         if let l = (lp ?? state.project).layers.first(where: { $0.id == state.selectedLayerID }) {
-                            TransformToolBody(state: state, layer: l, tool: tool)
+                            TransformToolBody(state: state, layer: l, tool: tool, positionAxisZ: $positionAxisZ)
                         }
                     }
                     .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity)
@@ -71,7 +78,7 @@ struct TransformPanel: View {
     /// Keyframe + graph, always in the same spot.
     private var leftRail: some View {
         VStack(spacing: 10) {
-            if let key = tool.key {
+            if let key = Self.diamondKey(tool: tool, axisZ: positionAxisZ) {
                 KeyframeDiamond(filled: state.hasKeyframe(key), animated: state.isAnimated(key)) { state.toggleKeyframe(key) }
                     .frame(width: 40, height: 36)
             }
@@ -128,7 +135,7 @@ struct TransformToolBody: View {
     let layer: Layer
     let tool: TransformPanel.Tool
     @State private var rawPadPosition: Vec2?
-    @State private var positionAxisZ = false
+    @Binding var positionAxisZ: Bool
 
     private var t: Double { state.currentTime }
     private var compW: Double { Double(state.project.width) }
@@ -253,10 +260,25 @@ struct TransformToolBody: View {
     }
 
     private func scaleBy(dx: Double, dy: Double) {
+        let linked = state.scaleLinked
         state.mutateLayer { l in
             let s = l.transform.scale.value(at: t)
-            l.transform.scale.set(Vec2(((s.x + dx) * 10).rounded() / 10, ((s.y + dy) * 10).rounded() / 10), at: t)
+            l.transform.scale.set(Self.scaled(s, dx: dx, dy: dy, linked: linked), at: t)
         }
+    }
+
+    /// Ruler step on scale. Linked keeps the aspect ratio (both sides grow by the same factor, driven by the strip's
+    /// own axis); adding the same percent to both used to distort non-uniform scales.
+    static func scaled(_ s: Vec2, dx: Double, dy: Double, linked: Bool) -> Vec2 {
+        func r(_ v: Double) -> Double { (v * 10).rounded() / 10 }
+        guard linked else { return Vec2(r(s.x + dx), r(s.y + dy)) }
+        // The strip that moved drives (Width strip -> x, Height strip -> y).
+        let useX = abs(dx) >= abs(dy)
+        let base = useX ? s.x : s.y, d = useX ? dx : dy
+        guard abs(base) > 1e-6 else { return Vec2(r(s.x + d), r(s.y + d)) }
+        let k = (base + d) / base
+        // Not rounded: per-step rounding would slowly drift the ratio.
+        return Vec2(s.x * k, s.y * k)
     }
 
     private func edit(_ label: String, _ change: (inout Layer) -> Void) {

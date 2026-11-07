@@ -13,9 +13,30 @@ struct IKRig: Codable, Equatable {
     var l2: Double
     var rest1: Double
     var rest2: Double
+    /// IK / FK blend 0...1 (nil = 1, full IK). Below 1 the limb's own rotation keys mix back in.
+    var blend: Double? = nil
 }
 
 enum IKSolver {
+    /// Every layer linked (directly or down the chain) under `id`.
+    static func descendants(of id: UUID, in p: Project) -> Set<UUID> {
+        var out = Set<UUID>(), frontier = [id]
+        while let cur = frontier.popLast() {
+            for l in p.layers where l.parentID == cur && !out.contains(l.id) && l.id != id {
+                out.insert(l.id); frontier.append(l.id)
+            }
+        }
+        return out
+    }
+
+    /// FK rotation mixed toward the IK one (shortest way round), `w` 0 = FK, 1 = IK.
+    static func blendAngle(fk: Double, ik: Double, w: Double) -> Double {
+        let w = min(1, max(0, w.isFinite ? w : 1))
+        var d = (ik - fk).truncatingRemainder(dividingBy: 360)
+        if d > 180 { d -= 360 } else if d < -180 { d += 360 }
+        return fk + d * w
+    }
+
     /// World (comp) position and rotation of a layer's pivot this frame, through its parent chain.
     private static func world(_ l: Layer, in p: Project, time: Double) -> (pos: Vec2, rot: Double) {
         let local = l.transform.position.value(at: time), r = l.transform.rotation.value(at: time)
@@ -66,8 +87,11 @@ enum IKSolver {
             let upperWorld = a1 * 180 / .pi - rig.rest1
             let lowerWorld = a2 * 180 / .pi - rig.rest2
             guard upperWorld.isFinite, lowerWorld.isFinite else { continue }
-            q.layers[ui].transform.rotation = Animated(upperWorld - parentRot)
-            q.layers[li].transform.rotation = Animated(lowerWorld - upperWorld)
+            // FK/IK blend: at 100 % the solve wins; below that the limbs' own rotation keys show through.
+            let w = rig.blend ?? 1
+            let fkUpper = upper.transform.rotation.value(at: time), fkLower = q.layers[li].transform.rotation.value(at: time)
+            q.layers[ui].transform.rotation = Animated(blendAngle(fk: fkUpper, ik: upperWorld - parentRot, w: w))
+            q.layers[li].transform.rotation = Animated(blendAngle(fk: fkLower, ik: lowerWorld - upperWorld, w: w))
         }
         return q
     }
@@ -77,7 +101,10 @@ extension EditorState {
     /// Rigs the selected layer as the lower limb: `upper` must be its parent; the controller sits at the limb's tip.
     /// Makes a controller null at the tip when none is given.
     func makeIK(upper: UUID, controller: UUID?) {
-        guard let lower = selectedLayer else { return }
+        guard let lower = selectedLayer, upper != lower.id else { return }
+        // No link loops: the upper limb (and the controller) can't hang under the lower limb.
+        let below = IKSolver.descendants(of: lower.id, in: project)
+        guard !below.contains(upper), controller.map({ $0 != lower.id && !below.contains($0) }) ?? true else { return }
         let t = currentTime
         let disp = displayProject
         guard let up = disp.layers.first(where: { $0.id == upper }), let lo = disp.layers.first(where: { $0.id == lower.id }) else { return }
@@ -92,17 +119,16 @@ extension EditorState {
         let rest1 = atan2(e.y - s.y, e.x - s.x) * 180 / .pi - up.transform.rotation.value(at: t)
         let rest2 = atan2(tip.y - e.y, tip.x - e.x) * 180 / .pi - lo.transform.rotation.value(at: t)
         var ctrlID = controller ?? UUID()
+        // One undo step: the link and the rig.
+        let ownsEdit = !editGroupOpen
+        if ownsEdit { beginEdit("Make IK") }
+        defer { if ownsEdit { endEdit() } }
+        // The lower limb follows the upper one. Linking converts every keyframe (it used to replace them).
+        if lower.parentID != upper {
+            setParent(upper)
+            guard project.layers.first(where: { $0.id == lower.id })?.parentID == upper else { return }
+        }
         mutate("Make IK") { p in
-            guard let li = p.layers.firstIndex(where: { $0.id == lower.id }) else { return }
-            // The lower limb follows the upper one.
-            if p.layers[li].parentID != upper, let ui = p.layers.firstIndex(where: { $0.id == upper }) {
-                let upW = Renderer.resolveParenting(p, time: t).layers[ui]
-                let inv = Renderer.layerMatrix(upW, time: t, renderScale: 1).inverse
-                let local = inv * SIMD3(e.x, e.y, 1)
-                p.layers[li].parentID = upper
-                p.layers[li].transform.position = Animated(Vec2(local.x, local.y))
-                p.layers[li].transform.rotation = Animated(lo.transform.rotation.value(at: t) - upW.transform.rotation.value(at: t))
-            }
             if controller == nil {
                 var n = p.makeLayer(name: "\(lower.name) Controller", content: .solid, size: Vec2(40, 40))
                 n.isNull = true
@@ -150,6 +176,18 @@ struct RigPanel: View {
                             }))
                             .tint(Theme.accent).foregroundStyle(Theme.text)
                             HStack {
+                                Text("IK / FK").font(.system(size: 13)).foregroundStyle(Theme.text)
+                                Slider(value: Binding(get: { (rig.blend ?? 1) * 100 }, set: { v in
+                                    state.mutate("IK Blend") { p in if let i = state.selectedIndex { p.layers[i].ik?.blend = min(1, max(0, v / 100)) } }
+                                }), in: 0...100, onEditingChanged: { editing in
+                                    if editing { state.beginPanelGesture("IK Blend") } else { state.endPanelGesture() }
+                                })
+                                .tint(Theme.accent)
+                                Text("\(Int(((rig.blend ?? 1) * 100).rounded()))% IK").font(.system(size: 12, weight: .semibold).monospacedDigit())
+                                    .foregroundStyle(Theme.textDim).frame(width: 64, alignment: .trailing)
+                            }
+                            .frame(minHeight: 44)
+                            HStack {
                                 Button("Select Controller") { state.select(rig.controllerID) }
                                 Spacer()
                                 Button("Remove IK", role: .destructive) { state.removeIK() }
@@ -173,7 +211,9 @@ struct RigPanel: View {
     }
 
     private func picker(_ title: String, selection: Binding<UUID?>, exclude: UUID) -> some View {
-        let options = state.project.layers.filter { $0.id != exclude && $0.content != .camera && $0.content != .light && !$0.isAudioOnly }
+        // Layers under the lower limb would make a link loop: never offer them.
+        let below = IKSolver.descendants(of: exclude, in: state.project)
+        let options = state.project.layers.filter { $0.id != exclude && !below.contains($0.id) && $0.content != .camera && $0.content != .light && !$0.isAudioOnly }
         return HStack {
             Text(title).font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 130, alignment: .leading)
             Menu {

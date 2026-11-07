@@ -22,6 +22,11 @@ extension EffectRegistry {
         .number("r25", "Red Shadows", 25, 0, 100), .number("r50", "Red Mids", 50, 0, 100), .number("r75", "Red Highs", 75, 0, 100),
         .number("g25", "Green Shadows", 25, 0, 100), .number("g50", "Green Mids", 50, 0, 100), .number("g75", "Green Highs", 75, 0, 100),
         .number("b25", "Blue Shadows", 25, 0, 100), .number("b50", "Blue Mids", 50, 0, 100), .number("b75", "Blue Highs", 75, 0, 100),
+        // Curve point input positions (drag a point sideways); kept in order.
+        .number("m25x", "Curve Shadows Input", 25, 2, 94), .number("m50x", "Curve Mids Input", 50, 4, 96), .number("m75x", "Curve Highs Input", 75, 6, 98),
+        .number("r25x", "Red Shadows Input", 25, 2, 94), .number("r50x", "Red Mids Input", 50, 4, 96), .number("r75x", "Red Highs Input", 75, 6, 98),
+        .number("g25x", "Green Shadows Input", 25, 2, 94), .number("g50x", "Green Mids Input", 50, 4, 96), .number("g75x", "Green Highs Input", 75, 6, 98),
+        .number("b25x", "Blue Shadows Input", 25, 2, 94), .number("b50x", "Blue Mids Input", 50, 4, 96), .number("b75x", "Blue Highs Input", 75, 6, 98),
         .number("hslHue", "HSL Target Hue", 0, 0, 360, unit: "°"),
         .number("hslRange", "HSL Range", 30, 5, 180, unit: "°"),
         .number("hslShift", "HSL Hue Shift", 0, -180, 180, unit: "°"),
@@ -64,29 +69,56 @@ enum GradeCurves {
     private static let lock = NSLock()
 
     /// Smooth monotone curve through (0, black), (.25, a), (.5, b), (.75, c), (1, white).
-    static func curve(_ pts: [Double]) -> [Double] {
-        let xs = [0, 0.25, 0.5, 0.75, 1.0]
+    static func curve(_ pts: [Double]) -> [Double] { curve(xs: [0, 0.25, 0.5, 0.75, 1.0], ys: pts) }
+
+    /// Smooth curve through 5 points whose inner x positions can move (kept in order). Non-uniform Catmull-Rom:
+    /// with evenly spaced points it is exactly the original curve.
+    static func curve(xs rawXs: [Double], ys pts: [Double]) -> [Double] {
+        guard pts.count == 5 else { return (0..<256).map { Double($0) / 255 } }
+        let xs = orderedXs(rawXs)
+        // Virtual outer neighbours keep the end tangents the same as the even-spaced version.
+        func x(_ i: Int) -> Double { i < 0 ? 2 * xs[0] - xs[1] : i > 4 ? 2 * xs[4] - xs[3] : xs[i] }
+        func p(_ i: Int) -> Double { pts[min(4, max(0, i))] }
         return (0..<256).map { i in
-            let x = Double(i) / 255
-            let k = min(3, Int(x * 4))
-            let t = (x - xs[k]) / 0.25
-            // Catmull-Rom between neighbours, clamped (keeps it smooth without overshoot at the ends).
-            let p0 = pts[max(0, k - 1)], p1 = pts[k], p2 = pts[k + 1], p3 = pts[min(4, k + 2)]
-            let v = 0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t + (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t)
+            let xv = Double(i) / 255
+            var k = 0
+            while k < 3 && xv > xs[k + 1] { k += 1 }
+            let dx = max(1e-6, xs[k + 1] - xs[k])
+            let t = min(1, max(0, (xv - xs[k]) / dx))
+            let m1 = (p(k + 1) - p(k - 1)) / max(1e-6, x(k + 1) - x(k - 1)) * dx
+            let m2 = (p(k + 2) - p(k)) / max(1e-6, x(k + 2) - x(k)) * dx
+            let t2 = t * t, t3 = t2 * t
+            let v = (2 * t3 - 3 * t2 + 1) * p(k) + (t3 - 2 * t2 + t) * m1 + (-2 * t3 + 3 * t2) * p(k + 1) + (t3 - t2) * m2
             return min(1, max(0, v))
         }
     }
 
-    static func texture(_ e: EffectInstance, _ t: Double, device: MTLDevice) -> MTLTexture? {
+    /// Ends pinned at 0 / 1; inner points keep their order with a small gap.
+    static func orderedXs(_ xs: [Double]) -> [Double] {
+        guard xs.count == 5 else { return [0, 0.25, 0.5, 0.75, 1.0] }
+        var o = xs.map { $0.isFinite ? $0 : 0.5 }
+        o[0] = 0; o[4] = 1
+        let gap = 0.02
+        for i in 1...3 { o[i] = min(1 - gap * Double(4 - i), max(o[i - 1] + gap, o[i])) }
+        return o
+    }
+
+    /// Curve points (x, y in 0...1) of a channel ("m", "r", "g", "b"). X positions default to 25 / 50 / 75 %
+    /// (older grades have no x controls).
+    static func points(_ e: EffectInstance, _ t: Double, channel c: String) -> (xs: [Double], ys: [Double]) {
         func n(_ k: String, _ d: Double) -> Double { (e.params[k]?.number(at: t) ?? d) / 100 }
-        let black = n("mBlack", 0), white = n("mWhite", 100)
-        let master = [black, n("m25", 25), n("m50", 50), n("m75", 75), white]
-        let r = [0, n("r25", 25), n("r50", 50), n("r75", 75), 1], g = [0, n("g25", 25), n("g50", 50), n("g75", 75), 1]
-        let b = [0, n("b25", 25), n("b50", 50), n("b75", 75), 1]
-        let key = (master + r + g + b).map { String(format: "%.4f", $0) }.joined(separator: ",")
+        let ys = c == "m" ? [n("mBlack", 0), n("m25", 25), n("m50", 50), n("m75", 75), n("mWhite", 100)]
+                          : [0, n(c + "25", 25), n(c + "50", 50), n(c + "75", 75), 1]
+        let xs = orderedXs([0, n(c + "25x", 25), n(c + "50x", 50), n(c + "75x", 75), 1])
+        return (xs, ys)
+    }
+
+    static func texture(_ e: EffectInstance, _ t: Double, device: MTLDevice) -> MTLTexture? {
+        let pm = points(e, t, channel: "m"), pr = points(e, t, channel: "r"), pg = points(e, t, channel: "g"), pb = points(e, t, channel: "b")
+        let key = (pm.xs + pm.ys + pr.xs + pr.ys + pg.xs + pg.ys + pb.xs + pb.ys).map { String(format: "%.4f", $0) }.joined(separator: ",")
         lock.lock(); defer { lock.unlock() }
         if let c = cache[key] { return c }
-        let m = curve(master), cr = curve(r), cg = curve(g), cb = curve(b)
+        let m = curve(xs: pm.xs, ys: pm.ys), cr = curve(xs: pr.xs, ys: pr.ys), cg = curve(xs: pg.xs, ys: pg.ys), cb = curve(xs: pb.xs, ys: pb.ys)
         func look(_ c: [Double], _ v: Double) -> Double { c[min(255, max(0, Int((v * 255).rounded())))] }
         var data = [Float16](repeating: 0, count: 256 * 4)
         for i in 0..<256 {

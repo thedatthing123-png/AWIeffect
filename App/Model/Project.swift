@@ -438,6 +438,8 @@ struct Project: Codable, Equatable, Identifiable {
     var detectedBeatTimes: [Double]? = nil
     /// Word-timed caption / lyric tracks (Captions Studio). Optional so older saves still decode.
     var captionTracks: [CaptionTrack]? = nil
+    /// CC Studio Looks saved with this project (travel with it on export / copy). nil in older projects.
+    var savedLooks: [String: EffectInstance]? = nil
     /// Scene motion blur (optional storage so older saves decode).
     var motionBlurOn: Bool? = nil
     /// Alight Motion-style length: the project is as long as its layers (grows/shrinks with them).

@@ -271,10 +271,74 @@ extension EditorState {
         default: t = currentTime
         }
         mutate("Preset \(p.name)") { proj in
-            var layer = proj.layers[i]
-            p.apply(&layer, proj, t)
-            proj.layers[i] = layer
+            proj.layers[i] = PresetLibrary.applying(p, to: proj.layers[i], project: proj, at: t)
         }
+    }
+}
+
+extension PresetLibrary {
+    /// Marks the effects a preset added (so applying it again replaces its own group instead of stacking).
+    static let presetTag = "preset"
+
+    /// Applies a preset as an editable group:
+    /// - applying the same preset again replaces what it added before (its effects and its keys), no duplicates;
+    /// - opacity keys are authored for 100 %, so they are scaled to the layer's own opacity (a 60 % layer fades
+    ///   0 → 60 %, it isn't forced to 100 %).
+    static func applying(_ p: LayerPreset, to original: Layer, project: Project, at t: Double) -> Layer {
+        var layer = original
+        // What the preset writes, measured on a clean copy (no keys, full opacity).
+        var probe = original
+        probe.effects = []
+        func clean<V: Interpolatable>(_ a: inout Animated<V>) { if a.isAnimated { a.staticValue = a.value(at: t); a.keyframes = [] } }
+        clean(&probe.transform.position); clean(&probe.transform.scale); clean(&probe.transform.rotation)
+        clean(&probe.transform.positionZ); clean(&probe.transform.rotationX); clean(&probe.transform.rotationY)
+        probe.transform.opacity = Animated(100)
+        p.apply(&probe, project, t)
+
+        // Already applied: its tagged effects are there, or (key-only presets) every key time it writes is keyed.
+        func hasAll<V: Interpolatable>(_ a: Animated<V>, _ written: Animated<V>) -> Bool {
+            written.keyframes.allSatisfy { w in a.keyframes.contains { abs($0.time - w.time) < 1e-6 } }
+        }
+        let tr = layer.transform, pt = probe.transform
+        let writtenCount = pt.position.keyframes.count + pt.scale.keyframes.count + pt.rotation.keyframes.count + pt.opacity.keyframes.count
+            + pt.positionZ.keyframes.count + pt.rotationX.keyframes.count + pt.rotationY.keyframes.count
+        let keysPresent = writtenCount >= 2 && hasAll(tr.position, pt.position) && hasAll(tr.scale, pt.scale) && hasAll(tr.rotation, pt.rotation)
+            && hasAll(tr.opacity, pt.opacity) && hasAll(tr.positionZ, pt.positionZ) && hasAll(tr.rotationX, pt.rotationX) && hasAll(tr.rotationY, pt.rotationY)
+        if layer.effects.contains(where: { $0.text?[presetTag] == p.id }) || keysPresent {
+            // Re-apply: drop the previous run's effects and the keys it set, so values don't compound.
+            layer.effects.removeAll { $0.text?[presetTag] == p.id }
+            let restIsFirst = p.kind == .transitionOut
+            func drop<V: Interpolatable>(_ a: inout Animated<V>, _ written: Animated<V>) {
+                let times = written.keyframes.map(\.time)
+                guard !times.isEmpty, a.isAnimated else { return }
+                let mine = a.keyframes.filter { k in times.contains { abs($0 - k.time) < 1e-6 } }
+                let keep = a.keyframes.filter { k in !times.contains { abs($0 - k.time) < 1e-6 } }
+                // Only the preset's keys: go back to the resting value it animated to / from.
+                if keep.isEmpty, let rest = restIsFirst ? mine.first : mine.last { a.staticValue = rest.value }
+                a.keyframes = keep
+            }
+            drop(&layer.transform.position, probe.transform.position); drop(&layer.transform.scale, probe.transform.scale)
+            drop(&layer.transform.rotation, probe.transform.rotation); drop(&layer.transform.opacity, probe.transform.opacity)
+            drop(&layer.transform.positionZ, probe.transform.positionZ)
+            drop(&layer.transform.rotationX, probe.transform.rotationX); drop(&layer.transform.rotationY, probe.transform.rotationY)
+        }
+        let userOpacity = layer.transform.opacity.value(at: t)
+        let before = layer.effects.count
+        p.apply(&layer, project, t)
+        // Tag the new effects as this preset's group.
+        for j in before..<layer.effects.count {
+            var tx = layer.effects[j].text ?? [:]
+            tx[presetTag] = p.id
+            layer.effects[j].text = tx
+        }
+        // Opacity on top of the layer's own opacity.
+        if !probe.transform.opacity.keyframes.isEmpty, abs(userOpacity - 100) > 1e-6 {
+            for var k in probe.transform.opacity.keyframes {
+                k.value = k.value * userOpacity / 100
+                layer.transform.opacity.insertKeyframe(k)
+            }
+        }
+        return layer
     }
 }
 
