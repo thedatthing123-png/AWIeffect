@@ -750,6 +750,10 @@ struct SelectionOverlay: View {
         let ap0 = M * SIMD3(anchor.x, anchor.y, 1)
         let ap = SIMD3(ap0.x / max(ap0.z, 1e-6), ap0.y / max(ap0.z, 1e-6), 1)
         let h = CanvasHandles.handles(layer, project: project, time: time, fit: fit)
+        // Small layers (short text, tiny shapes): lighter handles so the content stays visible.
+        let shortSide = min(hypot(corners[1].x - corners[0].x, corners[1].y - corners[0].y),
+                            hypot(corners[3].x - corners[0].x, corners[3].y - corners[0].y))
+        let compact = shortSide < 56
         ZStack {
             Path { path in
                 path.addLines(corners)
@@ -758,20 +762,24 @@ struct SelectionOverlay: View {
             .stroke(Theme.accentGlow, style: StrokeStyle(lineWidth: 1.2, dash: [5, 3]))
             Path { p in p.move(to: h.edges[0]); p.addLine(to: h.rotate) }.stroke(Theme.accentGlow.opacity(0.7), lineWidth: 1)
             ForEach(0..<4, id: \.self) { i in
-                Circle().fill(.white).frame(width: 11, height: 11)
-                    .overlay(Circle().stroke(Theme.accent, lineWidth: 1.5))
+                Circle().fill(.white).frame(width: compact ? 6 : 11, height: compact ? 6 : 11)
+                    .overlay(Circle().stroke(Theme.accent, lineWidth: compact ? 1 : 1.5))
                     .position(corners[i])
-                RoundedRectangle(cornerRadius: 2).fill(.white).frame(width: 9, height: 9)
-                    .overlay(RoundedRectangle(cornerRadius: 2).stroke(Theme.accent, lineWidth: 1.5))
-                    .position(h.edges[i])
+                if !compact {
+                    RoundedRectangle(cornerRadius: 2).fill(.white).frame(width: 9, height: 9)
+                        .overlay(RoundedRectangle(cornerRadius: 2).stroke(Theme.accent, lineWidth: 1.5))
+                        .position(h.edges[i])
+                }
             }
             Image(systemName: "arrow.clockwise.circle.fill").font(.system(size: 18, weight: .bold))
                 .foregroundStyle(.white, Theme.accent)
                 .position(h.rotate)
-            Image(systemName: tool == .pivot ? "scope" : "plus.circle")
-                .font(.system(size: tool == .pivot ? 22 : 14, weight: .bold))
-                .foregroundStyle(tool == .pivot ? Theme.warning : Theme.accentGlow)
-                .position(x: fit.minX + ap.x, y: fit.minY + ap.y)
+            if !compact || tool == .pivot {
+                Image(systemName: tool == .pivot ? "scope" : "plus.circle")
+                    .font(.system(size: tool == .pivot ? 22 : 14, weight: .bold))
+                    .foregroundStyle(tool == .pivot ? Theme.warning : Theme.accentGlow)
+                    .position(x: fit.minX + ap.x, y: fit.minY + ap.y)
+            }
         }
     }
 }
