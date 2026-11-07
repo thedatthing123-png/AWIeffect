@@ -4,7 +4,8 @@ import Foundation
 /// Every preset is built from ordinary animators (range / wiggly / wave selectors), so after applying one you can
 /// open the Animators section and tweak every part.
 enum TextPresetPack {
-    static let categories = ["In", "Out", "Loop", "Glitch", "Typewriter", "Kinetic", "Neon", "3D"]
+    /// Library categories (kept here for older call sites).
+    static var categories: [String] { TextPresetLibrary.categories }
 
     // MARK: Helpers
 
@@ -125,7 +126,7 @@ enum TextPresetPack {
             loop("wiggle", "Jitter", kind: .wiggly, freq: 6) { $0.position = Animated(Vec2(8, 8)) },
             loop("wiggleRot", "Shiver", kind: .wiggly, freq: 9) { $0.rotation = Animated(10) },
             loop("jelly", "Jelly", kind: .wiggly, freq: 3) { $0.scale = Animated(Vec2(125, 80)) },
-            loop("breathe", "Breathe (Words)", kind: .wave, freq: 0.6, spread: 2) { $0.scale = Animated(Vec2(112, 112)) },
+            loop("breathe", "Pulse Breathe", kind: .wave, freq: 0.6, spread: 2) { $0.scale = Animated(Vec2(112, 112)) },
             loop("colorWave", "Color Wave", kind: .wave, freq: 0.8, spread: 8) { $0.fill = Animated(RGBA(hex: 0x6CE7FF)) },
             loop("skewWave", "Lean Wave", kind: .wave, freq: 1.1, spread: 5) { $0.skew = Animated(18) },
         ]
@@ -137,7 +138,7 @@ enum TextPresetPack {
             burst("glitchCyan", "Cyan Glitch", cat: "Glitch", freq: 12, seed: 9, minAmount: 0) { $0.fill = Animated(RGBA(hex: 0x2FF6FF)); $0.position = Animated(Vec2(-18, 4)) },
             burst("glitchScramble", "Scramble Glitch", cat: "Glitch", freq: 14, minAmount: 0) { $0.characterOffset = Animated(30) },
             burst("glitchFlicker", "Flicker Glitch", cat: "Glitch", freq: 20, minAmount: 0) { $0.opacity = Animated(0) },
-            burst("glitchSlice", "Slice Glitch (Words)", cat: "Glitch", freq: 10, seed: 13) { $0.position = Animated(Vec2(60, 0)); $0.scale = Animated(Vec2(100, 60)) },
+            burst("glitchSlice", "Slice Glitch", cat: "Glitch", freq: 10, seed: 13) { $0.position = Animated(Vec2(60, 0)); $0.scale = Animated(Vec2(100, 60)) },
             burst("glitchBlur", "Smear Glitch", cat: "Glitch", freq: 11, minAmount: 0) { $0.blur = Animated(18); $0.position = Animated(Vec2(26, 0)) },
             loop("cursed", "Cursed Loop", kind: .wiggly, freq: 14, cat: "Glitch") { $0.position = Animated(Vec2(6, 3)); $0.skew = Animated(6) },
         ]

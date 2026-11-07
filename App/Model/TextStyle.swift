@@ -37,6 +37,8 @@ struct TextFillLayer: Codable, Equatable, Identifiable {
     var space: TextGradientSpace = .text
     /// Radial size as percent of the measured box (100 = reaches the corners).
     var radialScale: Animated<Double>? = nil
+    /// Preset group that owns this layer (Look presets); nil = the user's own.
+    var group: String? = nil
 
     init(kind: TextFillKind = .solid, colors: [RGBA] = [.white], angle: Double = 90, space: TextGradientSpace = .text) {
         self.kind = kind
@@ -70,6 +72,8 @@ struct TextStrokeLayer: Codable, Equatable, Identifiable {
     var position: TextStrokePosition = .outside
     var join: TextStrokeJoin = .round
     var opacity = Animated(100.0)
+    /// Preset group that owns this layer (Look presets); nil = the user's own.
+    var group: String? = nil
 
     init(color: RGBA = .black, width: Double = 6, position: TextStrokePosition = .outside) {
         self.color = Animated(color)
@@ -94,6 +98,8 @@ struct TextShadowLayer: Codable, Equatable, Identifiable {
     var angle = Animated(135.0)
     var distance = Animated(8.0)
     var blur = Animated(6.0)
+    /// Preset group that owns this layer (Look presets); nil = the user's own.
+    var group: String? = nil
 
     init(kind: TextShadowKind = .drop, color: RGBA = .black, distance: Double = 8, blur: Double = 6) {
         self.kind = kind
@@ -118,6 +124,8 @@ struct TextGlowLayer: Codable, Equatable {
     var intensity = Animated(100.0)
     /// Use each letter's own fill color (keeps hue like the light engine) instead of `color`.
     var useFillColor: Bool? = nil
+    /// Preset group that owns this glow (Look presets); nil = the user's own.
+    var group: String? = nil
 }
 
 struct TextStyleStack: Codable, Equatable {

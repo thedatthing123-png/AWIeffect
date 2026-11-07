@@ -114,7 +114,12 @@ extension TitleStyle {
         l.text!.colorSpans = []
         l.text!.tracking = Animated(tracking)
         if l.text!.fontSize < 40 || abs(l.text!.fontSize - 120) < 1 { l.text!.fontSize = size }
-        if let a = animation, let preset = TextPreset.library.first(where: { $0.id == a }) { l.text!.animators = preset.make(start, 1.0) }
+        // The title's animation joins as a preset group: the user's own animators stay, earlier preset groups go.
+        if let a = animation, let preset = TextPresetLibrary.animation(a) {
+            l.text!.animators.removeAll { $0.group != nil }
+            let length = TextPresetLibrary.defaultDuration(for: l, start: start)
+            TextPresetLibrary.applyPreset(preset, to: &l, start: start, duration: length)
+        }
         l.effects.removeAll { TitleStyles.styleEffectIDs.contains($0.typeID) }
         l.effects += makeEffects()
     }
