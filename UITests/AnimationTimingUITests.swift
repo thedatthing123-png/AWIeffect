@@ -28,6 +28,10 @@ final class AnimationTimingUITests: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 3))
         field.tap(); field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12) + "2\n")
         XCTAssertTrue(app.buttons["1.000s → 2.000s"].waitForExistence(timeout: 5))
+        // A graph node outside the clipped scroll viewport can still report isHittable.
+        // Bring the actual plot into view before sending a drag, rather than touching the timeline underneath it.
+        for _ in 0..<3 { scroll.swipeDown() }
+        save("remap-before-drag")
         let point = app.descendants(matching: .any)["Source key at 1.000 seconds"].firstMatch
         XCTAssertTrue(point.exists)
         for _ in 0..<4 { if point.isHittable { break }; scroll.swipeDown() }

@@ -208,7 +208,7 @@ struct PenOverlay: View {
                 }
             }
         }
-        .accessibilityElement(children: .contain).accessibilityIdentifier("pen-canvas")
+        .accessibilityElement(children: .ignore).accessibilityLabel("Pen canvas").accessibilityIdentifier("pen-canvas")
         .onAppear { session.fit = fit; loadShapePath() }
         .onChange(of: fit) { _, value in session.fit = value }
         }
