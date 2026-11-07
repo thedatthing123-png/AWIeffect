@@ -150,9 +150,11 @@ enum TextPresetStudio {
 
         // ---------- Typewriter ----------
         p("typeClean", "Typewriter Clean", "Typewriter") { s, d in
+            // Constant-speed typing with a 4% soft edge (the classic hard-cut one is "Typewriter").
             var sel = TextSelector()
-            sel.shape = .square
-            sel.start = kf([(s, 0.0), (s + d, 100.0)], interp: .linear)
+            sel.shape = .rampUp
+            sel.start = kf([(s, -4.0), (s + d, 100.0)], interp: .linear)
+            sel.end = kf([(s, 0.0), (s + d, 104.0)], interp: .linear)
             return [anim("Type", sel) { $0.opacity = Animated(0) }]
         },
         p("decode", "Decode", "Typewriter") { s, d in [

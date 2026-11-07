@@ -84,10 +84,14 @@ struct TextData: Codable, Equatable {
     var vertical: Bool? = nil
     /// Whole-text baseline shift, px (+ = up).
     var baselineShift: Animated<Double>? = nil
+    /// Real extruded 3D look (Part 4 materials); set by 3D Look presets. nil = flat text.
+    var text3D: Text3DOptions? = nil
+    /// Preset group (Look id) that set `text3D`; nil = set by the user.
+    var text3DGroup: String? = nil
 
     enum CodingKeys: String, CodingKey {
         case string, fontName, fontSize, fill, tracking, lineSpacing, alignment, colorSpans, animators, onPath, pathOffset
-        case counter, outline, spacingAnchor, style, charIDs, nextCharID, charStyles, boxWidth, autoFit, vertical, baselineShift
+        case counter, outline, spacingAnchor, style, charIDs, nextCharID, charStyles, boxWidth, autoFit, vertical, baselineShift, text3D, text3DGroup
     }
 
     /// The text as drawn at `time` (the counter's value when counting).
@@ -139,6 +143,8 @@ extension TextData {
         autoFit = try c.decodeIfPresent(Bool.self, forKey: .autoFit)
         vertical = try c.decodeIfPresent(Bool.self, forKey: .vertical)
         baselineShift = try c.decodeIfPresent(Animated<Double>.self, forKey: .baselineShift)
+        text3D = try c.decodeIfPresent(Text3DOptions.self, forKey: .text3D)
+        text3DGroup = try c.decodeIfPresent(String.self, forKey: .text3DGroup)
         // Older saves: give letters ids and move index / percent targets onto them. Counter text changes every
         // frame, so it keeps index targeting.
         if counter == nil { migrateToCharIDs() }
@@ -432,24 +438,11 @@ struct TextPreset: Identifiable {
     var category: String = "In"
     let make: (_ start: Double, _ duration: Double) -> [TextAnimator]
 
-    /// Category shown in the library (older built-ins are filed by what they do).
-    var shownCategory: String {
-        let legacy: [String: String] = [
-            "typewriter": "Typewriter", "typeOut": "Out", "decode": "Typewriter", "scramble": "Typewriter", "glitchDecode": "Glitch",
-            "wave": "Loop", "jelly": "Loop", "swingLetters": "Loop", "shakeLetters": "Loop", "rainbow": "Loop", "dreamy": "Loop", "karaoke": "Loop",
-            "glitch": "Glitch", "flicker": "Neon", "fadeOut": "Out", "fallOut": "Out", "shrinkOut": "Out",
-            "impactSlam": "Kinetic", "scalePop": "Kinetic", "zoomBig": "Kinetic", "wordPop": "Kinetic", "colorSweep": "Neon",
-        ]
-        return legacy[id] ?? category
-    }
+    /// Category shown in the library (TextPresetLibrary.categories). Older built-ins are refiled by what they do.
+    var shownCategory: String { TextPresetLibrary.libraryCategory(id: id, sourceCategory: category) }
 
-    /// Everything in the library: the built-ins plus the big pack.
-    /// Studio set first; the pack's near-duplicate "random" / "words" variants of the same move are left out.
-    static var library: [TextPreset] {
-        TextPresetStudio.all + TextPresets.all + TextPresetPack.all.filter { p in
-            !(p.id.hasPrefix("pack.in.") && p.id.split(separator: ".").count > 3)
-        }
-    }
+    /// Everything in the library (animation presets): unique names, every older id still resolves.
+    static var library: [TextPreset] { TextPresetLibrary.animations }
 }
 
 /// Counter / timer text (Alight Motion-style): a number that counts, or a clock that ticks.

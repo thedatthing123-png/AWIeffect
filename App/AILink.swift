@@ -211,6 +211,9 @@ final class AILink: ObservableObject {
                 return o
              }]
         }
+        var titleStyles: [[String: String]] = TitleStyles.all.map { ["id": $0.id, "name": $0.name, "category": $0.category, "kind": "title"] }
+        titleStyles += TextPresetLibrary.looks.map { ["id": $0.id, "name": $0.name, "category": $0.category, "kind": "look"] }
+        let textAnimations: [[String: String]] = TextPreset.library.map { ["id": $0.id, "name": $0.name, "category": $0.category, "kind": "animation"] }
         return [
             "effects": effects,
             "blendModes": BlendMode.allCases.map(\.rawValue),
@@ -218,8 +221,10 @@ final class AILink: ObservableObject {
             "trackMattes": TrackMatte.allCases.map(\.rawValue),
             "shapeKinds": ShapeKind.allCases.map(\.rawValue),
             "presets": PresetLibrary.all.map { ["id": $0.id, "name": $0.name, "kind": $0.kind.rawValue] },
-            "titleStyles": TitleStyles.all.map { ["id": $0.id, "name": $0.name, "category": $0.category] },
-            "textAnimations": TextPreset.library.map { ["id": $0.id, "name": $0.name] },
+            "titleStyles": titleStyles,
+            "textAnimations": textAnimations,
+            "textCategories": TextPresetLibrary.categories,
+            "lookCategories": TextPresetLibrary.lookCategories,
             "notes": "Edit by GET /project, change the JSON, PUT /project. Effects are {typeID, params}; params follow the catalog ranges.",
         ]
     }
