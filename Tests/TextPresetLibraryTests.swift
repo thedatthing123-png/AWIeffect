@@ -183,11 +183,13 @@ final class TextPresetLibraryTests: XCTestCase {
 
     func testPresetGroupsSurviveSaveAndOldTextStillDecodes() throws {
         var l = textLayer()
-        TextPresetLibrary.applyLook(try XCTUnwrap(TextPresetLibrary.look("look.3dChrome")), to: &l)
+        TextPresetLibrary.applyLook(TextLookPreset(id: "look.testChrome", name: "Test Chrome", category: "Test", font: nil,
+                                                   style: TextStyleStack(fills: [TextFillLayer(kind: .solid, colors: [RGBA(1, 1, 1)])]), effects: [], text3D: Text3DOptions(material: .chrome),
+                                                   tracking: nil), to: &l)
         TextPresetLibrary.applyPreset(try XCTUnwrap(TextPresetLibrary.animation("pack.3d.flipX")), to: &l, start: 0)
         let back = try JSONDecoder().decode(TextData.self, from: JSONEncoder().encode(l.text!))
-        XCTAssertEqual(back.text3DGroup, "look.3dChrome")
-        XCTAssertEqual(back.style?.fills.first?.group, "look.3dChrome")
+        XCTAssertEqual(back.text3DGroup, "look.testChrome")
+        XCTAssertEqual(back.style?.fills.first?.group, "look.testChrome")
         XCTAssertEqual(back.animators.first?.group, "pack.3d.flipX")
         let old = try JSONDecoder().decode(TextData.self, from: Data(#"{"string":"Hi"}"#.utf8))
         XCTAssertNil(old.text3D)

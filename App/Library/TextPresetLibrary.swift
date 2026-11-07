@@ -150,7 +150,8 @@ enum TextPresetLibrary {
         switch sourceCategory {
         case "Neon": return "Emphasis"
         case "3D": return "3D In"
-        default: return categories.contains(sourceCategory) ? sourceCategory : "In"
+        // allCategories, not categories: categories is computed from animations, which is being built right now.
+        default: return allCategories.contains(sourceCategory) ? sourceCategory : "In"
         }
     }
 
