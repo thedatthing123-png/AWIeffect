@@ -29,13 +29,24 @@ struct ExpressionSnippet: Identifiable {
 struct ExpressionSheet: View {
     @ObservedObject var state: EditorState
     let key: PropertyKey
+    @State private var current: PropertyKey?
     @State private var code = ""
+    @State private var liveError: String?
     @Environment(\.dismiss) private var dismiss
 
+    private var shownKey: PropertyKey { current ?? key }
+
     var body: some View {
+        let key = shownKey
         NavigationStack {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Expression · \(key.title)").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.textDim)
+                HStack(spacing: 8) {
+                    Text("Expression · \(state.selectedLayer?.name ?? "") · \(key.title)")
+                        .font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.textDim)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    pickWhip
+                }
                 TextEditor(text: $code)
                     .font(.system(size: 15, design: .monospaced))
                     .scrollContentBackground(.hidden)
@@ -44,9 +55,35 @@ struct ExpressionSheet: View {
                     .glass(radius: 12)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
-                if let err = state.expressionError(key), state.expression(key) != nil {
+                    .onChange(of: code) { _, c in liveError = state.validateExpression(key, code: c) }
+                if let err = liveError ?? (code == (state.expression(key) ?? "") ? state.expressionError(key) : nil) {
                     Label(err, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption).foregroundStyle(Theme.danger)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Label("Works at the playhead", systemImage: "checkmark.circle.fill").font(.caption).foregroundStyle(Theme.ok)
+                }
+                let others = state.expressionInventory()
+                if !others.isEmpty {
+                    Text("Expressions in this comp").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.textDim)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(others.indices, id: \.self) { n in
+                                let e = others[n]
+                                Button {
+                                    state.select(e.layerID)
+                                    current = e.key
+                                    code = state.expression(e.key) ?? ""
+                                    liveError = nil
+                                } label: {
+                                    Text("\(e.layerName) · \(e.key.title)").font(.system(size: 12, weight: .semibold))
+                                        .foregroundStyle(e.enabled ? Theme.text : Theme.textDim)
+                                        .padding(.horizontal, 12).frame(minHeight: 44).glass(radius: 10)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
                 }
                 Text("Library").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.textDim)
                 ScrollView {
@@ -83,5 +120,26 @@ struct ExpressionSheet: View {
             }
         }
         .onAppear { code = state.expression(key) ?? "" }
+    }
+
+    /// Pick-whip: choose another layer's property to insert a live reference to it.
+    private var pickWhip: some View {
+        Menu {
+            ForEach(state.project.layers.filter { $0.id != state.selectedLayerID }) { l in
+                Menu(l.name) {
+                    ForEach(ExpressionResolver.referenceProperties) { prop in
+                        Button(prop.title) {
+                            let ref = EditorState.expressionReference(layerName: l.name, property: prop)
+                            code = code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? ref : code + ref
+                        }
+                    }
+                }
+            }
+        } label: {
+            Label("Pick", systemImage: "scope").font(.system(size: 13, weight: .semibold))
+                .padding(.horizontal, 10).frame(minHeight: 44).glass(radius: 10)
+        }
+        .disabled(state.project.layers.count < 2)
+        .accessibilityLabel("Pick a property of another layer")
     }
 }

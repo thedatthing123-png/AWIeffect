@@ -6,7 +6,7 @@ extension EditorState {
     /// Snaps a time to frames, beat markers and the playhead.
     func snapTime(_ t: Double, tolerance: Double) -> Double {
         var best = t, dist = tolerance
-        for c in project.markers + [currentTime, 0, project.duration] where abs(c - t) < dist { best = c; dist = abs(c - t) }
+        for c in project.markers + namedMarkerTimes + [currentTime, 0, project.duration] where abs(c - t) < dist { best = c; dist = abs(c - t) }
         return project.snapToFrame(best)
     }
 

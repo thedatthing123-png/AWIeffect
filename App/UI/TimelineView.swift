@@ -26,10 +26,24 @@ struct TimelineView: View {
     @State private var keyDragTime: Double?
     @State private var liftLayer: UUID?
     @State private var liftOffset: CGFloat = 0
+    /// Clips moved together while several layers are selected.
+    @State private var multiOriginals: [Layer] = []
+    /// Layers twirled open (one lane per animated property under the row).
+    @State private var expanded: Set<UUID> = []
+    @State private var keySel: KeySelection?
+    @State private var selDragBase: KeySelection?
+    @State private var selDragOriginal: Layer?
+    @State private var stretchShown = 100.0
+    @State private var marquee: (layer: UUID, lane0: Int, t0: Double, lane1: Int, t1: Double)?
+    @State private var graphTarget: GraphTarget?
+    @State private var showMarkers = false
+    @State private var slipOriginal: Layer?
+    @AppStorage("awi.rulerFrames") private var rulerFrames = false
 
     private let rowHeight: CGFloat = 46
-    private let headerWidth: CGFloat = 60
-    private let rulerHeight: CGFloat = 26
+    private let laneHeight: CGFloat = 44
+    private let headerWidth: CGFloat = 132
+    private let rulerHeight: CGFloat = 44
 
     var body: some View {
         GeometryReader { geo in
@@ -40,10 +54,26 @@ struct TimelineView: View {
             ZStack(alignment: .topLeading) {
                 VStack(spacing: 0) {
                     HStack(spacing: 0) {
-                        Text(formatTimecode(clock.time, fps: state.project.fps)).accessibilityIdentifier("timeline-timecode")
-                            .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(Theme.accentGlow)
+                        Menu {
+                            Button { state.addMarker(onLayer: false) } label: { Label("Add Comp Marker", systemImage: "flag.fill") }
+                            if state.selectedLayer != nil {
+                                Button { state.addMarker(onLayer: true) } label: { Label("Add Layer Marker", systemImage: "flag") }
+                            }
+                            Button { showMarkers = true } label: { Label("Markers…", systemImage: "list.bullet") }
+                            Toggle("Frame Numbers", isOn: $rulerFrames)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text(rulerFrames ? "\(Int((clock.time * state.project.fps).rounded()))f" : formatTimecode(clock.time, fps: state.project.fps))
+                                    .accessibilityIdentifier("timeline-timecode")
+                                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                                    .foregroundStyle(Theme.accentGlow)
+                                Image(systemName: "chevron.down").font(.system(size: 9, weight: .bold)).foregroundStyle(Theme.textDim)
+                            }
                             .frame(width: headerWidth, height: rulerHeight)
+                            .contentShape(Rectangle())
+                        }
+                        .frame(width: headerWidth, height: rulerHeight)
+                        .accessibilityLabel("Ruler and markers")
                         ruler(width: trackWidth, offset: offset)
                             .frame(width: trackWidth, height: rulerHeight)
                             .gesture(TimelineHorizontalPan(
@@ -81,13 +111,16 @@ struct TimelineView: View {
                                 .offset(y: lifted ? liftOffset : 0)
                                 .zIndex(lifted ? 1 : 0)
                                 .animation(.interactiveSpring(response: 0.25, dampingFraction: 0.85), value: lifted)
+                                if !compact, expanded.contains(layer.id) {
+                                    lanes(layer, offset: offset, trackWidth: trackWidth)
+                                }
                             }
                         }
 
                     }
                     .frame(maxHeight: .infinity)
                     .accessibilityIdentifier("layer-timeline-scroll")
-                    .scrollDisabled(multiDragStart != nil || dragOriginal != nil)
+                    .scrollDisabled(multiDragStart != nil || dragOriginal != nil || marquee != nil || selDragOriginal != nil)
                 }
                 // Playhead.
                 Rectangle().fill(.white).frame(width: 1.5)
@@ -99,11 +132,11 @@ struct TimelineView: View {
                     Image(systemName: onBeat ? "diamond.fill" : "plus.diamond.fill")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(onBeat ? Theme.warning : .white)
-                        .frame(width: 34, height: rulerHeight)
+                        .frame(width: 44, height: rulerHeight)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .offset(x: headerWidth + playheadX - 17)
+                .offset(x: headerWidth + playheadX - 22)
                 .accessibilityLabel("Add beat marker")
             }
             .contentShape(Rectangle())
@@ -117,31 +150,172 @@ struct TimelineView: View {
             )
         }
         .background(Theme.surface)
-        .onDisappear { if dragOriginal != nil { dragOriginal = nil; state.endEdit() } }
+        .onDisappear {
+            if dragOriginal != nil || selDragOriginal != nil || slipOriginal != nil {
+                dragOriginal = nil; selDragOriginal = nil; slipOriginal = nil; state.endEdit()
+            }
+        }
+        .awiSheet(isPresented: Binding(get: { graphTarget != nil }, set: { if !$0 { graphTarget = nil } })) {
+            if let g = graphTarget { TimelineGraphSheet(state: state, target: g) }
+        }
+        .awiSheet(isPresented: $showMarkers) { TimelineMarkersSheet(state: state) }
+    }
+
+    // MARK: Property lanes
+
+    @ViewBuilder
+    private func lanes(_ layer: Layer, offset: CGFloat, trackWidth: CGFloat) -> some View {
+        let list = layer.propertyLanes()
+        ForEach(Array(list.enumerated()), id: \.element.id) { index, lane in
+            HStack(spacing: 0) {
+                Button { if lane.graphable { graphTarget = GraphTarget(layerID: layer.id, laneID: lane.id) } } label: {
+                    HStack(spacing: 4) {
+                        Text(lane.title).font(.system(size: 10, weight: .semibold)).foregroundStyle(Theme.text)
+                            .lineLimit(2).multilineTextAlignment(.leading).minimumScaleFactor(0.8)
+                        Spacer(minLength: 0)
+                        if lane.graphable {
+                            Image(systemName: "chart.xyaxis.line").font(.system(size: 10)).foregroundStyle(Theme.accentGlow)
+                        }
+                    }
+                    .padding(.leading, 14).padding(.trailing, 6)
+                    .frame(width: headerWidth, height: laneHeight, alignment: .leading)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .background(Theme.background.opacity(0.6))
+                .accessibilityLabel(lane.graphable ? "\(lane.title) graph" : lane.title)
+                laneTrack(layer, lane, index: index, lanes: list, offset: offset)
+                    .frame(width: trackWidth, height: laneHeight, alignment: .topLeading)
+                    .clipped()
+            }
+            .frame(height: laneHeight)
+            .accessibilityIdentifier("timeline-lane-\(lane.title)")
+        }
+        if let sel = keySel, sel.layerID == layer.id, !sel.isEmpty {
+            HStack(spacing: 8) {
+                Text("\(sel.count) keys").font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.textDim)
+                    .frame(width: headerWidth - 8, alignment: .leading).padding(.leading, 8)
+                ValueScrubber(value: stretchShown, range: 10...400, step: 1, unit: "%", onBegin: {
+                    selDragBase = keySel; selDragOriginal = state.project.layers.first { $0.id == layer.id }
+                    state.pause(); state.beginEdit("Stretch Keyframes")
+                }, onChange: { pct in
+                    stretchShown = pct
+                    guard let o = selDragOriginal, let base = selDragBase else { return }
+                    if let s = state.stretchKeySelection(of: o, base, factor: pct / 100) { keySel = s }
+                }, onEnd: {
+                    selDragBase = nil; selDragOriginal = nil; stretchShown = 100; state.endEdit()
+                })
+                .frame(height: 36)
+                .accessibilityLabel("Stretch keyframes")
+                Button {
+                    if let l = state.project.layers.first(where: { $0.id == layer.id }), let s = keySel,
+                       let r = state.reverseKeySelection(of: l, s) { keySel = r }
+                } label: {
+                    Image(systemName: "arrow.left.arrow.right").font(.system(size: 14, weight: .semibold))
+                        .frame(width: 44, height: 44).contentShape(Rectangle())
+                }
+                .accessibilityLabel("Reverse keyframes")
+                Button { keySel = nil } label: {
+                    Image(systemName: "xmark").font(.system(size: 13, weight: .semibold)).frame(width: 44, height: 44).contentShape(Rectangle())
+                }
+                .accessibilityLabel("Clear key selection")
+            }
+            .foregroundStyle(Theme.text)
+            .padding(.trailing, 6)
+            .frame(height: laneHeight)
+            .background(Theme.raised)
+        }
+    }
+
+    private func laneTrack(_ layer: Layer, _ lane: PropertyLane, index: Int, lanes: [PropertyLane], offset: CGFloat) -> some View {
+        let x = { (t: Double) in offset + CGFloat(t) * zoom }
+        return ZStack(alignment: .topLeading) {
+            Rectangle().fill(Color.white.opacity(index % 2 == 0 ? 0.03 : 0.015))
+            if let m = marquee, m.layer == layer.id, (min(m.lane0, m.lane1)...max(m.lane0, m.lane1)).contains(index) {
+                let a = x(min(m.t0, m.t1)), b = x(max(m.t0, m.t1))
+                Rectangle().fill(Theme.accent.opacity(0.22))
+                    .overlay(Rectangle().stroke(Theme.accentGlow, lineWidth: 1))
+                    .frame(width: max(1, b - a), height: laneHeight).offset(x: a)
+                    .allowsHitTesting(false)
+            }
+            ForEach(lane.times, id: \.self) { t in
+                let picked = keySel?.layerID == layer.id && keySel?.contains(lane.id, t) == true
+                Image(systemName: "diamond.fill")
+                    .font(.system(size: picked ? 14 : 11))
+                    .foregroundStyle(picked ? Theme.keyframe : .white.opacity(0.85))
+                    .shadow(color: .black.opacity(0.5), radius: 1)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+                    .position(x: x(t), y: laneHeight / 2)
+                    .onTapGesture {
+                        var s = (keySel?.layerID == layer.id ? keySel : nil) ?? KeySelection(layerID: layer.id)
+                        s.toggle(lane.id, t)
+                        keySel = s.isEmpty ? nil : s
+                    }
+                    .highPriorityGesture(laneKeyDrag(layer, lane, t))
+                    .accessibilityLabel("\(lane.title) key at \(String(format: "%.2f", t)) seconds\(picked ? ", selected" : "")")
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { keySel = nil }
+        .gesture(LongPressGesture(minimumDuration: 0.3).sequenced(before: DragGesture(minimumDistance: 0))
+            .onChanged { value in
+                guard case .second(true, let drag?) = value else { return }
+                let toT = { (px: CGFloat) in max(0, Double((px - offset) / zoom)) }
+                let lane1 = max(0, min(lanes.count - 1, index + Int(floor(drag.location.y / laneHeight))))
+                if marquee == nil { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
+                marquee = (layer.id, index, toT(drag.startLocation.x), lane1, toT(drag.location.x))
+                if let m = marquee {
+                    let s = KeySelection.marquee(layerID: layer.id, lanes: lanes, laneRange: min(m.lane0, m.lane1)...max(m.lane0, m.lane1), from: m.t0, to: m.t1)
+                    keySel = s.isEmpty ? nil : s
+                }
+            }
+            .onEnded { _ in marquee = nil })
+    }
+
+    /// Dragging a key moves the whole selection (an unselected key becomes the selection first).
+    private func laneKeyDrag(_ layer: Layer, _ lane: PropertyLane, _ t: Double) -> some Gesture {
+        DragGesture(minimumDistance: 3, coordinateSpace: .named("timeline"))
+            .onChanged { g in
+                if selDragOriginal == nil {
+                    guard let original = state.project.layers.first(where: { $0.id == layer.id }), !original.isLocked else { return }
+                    var s = keySel ?? KeySelection(layerID: layer.id)
+                    if s.layerID != layer.id || !s.contains(lane.id, t) { s = KeySelection(layerID: layer.id, keys: [lane.id: [t]]) }
+                    keySel = s; selDragBase = s; selDragOriginal = original
+                    state.pause(); state.beginEdit("Move Keyframes")
+                }
+                guard let o = selDragOriginal, let base = selDragBase, let earliest = base.allTimes.min() else { return }
+                let target = state.snapTime(earliest + Double(g.translation.width / zoom), tolerance: Double(8 / zoom))
+                if let moved = state.moveKeySelection(of: o, base, by: target - earliest) { keySel = moved }
+            }
+            .onEnded { _ in
+                guard selDragOriginal != nil else { return }
+                selDragOriginal = nil; selDragBase = nil; state.endEdit()
+            }
     }
 
     private func header(_ layer: Layer) -> some View {
-        HStack(spacing: 6) {
-            // Parts of a group get a colored bar so you can see what's inside it.
-            if let tag = state.groupMemberTag(of: layer) {
-                RoundedRectangle(cornerRadius: 1).fill(Theme.tagColor(tag)).frame(width: 3, height: rowHeight - 10)
-            }
-            Button { state.toggleVisibility(layer.id) } label: {
-                Image(systemName: layer.isVisible ? "eye" : "eye.slash")
-                    .font(.system(size: 11))
-                    .foregroundStyle(layer.isVisible ? Theme.textDim : Theme.textDim.opacity(0.4))
-                    .frame(width: 20, height: rowHeight)
-            }
-            .buttonStyle(.plain)
-            Image(systemName: state.multiSelection?.contains(layer.id) == true ? "checkmark.circle.fill" : (layer.isGroup ? "folder.fill" : layer.content.symbol))
-                .font(.system(size: 11))
-                .foregroundStyle(state.multiSelection?.contains(layer.id) == true ? Theme.accentGlow : Theme.tagColor(layer.tag))
-                .frame(width: 22, height: rowHeight)
-                .contentShape(Rectangle())
-
+        let inMulti = state.multiSelection?.contains(layer.id) == true
+        return HStack(spacing: 0) {
+            headerToggle(layer.isVisible ? "eye" : "eye.slash", on: layer.isVisible, tint: Theme.text,
+                         label: layer.isVisible ? "Hide Layer" : "Show Layer") { state.toggleVisibility(layer.id) }
+            headerToggle(layer.isLocked ? "lock.fill" : "lock.open", on: layer.isLocked, tint: Theme.warning,
+                         label: layer.isLocked ? "Unlock Layer" : "Lock Layer") { state.toggleLock(layer.id) }
+            headerToggle("s.circle\(layer.isSolo ? ".fill" : "")", on: layer.isSolo, tint: Theme.ok,
+                         label: layer.isSolo ? "Unsolo Layer" : "Solo Layer") { state.toggleSolo(layer.id) }
         }
         .frame(width: headerWidth, height: rowHeight, alignment: .leading)
-        .background(Theme.surface)
+        // Parts of a group get a colored bar so you can see what's inside it; the layer's own tag sits beside it.
+        .overlay(alignment: .leading) {
+            HStack(spacing: 1) {
+                if let tag = state.groupMemberTag(of: layer) {
+                    RoundedRectangle(cornerRadius: 1).fill(Theme.tagColor(tag)).frame(width: 3, height: rowHeight - 10)
+                }
+                RoundedRectangle(cornerRadius: 1).fill(inMulti ? Theme.accentGlow : Theme.tagColor(layer.tag)).frame(width: 3, height: rowHeight - 10)
+            }
+            .allowsHitTesting(false)
+        }
+        .background(inMulti ? Theme.accent.opacity(0.22) : Theme.surface)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("timeline-header-\(layer.name)")
         .accessibilityValue(state.multiSelection?.contains(layer.id) == true ? "Selected" : "Not selected")
@@ -156,6 +330,18 @@ struct TimelineView: View {
             }
             state.extendMultiSelect(toRow: index + Int((delta.y / rowHeight).rounded()))
         }, onEnd: { _ in multiDragStart = nil }))
+    }
+
+    private func headerToggle(_ icon: String, on: Bool, tint: Color, label: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon).font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(on ? tint : Theme.textDim.opacity(0.55))
+                .frame(width: 44, height: rowHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(state.isMultiSelecting)
+        .accessibilityLabel(label)
     }
 
     private func scrubHorizontal(_ translation: CGFloat) {
@@ -176,14 +362,14 @@ struct TimelineView: View {
         RulerCanvas(width: width, offset: offset, zoom: zoom, duration: state.project.duration, cache: PreviewCacheMonitor.shared) { ctx, size in
             let dur = state.project.duration
             // Choose a tick step that keeps labels readable.
-            let steps: [Double] = [0.1, 0.25, 0.5, 1, 2, 5, 10, 30, 60]
-            let step = steps.first { CGFloat($0) * zoom >= 60 } ?? 60
+            let fps = state.project.fps
+            let step = TimelineRuler.step(zoom: zoom, fps: fps, frames: rulerFrames)
             var t = 0.0
             while t <= dur + 1e-9 {
                 let x = offset + CGFloat(t) * zoom
                 if x >= -40 && x <= size.width + 40 {
                     ctx.fill(Path(CGRect(x: x, y: size.height - 8, width: 1, height: 8)), with: .color(Theme.textDim.opacity(0.6)))
-                    let label = step < 1 ? String(format: "%.2fs", t) : "\(Int(t))s"
+                    let label = TimelineRuler.label(t, step: step, fps: fps, frames: rulerFrames)
                     ctx.draw(Text(label).font(.system(size: 9, design: .monospaced)).foregroundColor(Theme.textDim),
                              at: CGPoint(x: x + 3, y: 8), anchor: .leading)
                 }
@@ -206,9 +392,31 @@ struct TimelineView: View {
                 tri.addLine(to: CGPoint(x: x, y: size.height - 2)); tri.closeSubpath()
                 ctx.fill(tri, with: .color(Theme.warning))
             }
+            // Named comp markers: colored flag with its name.
+            for m in state.project.compMarkers ?? [] {
+                let x = offset + CGFloat(m.time) * zoom
+                guard x >= -80, x <= size.width + 6 else { continue }
+                let c = Theme.tagColor(m.tag)
+                ctx.fill(Path(CGRect(x: x - 0.75, y: 0, width: 1.5, height: size.height)), with: .color(c))
+                var flag = Path()
+                flag.move(to: CGPoint(x: x, y: 2)); flag.addLine(to: CGPoint(x: x + 8, y: 6)); flag.addLine(to: CGPoint(x: x, y: 10)); flag.closeSubpath()
+                ctx.fill(flag, with: .color(c))
+                if !m.name.isEmpty {
+                    ctx.draw(Text(m.name).font(.system(size: 9, weight: .bold)).foregroundColor(c), at: CGPoint(x: x + 10, y: 6), anchor: .leading)
+                }
+            }
             // Comp end marker.
             let endX = offset + CGFloat(dur) * zoom
             ctx.fill(Path(CGRect(x: endX, y: 0, width: 2, height: size.height)), with: .color(Theme.danger.opacity(0.7)))
+        }
+        .overlay(alignment: .topLeading) {
+            // Tap a comp marker to rename / recolor / move / delete it.
+            ForEach(state.project.compMarkers ?? []) { m in
+                Color.clear.frame(width: 44, height: rulerHeight).contentShape(Rectangle())
+                    .position(x: offset + CGFloat(m.time) * zoom + 8, y: rulerHeight / 2)
+                    .onTapGesture { showMarkers = true }
+                    .accessibilityLabel("Marker \(m.name)")
+            }
         }
     }
 
@@ -225,13 +433,13 @@ struct TimelineView: View {
                 .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(selected ? Color.white : .clear, lineWidth: 1.5))
                 .overlay(alignment: .leading) {
                     HStack(spacing: 4) {
-                        if layer.isLocked { Image(systemName: "lock.fill").font(.system(size: 8)) }
-                        if layer.isSolo { Text("S").font(.system(size: 9, weight: .black)) }
+                        Image(systemName: state.multiSelection?.contains(layer.id) == true ? "checkmark.circle.fill" : (layer.isGroup ? "folder.fill" : layer.content.symbol))
+                            .font(.system(size: 10))
                         if layer.motionBlur { Image(systemName: "wind").font(.system(size: 8)) }
                         Text(layer.name).font(.system(size: 11, weight: .semibold)).lineLimit(1)
                     }
                     .foregroundStyle(.white)
-                    .padding(.leading, editable ? 16 : 8)
+                    .padding(.leading, (editable ? 24 : 8) + (canTwirl(layer) && w >= 120 ? 40 : 0))
                     .offset(x: max(0, -x0))
                     .allowsHitTesting(false)
                 }
@@ -250,9 +458,36 @@ struct TimelineView: View {
                 // Hold a clip to lift it: up / down reorders, sideways moves it in time (snaps to frames, beats, playhead).
 
                 .offset(x: x0, y: 4)
+            // Layer markers (they travel with the clip).
+            ForEach(layer.layerMarkers ?? []) { m in
+                let mx = x0 + CGFloat(m.time) * zoom
+                Rectangle().fill(Theme.tagColor(m.tag)).frame(width: 2, height: rowHeight - 8)
+                    .overlay(alignment: .topLeading) {
+                        Text(m.name).font(.system(size: 8, weight: .bold)).foregroundStyle(.white).fixedSize()
+                            .padding(.horizontal, 3).background(Theme.tagColor(m.tag)).offset(x: 2)
+                    }
+                    .offset(x: mx, y: 4).allowsHitTesting(false)
+            }
             if editable {
-                trimHandle(layer, start: true).offset(x: x0 - 13, y: 2)
-                trimHandle(layer, start: false).offset(x: x0 + max(w, 14) - 13, y: 2)
+                trimHandle(layer, start: true).offset(x: x0 - 22, y: 1)
+                trimHandle(layer, start: false).offset(x: x0 + max(w, 14) - 22, y: 1)
+                if layer.isMedia, layer.timeRemap == nil, w >= 170 { slipGrip(layer).offset(x: x0 + w / 2 - 22, y: 1) }
+            }
+            if canTwirl(layer) {
+                // Twirl: one lane per animated property opens under the row.
+                let open = expanded.contains(layer.id)
+                Button {
+                    if open { expanded.remove(layer.id) } else { expanded.insert(layer.id) }
+                    if keySel?.layerID == layer.id && open { keySel = nil }
+                } label: {
+                    Image(systemName: open ? "chevron.down" : "chevron.right").font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 40, height: rowHeight - 4)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .offset(x: w >= 120 ? max(x0, 0) + (editable ? 22 : 2) : x0 + w + 22, y: 2)
+                .accessibilityLabel(open ? "Close property lanes" : "Open property lanes")
             }
             // Open effects: each one's keys show in its own color and only those move; the rest fade back.
             let focused = editable ? state.keyframeFocusEffects.filter { id in layer.effects.contains { $0.id == id } } : []
@@ -285,7 +520,20 @@ struct TimelineView: View {
             if state.isMultiSelecting { state.toggleInMulti(layer.id) } else { state.openLayer(layer.id) }
         }
         .gesture(TimelineHold(onMove: { _, delta in
-                    guard !state.isMultiSelecting, !layer.isLocked else { return }
+                    // Several layers selected: holding one of them moves them all in time together.
+                    if let multi = state.multiSelection {
+                        guard multi.contains(layer.id) else { return }
+                        if multiOriginals.isEmpty {
+                            multiOriginals = state.project.timelineLayers.filter { multi.contains($0.id) && !$0.isLocked }
+                            guard !multiOriginals.isEmpty else { return }
+                            liftLayer = layer.id; state.pause(); state.beginEdit("Move Clips")
+                            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        }
+                        let start = multiOriginals.map(\.inPoint).min() ?? 0
+                        state.moveClips(multiOriginals, by: state.snapTime(start + Double(delta.x / zoom), tolerance: Double(8 / zoom)) - start)
+                        return
+                    }
+                    guard !layer.isLocked else { return }
                     if liftLayer == nil {
                         liftLayer = layer.id; dragOriginal = layer; state.pause(); state.beginEdit("Move Clip")
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -295,6 +543,8 @@ struct TimelineView: View {
                     let time = original.inPoint + Double(delta.x / zoom)
                     state.moveClip(original, by: state.snapTime(time, tolerance: Double(8 / zoom)) - original.inPoint)
                 }, onEnd: { delta in
+                    if !multiOriginals.isEmpty { multiOriginals = []; liftLayer = nil; state.endEdit(); return }
+                    guard dragOriginal != nil else { return }
                     defer { liftLayer = nil; liftOffset = 0; dragOriginal = nil; state.endEdit() }
                     if let from = state.project.timelineLayers.firstIndex(where: { $0.id == layer.id }) {
                         let to = from + Int((delta.y / rowHeight).rounded())
@@ -310,7 +560,7 @@ struct TimelineView: View {
             .font(.system(size: editable ? 12 : 9))
             .foregroundStyle(color)
             .shadow(color: .black.opacity(0.5), radius: 1)
-            .frame(width: 22, height: 22)
+            .frame(width: 44, height: 44)
             .contentShape(Rectangle())
             .position(x: offset + CGFloat(t) * zoom, y: rowHeight / 2)
             .highPriorityGesture(keyDrag(layer, t, effect: effect), including: editable ? .all : .subviews)
@@ -329,10 +579,33 @@ struct TimelineView: View {
             .onEnded { _ in dragOriginal = nil; keyDragTime = nil; state.endEdit() }
     }
 
+    private func canTwirl(_ layer: Layer) -> Bool { !compact && !layer.keyframeMarkers.isEmpty }
+
+    /// Slip grip in the middle of a selected media clip: drag sideways to change which source frames play under
+    /// the clip, without moving or resizing it.
+    private func slipGrip(_ layer: Layer) -> some View {
+        Image(systemName: "arrow.left.and.right")
+            .font(.system(size: 11, weight: .bold)).foregroundStyle(.white)
+            .frame(width: 30, height: 22)
+            .background(Capsule().fill(.black.opacity(0.45)))
+            .frame(width: 44, height: rowHeight - 2)
+            .contentShape(Rectangle())
+            .highPriorityGesture(DragGesture(minimumDistance: 2, coordinateSpace: .named("timeline"))
+                .onChanged { g in
+                    if slipOriginal == nil { slipOriginal = layer; state.pause(); state.beginEdit("Slip Clip") }
+                    guard let o = slipOriginal else { return }
+                    // Drag right = see earlier source frames (the footage slides right under the clip).
+                    let frames = (Double(-g.translation.width / zoom) * state.project.fps).rounded()
+                    state.slipClip(o, by: frames / state.project.fps)
+                }
+                .onEnded { _ in if slipOriginal != nil { slipOriginal = nil; state.endEdit() } })
+            .accessibilityLabel("Slip clip")
+    }
+
     private func trimHandle(_ layer: Layer, start: Bool) -> some View {
         RoundedRectangle(cornerRadius: 3).fill(.white)
             .frame(width: 8, height: rowHeight - 14)
-            .frame(width: 26, height: rowHeight - 4)
+            .frame(width: 44, height: rowHeight - 2)
             .contentShape(Rectangle())
             .highPriorityGesture(DragGesture(minimumDistance: 2, coordinateSpace: .named("timeline"))
                 .onChanged { g in

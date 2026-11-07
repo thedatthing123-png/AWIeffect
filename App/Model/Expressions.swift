@@ -42,6 +42,9 @@ struct ExpressionScope {
     /// Stable per-property seed (wiggle/random differ per property, like AE).
     var seed: Double
     var layerCount: Int = 0
+    /// Other layers' values at `time` for `thisComp.layer("Name")` / `thisComp.layer(index)` (pick-whip references).
+    var layerRefs: [String: Any] = [:]
+    var layerRefsByIndex: [Any] = []
 }
 
 /// AE-compatible expression evaluator on JavaScriptCore (ES2018+, like AE's modern JavaScript engine).
@@ -89,6 +92,8 @@ final class ExpressionEngine {
         ctx.setObject(scope.layerIndex, forKeyedSubscript: "index" as NSString)
         ctx.setObject(scope.inPoint, forKeyedSubscript: "inPoint" as NSString)
         ctx.setObject(scope.outPoint, forKeyedSubscript: "outPoint" as NSString)
+        ctx.setObject(scope.layerRefs, forKeyedSubscript: "__layers" as NSString)
+        ctx.setObject(scope.layerRefsByIndex, forKeyedSubscript: "__layersByIndex" as NSString)
         ctx.setObject(src, forKeyedSubscript: "__src" as NSString)
         ctx.exception = nil
 
@@ -129,6 +134,11 @@ final class ExpressionEngine {
     function __run() {
         // Same frame + same property = same random numbers, like AE: restart the stream every evaluation.
         __rng = null; __rngKey = null; __seedOverride = null; __timeless = false;
+        thisComp.layer = function (n) {
+            var L = (typeof n === "number") ? __layersByIndex[n - 1] : __layers[n];
+            if (!L) throw new Error("No layer " + (typeof n === "number" ? n : "named \"" + n + "\""));
+            return L;
+        };
         // Fresh scope per evaluation; `eval` returns the value of the last statement, like AE.
         return (function () { return eval(__src); })();
     }
@@ -280,13 +290,15 @@ enum ExpressionResolver {
         guard hasExpressions(project) else { return project }
         var p = project
         let engine = ExpressionEngine.shared
+        let refs = layerReferences(project, time: time)
         for i in p.layers.indices {
             let l = p.layers[i]
             func scope(_ salt: String) -> ExpressionScope {
                 // Read comp settings from the untouched input: `p` is being mutated through inout while this runs.
                 ExpressionScope(time: time, fps: project.fps, compWidth: project.width, compHeight: project.height, compDuration: project.duration,
                                 layerIndex: i + 1, layerName: l.name, inPoint: l.inPoint, outPoint: l.outPoint,
-                                seed: stableSeed(l.id, salt), layerCount: project.layers.count)
+                                seed: stableSeed(l.id, salt), layerCount: project.layers.count,
+                                layerRefs: refs.byName, layerRefsByIndex: refs.byIndex)
             }
             func bake<V: ExpressionValue>(_ a: inout Animated<V>, _ key: String) {
                 guard a.hasActiveExpression else { return }

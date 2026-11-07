@@ -332,6 +332,8 @@ struct Layer: Codable, Equatable, Identifiable {
     /// 3D shadows (AE defaults: layers don't cast, do accept).
     var castsShadows = false
     var acceptsShadows = true
+    /// Named, colored layer markers (times relative to the layer's in point, so they travel with the clip).
+    var layerMarkers: [TimelineMarker]? = nil
 
     init(id: UUID = UUID(), name: String, content: LayerContent, tag: LayerTag = .purple, outPoint: Double,
          transform: LayerTransform, size: Animated<Vec2>) {
@@ -395,6 +397,7 @@ struct Layer: Codable, Equatable, Identifiable {
         isCollider = try c.decodeIfPresent(Bool.self, forKey: .isCollider) ?? false
         castsShadows = try c.decodeIfPresent(Bool.self, forKey: .castsShadows) ?? false
         acceptsShadows = try c.decodeIfPresent(Bool.self, forKey: .acceptsShadows) ?? true
+        layerMarkers = try c.decodeIfPresent([TimelineMarker].self, forKey: .layerMarkers)
     }
 
     func isActive(at time: Double) -> Bool { isVisible && time >= inPoint && time < outPoint }
@@ -436,6 +439,8 @@ struct Project: Codable, Equatable, Identifiable {
     var markerTimes: [Double]? = nil
     /// Auto-detected markers are tracked separately so re-analysis preserves manual taps.
     var detectedBeatTimes: [Double]? = nil
+    /// Named, colored comp markers (separate from beat markers). nil in older projects.
+    var compMarkers: [TimelineMarker]? = nil
     /// Word-timed caption / lyric tracks (Captions Studio). Optional so older saves still decode.
     var captionTracks: [CaptionTrack]? = nil
     /// CC Studio Looks saved with this project (travel with it on export / copy). nil in older projects.
