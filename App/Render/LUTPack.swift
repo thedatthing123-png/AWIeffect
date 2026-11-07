@@ -3,7 +3,7 @@ import Foundation
 /// Built-in LUT pack (AWIeffect's own looks, written as standard .cube files into the LUT library on first launch,
 /// so they show up in CC Studio's LUT list next to imported ones and can be shared / deleted like any LUT).
 extension LUTLibrary {
-    private static let packVersion = 1
+    private static let packVersion = 2
 
     typealias Look = (Double, Double, Double) -> (Double, Double, Double)
 
@@ -42,21 +42,44 @@ extension LUTLibrary {
         ("Green Shadows", { r, g, b in let c = split((r, g, b), sh: (0.42, 0.6, 0.48), hi: (0.55, 0.52, 0.46), amt: 0.45); return sat(c, 0.95) }),
         ("Purple Sunset", { r, g, b in let c = split((r, g, b), sh: (0.45, 0.3, 0.65), hi: (1.0, 0.6, 0.45), amt: 0.55); return sat(c, 1.15) }),
         ("Manga Ink", { r, g, b in let l = lum(r, g, b); let v = 1 / (1 + exp(-(l - 0.5) * 12)); return (0.06 + v * 0.92, 0.05 + v * 0.9, 0.04 + v * 0.86) }),
+        // Looks that were separate color effects, offered as LUTs in CC Studio (the effects stay for older projects).
+        ("Infrared", { r, g, b in let ir = min(1, g * 0.9 + r * 0.35); return (min(1, ir * 1.05 + 0.04), ir * 0.82 + b * 0.1, b * 0.55 + (1 - ir) * 0.25) }),
+        ("Day for Night", { r, g, b in let s = sat((r, g, b), 0.35); let k = 0.42; return (contrast(s.0 * k, 1.15) - 0.05, contrast(s.1 * k * 1.05, 1.15) - 0.02, contrast(s.2 * k * 1.35 + 0.06, 1.15)) }),
+        ("Lomo", { r, g, b in let s = sat((r, g, b), 1.35); return (sCurve(s.0, 0.7), sCurve(s.1, 0.55), sCurve(s.2, 0.35) * 0.9 + 0.06) }),
+        ("Print Film", { r, g, b in let c = split((r, g, b), sh: (0.38, 0.52, 0.56), hi: (0.7, 0.58, 0.44), amt: 0.35); let s = sat(c, 0.9); return (0.02 + sCurve(s.0, 0.45) * 0.96, 0.02 + sCurve(s.1, 0.45) * 0.95, 0.03 + sCurve(s.2, 0.45) * 0.9) }),
+        ("Negative Film", { r, g, b in let s = sat((r, g, b), 0.85); return (0.05 + s.0 * 0.92, 0.06 + s.1 * 0.9, 0.07 + s.2 * 0.86) }),
+        ("Slide Film", { r, g, b in let s = sat((r, g, b), 1.3); return (sCurve(s.0, 0.55), sCurve(s.1, 0.5), min(1, sCurve(s.2, 0.5) * 1.04)) }),
+        ("Tungsten Film", { r, g, b in let s = sat((r, g, b), 0.95); return (s.0 * 0.86, s.1 * 0.95, min(1, s.2 * 1.12 + 0.03)) }),
     ]
+
+    /// File name of a built-in look ("AWI Lomo.cube").
+    static func builtInFile(_ look: String) -> String { "AWI \(look).cube" }
+    static var builtInFiles: [String] { builtInLooks.map { builtInFile($0.0) } }
+
+    private static func cube(_ name: String, _ f: Look) -> String {
+        let n = 17
+        var s = "TITLE \"AWI \(name)\"\nLUT_3D_SIZE \(n)\n"
+        s.reserveCapacity(n * n * n * 26)
+        for bi in 0..<n { for gi in 0..<n { for ri in 0..<n {
+            let o = f(Double(ri) / Double(n - 1), Double(gi) / Double(n - 1), Double(bi) / Double(n - 1))
+            s += String(format: "%.5f %.5f %.5f\n", min(max(o.0, 0), 1), min(max(o.1, 0), 1), min(max(o.2, 0), 1))
+        } } }
+        return s
+    }
+
+    /// Writes one built-in look again when a grade names it but its file is gone. Returns true if written.
+    @discardableResult
+    func restoreBuiltIn(_ file: String) -> Bool {
+        guard let look = Self.builtInLooks.first(where: { Self.builtInFile($0.0) == file }) else { return false }
+        return (try? Self.cube(look.0, look.1).write(to: Self.folder.appendingPathComponent(file), atomically: true, encoding: .utf8)) != nil
+    }
 
     /// Writes the built-in looks as .cube files once (and again when the pack grows).
     func installBuiltIns() {
         let key = "awi.lutPackVersion"
         guard UserDefaults.standard.integer(forKey: key) < Self.packVersion else { return }
-        let n = 17
         for (name, f) in Self.builtInLooks {
-            var s = "TITLE \"AWI \(name)\"\nLUT_3D_SIZE \(n)\n"
-            s.reserveCapacity(n * n * n * 26)
-            for bi in 0..<n { for gi in 0..<n { for ri in 0..<n {
-                let o = f(Double(ri) / Double(n - 1), Double(gi) / Double(n - 1), Double(bi) / Double(n - 1))
-                s += String(format: "%.5f %.5f %.5f\n", min(max(o.0, 0), 1), min(max(o.1, 0), 1), min(max(o.2, 0), 1))
-            } } }
-            try? s.write(to: Self.folder.appendingPathComponent("AWI \(name).cube"), atomically: true, encoding: .utf8)
+            try? Self.cube(name, f).write(to: Self.folder.appendingPathComponent(Self.builtInFile(name)), atomically: true, encoding: .utf8)
         }
         UserDefaults.standard.set(Self.packVersion, forKey: key)
     }

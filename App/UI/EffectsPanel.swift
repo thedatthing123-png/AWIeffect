@@ -227,12 +227,23 @@ struct EffectsPanel: View {
                             .background(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.accent.opacity(0.7), style: StrokeStyle(lineWidth: 1.2, dash: [5, 4])))
                             .foregroundStyle(Theme.accentGlow)
                     }
-                    Button { showFFX = true } label: {
-                        Label("Apply AE Preset (.ffx)", systemImage: "square.and.arrow.down")
-                            .font(.system(size: 13, weight: .semibold))
-                            .frame(maxWidth: .infinity).padding(.vertical, 9)
-                            .glass(radius: 12)
-                            .foregroundStyle(Theme.text)
+                    if let layer = state.selectedLayer, !layer.effects.isEmpty {
+                        // Stack tools: one row, two controls (the AE preset import lives in the menu).
+                        HStack(spacing: 8) {
+                            Button {
+                                let ids = Set(layer.effects.map(\.id))
+                                if ids.isSubset(of: expanded) { expanded.subtract(ids) } else { expanded.formUnion(ids) }
+                            } label: {
+                                let allOpen = Set(layer.effects.map(\.id)).isSubset(of: expanded)
+                                Label(allOpen ? "Collapse All" : "Expand All", systemImage: allOpen ? "rectangle.compress.vertical" : "rectangle.expand.vertical")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .frame(maxWidth: .infinity, minHeight: 44).glass(radius: 12)
+                            }
+                            .buttonStyle(.plain).foregroundStyle(Theme.text)
+                            stackMenu
+                        }
+                    } else {
+                        HStack { Spacer(); stackMenu.frame(width: 120) }
                     }
                     if let m = ffxMessage { Text(m).font(.caption).foregroundStyle(Theme.textDim) }
                     if let layer = state.selectedLayer {
@@ -267,6 +278,16 @@ struct EffectsPanel: View {
         }
     }
 
+    private var stackMenu: some View {
+        Menu {
+            Button { showFFX = true } label: { Label("Apply AE Preset (.ffx)…", systemImage: "square.and.arrow.down") }
+        } label: {
+            Label("More", systemImage: "ellipsis.circle").font(.system(size: 13, weight: .semibold))
+                .frame(maxWidth: .infinity, minHeight: 44).glass(radius: 12)
+        }
+        .foregroundStyle(Theme.text)
+    }
+
     private func effectCard(_ e: EffectInstance) -> some View {
         let def = EffectRegistry.definition(e.typeID)
         let isOpen = expanded.contains(e.id)
@@ -278,7 +299,7 @@ struct EffectsPanel: View {
                         if !isOpen { state.keyframeFocusEffects.append(e.id) }
                 } label: {
                     Image(systemName: "chevron.right").rotationEffect(.degrees(isOpen ? 90 : 0))
-                        .frame(width: 24, height: 30)
+                        .frame(width: 44, height: 44).contentShape(Rectangle())
                 }
                 .accessibilityIdentifier("effect-expand-\(e.typeID)")
                 Text(def?.name ?? "Missing effect: \(e.typeID)")
@@ -286,7 +307,7 @@ struct EffectsPanel: View {
                     .foregroundStyle(def == nil ? Theme.danger : (e.isEnabled ? Theme.text : Theme.textDim))
                 Spacer()
                 Button { state.toggleEffect(e.id) } label: {
-                    Image(systemName: e.isEnabled ? "eye" : "eye.slash").frame(width: 30, height: 30)
+                    Image(systemName: e.isEnabled ? "eye" : "eye.slash").frame(width: 44, height: 44).contentShape(Rectangle())
                 }
                 Menu {
                     Button { state.moveEffect(e.id, up: true) } label: { Label("Move Up", systemImage: "arrow.up") }
@@ -294,7 +315,7 @@ struct EffectsPanel: View {
                     Button { state.copyEffects([e.id]) } label: { Label("Copy Effect", systemImage: "doc.on.doc") }
                     Button { state.duplicateEffect(e.id) } label: { Label("Duplicate", systemImage: "plus.square.on.square") }
                     Button(role: .destructive) { state.removeEffect(e.id) } label: { Label("Delete", systemImage: "trash") }
-                } label: { Image(systemName: "ellipsis").frame(width: 30, height: 30) }
+                } label: { Image(systemName: "ellipsis").frame(width: 44, height: 44).contentShape(Rectangle()) }
             }
             .foregroundStyle(Theme.text)
             if isOpen, let def {
@@ -320,7 +341,16 @@ struct EffectsPanel: View {
                     Text("Use on Vector Shape or Freehand paths. Animate End from 0% to 100% to draw on; use Stroke settings for width and color. Raster paintings have no stroke history.")
                         .font(.caption).foregroundStyle(Theme.textDim)
                 }
+                if def.id == EffectRegistry.grade.id {
+                    // The grade has well over a hundred controls; they are edited in CC Studio (wheels, curves, scopes).
+                    Button { state.panel = .ccStudio } label: {
+                        Label("Open in CC Studio", systemImage: "camera.filters").font(.system(size: 13, weight: .semibold))
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                }
                 ForEach(def.params.filter { pd in
+                    guard def.id != EffectRegistry.grade.id else { return false }
                     guard def.id == "awi.halftone" else { return true }
                     let version = e.choice("version")
                     if version == 0 { return ["size", "angle", "color", "version"].contains(pd.id) }
