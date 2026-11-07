@@ -14,7 +14,7 @@ on:
       validation:
         description: Test scope (audit runs do not publish an IPA)
         type: choice
-        options: [all, audit, quick]
+        options: [all, audit, timing, quick]
         default: all
 
 concurrency:
@@ -76,6 +76,9 @@ jobs:
           FILTER=()
           if [[ "${{ inputs.validation }}" == "audit" ]]; then
             FILTER=(-only-testing:AWIeffectTests/AuditRegressionTests -only-testing:AWIeffectTests/AuditRenderRegressionTests -only-testing:AWIeffectTests/PrecompMaskImportTests -only-testing:AWIeffectTests/EssentialRegressionTests -only-testing:AWIeffectTests/DrawStudioTests -only-testing:AWIeffectTests/VisionTests -only-testing:AWIeffectTests/VideoDecodeTests -only-testing:AWIeffectTests/EditorPolishRegressionTests -only-testing:AWIeffectUITests/EditorPolishUITests)
+          fi
+          if [[ "${{ inputs.validation }}" == "timing" ]]; then
+            FILTER=(-only-testing:AWIeffectUITests/AnimationTimingUITests)
           fi
           xcodebuild test -jobs 2 "${FILTER[@]}" \
             -project AWIeffect.xcodeproj -scheme AWIeffect \
@@ -160,7 +163,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Archive (unsigned)
-        if: ${{ inputs.validation != 'audit' }}
+        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' }}
         run: |
           set -o pipefail
           set +e
@@ -187,7 +190,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Package IPA
-        if: ${{ inputs.validation != 'audit' }}
+        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' }}
         run: |
           mkdir -p Payload
           cp -R build/AWIeffect.xcarchive/Products/Applications/AWIeffect.app Payload/
@@ -200,7 +203,7 @@ jobs:
           ls -lh AWIeffect.ipa
 
       - name: Upload IPA
-        if: ${{ inputs.validation != 'audit' }}
+        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' }}
         uses: actions/upload-artifact@v4
         with:
           name: AWIeffect-ipa

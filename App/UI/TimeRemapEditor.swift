@@ -183,12 +183,13 @@ struct TimeRemapEditor: View {
                     ctx.stroke(path, with: .color(Theme.accentGlow), lineWidth: 2)
                 }
                     ForEach(remap.keyframes) { key in
-                        Circle().fill(selected == key.id ? Theme.keyframe : .white)
-                            .frame(width: 12, height: 12).frame(width: 44, height: 44).contentShape(Rectangle())
+                        Button { selected = key.id; state.seek(key.time) } label: {
+                            Circle().fill(selected == key.id ? Theme.keyframe : .white)
+                                .frame(width: 12, height: 12).frame(width: 44, height: 44).contentShape(Rectangle())
+                        }.buttonStyle(.plain)
+                            .accessibilityLabel(String(format: "Source key at %.3f seconds", key.time))
                             .position(x: box.minX + CGFloat((key.time - layer.inPoint) / duration) * box.width,
                                       y: box.maxY - CGFloat(((speedGraph ? layer.playbackRate(at: key.time) : key.value) - lower) / (upper - lower)) * box.height)
-                            .onTapGesture { selected = key.id; state.seek(key.time) }
-                            .accessibilityLabel(String(format: "Source key at %.3f seconds", key.time))
                             .highPriorityGesture(DragGesture(minimumDistance: 4, coordinateSpace: .named("remapPlot"))
                                 .onChanged { drag in
                                     if original == nil { original = remap; dragRange = lower...upper; selected = key.id; state.pause(); state.beginEdit("Move Remap Key"); state.remapDragging = true }

@@ -14,6 +14,11 @@ final class AnimationTimingUITests: XCTestCase {
         let scroll = app.scrollViews["clip-settings-scroll"].firstMatch
         for _ in 0..<8 { if remap.isHittable { break }; scrollPanel(scroll, up: true) }
         remap.tap()
+        let resize = app.descendants(matching: .any)["Resize panel"].firstMatch
+        if resize.exists {
+            let grab = resize.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            grab.press(forDuration: 0.1, thenDragTo: grab.withOffset(CGVector(dx: 0, dy: -180)))
+        }
         let sourceGraph = app.buttons["Source Time"].firstMatch
         XCTAssertTrue(sourceGraph.waitForExistence(timeout: 5)); sourceGraph.tap()
         let key = app.buttons["Add source time keyframe"].firstMatch
@@ -39,8 +44,8 @@ final class AnimationTimingUITests: XCTestCase {
             let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
             start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -delta)))
         }
-        XCTAssertTrue(scroll.frame.insetBy(dx: 0, dy: 20).contains(CGPoint(x: point.frame.midX, y: point.frame.midY)))
         save("remap-before-drag")
+        XCTAssertTrue(scroll.frame.insetBy(dx: 0, dy: 20).contains(CGPoint(x: point.frame.midX, y: point.frame.midY)), "key=\(point.frame), scroll=\(scroll.frame)")
         let center = point.coordinate(withNormalizedOffset: CGVector(dx: 0.5,dy: 0.5))
         center.press(forDuration: 0.1,thenDragTo: center.withOffset(CGVector(dx: 0,dy: -20)))
         XCTAssertFalse(app.buttons["1.000s → 2.000s"].exists, "Dragging the source key must edit its value, not scroll the sheet")
