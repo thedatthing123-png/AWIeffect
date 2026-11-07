@@ -42,7 +42,7 @@ extension Renderer {
     /// Bakes parenting into absolute transform values for this frame.
     static func resolveParenting(_ raw: Project, time: Double) -> Project {
         // IK poses limbs first; parenting then carries the lower limbs along.
-        let p = IKSolver.apply(raw, time: time)
+        let p = AutoOrient.apply(IKSolver.apply(raw, time: time), time: time)
         guard p.layers.contains(where: { $0.parentID != nil }) else { return p }
         var q = p
         for i in q.layers.indices {
@@ -211,8 +211,30 @@ extension EditorState {
 
     func endLinkPick(parent: UUID?) {
         linkPicking = false
+        if let handler = layerPickHandler {
+            // Tap-a-layer pick for another tool (IK, camera focus): hand the layer over and go back to that tool.
+            layerPickHandler = nil
+            if let parent, parent != selectedLayerID { handler(parent) }
+            panel = layerPickReturnPanel
+            return
+        }
         if let parent, parent != selectedLayerID { setParent(parent) }
         panel = .transform
+    }
+
+    /// Starts a canvas tap-a-layer pick that calls `handler` with the tapped layer (nil = tapped nothing).
+    func beginLayerPick(returnTo panel: ToolPanel, prompt: String = "Tap a layer", _ handler: @escaping (UUID?) -> Void) {
+        guard selectedLayerID != nil else { return }
+        layerPickHandler = handler
+        layerPickPrompt = prompt
+        layerPickReturnPanel = panel
+        linkPicking = true
+        self.panel = .none
+    }
+
+    /// Which layers a canvas pick may choose (parenting excludes loops; other picks take any visual layer).
+    func layerPickAllows(_ id: UUID) -> Bool {
+        layerPickHandler != nil ? id != selectedLayerID : canParent(to: id)
     }
 }
 
@@ -224,7 +246,7 @@ struct LinkPickOverlay: View {
     var body: some View {
         Canvas { ctx, _ in
             let p = state.displayProject
-            for l in p.layers where state.canParent(to: l.id) && l.isActive(at: state.currentTime) && !l.isAudioOnly
+            for l in p.layers where state.layerPickAllows(l.id) && l.isActive(at: state.currentTime) && !l.isAudioOnly
                 && l.content != .camera && l.content != .light {
                 let h = CanvasHandles.handles(l, project: p, time: state.currentTime, fit: fit)
                 var path = Path(); path.addLines(h.corners); path.closeSubpath()

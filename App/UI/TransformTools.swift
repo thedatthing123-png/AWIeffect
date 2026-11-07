@@ -136,6 +136,211 @@ struct TransformToolBody: View {
     let tool: TransformPanel.Tool
     @State private var rawPadPosition: Vec2?
     @Binding var positionAxisZ: Bool
+    @AppStorage("awi.simplifyTolerance") private var simplifyTolerance = 6.0
+
+    private var t: Double { state.currentTime }
+    private var compW: Double { Double(state.project.width) }
+
+    var body: some View {
+        VStack(spacing: 6) {
+            switch tool {
+            case .position:
+                let p = layer.transform.position.value(at: t)
+                valueRow([("X", p.x, { v in edit("Move") { $0.transform.position.set(Vec2(v, p.y), at: t) } }),
+                          ("Y", p.y, { v in edit("Move") { $0.transform.position.set(Vec2(p.x, v), at: t) } }),
+                          ("Z", layer.transform.positionZ.value(at: t), { v in edit("Depth") { $0.transform.positionZ.set(v, at: t) } })])
+                if positionAxisZ {
+                    SwipePad(hint: "Swipe to adjust Z position", gain: compW * 2, vertical: true) { delta in
+                        state.mutateLayer { l in l.transform.positionZ.set(l.transform.positionZ.value(at: t) + delta.height, at: t) }
+                    } begin: { state.beginPanelGesture("Position Z") } end: { state.endPanelGesture() }
+                } else {
+                SwipePad(hint: "Swipe here to move the layer", gain: compW) { d in
+                    let raw = (rawPadPosition ?? layer.transform.position.value(at: t)) + Vec2(d.width, d.height)
+                    rawPadPosition = raw
+                    let snapped = state.snapPositionOnCanvas(raw, layer: layer)
+                    state.mutateLayer { $0.transform.position.set(snapped, at: t) }
+                } begin: {
+                    rawPadPosition = layer.transform.position.value(at: t)
+                    state.beginPanelGesture("Move Layer")
+                } end: {
+                    state.endPanelGesture(); rawPadPosition = nil; state.snapGuides = SnapGuides()
+                }
+                }
+                // Three menus: snapping, arranging, layout (each opens a list; nothing wraps on a phone).
+                HStack(spacing: 6) {
+                    Menu {
+                        Toggle("Snapping", isOn: $state.snappingEnabled)
+                        Toggle("Snap to Grid (when shown)", isOn: $state.snapToGrid)
+                        Picker("Grid", selection: $state.gridDivisions) {
+                            ForEach([3, 4, 6, 8, 12], id: \.self) { n in Text("\(n) × \(n)").tag(n) }
+                        }
+                        Toggle("Rotation Snap (15°)", isOn: $state.rotationSnap)
+                        Divider()
+                        Toggle("Show Guides", isOn: $state.showGuides)
+                        Button("Add Vertical Guide") { state.addGuide(vertical: true) }
+                        Button("Add Horizontal Guide") { state.addGuide(vertical: false) }
+                        if !state.guides.isEmpty { Button("Clear Guides", role: .destructive) { state.clearGuides() } }
+                    } label: { menuLabel("Snap", state.snappingEnabled ? "dot.viewfinder" : "viewfinder", on: state.snappingEnabled) }
+                    Menu {
+                        let many = (state.multiSelection?.count ?? 0) > 1
+                        Section(many ? "Align to Selection" : "Align to Canvas") {
+                            ForEach(AlignEdge.allCases) { e in Button { state.align(e) } label: { Label(e.title, systemImage: e.symbol) } }
+                        }
+                        if (state.multiSelection?.count ?? 0) > 2 {
+                            Section("Distribute") {
+                                Button { state.distribute(horizontal: true) } label: { Label("Horizontally", systemImage: "distribute.horizontal.center") }
+                                Button { state.distribute(horizontal: false) } label: { Label("Vertically", systemImage: "distribute.vertical.center") }
+                            }
+                        }
+                    } label: { menuLabel("Align", "align.horizontal.center", on: false) }
+                    Menu {
+                        Button { state.fitToComp(fill: false) } label: { Label("Fit to Comp", systemImage: "arrow.down.right.and.arrow.up.left") }
+                        Button { state.fitToComp(fill: true) } label: { Label("Fill Comp", systemImage: "arrow.up.left.and.arrow.down.right") }
+                        Button { state.centerAnchor() } label: { Label("Center Anchor in Layer", systemImage: "scope") }
+                        Button(role: .destructive) { state.resetTransform() } label: { Label("Reset Transform", systemImage: "arrow.counterclockwise") }
+                    } label: { menuLabel("Layout", "rectangle.dashed", on: false) }
+                }
+                HStack(spacing: 6) {
+                    Toggle(isOn: $state.motionSketch) { toggleLabel("Sketch", "record.circle") }
+                        .toggleStyle(.button).tint(.red)
+                    Toggle(isOn: $state.showMotionPath) { toggleLabel("Path", "point.topleft.down.to.point.bottomright.curvepath") }
+                        .toggleStyle(.button).tint(Theme.accent)
+                    Toggle(isOn: Binding(get: { layer.transform.autoOrient }, set: { state.setAutoOrient($0) })) { toggleLabel("Orient", "location.north.line") }
+                        .toggleStyle(.button).tint(Theme.accent)
+                        .accessibilityLabel("Orient along path")
+                }
+                if layer.transform.position.keyframes.count >= 4 {
+                    // Simplify: one tolerance (px the path may move), then Apply.
+                    HStack(spacing: 8) {
+                        Text("Simplify").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.text).fixedSize()
+                        ValueScrubber(value: simplifyTolerance, range: 0.5...40, step: 0.5, unit: " px",
+                                      onChange: { simplifyTolerance = $0 })
+                        Button("Apply") { state.simplifyPositionKeys(tolerance: simplifyTolerance) }
+                            .font(.system(size: 13, weight: .semibold)).frame(minWidth: 64, minHeight: 44)
+                            .background(RoundedRectangle(cornerRadius: 9).fill(Theme.accent.opacity(0.28)))
+                            .foregroundStyle(Theme.accentGlow)
+                    }
+                }
+                if state.motionSketch {
+                    Text("Drag the layer on the canvas: the playhead runs and your exact motion is recorded as keyframes.")
+                        .font(.caption2).foregroundStyle(Theme.textDim)
+                }
+            case .depth: return "square.3.layers.3d.down.right"
+            case .rotation: return "arrow.triangle.2.circlepath"
+            case .scale: return "arrow.up.left.and.arrow.down.right"
+            case .opacity: return "circle.lefthalf.filled"
+            case .anchor: return "scope"
+            case .link: return "link"
+            }
+        }
+        var key: PropertyKey? {
+            switch self {
+            case .position: return .position
+            case .depth: return .positionZ
+            case .rotation: return .rotation
+            case .scale: return .scale
+            case .opacity: return .opacity
+            case .anchor: return .anchor
+            case .link: return nil
+            }
+        }
+        var canvasTool: TransformTool {
+            switch self {
+            case .scale: return .scale
+            case .rotation: return .rotate
+            case .anchor: return .pivot
+            default: return .move
+            }
+        }
+    }
+    @AppStorage("awi.transformTool") private var toolRaw = Tool.position.rawValue
+    private var tool: Tool { let saved = Tool(rawValue: toolRaw) ?? .position; return saved == .depth ? .position : saved }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            PanelHeader(state: state, title: state.selectedLayer?.content == .camera ? "Camera" : "Move & Transform")
+            if let sel = state.selectedLayer, sel.content == .camera {
+                CameraModeSwitch(state: state, layer: sel).padding(.horizontal, 12).padding(.bottom, 4)
+            }
+            if state.selectedLayer != nil {
+                HStack(spacing: 0) {
+                    leftRail
+                    LiveReader(live: state.live) { lp in
+                        if let l = (lp ?? state.project).layers.first(where: { $0.id == state.selectedLayerID }) {
+                            TransformToolBody(state: state, layer: l, tool: tool, positionAxisZ: $positionAxisZ)
+                        }
+                    }
+                    .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity)
+                    rightRail
+                }
+                .padding(.bottom, 6)
+            }
+        }
+        .onAppear { state.transformTool = tool.canvasTool }
+        .awiSheet(isPresented: $showVelocity) { KeyframeVelocitySheet(state: state, property: tool.key).presentationDetents([.medium, .large]) }
+    }
+
+    /// Keyframe + graph, always in the same spot.
+    private var leftRail: some View {
+        VStack(spacing: 10) {
+            if let key = Self.diamondKey(tool: tool, axisZ: positionAxisZ) {
+                KeyframeDiamond(filled: state.hasKeyframe(key), animated: state.isAnimated(key)) { state.toggleKeyframe(key) }
+                    .frame(width: 40, height: 36)
+            }
+            Button { state.graphTimeRemap = false; state.graphEffect = nil; state.panel = .graph } label: {
+                Image(systemName: "point.topleft.down.to.point.bottomright.curvepath").font(.system(size: 15, weight: .semibold))
+                    .frame(width: 40, height: 36)
+            }
+            .accessibilityLabel("Graph")
+            Button { showVelocity = true } label: {
+                Image(systemName: "speedometer").font(.system(size: 15, weight: .semibold)).frame(width: 40, height: 36)
+            }
+            .accessibilityLabel("Velocity")
+            Spacer()
+        }
+        .foregroundStyle(Theme.text)
+        .frame(width: 46)
+    }
+
+    private var rightRail: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 4) {
+                ForEach(tools) { t in
+                    Button {
+                        toolRaw = t.rawValue
+                        state.transformTool = t.canvasTool
+                        UISelectionFeedbackGenerator().selectionChanged()
+                    } label: {
+                        VStack(spacing: 2) {
+                            Image(systemName: t.icon).font(.system(size: 15, weight: .semibold))
+                            Text(t.rawValue).font(.system(size: 8.5, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
+                        }
+                        .frame(width: 54, height: 42)
+                        .foregroundStyle(tool == t ? Theme.accentGlow : Theme.text)
+                        .background(RoundedRectangle(cornerRadius: 9).fill(tool == t ? Theme.accent.opacity(0.28) : .clear))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(t.rawValue) tool")
+                }
+            }
+        }
+        .frame(width: 60)
+    }
+
+    private var tools: [Tool] {
+        guard let l = state.selectedLayer else { return [] }
+        if l.content == .light { return [.position, .rotation, .link] }
+        return Tool.allCases.filter { $0 != .depth }
+    }
+}
+
+/// The control for one transform tool, fed with the live layer (updates while dragging).
+struct TransformToolBody: View {
+    @ObservedObject var state: EditorState
+    let layer: Layer
+    let tool: TransformPanel.Tool
+    @State private var rawPadPosition: Vec2?
+    @Binding var positionAxisZ: Bool
 
     private var t: Double { state.currentTime }
     private var compW: Double { Double(state.project.width) }
@@ -257,6 +462,18 @@ struct TransformToolBody: View {
             }
         }
         .padding(.horizontal, 4)
+    }
+
+    private func menuLabel(_ title: String, _ icon: String, on: Bool) -> some View {
+        Label(title, systemImage: icon).font(.system(size: 12, weight: .semibold)).lineLimit(1).fixedSize()
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: 9).fill(on ? Theme.accent.opacity(0.28) : Theme.surface))
+            .foregroundStyle(on ? Theme.accentGlow : Theme.text)
+    }
+
+    private func toggleLabel(_ title: String, _ icon: String) -> some View {
+        Label(title, systemImage: icon).font(.system(size: 12, weight: .semibold)).lineLimit(1).fixedSize()
+            .frame(maxWidth: .infinity, minHeight: 32)
     }
 
     private func scaleBy(dx: Double, dy: Double) {

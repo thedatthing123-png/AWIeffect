@@ -1,0 +1,164 @@
+import SwiftUI
+import simd
+
+// MARK: - R2 canvas overlays: guides, camera point of interest, light gizmo, IK bones, marquee
+
+/// User guides: thin lines across the comp; each has a 44 pt tab on the comp edge to drag it (drag off to delete).
+struct GuidesOverlay: View {
+    @ObservedObject var state: EditorState
+    let fit: CGRect
+    @State private var dragging: UUID?
+
+    private var scale: CGFloat { fit.width / CGFloat(max(state.project.width, 1)) }
+
+    var body: some View {
+        if state.showGuides, !state.guides.isEmpty {
+            ZStack {
+                Canvas { ctx, _ in
+                    for g in state.guides {
+                        var p = Path()
+                        if g.vertical {
+                            let x = fit.minX + CGFloat(g.value) * scale
+                            p.move(to: CGPoint(x: x, y: fit.minY)); p.addLine(to: CGPoint(x: x, y: fit.maxY))
+                        } else {
+                            let y = fit.minY + CGFloat(g.value) * scale
+                            p.move(to: CGPoint(x: fit.minX, y: y)); p.addLine(to: CGPoint(x: fit.maxX, y: y))
+                        }
+                        ctx.stroke(p, with: .color(Color.cyan.opacity(g.id == dragging ? 1 : 0.7)), lineWidth: 1)
+                    }
+                }
+                .allowsHitTesting(false)
+                ForEach(state.guides) { g in
+                    let at = g.vertical ? CGPoint(x: fit.minX + CGFloat(g.value) * scale, y: fit.minY + 11)
+                                        : CGPoint(x: fit.minX + 11, y: fit.minY + CGFloat(g.value) * scale)
+                    Capsule().fill(Color.cyan)
+                        .frame(width: g.vertical ? 8 : 20, height: g.vertical ? 20 : 8)
+                        .frame(width: 44, height: 44).contentShape(Rectangle())
+                        .position(at)
+                        .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .named("guides"))
+                            .onChanged { v in
+                                if dragging == nil { dragging = g.id; state.beginEdit("Move Guide") }
+                                let value = g.vertical ? Double((v.location.x - fit.minX) / scale) : Double((v.location.y - fit.minY) / scale)
+                                state.moveGuide(g.id, to: value)
+                            }
+                            .onEnded { _ in state.finishGuideDrag(g.id); dragging = nil })
+                        .accessibilityLabel(g.vertical ? "Vertical guide" : "Horizontal guide")
+                }
+            }
+            .coordinateSpace(name: "guides")
+        }
+    }
+}
+
+/// A 3D camera's or light's aim on the canvas: where it points on the z = 0 plane (drag it to re-aim), a line from
+/// the light, and a spot light's cone. Cameras show it in free view (in camera view the aim is the frame centre).
+struct AimGizmoOverlay: View {
+    @ObservedObject var state: EditorState
+    let fit: CGRect
+    @State private var dragging = false
+
+    private var scale: CGFloat { fit.width / CGFloat(max(state.project.width, 1)) }
+    private func screen(_ p: Vec2) -> CGPoint { CGPoint(x: fit.minX + CGFloat(p.x) * scale, y: fit.minY + CGFloat(p.y) * scale) }
+    private func comp(_ p: CGPoint) -> Vec2 { Vec2(Double((p.x - fit.minX) / scale), Double((p.y - fit.minY) / scale)) }
+
+    var body: some View {
+        let t = state.currentTime
+        let view = state.canvasViewProject(state.project)
+        if let l = state.selectedLayer, l.content == .light || (l.content == .camera && EditorState.cameraIs3D(l) && !state.cameraView) {
+            // A copy at depth 0 projects plane points (the aim) through the same view.
+            let plane: Layer = { var d = l; d.transform.positionZ = Animated(0); return d }()
+            let hit = Aim.planeHit(l, time: t)
+            let hitScreen = hit.flatMap { MotionPathMath.screenPoint(plane, value: $0, project: view, time: t) }.map(screen)
+            let source = l.content == .light ? MotionPathMath.screenPoint(l, value: l.transform.position.value(at: t), project: view, time: t).map(screen) : nil
+            let aims = l.content == .camera || [LightType.spot, .parallel].contains(l.light?.type ?? .point)
+            ZStack {
+                Canvas { ctx, _ in
+                    if let s = source {
+                        let r: CGFloat = 9
+                        ctx.fill(Path(ellipseIn: CGRect(x: s.x - r, y: s.y - r, width: r * 2, height: r * 2)), with: .color(Theme.warning))
+                        ctx.stroke(Path(ellipseIn: CGRect(x: s.x - r, y: s.y - r, width: r * 2, height: r * 2)), with: .color(.black), lineWidth: 1.5)
+                        if aims, let h = hitScreen {
+                            var line = Path(); line.move(to: s); line.addLine(to: h)
+                            ctx.stroke(line, with: .color(Theme.warning), style: StrokeStyle(lineWidth: 1.5, dash: [5, 3]))
+                        }
+                    }
+                    // Spot cone where it lands (approximate: radius = distance × tan(cone / 2)).
+                    if l.content == .light, l.light?.type == .spot, let o = l.light, let h = hitScreen, let hp = hit {
+                        let p = l.transform.position.value(at: t)
+                        let dist = simd_length(SIMD3(hp.x - p.x, hp.y - p.y, -l.transform.positionZ.value(at: t)))
+                        let r = CGFloat(dist * tan(o.coneAngle.value(at: t) / 2 * .pi / 180)) * scale
+                        if r.isFinite, r > 2, r < 4000 {
+                            ctx.stroke(Path(ellipseIn: CGRect(x: h.x - r, y: h.y - r, width: r * 2, height: r * 2)),
+                                       with: .color(Theme.warning.opacity(0.6)), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                        }
+                    }
+                }
+                .allowsHitTesting(false)
+                if aims, let h = hitScreen {
+                    ZStack {
+                        Circle().stroke(Theme.warning, lineWidth: 2).frame(width: 18, height: 18)
+                        Rectangle().fill(Theme.warning).frame(width: 2, height: 26)
+                        Rectangle().fill(Theme.warning).frame(width: 26, height: 2)
+                    }
+                    .frame(width: 44, height: 44).contentShape(Rectangle())
+                    .position(h)
+                    .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .named("aimGizmo"))
+                        .onChanged { v in
+                            if !dragging { dragging = true; state.beginEdit(l.content == .camera ? "Point of Interest" : "Aim Light"); state.beginLiveGesture() }
+                            guard let target = MotionPathMath.value(plane, at: comp(v.location), project: view, time: t) else { return }
+                            state.aimSelected(atComp: target)
+                        }
+                        .onEnded { _ in dragging = false; state.endLiveGesture(); state.endEdit() })
+                    .accessibilityLabel(l.content == .camera ? "Camera point of interest" : "Light aim")
+                }
+            }
+            .coordinateSpace(name: "aimGizmo")
+        }
+    }
+}
+
+/// IK bones while the Rig panel is open: upper joint → elbow / knee → controller, for every rig.
+struct BoneOverlay: View {
+    @ObservedObject var state: EditorState
+    let fit: CGRect
+
+    var body: some View {
+        let s = fit.width / CGFloat(max(state.project.width, 1))
+        Canvas { ctx, _ in
+            let t = state.currentTime
+            let view = state.canvasViewProject(state.project)
+            let resolved = Renderer.resolveParenting(view, time: t)
+            func joint(_ id: UUID) -> CGPoint? {
+                guard let l = resolved.layers.first(where: { $0.id == id }),
+                      let p = LayerPlacement.projected(l.transform.position.value(at: t), by: LayerPlacement.positionMatrix(l, project: resolved, time: t)) else { return nil }
+                return CGPoint(x: fit.minX + CGFloat(p.x) * s, y: fit.minY + CGFloat(p.y) * s)
+            }
+            for l in view.layers {
+                guard let rig = l.ik, let a = joint(rig.upperID), let b = joint(l.id), let c = joint(rig.controllerID) else { continue }
+                let on = l.id == state.selectedLayerID
+                var bone = Path(); bone.move(to: a); bone.addLine(to: b); bone.addLine(to: c)
+                ctx.stroke(bone, with: .color(.black.opacity(0.6)), style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round))
+                ctx.stroke(bone, with: .color(on ? Theme.accentGlow : .white), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                for (k, p) in [a, b, c].enumerated() {
+                    let r: CGFloat = k == 2 ? 8 : 6
+                    let dot = Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2))
+                    ctx.fill(dot, with: .color(k == 2 ? Theme.warning : .white))
+                    ctx.stroke(dot, with: .color(.black), lineWidth: 1.5)
+                }
+            }
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+/// Rubber band while drag-selecting on an empty canvas.
+struct MarqueeOverlay: View {
+    let rect: CGRect
+    var body: some View {
+        Rectangle().fill(Theme.accent.opacity(0.12))
+            .overlay(Rectangle().stroke(Theme.accentGlow, style: StrokeStyle(lineWidth: 1.5, dash: [5, 3])))
+            .frame(width: rect.width, height: rect.height)
+            .position(x: rect.midX, y: rect.midY)
+            .allowsHitTesting(false)
+    }
+}

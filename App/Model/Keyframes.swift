@@ -70,6 +70,9 @@ struct Keyframe<Value: Interpolatable>: Codable, Equatable, Identifiable {
     /// replaces the bezier handles; nil = use the handles.
     var curve: EaseCurve? = nil
     var reversedSegment: Bool? = nil
+    /// Spatial (motion path) bezier handles for position keys, relative to the key's value (R2). nil = straight path.
+    var spatialIn: Vec2? = nil
+    var spatialOut: Vec2? = nil
 }
 
 /// Easing curves that a single bezier can't draw (Flow-style): real bounces, elastic wobbles, Penner families.
@@ -307,11 +310,22 @@ struct Animated<Value: Interpolatable>: Codable, Equatable {
         let x = (time - a.time) / span
         switch a.interpolation {
         case .hold: return a.reversedSegment == true ? b.value : a.value
-        case .linear: return Value.lerp(a.value, b.value, x)
+        case .linear: return Self.blend(a, b, x)
         case .bezier:
-            if let c = a.curve { return Value.lerp(a.value, b.value, (a.reversedSegment == true ? 1 - c.progress(1 - x) : c.progress(x))) }
-            return Value.lerp(a.value, b.value, BezierTiming.progress(x: x, p1: a.easeOut, p2: b.easeIn))
+            if let c = a.curve { return Self.blend(a, b, (a.reversedSegment == true ? 1 - c.progress(1 - x) : c.progress(x))) }
+            return Self.blend(a, b, BezierTiming.progress(x: x, p1: a.easeOut, p2: b.easeIn))
         }
+    }
+
+    /// Value between two keys at progress f: along the spatial bezier when the keys have motion path handles.
+    static func blend(_ a: Keyframe<Value>, _ b: Keyframe<Value>, _ f: Double) -> Value {
+        if a.spatialOut != nil || b.spatialIn != nil, let pa = a.value as? Vec2, let pb = b.value as? Vec2 {
+            let c1 = pa + (a.spatialOut ?? .zero), c2 = pb + (b.spatialIn ?? .zero)
+            let u = 1 - f
+            let q = pa * (u * u * u) + c1 * (3 * u * u * f) + c2 * (3 * u * f * f) + pb * (f * f * f)
+            if let v = q as? Value { return v }
+        }
+        return Value.lerp(a.value, b.value, f)
     }
 
     func keyframeIndex(at time: Double) -> Int? {

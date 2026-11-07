@@ -194,4 +194,157 @@ final class RenewCanvasTests: XCTestCase {
         XCTAssertNil(back.twist)
         XCTAssertEqual(back.activeOrder, [.offset])
     }
+
+    // MARK: R2 part 2 — motion path, orient, snapping, arrange, picking, aiming
+
+    func testSpatialHandlesCurveThePath() {
+        var a = Animated(Vec2(0, 0))
+        a.insertKeyframe(Keyframe(time: 0, value: Vec2(0, 0), interpolation: .linear))
+        a.insertKeyframe(Keyframe(time: 1, value: Vec2(100, 0), interpolation: .linear))
+        XCTAssertEqual(a.value(at: 0.5).y, 0, accuracy: 1e-9)
+        MotionPathHandles.setHandle(&a, key: 0, out: true, tangent: Vec2(0, 60))
+        XCTAssertNotNil(a.keyframes[0].spatialIn)
+        XCTAssertGreaterThan(a.value(at: 0.5).y, 10)
+        XCTAssertEqual(a.value(at: 1).x, 100, accuracy: 1e-9)
+        // Dragged back onto the key: straight again.
+        MotionPathHandles.setHandle(&a, key: 0, out: true, tangent: Vec2(0.5, 0))
+        XCTAssertNil(a.keyframes[0].spatialOut)
+        XCTAssertEqual(a.value(at: 0.5).y, 0, accuracy: 1e-9)
+    }
+
+    func testOrientAlongPath() throws {
+        var p = project()
+        var l = p.makeLayer(name: "car", content: .shape(.rectangle), size: Vec2(50, 20))
+        l.transform.position.insertKeyframe(Keyframe(time: 0, value: Vec2(100, 100), interpolation: .linear))
+        l.transform.position.insertKeyframe(Keyframe(time: 1, value: Vec2(100, 300), interpolation: .linear))
+        l.transform.rotation = Animated(10)
+        p.layers = [l]
+        XCTAssertEqual(Renderer.resolveParenting(p, time: 0.5).layers[0].transform.rotation.value(at: 0.5), 10, accuracy: 1e-9)
+        p.layers[0].transform.autoOrient = true
+        // Moving straight down = 90 degrees, plus its own 10.
+        XCTAssertEqual(Renderer.resolveParenting(p, time: 0.5).layers[0].transform.rotation.value(at: 0.5), 100, accuracy: 1e-6)
+        XCTAssertEqual(try XCTUnwrap(AutoOrient.angle(p.layers[0].transform.position, at: 5)), 90, accuracy: 1e-6)
+        let data = try JSONEncoder().encode(p)
+        XCTAssertTrue(try JSONDecoder().decode(Project.self, from: data).layers[0].transform.autoOrient)
+    }
+
+    func testOldTransformAndKeyframesDecode() throws {
+        // A transform saved before Orient Along Path, with a key saved before spatial handles.
+        var old = LayerTransform(position: Animated(Vec2(1, 2)))
+        old.position.insertKeyframe(Keyframe(time: 0, value: Vec2(1, 2)))
+        let data = try JSONEncoder().encode(old)
+        var obj = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        obj.removeValue(forKey: "autoOrientStore")
+        let json = String(decoding: try JSONSerialization.data(withJSONObject: obj), as: UTF8.self)
+        XCTAssertFalse(json.contains("spatial"))
+        let tr = try JSONDecoder().decode(LayerTransform.self, from: Data(json.utf8))
+        XCTAssertFalse(tr.autoOrient)
+        XCTAssertNil(tr.position.keyframes.first?.spatialOut)
+    }
+
+    func testSnapMath() {
+        XCTAssertEqual(CanvasSnap.snapScale(149.4), 150)
+        XCTAssertEqual(CanvasSnap.snapScale(147.5), 147.5)
+        XCTAssertEqual(CanvasSnap.snapRotation(52), 45)
+        XCTAssertEqual(CanvasSnap.gridLines(divisions: 4, length: 1000), [0, 250, 500, 750, 1000])
+    }
+
+    func testRotationIsFreeUnlessSnapIsOn() {
+        var p = project()
+        let l = p.makeLayer(name: "a", content: .shape(.rectangle), size: Vec2(200, 200))
+        p.layers = [l]
+        let s = state(p)
+        s.select(l.id)
+        s.beginLayerPinch(); s.updateLayerPinch(scale: 1, rotation: 44); s.endLayerPinch(ownsEdit: true)
+        XCTAssertEqual(s.selectedLayer!.transform.rotation.value(at: 0), 44, accuracy: 1e-9)
+        s.rotationSnap = true
+        s.beginLayerPinch(); s.updateLayerPinch(scale: 1, rotation: 4); s.endLayerPinch(ownsEdit: true)
+        XCTAssertEqual(s.selectedLayer!.transform.rotation.value(at: 0), 45, accuracy: 1e-9)
+    }
+
+    func testTapCycleAndMarquee() {
+        let a = UUID(), b = UUID(), c = UUID()
+        XCTAssertEqual(CanvasPick.next(hits: [a, b, c], current: nil, sameSpot: true), a)
+        XCTAssertEqual(CanvasPick.next(hits: [a, b, c], current: a, sameSpot: true), b)
+        XCTAssertEqual(CanvasPick.next(hits: [a, b, c], current: c, sameSpot: true), a)
+        XCTAssertEqual(CanvasPick.next(hits: [a, b, c], current: b, sameSpot: false), a)
+        XCTAssertNil(CanvasPick.next(hits: [], current: a, sameSpot: true))
+        let picked = CanvasPick.marquee(CGRect(x: 0, y: 0, width: 100, height: 100),
+                                        bounds: [(a, CGRect(x: 50, y: 50, width: 10, height: 10)), (b, CGRect(x: 300, y: 0, width: 10, height: 10))])
+        XCTAssertEqual(picked, [a])
+    }
+
+    func testDistributeAndFit() {
+        let a = UUID(), b = UUID(), c = UUID()
+        let moves = Arrange.distribute([(a, CGRect(x: 0, y: 0, width: 10, height: 10)), (b, CGRect(x: 20, y: 0, width: 10, height: 10)),
+                                        (c, CGRect(x: 100, y: 0, width: 10, height: 10))], horizontal: true)
+        XCTAssertEqual(moves[b]!.x, 30, accuracy: 1e-9)
+        XCTAssertEqual(moves[a]!.x, 0, accuracy: 1e-9)
+        XCTAssertEqual(Arrange.fitScale(halfSize: Vec2(500, 250), comp: Vec2(1000, 1000), fill: false), 100, accuracy: 1e-9)
+        XCTAssertEqual(Arrange.fitScale(halfSize: Vec2(500, 250), comp: Vec2(1000, 1000), fill: true), 200, accuracy: 1e-9)
+    }
+
+    func testAlignToSelectionCenterAnchorResetAndGuides() {
+        var p = project()
+        var a = p.makeLayer(name: "a", content: .shape(.rectangle), size: Vec2(100, 100))
+        var b = p.makeLayer(name: "b", content: .shape(.rectangle), size: Vec2(100, 100))
+        a.transform.position = Animated(Vec2(200, 200)); b.transform.position = Animated(Vec2(600, 400))
+        p.layers = [a, b]
+        let s = state(p)
+        s.beginMultiSelect(a.id); s.multiSelection = [a.id, b.id]
+        s.align(.left)
+        XCTAssertEqual(s.project.layers[1].transform.position.value(at: 0).x, 200, accuracy: 0.01, "left edges meet the selection's left")
+        s.undo()
+        XCTAssertEqual(s.project.layers[1].transform.position.value(at: 0).x, 600, accuracy: 0.01)
+        s.endMultiSelect(); s.select(a.id)
+        s.mutate("anchor") { $0.layers[0].transform.anchor = Animated(Vec2(30, 0)) }
+        let before = LayerPlacement.bounds(s.selectedLayer!, project: s.project, time: 0)!
+        s.centerAnchor()
+        XCTAssertEqual(s.selectedLayer!.transform.anchor.value(at: 0), .zero)
+        let after = LayerPlacement.bounds(s.selectedLayer!, project: s.project, time: 0)!
+        XCTAssertEqual(after.midX, before.midX, accuracy: 0.5, "centering the anchor keeps the layer in place")
+        s.resetTransform()
+        XCTAssertEqual(s.selectedLayer!.transform.position.value(at: 0), Vec2(500, 500))
+        s.addGuide(vertical: true)
+        XCTAssertEqual(s.guides.count, 1)
+        XCTAssertTrue(s.extraSnapTargets(view: s.project, time: 0).xs.contains(500))
+        let gid = s.guides[0].id
+        s.beginEdit("Move Guide"); s.moveGuide(gid, to: -20); s.finishGuideDrag(gid)
+        XCTAssertTrue(s.guides.isEmpty, "dragged off the comp = removed")
+    }
+
+    func testAimPointsAtTarget() {
+        let c = SIMD3(500.0, 500.0, -1000.0), target = SIMD3(800.0, 200.0, 0.0)
+        for rz in [0.0, 30.0] {
+            let a = Aim.angles(from: c, to: target, rotationZ: rz)!
+            let dir = CameraState.rotation(x: a.x, y: a.y, z: rz) * SIMD4(0, 0, 1, 0)
+            let want = simd_normalize(target - c)
+            XCTAssertEqual(dir.x, want.x, accuracy: 1e-9); XCTAssertEqual(dir.y, want.y, accuracy: 1e-9); XCTAssertEqual(dir.z, want.z, accuracy: 1e-9)
+        }
+        var p = project()
+        var light = p.makeLayer(name: "light", content: .light, size: Vec2(10, 10))
+        light.transform.position = Animated(Vec2(500, 500)); light.transform.positionZ = Animated(-800)
+        p.layers = [light]
+        let s = state(p)
+        s.select(light.id)
+        s.beginEdit("Aim"); s.aimSelected(atComp: Vec2(700, 300)); s.endEdit()
+        let hit = Aim.planeHit(s.selectedLayer!, time: 0)!
+        XCTAssertEqual(hit.x, 700, accuracy: 1); XCTAssertEqual(hit.y, 300, accuracy: 1)
+    }
+
+    func testLayerPickHandsTheTappedLayerToTheTool() {
+        var p = project()
+        let a = p.makeLayer(name: "lower", content: .shape(.rectangle), size: Vec2(10, 10))
+        let b = p.makeLayer(name: "upper", content: .shape(.rectangle), size: Vec2(10, 10))
+        p.layers = [a, b]
+        let s = state(p)
+        s.select(a.id)
+        s.pickIKUpper()
+        XCTAssertTrue(s.linkPicking)
+        XCTAssertFalse(s.layerPickAllows(a.id))
+        s.endLinkPick(parent: b.id)
+        XCTAssertEqual(s.ikDraftUpper, b.id)
+        XCTAssertEqual(s.panel, .rig)
+        XCTAssertNil(s.project.layers[0].parentID, "a tool pick never parents")
+    }
 }

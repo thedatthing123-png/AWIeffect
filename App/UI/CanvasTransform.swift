@@ -184,6 +184,9 @@ extension EditorState {
                     xs += [rect.minX, rect.midX, rect.maxX]; ys += [rect.minY, rect.midY, rect.maxY]
                 }
             }
+            // Guides, the grid (when shown) and other layers' anchor points.
+            let extra = extraSnapTargets(view: view, time: t)
+            xs += extra.xs; ys += extra.ys
             var xFeatures = [p.x], yFeatures = [p.y]
             if let layer = selectedLayer, let rect = LayerPlacement.bounds(layer, project: view, time: t) {
                 xFeatures += [rect.minX, rect.midX, rect.maxX].map { $0 + p.x - start.x }
@@ -204,7 +207,9 @@ extension EditorState {
         case .scale:
             let r0 = hypot(d.startComp.x - d.pivot.x, d.startComp.y - d.pivot.y)
             let r1 = hypot(c.x - d.pivot.x, c.y - d.pivot.y)
-            let k = r0 > 1 ? r1 / r0 : 1
+            var k = r0 > 1 ? r1 / r0 : 1
+            // Scale snapping: lands on whole 5 % steps (100 %, 150 %…) when close, free in between.
+            if snappingEnabled, abs(d.scale.x) > 1e-6 { k = CanvasSnap.snapScale(d.scale.x * k) / d.scale.x }
             mutateLayer { $0.transform.scale.set(Vec2((d.scale.x * k * 10).rounded() / 10, (d.scale.y * k * 10).rounded() / 10), at: t) }
         case .stretch(let ax, let ay):
             // Measure along the layer's own (rotated) axes so stretching follows the layer.
@@ -219,9 +224,8 @@ extension EditorState {
             let a1 = atan2(c.y - d.pivot.y, c.x - d.pivot.x)
             // Own rotation (a parent's turn is added on top when drawn).
             var r = (d.raw?.rotation.value(at: t) ?? d.rotation) + (a1 - a0) * 180 / .pi
-            // Gentle snapping to 45° steps.
-            let snap = (r / 45).rounded() * 45
-            if abs(r - snap) < 2.5 { r = snap }
+            // Free rotation unless Rotation Snap is on (then 15° steps).
+            if rotationSnap { r = CanvasSnap.snapRotation(r) }
             mutateLayer { $0.transform.rotation.set((r * 10).rounded() / 10, at: t) }
         case .pivot:
             // Move the anchor under the finger and compensate position so the layer stays put (AE Pan Behind).
@@ -261,7 +265,8 @@ extension EditorState {
         let kk = max(0.01, k)
         mutateLayer {
             $0.transform.scale.set(Vec2((s.scale.x * kk * 10).rounded() / 10, (s.scale.y * kk * 10).rounded() / 10), at: t)
-            $0.transform.rotation.set(((s.rotation + deg) * 10).rounded() / 10, at: t)
+            let r = self.rotationSnap ? CanvasSnap.snapRotation(s.rotation + deg) : s.rotation + deg
+            $0.transform.rotation.set((r * 10).rounded() / 10, at: t)
         }
     }
 

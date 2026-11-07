@@ -386,7 +386,8 @@ struct EditorView: View {
                         ClockReader(clock: state.clock) { t in CameraFrameOverlay(project: lp ?? state.project, time: t, fit: fit) }
                     }
                 }
-                if state.showGrid { CompGrid(fit: fit) }
+                if state.showGrid { CompGrid(fit: fit, divisions: state.gridDivisions) }
+                if state.canvasMode == .comp { GuidesOverlay(state: state, fit: fit) }
                 // 3D camera: two fingers dragged together slide the camera.
                 if state.canvasMode == .comp, state.cameraView, let cam = state.activeCameraLayer, EditorState.cameraIs3D(cam) {
                     TwoFingerPan(onBegan: { panCamera = state.beginCameraGesture() }, onChanged: { d in
@@ -411,6 +412,13 @@ struct EditorView: View {
                 if state.showMotionPath, state.canvasMode == .comp, state.panel == .transform || state.panel == .layerHome {
                     MotionPathOverlay(state: state, fit: fit)
                 }
+                if state.canvasMode == .comp, pen == nil, state.panel == .transform || state.panel == .threeD || state.panel == .layerHome {
+                    ClockReader(clock: state.clock) { _ in AimGizmoOverlay(state: state, fit: fit) }
+                }
+                if state.panel == .rig, state.canvasMode == .comp {
+                    ClockReader(clock: state.clock) { _ in BoneOverlay(state: state, fit: fit) }
+                }
+                if let r = marqueeRect { MarqueeOverlay(rect: r) }
                 if state.panel == .puppet, state.canvasMode == .comp {
                     ClockReader(clock: state.clock) { _ in PuppetOverlay(state: state, fit: fit) }
                 }
@@ -427,7 +435,7 @@ struct EditorView: View {
                     LinkPickOverlay(state: state, fit: fit)
                     VStack {
                         HStack {
-                            Text("Tap the layer to link to").font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
+                            Text(state.layerPickHandler == nil ? "Tap the layer to link to" : state.layerPickPrompt).font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
                             Spacer()
                             Button("Cancel") { state.endLinkPick(parent: nil) }.font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
                         }
@@ -589,6 +597,30 @@ struct EditorView: View {
     }
     @State private var puppetDragPin: Int?
     @State private var maskDrag: MaskDragSession?
+    @State private var marqueeStart: CGPoint?
+    @State private var marqueeEnd: CGPoint?
+    /// Last canvas tap (screen): tapping the same spot again steps to the layer underneath.
+    @State private var lastTapPoint: CGPoint?
+    private var marqueeRect: CGRect? {
+        guard let a = marqueeStart, let b = marqueeEnd else { return nil }
+        return CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(a.x - b.x), height: abs(a.y - b.y))
+    }
+
+    /// Marquee: every visible layer the rectangle touches. Two or more become a multi-selection.
+    private func finishMarquee(fit: CGRect) {
+        defer { marqueeStart = nil; marqueeEnd = nil }
+        guard let r = marqueeRect, r.width > 6 || r.height > 6 else { return }
+        let a = toComp(CGPoint(x: r.minX, y: r.minY), fit: fit), b = toComp(CGPoint(x: r.maxX, y: r.maxY), fit: fit)
+        let compRect = CGRect(x: a.x, y: a.y, width: b.x - a.x, height: b.y - a.y)
+        let view = state.canvasViewProject(state.project), t = state.currentTime
+        let bounds = view.layers.filter { $0.isActive(at: t) && !$0.isLocked && $0.content != .camera && $0.content != .light && !$0.isAudioOnly }
+            .compactMap { l in LayerPlacement.bounds(l, project: view, time: t).map { (l.id, $0) } }
+        let ids = CanvasPick.marquee(compRect, bounds: bounds)
+        guard let first = ids.first else { return }
+        if ids.count == 1 { state.select(first); return }
+        state.beginMultiSelect(first)
+        state.multiSelection = Set(ids)
+    }
     @State private var orbitZoomStart: Double?
 
     /// 3D view: one finger orbits (two fingers pan via the pinch's drift), pinch dollies.
@@ -649,15 +681,19 @@ struct EditorView: View {
                    state.selectedLayer?.content == .camera, state.activeCameraLayer != nil, let c = state.beginCameraGesture() {
                     cameraStart = c
                 }
-                if canvasDragState == nil && panBase == nil && cameraStart == nil {
+                if canvasDragState == nil && panBase == nil && cameraStart == nil && marqueeStart == nil {
                     canvasDragState = state.beginCanvasDrag(at: v.startLocation, comp: toComp(v.startLocation, fit: fit), fit: fit)
                     if canvasDragState == nil {
-                        // Nothing to move: in Camera view the camera moves (the scene follows the finger); otherwise
-                        // the view pans (free view never changes the export).
+                        // Nothing to move: in Camera view the camera moves (the scene follows the finger). Nothing
+                        // selected and the finger starts on empty canvas: drag a marquee to select. Otherwise the view
+                        // pans (two fingers always pan; free view never changes the export).
                         if state.cameraView, state.activeCameraLayer != nil, let c = state.beginCameraGesture() { cameraStart = c }
+                        else if state.selectedLayerID == nil, !state.isMultiSelecting, state.canvasMode == .comp,
+                                layerAt(v.startLocation, fit: fit) == nil { marqueeStart = v.startLocation }
                         else { panBase = viewPan }
                     }
                 }
+                if marqueeStart != nil { marqueeEnd = v.location; return }
                 if let c = cameraStart {
                     guard !dragFrozen, pinchOnLayer == nil else { return }
                     let s = Double(state.project.width) / Double(max(fit.width, 1))
@@ -677,6 +713,7 @@ struct EditorView: View {
                 if let k = puppetDragPin { if k >= 0 { state.endEdit() }; puppetDragPin = nil }
                 if let m = maskDrag { state.endMaskDrag(m); maskDrag = nil }
                 if canvasDragState != nil { state.endCanvasDrag() }
+                if marqueeStart != nil { finishMarquee(fit: fit) }
                 canvasDragState = nil
                 panBase = nil
             }
@@ -686,7 +723,7 @@ struct EditorView: View {
     private func layerAt(_ point: CGPoint, fit: CGRect) -> UUID? {
         let c = toComp(point, fit: fit)
         for layer in state.displayProject.layers where layer.isActive(at: state.currentTime) && layer.id != state.selectedLayerID
-            && (!state.linkPicking || state.canParent(to: layer.id))
+            && (!state.linkPicking || state.layerPickAllows(layer.id))
             && layer.content != .camera && layer.content != .light && !layer.isAudioOnly {
             let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(state.canvasViewProject(state.project), time: state.currentTime),
                                              time: state.currentTime, renderScale: 1)
@@ -697,9 +734,10 @@ struct EditorView: View {
         return nil
     }
 
-    /// Selects the top-most layer whose bounds contain the tap.
+    /// Selects the top-most layer whose bounds contain the tap; tapping the same spot again steps to the next one below.
     private func tapSelect(at point: CGPoint, fit: CGRect) {
         let c = toComp(point, fit: fit)
+        var hits: [UUID] = []
         for layer in state.displayProject.layers where layer.isActive(at: state.currentTime) && !layer.isLocked
             && layer.content != .adjustment && layer.content != .camera && layer.content != .light && !layer.isAudioOnly {
             let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(state.canvasViewProject(state.project), time: state.currentTime),
@@ -707,12 +745,11 @@ struct EditorView: View {
             let h = M.inverse * SIMD3(c.x, c.y, 1)
             let local = SIMD3(h.x / h.z, h.y / h.z, 1)
             let hs = Renderer.layerHalfSize(layer, time: state.currentTime)
-            if abs(local.x) <= hs.x && abs(local.y) <= hs.y {
-                state.select(layer.id)
-                return
-            }
+            if abs(local.x) <= hs.x && abs(local.y) <= hs.y { hits.append(layer.id) }
         }
-        state.select(nil)
+        let same = lastTapPoint.map { hypot($0.x - point.x, $0.y - point.y) < 14 } ?? false
+        lastTapPoint = point
+        state.select(CanvasPick.next(hits: hits, current: state.selectedLayerID, sameSpot: same))
     }
 }
 

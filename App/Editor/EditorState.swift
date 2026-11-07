@@ -87,6 +87,18 @@ final class EditorState: ObservableObject {
     /// Show the selected layer's motion path on the canvas.
     @Published var showMotionPath = true
     @Published var snappingEnabled = true
+    /// R2 snapping options: grid lines (when the grid is shown), rotation in 15 degree steps, user guides.
+    @Published var snapToGrid = true
+    @Published var gridDivisions = 3
+    @Published var rotationSnap = false
+    @Published var showGuides = true
+    /// Tap-a-layer pick for something other than parenting (IK limbs, camera focus). nil = Link (parent).
+    var layerPickHandler: ((UUID?) -> Void)?
+    var layerPickReturnPanel: ToolPanel = .transform
+    var layerPickPrompt = "Tap a layer"
+    /// Make-IK picks (kept here: the Rig panel closes while you tap a layer on the canvas).
+    @Published var ikDraftUpper: UUID?
+    @Published var ikDraftController: UUID?
     var sketchStartTime: Double?
     var sketchStartClock: CFTimeInterval = 0
     /// Motion Sketch samples per layer (multi-selection records every moved layer).
