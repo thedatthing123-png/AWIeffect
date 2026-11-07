@@ -170,7 +170,7 @@ final class EffectGPU {
         for name in ["fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
                      "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix", "fxBackdropMix", "fxBackdropMask",
                      "fxWarp", "fxStylize", "fxGlitch", "fxColor2", "fxSaberCore", "fxShine", "fxParticles", "fxPixelSort",
-                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet", "fxGrade", "maskMix", "fxLayerRef", "flowEstimate", "flowBlur", "fxAccumulate", "fx19", "fx19GlowKeep", "fx19KeyInvert", "fx19AlphaOf", "fx19ColorSelect", "fx19Bend", "fx20Flip", "fx20AMWave", "fx20AMFractal", "fx21", "fx22", "fx23", "fxGX", "fxInnerGlow24", "fxArt24", "fxLightPrep25", "fxLightSum25", "fxLightComp25", "fxStreak25", "fxLightGen25", "fxBlur26", "fxPrint27", "fxInk27", "fxFilm27", "fxGlitch27", "fxTurbulent28", "fxWaveWarp28", "fxPolar28", "fxRipple28", "fxMagnify28", "fxTrans28", "fxWarp14AA28", "fxDistort6AA28", "fxFractalNoise29", "fxGen29", "fxKey29", "fxColor29", "fxDeepSource", "fxDeepAccumulate", "fxDeepComposite", "fxProxyPremultiply", "fxGradeR4"] {
+                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet", "fxGrade", "maskMix", "fxLayerRef", "flowEstimate", "flowBlur", "fxAccumulate", "fx19", "fx19GlowKeep", "fx19KeyInvert", "fx19AlphaOf", "fx19ColorSelect", "fx19Bend", "fx20Flip", "fx20AMWave", "fx20AMFractal", "fx21", "fx22", "fx23", "fxGX", "fxInnerGlow24", "fxArt24", "fxLightPrep25", "fxLightSum25", "fxLightComp25", "fxStreak25", "fxLightGen25", "fxBlur26", "fxPrint27", "fxInk27", "fxFilm27", "fxGlitch27", "fxTurbulent28", "fxWaveWarp28", "fxPolar28", "fxRipple28", "fxMagnify28", "fxTrans28", "fxWarp14AA28", "fxDistort6AA28", "fxFractalNoise29", "fxGen29", "fxKey29", "fxColor29", "fxDeepSource", "fxDeepAccumulate", "fxDeepComposite", "fxProxyPremultiply", "fxGradeR4", "fxMixR4", "fxGradientR4"] {
             guard let f = library.makeFunction(name: name) else { throw RenderError.pipeline(name) }
             psos[name] = try device.makeComputePipelineState(function: f)
         }
@@ -257,9 +257,9 @@ enum EffectRegistry {
         gaussianBlur, directionalBlur, radialBlur,
         exposure, brightnessContrast, hueSaturation, tint, levels, invert, fill, vignette,
         glow, rgbSplit, fractalNoise, chromaKey, shake,
-    ] + [letterSpacing] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22 + batch23
+    ] + [letterSpacing] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22 + batch23 + batchR4
 
-    private static let byID: [String: EffectDefinition] = Dictionary(uniqueKeysWithValues: all.map { ($0.id, $0) })
+    private static let byID: [String: EffectDefinition] = Dictionary(uniqueKeysWithValues: all.map { ($0.id, EffectStackR4.wrap($0)) })
     private static let byMatchName: [String: EffectDefinition] = {
         var m: [String: EffectDefinition] = [:]
         for d in all { for n in d.aeMatchNames { m[n] = d } }

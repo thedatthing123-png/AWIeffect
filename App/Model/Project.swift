@@ -440,6 +440,8 @@ struct Project: Codable, Equatable, Identifiable {
     var captionTracks: [CaptionTrack]? = nil
     /// CC Studio Looks saved with this project (travel with it on export / copy). nil in older projects.
     var savedLooks: [String: EffectInstance]? = nil
+    /// Effect stacks saved as presets with this project (Effects > More > Save Stack). nil in older projects.
+    var effectStackPresets: [String: [EffectInstance]]? = nil
     /// Scene motion blur (optional storage so older saves decode).
     var motionBlurOn: Bool? = nil
     /// Alight Motion-style length: the project is as long as its layers (grows/shrinks with them).

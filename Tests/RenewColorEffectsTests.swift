@@ -1,7 +1,13 @@
 import XCTest
 @testable import AWIeffect
 
+@MainActor
 final class RenewColorEffectsTests: XCTestCase {
+    private func project() -> Project { Project.new(name: "r4", width: 1000, height: 1000, fps: 30, duration: 4, background: .black) }
+    private func state(_ p: Project) -> EditorState {
+        EditorState(project: p, store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+    }
+
     func testDefaultGradeUsesOriginalPathAndOlderGradesMatch() {
         let g = EffectRegistry.grade.makeInstance()
         XCTAssertFalse(GradeR4.isActive(g), "a fresh grade renders through the original kernel")
@@ -83,5 +89,94 @@ final class RenewColorEffectsTests: XCTestCase {
         var g = EffectRegistry.grade.makeInstance()
         g.params["hueSat3"] = .number(Animated(-100))
         XCTAssertTrue(GradeR4.isActive(g))
+    }
+
+    // MARK: Effects panel
+
+    func testHoldKeysResolveSwitchesAndMenusOverTime() {
+        var e = EffectRegistry.gaussianBlur.makeInstance()
+        XCTAssertNil(EffectStackR4.resolved(e, at: 0), "no hold keys: untouched (fast path)")
+        e = EffectStackR4.settingHold(e, "repeatEdges", value: 0, at: 0)
+        e = EffectStackR4.settingHold(e, "repeatEdges", value: 1, at: 1)
+        e = EffectStackR4.settingHold(e, "dimensions", value: 2, at: 0.5)
+        XCTAssertEqual(EffectStackR4.resolved(e, at: 0.5)?.bool("repeatEdges"), false)
+        XCTAssertEqual(EffectStackR4.resolved(e, at: 1.5)?.bool("repeatEdges"), true)
+        XCTAssertEqual(EffectStackR4.resolved(e, at: 0)?.choice("dimensions"), 2, "before the first key: the first key's value")
+        e = EffectStackR4.removingHold(e, "repeatEdges", at: 1)
+        XCTAssertEqual(EffectStackR4.holdKeys(e, "repeatEdges").count, 1)
+        let back = try? JSONDecoder().decode(EffectInstance.self, from: JSONEncoder().encode(e))
+        XCTAssertEqual(back, e, "hold keys save with the project")
+    }
+
+    func testMixDefaultsToFullAndSoloMutesTheOthers() {
+        let a = EffectRegistry.gaussianBlur.makeInstance(), b = EffectRegistry.gaussianBlur.makeInstance()
+        XCTAssertEqual(EffectStackR4.mix(a, 0), 100)
+        let soloed = EffectStackR4.toggledSolo([a, b], b.id)
+        XCTAssertTrue(EffectStackR4.isMuted(soloed[0])); XCTAssertTrue(EffectStackR4.isSolo(soloed[1]))
+        let cleared = EffectStackR4.toggledSolo(soloed, b.id)
+        XCTAssertEqual(cleared, [a, b], "ending solo restores the stack exactly")
+        XCTAssertNotNil(EffectRegistry.definition("awiR4.gradient"))
+        let t = EffectRegistry.definition("ae.shake").map { d -> Bool in if case .transform = d.stage { return true }; return false }
+        XCTAssertNotEqual(t, false, "wrapping keeps each stage kind")
+    }
+
+    func testReorderIsOneUndoStep() {
+        var p = project()
+        var l = p.makeLayer(name: "l", content: .solid, size: Vec2(10, 10))
+        let a = EffectRegistry.gaussianBlur.makeInstance(), b = EffectRegistry.exposure.makeInstance(), c = EffectRegistry.invert.makeInstance()
+        l.effects = [a, b, c]
+        p.layers = [l]
+        let s = state(p)
+        s.select(l.id)
+        s.moveEffect(c.id, to: a.id)
+        XCTAssertEqual(s.project.layers[0].effects.map(\.id), [c.id, a.id, b.id])
+        s.undo()
+        XCTAssertEqual(s.project.layers[0].effects.map(\.id), [a.id, b.id, c.id])
+    }
+
+    func testStackPresetsTravelAndApplyAsRemovableGroup() throws {
+        var p = project()
+        var l = p.makeLayer(name: "l", content: .solid, size: Vec2(10, 10))
+        l.effects = EffectStackR4.toggledSolo([EffectRegistry.gaussianBlur.makeInstance(), EffectRegistry.invert.makeInstance()], UUID())
+        p.layers = [l]
+        let s = state(p)
+        s.select(l.id)
+        let name = "R4 test \(UUID().uuidString)"
+        s.saveEffectStack(name)
+        defer { EffectStackLibrary.remove(name) }
+        XCTAssertEqual(s.project.effectStackPresets?[name]?.count, 2)
+        XCTAssertNil(s.project.effectStackPresets?[name]?.first?.text?["soloMute"])
+        s.applyEffectStack(name)
+        let fx = s.project.layers[0].effects
+        XCTAssertEqual(fx.count, 4)
+        let tag = try XCTUnwrap(fx[2].text?["stack"])
+        XCTAssertEqual(fx[3].text?["stack"], tag)
+        XCTAssertNotEqual(fx[2].id, fx[0].id, "fresh ids")
+        s.removeEffectGroup(tag)
+        XCTAssertEqual(s.project.layers[0].effects.count, 2)
+        let back = try JSONDecoder().decode(Project.self, from: JSONEncoder().encode(s.project))
+        XCTAssertEqual(back.effectStackPresets?[name]?.count, 2)
+        XCTAssertNil(try JSONDecoder().decode(Project.self, from: JSONEncoder().encode(project())).effectStackPresets)
+    }
+
+    func testMatteFromAnyLayer() {
+        var p = project()
+        let m = p.makeLayer(name: "matte", content: .solid, size: Vec2(10, 10))
+        let mid = p.makeLayer(name: "mid", content: .solid, size: Vec2(10, 10))
+        let l = p.makeLayer(name: "l", content: .solid, size: Vec2(10, 10))
+        p.layers = [m, mid, l]
+        let s = state(p)
+        s.select(l.id)
+        s.setMatteSource(m.id, mode: .lumaInverted)
+        let got = s.matteSource(s.project.layers[2])
+        XCTAssertEqual(got?.0, m.id); XCTAssertEqual(got?.1, .lumaInverted)
+        s.setMatteSource(nil, mode: .none)
+        XCTAssertNil(s.matteSource(s.project.layers[2]))
+    }
+
+    func testParticleR4ControlsDefaultToOldLook() {
+        let e = EffectRegistry.particles18.makeInstance()
+        XCTAssertFalse(e.bool("burst")); XCTAssertFalse(e.bool("floor")); XCTAssertEqual(e.choice("colorStops"), 0)
+        XCTAssertEqual(MemoryLayout<ParticleUniforms>.stride, 14 * 16, "matches the Metal struct")
     }
 }

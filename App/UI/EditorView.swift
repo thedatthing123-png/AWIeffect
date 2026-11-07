@@ -427,7 +427,7 @@ struct EditorView: View {
                     LinkPickOverlay(state: state, fit: fit)
                     VStack {
                         HStack {
-                            Text("Tap the layer to link to").font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
+                            Text(state.linkPickMatte == nil ? "Tap the layer to link to" : "Tap the layer to use as matte").font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
                             Spacer()
                             Button("Cancel") { state.endLinkPick(parent: nil) }.font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
                         }
@@ -436,6 +436,9 @@ struct EditorView: View {
                         .padding(8)
                         Spacer()
                     }
+                }
+                if state.panel == .effects, state.canvasMode == .comp, !state.keyframeFocusEffects.isEmpty {
+                    ClockReader(clock: state.clock) { _ in EffectPointOverlay(state: state, fit: fit) }
                 }
                 if state.panel == .masks, state.canvasMode == .comp {
                     ClockReader(clock: state.clock) { _ in MaskPointsOverlay(state: state, fit: fit) }

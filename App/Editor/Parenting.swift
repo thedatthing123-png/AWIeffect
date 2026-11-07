@@ -211,6 +211,12 @@ extension EditorState {
 
     func endLinkPick(parent: UUID?) {
         linkPicking = false
+        if let mode = linkPickMatte {
+            linkPickMatte = nil
+            if let parent, parent != selectedLayerID { setMatteSource(parent, mode: mode) }
+            panel = .blending
+            return
+        }
         if let parent, parent != selectedLayerID { setParent(parent) }
         panel = .transform
     }

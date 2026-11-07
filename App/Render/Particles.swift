@@ -7,6 +7,8 @@ struct ParticleUniforms {
     var emit: SIMD4<Float>, life: SIMD4<Float>, motion: SIMD4<Float>, forces: SIMD4<Float>
     var look: SIMD4<Float>, fade: SIMD4<Float>, colorA: SIMD4<Float>, colorB: SIMD4<Float>
     var view: SIMD4<Float>, mode: SIMD4<UInt32>
+    var colorC = SIMD4<Float>(repeating: 0), colorD = SIMD4<Float>(repeating: 0)
+    var burst = SIMD4<Float>(2, 0, 0, 0), floorR4 = SIMD4<Float>(repeating: 0)
 }
 
 /// Render pipelines for the particle system (additive glow / normal blending).
@@ -73,6 +75,16 @@ extension EffectRegistry {
             .choice("sprite", "Particle", particleSprites, 3),
             .choice("blend", "Blend", ["Add (glow)", "Normal"], 0),
             .number("seed", "Random Seed", 1, 0, 1000, step: 1),
+            // R4: color over life with up to 4 stops, one-shot bursts, floor.
+            .choice("colorStops", "Color Stops", ["2 (Birth → Death)", "3", "4"], 0),
+            .color("colorC", "Color Stop 2", RGBA(hex: 0xFF9A5C)),
+            .color("colorD", "Color Stop 3", RGBA(hex: 0xC85CFF)),
+            .toggle("burst", "Burst (one shot)", false),
+            .number("burstTime", "Burst Time", 0, 0, 3600, step: 0.01, unit: "s"),
+            .number("burstCount", "Burst Count", 200, 1, 20000, step: 1),
+            .toggle("floor", "Floor", false),
+            .number("floorY", "Floor Y", 80, -100, 100, unit: "%"),
+            .number("bounce", "Bounce", 40, 0, 100, unit: "%"),
         ],
         stage: .pixels { ctx in
             guard let pso = ctx.effect.choice("blend") == 0 ? ParticleGPU.shared.additive : ParticleGPU.shared.normal else { return ctx.input }
@@ -85,7 +97,9 @@ extension EffectRegistry {
             let sizePx = max(1, ctx.num("size") * u * (ctx.effect.choice("sprite") == 2 ? 3 : 1))
             let budget = max(2_000_000, 6 * Double(ctx.width * ctx.height))
             let byBudget = max(1, budget / (sizePx * sizePx))
-            let count = UInt32(min(20000, byBudget, max(1, (rate * life).rounded(.up))))
+            let burst = ctx.effect.bool("burst")
+            let wanted = burst ? max(1, ctx.num("burstCount")) : max(1, (rate * life).rounded(.up))
+            let count = UInt32(min(20000, byBudget, wanted))
             let ca = ctx.effect.color("colorA", ctx.time), cb = ctx.effect.color("colorB", ctx.time)
             let dir = ctx.effect.number("direction", ctx.time) * .pi / 180
             var uni = ParticleUniforms(
@@ -101,6 +115,16 @@ extension EffectRegistry {
                 colorB: SIMD4(Float(cb.r), Float(cb.g), Float(cb.b), Float(cb.a)),
                 view: SIMD4(Float(ctx.num("depth") * u), Float(1000 * u), Float(ctx.width), Float(ctx.height)),
                 mode: SIMD4(UInt32(ctx.effect.choice("emitter")), UInt32(ctx.effect.choice("sprite")), count, UInt32(max(0, ctx.num("seed")))))
+            // Older particle effects lack these controls: 2 stops, no burst, no floor (renders as before).
+            func num(_ k: String, _ d: Double) -> Double { ctx.effect.params[k] == nil ? d : ctx.num(k) }
+            let cc = ctx.effect.params["colorC"] == nil ? ca : ctx.effect.color("colorC", ctx.time)
+            let cd = ctx.effect.params["colorD"] == nil ? cb : ctx.effect.color("colorD", ctx.time)
+            uni.colorC = SIMD4(Float(cc.r), Float(cc.g), Float(cc.b), Float(cc.a))
+            uni.colorD = SIMD4(Float(cd.r), Float(cd.g), Float(cd.b), Float(cd.a))
+            // Burst time is on the same (pre-run) clock as life.w.
+            uni.burst = SIMD4(Float(2 + max(0, ctx.effect.choice("colorStops"))), burst ? 1 : 0, Float(num("burstTime", 0) + life), 0)
+            uni.floorR4 = SIMD4(ctx.effect.bool("floor") ? 1 : 0, Float(Double(ctx.height) / 2 * (1 + num("floorY", 80) / 100)),
+                                Float(num("bounce", 40) / 100), 0)
             let rp = MTLRenderPassDescriptor()
             rp.colorAttachments[0].texture = out
             rp.colorAttachments[0].loadAction = .load

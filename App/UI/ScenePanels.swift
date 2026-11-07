@@ -130,6 +130,13 @@ struct StylePanel: View {
                     section("Border", typeID: EffectRegistry.border.id, def: EffectRegistry.border)
                     Divider().overlay(Theme.stroke)
                     section("Shadow", typeID: EffectRegistry.dropShadow.id, def: EffectRegistry.dropShadow)
+                    Divider().overlay(Theme.stroke)
+                    section("Inner Shadow", typeID: EffectRegistry.innerShadow10.id, def: EffectRegistry.innerShadow10)
+                    Divider().overlay(Theme.stroke)
+                    section("Outer Glow", typeID: EffectRegistry.outerGlow.id, def: EffectRegistry.outerGlow)
+                    Divider().overlay(Theme.stroke)
+                    section("Inner Glow", typeID: EffectRegistry.innerGlow.id, def: EffectRegistry.innerGlow)
+                    Text("Gradient fills and overlays are in Color & Fill.").font(.caption).foregroundStyle(Theme.textDim)
                 }
                 .padding(.horizontal, 12).padding(.bottom, 14)
             }
@@ -150,6 +157,7 @@ struct StylePanel: View {
             state.endEdit()
         }))
         .font(.system(size: 14, weight: .semibold)).tint(Theme.accent).foregroundStyle(Theme.text)
+        .frame(minHeight: 44)
         if let fx, fx.isEnabled {
             ForEach(def.params) { pd in ParamRow(state: state, effect: fx, def: pd) }
             if all.filter(\.isEnabled).count > 1 {

@@ -90,3 +90,56 @@ kernel void fxGradeR4(texture2d<half, access::sample> src [[texture(0)]],
     c = clamp(c, 0.0, 1.0);
     dst.write(half4(half3(c * s.a), half(s.a)), gid);
 }
+
+// Per-effect Mix: a.x = amount of the effect (0 = its input, 1 = its output).
+kernel void fxMixR4(texture2d<half, access::read> before [[texture(0)]],
+                    texture2d<half, access::read> after [[texture(1)]],
+                    texture2d<half, access::write> dst [[texture(2)]],
+                    constant EffectParams& p [[buffer(0)]],
+                    uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    dst.write(half4(mix(float4(before.read(gid)), float4(after.read(gid)), clamp(p.a.x, 0.0, 1.0))), gid);
+}
+
+// Gradient fill / overlay inside the layer's alpha.
+// a = (center u, center v, cos angle, sin angle), b = color 1, c = color 2, d = (scale, opacity, layer w px, layer h px)
+// i.x 0 linear / 1 radial, i.y blend 0 normal, 1 multiply, 2 screen, 3 overlay, 4 soft light, 5 color
+static float3 blendR4(float3 s, float3 g, uint m) {
+    if (m == 1u) return s * g;
+    if (m == 2u) return 1.0 - (1.0 - s) * (1.0 - g);
+    if (m == 3u) return select(1.0 - 2.0 * (1.0 - s) * (1.0 - g), 2.0 * s * g, s < 0.5);
+    if (m == 4u) return select(s + (2.0 * g - 1.0) * (sqrt(s) - s), s - (1.0 - 2.0 * g) * s * (1.0 - s), g < 0.5);
+    if (m == 5u) {
+        float ls = dot(s, float3(0.2126, 0.7152, 0.0722)), lg = dot(g, float3(0.2126, 0.7152, 0.0722));
+        return clamp(g + (ls - lg), 0.0, 1.0);
+    }
+    return g;
+}
+kernel void fxGradientR4(texture2d<half, access::read> src [[texture(0)]],
+                         texture2d<half, access::write> dst [[texture(1)]],
+                         constant EffectParams& p [[buffer(0)]],
+                         uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    float4 s = float4(src.read(gid));
+    if (s.a <= 0.0) { dst.write(half4(s), gid); return; }
+    float2 size = float2(dst.get_width(), dst.get_height());
+    float2 lp = max(p.d.zw, float2(1.0));
+    float2 off = (size - lp) * 0.5;
+    float2 px = float2(gid) + 0.5 - off;
+    float m = max(lp.x, lp.y);
+    float2 d = (px - p.a.xy * lp) / m;          // from the center, in units of the longer side
+    float sc = max(p.d.x, 0.01);
+    float t;
+    if (p.i.x == 1u) t = length(d) / (0.5 * sc);
+    else {
+        // Linear: the gradient spans the layer along the angle.
+        float2 dir = float2(p.a.z, p.a.w);
+        float span = (abs(dir.x) * lp.x + abs(dir.y) * lp.y) / m;
+        t = dot(d, dir) / max(span * sc, 1e-4) + 0.5;
+    }
+    t = clamp(t, 0.0, 1.0);
+    float4 g = mix(p.b, p.c, t);
+    float3 sc3 = s.rgb / s.a;
+    float3 o = mix(sc3, blendR4(sc3, g.rgb, p.i.y), clamp(p.d.y * g.a, 0.0, 1.0));
+    dst.write(half4(half3(o * s.a), half(s.a)), gid);
+}

@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import UniformTypeIdentifiers
 
 /// Image every effect / preset thumbnail renders on. Owner-chosen image (Settings) or a built-in test image.
 enum PreviewImage {
@@ -211,6 +212,9 @@ struct EffectsPanel: View {
     @State private var expanded: Set<UUID> = []
     /// Cards already auto-opened once (a newly added effect opens; scrolling back to it must not re-open it).
     @State private var autoOpened: Set<UUID> = []
+    @State private var draggingEffect: UUID?
+    @State private var savingPreset = false
+    @State private var presetName = ""
 
     /// The newest effect opens the first time its card appears, never again on later appearances (scrolling).
     static func shouldAutoOpen(_ id: UUID, last: UUID?, opened: Set<UUID>) -> Bool { last == id && !opened.contains(id) }
@@ -252,8 +256,16 @@ struct EffectsPanel: View {
                                                                : "No effects yet.")
                                 .font(.caption).foregroundStyle(Theme.textDim).padding(.top, 6)
                         }
-                        ForEach(layer.effects) { e in
+                        ForEach(Array(layer.effects.enumerated()), id: \.element.id) { idx, e in
+                            // An applied preset shows once above its effects, with one button to remove them all.
+                            if let tag = e.text?["stack"], idx == 0 || layer.effects[idx - 1].text?["stack"] != tag {
+                                presetHeader(tag)
+                            }
                             SwipeToDelete(content: { effectCard(e) }, isEnabled: !expanded.contains(e.id), onDelete: { state.removeEffect(e.id) })
+                                .onDrop(of: [UTType.text], delegate: EffectDropDelegate(target: e.id, dragging: $draggingEffect) { from, to in
+                                    state.moveEffect(from, to: to)
+                                })
+                                .opacity(draggingEffect == e.id ? 0.5 : 1)
                         }
                     }
                 }
@@ -261,6 +273,14 @@ struct EffectsPanel: View {
                 .padding(.bottom, 16)
             }
         }
+        .alert("Save Effect Preset", isPresented: $savingPreset) {
+            TextField("Preset name", text: $presetName)
+            Button("Save") {
+                let n = presetName.trimmingCharacters(in: .whitespaces)
+                if !n.isEmpty { state.saveEffectStack(n) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { Text("Saves this layer's effects (with their keyframes) to use on any layer or project.") }
         .fileImporter(isPresented: $showFFX, allowedContentTypes: [.ffx, .data]) { result in
             guard case .success(let url) = result else { return }
             if let r = state.applyFFX(url: url) {
@@ -278,8 +298,59 @@ struct EffectsPanel: View {
         }
     }
 
+    /// How much of the effect shows over its input (keyframable; 100 % = the effect as it is).
+    private func mixRow(_ e: EffectInstance) -> some View {
+        let key = EffectStackR4.mixKey
+        let a: Animated<Double>? = { if case .number(let a)? = e.params[key] { return a }; return nil }()
+        return HStack(spacing: 6) {
+            KeyframeDiamond(filled: a?.hasKeyframe(at: state.currentTime) ?? false, animated: a?.isAnimated ?? false) {
+                state.toggleEffectNumberKeyR4(e.id, key, default: 100)
+            }
+            Text("Mix").font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text).frame(width: 96, alignment: .leading)
+            ValueScrubber(value: EffectStackR4.mix(e, state.currentTime), range: 0...100, step: 0, unit: "%",
+                          onBegin: { state.beginEdit("Edit Mix") },
+                          onChange: { state.setEffectNumberR4(e.id, key, default: 100, $0) },
+                          onEnd: { state.endEdit() })
+                .accessibilityIdentifier("effect-mix-\(e.typeID)")
+        }
+    }
+
+    private func presetHeader(_ tag: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "square.stack.3d.up").foregroundStyle(Theme.accentGlow)
+            Text(String(tag.split(separator: "|", maxSplits: 1).first ?? "Preset")).font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.text)
+                .lineLimit(1)
+            Spacer()
+            Button(role: .destructive) { state.removeEffectGroup(tag) } label: {
+                Label("Remove", systemImage: "minus.circle").font(.system(size: 12, weight: .semibold))
+                    .padding(.horizontal, 10).frame(minHeight: 44)
+            }
+            .buttonStyle(.plain).foregroundStyle(Theme.danger)
+        }
+        .padding(.horizontal, 6)
+    }
+
     private var stackMenu: some View {
         Menu {
+            if state.selectedLayer?.effects.isEmpty == false {
+                Button { presetName = ""; savingPreset = true } label: { Label("Save Stack as Preset…", systemImage: "square.and.arrow.down.on.square") }
+            }
+            let names = EffectStackLibrary.allNames(project: state.project)
+            if !names.isEmpty {
+                Menu {
+                    ForEach(names, id: \.self) { n in Button(n) { state.applyEffectStack(n) } }
+                } label: { Label("Apply Preset", systemImage: "square.stack.3d.up") }
+                Menu {
+                    ForEach(names, id: \.self) { n in
+                        Button(role: .destructive) {
+                            EffectStackLibrary.remove(n)
+                            if state.project.effectStackPresets?[n] != nil {
+                                state.mutate("Delete Preset") { p in p.effectStackPresets?[n] = nil; if p.effectStackPresets?.isEmpty == true { p.effectStackPresets = nil } }
+                            }
+                        } label: { Text(n) }
+                    }
+                } label: { Label("Delete Preset", systemImage: "trash") }
+            }
             Button { showFFX = true } label: { Label("Apply AE Preset (.ffx)…", systemImage: "square.and.arrow.down") }
         } label: {
             Label("More", systemImage: "ellipsis.circle").font(.system(size: 13, weight: .semibold))
@@ -302,16 +373,34 @@ struct EffectsPanel: View {
                         .frame(width: 44, height: 44).contentShape(Rectangle())
                 }
                 .accessibilityIdentifier("effect-expand-\(e.typeID)")
-                Text(def?.name ?? "Missing effect: \(e.typeID)")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(def == nil ? Theme.danger : (e.isEnabled ? Theme.text : Theme.textDim))
-                Spacer()
+                // Long-press the name to drag the card to a new place in the stack.
+                HStack(spacing: 6) {
+                    Image(systemName: "line.3.horizontal").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+                    Text(def?.name ?? "Missing effect: \(e.typeID)")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(def == nil ? Theme.danger : (e.isEnabled && !EffectStackR4.isMuted(e) ? Theme.text : Theme.textDim))
+                        .lineLimit(2)
+                    if EffectStackR4.isSolo(e) {
+                        Text("SOLO").font(.system(size: 9, weight: .heavy)).padding(.horizontal, 5).padding(.vertical, 2)
+                            .background(Capsule().fill(Theme.warning)).foregroundStyle(.black)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .contentShape(Rectangle())
+                .onDrag {
+                    draggingEffect = e.id
+                    return NSItemProvider(object: e.id.uuidString as NSString)
+                }
                 Button { state.toggleEffect(e.id) } label: {
                     Image(systemName: e.isEnabled ? "eye" : "eye.slash").frame(width: 44, height: 44).contentShape(Rectangle())
                 }
                 Menu {
                     Button { state.moveEffect(e.id, up: true) } label: { Label("Move Up", systemImage: "arrow.up") }
                     Button { state.moveEffect(e.id, up: false) } label: { Label("Move Down", systemImage: "arrow.down") }
+                    Button { state.toggleEffectSolo(e.id) } label: {
+                        Label(EffectStackR4.isSolo(e) ? "End Solo" : "Solo (show only this)", systemImage: "s.circle")
+                    }
                     Button { state.copyEffects([e.id]) } label: { Label("Copy Effect", systemImage: "doc.on.doc") }
                     Button { state.duplicateEffect(e.id) } label: { Label("Duplicate", systemImage: "plus.square.on.square") }
                     Button(role: .destructive) { state.removeEffect(e.id) } label: { Label("Delete", systemImage: "trash") }
@@ -356,6 +445,7 @@ struct EffectsPanel: View {
                     if version == 0 { return ["size", "angle", "color", "version"].contains(pd.id) }
                     return pd.id != (version == 2 ? "size" : "amount")
                 }) { pd in ParamRow(state: state, effect: e, def: pd) }
+                if def.id != EffectRegistry.grade.id { mixRow(e) }
             }
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
@@ -390,35 +480,75 @@ struct EffectsPanel: View {
     }
 }
 
+/// Drop target for drag-to-reorder: dropping a card on another moves it to that place (one undo step).
+struct EffectDropDelegate: DropDelegate {
+    let target: UUID
+    @Binding var dragging: UUID?
+    let move: (UUID, UUID) -> Void
+
+    func dropUpdated(info: DropInfo) -> DropProposal? { DropProposal(operation: .move) }
+    func performDrop(info: DropInfo) -> Bool {
+        defer { dragging = nil }
+        guard let from = dragging, from != target else { return false }
+        move(from, target)
+        return true
+    }
+}
+
 /// One editable effect parameter with keyframe diamond.
 struct ParamRow: View {
     @ObservedObject var state: EditorState
     let effect: EffectInstance
     let def: ParamDef
 
+    /// Points and angles have two values: they get their own line under the name (max 3 controls per row).
+    private var twoLine: Bool { switch def.kind { case .point, .angle: return true; default: return false } }
+
     var body: some View {
-        let kf = state.effectParamHasKeyframe(effect.id, def.id)
         let t = state.currentTime
-        HStack(spacing: 6) {
-            switch def.kind {
-            case .toggle, .choice:
-                Color.clear.frame(width: 34, height: 30)
-            default:
-                KeyframeDiamond(filled: kf.filled, animated: kf.animated) { state.toggleEffectKeyframe(effect.id, def.id) }
+        if twoLine {
+            VStack(spacing: 4) {
+                HStack(spacing: 6) { diamond; nameLabel.frame(maxWidth: .infinity, alignment: .leading); graphButton }
+                HStack(spacing: 6) { control(t: t) }.padding(.leading, 40)
             }
-            Text(def.name).font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text)
-                .frame(width: 96, alignment: .leading).lineLimit(2).minimumScaleFactor(0.8)
-            control(t: t)
-            if state.effectSegments(GraphEffectTarget(effect: effect.id, key: def.id)).count > 0 {
-                // Keyframed: shape its motion in the Graph (bounce, ease, elastic…).
-                Button { state.graphEffect = GraphEffectTarget(effect: effect.id, key: def.id); state.panel = .graph } label: {
-                    Image(systemName: "point.topleft.down.to.point.bottomright.curvepath").font(.system(size: 13, weight: .semibold))
-                        .frame(width: 30, height: 30).foregroundStyle(Theme.accentGlow)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Graph for \(def.name)")
-            }
+        } else {
+            HStack(spacing: 6) { diamond; nameLabel.frame(width: 96, alignment: .leading); control(t: t); graphButton }
         }
+    }
+
+    @ViewBuilder private var diamond: some View {
+        switch def.kind {
+        case .toggle, .choice:
+            // Switches and menus key as holds: the value jumps at each key.
+            let hk = state.holdState(effect, def.id)
+            KeyframeDiamond(filled: hk.filled, animated: hk.animated) {
+                state.toggleHoldKeyR4(effect.id, def.id, current: heldValue)
+            }
+        default:
+            let kf = state.effectParamHasKeyframe(effect.id, def.id)
+            KeyframeDiamond(filled: kf.filled, animated: kf.animated) { state.toggleEffectKeyframe(effect.id, def.id) }
+        }
+    }
+
+    private var nameLabel: some View {
+        Text(def.name).font(.system(size: 12, weight: .medium)).foregroundStyle(Theme.text).lineLimit(2).minimumScaleFactor(0.8)
+    }
+
+    @ViewBuilder private var graphButton: some View {
+        if state.effectSegments(GraphEffectTarget(effect: effect.id, key: def.id)).count > 0 {
+            // Keyframed: shape its motion in the Graph (bounce, ease, elastic…).
+            Button { state.graphEffect = GraphEffectTarget(effect: effect.id, key: def.id); state.panel = .graph } label: {
+                Image(systemName: "point.topleft.down.to.point.bottomright.curvepath").font(.system(size: 13, weight: .semibold))
+                    .frame(width: 44, height: 44).foregroundStyle(Theme.accentGlow).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Graph for \(def.name)")
+        }
+    }
+
+    private var heldValue: Int {
+        if case .toggle = def.kind { return effect.bool(def.id) ? 1 : 0 }
+        return effect.choice(def.id)
     }
 
     @ViewBuilder private func control(t: Double) -> some View {
@@ -429,14 +559,31 @@ struct ParamRow: View {
                           onChange: { setNumber($0) }, onEnd: { state.endEdit() })
                 .accessibilityIdentifier("effect-param-\(effect.typeID)-\(def.id)")
         case .angle:
-            ValueScrubber(value: effect.number(def.id, t), range: -360...360, step: 1, unit: "°",
+            // AE angle: whole turns + degrees (value = turns x 360 + degrees), both scrubbable and typeable.
+            let v = effect.number(def.id, t)
+            let turns = (v / 360).rounded(.towardZero), deg = v - turns * 360
+            ValueScrubber(value: turns, range: -50...50, step: 1, unit: "x",
                           onBegin: { state.beginEdit("Edit \(def.name)") },
-                          onChange: { setNumber($0) }, onEnd: { state.endEdit() })
+                          onChange: { setNumber($0.rounded() * 360 + deg) }, onEnd: { state.endEdit() })
+                .frame(width: 64)
+                .accessibilityLabel("\(def.name) revolutions")
+            ValueScrubber(value: deg, range: -359...359, step: 1, unit: "°",
+                          onBegin: { state.beginEdit("Edit \(def.name)") },
+                          onChange: { setNumber(turns * 360 + $0) }, onEnd: { state.endEdit() })
                 .accessibilityIdentifier("effect-param-\(effect.typeID)-\(def.id)")
         case .point:
+            // Scrub or type X / Y (%); the crosshair on the canvas drags the same point.
             let v = effect.point(def.id, t)
-            NumberField(value: v.x * 100, label: "X%") { nv in setPoint(Vec2(nv / 100, v.y)) }
-            NumberField(value: v.y * 100, label: "Y%") { nv in setPoint(Vec2(v.x, nv / 100)) }
+            ValueScrubber(value: v.x * 100, range: -100...200, step: 0.1, unit: "%",
+                          onBegin: { state.beginEdit("Edit \(def.name)") },
+                          onChange: { nv in setPointLive(Vec2(nv / 100, effect.point(def.id, state.currentTime).y), axis: 0, nv / 100) },
+                          onEnd: { state.endEdit() })
+                .accessibilityLabel("\(def.name) X")
+            ValueScrubber(value: v.y * 100, range: -100...200, step: 0.1, unit: "%",
+                          onBegin: { state.beginEdit("Edit \(def.name)") },
+                          onChange: { nv in setPointLive(Vec2(effect.point(def.id, state.currentTime).x, nv / 100), axis: 1, nv / 100) },
+                          onEnd: { state.endEdit() })
+                .accessibilityLabel("\(def.name) Y")
         case .color:
             let c = effect.color(def.id, t)
             AWIColorWell("", selection: Binding(get: { Color(c) }, set: { col in
@@ -452,18 +599,14 @@ struct ParamRow: View {
             Spacer()
         case .toggle:
             Toggle("", isOn: Binding(get: { effect.bool(def.id) }, set: { b in
-                state.beginEdit("Edit \(def.name)")
-                state.setEffectParam(effect.id, def.id) { pv, _ in pv = .toggle(b) }
-                state.endEdit()
+                state.setHeldParamR4(effect.id, def.id, value: b ? 1 : 0, asParam: .toggle(b), label: "Edit \(def.name)")
             })).labelsHidden().tint(Theme.accent)
             Spacer()
         case .choice(let options):
             Menu {
                 ForEach(options.indices, id: \.self) { i in
                     Button(options[i]) {
-                        state.beginEdit("Edit \(def.name)")
-                        state.setEffectParam(effect.id, def.id) { pv, _ in pv = .choice(i) }
-                        state.endEdit()
+                        state.setHeldParamR4(effect.id, def.id, value: i, asParam: .choice(i), label: "Edit \(def.name)")
                     }
                 }
             } label: {
@@ -472,7 +615,7 @@ struct ParamRow: View {
                     Image(systemName: "chevron.up.chevron.down").font(.system(size: 10))
                 }
                 .foregroundStyle(Theme.accentGlow)
-                .padding(.horizontal, 10).frame(height: 30)
+                .padding(.horizontal, 10).frame(minHeight: 44)
                 .background(RoundedRectangle(cornerRadius: 8).fill(Theme.surface))
             }
             Spacer()
@@ -482,6 +625,17 @@ struct ParamRow: View {
     private func setNumber(_ v: Double) {
         state.setEffectParam(effect.id, def.id) { pv, time in
             if case .number(var a) = pv { a.set(v, at: time); pv = .number(a) }
+        }
+    }
+
+    /// Point edit inside a scrub: the other axis is read from the live copy so the two never fight.
+    private func setPointLive(_ v: Vec2, axis: Int, _ n: Double) {
+        state.setEffectParam(effect.id, def.id) { pv, time in
+            if case .point(var a) = pv {
+                var cur = a.value(at: time)
+                if axis == 0 { cur.x = n } else { cur.y = n }
+                a.set(cur, at: time); pv = .point(a)
+            }
         }
     }
 
