@@ -66,7 +66,29 @@ final class ModelRenderer {
         renderQueue = device.makeCommandQueue()
     }
 
-    func clear() { lock.lock(); scenes.removeAll(); availableRenderers.removeAll(); rendererGeneration += 1; lock.unlock() }
+    func clear() { lock.lock(); scenes.removeAll(); availableRenderers.removeAll(); renderTargets.removeAll(); rendererGeneration += 1; lock.unlock() }
+
+    /// SceneKit render targets reused per size (SceneKit writes linear light into the sRGB target; `view` is a plain
+    /// view of the same memory with the display values the compositor expects).
+    private struct RenderTarget { let color: MTLTexture; let view: MTLTexture; let depth: MTLTexture }
+    private var renderTargets: [String: RenderTarget] = [:]
+
+    private func renderTarget(width: Int, height: Int) -> RenderTarget? {
+        let key = "\(width)x\(height)"
+        if let t = renderTargets[key] { return t }
+        let colorDesc = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm_srgb, width: width, height: height, mipmapped: false)
+        colorDesc.usage = [.renderTarget, .shaderRead, .pixelFormatView]
+        colorDesc.storageMode = .private
+        let depthDesc = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float, width: width, height: height, mipmapped: false)
+        depthDesc.usage = [.renderTarget]
+        depthDesc.storageMode = .private
+        guard let color = device.makeTexture(descriptor: colorDesc), let depth = device.makeTexture(descriptor: depthDesc),
+              let view = color.makeTextureView(pixelFormat: .bgra8Unorm) else { return nil }
+        if renderTargets.count >= 6 { renderTargets.removeAll() }
+        let t = RenderTarget(color: color, view: view, depth: depth)
+        renderTargets[key] = t
+        return t
+    }
 
     /// Model content node (cached per file / per text settings).
     private func content(_ o: Model3DOptions, mediaURL: (String) -> URL) -> CachedContent? {
@@ -256,14 +278,8 @@ final class ModelRenderer {
         // Render straight into a GPU texture. The old path took a snapshot image, copied it to the CPU and uploaded
         // it again every frame, which made the 3D camera heavy. SceneKit writes linear light into an sRGB target;
         // a plain view of the same memory gives the compositor the display values it expects.
-        let colorDesc = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm_srgb, width: width, height: height, mipmapped: false)
-        colorDesc.usage = [.renderTarget, .shaderRead, .pixelFormatView]
-        colorDesc.storageMode = .private
-        let depthDesc = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float, width: width, height: height, mipmapped: false)
-        depthDesc.usage = [.renderTarget]
-        depthDesc.storageMode = .private
-        guard let color = device.makeTexture(descriptor: colorDesc), let depth = device.makeTexture(descriptor: depthDesc),
-              let texture = color.makeTextureView(pixelFormat: .bgra8Unorm) else { return nil }
+        guard let rt = renderTarget(width: width, height: height) else { return nil }
+        let color = rt.color, depth = rt.depth
         let pass = MTLRenderPassDescriptor()
         pass.colorAttachments[0].texture = color
         pass.colorAttachments[0].loadAction = .clear
@@ -274,11 +290,16 @@ final class ModelRenderer {
         pass.depthAttachment.clearDepth = 1
         pass.depthAttachment.storeAction = .dontCare
         renderer.render(atTime: time, viewport: CGRect(x: 0, y: 0, width: width, height: height), commandBuffer: modelBuffer, passDescriptor: pass)
+        // The color/depth targets are reused per size; copy into the caller's own texture (pool texture when given)
+        // so separate layers and motion samples keep independent pictures.
+        if let blit = modelBuffer.makeBlitCommandEncoder() {
+            blit.copy(from: rt.view, to: target)
+            blit.endEncoding()
+        }
         modelBuffer.commit()
         _ = completed.wait(timeout: .now() + 2)
-        _ = target
         renderer.scene = nil; renderer.pointOfView = nil
         if availableRenderers.count < 8 { availableRenderers.append(renderer) }
-        return texture
+        return target
     }
 }
