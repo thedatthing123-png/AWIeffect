@@ -271,6 +271,9 @@ final class EditorState: ObservableObject {
         else { p.fitAutoLength(); project = p }
     }
 
+    /// The project as it was when the open edit group (drag) began; nil outside a drag.
+    var editStartProject: Project? { editGroupOpen ? undoStack.last?.project : nil }
+
     var canUndo: Bool { !undoStack.isEmpty }
     var canRedo: Bool { !redoStack.isEmpty }
 
@@ -426,6 +429,12 @@ final class EditorState: ObservableObject {
         let t = currentTime
         let l = project.layers[i]
         guard t > l.inPoint + project.frameDuration / 2, t < l.outPoint - project.frameDuration / 2 else { return }
+        if l.isGroup {
+            mutate("Split Group") { p in
+                if let id = Self.splitGroup(l.id, at: t, in: &p) { selectedLayerID = id }
+            }
+            return
+        }
         mutate("Split Layer") { p in
             var second = p.layers[i]
             second.id = UUID()
@@ -435,6 +444,42 @@ final class EditorState: ObservableObject {
             p.layers.insert(second, at: i)
             selectedLayerID = second.id
         }
+    }
+
+    /// Splits a group and every part inside it at `t`. Parts spanning `t` are cut in two, parts that start after `t`
+    /// move to the second group, parts that end before it stay in the first. Nested groups and parent links inside
+    /// the group are remapped to the second half's copies. Returns the second group's id.
+    nonisolated static func splitGroup(_ gid: UUID, at t: Double, in p: inout Project) -> UUID? {
+        guard let gi = p.layers.firstIndex(where: { $0.id == gid }) else { return nil }
+        let members = descendantIDs(of: gid, in: p)
+        let ids = members.union([gid])
+        // Everything still running after t gets a second-half copy (the group itself, nested groups, parts).
+        let copied = p.layers.filter { ids.contains($0.id) && $0.outPoint > t }
+        let remap = Dictionary(uniqueKeysWithValues: copied.map { ($0.id, UUID()) })
+        var seconds: [Layer] = []
+        for layer in copied {
+            var second = layer
+            second.id = remap[layer.id]!
+            if let g = layer.groupID, let mapped = remap[g] { second.groupID = mapped }
+            if let parent = layer.parentID, let mapped = remap[parent] { second.parentID = mapped }
+            if layer.isGroup { second.tag = p.nextContainerTag() }
+            if layer.inPoint < t {
+                if second.timeRemap == nil { second.sourceStart += (t - layer.inPoint) * layer.speed }
+                second.inPoint = t
+            }
+            seconds.append(second)
+        }
+        // First half: spanning layers end at t; layers that start at/after t live only in the second half.
+        let movedOut = Set(copied.filter { $0.id != gid && $0.inPoint >= t }.map(\.id))
+        p.layers.removeAll { movedOut.contains($0.id) }
+        for k in p.layers.indices where ids.contains(p.layers[k].id) && p.layers[k].outPoint > t { p.layers[k].outPoint = t }
+        // Links to a layer that moved wholly to the second half follow it.
+        for k in p.layers.indices {
+            if let parent = p.layers[k].parentID, movedOut.contains(parent) { p.layers[k].parentID = remap[parent] }
+        }
+        let insertAt = p.layers.firstIndex(where: { $0.id == gid }) ?? min(gi, p.layers.count)
+        p.layers.insert(contentsOf: seconds, at: insertAt)
+        return remap[gid]
     }
 
     // MARK: Effects
@@ -710,6 +755,27 @@ final class EditorState: ObservableObject {
             guard !Task.isCancelled, self.saveGeneration == generation else { return }
             self.saveError = failure
             if failure == nil && snapshot { self.lastVersionSnapshot = Date() }
+            // Keep the home-screen card current while editing (not only on close), at most every 30 s.
+            if failure == nil, !self.isPlaying, Date().timeIntervalSince(self.lastThumbnailSave) > 30 { self.saveThumbnail(project) }
+        }
+    }
+
+    private var lastThumbnailSave = Date.distantPast
+
+    /// Time the thumbnail shows: the playhead, kept inside the comp (the very end frame is often empty/black).
+    nonisolated static func thumbnailTime(current: Double, project: Project) -> Double {
+        let last = max(0, project.duration - project.frameDuration)
+        return min(max(0, current), last)
+    }
+
+    /// Renders the root comp at the playhead's root time into thumb.jpg.
+    func saveThumbnail(_ project: Project) {
+        guard let r = Renderer.shared else { return }
+        lastThumbnailSave = Date()
+        let pid = project.id, st = store
+        let t = Self.thumbnailTime(current: rootTime(currentTime), project: project)
+        if let img = r.renderImage(project: project, time: t, maxDimension: 360, mediaURL: { st.mediaURL($0, projectID: pid) }) {
+            store.saveThumbnail(img, for: project.id)
         }
     }
 
@@ -728,6 +794,17 @@ final class EditorState: ObservableObject {
     func popUndoContext() {
         guard let s = savedUndo.popLast() else { undoBarrier(); return }
         undoStack = s.undo; redoStack = s.redo
+    }
+
+    /// Leaving a group / pre-comp: brings the parent's history back and, when anything changed inside, records the
+    /// whole inside session as ONE undo step on the parent (undo returns to `before`, redo re-applies the edits).
+    func popUndoContext(committing label: String, before: Project, after: Project) {
+        popUndoContext()
+        guard before != after else { return }
+        CrashReporter.note(label)
+        undoStack.append((label, before))
+        if undoStack.count > 200 { undoStack.removeFirst() }
+        redoStack.removeAll()
     }
 
     /// Value scrubbing / color dragging: one undo step per gesture (closes after a short pause), not one per event.
@@ -753,14 +830,7 @@ final class EditorState: ObservableObject {
             saveError = "Changes could not be saved: " + error.localizedDescription
             NSLog("AWIeffect autosave failed: \(error)")
         }
-        if thumbnail, let r = Renderer.shared {
-            let pid = project.id
-            let st = store
-            if let img = r.renderImage(project: project, time: min(currentTime, project.duration), maxDimension: 360,
-                                       mediaURL: { st.mediaURL($0, projectID: pid) }) {
-                store.saveThumbnail(img, for: project.id)
-            }
-        }
+        if thumbnail { saveThumbnail(project) }
     }
 
     func mediaURL(_ name: String) -> URL { store.mediaURL(name, projectID: rootProject.id) }
@@ -1060,19 +1130,36 @@ extension EditorState {
     func clearMarkers() { mutate("Clear Markers") { $0.markers = []; $0.detectedBeatTimes = nil } }
 
     /// Beat-sync script: a punch-in scale + shake hit on the selected layer at every marker.
+    /// Scale punch on every beat inside the selected layer, added on top of its existing scale animation.
     func punchOnBeats(scaleAmount: Double = 12, decay: Double = 0.18) {
         guard let i = selectedIndex, !project.markers.isEmpty else { return }
         mutate("Punch on Beats") { p in
-            var s = p.layers[i].transform.scale
-            let base = s.value(at: p.layers[i].inPoint)
-            for m in p.markers where m >= p.layers[i].inPoint && m < p.layers[i].outPoint {
-                s.insertKeyframe(Keyframe(time: max(0, m - 0.001), value: base, interpolation: .linear))
-                s.insertKeyframe(Keyframe(time: m, value: base * (1 + scaleAmount / 100), interpolation: .bezier,
-                                          easeOut: EaseHandle(x: 0.1, y: 0.9), easeIn: .easyIn))
-                s.insertKeyframe(Keyframe(time: m + decay, value: base, interpolation: .linear))
-            }
-            p.layers[i].transform.scale = s
+            let l = p.layers[i]
+            p.layers[i].transform.scale = Self.punched(l.transform.scale, beats: p.markers, inPoint: l.inPoint, outPoint: l.outPoint,
+                                                       amount: scaleAmount, decay: decay)
         }
+    }
+
+    /// Adds a punch (×(1+amount%) on the beat, back to the underlying value after `decay`) to an existing scale
+    /// animation: every value comes from the original curve, so earlier scale keys keep their motion.
+    nonisolated static func punched(_ original: Animated<Vec2>, beats: [Double], inPoint: Double, outPoint: Double,
+                                    amount: Double, decay: Double) -> Animated<Vec2> {
+        let beats = beats.filter { $0 >= inPoint && $0 < outPoint }.sorted()
+        let factor = 1 + max(0, amount) / 100, decay = max(0.01, decay)
+        var s = original
+        for (k, m) in beats.enumerated() {
+            let next = k + 1 < beats.count ? beats[k + 1] : .infinity
+            let back = min(m + decay, next - 0.002)
+            if m - 0.001 >= inPoint, original.keyframeIndex(at: m - 0.001) == nil {
+                s.insertKeyframe(Keyframe(time: m - 0.001, value: original.value(at: m - 0.001), interpolation: .linear))
+            }
+            s.insertKeyframe(Keyframe(time: m, value: original.value(at: m) * factor, interpolation: .bezier,
+                                      easeOut: EaseHandle(x: 0.1, y: 0.9), easeIn: .easyIn))
+            if back > m + 0.001 {
+                s.insertKeyframe(Keyframe(time: back, value: original.value(at: back), interpolation: .linear))
+            }
+        }
+        return s
     }
 
     /// Adds a beat marker at the playhead, or removes the one already there. While playing it never pauses,

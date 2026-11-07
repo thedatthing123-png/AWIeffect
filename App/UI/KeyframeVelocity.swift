@@ -15,7 +15,7 @@ struct KeyframeVelocitySheet: View {
         NavigationStack {
             Form {
                 Section {
-                    Text(canApply ? "Applies to \(property?.title ?? "all transform") keyframes at the playhead."
+                    Text(canApply ? "Applies to \(property?.title ?? "all") keyframes at the playhead."
                                                      : "Move the playhead onto a keyframe first.")
                         .font(.caption)
                 }
@@ -99,6 +99,15 @@ extension EditorState {
         return tr.position.hasKeyframe(at: t) || tr.scale.hasKeyframe(at: t) || tr.rotation.hasKeyframe(at: t)
             || tr.opacity.hasKeyframe(at: t) || tr.anchor.hasKeyframe(at: t) || tr.positionZ.hasKeyframe(at: t)
             || tr.rotationX.hasKeyframe(at: t) || tr.rotationY.hasKeyframe(at: t)
+            || l.size.hasKeyframe(at: t) || l.fill.hasKeyframe(at: t) || l.cornerRadius.hasKeyframe(at: t)
+            || l.effects.contains { fx in fx.params.values.contains { value in
+                switch value {
+                case .number(let a): return a.hasKeyframe(at: t)
+                case .point(let a): return a.hasKeyframe(at: t)
+                case .color(let a): return a.hasKeyframe(at: t)
+                default: return false
+                }
+            } }
     }
 
     func applyKeyframeVelocity(inInfluence: Double, inSpeed: Double, outInfluence: Double, outSpeed: Double, property: PropertyKey? = nil) {
@@ -120,10 +129,30 @@ extension EditorState {
             case .fill?: v(&p.layers[i].fill)
             case .cornerRadius?: v(&p.layers[i].cornerRadius)
             case nil:
-                v(&p.layers[i].transform.position); v(&p.layers[i].transform.positionZ)
-                v(&p.layers[i].transform.scale); v(&p.layers[i].transform.rotation)
-                v(&p.layers[i].transform.opacity); v(&p.layers[i].transform.anchor)
-                v(&p.layers[i].transform.rotationX); v(&p.layers[i].transform.rotationY)
+                p.layers[i].setVelocityOnAllKeys(at: t, inInfluence: inInfluence, inSpeed: inSpeed, outInfluence: outInfluence, outSpeed: outSpeed)
+            }
+        }
+    }
+}
+
+extension Layer {
+    /// Keyframe Velocity with no property chosen: every key at `t` on transform, 3D, size, fill, corner and the
+    /// layer's effect parameters.
+    mutating func setVelocityOnAllKeys(at t: Double, inInfluence: Double, inSpeed: Double, outInfluence: Double, outSpeed: Double) {
+        func v<V: Interpolatable>(_ a: inout Animated<V>) {
+            a.setVelocity(at: t, inInfluence: inInfluence, inSpeed: inSpeed, outInfluence: outInfluence, outSpeed: outSpeed)
+        }
+        v(&transform.position); v(&transform.positionZ); v(&transform.scale); v(&transform.rotation)
+        v(&transform.opacity); v(&transform.anchor); v(&transform.rotationX); v(&transform.rotationY)
+        v(&size); v(&fill); v(&cornerRadius)
+        for j in effects.indices {
+            for key in Array(effects[j].params.keys) {
+                switch effects[j].params[key] {
+                case .number(var a)?: v(&a); effects[j].params[key] = .number(a)
+                case .point(var a)?: v(&a); effects[j].params[key] = .point(a)
+                case .color(var a)?: v(&a); effects[j].params[key] = .color(a)
+                default: break
+                }
             }
         }
     }

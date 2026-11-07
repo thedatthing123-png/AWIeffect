@@ -15,6 +15,10 @@ struct HomeView: View {
     @State private var importURL: URL?
     @State private var importResult: AEPImportResult?
     @State private var importError: String?
+    /// A version waiting for the user to confirm the restore (project + version file).
+    @State private var pendingRestore: (project: ProjectSummary, url: URL)?
+    @State private var deleted: [DeletedProject] = []
+    @State private var showDeleted = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -43,6 +47,20 @@ struct HomeView: View {
                         Text("Latest projects").font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.text)
                             .padding(.top, 6)
                         ForEach(projects) { p in projectRow(p) }
+                    }
+                    if !deleted.isEmpty {
+                        Button { showDeleted = true } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "trash").font(.system(size: 16, weight: .semibold)).frame(width: 34, height: 34)
+                                    .foregroundStyle(Theme.textDim)
+                                Text("Recently Deleted (\(deleted.count))").font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.text)
+                                Spacer()
+                                Image(systemName: "chevron.right").foregroundStyle(Theme.textDim)
+                            }
+                            .padding(12).frame(minHeight: 44).glass()
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Recently Deleted")
                     }
                 }
                 .padding(.horizontal, 16)
@@ -81,16 +99,25 @@ struct HomeView: View {
                     let urls = ProjectStore.shared.versions(for: t.id)
                     if urls.isEmpty { Text("No saved versions yet — they're made automatically every couple of minutes while you edit.").foregroundStyle(Theme.textDim) }
                     ForEach(urls, id: \.self) { u in
-                        Button {
-                            if var v = try? ProjectStore.shared.loadVersion(u) {
-                                v.id = t.id; try? ProjectStore.shared.save(v, snapshotVersion: true); reload(); versionsTarget = nil
-                            }
-                        } label: {
+                        Button { pendingRestore = (t, u) } label: {
                             Text(((try? u.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()).formatted(date: .abbreviated, time: .shortened))
                         }
                     }
                 }
                 .navigationTitle("Restore \(t.name)").navigationBarTitleDisplayMode(.inline)
+                .confirmationDialog("Restore this version?", isPresented: Binding(get: { pendingRestore != nil }, set: { if !$0 { pendingRestore = nil } }),
+                                    titleVisibility: .visible) {
+                    Button("Restore") {
+                        if let r = pendingRestore {
+                            do { try ProjectStore.shared.restoreVersion(r.url, for: r.project.id) }
+                            catch { importError = "Couldn't restore the version: " + error.localizedDescription }
+                        }
+                        pendingRestore = nil; reload(); versionsTarget = nil
+                    }
+                    Button("Cancel", role: .cancel) { pendingRestore = nil }
+                } message: {
+                    Text("The project as it is now is saved as a version first, so you can come back to it.")
+                }
                 .toolbarBackground(Theme.background, for: .navigationBar)
                 .toolbarBackground(.visible, for: .navigationBar)
             }
@@ -114,7 +141,8 @@ struct HomeView: View {
                 ProjectStore.shared.delete(p.id)
                 reload()
             }
-        } message: { _ in Text("This can't be undone.") }
+        } message: { _ in Text("It moves to Recently Deleted for 30 days, where you can restore it.") }
+        .sheet(isPresented: $showDeleted, onDismiss: reload) { recentlyDeletedSheet }
     }
 
     private var header: some View {
@@ -210,7 +238,41 @@ struct HomeView: View {
         }
     }
 
-    private func reload() { projects = ProjectStore.shared.list() }
+    private func reload() {
+        projects = ProjectStore.shared.list()
+        deleted = ProjectStore.shared.deletedProjects()
+    }
+
+    /// Deleted projects (kept 30 days): restore or remove for good.
+    private var recentlyDeletedSheet: some View {
+        NavigationStack {
+            List {
+                if deleted.isEmpty { Text("Nothing here.").foregroundStyle(Theme.textDim) }
+                ForEach(deleted) { d in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(d.summary.name).font(.system(size: 15, weight: .semibold))
+                            let left = max(0, Int(((ProjectStore.deletedRetention - Date().timeIntervalSince(d.deletedAt)) / 86_400).rounded(.up)))
+                            Text("\(left) day\(left == 1 ? "" : "s") left").font(.caption).foregroundStyle(Theme.textDim)
+                        }
+                        Spacer()
+                        Button("Restore") {
+                            do { try ProjectStore.shared.restoreDeleted(d.id) }
+                            catch { importError = "Couldn't restore: " + error.localizedDescription }
+                            reload()
+                        }
+                        .buttonStyle(.borderless).frame(minHeight: 44)
+                    }
+                    .swipeActions {
+                        Button("Delete Now", role: .destructive) { ProjectStore.shared.deletePermanently(d.id); reload() }
+                    }
+                }
+            }
+            .navigationTitle("Recently Deleted").navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { showDeleted = false } } }
+        }
+        .presentationDetents([.medium, .large])
+    }
 
     private func runImport(compName: String?) {
         guard let url = importURL else { return }

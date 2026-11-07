@@ -36,10 +36,11 @@ import XCTest
         s.moveKeyframes(of: s.project.layers[0], from: 2, to: 3, effect: effect)
         XCTAssertEqual(blurTimes(s), [1, 3])
         XCTAssertEqual(s.project.layers[0].transform.opacity.keyframeTimes, [1, 3])
-        // Without focus, every property at 1 moves together, and can land exactly on 3.
+        // Without focus, every property at 1 moves together; landing on another key of the same property is
+        // rejected so nothing is deleted.
         s.moveKeyframes(of: s.project.layers[0], from: 1, to: 3)
-        XCTAssertEqual(s.project.layers[0].transform.opacity.keyframeTimes, [3], "the moved opacity key replaced the one at 3")
-        XCTAssertEqual(blurTimes(s), [3])
+        XCTAssertEqual(s.project.layers[0].transform.opacity.keyframeTimes, [1, 3], "no key was replaced")
+        XCTAssertEqual(blurTimes(s), [1, 3])
     }
 
     func testFocusClearsWhenLeavingEffectsOrChangingLayer() {

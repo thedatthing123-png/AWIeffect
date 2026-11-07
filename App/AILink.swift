@@ -90,20 +90,25 @@ final class AILink: ObservableObject {
             var info: [String: Any] = ["app": "AWIeffect", "version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] ?? "?",
                                        "effects": EffectRegistry.all.count, "projectOpen": editor != nil]
             if let e = editor {
-                info["project"] = ["name": e.project.name, "width": e.project.width, "height": e.project.height, "fps": e.project.fps,
-                                   "duration": e.project.duration, "layers": e.project.layers.count, "time": e.currentTime,
-                                   "selected": e.selectedLayerID?.uuidString ?? ""]
+                // Always the root comp (what gets saved), even while a group / pre-comp is open on the phone.
+                let root = e.rootProject
+                info["project"] = ["name": root.name, "width": root.width, "height": root.height, "fps": root.fps,
+                                   "duration": root.duration, "layers": root.layers.count, "time": e.rootTime(e.currentTime),
+                                   "selected": e.isInPrecomp ? "" : (e.selectedLayerID?.uuidString ?? ""),
+                                   "openComp": e.isInPrecomp ? e.project.name : ""]
             }
             return .json(info)
         case ("GET", "/catalog"):
             return .json(Self.catalog())
         case ("GET", "/project"):
-            guard let e = editor, let d = try? enc.encode(e.project) else { return .noProject }
+            guard let e = editor, let d = try? enc.encode(e.rootProject) else { return .noProject }
             return HTTPResponse(status: 200, type: "application/json", body: d)
         case ("PUT", "/project"):
             guard let e = editor else { return .noProject }
             do {
                 var p = try dec.decode(Project.self, from: r.body)
+                // /project is the root comp: close any open group / pre-comp first (their edits are kept as undo).
+                while e.isInPrecomp { e.closePrecomp() }
                 p.id = e.project.id     // edits stay in the open project (and its media folder)
                 e.mutate("AI Link Edit") { $0 = p }
                 e.redrawToken += 1
@@ -116,10 +121,10 @@ final class AILink: ObservableObject {
             if UIApplication.shared.applicationState == .background {
                 return .json(["error": "AWIeffect is in the background: iPhone blocks the graphics chip there. Edits still work; come back to the app to preview frames."], status: 409)
             }
-            let t = Double(r.query["t"] ?? "") ?? e.currentTime
+            let t = Double(r.query["t"] ?? "") ?? e.rootTime(e.currentTime)
             let size = Double(r.query["size"] ?? "") ?? 720
-            let pid = e.rootProject.id, store = e.store
-            guard let img = rr.renderImage(project: e.project, time: t, maxDimension: size, mediaURL: { store.mediaURL($0, projectID: pid) }),
+            let root = e.rootProject, pid = root.id, store = e.store
+            guard let img = rr.renderImage(project: root, time: t, maxDimension: size, mediaURL: { store.mediaURL($0, projectID: pid) }),
                   let png = img.pngData() else { return .json(["error": "render failed"], status: 500) }
             return HTTPResponse(status: 200, type: "image/png", body: png)
         case ("POST", "/media"):

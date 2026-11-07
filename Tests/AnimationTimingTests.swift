@@ -29,12 +29,12 @@ final class AnimationTimingTests: XCTestCase {
         XCTAssertEqual(moved.volume.keyframeTimes, [2])
         XCTAssertEqual(moved.transform.rotation.keyframes[0].id, original.transform.rotation.keyframes[0].id)
         XCTAssertEqual(moved.transform.rotation.keyframes[0].curve, original.transform.rotation.keyframes[0].curve)
-        // Dropping onto the key at 4: the moved key takes that spot, like After Effects.
+        // Dropping onto the key at 4 is rejected: moving keys never deletes another key.
         s.beginEdit("Move onto a key")
-        XCTAssertEqual(s.moveKeyframeSelection(of: moved, times: [2,3], by: 1), 1)
+        XCTAssertNil(s.moveKeyframeSelection(of: moved, times: [2,3], by: 1))
         s.endEdit()
-        XCTAssertEqual(s.project.layers[0].transform.rotation.keyframeTimes, [3,4])
-        XCTAssertEqual(s.project.layers[0].transform.rotation.keyframes[1].value, 20, "the moved key (20) wins over the one that was at 4 (40)")
+        XCTAssertEqual(s.project.layers[0].transform.rotation.keyframeTimes, [2,3,4])
+        XCTAssertEqual(s.project.layers[0], moved)
         s.undo(); XCTAssertEqual(s.project.layers[0], moved)
         s.undo(); XCTAssertEqual(s.project.layers[0], original)
     }
@@ -155,7 +155,7 @@ final class AnimationTimingTests: XCTestCase {
     @MainActor func testExtendingTrimBeforeFirstSourceFrameKeepsExistingFrames() {
         var p = scene(); p.layers[0].inPoint = 2; p.layers[0].sourceStart = 0
         let s = editor(p); s.trimClip(p.layers[0], start: true, by: -1)
-        XCTAssertEqual(s.project.layers[0].inPoint, 1)
+        XCTAssertEqual(s.project.layers[0].inPoint, 2, "can't extend before the first source frame")
         for t in [2.0,3,4] { XCTAssertEqual(s.project.layers[0].sourceTime(at: t), p.layers[0].sourceTime(at: t)) }
     }
 

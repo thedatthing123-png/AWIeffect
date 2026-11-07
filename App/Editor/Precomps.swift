@@ -6,12 +6,38 @@ struct CompositionEditContext {
     var time: Double
     var selected: UUID?
     var groupID: UUID? = nil
+    /// The comp as it was opened; closing compares against it to decide whether an undo step is needed.
+    var opened: Project? = nil
 }
 
 /// Pre-compose / open / close nested comps. While a pre-comp is open, `project` IS that comp;
 /// the parents wait on `compStack` and get the edited comp written back on close.
 extension EditorState {
     var isInPrecomp: Bool { !compStack.isEmpty }
+
+    /// Maps a time in the open comp to the root comp's time. Groups share the root timeline; a pre-comp maps
+    /// back through its layer's timing (time remap falls back to the time the pre-comp was opened at).
+    func rootTime(_ t: Double) -> Double {
+        var time = t
+        for entry in compStack.reversed() where entry.groupID == nil {
+            guard let id = entry.selected, let l = entry.project.layers.first(where: { $0.id == id }),
+                  case .precomp = l.content, l.timeRemap == nil, abs(l.speed) > 1e-6 else { time = entry.time; continue }
+            time = l.inPoint + (time - l.sourceStart) / l.speed
+        }
+        return time
+    }
+
+    /// Color of the bar on a group part's timeline row: the tag of the group it belongs to. Inside an open group its
+    /// direct parts carry no `groupID`, so they take the open group's tag. nil = not a group part.
+    func groupMemberTag(of layer: Layer) -> LayerTag? {
+        if let gid = layer.groupID {
+            return project.layers.first(where: { $0.id == gid })?.tag ?? .teal
+        }
+        if let entry = compStack.last, let gid = entry.groupID {
+            return entry.project.layers.first(where: { $0.id == gid })?.tag ?? .teal
+        }
+        return nil
+    }
 
     /// The top-level project (what gets saved).
     var rootProject: Project {
@@ -76,7 +102,7 @@ extension EditorState {
         }
         child.parentContext = project.layers.filter { !members.contains($0.id) } + (project.parentContext ?? [])
         child.distinguishContainerTags()
-        compStack.append(CompositionEditContext(project: project, time: currentTime, selected: selectedLayerID, groupID: group.id))
+        compStack.append(CompositionEditContext(project: project, time: currentTime, selected: selectedLayerID, groupID: group.id, opened: child))
         pushUndoContext()
         project = child
         select(nil)
@@ -135,22 +161,32 @@ extension EditorState {
         pause()
         let library = rootProject.precomps
         let inner = max(0, min(comp.duration, l.sourceTime(at: currentTime)))
-        compStack.append(CompositionEditContext(project: project, time: currentTime, selected: selectedLayerID))
         comp.parentContext = nil
         comp.distinguishContainerTags()
         comp.precompList = library.filter { $0.id != comp.id }
+        compStack.append(CompositionEditContext(project: project, time: currentTime, selected: selectedLayerID, opened: comp))
         pushUndoContext()
         project = comp
         currentTime = comp.snapToFrame(inner)
         select(nil)
     }
 
+    /// True when nothing was edited inside (modification dates don't count).
+    private static func sameContent(_ a: Project, _ b: Project) -> Bool {
+        var x = a, y = b
+        x.modifiedAt = y.modifiedAt
+        return x == y
+    }
+
     /// Closes the open pre-comp, writing its edits back into the parent.
     func closePrecomp() {
+        endLiveGesture(); endEdit()
         guard let entry = compStack.popLast() else { return }
         pause()
         let parent = Self.applying(project, to: entry)
-        popUndoContext()
+        // The inside work becomes one undo step on the parent, so it can be undone after closing.
+        popUndoContext(committing: entry.groupID != nil ? "Edit Group" : "Edit Pre-comp", before: entry.project,
+                             after: entry.opened.map { Self.sameContent($0, project) } == true ? entry.project : parent)
         project = parent
         currentTime = entry.time
         selectedLayerID = entry.selected

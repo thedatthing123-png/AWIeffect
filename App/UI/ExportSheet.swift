@@ -65,18 +65,23 @@ struct ExportSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    let (w, h) = Exporter.outputSize(state.project, scale: settings.scale)
+                    let root = state.rootProject
+                    let (w, h) = outputDims(root)
                     HStack {
                         stat("Output", "\(w)×\(h)")
-                        stat("Frame rate", "\(Int(settings.fps ?? state.project.fps)) fps")
+                        stat("Frame rate", "\(Int(settings.format == .gif ? Exporter.gifOutput(root, settings: settings).fps : (settings.fps ?? root.fps))) fps")
                         stat("Est. size", estimatedSize)
                     }
                     section("Format") {
                         chips(ExportFormat.allCases, selected: settings.format, title: { $0.rawValue }) { settings.format = $0 }
                         Text("MOV (alpha) preserves empty background transparency. MP4 has no alpha channel. Add a background layer when you want an opaque frame.").font(.caption).foregroundStyle(Theme.textDim)
+                        if settings.format == .gif {
+                            Text("GIF is limited to \(Int(Exporter.gifMaxDimension)) px on the long side and \(Int(Exporter.gifMaxFPS)) fps, with no sound.")
+                                .font(.caption).foregroundStyle(Theme.warning)
+                        }
                     }
                     section("Resolution") {
-                        let shortSide = Double(min(state.project.width, state.project.height))
+                        let shortSide = Double(min(state.rootProject.width, state.rootProject.height))
                         chips([480.0, 720, 1080, 1440, 2160], selected: (shortSide * settings.scale).rounded(),
                               title: { [480: "480p", 720: "720p", 1080: "1080p", 1440: "2K", 2160: "4K"][$0] ?? "" }) { v in
                             settings.scale = v / shortSide
@@ -87,7 +92,7 @@ struct ExportSheet: View {
                             NumberField(value: (shortSide * settings.scale).rounded(), label: "px") { v in
                                 settings.scale = min(4, max(0.05, v / shortSide))
                             }
-                            let (cw, ch) = Exporter.outputSize(state.project, scale: settings.scale)
+                            let (cw, ch) = Exporter.outputSize(state.rootProject, scale: settings.scale)
                             Text("\(cw)×\(ch)").font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.textDim)
                         }
                     }
@@ -100,13 +105,17 @@ struct ExportSheet: View {
                         chips(["All", "From Playhead", "Selected Layer"], selected: rangeMode, title: { $0 }) { m in
                             rangeMode = m
                             switch m {
-                            case "From Playhead": settings.start = state.currentTime; settings.end = nil
+                            // Export always renders the root comp, so times inside an open group / pre-comp are mapped out.
+                            case "From Playhead": settings.start = state.rootTime(state.currentTime); settings.end = nil
                             case "Selected Layer":
-                                if let l = state.selectedLayer { settings.start = max(0, l.inPoint); settings.end = min(state.project.duration, l.outPoint) }
+                                if let l = state.selectedLayer {
+                                    let a = state.rootTime(l.inPoint), b = state.rootTime(l.outPoint)
+                                    settings.start = max(0, min(a, b)); settings.end = min(state.rootProject.duration, max(a, b))
+                                }
                             default: settings.start = 0; settings.end = nil
                             }
                         }
-                        Text(String(format: "%.2fs → %.2fs", settings.start, settings.end ?? state.project.duration))
+                        Text(String(format: "%.2fs → %.2fs", settings.start, settings.end ?? state.rootProject.duration))
                             .font(.caption.monospaced()).foregroundStyle(Theme.textDim)
                     }
                     if settings.format == .mp4 {
@@ -168,10 +177,13 @@ struct ExportSheet: View {
         }
     }
 
+    private func outputDims(_ root: Project) -> (Int, Int) {
+        if settings.format == .gif { let g = Exporter.gifOutput(root, settings: settings); return (g.width, g.height) }
+        return Exporter.outputSize(root, scale: settings.scale)
+    }
+
     private var estimatedSize: String {
-        let dur = (settings.end ?? state.project.duration) - settings.start
-        if settings.format == .gif { return "~\(max(1, Int(dur * 1.5))) MB" }
-        let mb = settings.bitrateMbps * dur / 8
+        let mb = Exporter.estimatedBytes(state.rootProject, settings: settings) / 1_000_000
         return mb < 1 ? "<1 MB" : "~\(Int(mb.rounded())) MB"
     }
 
@@ -259,10 +271,11 @@ struct ExportSheet: View {
         guard let r = Renderer.shared else { return }
         let pid = state.rootProject.id
         let store = state.store
-        var frameProject = state.project
+        // The root comp at the matching root time (inside a group the open comp is only part of the picture).
+        var frameProject = state.rootProject
         frameProject.background.a = 0
-        guard let img = r.renderImage(project: frameProject, time: state.currentTime,
-                                      maxDimension: Double(max(state.project.width, state.project.height)),
+        guard let img = r.renderImage(project: frameProject, time: state.rootTime(state.currentTime),
+                                      maxDimension: Double(max(frameProject.width, frameProject.height)),
                                       mediaURL: { store.mediaURL($0, projectID: pid) }),
               let data = img.pngData() else { message = "Couldn't render frame."; return }
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString)-frame.png")

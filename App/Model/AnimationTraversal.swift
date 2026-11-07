@@ -8,6 +8,9 @@ struct AnimationTraversal {
     var markers: [Double: UUID] = [:]
     /// Only this effect's keyframes are visited (keyframe focus while an effect is open).
     var onlyEffect: UUID? = nil
+    /// Set by `.moveTimes` when a moved key would land on an unmoved key of the same property. Nothing is removed;
+    /// the caller rejects the whole move (moving keys never destroys another key).
+    var collided = false
     mutating func apply<V: Interpolatable>(_ value: inout Animated<V>) {
         switch operation {
         case .reverse(let sum): value.reverseKeys(around: sum)
@@ -23,9 +26,11 @@ struct AnimationTraversal {
                 value.keyframes[i].time += delta
                 moved.insert(value.keyframes[i].id)
             }
-            // A key dropped exactly on another key of the same property replaces it (After Effects does the same).
+            // A key dropped on another key of the same property is a collision: keep both, flag it, the caller rejects.
             let landed = value.keyframes.filter { moved.contains($0.id) }.map(\.time)
-            value.keyframes.removeAll { k in !moved.contains(k.id) && landed.contains { abs($0 - k.time) < keyframeTimeEpsilon } }
+            if value.keyframes.contains(where: { k in !moved.contains(k.id) && landed.contains { abs($0 - k.time) < keyframeTimeEpsilon } }) {
+                collided = true
+            }
             value.keyframes.sort { $0.time < $1.time }
         case .retime(let from, let to): value.retime(at: from, to: to)
         case .shift(let dt): value.shift(by: dt)

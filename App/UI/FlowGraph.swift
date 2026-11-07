@@ -74,7 +74,11 @@ struct FlowGraphPanel: View {
     // MARK: Current segment
 
     /// The property the graph shows (the chosen one, else the first animated).
-    private var shownKey: PropertyKey? { key ?? state.animatedKeys.first }
+    /// With All, the first property that has a curve to show (two or more keys), so the graph never sits empty
+    /// while another property could be drawn.
+    private var shownKey: PropertyKey? {
+        key ?? state.animatedKeys.first { !state.easeSegments($0).isEmpty } ?? state.animatedKeys.first
+    }
 
     /// Segments of what the graph shows: a keyframed effect setting, else a transform property.
     private var shownSegs: [EaseSegment] {
@@ -180,6 +184,15 @@ struct FlowGraphPanel: View {
                               segmentDuration: currentSegmentDuration)
                 }
                 ReplayDot(ease: e).allowsHitTesting(false)
+            }
+            .frame(minHeight: 120)
+        } else {
+            // One keyframe only: there's no segment yet. Draw the curve a new segment would get and say why.
+            ZStack {
+                CurvePlot(ease: SavedEase(name: "", interpolation: .bezier, out: .easyOut, into: .easyIn, curve: nil), speed: speedView)
+                    .opacity(0.35)
+                Text("Add a second keyframe to shape this curve.")
+                    .font(.system(size: 12)).foregroundStyle(Theme.textDim).multilineTextAlignment(.center).padding(.horizontal, 24)
             }
             .frame(minHeight: 120)
         }

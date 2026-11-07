@@ -16,12 +16,24 @@ struct PickedMovie: Transferable {
 }
 
 extension EditorState {
-    /// Copies a video into the project and adds it as a layer that fits the comp.
-    func addVideo(from url: URL) {
+    /// Copies a video into the project (file copy, never the whole movie in memory) and adds it as a layer that
+    /// fits the comp. Failures are shown to the user instead of silently doing nothing.
+    @discardableResult
+    func addVideo(from url: URL) -> Bool {
         let ext = url.pathExtension.isEmpty ? "mov" : url.pathExtension
-        guard let data = try? Data(contentsOf: url), let name = try? store.importMedia(data: data, ext: ext, into: rootProject.id) else { return }
-        let asset = AVURLAsset(url: store.mediaURL(name, projectID: rootProject.id))
-        guard let track = asset.tracks(withMediaType: .video).first else { return }
+        let name: String
+        do { name = try store.importMedia(fileAt: url, ext: ext, into: rootProject.id) }
+        catch {
+            recoveryNotice = "Couldn't import the video: " + error.localizedDescription
+            return false
+        }
+        let stored = store.mediaURL(name, projectID: rootProject.id)
+        let asset = AVURLAsset(url: stored)
+        guard let track = asset.tracks(withMediaType: .video).first else {
+            try? FileManager.default.removeItem(at: stored)
+            recoveryNotice = "Couldn't import the video: the file has no readable video track."
+            return false
+        }
         let size = track.naturalSize.applying(track.preferredTransform)
         let w = Int(abs(size.width)), h = Int(abs(size.height))
         let duration = CMTimeGetSeconds(asset.duration)
@@ -42,6 +54,7 @@ extension EditorState {
         }
         panel = .clip
         AudioPreview.shared.invalidate()
+        return true
     }
 
     /// Pulls the sound out of a video file into an .m4a (AAC). Calls back on the main thread with the file, or nil.

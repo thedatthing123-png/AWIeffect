@@ -123,8 +123,8 @@ struct TimelineView: View {
     private func header(_ layer: Layer) -> some View {
         HStack(spacing: 6) {
             // Parts of a group get a colored bar so you can see what's inside it.
-            if layer.groupID != nil {
-                RoundedRectangle(cornerRadius: 1).fill(Theme.tagColor(.teal)).frame(width: 3, height: rowHeight - 10)
+            if let tag = state.groupMemberTag(of: layer) {
+                RoundedRectangle(cornerRadius: 1).fill(Theme.tagColor(tag)).frame(width: 3, height: rowHeight - 10)
             }
             Button { state.toggleVisibility(layer.id) } label: {
                 Image(systemName: layer.isVisible ? "eye" : "eye.slash")
@@ -301,48 +301,6 @@ struct TimelineView: View {
                         if from != to { state.endEdit(); state.reorderTimelineLayer(layer.id, to: to) }
                     }
                 }))
-    }
-
-    private func clipHold(_ layer: Layer) -> some Gesture {
-        LongPressGesture(minimumDuration: 0.28, maximumDistance: 4)
-            .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .named("timeline")))
-            .onChanged { v in
-                guard case .second(true, let drag) = v else { return }
-                if liftLayer == nil {
-                    liftLayer = layer.id
-                    dragOriginal = layer
-                    state.pause()
-                    state.beginEdit("Move Clip")
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                }
-                guard let g = drag, let o = dragOriginal else { return }
-                liftOffset = g.translation.height
-                let raw = o.inPoint + Double(g.translation.width / zoom)
-                state.moveClip(o, by: state.snapTime(raw, tolerance: Double(8 / zoom)) - o.inPoint)
-            }
-            .onEnded { v in
-                defer { liftLayer = nil; liftOffset = 0; dragOriginal = nil; state.endEdit() }
-                guard case .second(true, let drag) = v, let drag,
-                      let from = state.project.layers.firstIndex(where: { $0.id == layer.id }) else { return }
-                let to = from + Int((drag.translation.height / rowHeight).rounded())
-                if to != from {
-                    state.endEdit()
-                    state.reorderLayer(from: from, to: to)
-                    UISelectionFeedbackGenerator().selectionChanged()
-                }
-            }
-    }
-
-    private func clipDrag(_ layer: Layer) -> some Gesture {
-        DragGesture(minimumDistance: 6, coordinateSpace: .named("timeline"))
-            .onChanged { g in
-                if multiDragStart != nil || state.isMultiSelecting { return }
-                if dragOriginal == nil { dragOriginal = layer; state.pause(); state.beginEdit("Move Clip") }
-                guard let o = dragOriginal else { return }
-                let raw = o.inPoint + Double(g.translation.width / zoom)
-                state.moveClip(o, by: state.snapTime(raw, tolerance: Double(8 / zoom)) - o.inPoint)
-            }
-            .onEnded { _ in dragOriginal = nil; state.endEdit() }
     }
 
     /// A keyframe diamond: drag moves every property keyed at that time (or just `effect`'s keys); tap jumps to it.

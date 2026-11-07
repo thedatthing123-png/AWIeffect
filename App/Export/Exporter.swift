@@ -59,6 +59,46 @@ final class Exporter {
         return (w, h)
     }
 
+    /// GIF output limits (applied in `exportGIF`, shown in the export sheet).
+    static let gifMaxDimension = 480.0
+    static let gifMaxFPS = 25.0
+    static let audioBitrate = 256_000
+
+    /// Average video bits per second actually given to the encoder: the setting is for 1080p30 and scales with
+    /// resolution and frame rate, capped so Photos and other players always accept the file.
+    static func videoBitrate(_ settings: ExportSettings, width w: Int, height h: Int, fps: Double) -> Int {
+        let alpha = settings.format == .transparent
+        let mbps = min(settings.codec == .h264 && !alpha ? 60 : 120, max(8, settings.bitrateMbps * (Double(w * h) / 2_073_600) * (fps / 30)))
+        return Int(mbps * 1_000_000)
+    }
+
+    /// GIF frame size and rate after the caps.
+    static func gifOutput(_ project: Project, settings: ExportSettings) -> (width: Int, height: Int, fps: Double) {
+        let fps = min(gifMaxFPS, settings.fps ?? project.fps)
+        let longSide = Double(max(project.width, project.height))
+        let maxDim = min(gifMaxDimension, longSide * settings.scale)
+        let k = maxDim / max(longSide, 1)
+        return (max(1, Int((Double(project.width) * k).rounded())), max(1, Int((Double(project.height) * k).rounded())), fps)
+    }
+
+    /// Expected file size in bytes, from the same numbers the encoder uses (video + AAC audio when anything is
+    /// audible; HEVC alpha carries an extra alpha plane, roughly +60 %).
+    static func estimatedBytes(_ project: Project, settings: ExportSettings) -> Double {
+        let start = max(0, settings.start), end = min(project.duration, settings.end ?? project.duration)
+        let dur = max(0, end - start)
+        if settings.format == .gif {
+            let g = gifOutput(project, settings: settings)
+            // Palette-indexed LZW frames: about 0.4 byte per pixel for typical motion-graphics content.
+            return Double(g.width * g.height) * 0.4 * (dur * g.fps).rounded()
+        }
+        let fps = settings.fps ?? project.fps
+        let (w, h) = outputSize(project, scale: settings.scale)
+        var bps = Double(videoBitrate(settings, width: w, height: h, fps: fps))
+        if settings.format == .transparent { bps *= 1.6 }
+        if project.layers.contains(where: { $0.hasAudio && $0.isVisible }) { bps += Double(audioBitrate) }
+        return bps * dur / 8 * 1.01   // container overhead
+    }
+
     func export(project: Project, settings: ExportSettings, mediaURL: @escaping (String) -> URL,
                 progress: @escaping (Double) -> Void) async throws -> URL {
         guard let r = Renderer.shared else { throw ExportError.noRenderer }
@@ -93,7 +133,7 @@ final class Exporter {
             // Bitrate scales with resolution and frame rate (the setting is for 1080p30), so fast edits never
             // turn blocky: 4K or 60 fps get proportionally more data.
             // Capped so Photos and other players always accept the file (very high H.264 rates get refused).
-            AVVideoAverageBitRateKey: Int(min(settings.codec == .h264 && !alpha ? 60 : 120, max(8, settings.bitrateMbps * (Double(w * h) / 2_073_600) * (fps / 30))) * 1_000_000),
+            AVVideoAverageBitRateKey: Self.videoBitrate(settings, width: w, height: h, fps: fps),
             AVVideoExpectedSourceFrameRateKey: Int(fps.rounded()),
             AVVideoMaxKeyFrameIntervalKey: Int(fps.rounded()),
         ]
@@ -246,7 +286,7 @@ final class Exporter {
             if writer.status == .writing { writer.cancelWriting() }
         }
         let ain = AVAssetWriterInput(mediaType: .audio, outputSettings: [
-            AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: 48000, AVNumberOfChannelsKey: 2, AVEncoderBitRateKey: 256_000,
+            AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: 48000, AVNumberOfChannelsKey: 2, AVEncoderBitRateKey: Self.audioBitrate,
         ])
         ain.expectsMediaDataInRealTime = false
         guard writer.canAdd(ain) else { throw ExportError.writer("Cannot encode the audio mix.") }
@@ -279,7 +319,7 @@ final class Exporter {
     private func exportGIF(project: Project, settings: ExportSettings, mediaURL: @escaping (String) -> URL,
                            progress: @escaping (Double) -> Void) async throws -> URL {
         guard let r = Renderer.shared else { throw ExportError.noRenderer }
-        let fps = min(25, settings.fps ?? project.fps)
+        let fps = min(Self.gifMaxFPS, settings.fps ?? project.fps)
         let start = max(0, settings.start), end = min(project.duration, settings.end ?? project.duration)
         let frames = max(1, Int(((end - start) * fps).rounded()))
         let safeName = project.name.replacingOccurrences(of: "/", with: "-")
@@ -289,7 +329,7 @@ final class Exporter {
             throw ExportError.writer("gif")
         }
         CGImageDestinationSetProperties(dest, [kCGImagePropertyGIFDictionary as String: [kCGImagePropertyGIFLoopCount as String: 0]] as CFDictionary)
-        let maxDim = min(480, Double(max(project.width, project.height)) * settings.scale)
+        let maxDim = min(Self.gifMaxDimension, Double(max(project.width, project.height)) * settings.scale)
         let props = [kCGImagePropertyGIFDictionary as String: [kCGImagePropertyGIFDelayTime as String: 1 / fps]] as CFDictionary
         for i in 0..<frames {
             if cancelled { throw ExportError.cancelled }

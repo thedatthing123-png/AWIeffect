@@ -174,7 +174,7 @@ struct MediaPickerView: View {
 
     private func addMovie(_ url: URL) -> Bool {
         if libraryOnly { return UserLibrary.save(file: url) }
-        state.addVideo(from: url); return true
+        return state.addVideo(from: url)
     }
     private func addImage(_ data: Data, ext: String) -> Bool {
         if libraryOnly { return UserLibrary.save(data: data, ext: ext) }

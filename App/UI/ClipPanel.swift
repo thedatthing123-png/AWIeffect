@@ -4,9 +4,6 @@ import SwiftUI
 struct ClipPanel: View {
     @ObservedObject var state: EditorState
     @EnvironmentObject private var trackLauncher: TrackLauncher
-    @State private var sensitivity = 0.5
-    @State private var automaticTempo = true
-    @State private var tempo = 120.0
     @State private var showTiming = false
     @State private var slowMoProgress: Double?
     @State private var slowMoMessage: String?
@@ -20,14 +17,6 @@ struct ClipPanel: View {
                         if l.timeRemap == nil {
                             row("Speed", value: abs(l.speed), range: 0.05...16, fmt: "%.2fx") { v in
                                 state.setLayerSpeed(v)
-                            }
-                            if abs(l.speed) < 0.999, case .video = l.content {
-                                Toggle("Smooth Slow (blend frames so slow motion doesn't stutter)", isOn: Binding(get: { l.usesFrameBlending }, set: { b in
-                                    state.coalescedEdit("Smooth Slow") { layer in
-                                        layer.usesFrameBlending = b
-                                    }
-                                }))
-                                .tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13))
                             }
                         } else {
                             HStack {
@@ -95,22 +84,12 @@ struct ClipPanel: View {
                             .font(.caption).foregroundStyle(Theme.textDim)
                         CutoutSection(state: state)
                         Divider().overlay(Theme.stroke)
-                        Text("Beat Sync").font(.system(size: 13, weight: .bold)).foregroundStyle(Theme.text)
-                        if l.hasAudio {
-                            HStack {
-                                Text("Sensitivity").font(.system(size: 12)).foregroundStyle(Theme.textDim)
-                                Slider(value: $sensitivity, in: 0...1)
-                            }
-                            Button { state.detectBeats(sensitivity: sensitivity) } label: {
-                                Label("Detect Beats", systemImage: "waveform.badge.magnifyingglass")
-                            }.buttonStyle(PrimaryButtonStyle())
+                        // Beat Sync lives in one place: the Beats panel (detect, tap, punch with strength / decay).
+                        Button { state.panel = .beats } label: {
+                            Label("Beat Sync (\(state.project.markers.count) markers)", systemImage: "metronome")
+                                .frame(maxWidth: .infinity, minHeight: 44)
                         }
-                        HStack(spacing: 8) {
-                            ToolTile(icon: "hand.tap", title: "Tap Beat") { state.tapMarker() }
-                            ToolTile(icon: "bolt.fill", title: "Punch on Beats") { state.punchOnBeats() }
-                            ToolTile(icon: "xmark.circle", title: "Clear Beats") { state.clearMarkers() }
-                        }
-                        Text("\(state.project.markers.count) beat markers").font(.caption).foregroundStyle(Theme.textDim)
+                        .buttonStyle(.bordered).foregroundStyle(Theme.text)
                     }
                     .padding(.horizontal, 12).padding(.bottom, 14)
                 }.accessibilityIdentifier("clip-settings-scroll")
@@ -169,6 +148,8 @@ struct ClipPanel: View {
 struct BeatsPanel: View {
     @ObservedObject var state: EditorState
     @State private var sensitivity = 0.5
+    @AppStorage("awi.punchStrength") private var punchStrength = 12.0
+    @AppStorage("awi.punchDecay") private var punchDecay = 0.18
     @State private var automaticTempo = true
     @State private var tempo = 120.0
 
@@ -201,8 +182,17 @@ struct BeatsPanel: View {
                     }
                     HStack(spacing: 8) {
                         ToolTile(icon: "diamond", title: "Beat Here") { state.toggleBeatMarker() }
-                        ToolTile(icon: "bolt.fill", title: "Punch on Beats") { state.punchOnBeats() }
+                        ToolTile(icon: "bolt.fill", title: "Punch on Beats") { state.punchOnBeats(scaleAmount: punchStrength, decay: punchDecay) }
                         ToolTile(icon: "xmark.circle", title: "Clear Beats") { state.clearMarkers() }
+                    }
+                    // Punch adds on top of the layer's own scale animation.
+                    HStack {
+                        Text("Punch").font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 64, alignment: .leading)
+                        ValueScrubber(value: punchStrength, range: 1...100, unit: "%", onChange: { punchStrength = $0 })
+                    }
+                    HStack {
+                        Text("Decay").font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 64, alignment: .leading)
+                        ValueScrubber(value: punchDecay, range: 0.03...1, step: 0.01, unit: "s", onChange: { punchDecay = $0 })
                     }
                     Text("\(state.project.markers.count) beat markers · scrubbing snaps to them").font(.caption).foregroundStyle(Theme.textDim)
                 }
