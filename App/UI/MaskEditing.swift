@@ -384,20 +384,29 @@ struct MaskSelectionOverlay: View {
     @ObservedObject var state: EditorState
     let fit: CGRect
 
-    var body: some View {
+    /// Screen points of the selected vertex and its handle ends, worked out on the main actor before drawing.
+    private var points: (point: CGPoint, handles: [CGPoint])? {
         let s = fit.width / CGFloat(max(state.project.width, 1))
+        guard let sel = state.maskSelection, let mi = state.selectedMaskIndex, let l = state.selectedLayer,
+              l.masks.indices.contains(mi) else { return nil }
+        let path = l.masks[mi].path.value(at: state.currentTime)
+        guard path.vertices.indices.contains(sel.vertex) else { return nil }
+        func scr(_ v: Vec2) -> CGPoint? {
+            guard let c = state.compPoint(fromLocal: v) else { return nil }
+            return CGPoint(x: fit.minX + CGFloat(c.x) * s, y: fit.minY + CGFloat(c.y) * s)
+        }
+        let v = path.vertices[sel.vertex]
+        guard let p = scr(v.point) else { return nil }
+        let handles = [v.inTangent, v.outTangent].filter { $0 != .zero }.compactMap { scr(v.point + $0) }
+        return (p, handles)
+    }
+
+    var body: some View {
+        let pts = points
         Canvas { ctx, _ in
-            guard let sel = state.maskSelection, let mi = state.selectedMaskIndex, let l = state.selectedLayer else { return }
-            let path = l.masks[mi].path.value(at: state.currentTime)
-            guard path.vertices.indices.contains(sel.vertex) else { return }
-            func scr(_ v: Vec2) -> CGPoint? {
-                guard let c = state.compPoint(fromLocal: v) else { return nil }
-                return CGPoint(x: fit.minX + CGFloat(c.x) * s, y: fit.minY + CGFloat(c.y) * s)
-            }
-            let v = path.vertices[sel.vertex]
-            guard let p = scr(v.point) else { return }
-            for tan in [v.inTangent, v.outTangent] where tan != .zero {
-                guard let h = scr(v.point + tan) else { continue }
+            guard let pts else { return }
+            let p = pts.point
+            for h in pts.handles {
                 var line = Path(); line.move(to: p); line.addLine(to: h)
                 ctx.stroke(line, with: .color(Theme.accentGlow), lineWidth: 1.5)
                 let r: CGFloat = 7

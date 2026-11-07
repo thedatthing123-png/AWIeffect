@@ -124,9 +124,12 @@ struct BoneOverlay: View {
 
     var body: some View {
         let s = fit.width / CGFloat(max(state.project.width, 1))
+        // Read the editor on the main actor; the Canvas drawing closure isn't main-actor isolated.
+        let t = state.currentTime
+        let view = state.canvasViewProject(state.project)
+        let selectedID = state.selectedLayerID
+        let fit = self.fit
         Canvas { ctx, _ in
-            let t = state.currentTime
-            let view = state.canvasViewProject(state.project)
             let resolved = Renderer.resolveParenting(view, time: t)
             func joint(_ id: UUID) -> CGPoint? {
                 guard let l = resolved.layers.first(where: { $0.id == id }),
@@ -135,7 +138,7 @@ struct BoneOverlay: View {
             }
             for l in view.layers {
                 guard let rig = l.ik, let a = joint(rig.upperID), let b = joint(l.id), let c = joint(rig.controllerID) else { continue }
-                let on = l.id == state.selectedLayerID
+                let on = l.id == selectedID
                 var bone = Path(); bone.move(to: a); bone.addLine(to: b); bone.addLine(to: c)
                 ctx.stroke(bone, with: .color(.black.opacity(0.6)), style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round))
                 ctx.stroke(bone, with: .color(on ? Theme.accentGlow : .white), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
