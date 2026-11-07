@@ -200,6 +200,8 @@ final class EffectTests: XCTestCase {
                                    // Same: cycle length only applies with Cycle Evolution on.
                                    "ae.turbulentDisplace/cycleLen", "ae.turbulentDisplace/pinSoft",
                                    // Curve point positions only matter once the curve is bent (flat by default).
+                                   // Added curve points only act once switched on.
+                                   "awi18.grade/me1x", "awi18.grade/me1y", "awi18.grade/me2x", "awi18.grade/me2y", "awi18.grade/me3x", "awi18.grade/me3y", "awi18.grade/re1x", "awi18.grade/re1y", "awi18.grade/re2x", "awi18.grade/re2y", "awi18.grade/re3x", "awi18.grade/re3y", "awi18.grade/ge1x", "awi18.grade/ge1y", "awi18.grade/ge2x", "awi18.grade/ge2y", "awi18.grade/ge3x", "awi18.grade/ge3y", "awi18.grade/be1x", "awi18.grade/be1y", "awi18.grade/be2x", "awi18.grade/be2y", "awi18.grade/be3x", "awi18.grade/be3y",
                                    "awi18.grade/m25x", "awi18.grade/m50x", "awi18.grade/m75x", "awi18.grade/r25x", "awi18.grade/r50x", "awi18.grade/r75x", "awi18.grade/g25x", "awi18.grade/g50x", "awi18.grade/g75x", "awi18.grade/b25x", "awi18.grade/b50x", "awi18.grade/b75x",
                                    // Hue softness and spill only act on colors at the edge of the keyed hue range (the test shapes are flat colors).
                                    "awi11.colorRangeKey/softness", "awi11.colorRangeKey/spill"]

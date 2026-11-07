@@ -85,7 +85,7 @@ struct ShapeOps: Codable, Equatable {
     /// Moves an active operator one step earlier (-1) or later (+1) in the stack.
     mutating func move(_ k: ShapeOpKind, by d: Int) {
         var list = activeOrder
-        guard let i = list.firstIndex(of: k) else { return }
+        guard abs(d) == 1, let i = list.firstIndex(of: k) else { return }
         let j = i + d
         guard list.indices.contains(j) else { return }
         list.swapAt(i, j)
