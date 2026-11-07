@@ -121,21 +121,57 @@ final class ProjectStore {
         let fm = FileManager.default
         let dir = versionsFolder(for: id)
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let now = Date()
-        let stamp = formatter.string(from: now).replacingOccurrences(of: ":", with: "-") + "-" + String(format: "%020.6f", now.timeIntervalSince1970) + "-" + UUID().uuidString
-        try data.write(to: dir.appendingPathComponent("\(stamp).json"), options: .atomic)
+        _ = try writeSnapshot(data, in: dir)
+        // Named versions are kept; only automatic ones roll off.
         let files = try fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)
+            .filter { $0.pathExtension == "json" && !fm.fileExists(atPath: $0.deletingPathExtension().appendingPathExtension("name").path) }
             .sorted { $0.lastPathComponent < $1.lastPathComponent }
         if files.count > Self.maxVersions {
             for f in files.prefix(files.count - Self.maxVersions) { try? fm.removeItem(at: f) }
         }
     }
 
+    private func writeSnapshot(_ data: Data, in dir: URL) throws -> URL {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let now = Date()
+        let stamp = formatter.string(from: now).replacingOccurrences(of: ":", with: "-") + "-" + String(format: "%020.6f", now.timeIntervalSince1970) + "-" + UUID().uuidString
+        let url = dir.appendingPathComponent("\(stamp).json")
+        try data.write(to: url, options: .atomic)
+        return url
+    }
+
+    /// A version the user named ("Before drop", "Client v2"), with a thumbnail; never pruned automatically.
+    @discardableResult
+    func saveNamedVersion(_ project: Project, name: String, thumbnail: UIImage?) throws -> URL {
+        ioLock.lock(); defer { ioLock.unlock() }
+        let dir = versionsFolder(for: project.id)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let url = try writeSnapshot(try encoder.encode(project), in: dir)
+        try Data(name.utf8).write(to: url.deletingPathExtension().appendingPathExtension("name"), options: .atomic)
+        if let jpg = thumbnail?.jpegData(compressionQuality: 0.7) {
+            try? jpg.write(to: url.deletingPathExtension().appendingPathExtension("jpg"), options: .atomic)
+        }
+        return url
+    }
+
+    func versionName(_ url: URL) -> String? {
+        (try? String(contentsOf: url.deletingPathExtension().appendingPathExtension("name"), encoding: .utf8))
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    }
+
+    func versionThumbnail(_ url: URL) -> UIImage? {
+        UIImage(contentsOfFile: url.deletingPathExtension().appendingPathExtension("jpg").path)
+    }
+
+    func deleteVersion(_ url: URL) {
+        ioLock.lock(); defer { ioLock.unlock() }
+        for ext in ["json", "name", "jpg"] { try? FileManager.default.removeItem(at: url.deletingPathExtension().appendingPathExtension(ext)) }
+    }
+
     func versions(for id: UUID) -> [URL] {
         let files = (try? FileManager.default.contentsOfDirectory(at: versionsFolder(for: id), includingPropertiesForKeys: nil)) ?? []
-        return files.sorted { $0.lastPathComponent > $1.lastPathComponent }
+        return files.filter { $0.pathExtension == "json" }.sorted { $0.lastPathComponent > $1.lastPathComponent }
     }
 
     func loadVersion(_ url: URL) throws -> Project {
@@ -289,5 +325,87 @@ final class ProjectStore {
 
     func mediaURL(_ fileName: String, projectID: UUID) -> URL {
         mediaFolder(for: projectID).appendingPathComponent(fileName)
+    }
+
+    // MARK: Storage, backup
+
+    /// Bytes on disk below `url` (recursive).
+    static func size(of url: URL) -> Int64 {
+        let fm = FileManager.default
+        guard let e = fm.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey]) else { return 0 }
+        var total: Int64 = 0
+        for case let f as URL in e {
+            let v = try? f.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
+            if v?.isRegularFile == true { total += Int64(v?.fileSize ?? 0) }
+        }
+        return total
+    }
+
+    /// Project bytes (without Recently Deleted) and Recently Deleted bytes.
+    func storageUsage() -> (projects: Int64, deleted: Int64) {
+        let deleted = Self.size(of: deletedRoot)
+        return (max(0, Self.size(of: root) - deleted), deleted)
+    }
+
+    /// Scratch files (render/audio caches, old exports) that the app can always rebuild.
+    static var cacheFolders: [URL] {
+        let fm = FileManager.default
+        return [fm.temporaryDirectory] + fm.urls(for: .cachesDirectory, in: .userDomainMask)
+    }
+
+    static func cacheBytes() -> Int64 { cacheFolders.reduce(0) { $0 + size(of: $1) } }
+
+    /// Removes rebuildable caches (keeps files touched in the last minute, which may be in use right now).
+    static func clearCaches() {
+        let fm = FileManager.default
+        let cutoff = Date().addingTimeInterval(-60)
+        for folder in cacheFolders {
+            for f in (try? fm.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.contentModificationDateKey])) ?? [] {
+                let m = (try? f.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? .distantPast
+                if m < cutoff { try? fm.removeItem(at: f) }
+            }
+        }
+    }
+
+    /// One ZIP with every project (media, versions, thumbnails), for Files / iCloud Drive / a computer.
+    func backupAll() throws -> URL {
+        ioLock.lock(); defer { ioLock.unlock() }
+        let fm = FileManager.default
+        let stamp = ISO8601DateFormatter().string(from: Date()).prefix(10)
+        let url = fm.temporaryDirectory.appendingPathComponent("AWIeffect Backup \(stamp).zip")
+        let zip = try ZipArchive.Writer(url: url)
+        var ok = false
+        defer { if !ok { try? fm.removeItem(at: url) } }
+        for dir in (try? fm.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? [] {
+            guard let id = UUID(uuidString: dir.lastPathComponent) else { continue }
+            guard let e = fm.enumerator(at: dir, includingPropertiesForKeys: [.isRegularFileKey]) else { continue }
+            for case let f as URL in e where (try? f.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile == true {
+                let rel = String(f.standardizedFileURL.path.dropFirst(dir.standardizedFileURL.path.count)).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                try zip.add("Projects/\(id.uuidString)/\(rel)", file: f)
+            }
+        }
+        try zip.finish()
+        ok = true
+        return url
+    }
+
+    /// Restores projects from a backup ZIP. Projects already on this device are kept as they are (skipped).
+    /// Returns (restored, skipped).
+    func restoreBackup(_ url: URL) throws -> (restored: Int, skipped: Int) {
+        let fm = FileManager.default
+        let temp = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? fm.removeItem(at: temp) }
+        try ZipArchive.extract(url, to: temp)
+        ioLock.lock(); defer { ioLock.unlock() }
+        var restored = 0, skipped = 0
+        let projects = temp.appendingPathComponent("Projects", isDirectory: true)
+        for dir in (try? fm.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil)) ?? [] {
+            guard let id = UUID(uuidString: dir.lastPathComponent),
+                  fm.fileExists(atPath: dir.appendingPathComponent("project.json").path) else { continue }
+            if fm.fileExists(atPath: folder(for: id).path) { skipped += 1; continue }
+            try fm.moveItem(at: dir, to: folder(for: id))
+            restored += 1
+        }
+        return (restored, skipped)
     }
 }

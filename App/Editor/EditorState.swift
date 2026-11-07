@@ -748,7 +748,7 @@ final class EditorState: ObservableObject {
             do { try await Task.sleep(nanoseconds: 800_000_000) } catch { return }
             guard !Task.isCancelled, let self, self.saveGeneration == generation else { return }
             let project = self.rootProject, store = self.store
-            let snapshot = Date().timeIntervalSince(self.lastVersionSnapshot) > 120
+            let snapshot = Date().timeIntervalSince(self.lastVersionSnapshot) > AppSettings.versionInterval
             let failure = await withCheckedContinuation { (continuation: CheckedContinuation<String?, Never>) in
                 Self.saveQueue.async {
                     do { try store.save(project, snapshotVersion: snapshot); continuation.resume(returning: nil) }
@@ -832,7 +832,7 @@ final class EditorState: ObservableObject {
 
     func saveNow(thumbnail: Bool = false) {
         autosaveTask?.cancel(); saveGeneration += 1
-        let snapshot = Date().timeIntervalSince(lastVersionSnapshot) > 120
+        let snapshot = Date().timeIntervalSince(lastVersionSnapshot) > AppSettings.versionInterval
         let project = rootProject
         do {
             // Drain older queued snapshots before writing the newest project on close/export/retry.

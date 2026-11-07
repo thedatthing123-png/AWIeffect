@@ -332,6 +332,8 @@ struct Layer: Codable, Equatable, Identifiable {
     /// 3D shadows (AE defaults: layers don't cast, do accept).
     var castsShadows = false
     var acceptsShadows = true
+    /// Audio effects (EQ, compressor, pitch, ducking); nil = untouched sound.
+    var audioFX: LayerAudioFX? = nil
 
     init(id: UUID = UUID(), name: String, content: LayerContent, tag: LayerTag = .purple, outPoint: Double,
          transform: LayerTransform, size: Animated<Vec2>) {
@@ -395,6 +397,7 @@ struct Layer: Codable, Equatable, Identifiable {
         isCollider = try c.decodeIfPresent(Bool.self, forKey: .isCollider) ?? false
         castsShadows = try c.decodeIfPresent(Bool.self, forKey: .castsShadows) ?? false
         acceptsShadows = try c.decodeIfPresent(Bool.self, forKey: .acceptsShadows) ?? true
+        audioFX = try c.decodeIfPresent(LayerAudioFX.self, forKey: .audioFX)
     }
 
     func isActive(at time: Double) -> Bool { isVisible && time >= inPoint && time < outPoint }
