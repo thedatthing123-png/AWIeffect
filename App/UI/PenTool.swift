@@ -33,23 +33,36 @@ extension EditorState {
     /// Adds a mask (comp-space path) to the layer with `id`, converting into that layer's local space.
     func addMask(_ compPath: BezierPath, to id: UUID) {
         guard let i = project.layers.firstIndex(where: { $0.id == id }) else { return }
-        let M = Renderer.layerMatrix(project.layers[i], time: currentTime, renderScale: 1, includeEffects: false)
-        let inv = M.inverse
-        // Points transform as positions, tangents as directions.
-        func toLocal(_ v: Vec2) -> Vec2 { let q = inv * SIMD3(v.x, v.y, 1); return Vec2(q.x, q.y) }
-        func dirLocal(_ v: Vec2) -> Vec2 { let q = inv * SIMD3(v.x, v.y, 0); return Vec2(q.x, q.y) }
-        var local = compPath
-        for k in local.vertices.indices {
-            local.vertices[k].point = toLocal(local.vertices[k].point)
-            local.vertices[k].inTangent = dirLocal(local.vertices[k].inTangent)
-            local.vertices[k].outTangent = dirLocal(local.vertices[k].outTangent)
-        }
+        // Where the layer is drawn (parenting, 3D, camera of the current view), like puppet pins: the mask lands
+        // exactly where it was drawn on the canvas.
+        let M = displayPlacement(of: id)
+            ?? Renderer.layerMatrix(project.layers[i], time: currentTime, renderScale: 1, includeEffects: false)
+        var local = Self.maskLocal(compPath, placement: M)
         local.closed = true
         mutate("Add Mask") { p in
             p.layers[i].masks.append(LayerMask(name: "Mask \(p.layers[i].masks.count + 1)", path: Animated(local)))
         }
         selectedLayerID = id
         panel = .masks
+    }
+
+    /// Comp-space path -> layer-local, through a (possibly projective) placement. Tangent ends are mapped as points,
+    /// so curves survive perspective too.
+    nonisolated static func maskLocal(_ compPath: BezierPath, placement M: simd_double3x3) -> BezierPath {
+        let inv = M.inverse
+        func toLocal(_ v: Vec2) -> Vec2 {
+            let q = inv * SIMD3(v.x, v.y, 1)
+            return abs(q.z) > 1e-12 ? Vec2(q.x / q.z, q.y / q.z) : Vec2(q.x, q.y)
+        }
+        var local = compPath
+        for k in local.vertices.indices {
+            let v = compPath.vertices[k]
+            let p = toLocal(v.point)
+            local.vertices[k].point = p
+            local.vertices[k].inTangent = toLocal(v.point + v.inTangent) - p
+            local.vertices[k].outTangent = toLocal(v.point + v.outTangent) - p
+        }
+        return local
     }
 
     func addPrimitiveMask(ellipse: Bool) {
@@ -414,7 +427,7 @@ struct StrokeSection: View {
                     .tint(Theme.accent).foregroundStyle(Theme.text)
                 if l.stroke.enabled {
                     AWIColorWell("Stroke Color", selection: Binding(get: { Color(l.stroke.color.value(at: t)) }, set: { c in
-                        edit("Stroke Color") { $0.stroke.color.set(c.rgba, at: t) }
+                        state.coalescedEdit("Stroke Color") { $0.stroke.color.set(c.rgba, at: t) }
                     })).foregroundStyle(Theme.text)
                     row("Width", l.stroke.width.value(at: t), 0...200) { v in cont { $0.stroke.width.set(v, at: t) } }
                     Text("Trim Paths").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textDim)

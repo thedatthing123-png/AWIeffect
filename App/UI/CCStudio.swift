@@ -13,6 +13,8 @@ struct CCStudioPanel: View {
     @State private var lookName = ""
     @State private var histogram: [[Float]] = []
     @State private var scopeToken = ""
+    @State private var scopeQueue = ScopeRenderQueue()
+    @State private var confirmLook: String?
 
     private var gradeIndex: Int? { state.selectedLayer?.effects.firstIndex { $0.typeID == EffectRegistry.grade.id } }
     private var grade: EffectInstance? { gradeIndex.flatMap { state.selectedLayer?.effects[$0] } }
@@ -80,6 +82,8 @@ struct CCStudioPanel: View {
         }
         .onAppear(perform: refreshScopes)
         .onChange(of: state.project.modifiedAt) { _, _ in refreshScopes() }
+        // Scrubbing the playhead refreshes the histogram too.
+        .onChange(of: state.currentTime) { _, _ in refreshScopes() }
     }
 
     // MARK: Controls
@@ -125,6 +129,11 @@ struct CCStudioPanel: View {
             Button { importLUT = true } label: { Label("Import .cube LUT", systemImage: "square.and.arrow.down") }.buttonStyle(PrimaryButtonStyle())
             row(g, "lutStrength")
             let current = g.text?["lut"]
+            if let current, !luts.contains(current) {
+                // The grade names a LUT that isn't on this device (moved project / deleted file): it renders without it.
+                Label("Missing LUT \"\((current as NSString).deletingPathExtension)\" — import it to restore the look.", systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption).foregroundStyle(Theme.warning)
+            }
             lutButton(g, nil, selected: current == nil)
             ForEach(luts, id: \.self) { name in lutButton(g, name, selected: current == name) }
             if luts.isEmpty { Text("LUTs you import stay here for every project.").font(.caption).foregroundStyle(Theme.textDim) }
@@ -158,25 +167,58 @@ struct CCStudioPanel: View {
                 Button("Save Look") {
                     let n = lookName.trimmingCharacters(in: .whitespaces)
                     guard !n.isEmpty else { return }
-                    LookLibrary.save(n, g); looks = LookLibrary.names(); lookName = ""
+                    // Saved in the app library and inside the project, so it travels with the project.
+                    LookLibrary.save(n, g)
+                    state.mutate("Save Look") { p in var all = p.savedLooks ?? [:]; all[n] = g; p.savedLooks = all }
+                    looks = LookLibrary.names(); lookName = ""
                 }
                 .font(.system(size: 13, weight: .semibold))
             }
-            ForEach(looks, id: \.self) { n in
+            let names = LookLibrary.allNames(project: state.project)
+            ForEach(names, id: \.self) { n in
                 Button {
-                    guard let saved = LookLibrary.load(n) else { return }
-                    state.mutate("Apply Look \(n)") { p in
-                        guard let i = state.selectedIndex, let j = p.layers[i].effects.firstIndex(where: { $0.id == g.id }) else { return }
-                        p.layers[i].effects[j].params = saved.params
-                        p.layers[i].effects[j].text = saved.text
-                    }
+                    // Keyframed grade: ask whether to keep the keyframes (merge) or replace everything.
+                    if g.params.values.contains(where: { !$0.keyframeTimes.isEmpty }) { confirmLook = n } else { applyLook(n, to: g, merge: false) }
                 } label: {
-                    HStack { Image(systemName: "camera.filters"); Text(n); Spacer() }.foregroundStyle(Theme.text).padding(.vertical, 6)
+                    HStack {
+                        Image(systemName: "camera.filters"); Text(n); Spacer()
+                        if state.project.savedLooks?[n] != nil { Image(systemName: "doc.fill").font(.caption2).foregroundStyle(Theme.textDim) }
+                    }
+                    .foregroundStyle(Theme.text).frame(minHeight: 44)
                 }
                 .buttonStyle(.plain)
-                .contextMenu { Button(role: .destructive) { LookLibrary.remove(n); looks = LookLibrary.names() } label: { Label("Delete Look", systemImage: "trash") } }
+                .contextMenu {
+                    Button(role: .destructive) {
+                        LookLibrary.remove(n); looks = LookLibrary.names()
+                        if state.project.savedLooks?[n] != nil {
+                            state.mutate("Delete Look") { p in p.savedLooks?[n] = nil; if p.savedLooks?.isEmpty == true { p.savedLooks = nil } }
+                        }
+                    } label: { Label("Delete Look", systemImage: "trash") }
+                }
             }
-            if looks.isEmpty { Text("Save a grade as a Look to reuse it on any layer or project.").font(.caption).foregroundStyle(Theme.textDim) }
+            if names.isEmpty { Text("Save a grade as a Look to reuse it on any layer or project.").font(.caption).foregroundStyle(Theme.textDim) }
+        }
+        .confirmationDialog("This grade has keyframes", isPresented: Binding(get: { confirmLook != nil }, set: { if !$0 { confirmLook = nil } }),
+                            titleVisibility: .visible) {
+            if let n = confirmLook {
+                Button("Apply at Playhead (keep keyframes)") { applyLook(n, to: g, merge: true); confirmLook = nil }
+                Button("Replace Grade (remove keyframes)", role: .destructive) { applyLook(n, to: g, merge: false); confirmLook = nil }
+                Button("Cancel", role: .cancel) { confirmLook = nil }
+            }
+        }
+    }
+
+    private func applyLook(_ n: String, to g: EffectInstance, merge: Bool) {
+        guard let saved = LookLibrary.look(n, project: state.project) else { return }
+        let t = state.currentTime
+        state.mutate("Apply Look \(n)") { p in
+            guard let i = state.selectedIndex, let j = p.layers[i].effects.firstIndex(where: { $0.id == g.id }) else { return }
+            let current = p.layers[i].effects[j]
+            p.layers[i].effects[j] = merge ? LookLibrary.merged(saved, into: current, at: t) : LookLibrary.replaced(saved, into: current)
+        }
+        // A Look that points at a LUT this device doesn't have: say so instead of silently grading without it.
+        if let lut = saved.text?["lut"], !LUTLibrary.shared.names().contains(lut) {
+            state.recoveryNotice = "The Look \"\(n)\" uses the LUT \"\(lut)\", which isn't on this device. Import it in CC Studio > LUT."
         }
     }
 
@@ -203,24 +245,68 @@ struct CCStudioPanel: View {
         .overlay(alignment: .topLeading) { Text("HISTOGRAM").font(.system(size: 9, weight: .bold)).foregroundStyle(.white.opacity(0.6)).padding(5) }
     }
 
-    /// Histogram of the frame at the playhead (rendered small, off the main thread).
+    /// Histogram of the frame at the playhead (rendered small, off the main thread). Follows scrubbing and edits;
+    /// renders one at a time (latest request wins) and waits while a live gesture drives the preview.
     private func refreshScopes() {
+        guard !state.isLiveGesture else { return }   // the gesture's end changes modifiedAt and refreshes
         let p = state.project, t = state.currentTime, pid = p.id, store = state.store
         let token = "\(p.modifiedAt.timeIntervalSince1970)|\(t)"
         guard token != scopeToken else { return }
         scopeToken = token
-        DispatchQueue.global(qos: .userInitiated).async {
+        scopeQueue.submit(token: token) {
             guard let r = Renderer.shared,
                   let px = r.renderPixels(project: p, time: t, renderScale: min(1, 200 / Double(max(p.width, p.height))),
-                                          mediaURL: { store.mediaURL($0, projectID: pid) }) else { return }
-            var h = Array(repeating: [Float](repeating: 0, count: 64), count: 3)
-            var i = 0
-            while i + 3 < px.rgba.count {
-                for c in 0..<3 { h[c][Int(px.rgba[i + c]) >> 2] += 1 }
-                i += 4
+                                          mediaURL: { store.mediaURL($0, projectID: pid) }) else { return nil }
+            return ScopeRenderQueue.histogram(px.rgba)
+        } apply: { h in histogram = h }
+    }
+}
+
+/// Serial, coalescing scope renders: at most one in flight; while it runs only the newest request is kept, and a
+/// result is applied only if it is still the newest (no stale histogram after scrubbing).
+final class ScopeRenderQueue {
+    private let queue = DispatchQueue(label: "awi.scopes", qos: .userInitiated)
+    private let lock = NSLock()
+    private var latest = ""
+    private var running = false
+    private var pending: (String, () -> [[Float]]?, ([[Float]]) -> Void)?
+
+    func submit(token: String, work: @escaping () -> [[Float]]?, apply: @escaping ([[Float]]) -> Void) {
+        lock.lock()
+        latest = token
+        if running { pending = (token, work, apply); lock.unlock(); return }
+        running = true
+        lock.unlock()
+        run(token, work, apply)
+    }
+
+    var latestToken: String { lock.lock(); defer { lock.unlock() }; return latest }
+
+    private func run(_ token: String, _ work: @escaping () -> [[Float]]?, _ apply: @escaping ([[Float]]) -> Void) {
+        queue.async { [weak self] in
+            let result = work()
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let result, self.latestToken == token { apply(result) }
+                self.lock.lock()
+                let next = self.pending
+                self.pending = nil
+                self.running = next != nil
+                self.lock.unlock()
+                if let next { self.run(next.0, next.1, next.2) }
             }
-            DispatchQueue.main.async { histogram = h }
         }
+    }
+
+    /// 64-bin RGB histogram of RGBA8 pixels.
+    static func histogram(_ rgba: [UInt8]) -> [[Float]] {
+        var h = Array(repeating: [Float](repeating: 0, count: 64), count: 3)
+        var i = 0
+        while i + 3 < rgba.count {
+            for c in 0..<3 { h[c][Int(rgba[i + c]) >> 2] += 1 }
+            i += 4
+        }
+        return h
     }
 }
 
@@ -231,14 +317,20 @@ struct CurveGraph: View {
     let prefix: String
     @State private var dragging: String?
 
+    /// The effect as it is right now (the live copy mid-drag), so points follow the finger.
+    private func live(_ e: EffectInstance) -> EffectInstance {
+        guard let id = state.selectedLayerID,
+              let l = (state.live.project ?? state.project).layers.first(where: { $0.id == id }) else { return e }
+        return l.effects.first { $0.id == e.id } ?? e
+    }
+
     var body: some View {
         GeometryReader { geo in
             let t = state.currentTime
             let keys = [prefix + "25", prefix + "50", prefix + "75"]
-            let lo = prefix == "m" ? effect.number("mBlack", t) / 100 : 0
-            let hi = prefix == "m" ? effect.number("mWhite", t) / 100 : 1
-            let pts = [lo] + keys.map { effect.number($0, t) / 100 } + [hi]
-            let curve = GradeCurves.curve(pts)
+            let cp = GradeCurves.points(live(effect), t, channel: prefix)
+            let pts = cp.ys, xs = cp.xs
+            let curve = GradeCurves.curve(xs: xs, ys: pts)
             ZStack {
                 RoundedRectangle(cornerRadius: 10).fill(Color.black.opacity(0.45))
                 Path { p in
@@ -258,21 +350,29 @@ struct CurveGraph: View {
                 }
                 .stroke(["m": Color.white, "r": .red, "g": .green, "b": .blue][prefix] ?? .white, lineWidth: 2)
                 ForEach(Array(keys.enumerated()), id: \.offset) { k, key in
-                    Circle().fill(.white).frame(width: 14, height: 14)
-                        .position(x: geo.size.width * CGFloat(k + 1) / 4, y: geo.size.height * CGFloat(1 - pts[k + 1]))
+                    Circle().fill(dragging == key ? Theme.accentGlow : .white).frame(width: 14, height: 14)
+                        .position(x: geo.size.width * CGFloat(xs[k + 1]), y: geo.size.height * CGFloat(1 - pts[k + 1]))
                 }
             }
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0)
                 .onChanged { v in
                     if dragging == nil {
-                        let k = min(2, max(0, Int((v.startLocation.x / geo.size.width * 4).rounded()) - 1))
+                        // Nearest point to the finger (points can sit anywhere along x now).
+                        let fx = Double(v.startLocation.x / max(geo.size.width, 1)), fy = 1 - Double(v.startLocation.y / max(geo.size.height, 1))
+                        let k = (0..<3).min { a, b in
+                            hypot(xs[a + 1] - fx, pts[a + 1] - fy) < hypot(xs[b + 1] - fx, pts[b + 1] - fy)
+                        } ?? 1
                         dragging = keys[k]
                         state.beginEdit("Curve")
                     }
-                    guard let key = dragging else { return }
-                    let val = min(100, max(0, (1 - Double(v.location.y / geo.size.height)) * 100))
+                    guard let key = dragging, let k = keys.firstIndex(of: key) else { return }
+                    let val = min(100, max(0, (1 - Double(v.location.y / max(geo.size.height, 1))) * 100))
+                    // Sideways too, kept between its neighbours so the points never cross.
+                    let now = GradeCurves.points(live(effect), state.currentTime, channel: prefix).xs
+                    let x = min(now[k + 2] - 0.02, max(now[k] + 0.02, Double(v.location.x / max(geo.size.width, 1)))) * 100
                     state.setEffectParam(effect.id, key) { pv, time in if case .number(var a) = pv { a.set(val, at: time); pv = .number(a) } }
+                    state.setEffectParam(effect.id, key + "x") { pv, time in if case .number(var a) = pv { a.set(x, at: time); pv = .number(a) } }
                 }
                 .onEnded { _ in dragging = nil; state.endEdit() })
         }
@@ -293,6 +393,43 @@ enum LookLibrary {
     static func save(_ name: String, _ e: EffectInstance) { var a = all(); a[name] = e; write(a) }
     static func load(_ name: String) -> EffectInstance? { all()[name] }
     static func remove(_ name: String) { var a = all(); a[name] = nil; write(a) }
+
+    /// Looks saved in the app plus the ones carried inside the project.
+    static func allNames(project: Project) -> [String] { Set(names()).union((project.savedLooks ?? [:]).keys).sorted() }
+    /// The project's own copy wins (it is the one that travelled with the project).
+    static func look(_ name: String, project: Project) -> EffectInstance? { project.savedLooks?[name] ?? load(name) }
+
+    /// Replace: the grade becomes the Look (same effect id and switch; controls the Look lacks reset to default).
+    static func replaced(_ look: EffectInstance, into current: EffectInstance) -> EffectInstance {
+        var out = current
+        out.params = look.params
+        out.text = look.text
+        return out
+    }
+
+    /// Merge at the playhead: animated controls keep their keyframes (the Look's value is keyed at `t`); everything
+    /// else takes the Look's value. Controls the Look lacks go back to default unless they are animated.
+    static func merged(_ look: EffectInstance, into current: EffectInstance, at t: Double) -> EffectInstance {
+        var out = current
+        for (k, v) in look.params {
+            switch (current.params[k], v) {
+            case (.number(var a)?, .number(let b)) where a.isAnimated && !b.isAnimated:
+                a.set(b.value(at: t), at: t); out.params[k] = .number(a)
+            case (.point(var a)?, .point(let b)) where a.isAnimated && !b.isAnimated:
+                a.set(b.value(at: t), at: t); out.params[k] = .point(a)
+            case (.color(var a)?, .color(let b)) where a.isAnimated && !b.isAnimated:
+                a.set(b.value(at: t), at: t); out.params[k] = .color(a)
+            default:
+                out.params[k] = v
+            }
+        }
+        let defaults = EffectRegistry.definition(current.typeID)?.params ?? []
+        for (k, v) in current.params where look.params[k] == nil && v.keyframeTimes.isEmpty {
+            if let d = defaults.first(where: { $0.id == k }) { out.params[k] = d.defaultValue } else { out.params[k] = nil }
+        }
+        out.text = look.text
+        return out
+    }
 }
 
 extension EditorState {

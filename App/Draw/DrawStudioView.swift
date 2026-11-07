@@ -553,16 +553,21 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         let e = session.engine
         guard let cb = e.queue.makeCommandBuffer() else { return }
         e.encodeComposite(cb)
-        cb.commit(); cb.waitUntilCompleted()
         let x = min(max(Int(p.x), 0), e.width - 1), y = min(max(Int(p.y), 0), e.height - 1)
-        var px = [UInt8](repeating: 0, count: 4)
-        e.canvas.getBytes(&px, bytesPerRow: 4, from: MTLRegionMake2D(x, y, 1, 1), mipmapLevel: 0)
-        let a = Double(px[3]) / 255
-        guard a > 0 else { return }
-        DispatchQueue.main.async {
-            self.session.brush.color = RGBA(Double(px[0]) / 255 / a, Double(px[1]) / 255 / a, Double(px[2]) / 255 / a)
-            self.session.tool = returnTool == .eraser ? .brush : returnTool
+        let canvas = e.canvas
+        // Read the pixel when the GPU is done instead of blocking the main thread on it.
+        cb.addCompletedHandler { _ in
+            var px = [UInt8](repeating: 0, count: 4)
+            canvas.getBytes(&px, bytesPerRow: 4, from: MTLRegionMake2D(x, y, 1, 1), mipmapLevel: 0)
+            let a = Double(px[3]) / 255
+            guard a > 0 else { return }
+            let picked = RGBA(Double(px[0]) / 255 / a, Double(px[1]) / 255 / a, Double(px[2]) / 255 / a)
+            DispatchQueue.main.async {
+                self.session.brush.color = picked
+                self.session.tool = returnTool == .eraser ? .brush : returnTool
+            }
         }
+        cb.commit()
     }
 
     // MARK: Navigation gestures

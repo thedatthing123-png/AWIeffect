@@ -209,6 +209,11 @@ struct EffectsPanel: View {
     @State private var showFFX = false
     @State private var ffxMessage: String?
     @State private var expanded: Set<UUID> = []
+    /// Cards already auto-opened once (a newly added effect opens; scrolling back to it must not re-open it).
+    @State private var autoOpened: Set<UUID> = []
+
+    /// The newest effect opens the first time its card appears, never again on later appearances (scrolling).
+    static func shouldAutoOpen(_ id: UUID, last: UUID?, opened: Set<UUID>) -> Bool { last == id && !opened.contains(id) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -325,7 +330,7 @@ struct EffectsPanel: View {
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
         .glass(radius: 12)
-        .onAppear { if state.selectedLayer?.effects.last?.id == e.id { expanded.insert(e.id) } }
+        .onAppear { if Self.shouldAutoOpen(e.id, last: state.selectedLayer?.effects.last?.id, opened: autoOpened) { expanded.insert(e.id) }; autoOpened.insert(e.id) }
     }
 
     /// Which layer the effect reads.
@@ -405,11 +410,14 @@ struct ParamRow: View {
         case .color:
             let c = effect.color(def.id, t)
             AWIColorWell("", selection: Binding(get: { Color(c) }, set: { col in
-                state.beginEdit("Edit \(def.name)")
-                state.setEffectParam(effect.id, def.id) { pv, time in
-                    if case .color(var a) = pv { a.set(col.rgba, at: time); pv = .color(a) }
+                // A picker drag sets the color many times: one undo step per drag (like Fill), not one per event.
+                let value = col.rgba, key = def.id, fallback = def.defaultValue, effectID = effect.id, time = state.currentTime
+                state.coalescedEdit("Edit \(def.name)") { l in
+                    guard let j = l.effects.firstIndex(where: { $0.id == effectID }) else { return }
+                    var pv = l.effects[j].params[key] ?? fallback
+                    if case .color(var a) = pv { a.set(value, at: time); pv = .color(a) }
+                    l.effects[j].params[key] = pv
                 }
-                state.endEdit()
             }), supportsOpacity: false).labelsHidden()
             Spacer()
         case .toggle:

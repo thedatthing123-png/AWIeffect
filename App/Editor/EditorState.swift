@@ -89,7 +89,10 @@ final class EditorState: ObservableObject {
     @Published var snappingEnabled = true
     var sketchStartTime: Double?
     var sketchStartClock: CFTimeInterval = 0
-    var sketchSamples: [(Double, Vec2)] = []
+    /// Motion Sketch samples per layer (multi-selection records every moved layer).
+    var sketchSamples: [UUID: [(Double, Vec2)]] = [:]
+    /// Position tracks as they were when the sketch began (the live drag writes into them).
+    var sketchBase: [UUID: Animated<Vec2>] = [:]
     /// The searchable Add Light browser.
     @Published var showLightBrowser = false
     /// Cutout refine tools on the canvas.
@@ -181,7 +184,7 @@ final class EditorState: ObservableObject {
     private var autosaveTask: Task<Void, Never>?
     private var lastVersionSnapshot = Date.distantPast
     /// Coalesces continuous edits (slider drags) into one undo step.
-    private var editGroupOpen = false
+    private(set) var editGroupOpen = false
     private var coalesceWork: DispatchWorkItem?
     private var savedUndo: [(undo: [(label: String, project: Project)], redo: [(label: String, project: Project)])] = []
 
@@ -734,6 +737,16 @@ final class EditorState: ObservableObject {
     func coalescedEdit(_ label: String, _ change: (inout Layer) -> Void) {
         beginEdit(label)
         mutateLayer(change)
+        coalesceWork?.cancel()
+        let w = DispatchWorkItem { [weak self] in self?.endEdit() }
+        coalesceWork = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6, execute: w)
+    }
+
+    /// Project-level twin of `coalescedEdit` (scene background color drags etc.): one undo step per drag.
+    func coalescedProjectEdit(_ label: String, _ change: (inout Project) -> Void) {
+        beginEdit(label)
+        mutate(label, change)
         coalesceWork?.cancel()
         let w = DispatchWorkItem { [weak self] in self?.endEdit() }
         coalesceWork = w

@@ -41,7 +41,7 @@ struct ScenePanel: View {
                     Text(String(format: "Length  %.1fs  (follows your clips — drag a layer's end to make it longer)", state.project.duration))
                         .font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.textDim)
                     AWIColorWell("Background", selection: Binding(get: { Color(state.project.background) }, set: { c in
-                        state.mutate("Background") { $0.background = c.rgba }
+                        state.coalescedProjectEdit("Background") { $0.background = c.rgba }
                     }), supportsOpacity: true).foregroundStyle(Theme.text)
                     Toggle("Motion Blur (whole scene)", isOn: Binding(get: { state.project.motionBlurEnabled }, set: { b in
                         state.mutate("Motion Blur") { $0.motionBlurEnabled = b }
@@ -137,14 +137,36 @@ struct StylePanel: View {
     }
 
     @ViewBuilder private func section(_ title: String, typeID: String, def: EffectDefinition) -> some View {
-        let fx = state.selectedLayer?.effects.first { $0.typeID == typeID }
-        Toggle(title, isOn: Binding(get: { fx?.isEnabled ?? false }, set: { on in
-            if let fx { state.toggleEffect(fx.id) } else if on { state.addEffect(def); state.panel = .style }
+        let all = state.selectedLayer?.effects.filter { $0.typeID == typeID } ?? []
+        // The switch reflects every border / shadow on the layer (a second, active one used to be hidden).
+        let fx = Self.shown(all)
+        Toggle(title, isOn: Binding(get: { Self.isOn(all) }, set: { on in
+            let current = state.selectedLayer?.effects.filter { $0.typeID == typeID } ?? []
+            if current.isEmpty { if on { state.addEffect(def); state.panel = .style }; return }
+            let targets = Self.toggleTargets(current, on: on)
+            guard !targets.isEmpty else { return }
+            state.beginEdit(on ? "Enable \(title)" : "Disable \(title)")
+            for id in targets { state.toggleEffect(id) }
+            state.endEdit()
         }))
         .font(.system(size: 14, weight: .semibold)).tint(Theme.accent).foregroundStyle(Theme.text)
         if let fx, fx.isEnabled {
             ForEach(def.params) { pd in ParamRow(state: state, effect: fx, def: pd) }
+            if all.filter(\.isEnabled).count > 1 {
+                Text("This layer has \(all.filter(\.isEnabled).count) \(title.lowercased()) effects; the first active one is shown. Edit the others in Effects.")
+                    .font(.caption).foregroundStyle(Theme.textDim)
+            }
         }
+    }
+
+    /// On when any of them is active.
+    static func isOn(_ effects: [EffectInstance]) -> Bool { effects.contains(where: \.isEnabled) }
+    /// The one whose controls show: the first active one, else the first.
+    static func shown(_ effects: [EffectInstance]) -> EffectInstance? { effects.first(where: \.isEnabled) ?? effects.first }
+    /// Switching off turns every active one off; switching on turns the first one on.
+    static func toggleTargets(_ effects: [EffectInstance], on: Bool) -> [UUID] {
+        if on { return effects.contains(where: \.isEnabled) ? [] : effects.prefix(1).map(\.id) }
+        return effects.filter(\.isEnabled).map(\.id)
     }
 }
 
