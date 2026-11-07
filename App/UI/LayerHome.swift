@@ -6,6 +6,9 @@ struct LayerHomePanel: View {
     @ObservedObject var state: EditorState
     @EnvironmentObject private var drawLauncher: DrawLauncher
     @EnvironmentObject private var trackLauncher: TrackLauncher
+    @State private var captionsSource: CaptionsSource?
+
+    struct CaptionsSource: Identifiable { let id: UUID }
 
     struct Tile: Identifiable {
         let id: String
@@ -34,6 +37,7 @@ struct LayerHomePanel: View {
                 .padding(.horizontal, 12).padding(.bottom, 12)
             }
         }
+        .sheet(item: $captionsSource) { src in CaptionsStudio(state: state, sourceLayerID: src.id) }
     }
 
     private func tile(_ t: Tile) -> some View {
@@ -102,6 +106,9 @@ struct LayerHomePanel: View {
         if visual && c != .text { move.append(Tile(id: "Puppet", icon: "hand.point.up.braille", panel: .puppet)) }
         if visual { move.append(Tile(id: "Rig", icon: "figure.arms.open", panel: .rig)) }
         if visual && c != .adjustment { move.append(Tile(id: "Physics", icon: "atom", panel: .physics)) }
+        var hasSound = l.isAudioOnly
+        if case .video(_, _, _, let a) = c { hasSound = a }
+        if hasSound { timing.append(Tile(id: "Captions", icon: "captions.bubble") { captionsSource = CaptionsSource(id: l.id) }) }
         timing.append(Tile(id: "Speed & Reverse", icon: "speedometer", panel: .clip))
         if case .video = c { timing.append(Tile(id: "Twixtor", icon: "tortoise.fill", panel: .clip)) }
         if visual { timing.append(Tile(id: "Time", icon: "timer", panel: .time)) }

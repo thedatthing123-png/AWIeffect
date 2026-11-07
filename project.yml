@@ -46,6 +46,7 @@ targets:
         NSPhotoLibraryAddUsageDescription: AWIeffect saves exported videos to your library.
         NSCameraUsageDescription: AWIeffect can capture media for your projects.
         NSMicrophoneUsageDescription: AWIeffect can record audio for your projects.
+        NSSpeechRecognitionUsageDescription: AWIeffect turns the speech or lyrics in your clips into timed captions, on your device.
         UIBackgroundModes: [audio]
     settings:
       base:
