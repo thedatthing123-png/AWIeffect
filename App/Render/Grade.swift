@@ -34,7 +34,7 @@ extension EffectRegistry {
         .number("hslLight", "HSL Lightness", 0, -100, 100),
         .number("lutStrength", "LUT Strength", 100, 0, 100, unit: "%"),
         .number("split", "Before / After Split", 0, 0, 100, unit: "%"),
-    ]
+    ] + gradeR4Params
 
     static let grade = EffectDefinition(
         id: "awi18.grade", name: "CC Studio Grade", category: .color,
@@ -53,12 +53,19 @@ extension EffectRegistry {
             guard let curve = GradeCurves.texture(ctx.effect, ctx.time, device: ctx.gpu.device),
                   let lut3D = lut ?? LUTLibrary.shared.identity(device: ctx.gpu.device) else { return ctx.input }
             // Wheels go in as extra data: lift / gamma / gain rgb.
-            let w: [SIMD4<Float>] = [
+            var w: [SIMD4<Float>] = [
                 SIMD4(Float(ctx.num("liftR") / 100), Float(ctx.num("liftG") / 100), Float(ctx.num("liftB") / 100), 0),
                 SIMD4(Float(ctx.num("gammaR") / 100), Float(ctx.num("gammaG") / 100), Float(ctx.num("gammaB") / 100), 0),
                 SIMD4(Float(ctx.num("gainR") / 100), Float(ctx.num("gainG") / 100), Float(ctx.num("gainB") / 100), 0),
             ]
-            ctx.gpu.run("fxGrade", ctx.cb, textures: [ctx.input, out, curve, lut3D], params: p, extra: w, grid: out)
+            // Grades that use none of the R4 controls run the original kernel: saved projects render exactly as before.
+            guard GradeR4.isActive(ctx.effect),
+                  let hue = GradeR4.hueTexture(ctx.effect, ctx.time, device: ctx.gpu.device) else {
+                ctx.gpu.run("fxGrade", ctx.cb, textures: [ctx.input, out, curve, lut3D], params: p, extra: w, grid: out)
+                return out
+            }
+            w += GradeR4.extra(ctx.effect, ctx.time)
+            ctx.gpu.run("fxGradeR4", ctx.cb, textures: [ctx.input, out, curve, lut3D, hue], params: p, extra: w, grid: out)
             return out
         })
 }
@@ -72,25 +79,39 @@ enum GradeCurves {
     static func curve(_ pts: [Double]) -> [Double] { curve(xs: [0, 0.25, 0.5, 0.75, 1.0], ys: pts) }
 
     /// Smooth curve through 5 points whose inner x positions can move (kept in order). Non-uniform Catmull-Rom:
-    /// with evenly spaced points it is exactly the original curve.
+    /// with evenly spaced points it is exactly the original curve. Any other count of points (added / removed
+    /// curve points, ends included) uses the same spline.
     static func curve(xs rawXs: [Double], ys pts: [Double]) -> [Double] {
-        guard pts.count == 5 else { return (0..<256).map { Double($0) / 255 } }
-        let xs = orderedXs(rawXs)
-        // Virtual outer neighbours keep the end tangents the same as the even-spaced version.
-        func x(_ i: Int) -> Double { i < 0 ? 2 * xs[0] - xs[1] : i > 4 ? 2 * xs[4] - xs[3] : xs[i] }
-        func p(_ i: Int) -> Double { pts[min(4, max(0, i))] }
-        return (0..<256).map { i in
-            let xv = Double(i) / 255
-            var k = 0
-            while k < 3 && xv > xs[k + 1] { k += 1 }
-            let dx = max(1e-6, xs[k + 1] - xs[k])
-            let t = min(1, max(0, (xv - xs[k]) / dx))
-            let m1 = (p(k + 1) - p(k - 1)) / max(1e-6, x(k + 1) - x(k - 1)) * dx
-            let m2 = (p(k + 2) - p(k)) / max(1e-6, x(k + 2) - x(k)) * dx
-            let t2 = t * t, t3 = t2 * t
-            let v = (2 * t3 - 3 * t2 + 1) * p(k) + (t3 - 2 * t2 + t) * m1 + (-2 * t3 + 3 * t2) * p(k + 1) + (t3 - t2) * m2
-            return min(1, max(0, v))
-        }
+        guard pts.count >= 2, rawXs.count == pts.count else { return (0..<256).map { Double($0) / 255 } }
+        let xs = pts.count == 5 ? orderedXs(rawXs) : orderedXsAny(rawXs)
+        return (0..<256).map { i in min(1, max(0, spline(xs: xs, ys: pts, at: Double(i) / 255))) }
+    }
+
+    /// Unclamped non-uniform Catmull-Rom through ordered points (virtual outer neighbours mirror the end spacing).
+    static func spline(xs: [Double], ys pts: [Double], at xv: Double) -> Double {
+        let last = xs.count - 1
+        guard last >= 1, pts.count == xs.count else { return xv }
+        func x(_ i: Int) -> Double { i < 0 ? 2 * xs[0] - xs[1] : i > last ? 2 * xs[last] - xs[last - 1] : xs[i] }
+        func p(_ i: Int) -> Double { pts[min(last, max(0, i))] }
+        var k = 0
+        while k < last - 1 && xv > xs[k + 1] { k += 1 }
+        let dx = max(1e-6, xs[k + 1] - xs[k])
+        let t = min(1, max(0, (xv - xs[k]) / dx))
+        let m1 = (p(k + 1) - p(k - 1)) / max(1e-6, x(k + 1) - x(k - 1)) * dx
+        let m2 = (p(k + 2) - p(k)) / max(1e-6, x(k + 2) - x(k)) * dx
+        let t2 = t * t, t3 = t2 * t
+        return (2 * t3 - 3 * t2 + 1) * p(k) + (t3 - 2 * t2 + t) * m1 + (-2 * t3 + 3 * t2) * p(k + 1) + (t3 - t2) * m2
+    }
+
+    /// Any number of points: ends pinned at 0 / 1, inner points kept in order with a small gap.
+    static func orderedXsAny(_ xs: [Double]) -> [Double] {
+        guard xs.count >= 2 else { return [0, 1] }
+        var o = xs.map { $0.isFinite ? $0 : 0.5 }
+        let n = o.count - 1
+        o[0] = 0; o[n] = 1
+        let gap = min(0.02, 1 / Double(n * 2))
+        if n >= 2 { for i in 1..<n { o[i] = min(1 - gap * Double(n - i), max(o[i - 1] + gap, o[i])) } }
+        return o
     }
 
     /// Ends pinned at 0 / 1; inner points keep their order with a small gap.
@@ -114,8 +135,9 @@ enum GradeCurves {
     }
 
     static func texture(_ e: EffectInstance, _ t: Double, device: MTLDevice) -> MTLTexture? {
-        let pm = points(e, t, channel: "m"), pr = points(e, t, channel: "r"), pg = points(e, t, channel: "g"), pb = points(e, t, channel: "b")
-        let key = (pm.xs + pm.ys + pr.xs + pr.ys + pg.xs + pg.ys + pb.xs + pb.ys).map { String(format: "%.4f", $0) }.joined(separator: ",")
+        let pm = GradeR4.activePoints(e, t, channel: "m"), pr = GradeR4.activePoints(e, t, channel: "r")
+        let pg = GradeR4.activePoints(e, t, channel: "g"), pb = GradeR4.activePoints(e, t, channel: "b")
+        let key = [pm, pr, pg, pb].map { c in (c.xs + c.ys).map { String(format: "%.4f", $0) }.joined(separator: ",") }.joined(separator: "|")
         lock.lock(); defer { lock.unlock() }
         if let c = cache[key] { return c }
         let m = curve(xs: pm.xs, ys: pm.ys), cr = curve(xs: pr.xs, ys: pr.ys), cg = curve(xs: pg.xs, ys: pg.ys), cb = curve(xs: pb.xs, ys: pb.ys)
@@ -238,8 +260,10 @@ final class LUTLibrary {
         lock.lock()
         if let t = cache[name] { lock.unlock(); return t }
         lock.unlock()
-        guard let text = try? String(contentsOf: Self.folder.appendingPathComponent(name), encoding: .utf8),
-              let (n, v) = try? Self.parse(text) else { return nil }
+        var text = try? String(contentsOf: Self.folder.appendingPathComponent(name), encoding: .utf8)
+        // A built-in look is rebuilt from its formula when its file is gone (moved project, cleared library).
+        if text == nil, restoreBuiltIn(name) { text = try? String(contentsOf: Self.folder.appendingPathComponent(name), encoding: .utf8) }
+        guard let text, let (n, v) = try? Self.parse(text) else { return nil }
         let tex = make3D(n, v, device: device)
         lock.lock(); cache[name] = tex; lock.unlock()
         return tex

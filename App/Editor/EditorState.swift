@@ -117,6 +117,8 @@ final class EditorState: ObservableObject {
     @Published var cutoutSmart = true
     /// Link mode: the panel steps aside and the next tap on a layer makes it this layer's parent.
     @Published var linkPicking = false
+    /// Link pick is choosing a track matte layer (Blending) instead of a parent.
+    @Published var linkPickMatte: TrackMatte?
     @Published var isDetectingBeats = false
     @Published var recoveryNotice: String?
     @Published var saveError: String?

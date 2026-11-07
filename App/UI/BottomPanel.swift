@@ -356,6 +356,7 @@ struct FillPanel: View {
                         Text("Image layers use their own colors; fill tints arrive with Color effects.")
                             .font(.caption).foregroundStyle(Theme.textDim)
                     }
+                    FillGradientSection(state: state, layer: layer)
                 }
                 .padding(.horizontal, 12)
                 Spacer()
@@ -383,26 +384,7 @@ struct BlendingPanel: View {
                             let t = state.currentTime
                             state.mutateLayer { $0.transform.opacity.set(v, at: t) }
                         }
-                        ForEach(BlendMode.groups, id: \.self) { grp in
-                        Text(grp.uppercased()).font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.textDim)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
-                            ForEach(BlendMode.allCases.filter { $0.group == grp }) { m in
-                                Button {
-                                    state.mutate("Blend Mode") { p in
-                                        if let i = state.selectedIndex { p.layers[i].blendMode = m }
-                                    }
-                                } label: {
-                                    Text(m.title).font(.system(size: 12, weight: .semibold))
-                                        .frame(maxWidth: .infinity, minHeight: 36)
-                                        .background(RoundedRectangle(cornerRadius: 9)
-                                            .fill(layer.blendMode == m ? Theme.accent.opacity(0.3) : Theme.surface))
-                                        .foregroundStyle(layer.blendMode == m ? Theme.accentGlow : Theme.text)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        }
+                        BlendModePicker(state: state, layer: layer)
                         Toggle(isOn: Binding(get: { layer.clipToBelow }, set: { v in
                             state.mutate("Clip to Layer Below") { p in if let i = state.selectedIndex { p.layers[i].clipToBelow = v } }
                         })) {
@@ -435,6 +417,7 @@ struct BlendingPanel: View {
                                 Text("Move a matte layer (text, shape, image…) above this one to use it as a track matte.")
                                     .font(.caption).foregroundStyle(Theme.textDim)
                             }
+                            MatteFromLayerSection(state: state, layer: layer)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }

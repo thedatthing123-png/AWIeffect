@@ -7,17 +7,25 @@ struct CCStudioPanel: View {
     @ObservedObject var state: EditorState
     @State private var section = 0
     @State private var curveChannel = 0
+    @State private var curvePoint: String?
+    @State private var knot: Int?
     @State private var importLUT = false
     @State private var luts = LUTLibrary.shared.names()
     @State private var looks = LookLibrary.names()
     @State private var lookName = ""
-    @State private var histogram: [[Float]] = []
+    @State private var scopes: GradeScopes?
+    @State private var scopeKind = GradeScopes.Kind.histogram
     @State private var scopeToken = ""
-    @State private var scopeQueue = ScopeRenderQueue()
+    @State private var scopeQueue = ScopeRenderQueueOf<GradeScopes>()
     @State private var confirmLook: String?
+    @State private var picking = false
+    @State private var showWheelNumbers = false
 
     private var gradeIndex: Int? { state.selectedLayer?.effects.firstIndex { $0.typeID == EffectRegistry.grade.id } }
     private var grade: EffectInstance? { gradeIndex.flatMap { state.selectedLayer?.effects[$0] } }
+
+    private static let sections = ["Basic", "Wheels", "Curves", "HSL", "LUT", "Looks"]
+    private static let channels = ["Master", "Red", "Green", "Blue", "Hue vs Hue", "Hue vs Sat", "Hue vs Lum", "Luma vs Sat"]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -37,35 +45,22 @@ struct CCStudioPanel: View {
                 }
                 .padding(14)
             } else if let g = grade {
-                Picker("", selection: $section) {
-                    Text("Basic").tag(0); Text("Wheels").tag(1); Text("Curves").tag(2); Text("HSL").tag(3); Text("LUT").tag(4); Text("Looks").tag(5)
-                }
-                .pickerStyle(.segmented).padding(.horizontal, 10).padding(.bottom, 6)
+                chips(Self.sections, selection: $section)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
-                        scopes
+                        toolsRow(g)
+                        if picking { pickerFrame(g) }
+                        CCScopeView(scopes: scopes, kind: $scopeKind)
                         switch section {
                         case 0:
                             group(g, ["exposure", "contrast", "highlights", "shadows", "temp", "tint", "vibrance", "saturation"])
                             row(g, "split")
                         case 1:
-                            wheel(g, "Lift (Shadows)", "lift")
-                            wheel(g, "Gamma (Mids)", "gamma")
-                            wheel(g, "Gain (Highlights)", "gain")
+                            wheelsSection(g)
                         case 2:
-                            Picker("", selection: $curveChannel) { Text("Master").tag(0); Text("Red").tag(1); Text("Green").tag(2); Text("Blue").tag(3) }
-                                .pickerStyle(.segmented)
-                            CurveGraph(state: state, effect: g, prefix: ["m", "r", "g", "b"][curveChannel])
-                                .frame(height: 180)
-                            if curveChannel == 0 { group(g, ["mBlack", "m25", "m50", "m75", "mWhite"]) }
-                            else { let p = ["", "r", "g", "b"][curveChannel]; group(g, [p + "25", p + "50", p + "75"]) }
+                            curvesSection(g)
                         case 3:
-                            HStack {
-                                Text("Target").font(.system(size: 12)).foregroundStyle(Theme.textDim)
-                                Rectangle().fill(LinearGradient(colors: (0...6).map { Color(hue: Double($0) / 6, saturation: 1, brightness: 1) }, startPoint: .leading, endPoint: .trailing))
-                                    .frame(height: 10).clipShape(Capsule())
-                            }
-                            group(g, ["hslHue", "hslRange", "hslShift", "hslSat", "hslLight"])
+                            qualifierSection(g)
                         case 4:
                             lutSection(g)
                         default:
@@ -82,26 +77,108 @@ struct CCStudioPanel: View {
         }
         .onAppear(perform: refreshScopes)
         .onChange(of: state.project.modifiedAt) { _, _ in refreshScopes() }
-        // Scrubbing the playhead refreshes the histogram too.
+        // Scrubbing the playhead refreshes the scopes too.
         .onChange(of: state.currentTime) { _, _ in refreshScopes() }
+        .onChange(of: curveChannel) { _, _ in curvePoint = nil; knot = nil }
+    }
+
+    // MARK: Layout pieces
+
+    /// A row of 44 pt chips that scrolls sideways (labels never squeeze).
+    private func chips(_ titles: [String], selection: Binding<Int>) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(titles.indices, id: \.self) { i in
+                    Button { selection.wrappedValue = i } label: {
+                        Text(titles[i]).font(.system(size: 13, weight: .semibold)).lineLimit(1).fixedSize()
+                            .padding(.horizontal, 14).frame(minHeight: 44)
+                            .background(Capsule().fill(selection.wrappedValue == i ? Theme.accent.opacity(0.85) : Theme.surface))
+                            .foregroundStyle(selection.wrappedValue == i ? Color.white : Theme.text)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 10)
+        }
+        .padding(.bottom, 6)
+    }
+
+    /// Bypass, A / B versions and the white-balance eyedropper.
+    private func toolsRow(_ g: EffectInstance) -> some View {
+        HStack(spacing: 8) {
+            toolButton(g.isEnabled ? "Bypass" : "Bypassed", g.isEnabled ? "eye" : "eye.slash", on: !g.isEnabled) { state.toggleEffect(g.id) }
+                .accessibilityLabel(g.isEnabled ? "Bypass grade" : "Turn grade back on")
+            toolButton("Version \(GradeR4.slot(g))", "square.on.square", on: g.text?["gradeAlt"] != nil) {
+                state.mutate("Switch Grade A/B") { p in
+                    guard let i = state.selectedIndex, let j = p.layers[i].effects.firstIndex(where: { $0.id == g.id }) else { return }
+                    p.layers[i].effects[j] = GradeR4.swapAB(p.layers[i].effects[j])
+                }
+            }
+            .accessibilityLabel("Switch between grade versions A and B, now \(GradeR4.slot(g))")
+            toolButton("White Bal.", "eyedropper", on: picking) { picking.toggle() }
+                .accessibilityLabel("White balance eyedropper")
+        }
+    }
+
+    private func toolButton(_ title: String, _ icon: String, on: Bool, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: icon).font(.system(size: 12, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.85)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background(RoundedRectangle(cornerRadius: 10).fill(on ? Theme.accent.opacity(0.35) : Theme.surface))
+                .foregroundStyle(on ? Theme.accentGlow : Theme.text)
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// The frame at the playhead: tap something that should be neutral grey or white.
+    private func pickerFrame(_ g: EffectInstance) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Tap something that should be white or grey.").font(.caption).foregroundStyle(Theme.textDim)
+            if let s = scopes, let img = s.frame {
+                GeometryReader { geo in
+                    Image(decorative: img, scale: 1).resizable().aspectRatio(contentMode: .fit)
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .contentShape(Rectangle())
+                        .onTapGesture { loc in
+                            let aspect = Double(s.width) / Double(max(1, s.height))
+                            let fw = min(Double(geo.size.width), Double(geo.size.height) * aspect), fh = fw / aspect
+                            let ox = (Double(geo.size.width) - fw) / 2, oy = (Double(geo.size.height) - fh) / 2
+                            let u = (Double(loc.x) - ox) / fw, v = (Double(loc.y) - oy) / fh
+                            guard (0...1).contains(u), (0...1).contains(v), let c = s.sample(atX: u, y: v) else { return }
+                            neutralize(g, c)
+                        }
+                }
+                .frame(height: 150)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.black.opacity(0.5)))
+            }
+        }
+    }
+
+    private func neutralize(_ g: EffectInstance, _ c: (Double, Double, Double)) {
+        let d = GradeR4.whiteBalanceDelta(r: c.0, g: c.1, b: c.2)
+        let t = state.currentTime
+        state.beginEdit("White Balance")
+        CCLive.set(state, g, "temp", min(100, max(-100, GradeR4.num(g, "temp", t) + d.temp)))
+        CCLive.set(state, g, "tint", min(100, max(-100, GradeR4.num(g, "tint", t) + d.tint)))
+        state.endEdit()
+        picking = false
     }
 
     // MARK: Controls
 
     private func def(_ k: String) -> ParamDef? { EffectRegistry.gradeParams.first { $0.id == k } }
 
-    private func row(_ g: EffectInstance, _ k: String) -> some View {
+    private func row(_ g: EffectInstance, _ k: String, label: String? = nil) -> some View {
         let d = def(k)
         var lo = -100.0, hi = 100.0, step = 0.0, unit = ""
         if case .number(let a, let b, let s, let u)? = d?.kind { lo = a; hi = b; step = s; unit = u }
+        let kf = state.effectParamHasKeyframe(g.id, k)
         return HStack {
-            KeyframeDiamond(filled: state.effectParamHasKeyframe(g.id, k).filled, animated: state.effectParamHasKeyframe(g.id, k).animated) {
-                state.toggleEffectKeyframe(g.id, k)
-            }
-            Text(d?.name ?? k).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 92, alignment: .leading).lineLimit(1).minimumScaleFactor(0.8)
-            ValueScrubber(value: g.number(k, state.currentTime), range: lo...hi, step: step, unit: unit,
+            KeyframeDiamond(filled: kf.filled, animated: kf.animated) { state.toggleEffectKeyframe(g.id, k) }
+            Text(label ?? d?.name ?? k).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 96, alignment: .leading).lineLimit(2).minimumScaleFactor(0.85)
+            ValueScrubber(value: GradeR4.num(g, k, state.currentTime), range: lo...hi, step: step, unit: unit,
                           onBegin: { state.beginEdit("Grade") },
-                          onChange: { v in state.setEffectParam(g.id, k) { pv, t in if case .number(var a) = pv { a.set(v, at: t); pv = .number(a) } } },
+                          onChange: { v in CCLive.set(state, g, k, v) },
                           onEnd: { state.endEdit() })
         }
     }
@@ -110,18 +187,92 @@ struct CCStudioPanel: View {
         VStack(spacing: 6) { ForEach(keys, id: \.self) { row(g, $0) } }
     }
 
-    private func wheel(_ g: EffectInstance, _ title: String, _ p: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(title.uppercased()).font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
-                Spacer()
-                let t = state.currentTime
-                Circle().fill(Color(red: 0.5 + g.number(p + "R", t) / 200, green: 0.5 + g.number(p + "G", t) / 200, blue: 0.5 + g.number(p + "B", t) / 200))
-                    .frame(width: 18, height: 18)
+    private func toggleRow(_ g: EffectInstance, _ k: String, _ title: String) -> some View {
+        Toggle(isOn: Binding(get: { GradeR4.flag(g, k) }, set: { b in
+            state.beginEdit(title); CCLive.setFlag(state, g, k, b); state.endEdit()
+        })) { Text(title).font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.text) }
+        .tint(Theme.accent).frame(minHeight: 44)
+    }
+
+    private func wheelsSection(_ g: EffectInstance) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+                CCColorWheel(state: state, effect: g, title: "Lift", prefix: "lift")
+                CCColorWheel(state: state, effect: g, title: "Gamma", prefix: "gamma")
+                CCColorWheel(state: state, effect: g, title: "Gain", prefix: "gain")
+                CCColorWheel(state: state, effect: g, title: "Offset", prefix: "off")
             }
-            group(g, [p + "R", p + "G", p + "B"])
+            Text("Drag the puck to tint, drag around the ring for brightness.").font(.caption).foregroundStyle(Theme.textDim)
+            DisclosureGroup(isExpanded: $showWheelNumbers) {
+                VStack(spacing: 6) {
+                    ForEach(["lift", "gamma", "gain", "off"], id: \.self) { p in group(g, [p + "R", p + "G", p + "B"]) }
+                }
+                .padding(.top, 6)
+            } label: {
+                Text("Wheel numbers").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.text).frame(minHeight: 44)
+            }
+            .tint(Theme.textDim)
         }
-        .padding(10).glass(radius: 12)
+    }
+
+    private func curvesSection(_ g: EffectInstance) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            chips(Self.channels, selection: $curveChannel).padding(.horizontal, -10)
+            if curveChannel < 4 {
+                let c = ["m", "r", "g", "b"][curveChannel]
+                CCCurveGraph(state: state, effect: g, channel: c, selected: $curvePoint).frame(height: 200)
+                Text("Tap the curve to add a point, drag to move it.").font(.caption).foregroundStyle(Theme.textDim)
+                curvePointEditor(g, c)
+            } else {
+                let prefix = ["hueHue", "hueSat", "hueLum", "lumSat"][curveChannel - 4]
+                CCKnotGraph(state: state, effect: g, prefix: prefix, selected: $knot).frame(height: 190)
+                if let k = knot, k < GradeR4.knotXs(prefix).count {
+                    row(g, "\(prefix)\(k)", label: prefix == "lumSat" ? GradeR4.lumaKnotNames[k] : GradeR4.vectorNames[k])
+                } else {
+                    Text(prefix == "lumSat" ? "Drag a point to change saturation by brightness." : "Each point is one color vector. Drag it up or down.")
+                        .font(.caption).foregroundStyle(Theme.textDim)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private func curvePointEditor(_ g: EffectInstance, _ c: String) -> some View {
+        if let id = curvePoint, id == "mBlack" || id == "mWhite" {
+            row(g, id)
+        } else if let id = curvePoint, let slot = GradeR4.slots(c).first(where: { $0.on == id }), GradeR4.flag(g, slot.on) {
+            row(g, slot.x, label: "Input")
+            row(g, slot.y, label: "Output")
+            Button(role: .destructive) {
+                state.beginEdit("Remove Curve Point")
+                CCLive.setFlag(state, g, slot.on, false)
+                state.endEdit()
+                curvePoint = nil
+            } label: {
+                Label("Remove Point", systemImage: "minus.circle").font(.system(size: 13, weight: .semibold))
+                    .frame(maxWidth: .infinity, minHeight: 44).background(RoundedRectangle(cornerRadius: 10).fill(Theme.surface))
+            }
+            .buttonStyle(.plain).foregroundStyle(Theme.danger)
+        }
+    }
+
+    private func qualifierSection(_ g: EffectInstance) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("QUALIFY").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+            Rectangle().fill(LinearGradient(colors: (0...6).map { Color(hue: Double($0) / 6, saturation: 1, brightness: 1) }, startPoint: .leading, endPoint: .trailing))
+                .frame(height: 10).clipShape(Capsule())
+                .overlay(alignment: .leading) {
+                    GeometryReader { geo in
+                        Capsule().strokeBorder(.white, lineWidth: 2)
+                            .frame(width: max(8, geo.size.width * CGFloat(GradeR4.num(g, "hslRange", state.currentTime) / 360) * 2), height: 14)
+                            .position(x: geo.size.width * CGFloat(GradeR4.num(g, "hslHue", state.currentTime) / 360), y: 5)
+                    }
+                }
+            group(g, ["hslHue", "hslRange", "qSoft", "qSatLo", "qSatHi", "qLumLo", "qLumHi"])
+            toggleRow(g, "qShow", "Show Mask")
+            Text("ADJUST").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim).padding(.top, 4)
+            group(g, ["hslShift", "hslSat", "hslLight"])
+            Text("Per-color Hue / Sat / Lum vectors are under Curves.").font(.caption).foregroundStyle(Theme.textDim)
+        }
     }
 
     private func lutSection(_ g: EffectInstance) -> some View {
@@ -129,14 +280,18 @@ struct CCStudioPanel: View {
             Button { importLUT = true } label: { Label("Import .cube LUT", systemImage: "square.and.arrow.down") }.buttonStyle(PrimaryButtonStyle())
             row(g, "lutStrength")
             let current = g.text?["lut"]
-            if let current, !luts.contains(current) {
+            if let current, !luts.contains(current), !LUTLibrary.builtInFiles.contains(current) {
                 // The grade names a LUT that isn't on this device (moved project / deleted file): it renders without it.
                 Label("Missing LUT \"\((current as NSString).deletingPathExtension)\" — import it to restore the look.", systemImage: "exclamationmark.triangle.fill")
                     .font(.caption).foregroundStyle(Theme.warning)
             }
             lutButton(g, nil, selected: current == nil)
-            ForEach(luts, id: \.self) { name in lutButton(g, name, selected: current == name) }
-            if luts.isEmpty { Text("LUTs you import stay here for every project.").font(.caption).foregroundStyle(Theme.textDim) }
+            Text("BUILT-IN LOOKS").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim).padding(.top, 4)
+            ForEach(LUTLibrary.builtInFiles, id: \.self) { name in lutButton(g, name, selected: current == name) }
+            let own = luts.filter { !LUTLibrary.builtInFiles.contains($0) }
+            Text("YOUR LUTS").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim).padding(.top, 4)
+            ForEach(own, id: \.self) { name in lutButton(g, name, selected: current == name) }
+            if own.isEmpty { Text("LUTs you import stay here for every project.").font(.caption).foregroundStyle(Theme.textDim) }
         }
     }
 
@@ -154,7 +309,7 @@ struct CCStudioPanel: View {
                 Text(name.map { ($0 as NSString).deletingPathExtension } ?? "No LUT").foregroundStyle(Theme.text)
                 Spacer()
             }
-            .padding(.vertical, 6)
+            .frame(minHeight: 44).contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .contextMenu { if let name { Button(role: .destructive) { LUTLibrary.shared.remove(name); luts = LUTLibrary.shared.names() } label: { Label("Remove LUT", systemImage: "trash") } } }
@@ -224,29 +379,8 @@ struct CCStudioPanel: View {
 
     // MARK: Scopes
 
-    private var scopes: some View {
-        Canvas { ctx, size in
-            guard histogram.count == 3 else { return }
-            let colors: [Color] = [.red, .green, .blue]
-            for ch in 0..<3 {
-                let h = histogram[ch]
-                guard let mx = h.max(), mx > 0 else { continue }
-                var path = Path()
-                path.move(to: CGPoint(x: 0, y: size.height))
-                for (i, v) in h.enumerated() {
-                    path.addLine(to: CGPoint(x: CGFloat(i) / CGFloat(h.count - 1) * size.width, y: size.height - CGFloat(v / mx) * size.height))
-                }
-                path.addLine(to: CGPoint(x: size.width, y: size.height))
-                ctx.fill(path, with: .color(colors[ch].opacity(0.35)))
-            }
-        }
-        .frame(height: 70)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.black.opacity(0.5)))
-        .overlay(alignment: .topLeading) { Text("HISTOGRAM").font(.system(size: 9, weight: .bold)).foregroundStyle(.white.opacity(0.6)).padding(5) }
-    }
-
-    /// Histogram of the frame at the playhead (rendered small, off the main thread). Follows scrubbing and edits;
-    /// renders one at a time (latest request wins) and waits while a live gesture drives the preview.
+    /// Scopes of the frame at the playhead (rendered small, analysed off the main thread). Follows scrubbing and
+    /// edits; one render at a time (latest request wins) and waits while a live gesture drives the preview.
     private func refreshScopes() {
         guard !state.isLiveGesture else { return }   // the gesture's end changes modifiedAt and refreshes
         let p = state.project, t = state.currentTime, pid = p.id, store = state.store
@@ -257,125 +391,8 @@ struct CCStudioPanel: View {
             guard let r = Renderer.shared,
                   let px = r.renderPixels(project: p, time: t, renderScale: min(1, 200 / Double(max(p.width, p.height))),
                                           mediaURL: { store.mediaURL($0, projectID: pid) }) else { return nil }
-            return ScopeRenderQueue.histogram(px.rgba)
-        } apply: { h in histogram = h }
-    }
-}
-
-/// Serial, coalescing scope renders: at most one in flight; while it runs only the newest request is kept, and a
-/// result is applied only if it is still the newest (no stale histogram after scrubbing).
-final class ScopeRenderQueue {
-    private let queue = DispatchQueue(label: "awi.scopes", qos: .userInitiated)
-    private let lock = NSLock()
-    private var latest = ""
-    private var running = false
-    private var pending: (String, () -> [[Float]]?, ([[Float]]) -> Void)?
-
-    func submit(token: String, work: @escaping () -> [[Float]]?, apply: @escaping ([[Float]]) -> Void) {
-        lock.lock()
-        latest = token
-        if running { pending = (token, work, apply); lock.unlock(); return }
-        running = true
-        lock.unlock()
-        run(token, work, apply)
-    }
-
-    var latestToken: String { lock.lock(); defer { lock.unlock() }; return latest }
-
-    private func run(_ token: String, _ work: @escaping () -> [[Float]]?, _ apply: @escaping ([[Float]]) -> Void) {
-        queue.async { [weak self] in
-            let result = work()
-            DispatchQueue.main.async {
-                guard let self else { return }
-                if let result, self.latestToken == token { apply(result) }
-                self.lock.lock()
-                let next = self.pending
-                self.pending = nil
-                self.running = next != nil
-                self.lock.unlock()
-                if let next { self.run(next.0, next.1, next.2) }
-            }
-        }
-    }
-
-    /// 64-bin RGB histogram of RGBA8 pixels.
-    static func histogram(_ rgba: [UInt8]) -> [[Float]] {
-        var h = Array(repeating: [Float](repeating: 0, count: 64), count: 3)
-        var i = 0
-        while i + 3 < rgba.count {
-            for c in 0..<3 { h[c][Int(rgba[i + c]) >> 2] += 1 }
-            i += 4
-        }
-        return h
-    }
-}
-
-/// Draggable curve: the 25 / 50 / 75 % points of the chosen channel.
-struct CurveGraph: View {
-    @ObservedObject var state: EditorState
-    let effect: EffectInstance
-    let prefix: String
-    @State private var dragging: String?
-
-    /// The effect as it is right now (the live copy mid-drag), so points follow the finger.
-    private func live(_ e: EffectInstance) -> EffectInstance {
-        guard let id = state.selectedLayerID,
-              let l = (state.live.project ?? state.project).layers.first(where: { $0.id == id }) else { return e }
-        return l.effects.first { $0.id == e.id } ?? e
-    }
-
-    var body: some View {
-        GeometryReader { geo in
-            let t = state.currentTime
-            let keys = [prefix + "25", prefix + "50", prefix + "75"]
-            let cp = GradeCurves.points(live(effect), t, channel: prefix)
-            let pts = cp.ys, xs = cp.xs
-            let curve = GradeCurves.curve(xs: xs, ys: pts)
-            ZStack {
-                RoundedRectangle(cornerRadius: 10).fill(Color.black.opacity(0.45))
-                Path { p in
-                    for k in 1..<4 {
-                        let x = geo.size.width * CGFloat(k) / 4
-                        p.move(to: CGPoint(x: x, y: 0)); p.addLine(to: CGPoint(x: x, y: geo.size.height))
-                        let y = geo.size.height * CGFloat(k) / 4
-                        p.move(to: CGPoint(x: 0, y: y)); p.addLine(to: CGPoint(x: geo.size.width, y: y))
-                    }
-                }
-                .stroke(Color.white.opacity(0.1))
-                Path { p in
-                    for (i, v) in curve.enumerated() {
-                        let pt = CGPoint(x: geo.size.width * CGFloat(i) / 255, y: geo.size.height * CGFloat(1 - v))
-                        if i == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
-                    }
-                }
-                .stroke(["m": Color.white, "r": .red, "g": .green, "b": .blue][prefix] ?? .white, lineWidth: 2)
-                ForEach(Array(keys.enumerated()), id: \.offset) { k, key in
-                    Circle().fill(dragging == key ? Theme.accentGlow : .white).frame(width: 14, height: 14)
-                        .position(x: geo.size.width * CGFloat(xs[k + 1]), y: geo.size.height * CGFloat(1 - pts[k + 1]))
-                }
-            }
-            .contentShape(Rectangle())
-            .gesture(DragGesture(minimumDistance: 0)
-                .onChanged { v in
-                    if dragging == nil {
-                        // Nearest point to the finger (points can sit anywhere along x now).
-                        let fx = Double(v.startLocation.x / max(geo.size.width, 1)), fy = 1 - Double(v.startLocation.y / max(geo.size.height, 1))
-                        let k = (0..<3).min { a, b in
-                            hypot(xs[a + 1] - fx, pts[a + 1] - fy) < hypot(xs[b + 1] - fx, pts[b + 1] - fy)
-                        } ?? 1
-                        dragging = keys[k]
-                        state.beginEdit("Curve")
-                    }
-                    guard let key = dragging, let k = keys.firstIndex(of: key) else { return }
-                    let val = min(100, max(0, (1 - Double(v.location.y / max(geo.size.height, 1))) * 100))
-                    // Sideways too, kept between its neighbours so the points never cross.
-                    let now = GradeCurves.points(live(effect), state.currentTime, channel: prefix).xs
-                    let x = min(now[k + 2] - 0.02, max(now[k] + 0.02, Double(v.location.x / max(geo.size.width, 1)))) * 100
-                    state.setEffectParam(effect.id, key) { pv, time in if case .number(var a) = pv { a.set(val, at: time); pv = .number(a) } }
-                    state.setEffectParam(effect.id, key + "x") { pv, time in if case .number(var a) = pv { a.set(x, at: time); pv = .number(a) } }
-                }
-                .onEnded { _ in dragging = nil; state.endEdit() })
-        }
+            return GradeScopes.analyze(width: px.width, height: px.height, rgba: px.rgba)
+        } apply: { s in scopes = s }
     }
 }
 

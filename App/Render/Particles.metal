@@ -14,6 +14,10 @@ struct ParticleUniforms {
     float4 colorB;    // end color
     float4 view;      // x depth spread px, y focal px, z buffer width, w buffer height
     uint4  mode;      // x emitter (0 point,1 box,2 line,3 ring), y sprite, z count, w seed
+    float4 colorC;    // color over life: middle stop(s)
+    float4 colorD;
+    float4 burst;     // x stop count (2-4), y burst on, z burst time (same clock as life.w), w -
+    float4 floorR4;   // x on, y floor y (buffer px), z bounce 0-1, w -
 };
 
 struct PVOut {
@@ -41,8 +45,13 @@ vertex PVOut particleVertex(uint vid [[vertex_id]], uint iid [[instance_id]], co
     float t = u.life.w;
     float born0 = float(iid) / rate;
     float cycle = floor((t - born0) / cycleLen);
-    if (t < born0) return o;
     float birth = born0 + cycle * cycleLen;
+    if (u.burst.y > 0.5) {
+        // Burst: every particle is born at the burst time (a few ms apart), once.
+        cycle = 0.0;
+        birth = u.burst.z + ph(float(iid) * 3.17) * 0.03;
+        if (t < birth) return o;
+    } else if (t < born0) return o;
     float seed = float(iid) * 1.618 + cycle * 97.13 + float(u.mode.w) * 31.7;
     float r1 = ph(seed), r2 = ph(seed + 1.1), r3 = ph(seed + 2.3), r4 = ph(seed + 3.7), r5 = ph(seed + 4.9), r6 = ph(seed + 6.1);
     float life = u.life.y * (1.0 - u.life.z * r1);
@@ -66,6 +75,11 @@ vertex PVOut particleVertex(uint vid [[vertex_id]], uint iid [[instance_id]], co
         float3 q = float3(pos / sc, age * 0.6 + seed * 0.01);
         pos += float2(pnoise(q), pnoise(q + 19.7)) * u.forces.z * k;
     }
+    // Floor: particles that reach it bounce back up (bounce 0 = they stay on it).
+    if (u.floorR4.x > 0.5 && pos.y > u.floorR4.y) {
+        pos.y = u.floorR4.y - (pos.y - u.floorR4.y) * clamp(u.floorR4.z, 0.0, 1.0);
+        vel.y = -vel.y * u.floorR4.z;
+    }
     // Depth: particles spread in z, smaller and closer to the center when far (parallax).
     float z = (r6 - 0.5) * u.view.x;
     float persp = u.view.y / max(u.view.y + z, 1.0);
@@ -76,7 +90,14 @@ vertex PVOut particleVertex(uint vid [[vertex_id]], uint iid [[instance_id]], co
     float alpha = u.look.w;
     if (u.fade.x > 0.0) alpha *= clamp(k / u.fade.x, 0.0, 1.0);
     if (u.fade.y > 0.0) alpha *= clamp((1.0 - k) / u.fade.y, 0.0, 1.0);
-    float4 col = mix(u.colorA, u.colorB, k);
+    float4 col;
+    float stops = clamp(u.burst.x, 2.0, 4.0);
+    if (stops < 2.5) col = mix(u.colorA, u.colorB, k);
+    else if (stops < 3.5) col = k < 0.5 ? mix(u.colorA, u.colorC, k * 2.0) : mix(u.colorC, u.colorB, k * 2.0 - 1.0);
+    else {
+        float q = k * 3.0;
+        col = q < 1.0 ? mix(u.colorA, u.colorC, q) : (q < 2.0 ? mix(u.colorC, u.colorD, q - 1.0) : mix(u.colorD, u.colorB, q - 2.0));
+    }
     alpha *= col.a;
 
     float2 corner = float2((vid & 1u) ? 1.0 : -1.0, (vid & 2u) ? 1.0 : -1.0);

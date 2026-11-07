@@ -218,6 +218,13 @@ extension EditorState {
             panel = layerPickReturnPanel
             return
         }
+        if let mode = linkPickMatte {
+            // Track matte from any layer.
+            linkPickMatte = nil
+            if let parent, parent != selectedLayerID { setMatteSource(parent, mode: mode) }
+            panel = .blending
+            return
+        }
         if let parent, parent != selectedLayerID { setParent(parent) }
         panel = .transform
     }
