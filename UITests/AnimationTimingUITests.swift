@@ -28,13 +28,17 @@ final class AnimationTimingUITests: XCTestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 3))
         field.tap(); field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12) + "2\n")
         XCTAssertTrue(app.buttons["1.000s → 2.000s"].waitForExistence(timeout: 5))
-        // A graph node outside the clipped scroll viewport can still report isHittable.
-        // Bring the actual plot into view before sending a drag, rather than touching the timeline underneath it.
-        for _ in 0..<3 { scroll.swipeDown() }
-        save("remap-before-drag")
         let point = app.descendants(matching: .any)["Source key at 1.000 seconds"].firstMatch
         XCTAssertTrue(point.exists)
-        for _ in 0..<4 { if point.isHittable { break }; scroll.swipeDown() }
+        // AX can call an offscreen graph key hittable through a clipped SwiftUI ScrollView.
+        // Require its actual touch position to be inside the panel, not merely in the AX tree.
+        for _ in 0..<8 {
+            let y = point.frame.midY, viewport = scroll.frame.insetBy(dx: 0, dy: 28)
+            if viewport.contains(CGPoint(x: point.frame.midX, y: y)) { break }
+            if y > viewport.maxY { scroll.swipeUp() } else { scroll.swipeDown() }
+        }
+        XCTAssertTrue(scroll.frame.insetBy(dx: 0, dy: 20).contains(CGPoint(x: point.frame.midX, y: point.frame.midY)))
+        save("remap-before-drag")
         let center = point.coordinate(withNormalizedOffset: CGVector(dx: 0.5,dy: 0.5))
         center.press(forDuration: 0.1,thenDragTo: center.withOffset(CGVector(dx: 0,dy: -20)))
         XCTAssertFalse(app.buttons["1.000s → 2.000s"].exists, "Dragging the source key must edit its value, not scroll the sheet")
