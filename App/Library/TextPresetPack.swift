@@ -115,7 +115,8 @@ enum TextPresetPack {
         for r in recipes where ["fade", "fadeUp", "slideL", "scaleUp", "blur", "drop", "rise", "pop", "elastic", "scramble", "spin", "skew"].contains(r.id) {
             out.append(inPreset(r, .random)); out.append(inPreset(r, .words))
         }
-        for r in recipes where !["colorPop", "scramble"].contains(r.id) { out.append(outPreset(r)) }
+        // "pop" out was an exact copy of "Grow Out" (out sweeps don't use the recipe's ease), so it isn't listed.
+        for r in recipes where !["colorPop", "scramble", "pop"].contains(r.id) { out.append(outPreset(r)) }
 
         // Loops
         out += [

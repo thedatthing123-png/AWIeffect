@@ -26,7 +26,7 @@ Rules for every item: read the existing system first, improve what's there befor
 8. **Shape layers.** Trim paths, repeater, offset and wiggle paths, plus the vector pen in the main editor.
 9. **Particles.** A real emitter for sparks, debris, dust and energy.
 10. **Expressions.** Easy wiggle, loopOut and property linking on a phone.
-11. **New preset system and previews.** After the effects are done.
+11. **New preset system and previews.** After the effects are done. Includes a second wave of text presets that combine the text engine's animators with the new expanded effects (new glitch pack, glows, distortions) as per-letter and layer effects; today's text presets run on the engine's own animators only.
 12. **CC Studio renewal.** Look-type color effects (Cross Process, Bleach Bypass, Infrared, Day for Night, Cyberpunk, Lomo, Vintage Fade, Sepia, film stocks) are really LUTs: move them into CC Studio as LUTs, add many more LUTs, and give CC Studio finer grading settings.
 12. **Media and export.** Proxies for heavy footage, high frame rate and HDR clips, quality presets, ProRes and transparent video, exports that match the preview.
 13. **Workflow speed.** Own presets and rigs, templates, fast duplicate and replace.

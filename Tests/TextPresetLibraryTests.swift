@@ -45,13 +45,12 @@ final class TextPresetLibraryTests: XCTestCase {
 
     // MARK: Catalog
 
-    func testLibraryHasAtLeast300PresetsInRealCategories() {
+    /// The current set (the full designed library comes with the post-expansion preset pass).
+    func testLibraryKeepsTheCurrentPresetsInRealCategories() {
         let all = TextPresetLibrary.animations
-        XCTAssertGreaterThanOrEqual(all.count, 300)
+        XCTAssertGreaterThanOrEqual(all.count, 150)
         for p in all { XCTAssertTrue(TextPresetLibrary.categories.contains(p.category), "\(p.id) in \(p.category)") }
         for c in TextPresetLibrary.categories { XCTAssertFalse(TextPresetLibrary.presets(in: c).isEmpty, c) }
-        XCTAssertFalse(TextPresetLibrary.looks.isEmpty)
-        for l in TextPresetLibrary.looks { XCTAssertTrue(TextPresetLibrary.lookCategories.contains(l.category), l.id) }
         XCTAssertEqual(TextPreset.library.count, all.count)
     }
 
@@ -83,14 +82,6 @@ final class TextPresetLibraryTests: XCTestCase {
         }
     }
 
-    func testLibraryPresetsUseEasedKeyframes() throws {
-        let linearAllowed: Set<String> = ["lib.glitchType", "lib.flashSwap", "lib.coinSpin"]
-        for p in TextPresetLibrary.animations where p.id.hasPrefix("lib.") && p.category != "Typewriter" && !linearAllowed.contains(p.id) {
-            let json = String(decoding: try JSONEncoder().encode(p.make(0, 1)), as: UTF8.self)
-            XCTAssertFalse(json.contains("\"linear\""), "\(p.id) has linear keyframes")
-        }
-    }
-
     // MARK: Motion
 
     func testEveryPresetAnimates() {
@@ -113,22 +104,6 @@ final class TextPresetLibraryTests: XCTestCase {
         }
     }
 
-    func testNewPresetsUseNewEngineFeatures() {
-        let made = TextPresetLibrary.animations.filter { $0.id.hasPrefix("lib.") }.flatMap { $0.make(0, 1) }
-        XCTAssertTrue(made.contains { ($0.selectors ?? []).count > 0 }, "multiple selectors")
-        XCTAssertTrue(made.contains { $0.allSelectors.contains { $0.kind == .random } })
-        XCTAssertTrue(made.contains { $0.allSelectors.contains { $0.kind == .beat } })
-        XCTAssertTrue(made.contains { $0.properties.glow != nil })
-        XCTAssertTrue(made.contains { $0.properties.hueShift != nil })
-        XCTAssertTrue(made.contains { $0.properties.directionalBlur != nil })
-        XCTAssertTrue(made.contains { $0.properties.scramble != nil })
-        XCTAssertTrue(made.contains { $0.properties.anchor != nil })
-        XCTAssertTrue(made.contains { $0.properties.strokeWidth != nil })
-        XCTAssertTrue(made.contains { $0.letterEffects?.isEmpty == false })
-        let threeD = TextPresetLibrary.animations.filter { $0.category.hasPrefix("3D") }.flatMap { $0.make(0, 1) }
-        XCTAssertTrue(threeD.allSatisfy { $0.properties.rotationX != nil || $0.properties.rotationY != nil || $0.properties.positionZ != nil })
-    }
-
     // MARK: Apply / remove
 
     private func textLayer(_ string: String = "Hello there", outPoint: Double = 10) -> Layer {
@@ -143,7 +118,7 @@ final class TextPresetLibraryTests: XCTestCase {
         var mine = TextAnimator(name: "Mine")
         mine.properties.position = Animated(Vec2(0, 10))
         l.text!.animators = [mine]
-        let a = try XCTUnwrap(TextPresetLibrary.animation("lib.megaSlam"))
+        let a = try XCTUnwrap(TextPresetLibrary.animation("impactSlam"))
         let b = try XCTUnwrap(TextPresetLibrary.animation("typewriter"))
         XCTAssertTrue(TextPresetLibrary.applyPreset(a, to: &l, start: 1, duration: 1))
         TextPresetLibrary.applyPreset(b, to: &l, start: 2)
@@ -170,7 +145,7 @@ final class TextPresetLibraryTests: XCTestCase {
 
     func testSnapToBeatsMovesStartAndEnd() throws {
         var l = textLayer()
-        let p = try XCTUnwrap(TextPresetLibrary.animation("lib.glowRise"))
+        let p = try XCTUnwrap(TextPresetLibrary.animation("studio.lineRise"))
         TextPresetLibrary.applyPreset(p, to: &l, start: 1.05, duration: 1, snapToBeats: [1.0, 1.8, 3])
         let sel = try XCTUnwrap(l.text!.animators.first?.selector)
         XCTAssertEqual(sel.start.keyframes.first?.time ?? -1, 1.0, accuracy: 1e-9)
@@ -186,8 +161,11 @@ final class TextPresetLibraryTests: XCTestCase {
         mine.properties.opacity = Animated(50)
         l.text!.animators = [mine]
         let userEffectCount = l.effects.count
-        let a = try XCTUnwrap(TextPresetLibrary.look("look.animeImpact"))
-        let b = try XCTUnwrap(TextPresetLibrary.look("look.3dGold"))
+        var aStack = TextStyleStack(); aStack.strokes = [TextStrokeLayer(color: .white, width: 8)]
+        let a = TextLookPreset(id: "look.testStroke", name: "Test Stroke", category: "Test", font: nil, style: aStack,
+                               effects: [], text3D: nil, tracking: nil)
+        let b = TextLookPreset(id: "look.testGold", name: "Test Gold", category: "Test", font: nil, style: TextStyleStack(),
+                               effects: [], text3D: Text3DOptions(material: .gold), tracking: nil)
         TextPresetLibrary.applyLook(a, to: &l)
         XCTAssertEqual(l.text!.style!.strokes.count, 1 + a.style.strokes.count)
         XCTAssertEqual(l.text!.animators.map(\.id), [mine.id])
@@ -203,20 +181,14 @@ final class TextPresetLibraryTests: XCTestCase {
         XCTAssertEqual(l.text!.animators.map(\.id), [mine.id])
     }
 
-    func testThreeDLooksCoverEveryMaterial() {
-        let fronts = TextPresetLibrary.looks.compactMap { $0.text3D?.front }
-        for m in Text3DMaterial.presets.map(\.material) { XCTAssertTrue(fronts.contains(m), "missing material look") }
-        XCTAssertTrue(TextPresetLibrary.looks.contains { l in l.text3D.map { $0.front != $0.side || $0.front != $0.bevel } ?? false }, "combo looks")
-    }
-
     func testPresetGroupsSurviveSaveAndOldTextStillDecodes() throws {
         var l = textLayer()
         TextPresetLibrary.applyLook(try XCTUnwrap(TextPresetLibrary.look("look.3dChrome")), to: &l)
-        TextPresetLibrary.applyPreset(try XCTUnwrap(TextPresetLibrary.animation("lib.flipCascade")), to: &l, start: 0)
+        TextPresetLibrary.applyPreset(try XCTUnwrap(TextPresetLibrary.animation("pack.3d.flipX")), to: &l, start: 0)
         let back = try JSONDecoder().decode(TextData.self, from: JSONEncoder().encode(l.text!))
         XCTAssertEqual(back.text3DGroup, "look.3dChrome")
         XCTAssertEqual(back.style?.fills.first?.group, "look.3dChrome")
-        XCTAssertEqual(back.animators.first?.group, "lib.flipCascade")
+        XCTAssertEqual(back.animators.first?.group, "pack.3d.flipX")
         let old = try JSONDecoder().decode(TextData.self, from: Data(#"{"string":"Hi"}"#.utf8))
         XCTAssertNil(old.text3D)
         XCTAssertNil(old.text3DGroup)
@@ -251,7 +223,7 @@ final class TextPresetLibraryTests: XCTestCase {
         XCTAssertEqual(src.string, "Sakura Drop")
         XCTAssertEqual(src.fontName, "AvenirNext-Heavy")
         XCTAssertEqual(TextPresetPreviewSource(layer: nil).string, "Text")
-        let p = TextPresetBrowserPreviews.project(for: .animation(try XCTUnwrap(TextPresetLibrary.animation("lib.glowRise"))), source: src)
+        let p = TextPresetBrowserPreviews.project(for: .animation(try XCTUnwrap(TextPresetLibrary.animation("studio.lineRise"))), source: src)
         XCTAssertEqual(p.layers.first?.text?.string, "Sakura Drop")
         XCTAssertEqual(p.layers.first?.text?.fontName, "AvenirNext-Heavy")
         XCTAssertFalse(p.layers.first?.text?.animators.isEmpty ?? true)
@@ -259,7 +231,7 @@ final class TextPresetLibraryTests: XCTestCase {
 
     func testPreviewRendersAnimatedFrames() throws {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
-        let p = TextPresetBrowserPreviews.project(for: .animation(try XCTUnwrap(TextPresetLibrary.animation("lib.megaSlam"))),
+        let p = TextPresetBrowserPreviews.project(for: .animation(try XCTUnwrap(TextPresetLibrary.animation("impactSlam"))),
                                             source: TextPresetPreviewSource(layer: nil))
         let a = r.renderImage(project: p, time: 0.2, maxDimension: 160, mediaURL: { URL(fileURLWithPath: $0) })
         let b = r.renderImage(project: p, time: 1.4, maxDimension: 160, mediaURL: { URL(fileURLWithPath: $0) })

@@ -46,8 +46,10 @@ struct TextLookPreset: Identifiable {
 
 enum TextPresetLibrary {
     /// Animation categories, in browser order.
-    static let categories = ["In", "Out", "Loop", "Emphasis", "Glitch", "Typewriter", "Kinetic", "Manga/AMV", "Lyric",
-                             "Impact", "3D In", "3D Out", "3D Loop"]
+    static let allCategories = ["In", "Out", "Loop", "Emphasis", "Glitch", "Typewriter", "Kinetic", "Manga/AMV", "Lyric",
+                                "Impact", "3D In", "3D Out", "3D Loop"]
+    /// Categories that hold presets right now (the full designed library arrives with the post-expansion preset pass).
+    static let categories: [String] = allCategories.filter { c in animations.contains { $0.category == c } }
     /// Look categories, in browser order.
     static let lookCategories = ["Manga/AMV", "Impact", "Sticker", "Neon", "Glitch", "Lyric", "Speed", "Cinematic", "Minimal", "3D"]
 
@@ -61,7 +63,7 @@ enum TextPresetLibrary {
     /// Every animation preset: studio set, classic built-ins, the pack and the new library. Names are unique and
     /// every id that older projects / AI Link may reference still resolves.
     static let animations: [TextPreset] = {
-        let sources: [TextPreset] = TextPresetStudio.all + TextPresets.all + TextPresetPack.all + TextPresetLibraryAnimations.all
+        let sources: [TextPreset] = TextPresetStudio.all + TextPresets.all + TextPresetPack.all
         var seenIDs = Set<String>()
         var seenNames = Set<String>()
         var out: [TextPreset] = []
@@ -85,7 +87,9 @@ enum TextPresetLibrary {
         var seen = Set<String>()
         var names = Set<String>()
         var out: [TextLookPreset] = []
-        for l in TextLookPresets.all where !seen.contains(l.id) {
+        // Looks return with the post-expansion preset pass (designed together with the new effects).
+        let source: [TextLookPreset] = []
+        for l in source where !seen.contains(l.id) {
             seen.insert(l.id)
             var name = l.name
             var n = 2

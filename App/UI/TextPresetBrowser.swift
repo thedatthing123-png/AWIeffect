@@ -10,7 +10,7 @@ struct TextPresetBrowser: View {
 
     @State private var kind: TextPresetKind = .animation
     @State private var category = TextPresetLibrary.categories[0]
-    @State private var lookCategory = TextPresetLibrary.lookCategories[0]
+    @State private var lookCategory = TextPresetLibrary.lookCategories.first ?? ""
     @State private var selectedID: String?
     @State private var duration: Double?
     @State private var snapToBeats = false
@@ -28,11 +28,14 @@ struct TextPresetBrowser: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Picker("Kind", selection: $kind) {
-                ForEach(TextPresetKind.allCases) { k in Text(k.title).tag(k) }
+            // Looks come back with the post-expansion preset pass; until then only animations show.
+            if !TextPresetLibrary.looks.isEmpty {
+                Picker("Kind", selection: $kind) {
+                    ForEach(TextPresetKind.allCases) { k in Text(k.title).tag(k) }
+                }
+                .pickerStyle(.segmented)
+                .frame(minHeight: 44)
             }
-            .pickerStyle(.segmented)
-            .frame(minHeight: 44)
 
             chips
             if kind == .animation { timingControls }

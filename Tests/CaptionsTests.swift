@@ -132,7 +132,12 @@ final class CaptionsTests: XCTestCase {
         let data = try JSONEncoder().encode(p)
         let back = try JSONDecoder().decode(Project.self, from: data)
         XCTAssertEqual(back.captionTracks, p.captionTracks)
-        XCTAssertEqual(back.layers, p.layers)
+        // Loading upgrades text to stable letter ids, so compare against a once-loaded copy; a second save/load is exact.
+        let again = try JSONDecoder().decode(Project.self, from: try JSONEncoder().encode(back))
+        XCTAssertEqual(again.layers, back.layers)
+        XCTAssertEqual(back.layers.map(\.text?.string), p.layers.map(\.text?.string))
+        XCTAssertEqual(back.layers.map(\.inPoint), p.layers.map(\.inPoint))
+        XCTAssertEqual(back.layers.map(\.outPoint), p.layers.map(\.outPoint))
         // Old saves without the field still decode.
         var old = try JSONSerialization.jsonObject(with: data) as! [String: Any]
         old.removeValue(forKey: "captionTracks")
