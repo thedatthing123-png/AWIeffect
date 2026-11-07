@@ -190,8 +190,11 @@ struct KeyClipboard: Equatable {
         let tr = l.transform
         var times = tr.anchor.keyframeTimes + tr.position.keyframeTimes + tr.scale.keyframeTimes + tr.rotation.keyframeTimes
         times += tr.opacity.keyframeTimes + tr.positionZ.keyframeTimes + tr.rotationX.keyframeTimes + tr.rotationY.keyframeTimes
-        times += l.size.keyframeTimes + l.fill.keyframeTimes + l.cornerRadius.keyframeTimes + l.sides.keyframeTimes
-        times += l.innerRatio.keyframeTimes + l.volume.keyframeTimes + l.extrude.keyframeTimes
+        if l.shapeContents == nil {
+            times += l.size.keyframeTimes + l.fill.keyframeTimes + l.cornerRadius.keyframeTimes + l.sides.keyframeTimes
+            times += l.innerRatio.keyframeTimes
+        }
+        times += l.volume.keyframeTimes + l.extrude.keyframeTimes
         for fx in l.effects {
             for value in fx.params.values {
                 switch value {
@@ -203,8 +206,9 @@ struct KeyClipboard: Equatable {
             }
         }
         var inspect = AnimationTraversal(operation: .inspect), stroke = l.stroke
-        stroke.traverse(&inspect)
+        if l.shapeContents == nil { stroke.traverse(&inspect) }
         for var item in l.shapeContents ?? [] { item.component?.traverse(&inspect) }
+        if var ops = l.shapeOps { ops.traverse(&inspect) }
         times += inspect.times
         return times
     }
@@ -236,6 +240,14 @@ struct KeyClipboard: Equatable {
         put(&target.volume, s.volume)
         put(&target.extrude, s.extrude)
         target.stroke.pasteKeys(s.stroke, delta: dt)
+        if let sourceOps = s.shapeOps {
+            var inspect = AnimationTraversal(operation: .inspect), copy = sourceOps
+            copy.traverse(&inspect)
+            if !inspect.times.isEmpty {
+                if target.shapeOps == nil { target.shapeOps = ShapeOps() }
+                target.shapeOps?.pasteKeys(sourceOps, delta: dt)
+            }
+        }
         if let sourceItems = s.shapeContents, case .shape = target.content {
             var items = target.editableShapeContents
             var usedPaths = Set<UUID>()

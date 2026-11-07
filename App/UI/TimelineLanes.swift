@@ -57,14 +57,16 @@ extension Layer {
         add("3d.rotationX", "Rotation X", "3D", scalar(\.transform.rotationX), path(\.transform.rotationX))
         add("3d.rotationY", "Rotation Y", "3D", scalar(\.transform.rotationY), path(\.transform.rotationY))
         add("3d.extrude", "Thickness", "3D", scalar(\.extrude), path(\.extrude))
+        if shapeContents == nil {
         add("c.size", "Size", "Content", vector(\.size), path(\.size))
         add("c.fill", "Fill Color", "Content", .none, path(\.fill))
         add("c.corner", "Roundness", "Content", scalar(\.cornerRadius), path(\.cornerRadius))
         add("c.sides", "Points", "Content", scalar(\.sides), path(\.sides))
         add("c.inner", "Inner Radius", "Content", scalar(\.innerRatio), path(\.innerRatio))
+        }
         add("c.volume", "Volume", "Audio", scalar(\.volume), path(\.volume))
         add("c.timeRemap", "Time Remap", "Time", .scalar(get: { $0.timeRemap }, set: { $0.timeRemap = $1 })) { l, v in v.apply(&l.timeRemap) }
-        add("c.path", "Path", "Shape") { l, v in v.apply(&l.path) }
+        if shapeContents == nil { add("c.path", "Path", "Shape") { l, v in v.apply(&l.path) } }
 
         for item in shapeContents ?? [] where item.component != nil {
             let id = item.id
@@ -73,7 +75,7 @@ extension Layer {
                 l.shapeContents?[i].component?.traverse(&v)
             }
         }
-        add("c.stroke", "Stroke & Trim", "Shape") { l, v in l.stroke.traverse(&v) }
+        if shapeContents == nil { add("c.stroke", "Stroke & Trim", "Shape") { l, v in l.stroke.traverse(&v) } }
         for mask in masks {
             let mid = mask.id
             add("mask.\(mid)", mask.name.isEmpty ? "Mask" : mask.name, "Masks") { l, v in

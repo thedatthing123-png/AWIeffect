@@ -194,6 +194,22 @@ extension EditorState {
     static func applyStyle(_ source: Layer, to target: inout Layer, parts: Set<LayerStylePart>) {
         if parts.contains(.fill) {
             target.fill = source.fill; target.cornerRadius = source.cornerRadius
+            if target.shapeContents != nil {
+                let styles = source.editableShapeContents.compactMap(\.component)
+                var pathIndex = 0
+                for i in target.shapeContents!.indices where target.shapeContents![i].component != nil {
+                    if styles.indices.contains(pathIndex) {
+                        target.shapeContents![i].component?.fill = styles[pathIndex].fill
+                        target.shapeContents![i].component?.fillOn = styles[pathIndex].fillOn
+                        target.shapeContents![i].component?.fillGradient = styles[pathIndex].fillGradient
+                    } else {
+                        target.shapeContents![i].component?.fill = source.fill
+                        target.shapeContents![i].component?.fillOn = true
+                        target.shapeContents![i].component?.fillGradient = nil
+                    }
+                    pathIndex += 1
+                }
+            }
             if target.text != nil {
                 target.text?.fill = source.text?.fill ?? source.fill
                 target.text?.colorSpans = source.text?.colorSpans ?? []
@@ -202,6 +218,15 @@ extension EditorState {
         let styleIDs: Set<String> = [EffectRegistry.border.id, EffectRegistry.dropShadow.id]
         if parts.contains(.border) {
             target.stroke = source.stroke
+            if target.shapeContents != nil {
+                let styles = source.editableShapeContents.compactMap(\.component)
+                var pathIndex = 0
+                for i in target.shapeContents!.indices where target.shapeContents![i].component != nil {
+                    target.shapeContents![i].component?.stroke = styles.indices.contains(pathIndex) ? styles[pathIndex].stroke : source.stroke
+                    target.shapeContents![i].component?.strokeGradient = styles.indices.contains(pathIndex) ? styles[pathIndex].strokeGradient : nil
+                    pathIndex += 1
+                }
+            }
             if !parts.contains(.effects) {
                 target.effects.removeAll { styleIDs.contains($0.typeID) }
                 target.effects += source.effects.filter { styleIDs.contains($0.typeID) }

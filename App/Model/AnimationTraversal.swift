@@ -67,16 +67,13 @@ extension Layer {
         visit.apply(&transform.positionZ)
         visit.apply(&transform.rotationX)
         visit.apply(&transform.rotationY)
-        visit.apply(&size)
-        visit.apply(&fill)
-        visit.apply(&cornerRadius)
-        visit.apply(&sides)
-        visit.apply(&innerRatio)
+        if shapeContents == nil {
+            visit.apply(&size); visit.apply(&fill); visit.apply(&cornerRadius)
+            visit.apply(&sides); visit.apply(&innerRatio); visit.apply(&path); stroke.traverse(&visit)
+        }
         visit.apply(&volume)
         visit.apply(&extrude)
         visit.apply(&timeRemap)
-        visit.apply(&path)
-        stroke.traverse(&visit)
         if shapeContents != nil {
             for i in shapeContents!.indices { shapeContents![i].component?.traverse(&visit) }
         }

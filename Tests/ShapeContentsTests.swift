@@ -113,6 +113,19 @@ final class ShapeContentsTests: XCTestCase {
                           source.layers[0].shapeContents?[0].component?.position.keyframes.first?.id)
     }
 
+    @MainActor func testCompoundStylePasteAndNoLegacyGhostLanes() {
+        var p = logo(), source = p.layers[0]
+        source.shapeContents = nil; source.content = .solid; source.fill = Animated(RGBA(1,0,0))
+        source.stroke.enabled = true; source.stroke.width = Animated(12)
+        p.layers[0].fill.insertKeyframe(Keyframe(time: 9, value: .white))
+        XCTAssertFalse(p.layers[0].keyframeTimes.contains(9))
+        EditorState.applyStyle(source, to: &p.layers[0], parts: [.fill, .border])
+        XCTAssertEqual(p.layers[0].shapeContents?[0].component?.fill.staticValue, RGBA(1,0,0))
+        XCTAssertEqual(p.layers[0].shapeContents?[0].component?.stroke.width.staticValue, 12)
+        XCTAssertFalse(p.layers[0].propertyLanes().contains { $0.id == "c.fill" })
+        XCTAssertFalse(p.layers[0].keyframeTimes.contains(9))
+    }
+
     func testCompoundRoundTripAndBoundsIncludeTransformsRepeaterStroke() throws {
         var p = logo()
         var c = try XCTUnwrap(p.layers[0].shapeContents?[0].component)
