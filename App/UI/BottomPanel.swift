@@ -290,7 +290,8 @@ struct NumberField: View {
                         .onChanged { g in
                             if dragBase == nil { onActivate?(); dragBase = value; onDragBegin?() }
                             let increment = max(abs(step), 1e-9)
-                            let raw = (dragBase ?? value) + Double(g.translation.width) * increment
+                            // Half a step per point: steady and precise (no acceleration).
+                            let raw = (dragBase ?? value) + Double(g.translation.width) * 0.5 * increment
                             let v = (raw / increment).rounded() * increment
                             dragValue = v
                             onCommit(v)

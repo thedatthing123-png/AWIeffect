@@ -98,12 +98,15 @@ struct ValueScrubber: View {
                         onBegin()
                         UISelectionFeedbackGenerator().selectionChanged()
                     }
-                    // Fine control: slow drags move the value less than fast ones.
+                    // Steady control: one bar width of drag travels a sensible amount around the current value
+                    // (never more than the whole range), so huge ranges (radius 0…8000) don't fly and small values
+                    // stay precise. Slow drags are finer; there is no fast acceleration.
                     let dx = g.translation.width - lastX
                     lastX = g.translation.width
-                    let speed = abs(dx)
-                    let gain = speed < 2 ? 0.35 : 1.0
-                    let next = (dragBase ?? value) + Double(dx) / Double(max(geo.size.width, 1)) * span * gain
+                    let current = dragBase ?? value
+                    let travel = min(span, max(min(span, 150), abs(current) * 1.5))
+                    let gain = abs(dx) < 2 ? 0.4 : 0.8
+                    let next = current + Double(dx) / Double(max(geo.size.width, 1)) * travel * gain
                     dragBase = min(max(next, range.lowerBound), range.upperBound)
                     onChange(quantize(dragBase ?? value))
                 }

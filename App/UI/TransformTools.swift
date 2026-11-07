@@ -365,9 +365,9 @@ struct SwipePad: View {
                     let dx = g.translation.width - (last?.width ?? 0), dy = g.translation.height - (last?.height ?? 0)
                     let dt = max(now - lastTime, 1.0 / 240)
                     last = g.translation; lastTime = now
-                    // Speed-based acceleration: < ~60 pt/s precise, fast flicks up to 4×.
+                    // Steady: a precise slow zone, and fast swipes go only a little further (max 1.2×, no flinging).
                     let speed = Double(hypot(dx, dy)) / dt
-                    let accel = speed < 60 ? 0.35 : min(4, 0.35 + (speed - 60) / 260)
+                    let accel = speed < 80 ? 0.3 : min(1.2, 0.3 + (speed - 80) / 700)
                     let k = gain / Double(max(geo.size.width, 1)) * accel
                     onDelta(vertical ? CGSize(width: 0, height: Double(dy) * k) : CGSize(width: Double(dx) * k, height: Double(dy) * k))
                 }
@@ -456,7 +456,7 @@ struct Trackball: View {
                     if last == nil { last = .zero; begin() }
                     let dx = g.translation.width - (last?.width ?? 0), dy = g.translation.height - (last?.height ?? 0)
                     last = g.translation
-                    onDelta(Double(dx) * 0.6, Double(dy) * 0.6)
+                    onDelta(Double(dx) * 0.4, Double(dy) * 0.4)
                 }
                 .onEnded { _ in last = nil; end() })
         }
@@ -504,7 +504,7 @@ struct RulerStrip: View {
                 last = g.translation.width; lastTime = now
                 shift += dx
                 let speed = Double(abs(dx)) / dt
-                let accel = speed < 60 ? 0.4 : min(4, 0.4 + (speed - 60) / 260)
+                let accel = speed < 80 ? 0.4 : min(1.3, 0.4 + (speed - 80) / 600)   // steady, no flinging
                 onDelta(Double(dx) * perPoint * accel)
             }
             .onEnded { _ in last = nil; end() })
