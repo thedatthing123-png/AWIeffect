@@ -1,6 +1,6 @@
 # AWIeffect — handoff (Claude → Codex), 2026-11-07
 
-Read this, AGENTS.md, ROADMAP.md, docs/RENEWAL_PLAN.md and docs/TEXT_STUDIO_SPEC.md before touching code.
+Read this, AGENTS.md, ROADMAP.md, docs/RENEWAL_PLAN.md and docs/TEXT_STUDIO_SPEC.md before touching code. Then docs/EXPANSION_PLAN.md for everything after the renewal.
 
 ## The owner and how to work
 - One professional manga/AMV editor, phone only. AWIeffect replaces After Effects, Alight Motion, Ibis Paint and Blender for their own work (not a public release). They write casually with typos — read intent.
