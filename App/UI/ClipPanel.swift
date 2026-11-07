@@ -262,7 +262,7 @@ struct ClipPanel: View {
         Text("Drag a point up for faster, down for slower. The clip keeps its first and last frame; the curve redistributes time between them. Fine-tune keys in the graph.")
             .font(.caption).foregroundStyle(Theme.textDim)
         HStack(spacing: 8) {
-            ToolTile(icon: "point.topleft.down.to.point.bottomright.curvepath", title: "Remap Graph") {
+            ToolTile(icon: "point.topleft.down.to.point.bottomright.curvepath", title: "Time Remap") {
                 if l.timeRemap == nil { state.enableTimeRemap() }
                 showTiming = true
             }

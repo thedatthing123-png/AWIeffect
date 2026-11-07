@@ -39,7 +39,14 @@ Many AE Motion effects are a simple effect with a texture or overlay baked in (a
 
 - **Building blocks that do something new**, not one family copied with small changes.
 - **Real quality on each one**, matched to how AE and AM behave.
-- **No combo effects.** AE Motion's combos (like a ripple with an overlay baked in) are skipped; the owner builds those by stacking.
+- **No baked-texture combos.** AE Motion's "effect + baked overlay image" combos (like a ripple with a light texture baked in) are skipped.
+- **Designed composite effects ARE wanted** (owner, 2026-11-07): like plugin makers do, several looks built together into one effect family with its own controls (sun rays + light + glow as one designed effect, custom glitches, etc.). Designed our way, not copies.
+
+### Scale and organization (owner, 2026-11-07)
+- Think ~1,000 usable effects, not 400. The limit of the app right now is the effect count. Mix of simple / easy, deep / hard, and odd ones — weird or "broken-looking" effects are fine because editors find creative uses for them.
+- Much more in every section, especially **Backgrounds, Key & Matte, Transitions, Shapes, Text/type** (no "rotation shapes" — owner doesn't like them).
+- **Reorganize the browser** during the expansion: put things where they belong (e.g. 3D shapes are filed under the wrong section today) and **add new sections** freely (e.g. Liquid) — don't limit to today's 14.
+- Specific: a **solid sunburst / starburst pattern** (radial solid wedges, no rays/light — "candy" style) like AE Motion's version (inspect it), as a separate effect next to today's light Sunburst.
 ## Ideas from research
 
 What the big tools added recently, and what's worth bringing to a phone editor:

@@ -297,9 +297,9 @@ struct TimelineView: View {
     private func header(_ layer: Layer) -> some View {
         let inMulti = state.multiSelection?.contains(layer.id) == true
         return HStack(spacing: 0) {
-            headerToggle(layer.isVisible ? "eye" : "eye.slash", on: layer.isVisible, tint: Theme.text,
+            headerToggle(layer.id, layer.isVisible ? "eye" : "eye.slash", on: layer.isVisible, tint: Theme.text,
                          label: layer.isVisible ? "Hide Layer" : "Show Layer") { state.toggleVisibility(layer.id) }
-            headerToggle(layer.isLocked ? "lock.fill" : "lock.open", on: layer.isLocked, tint: Theme.warning,
+            headerToggle(layer.id, layer.isLocked ? "lock.fill" : "lock.open", on: layer.isLocked, tint: Theme.warning,
                          label: layer.isLocked ? "Unlock Layer" : "Lock Layer") { state.toggleLock(layer.id) }
             headerToggle("s.circle\(layer.isSolo ? ".fill" : "")", on: layer.isSolo, tint: Theme.ok,
                          label: layer.isSolo ? "Unsolo Layer" : "Solo Layer") { state.toggleSolo(layer.id) }
@@ -332,16 +332,17 @@ struct TimelineView: View {
         }, onEnd: { _ in multiDragStart = nil }))
     }
 
-    private func headerToggle(_ icon: String, on: Bool, tint: Color, label: String, _ action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: icon).font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(on ? tint : Theme.textDim.opacity(0.55))
-                .frame(width: 44, height: rowHeight)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .disabled(state.isMultiSelecting)
-        .accessibilityLabel(label)
+    private func headerToggle(_ id: UUID, _ icon: String, on: Bool, tint: Color, label: String, _ action: @escaping () -> Void) -> some View {
+        // A tap, not a Button: a Button swallows the header's hold, which starts range selection.
+        Image(systemName: icon).font(.system(size: 14, weight: .semibold))
+            .foregroundStyle(on ? tint : Theme.textDim.opacity(0.55))
+            .frame(width: 44, height: rowHeight)
+            .contentShape(Rectangle())
+            .onTapGesture { if state.isMultiSelecting { state.toggleInMulti(id) } else { action() } }
+            .accessibilityElement()
+            .accessibilityAddTraits(.isButton)
+            .accessibilityLabel(label)
+            .accessibilityAction { if state.isMultiSelecting { state.toggleInMulti(id) } else { action() } }
     }
 
     private func scrubHorizontal(_ translation: CGFloat) {
