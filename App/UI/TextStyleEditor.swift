@@ -92,7 +92,8 @@ struct TextStyleTab: View {
                     else {
                         let ids = session.selectedIDs
                         state.editText("Letter Font") { td in
-                            if let r = TextStudioLogic.range(td, ids: ids) { td.setCharStyle(r) { $0.fontName = name == td.fontName ? nil : name } }
+                            let base = td.fontName
+                            if let r = TextStudioLogic.range(td, ids: ids) { td.setCharStyle(r) { $0.fontName = name == base ? nil : name } }
                         }
                     }
                 }
