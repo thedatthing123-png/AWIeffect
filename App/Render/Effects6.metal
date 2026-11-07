@@ -350,7 +350,7 @@ kernel void fxDistort6(texture2d<half, access::sample> src [[texture(0)]],
             float ph = y * p.a.y * 6.2831853 - t * p.a.z * 6.2831853;
             float band = sin(ph);
             float sharp = pow(abs(band), 6.0) * sign(band);
-            float fr = floor(t * 30.0) + p.c.x * 9.0;
+            float fr = floor(t * 120.0) + p.c.x * 9.0;
             float rn = (hash6(float2(floor(c.y), fr)) - 0.5) * p.b.x * 2.0;
             float dx = (sharp + rn) * p.a.x;
             float4 g = tap6(src, c + float2(dx, 0));

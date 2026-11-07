@@ -28,7 +28,7 @@ static float3 sat13(float3 c, float s) { float y = l13(c); return clamp(float3(y
 static float3 scurve13(float3 c, float k) { float3 x = clamp(c, 0.0, 1.0); float3 sc = x * x * (3.0 - 2.0 * x); return mix(x, sc, k); }
 /// Animated film grain (24 fps), centered on 0.
 static float grain13(float2 c, float t) {
-    float f = floor(t * 24.0);
+    float f = floor(t * 120.0);
     return (h13(floor(c) + float2(f * 37.17, f * 11.73)) + h13(floor(c * 0.5) + float2(f * 5.1, 91.7 + f)) - 1.0);
 }
 static float vig13(float2 c, float2 size) {
@@ -254,7 +254,7 @@ kernel void fxRetro13(texture2d<half, access::sample> src [[texture(0)]],
             holo *= 0.6 + 0.6 * ln;
             float band = smoothstep(0.92, 1.0, fract(c.y / size.y - t * p.a.z * 0.15));
             holo += p.b.rgb * band * 0.6;
-            holo *= 1.0 - p.a.w * (0.4 + 0.6 * h13(float2(floor(t * 30.0), 3.0)));
+            holo *= 1.0 - p.a.w * (0.4 + 0.6 * h13(float2(floor(t * 120.0), 3.0)));
             r = clamp(mix(col, holo, p.a.x), 0.0, 1.0);
             break;
         }
@@ -271,7 +271,7 @@ kernel void fxRetro13(texture2d<half, access::sample> src [[texture(0)]],
             float3 x = clamp(float3(Y) + (ch - l13(ch)) * 1.2, 0.0, 1.0);
             float bar = smoothstep(0.0, 0.08, abs(fract(yy / size.y + 0.5) - 0.5) - 0.02);
             x *= 0.75 + 0.25 * bar;
-            float fr = floor(t * 30.0);
+            float fr = floor(t * 120.0);
             float n = h13(floor(c) + float2(fr * 13.7, fr * 3.1));
             x = mix(x, float3(n), p.a.x * 0.6);
             x *= 0.92 + 0.08 * sin(c.y * 3.1416);

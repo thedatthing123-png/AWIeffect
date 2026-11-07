@@ -53,14 +53,14 @@ extension EffectRegistry {
     static let mangaScreentone16 = EffectDefinition(
         id: "awi16.mangaScreentone", name: "Manga Screentone", category: .stylize, aeMatchNames: [],
         summary: "Manga screentone: flat printed tone sheets (paper, dot tones, solid black) with crisp antialiased dots on a rotated screen.",
-        params: [px16("size", "Dot Size", 6, 2, 30), .angle("angle", "Screen Angle", 45), pct16("tone", "Tone", 0, -100, 100),
+        params: [px16("size", "Dot Size", 6, 2, 30), .angle("angle", "Screen Angle", 45), pct16("tone", "Tone", 25, -100, 100),
                  .color("ink", "Ink", ink16), .color("paper", "Paper", paper16), pct16("strength", "Strength", 100),
                  .number("levels", "Flat Tones (0 = smooth)", 4, 0, 6, step: 1), .choice("shape", "Dot Shape", printShapes27, 0),
-                 pct16("contrast", "Contrast", 120, 0, 300)],
+                 pct16("contrast", "Contrast", 100, 0, 300)],
         stage: .pixels { ctx in
             let lv = Int(v27(ctx, "levels", 4).rounded())
             return print27(ctx, mode: 0, cell: ctx.num("size") * ctx.unit, angle: ctx.num("angle") * .pi / 180,
-                           contrast: v27(ctx, "contrast", 120) / 100, mix: ctx.num("strength") / 100,
+                           contrast: v27(ctx, "contrast", 100) / 100, mix: ctx.num("strength") / 100,
                            ink: col16(ctx, "ink"), paper: col16(ctx, "paper"), shape: ctx.effect.choice("shape"),
                            levels: lv >= 2 ? lv : 0, bias: ctx.num("tone") * 0.005) })
 

@@ -151,8 +151,8 @@ extension EffectRegistry {
     static let oilPaint = EffectDefinition(
         id: "awi8.oilPaint", name: "Oil Paint", category: .stylize, aeMatchNames: [],
         summary: "Kuwahara brush smoothing that keeps edges crisp, like thick paint.",
-        params: [.number("radius", "Brush Size", 8, 1, 40, step: 0.1, unit: "px"), pct("strength", "Strength", 100),
-                 pct("impasto", "Thick Paint", 60)],
+        params: [.number("radius", "Brush Size", 12, 1, 40, step: 0.1, unit: "px"), pct("strength", "Strength", 100),
+                 pct("impasto", "Thick Paint", 85)],
         stage: .pixels { ctx in
             let r = max(1, ctx.num("radius") * ctx.unit)
             let k = art(ctx, 0) { $0.a.x = Float(r) }

@@ -191,8 +191,8 @@ extension EffectRegistry {
     static let clouds = EffectDefinition(
         id: "awi7.clouds", name: "Clouds & Fog", category: .generate, aeMatchNames: [],
         summary: "Billowing fbm clouds or fog curling into themselves, drifting and evolving, lit from above with soft shadowed undersides and silver edges.",
-        params: p7([.number("scale", "Scale", 80, 10, 800, unit: "px"), .number("coverage", "Coverage", 55, 0, 100, unit: "%"),
-                 .number("softness", "Softness", 35, 0, 100, unit: "%"), .number("drift", "Drift", 30, -300, 300, unit: "px/s"),
+        params: p7([.number("scale", "Scale", 240, 10, 800, unit: "px"), .number("coverage", "Coverage", 40, 0, 100, unit: "%"),
+                 .number("softness", "Softness", 60, 0, 100, unit: "%"), .number("drift", "Drift", 30, -300, 300, unit: "px/s"),
                  .number("evolve", "Evolve", 0.3, 0, 3, step: 0.01), .color("color", "Color", RGBA(0.92, 0.94, 1)), seed7,
                  .number("warp", "Billow (Domain Warp)", 100, 0, 300, unit: "%"), .number("detail", "Detail", 6, 2, 8, step: 1),
                  .number("shading", "Shading", 60, 0, 100, unit: "%"), .color("shadow", "Shadow Color", RGBA(0.5, 0.55, 0.68))], 85),

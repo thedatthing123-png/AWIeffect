@@ -30,7 +30,7 @@ kernel void fx18(texture2d<half, access::sample> src [[texture(0)]],
         bool fire = slot < 0.5 || fmod(slot, 2.0) >= 1.0 || h18(slot + p.a.w * 13.0) < 0.5;
         float on = (fire && phase < max(p.a.z, 0.02)) ? 1.0 : 0.0;
         float k = on * p.a.x * (0.5 + 0.5 * h18(slot * 3.1 + p.a.w));
-        float fr = floor(t * 30.0);
+        float fr = floor(t * 120.0);
         // Horizontal slice offsets.
         float band = floor(c.y / max(size.y / 18.0, 2.0));
         float sl = (h182(float2(band, fr + p.a.w)) - 0.5) * 2.0 * p.b.y * k * step(0.55, h182(float2(band * 1.7, fr)));
@@ -64,7 +64,7 @@ kernel void fx18(texture2d<half, access::sample> src [[texture(0)]],
         float half_ = max(p.a.y * size.y * 0.5, 1.0);
         float inBand = 1.0 - smoothstep(half_ * 0.8, half_, abs(c.y - center));
         float row = floor(c.y / max(p.a.w, 1.0));
-        float sh = (h182(float2(row, floor(t * 24.0))) - 0.5) * 2.0 * p.a.x * inBand;
+        float sh = (h182(float2(row, floor(t * 120.0))) - 0.5) * 2.0 * p.a.x * inBand;
         o = float4(src.sample(sm18, c + float2(sh, 0.0)));
     } else if (p.i.x == 4) {
         // Wave Glitch: a = (amount px, waves, speed, steps/s)

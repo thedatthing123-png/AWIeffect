@@ -77,7 +77,11 @@ extension EditorState {
     }
 }
 
-/// Canvas overlay for drawing bezier paths: tap = corner, drag = smooth point, tap first point = close.
+/// Canvas overlay for drawing bezier paths, Alight Motion style:
+/// - A cursor sits on the canvas. Move it with the swipe pad (your finger never covers the art), then Add Point.
+/// - Or tap the canvas to drop a point right there; drag while dropping to pull a curve.
+/// - Tap a point to select it: the pad then moves that point (or its curve handle in Curve mode), Delete removes it.
+/// - Drag a point on the canvas to move it. Points are unlimited; the path only closes when you press Close.
 struct PenOverlay: View {
     @ObservedObject var state: EditorState
     let target: PenTarget
@@ -85,12 +89,19 @@ struct PenOverlay: View {
     let fit: CGRect
     let done: () -> Void
     @State private var vertices: [PathVertex] = []
+    @State private var closed = false
+    @State private var selected: Int?
+    @State private var cursor: Vec2?
+    @State private var curveMode = false
     @State private var dragStart: CGPoint?
+    @State private var dragVertex: Int?
+    @State private var dragVertexStart: Vec2?
     @State private var freehand: [Vec2] = []
 
     private var scale: Double { Double(fit.width) / Double(state.project.width) }
     private func comp(_ p: CGPoint) -> Vec2 { Vec2(Double(p.x - fit.minX) / scale, Double(p.y - fit.minY) / scale) }
     private func view(_ v: Vec2) -> CGPoint { CGPoint(x: fit.minX + v.x * scale, y: fit.minY + v.y * scale) }
+    private var cursorPoint: Vec2 { cursor ?? Vec2(Double(state.project.width) / 2, Double(state.project.height) / 2) }
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -105,30 +116,141 @@ struct PenOverlay: View {
                         let a = vertices[i - 1], b = vertices[i]
                         path.addCurve(to: view(b.point), control1: view(a.point + a.outTangent), control2: view(b.point + b.inTangent))
                     }
+                    if closed, vertices.count > 2, let last = vertices.last {
+                        path.addCurve(to: view(first.point), control1: view(last.point + last.outTangent), control2: view(first.point + first.inTangent))
+                    }
                 }
             }
             .stroke(Theme.accentGlow, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
             .allowsHitTesting(false)
-            ForEach(Array(vertices.enumerated()), id: \.offset) { i, v in
-                Circle().fill(i == 0 ? Theme.accent : .white).frame(width: 12, height: 12)
-                    .overlay(Circle().stroke(Theme.accent, lineWidth: 2))
-                    .position(view(v.point)).allowsHitTesting(false)
-                if v.outTangent != .zero {
-                    Path { p in p.move(to: view(v.point + v.inTangent)); p.addLine(to: view(v.point + v.outTangent)) }
-                        .stroke(Theme.textDim, lineWidth: 1).allowsHitTesting(false)
+            if style == .points {
+                ForEach(Array(vertices.enumerated()), id: \.offset) { i, v in
+                    if v.outTangent != .zero || v.inTangent != .zero {
+                        Path { p in p.move(to: view(v.point + v.inTangent)); p.addLine(to: view(v.point + v.outTangent)) }
+                            .stroke(i == selected ? Theme.accentGlow : Theme.textDim, lineWidth: 1).allowsHitTesting(false)
+                        Circle().fill(Theme.textDim).frame(width: 6, height: 6).position(view(v.point + v.outTangent)).allowsHitTesting(false)
+                    }
+                    Circle().fill(i == selected ? Theme.accent : (i == 0 ? Theme.accent.opacity(0.6) : .white)).frame(width: i == selected ? 16 : 12, height: i == selected ? 16 : 12)
+                        .overlay(Circle().stroke(Theme.accent, lineWidth: 2))
+                        .position(view(v.point)).allowsHitTesting(false)
+                }
+                // The cursor: where Add Point drops the next point.
+                if selected == nil {
+                    let c = view(cursorPoint)
+                    ZStack {
+                        Circle().stroke(Color.white, lineWidth: 1.5).frame(width: 22, height: 22)
+                        Rectangle().fill(Color.white).frame(width: 1.5, height: 30)
+                        Rectangle().fill(Color.white).frame(width: 30, height: 1.5)
+                    }
+                    .shadow(color: .black.opacity(0.8), radius: 1.5)
+                    .position(c).allowsHitTesting(false)
                 }
             }
-            HStack(spacing: 10) {
-                Text(style == .freehand ? "Draw with your finger" : "Tap = corner · drag = curve · tap first point = close")
-                    .font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
-                    .padding(.horizontal, 10).padding(.vertical, 6).background(Capsule().fill(.black.opacity(0.6)))
-                Button("Cancel") { done() }.buttonStyle(.bordered).tint(Theme.danger)
-                Button("Done") { finish(closed: target != .newShape ? true : false) }
-                    .buttonStyle(.borderedProminent).tint(Theme.accent)
-                    .disabled(style == .points ? vertices.count < 2 : freehand.count < 3)
+            topBar
+            if style == .points {
+                VStack { Spacer(); controls }
             }
-            .padding(.top, 6)
         }
+    }
+
+    private var topBar: some View {
+        HStack(spacing: 10) {
+            Text(style == .freehand ? "Draw with your finger" : hint)
+                .font(.system(size: 11, weight: .semibold)).foregroundStyle(.white).lineLimit(2)
+                .padding(.horizontal, 10).padding(.vertical, 6).background(Capsule().fill(.black.opacity(0.6)))
+            Button("Cancel") { done() }.buttonStyle(.bordered).tint(Theme.danger)
+            Button("Done") { finish() }
+                .buttonStyle(.borderedProminent).tint(Theme.accent)
+                .disabled(style == .points ? vertices.count < 2 : freehand.count < 3)
+        }
+        .padding(.top, 6)
+    }
+
+    private var hint: String {
+        if let s = selected { return curveMode ? "Swipe: shape point \(s + 1)'s curve" : "Swipe: move point \(s + 1)" }
+        return "Swipe to aim · Add Point · tap a point to edit it"
+    }
+
+    /// Swipe pad + point buttons along the bottom of the canvas.
+    private var controls: some View {
+        VStack(spacing: 6) {
+            SwipePad(hint: selected == nil ? "Swipe to move the cursor" : (curveMode ? "Swipe to bend the curve" : "Swipe to move the point"),
+                     gain: Double(state.project.width) * 0.8) { d in padMoved(Vec2(Double(d.width), Double(d.height))) }
+                .frame(height: 70)
+            HStack(spacing: 6) {
+                penButton(selected == nil ? "Add Point" : "Done Editing", selected == nil ? "plus.circle.fill" : "checkmark.circle") {
+                    if selected == nil { addPoint(at: cursorPoint) } else { selected = nil; curveMode = false }
+                }
+                penButton("Curve", curveMode ? "point.topleft.down.curvedto.point.bottomright.up.fill" : "point.topleft.down.curvedto.point.bottomright.up", on: curveMode) {
+                    if selected == nil, !vertices.isEmpty { selected = vertices.count - 1 }
+                    curveMode.toggle()
+                }
+                .disabled(vertices.isEmpty)
+                penButton(closed ? "Open" : "Close", closed ? "lasso" : "circle.dashed", on: closed) { closed.toggle() }
+                    .disabled(vertices.count < 3)
+                penButton("Delete", "trash") { deletePoint() }
+                    .disabled(vertices.isEmpty)
+            }
+        }
+        .padding(8)
+        .background(RoundedRectangle(cornerRadius: 16).fill(.black.opacity(0.55)))
+        .padding(.horizontal, 8).padding(.bottom, 6)
+    }
+
+    private func penButton(_ title: String, _ icon: String, on: Bool = false, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 2) {
+                Image(systemName: icon).font(.system(size: 15, weight: .semibold))
+                Text(title).font(.system(size: 10, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
+            }
+            .frame(maxWidth: .infinity, minHeight: 42)
+            .background(RoundedRectangle(cornerRadius: 10).fill(on ? Theme.accent : Theme.surface))
+            .foregroundStyle(on ? Color.white : Theme.text)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func padMoved(_ d: Vec2) {
+        if let s = selected, vertices.indices.contains(s) {
+            if curveMode {
+                // Pull the handle out from the point; both sides stay mirrored (smooth point).
+                let t = vertices[s].outTangent + d
+                vertices[s].outTangent = t
+                vertices[s].inTangent = t * -1
+            } else {
+                vertices[s].point = vertices[s].point + d
+            }
+        } else {
+            let w = Double(state.project.width), h = Double(state.project.height)
+            let n = cursorPoint + d
+            cursor = Vec2(min(max(n.x, -w * 0.5), w * 1.5), min(max(n.y, -h * 0.5), h * 1.5))
+        }
+    }
+
+    private func addPoint(at p: Vec2) {
+        vertices.append(PathVertex(point: p))
+        cursor = p
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    private func deletePoint() {
+        guard !vertices.isEmpty else { return }
+        let i = selected ?? vertices.count - 1
+        guard vertices.indices.contains(i) else { return }
+        vertices.remove(at: i)
+        selected = nil; curveMode = false
+        if vertices.count < 3 { closed = false }
+    }
+
+    /// Index of the point under a touch (view space), if any.
+    private func vertexHit(_ loc: CGPoint) -> Int? {
+        var best: (Int, CGFloat)?
+        for (i, v) in vertices.enumerated() {
+            let p = view(v.point)
+            let d = hypot(p.x - loc.x, p.y - loc.y)
+            if d < 24, d < (best?.1 ?? .infinity) { best = (i, d) }
+        }
+        return best?.0
     }
 
     private var pointsGesture: some Gesture {
@@ -136,23 +258,28 @@ struct PenOverlay: View {
             .onChanged { v in
                 if dragStart == nil {
                     dragStart = v.startLocation
-                    let p = comp(v.startLocation)
-                    // Close when tapping the first point.
-                    if vertices.count >= 3, let f = vertices.first, hypot(view(f.point).x - v.startLocation.x, view(f.point).y - v.startLocation.y) < 22 {
-                        finish(closed: true)
+                    // Touching an existing point grabs it (select + drag to move). It never closes the path.
+                    if let hit = vertexHit(v.startLocation) {
+                        dragVertex = hit; dragVertexStart = vertices[hit].point
+                        selected = hit
+                        UISelectionFeedbackGenerator().selectionChanged()
                         return
                     }
-                    vertices.append(PathVertex(point: p))
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    selected = nil; curveMode = false
+                    addPoint(at: comp(v.startLocation))
+                }
+                let d = comp(v.location) - comp(v.startLocation)
+                if let i = dragVertex, let start = dragVertexStart, vertices.indices.contains(i) {
+                    if hypot(d.x, d.y) > 2 { vertices[i].point = start + d }
+                    return
                 }
                 guard !vertices.isEmpty else { return }
-                let d = comp(v.location) - comp(v.startLocation)
                 if hypot(d.x, d.y) > 3 {
                     vertices[vertices.count - 1].outTangent = d
                     vertices[vertices.count - 1].inTangent = d * -1
                 }
             }
-            .onEnded { _ in dragStart = nil }
+            .onEnded { _ in dragStart = nil; dragVertex = nil; dragVertexStart = nil }
     }
 
     private var freehandGesture: some Gesture {
@@ -161,7 +288,7 @@ struct PenOverlay: View {
             .onEnded { _ in }
     }
 
-    private func finish(closed: Bool) {
+    private func finish() {
         let path: BezierPath
         if style == .freehand {
             guard freehand.count >= 3 else { done(); return }
@@ -170,7 +297,8 @@ struct PenOverlay: View {
             path = BezierPath.smoothed(freehand, closed: autoClose, tolerance: 4 / scale)
         } else {
             guard vertices.count >= 2 else { done(); return }
-            path = BezierPath(vertices: vertices, closed: closed)
+            // Masks are always closed; shapes close only when you chose Close.
+            path = BezierPath(vertices: vertices, closed: target != .newShape ? true : closed)
         }
         switch target {
         case .newShape: state.addPathLayer(path)

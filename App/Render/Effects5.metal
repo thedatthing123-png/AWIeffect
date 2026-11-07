@@ -73,7 +73,7 @@ kernel void fxLook5(texture2d<half, access::sample> src [[texture(0)]],
         }
         case 3: { // old film: a = (grain, scratches, dust, flicker), b.x = sepia, c.x = seed
             float3 col = u5(s);
-            float frame = floor(t * 24.0) + p.c.x * 13.0;
+            float frame = floor(t * 120.0) + p.c.x * 13.0;
             col *= 1.0 - p.a.w * 0.5 * h5(float2(frame, 3.1));
             float g = (h5(c + frame * 17.0) - 0.5) * p.a.x;
             col += g;

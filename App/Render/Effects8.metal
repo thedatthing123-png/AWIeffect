@@ -138,7 +138,7 @@ kernel void fxStyle8(texture2d<half, access::sample> src [[texture(0)]],
             break;
         }
         case 10: { // night vision: a = (gain, noise, scanlines, vignette)
-            float n = (h8(c + floor(t * 30.0) * 31.7) - 0.5) * p.a.y;
+            float n = (h8(c + floor(t * 120.0) * 31.7) - 0.5) * p.a.y;
             float scan = 1.0 - p.a.z * (0.5 + 0.5 * sin(c.y * 2.1));
             float vig = 1.0 - p.a.w * smoothstep(0.3, 0.95, length((c / size - 0.5) * 1.6));
             float g = clamp(l8(col) * p.a.x + n, 0.0, 1.0) * scan * vig;

@@ -157,7 +157,7 @@ kernel void fxRepeat11(texture2d<half, access::sample> src [[texture(0)]],
         }
         case 9: { // random dissolve: a = (amount, grain px, seed, animate)
             float2 cell = floor(c / max(p.a.y, 1.0));
-            float fr = p.a.w > 0.5 ? floor(t * 24.0) : 0.0;
+            float fr = p.a.w > 0.5 ? floor(t * 120.0) : 0.0;
             float r = h11(cell + float2(p.a.z * 17.3 + fr * 7.1, p.a.z * 5.9 - fr * 3.3));
             o = r >= p.a.x ? s : float4(0.0);
             break;

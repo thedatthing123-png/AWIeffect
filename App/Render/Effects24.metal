@@ -322,10 +322,10 @@ kernel void fxGX(texture2d<half, access::sample> src [[texture(0)]],
         // wobbling lines, a torn head-switching strip at the bottom and white dropout streaks.
         float bleed = p.a.x, nz = p.a.y, wob = p.a.z;
         float row = floor(c.y);
-        float lineWob = sin(c.y * 0.035 + t * 2.3) * 1.5 + (gxH1(row, floor(t * 30.0)) - 0.5) * 1.2;
+        float lineWob = sin(c.y * 0.035 + t * 2.3) * 1.5 + (gxH1(row, floor(t * 120.0)) - 0.5) * 1.2;
         float2 q = c + float2(lineWob * wob * 2.0, 0.0);
         float head = smoothstep(size.y * 0.955, size.y * 0.975, c.y);
-        q.x += head * (20.0 + gxH1(floor(c.y / 2.0), floor(t * 30.0)) * 25.0);
+        q.x += head * (20.0 + gxH1(floor(c.y / 2.0), floor(t * 120.0)) * 25.0);
         float4 lumaS = (gxS(src, q - float2(1.0, 0.0)) + gxS(src, q) * 2.0 + gxS(src, q + float2(1.0, 0.0))) * 0.25;
         float4 chromaS = float4(0.0);
         float spread = 2.0 + bleed * 10.0;
@@ -335,25 +335,25 @@ kernel void fxGX(texture2d<half, access::sample> src [[texture(0)]],
         float3 rgb = Y + (chromaS.rgb - gxLum(chromaS.rgb)) * (1.0 - 0.25 * bleed);
         float a = lumaS.a;
         rgb = mix(rgb, rgb * 0.92 + 0.04 * a, 0.6);
-        float g = (gxH(floor(c / float2(2.0, 1.0)), floor(t * 30.0)) - 0.5) * nz * 0.18;
+        float g = (gxH(floor(c / float2(2.0, 1.0)), floor(t * 120.0)) - 0.5) * nz * 0.18;
         rgb += g * a;
         // Dropouts: short bright streaks on random lines.
-        float dl = gxH1(row, floor(t * 30.0) + 3.0);
+        float dl = gxH1(row, floor(t * 120.0) + 3.0);
         if (dl < nz * 0.012) {
-            float x0 = gxH1(row, floor(t * 30.0) + 4.0) * size.x;
-            float len = 20.0 + gxH1(row, floor(t * 30.0) + 5.0) * 90.0;
+            float x0 = gxH1(row, floor(t * 120.0) + 4.0) * size.x;
+            float len = 20.0 + gxH1(row, floor(t * 120.0) + 5.0) * 90.0;
             if (c.x > x0 && c.x < x0 + len) rgb = mix(rgb, float3(a), 0.85);
         }
-        rgb = mix(rgb, float3(gxH(floor(c / 2.0), floor(t * 30.0)) * a), head * 0.5);
+        rgb = mix(rgb, float3(gxH(floor(c / 2.0), floor(t * 120.0)) * a), head * 0.5);
         o = float4(clamp(rgb, 0.0, a), a);
         break; }
     default: {
         // Signal Interference: a = (strength px, bands, speed, color shift px), b.x = line noise 0-1.
         float ph = c.y / size.y * p.a.y - t * p.a.z;
         float env = smoothstep(0.55, 1.0, sin(ph * 6.2832) * 0.5 + 0.5);
-        float jag = sin(c.y * 0.35 + t * 37.0) * 0.6 + (gxH1(floor(c.y / 2.0), floor(t * 24.0) + p.d.z) - 0.5);
-        float noisy = step(gxH1(floor(c.y / 2.0), floor(t * 24.0) + 7.0 + p.d.z), p.b.x * 0.08);
-        float shift = p.a.x * (env * jag * 1.5 + noisy * (gxH1(floor(c.y), floor(t * 24.0)) - 0.5) * 3.0);
+        float jag = sin(c.y * 0.35 + t * 37.0) * 0.6 + (gxH1(floor(c.y / 2.0), floor(t * 120.0) + p.d.z) - 0.5);
+        float noisy = step(gxH1(floor(c.y / 2.0), floor(t * 120.0) + 7.0 + p.d.z), p.b.x * 0.08);
+        float shift = p.a.x * (env * jag * 1.5 + noisy * (gxH1(floor(c.y), floor(t * 120.0)) - 0.5) * 3.0);
         float2 q = c + float2(shift, 0.0);
         o = gxSplit(src, q, float2(p.a.w * (0.3 + env), 0.0));
         o.rgb = min(o.rgb * (1.0 + env * 0.18) + noisy * 0.12 * o.a, float3(o.a));
@@ -517,7 +517,8 @@ kernel void fxArt24(texture2d<half, access::sample> src [[texture(0)]],
                 float2 cc = cell + float2(x, y);
                 float sl = float(layer) * 17.0;
                 float2 pt = cc + 0.5 + (float2(gxH(cc, 4.0 + sl), gxH(cc, 5.0 + sl)) - 0.5) * p.a.y;
-                float rad = 0.5 * p.a.z * (0.75 + 0.5 * gxH(cc, 6.0 + sl));
+                // Dots overlap a little so dark areas read as color, with paper showing mostly in the light.
+                float rad = 0.62 * p.a.z * (0.8 + 0.45 * gxH(cc, 6.0 + sl));
                 float d = distance(g, pt);
                 float cover = 1.0 - smoothstep(rad - 0.08, rad, d);
                 float order = gxH(cc, 7.0 + sl);

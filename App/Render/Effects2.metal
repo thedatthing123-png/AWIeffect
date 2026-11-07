@@ -140,7 +140,9 @@ kernel void fxWarp(texture2d<half, access::sample> src [[texture(0)]],
             else r.x += fmod(floor(r.y), 2.0) != 0.0 ? p.c.x : 0.0;
             float2 f = fract(r);
             if (p.i.y != 0) { float2 cell = floor(r); f = select(f, 1.0 - f, fmod(abs(cell), 2.0) > 0.5); }
-            q = p.d.xy + f * p.d.zw;
+            // Stay half a pixel inside the layer: sampling on its edge blended in the empty margin around it,
+            // which drew a dark line at every tile seam. Seams now repeat (or mirror) the picture itself.
+            q = clamp(p.d.xy + f * p.d.zw, p.d.xy + 0.5, p.d.xy + p.d.zw - 0.5);
             edge = true;
             break;
         }
@@ -290,13 +292,13 @@ kernel void fxGlitch(texture2d<half, access::sample> src [[texture(0)]],
         if (h21(float2(row * 3.1, seed + 3.0)) > 1.0 - p.a.x * 0.08) o.rgb = o.a - o.rgb;
     } else {
         float t = p.a.w;
-        float wob = sin(c.y * 0.05 + t * 9.0) * p.a.z * 3.0 + (h21(float2(floor(c.y / 3.0), floor(t * 30.0))) - 0.5) * p.a.z * 4.0;
+        float wob = sin(c.y * 0.05 + t * 9.0) * p.a.z * 3.0 + (h21(float2(floor(c.y / 3.0), floor(t * 120.0))) - 0.5) * p.a.z * 4.0;
         float2 q = c + float2(wob, 0);
         float4 base = float4(src.sample(s2Zero, q));
         float4 bleedR = float4(src.sample(s2Zero, q + float2(3.0 * p.a.x, 0)));
         float4 bleedB = float4(src.sample(s2Zero, q - float2(2.0 * p.a.x, 0)));
         o = float4(mix(base.r, bleedR.r, 0.6 * p.a.x), base.g, mix(base.b, bleedB.b, 0.6 * p.a.x), base.a);
-        float n = (h21(c + floor(t * 30.0)) - 0.5) * p.a.y;
+        float n = (h21(c + floor(t * 120.0)) - 0.5) * p.a.y;
         o.rgb = clamp(o.rgb + n * o.a, 0.0, 64.0);
         float band = smoothstep(0.0, 0.02, abs(fract(c.y / size.y - t * 0.15) - 0.5) - 0.48);
         o.rgb *= mix(1.0, 1.25, (1.0 - band) * p.a.x);

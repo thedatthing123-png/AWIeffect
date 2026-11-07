@@ -157,7 +157,7 @@ extension EffectRegistry {
         id: "awi15.spinStreaks", name: "Spin Streaks", category: .blur, aeMatchNames: [],
         summary: "Highlights trail around a center in circular light arcs.",
         params: [.point("center", "Center", Vec2(0.5, 0.5)), .number("angle", "Arc Angle", 20, 0, 180, step: 0.1, unit: "°"),
-                 pct15("threshold", "Threshold", 50, 0, 95), .number("intensity", "Intensity", 1.5, 0, 5, step: 0.01),
+                 pct15("threshold", "Threshold", 75, 0, 95), .number("intensity", "Intensity", 0.8, 0, 5, step: 0.01),
                  .color("tint", "Tint", RGBA(0.85, 0.92, 1))],
         stage: .pixels { ctx in r15(ctx, 13) { p in
             let ce = pt15(ctx, "center")
