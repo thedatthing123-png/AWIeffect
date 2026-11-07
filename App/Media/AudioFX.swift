@@ -274,7 +274,7 @@ enum AudioDucking {
             guard !samples.isEmpty else { continue }
             let status = samples.withUnsafeMutableBytes { raw -> OSStatus in
                 guard let base = raw.baseAddress else { return -1 }
-                return CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: samples.count * MemoryLayout<Float>.size, destination: base)
+                return CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: raw.count, destination: base)
             }
             guard status == kCMBlockBufferNoErr else { continue }
             let first = (pts.isFinite ? pts : 0) * 48000
