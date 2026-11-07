@@ -515,9 +515,16 @@ struct StrokeSection: View {
                 Toggle("Stroke", isOn: Binding(get: { l.stroke.enabled }, set: { b in edit("Stroke") { $0.stroke.enabled = b } }))
                     .tint(Theme.accent).foregroundStyle(Theme.text)
                 if l.stroke.enabled {
+                    HStack {
+                        KeyframeDiamond(filled: l.stroke.color.hasKeyframe(at: t), animated: l.stroke.color.isAnimated) {
+                            edit("Stroke Color Keyframe") { $0.stroke.color.toggleKeyframe(at: t) }
+                        }
                     AWIColorWell("Stroke Color", selection: Binding(get: { Color(l.stroke.color.value(at: t)) }, set: { c in
-                        state.beginEdit("Stroke Color"); state.editShapeStyle(contentID) { $0.stroke.color.set(c.rgba, at: t) }; state.endEdit()
+                        if let id = contentID {
+                            state.coalescedShapeContent(id, "Stroke Color") { $0.stroke.color.set(c.rgba, at: t) }
+                        } else { state.coalescedEdit("Stroke Color") { $0.stroke.color.set(c.rgba, at: t) } }
                     })).foregroundStyle(Theme.text)
+                    }
                     row("Width", l.stroke.width, \.stroke.width, 0...200, t)
                     Text("Trim Paths").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textDim)
                         .frame(maxWidth: .infinity, alignment: .leading)

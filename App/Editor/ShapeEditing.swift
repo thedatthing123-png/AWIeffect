@@ -2,6 +2,13 @@ import Foundation
 import simd
 
 extension EditorState {
+    func coalescedShapeContent(_ id: UUID, _ label: String, _ change: (inout ShapeComponent) -> Void) {
+        coalescedEdit(label) { l in
+            var items = l.editableShapeContents
+            guard let i = items.firstIndex(where: { $0.id == id }), var c = items[i].component else { return }
+            change(&c); items[i].component = c; l.shapeContents = items
+        }
+    }
     var selectedShapeContent: ShapeContent? {
         let items = selectedLayer?.editableShapeContents ?? []
         return items.first { $0.id == selectedShapeContentID } ?? items.first { $0.component != nil }
@@ -22,6 +29,7 @@ extension EditorState {
         guard let l = selectedLayer, case .shape = l.content else { return }
         var c = ShapeComponent(); c.kind = kind
         c.size = Animated(Vec2(180, 180))
+        if kind == .path { c.path = Animated(BezierPath(vertices: [], closed: false)) }
 
         let item = ShapeContent(name: "Path \(l.editableShapeContents.filter { $0.component != nil }.count + 1)", component: c)
         beginEdit("Add Path")
@@ -81,6 +89,9 @@ extension EditorState {
         let local = Self.maskLocal(path, placement: placement), t = currentTime
         editShapeContent(cid, "Edit Path") { item in
             guard var c = item.component else { return }
+            if c.kind == .path && c.path.staticValue.vertices.isEmpty {
+                c.fillOn = local.closed; c.stroke.enabled = !local.closed
+            }
             c.kind = .path
             c.path.set(local, at: t)
             item.component = c

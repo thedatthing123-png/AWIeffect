@@ -141,7 +141,7 @@ struct ShapeComponentControls: View {
             if component.fillOn {
                 HStack {
                     KeyframeDiamond(filled: component.fill.hasKeyframe(at: t), animated: component.fill.isAnimated) { edit("Fill Keyframe") { $0.fill.toggleKeyframe(at: t) } }
-                    AWIColorWell("Fill Color", selection: Binding(get: { Color(component.fill.value(at: t)) }, set: { color in edit("Fill Color") { $0.fill.set(color.rgba, at: t) } }))
+                    AWIColorWell("Fill Color", selection: Binding(get: { Color(component.fill.value(at: t)) }, set: { color in state.coalescedShapeContent(id, "Fill Color") { $0.fill.set(color.rgba, at: t) } }))
                 }.frame(minHeight: 44)
                 ShapeGradientControls(state: state, id: id, gradient: component.fillGradient, stroke: false)
             }
@@ -211,7 +211,11 @@ struct ShapeGradientControls: View {
     private func color(_ title: String, _ a: Animated<RGBA>, _ kp: WritableKeyPath<ShapeGradient, Animated<RGBA>>) -> some View {
         HStack {
             KeyframeDiamond(filled: a.hasKeyframe(at: t), animated: a.isAnimated) { edit("Gradient Keyframe") { $0[keyPath: kp].toggleKeyframe(at: t) } }
-            AWIColorWell(title, selection: Binding(get: { Color(a.value(at: t)) }, set: { c in edit(title) { $0[keyPath: kp].set(c.rgba, at: t) } }))
+            AWIColorWell(title, selection: Binding(get: { Color(a.value(at: t)) }, set: { c in state.coalescedShapeContent(id, title) { component in
+                var g = (stroke ? component.strokeGradient : component.fillGradient) ?? ShapeGradient()
+                g[keyPath: kp].set(c.rgba, at: t)
+                if stroke { component.strokeGradient = g } else { component.fillGradient = g }
+            } }))
         }.frame(minHeight: 44)
     }
     private func point(_ title: String, _ a: Animated<Vec2>, _ kp: WritableKeyPath<ShapeGradient, Animated<Vec2>>) -> some View {

@@ -964,6 +964,13 @@ final class Renderer {
     enum Source { case shape, solid, image(MTLTexture), model(MTLTexture) }
 
 
+    private func mappedGradient(_ gradient: ShapeGradient?, matrix: simd_double3x3, time: Double) -> ShapeGradient? {
+        guard var g = gradient else { return nil }
+        g.start = Animated(ShapeContentsRenderer.point(g.start.value(at: time), matrix))
+        g.end = Animated(ShapeContentsRenderer.point(g.end.value(at: time), matrix))
+        return g
+    }
+
     private func drawShapePath(cb: MTLCommandBuffer, target: MTLTexture, matrix: simd_double3x3, layer: Layer, path: BezierPath,
                                time: Double, opacity: Double, blend: BlendMode, aa: Double) {
         if let contents = layer.shapeContents {
@@ -981,7 +988,8 @@ final class Renderer {
                         fill: c.fillOn ? c.fill.value(at: time) : nil, stroke: stroke,
                         opacity: opacity * copyOpacity * draw.opacity, blend: blend, aa: aa,
                         drawingEffects: layer.effects, time: time, trimMode: c.trimMode,
-                        fillGradient: c.fillOn ? c.fillGradient : nil, strokeGradient: c.strokeGradient)
+                        fillGradient: c.fillOn ? mappedGradient(c.fillGradient, matrix: useGroup ? draw.matrix : matrix_identity_double3x3, time: time) : nil,
+                        strokeGradient: mappedGradient(c.strokeGradient, matrix: useGroup ? draw.matrix : matrix_identity_double3x3, time: time))
                 }
             }
             return

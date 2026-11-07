@@ -202,6 +202,10 @@ struct KeyClipboard: Equatable {
                 }
             }
         }
+        var inspect = AnimationTraversal(operation: .inspect), stroke = l.stroke
+        stroke.traverse(&inspect)
+        for var item in l.shapeContents ?? [] { item.component?.traverse(&inspect) }
+        times += inspect.times
         return times
     }
 
@@ -231,6 +235,24 @@ struct KeyClipboard: Equatable {
         put(&target.innerRatio, s.innerRatio)
         put(&target.volume, s.volume)
         put(&target.extrude, s.extrude)
+        target.stroke.pasteKeys(s.stroke, delta: dt)
+        if let sourceItems = s.shapeContents, case .shape = target.content {
+            var items = target.editableShapeContents
+            var usedPaths = Set<UUID>()
+            for sourceItem in sourceItems {
+                guard let source = sourceItem.component else { continue }
+                var inspect = AnimationTraversal(operation: .inspect), check = source
+                check.traverse(&inspect)
+                guard !inspect.times.isEmpty else { continue }
+                let index = items.firstIndex { $0.component != nil && !usedPaths.contains($0.id) && $0.id == sourceItem.id }
+                    ?? items.firstIndex { $0.component != nil && !usedPaths.contains($0.id) && $0.name == sourceItem.name }
+                    ?? items.firstIndex { $0.component != nil && !usedPaths.contains($0.id) }
+                if let index {
+                    items[index].component?.pasteKeys(source, delta: dt); usedPaths.insert(items[index].id)
+                }
+            }
+            target.shapeContents = items
+        }
         // Effects: keys go onto the first not-yet-used effect of the same type; a missing effect is added.
         var used = Set<UUID>()
         for fx in s.effects {

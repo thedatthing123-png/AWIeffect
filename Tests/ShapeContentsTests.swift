@@ -101,6 +101,18 @@ final class ShapeContentsTests: XCTestCase {
         state.undo(); XCTAssertNil(state.project.layers[0].shapeContents?[1].component?.fillGradient)
         state.undo(); XCTAssertNil(state.project.layers[0].shapeContents)
     }
+    func testCopyPastePathKeysKeepsStyleAndRelativeTimes() {
+        var source = logo(), target = logo()
+        source.layers[0].shapeContents?[0].component?.position.insertKeyframe(Keyframe(time: 2, value: Vec2(40, 20)))
+        let clipboard = KeyClipboard(layer: source.layers[0], at: 0)
+        let oldFill = target.layers[0].shapeContents?[0].component?.fill
+        clipboard.paste(into: &target.layers[0], at: 5)
+        XCTAssertEqual(target.layers[0].shapeContents?[0].component?.position.keyframeTimes, [7])
+        XCTAssertEqual(target.layers[0].shapeContents?[0].component?.fill, oldFill)
+        XCTAssertNotEqual(target.layers[0].shapeContents?[0].component?.position.keyframes.first?.id,
+                          source.layers[0].shapeContents?[0].component?.position.keyframes.first?.id)
+    }
+
     func testCompoundRoundTripAndBoundsIncludeTransformsRepeaterStroke() throws {
         var p = logo()
         var c = try XCTUnwrap(p.layers[0].shapeContents?[0].component)
