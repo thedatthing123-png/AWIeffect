@@ -156,6 +156,11 @@ extension Layer {
         if shapeOps != nil {
             visit.apply(&shapeOps!.offset)
             visit.apply(&shapeOps!.pucker)
+            visit.apply(&shapeOps!.roundCorners)
+            if shapeOps!.twist != nil {
+                visit.apply(&shapeOps!.twist!.angle)
+                visit.apply(&shapeOps!.twist!.center)
+            }
             if shapeOps!.repeater != nil {
                 visit.apply(&shapeOps!.repeater!.copies)
                 visit.apply(&shapeOps!.repeater!.position)

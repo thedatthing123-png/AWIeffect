@@ -438,7 +438,10 @@ struct EditorView: View {
                     }
                 }
                 if state.panel == .masks, state.canvasMode == .comp {
-                    ClockReader(clock: state.clock) { _ in MaskPointsOverlay(state: state, fit: fit) }
+                    ClockReader(clock: state.clock) { _ in
+                        MaskPointsOverlay(state: state, fit: fit)
+                        MaskSelectionOverlay(state: state, fit: fit)
+                    }
                 }
                 if pen == nil, state.canvasMode == .comp, let id = state.selectedLayerID {
                     LiveReader(live: state.live) { lp in
@@ -513,6 +516,11 @@ struct EditorView: View {
                     }
                     return
                 }
+                // Masks panel open: taps select mask points or add one on the outline.
+                if state.panel == .masks, state.selectedLayerID != nil {
+                    let reach = 28 * Double(state.project.width) / Double(max(fit.width, 1))
+                    if state.maskTap(atComp: toComp(v.location, fit: fit), reach: reach) { return }
+                }
                 tapSelect(at: v.location, fit: fit)
             })
         }
@@ -580,7 +588,7 @@ struct EditorView: View {
         state.orbit.pan = Vec2(p.x - Double(t.x) * k * cos(yaw), p.y - Double(t.y) * k)
     }
     @State private var puppetDragPin: Int?
-    @State private var maskDrag: [Int]?
+    @State private var maskDrag: MaskDragSession?
     @State private var orbitZoomStart: Double?
 
     /// 3D view: one finger orbits (two fingers pan via the pinch's drift), pinch dollies.
@@ -616,21 +624,16 @@ struct EditorView: View {
                 if state.panel == .masks, canvasDragState == nil, panBase == nil {
                     if maskDrag == nil {
                         let reach = 28 * Double(state.project.width) / Double(max(fit.width, 1))
-                        var hit = state.maskPoint(nearComp: toComp(v.startLocation, fit: fit), reach: reach).map { [$0.0, $0.1] } ?? []
-                        // A transform handle closer to the finger than the mask point wins (masks don't cover handles).
-                        if hit.count == 2, let hd = state.nearestHandleDistance(at: v.startLocation, fit: fit),
-                           let l = state.selectedLayer, l.masks.indices.contains(hit[0]) {
-                            let verts = l.masks[hit[0]].path.value(at: state.currentTime).vertices
-                            if verts.indices.contains(hit[1]), let c = state.compPoint(fromLocal: verts[hit[1]].point) {
-                                let k = fit.width / CGFloat(max(state.project.width, 1))
-                                let md = hypot(fit.minX + CGFloat(c.x) * k - v.startLocation.x, fit.minY + CGFloat(c.y) * k - v.startLocation.y)
-                                if hd < md { hit = [] }
-                            }
+                        let start = toComp(v.startLocation, fit: fit)
+                        // A transform handle closer to the finger than any mask point wins (masks don't cover handles).
+                        var blocked = false
+                        if let hd = state.nearestHandleDistance(at: v.startLocation, fit: fit), hd < 20,
+                           state.maskCanvasHit(atComp: start, reach: Double(hd) * Double(state.project.width) / Double(max(fit.width, 1))) == nil {
+                            blocked = true
                         }
-                        maskDrag = hit
-                        if maskDrag?.count == 2 { state.beginEdit("Move Mask Point") }
+                        maskDrag = blocked ? MaskDragSession(hit: nil, base: nil, startComp: start) : state.beginMaskDrag(atComp: start, reach: reach)
                     }
-                    if let m = maskDrag, m.count == 2 { state.moveMaskPoint(mask: m[0], vertex: m[1], toComp: toComp(v.location, fit: fit)); return }
+                    if let m = maskDrag, m.hit != nil { state.updateMaskDrag(m, toComp: toComp(v.location, fit: fit)); return }
                 }
                 if state.panel == .puppet, canvasDragState == nil, panBase == nil {
                     if puppetDragPin == nil {
@@ -672,7 +675,7 @@ struct EditorView: View {
                 dragFrozen = false
                 if cameraStart != nil { if pinchOnLayer == nil { state.endCameraGesture() }; cameraStart = nil }
                 if let k = puppetDragPin { if k >= 0 { state.endEdit() }; puppetDragPin = nil }
-                if let m = maskDrag { if m.count == 2 { state.endEdit() }; maskDrag = nil }
+                if let m = maskDrag { state.endMaskDrag(m); maskDrag = nil }
                 if canvasDragState != nil { state.endCanvasDrag() }
                 canvasDragState = nil
                 panBase = nil
