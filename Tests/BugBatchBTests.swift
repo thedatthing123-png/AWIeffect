@@ -425,7 +425,7 @@ final class BugBatchBTests: XCTestCase {
     // MARK: R4 — presets
 
     func testPresetReappliesWithoutStackingAndKeepsUserOpacity() throws {
-        let p = project()
+        var p = project()
         var l = p.makeLayer(name: "l", content: .solid, size: Vec2(100, 100))
         l.transform.opacity = Animated(60)
         let zoom = try XCTUnwrap(PresetLibrary.all.first { $0.id == "zoomBlurIn" })

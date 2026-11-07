@@ -24,6 +24,7 @@ import XCTest
     }
 
     private func solid(_ p: Project, _ name: String, _ a: Double, _ b: Double) -> Layer {
+        var p = p
         var l = p.makeLayer(name: name, content: .solid, size: Vec2(10, 10))
         l.inPoint = a; l.outPoint = b
         return l
