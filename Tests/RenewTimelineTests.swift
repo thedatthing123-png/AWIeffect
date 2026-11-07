@@ -143,7 +143,7 @@ final class RenewTimelineTests: XCTestCase {
     }
 
     func testSlipStaysInsideSource() {
-        var l = Layer(name: "v", content: .audio("a.m4a", 10), outPoint: 4, transform: LayerTransform(position: Animated(Vec2(0, 0))), size: Animated(Vec2(1, 1)))
+        var l = Layer(name: "v", content: .audio(fileName: "a.m4a", duration: 10), outPoint: 4, transform: LayerTransform(position: Animated(Vec2(0, 0))), size: Animated(Vec2(1, 1)))
         l.sourceStart = 1
         XCTAssertEqual(EditorState.slipped(l, by: 2, sourceLength: 10), 3, accuracy: 1e-9)
         XCTAssertEqual(EditorState.slipped(l, by: 20, sourceLength: 10), 6, accuracy: 1e-9)
