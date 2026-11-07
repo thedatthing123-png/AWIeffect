@@ -110,6 +110,9 @@ struct PenOverlay: View {
     @State private var dragVertex: Int?
     @State private var dragVertexStart: Vec2?
     @State private var freehand: [Vec2] = []
+    /// Broken handles: each side of a point bends on its own (sharp corner with curves). Off = mirrored (smooth).
+    @State private var broken = false
+    @State private var dragHandle: MaskHandleSide?
 
     private var scale: Double { Double(fit.width) / Double(state.project.width) }
     private func comp(_ p: CGPoint) -> Vec2 { Vec2(Double(p.x - fit.minX) / scale, Double(p.y - fit.minY) / scale) }
@@ -139,9 +142,14 @@ struct PenOverlay: View {
             if style == .points {
                 ForEach(Array(vertices.enumerated()), id: \.offset) { i, v in
                     if v.outTangent != .zero || v.inTangent != .zero {
-                        Path { p in p.move(to: view(v.point + v.inTangent)); p.addLine(to: view(v.point + v.outTangent)) }
+                        Path { p in p.move(to: view(v.point + v.inTangent)); p.addLine(to: view(v.point)); p.addLine(to: view(v.point + v.outTangent)) }
                             .stroke(i == selected ? Theme.accentGlow : Theme.textDim, lineWidth: 1).allowsHitTesting(false)
-                        Circle().fill(Theme.textDim).frame(width: 6, height: 6).position(view(v.point + v.outTangent)).allowsHitTesting(false)
+                        // The selected point's handle ends are big enough to drag; others stay small.
+                        ForEach([v.inTangent, v.outTangent].filter { $0 != .zero }, id: \.self) { tan in
+                            Circle().fill(i == selected ? Theme.accent : Theme.textDim)
+                                .frame(width: i == selected ? 12 : 6, height: i == selected ? 12 : 6)
+                                .position(view(v.point + tan)).allowsHitTesting(false)
+                        }
                     }
                     Circle().fill(i == selected ? Theme.accent : (i == 0 ? Theme.accent.opacity(0.6) : .white)).frame(width: i == selected ? 16 : 12, height: i == selected ? 16 : 12)
                         .overlay(Circle().stroke(Theme.accent, lineWidth: 2))
@@ -180,8 +188,8 @@ struct PenOverlay: View {
     }
 
     private var hint: String {
-        if let s = selected { return curveMode ? "Swipe: shape point \(s + 1)'s curve" : "Swipe: move point \(s + 1)" }
-        return "Swipe to aim · Add Point · tap a point to edit it"
+        if let s = selected { return curveMode ? "Swipe: shape point \(s + 1)'s curve" : "Swipe: move point \(s + 1) · drag its handles" }
+        return "Swipe to aim · Add Point · tap the line to insert a point"
     }
 
     /// Swipe pad + point buttons along the bottom of the canvas.
@@ -190,6 +198,7 @@ struct PenOverlay: View {
             SwipePad(hint: selected == nil ? "Swipe to move the cursor" : (curveMode ? "Swipe to bend the curve" : "Swipe to move the point"),
                      gain: Double(state.project.width) * 0.8) { d in padMoved(Vec2(Double(d.width), Double(d.height))) }
                 .frame(height: 70)
+            // Three per row: build the path, then shape the point.
             HStack(spacing: 6) {
                 penButton(selected == nil ? "Add Point" : "Done Editing", selected == nil ? "plus.circle.fill" : "checkmark.circle") {
                     if selected == nil { addPoint(at: cursorPoint) } else { selected = nil; curveMode = false }
@@ -201,6 +210,11 @@ struct PenOverlay: View {
                 .disabled(vertices.isEmpty)
                 penButton(closed ? "Open" : "Close", closed ? "lasso" : "circle.dashed", on: closed) { closed.toggle() }
                     .disabled(vertices.count < 3)
+            }
+            HStack(spacing: 6) {
+                penButton(broken ? "Broken" : "Linked", broken ? "line.diagonal" : "link", on: broken) { broken.toggle() }
+                penButton("Corner", "square") { makeCorner() }
+                    .disabled(vertices.isEmpty)
                 penButton("Delete", "trash") { deletePoint() }
                     .disabled(vertices.isEmpty)
             }
@@ -216,7 +230,7 @@ struct PenOverlay: View {
                 Image(systemName: icon).font(.system(size: 15, weight: .semibold))
                 Text(title).font(.system(size: 10, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
             }
-            .frame(maxWidth: .infinity, minHeight: 42)
+            .frame(maxWidth: .infinity, minHeight: 44)
             .background(RoundedRectangle(cornerRadius: 10).fill(on ? Theme.accent : Theme.surface))
             .foregroundStyle(on ? Color.white : Theme.text)
         }
@@ -227,9 +241,10 @@ struct PenOverlay: View {
         if let s = selected, vertices.indices.contains(s) {
             if curveMode {
                 // Pull the handle out from the point; both sides stay mirrored (smooth point).
+                // Linked: both sides mirrored (smooth). Broken: only the outgoing side bends.
                 let t = vertices[s].outTangent + d
                 vertices[s].outTangent = t
-                vertices[s].inTangent = t * -1
+                if !broken { vertices[s].inTangent = t * -1 }
             } else {
                 vertices[s].point = vertices[s].point + d
             }
@@ -244,6 +259,35 @@ struct PenOverlay: View {
         vertices.append(PathVertex(point: p))
         cursor = p
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    /// Selected (or last) point loses its handles: a sharp corner.
+    private func makeCorner() {
+        let i = selected ?? vertices.count - 1
+        guard vertices.indices.contains(i) else { return }
+        vertices[i].inTangent = .zero; vertices[i].outTangent = .zero
+        curveMode = false
+    }
+
+    /// Handle end of the selected point under a touch.
+    private func handleHit(_ loc: CGPoint) -> MaskHandleSide? {
+        guard let s = selected, vertices.indices.contains(s) else { return nil }
+        let v = vertices[s]
+        var best: (MaskHandleSide, CGFloat)?
+        for (side, tan) in [(MaskHandleSide.outTangent, v.outTangent), (.inTangent, v.inTangent)] where tan != .zero {
+            let p = view(v.point + tan)
+            let d = hypot(p.x - loc.x, p.y - loc.y)
+            if d < 22, d < (best?.1 ?? .infinity) { best = (side, d) }
+        }
+        return best?.0
+    }
+
+    /// A touch on the drawn line (not on a point): segment index and position along it.
+    private func segmentHit(_ loc: CGPoint) -> (Int, Double)? {
+        guard vertices.count >= 2 else { return nil }
+        let path = BezierPath(vertices: vertices, closed: closed && vertices.count > 2)
+        guard let (seg, t, d) = path.nearestSegment(to: comp(loc), map: { $0 }), d * scale < 14, t > 0.02, t < 0.98 else { return nil }
+        return (seg, t)
     }
 
     private func deletePoint() {
@@ -272,14 +316,33 @@ struct PenOverlay: View {
                 if dragStart == nil {
                     dragStart = v.startLocation
                     // Touching an existing point grabs it (select + drag to move). It never closes the path.
+                    // A handle of the selected point: drag bends that side (both when Linked).
+                    if let side = handleHit(v.startLocation) { dragHandle = side; return }
                     if let hit = vertexHit(v.startLocation) {
                         dragVertex = hit; dragVertexStart = vertices[hit].point
                         selected = hit
                         UISelectionFeedbackGenerator().selectionChanged()
                         return
                     }
+                    // On the line: insert a point there; the curve keeps its shape.
+                    if let (seg, t) = segmentHit(v.startLocation) {
+                        var path = BezierPath(vertices: vertices, closed: closed && vertices.count > 2)
+                        if let j = path.insertVertex(onSegment: seg, t: t) {
+                            vertices = path.vertices
+                            selected = j; curveMode = false
+                            dragVertex = j; dragVertexStart = vertices[j].point
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        }
+                        return
+                    }
                     selected = nil; curveMode = false
                     addPoint(at: comp(v.startLocation))
+                }
+                if let side = dragHandle, let s = selected, vertices.indices.contains(s) {
+                    var path = BezierPath(vertices: vertices, closed: closed)
+                    path.moveHandle(s, side: side, toLocal: comp(v.location), broken: broken)
+                    vertices = path.vertices
+                    return
                 }
                 let d = comp(v.location) - comp(v.startLocation)
                 if let i = dragVertex, let start = dragVertexStart, vertices.indices.contains(i) {
@@ -292,7 +355,7 @@ struct PenOverlay: View {
                     vertices[vertices.count - 1].inTangent = d * -1
                 }
             }
-            .onEnded { _ in dragStart = nil; dragVertex = nil; dragVertexStart = nil }
+            .onEnded { _ in dragStart = nil; dragVertex = nil; dragVertexStart = nil; dragHandle = nil }
     }
 
     private var freehandGesture: some Gesture {
@@ -393,24 +456,34 @@ struct MasksPanel: View {
                 state.editMask(m.id, "Effects Only") { $0.effectsOnly = b }
             }))
             .tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13))
-            maskSlider("Feather", m.feather.value(at: t), 0...400) { v in state.editMask(m.id, "Feather", continuous: true) { $0.feather.set(v, at: t) } }
-            maskSlider("Opacity", m.opacity.value(at: t), 0...100) { v in state.editMask(m.id, "Mask Opacity", continuous: true) { $0.opacity.set(v, at: t) } }
-            maskSlider("Expansion", m.expansion.value(at: t), -300...300) { v in state.editMask(m.id, "Expansion", continuous: true) { $0.expansion.set(v, at: t) } }
-            HStack {
+            // Every mask value is animatable: the diamond keys it at the playhead.
+            maskSlider("Feather", m, 0...400, \.feather, t)
+            maskSlider("Opacity", m, 0...100, \.opacity, t)
+            maskSlider("Expansion", m, -300...300, \.expansion, t)
+            HStack(spacing: 8) {
                 KeyframeDiamond(filled: m.path.hasKeyframe(at: t), animated: m.path.isAnimated) {
                     state.editMask(m.id, "Mask Path Keyframe") { $0.path.toggleKeyframe(at: t) }
                 }
                 Text("Mask Path").font(.system(size: 12)).foregroundStyle(Theme.text)
                 Spacer()
             }
+            MaskPathEditSection(state: state, mask: m)
         }
         .padding(10).glass(radius: 12)
     }
 
-    private func maskSlider(_ title: String, _ v: Double, _ r: ClosedRange<Double>, _ set: @escaping (Double) -> Void) -> some View {
-        HStack {
+    private func maskSlider(_ title: String, _ m: LayerMask, _ r: ClosedRange<Double>,
+                            _ key: WritableKeyPath<LayerMask, Animated<Double>>, _ t: Double) -> some View {
+        let a = m[keyPath: key]
+        let id: UUID? = m.id
+        return HStack(spacing: 8) {
+            KeyframeDiamond(filled: a.hasKeyframe(at: t), animated: a.isAnimated) {
+                if let id { state.editMask(id, "\(title) Keyframe") { $0[keyPath: key].toggleKeyframe(at: t) } }
+            }
             Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 74, alignment: .leading)
-            ValueScrubber(value: v, range: r, step: 1, onChange: set, onEnd: { state.endEdit() })
+            ValueScrubber(value: a.value(at: t), range: r, step: 1,
+                          onChange: { v in if let id { state.editMask(id, title, continuous: true) { $0[keyPath: key].set(v, at: t) } } },
+                          onEnd: { state.endEdit() })
         }
     }
 }
@@ -429,19 +502,12 @@ struct StrokeSection: View {
                     AWIColorWell("Stroke Color", selection: Binding(get: { Color(l.stroke.color.value(at: t)) }, set: { c in
                         state.coalescedEdit("Stroke Color") { $0.stroke.color.set(c.rgba, at: t) }
                     })).foregroundStyle(Theme.text)
-                    row("Width", l.stroke.width.value(at: t), 0...200) { v in cont { $0.stroke.width.set(v, at: t) } }
+                    row("Width", l.stroke.width, \.stroke.width, 0...200, t)
                     Text("Trim Paths").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textDim)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    row("Start", l.stroke.trimStart.value(at: t), 0...100) { v in cont { $0.stroke.trimStart.set(v, at: t) } }
-                    row("End", l.stroke.trimEnd.value(at: t), 0...100) { v in cont { $0.stroke.trimEnd.set(v, at: t) } }
-                    row("Offset", l.stroke.trimOffset.value(at: t), -360...360) { v in cont { $0.stroke.trimOffset.set(v, at: t) } }
-                    HStack {
-                        Button("Keyframe Trim End") {
-                            edit("Trim Keyframe") { $0.stroke.trimEnd.toggleKeyframe(at: t) }
-                        }
-                        .font(.system(size: 12, weight: .semibold)).tint(Theme.accent)
-                        Spacer()
-                    }
+                    row("Start", l.stroke.trimStart, \.stroke.trimStart, 0...100, t)
+                    row("End", l.stroke.trimEnd, \.stroke.trimEnd, 0...100, t)
+                    row("Offset", l.stroke.trimOffset, \.stroke.trimOffset, -360...360, t)
                 }
             }
         }
@@ -451,17 +517,24 @@ struct StrokeSection: View {
         state.beginEdit(label); state.mutateLayer(change); state.endEdit()
     }
 
-    private func cont(_ change: (inout Layer) -> Void) { state.beginEdit("Edit Stroke"); state.mutateLayer(change) }
-
-    private func row(_ title: String, _ v: Double, _ r: ClosedRange<Double>, _ set: @escaping (Double) -> Void) -> some View {
-        HStack {
+    /// Diamond + label + scrubber: every stroke / trim value keys at the playhead.
+    private func row(_ title: String, _ a: Animated<Double>, _ key: WritableKeyPath<Layer, Animated<Double>>,
+                     _ r: ClosedRange<Double>, _ t: Double) -> some View {
+        HStack(spacing: 8) {
+            KeyframeDiamond(filled: a.hasKeyframe(at: t), animated: a.isAnimated) {
+                edit("\(title) Keyframe") { $0[keyPath: key].toggleKeyframe(at: t) }
+            }
             Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 60, alignment: .leading)
-            ValueScrubber(value: v, range: r, step: 1, onChange: set, onEnd: { state.endEdit() })
+            ValueScrubber(value: a.value(at: t), range: r, step: 1,
+                          onBegin: { state.beginEdit("Edit Stroke") },
+                          onChange: { v in state.mutateLayer { $0[keyPath: key].set(v, at: t) } },
+                          onEnd: { state.endEdit() })
         }
     }
 }
 
-/// AE shape operators for the selected shape layer: Repeater, Offset Paths, Wiggle Paths, Zig Zag, Pucker & Bloat.
+/// AE shape operators for the selected shape layer, as a stack of cards: each card is one operator, in the order it
+/// runs (move it up / down), every value has its keyframe diamond. Repeater always runs last (it copies the result).
 struct ShapeOpsSection: View {
     @ObservedObject var state: EditorState
 
@@ -469,54 +542,164 @@ struct ShapeOpsSection: View {
         if let l = state.selectedLayer, case .shape = l.content {
             let ops = l.shapeOps ?? ShapeOps()
             let t = state.currentTime
-            VStack(alignment: .leading, spacing: 6) {
-                Text("SHAPE OPERATORS").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
-                toggle("Repeater", ops.repeater != nil) { on in edit { $0.repeater = on ? RepeaterOp() : nil } }
+            let active = ops.activeOrder
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("SHAPE OPERATORS").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+                    Spacer()
+                    Menu {
+                        ForEach(ShapeOpKind.allCases.filter { !ops.has($0) }) { k in
+                            Button(k.title) { edit("Add \(k.title)") { $0.setEnabled(k, true) } }
+                        }
+                        if ops.repeater == nil {
+                            Button("Repeater") { edit("Add Repeater") { $0.repeater = RepeaterOp() } }
+                        }
+                    } label: {
+                        Label("Add", systemImage: "plus.circle.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                            .frame(minWidth: 88, minHeight: 44)
+                            .foregroundStyle(Theme.accent)
+                    }
+                }
+                if active.isEmpty && ops.repeater == nil {
+                    Text("Add an operator to bend, round, twist or repeat this shape.")
+                        .font(.caption).foregroundStyle(Theme.textDim)
+                }
+                ForEach(Array(active.enumerated()), id: \.element) { i, k in
+                    card(k, first: i == 0, last: i == active.count - 1) { rows(k, ops, t) }
+                }
                 if let r = ops.repeater {
-                    row("Copies", r.copies.value(at: t), 1...50, 1) { v in edit { $0.repeater?.copies.set(v, at: t) } }
-                    row("Offset X", r.position.value(at: t).x, -1000...1000, 1) { v in edit { $0.repeater?.position.set(Vec2(v, r.position.value(at: t).y), at: t) } }
-                    row("Offset Y", r.position.value(at: t).y, -1000...1000, 1) { v in edit { $0.repeater?.position.set(Vec2(r.position.value(at: t).x, v), at: t) } }
-                    row("Scale %", r.scale.value(at: t).x, 0...200, 1) { v in edit { $0.repeater?.scale.set(Vec2(v, v), at: t) } }
-                    row("Rotation", r.rotation.value(at: t), -360...360, 1) { v in edit { $0.repeater?.rotation.set(v, at: t) } }
-                    row("Start Opacity", r.startOpacity.value(at: t), 0...100, 1) { v in edit { $0.repeater?.startOpacity.set(v, at: t) } }
-                    row("End Opacity", r.endOpacity.value(at: t), 0...100, 1) { v in edit { $0.repeater?.endOpacity.set(v, at: t) } }
+                    card(nil, first: true, last: true) { repeaterRows(r, t) }
                 }
-                toggle("Offset Paths", ops.offset != nil) { on in edit { $0.offset = on ? Animated(10) : nil } }
-                if let o = ops.offset { row("Amount", o.value(at: t), -300...300, 1) { v in edit { $0.offset?.set(v, at: t) } } }
-                toggle("Wiggle Paths", ops.wiggle != nil) { on in edit { $0.wiggle = on ? WiggleOp() : nil } }
-                if let w = ops.wiggle {
-                    row("Size", w.size.value(at: t), 0...200, 1) { v in edit { $0.wiggle?.size.set(v, at: t) } }
-                    row("Detail", w.detail.value(at: t), 0...20, 1) { v in edit { $0.wiggle?.detail.set(v, at: t) } }
-                    row("Wiggles/s", w.speed.value(at: t), 0...20, 0.1) { v in edit { $0.wiggle?.speed.set(v, at: t) } }
-                }
-                toggle("Zig Zag", ops.zigzag != nil) { on in edit { $0.zigzag = on ? ZigZagOp() : nil } }
-                if let z = ops.zigzag {
-                    row("Size", z.size.value(at: t), -200...200, 1) { v in edit { $0.zigzag?.size.set(v, at: t) } }
-                    row("Ridges", z.ridges.value(at: t), 1...40, 1) { v in edit { $0.zigzag?.ridges.set(v, at: t) } }
-                }
-                toggle("Pucker & Bloat", ops.pucker != nil) { on in edit { $0.pucker = on ? Animated(30) : nil } }
-                if let pk = ops.pucker { row("Amount", pk.value(at: t), -100...100, 1) { v in edit { $0.pucker?.set(v, at: t) } } }
             }
             .padding(10).glass(radius: 12)
         }
     }
 
-    private func edit(_ change: (inout ShapeOps) -> Void) {
-        state.coalescedEdit("Shape Operator") { l in
+    // MARK: cards
+
+    /// `k == nil` is the Repeater card (fixed at the end of the stack).
+    private func card<Content: View>(_ k: ShapeOpKind?, first: Bool, last: Bool, @ViewBuilder _ content: () -> Content) -> some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 6) {
+                Text(k?.title ?? "Repeater").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.text)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                if let k {
+                    // Order in the stack + remove: three controls on the title row.
+                    iconButton("chevron.up", "Move Up") { edit("Reorder Operators") { $0.move(k, by: -1) } }.disabled(first)
+                    iconButton("chevron.down", "Move Down") { edit("Reorder Operators") { $0.move(k, by: 1) } }.disabled(last)
+                    iconButton("trash", "Remove") { edit("Remove \(k.title)") { $0.setEnabled(k, false) } }
+                } else {
+                    iconButton("trash", "Remove") { edit("Remove Repeater") { $0.repeater = nil } }
+                }
+            }
+            content()
+        }
+        .padding(8)
+        .background(RoundedRectangle(cornerRadius: 10).fill(Theme.surface.opacity(0.6)))
+    }
+
+    @ViewBuilder
+    private func rows(_ k: ShapeOpKind, _ ops: ShapeOps, _ t: Double) -> some View {
+        switch k {
+        case .pucker:
+            if let a = ops.pucker { row("Amount", a, -100...100, 1, t, set: { o, v in o.pucker?.set(v, at: t) }, key: { $0.pucker?.toggleKeyframe(at: t) }) }
+        case .roundCorners:
+            if let a = ops.roundCorners { row("Radius", a, 0...500, 1, t, set: { o, v in o.roundCorners?.set(v, at: t) }, key: { $0.roundCorners?.toggleKeyframe(at: t) }) }
+        case .offset:
+            if let a = ops.offset { row("Amount", a, -300...300, 1, t, set: { o, v in o.offset?.set(v, at: t) }, key: { $0.offset?.toggleKeyframe(at: t) }) }
+        case .zigzag:
+            if let z = ops.zigzag {
+                row("Size", z.size, -200...200, 1, t, set: { o, v in o.zigzag?.size.set(v, at: t) }, key: { $0.zigzag?.size.toggleKeyframe(at: t) })
+                row("Ridges", z.ridges, 1...40, 1, t, set: { o, v in o.zigzag?.ridges.set(v, at: t) }, key: { $0.zigzag?.ridges.toggleKeyframe(at: t) })
+            }
+        case .twist:
+            if let tw = ops.twist {
+                row("Angle", tw.angle, -720...720, 1, t, set: { o, v in o.twist?.angle.set(v, at: t) }, key: { $0.twist?.angle.toggleKeyframe(at: t) })
+                vecRow("Center", tw.center, t, set: { o, v in o.twist?.center.set(v, at: t) }, key: { $0.twist?.center.toggleKeyframe(at: t) })
+            }
+        case .wiggle:
+            if let w = ops.wiggle {
+                row("Size", w.size, 0...200, 1, t, set: { o, v in o.wiggle?.size.set(v, at: t) }, key: { $0.wiggle?.size.toggleKeyframe(at: t) })
+                row("Detail", w.detail, 0...20, 1, t, set: { o, v in o.wiggle?.detail.set(v, at: t) }, key: { $0.wiggle?.detail.toggleKeyframe(at: t) })
+                row("Wiggles/s", w.speed, 0...20, 0.1, t, set: { o, v in o.wiggle?.speed.set(v, at: t) }, key: { $0.wiggle?.speed.toggleKeyframe(at: t) })
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func repeaterRows(_ r: RepeaterOp, _ t: Double) -> some View {
+        row("Copies", r.copies, 1...50, 1, t, set: { o, v in o.repeater?.copies.set(v, at: t) }, key: { $0.repeater?.copies.toggleKeyframe(at: t) })
+        vecRow("Offset", r.position, t, set: { o, v in o.repeater?.position.set(v, at: t) }, key: { $0.repeater?.position.toggleKeyframe(at: t) })
+        row("Scale %", Animated(r.scale.value(at: t).x), 0...200, 1, t, keyState: (r.scale.hasKeyframe(at: t), r.scale.isAnimated),
+            set: { o, v in o.repeater?.scale.set(Vec2(v, v), at: t) }, key: { $0.repeater?.scale.toggleKeyframe(at: t) })
+        row("Rotation", r.rotation, -360...360, 1, t, set: { o, v in o.repeater?.rotation.set(v, at: t) }, key: { $0.repeater?.rotation.toggleKeyframe(at: t) })
+        row("Start Opacity", r.startOpacity, 0...100, 1, t, set: { o, v in o.repeater?.startOpacity.set(v, at: t) }, key: { $0.repeater?.startOpacity.toggleKeyframe(at: t) })
+        row("End Opacity", r.endOpacity, 0...100, 1, t, set: { o, v in o.repeater?.endOpacity.set(v, at: t) }, key: { $0.repeater?.endOpacity.toggleKeyframe(at: t) })
+    }
+
+    // MARK: rows
+
+    private func edit(_ label: String, _ change: (inout ShapeOps) -> Void) {
+        state.beginEdit(label)
+        apply(change)
+        state.endEdit()
+    }
+
+    private func apply(_ change: (inout ShapeOps) -> Void) {
+        state.mutateLayer { l in
             var o = l.shapeOps ?? ShapeOps()
             change(&o)
             l.shapeOps = o.isEmpty ? nil : o
         }
     }
 
-    private func toggle(_ title: String, _ on: Bool, _ set: @escaping (Bool) -> Void) -> some View {
-        Toggle(title, isOn: Binding(get: { on }, set: set)).tint(Theme.accent).foregroundStyle(Theme.text).font(.system(size: 13, weight: .semibold))
+    /// Diamond + label + scrubber (one undo step per drag / typed value). `keyed` is the property the diamond shows
+    /// when the value shown is derived from it (Repeater scale).
+    private func row(_ title: String, _ a: Animated<Double>, _ r: ClosedRange<Double>, _ step: Double, _ t: Double,
+                     keyState: (filled: Bool, animated: Bool)? = nil,
+                     set: @escaping (inout ShapeOps, Double) -> Void,
+                     key: @escaping (inout ShapeOps) -> Void) -> some View {
+        let filled = keyState?.filled ?? a.hasKeyframe(at: t)
+        let animated = keyState?.animated ?? a.isAnimated
+        return HStack(spacing: 8) {
+            KeyframeDiamond(filled: filled, animated: animated) { edit("\(title) Keyframe", key) }
+            Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).lineLimit(1).fixedSize()
+                .frame(width: 92, alignment: .leading)
+            ValueScrubber(value: a.value(at: t), range: r, step: step,
+                          onBegin: { state.beginEdit(title) },
+                          onChange: { v in apply { set(&$0, v) } },
+                          onEnd: { state.endEdit() })
+        }
     }
 
-    private func row(_ title: String, _ v: Double, _ r: ClosedRange<Double>, _ step: Double, _ set: @escaping (Double) -> Void) -> some View {
-        HStack {
-            Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 90, alignment: .leading)
-            ValueScrubber(value: v, range: r, step: step, onChange: set)
+    /// X and Y share one diamond (one property), each gets its own scrubber: diamond + X + Y, three per row.
+    private func vecRow(_ title: String, _ a: Animated<Vec2>, _ t: Double,
+                        set: @escaping (inout ShapeOps, Vec2) -> Void,
+                        key: @escaping (inout ShapeOps) -> Void) -> some View {
+        let v = a.value(at: t)
+        return VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.system(size: 12)).foregroundStyle(Theme.text)
+            HStack(spacing: 8) {
+                KeyframeDiamond(filled: a.hasKeyframe(at: t), animated: a.isAnimated) { edit("\(title) Keyframe", key) }
+                ValueScrubber(value: v.x, range: -1000...1000, step: 1, unit: " X",
+                              onBegin: { state.beginEdit(title) },
+                              onChange: { x in apply { set(&$0, Vec2(x, v.y)) } },
+                              onEnd: { state.endEdit() }, allowBeyond: true)
+                ValueScrubber(value: v.y, range: -1000...1000, step: 1, unit: " Y",
+                              onBegin: { state.beginEdit(title) },
+                              onChange: { y in apply { set(&$0, Vec2(v.x, y)) } },
+                              onEnd: { state.endEdit() }, allowBeyond: true)
+            }
         }
+    }
+
+    private func iconButton(_ icon: String, _ label: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon).font(.system(size: 14, weight: .semibold))
+                .frame(width: 44, height: 44)
+                .foregroundStyle(Theme.text)
+        }
+        .buttonStyle(.plain).accessibilityLabel(label)
     }
 }

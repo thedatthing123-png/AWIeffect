@@ -107,6 +107,7 @@ struct MotionPathOverlay: View {
     @ObservedObject var state: EditorState
     let fit: CGRect
     @State private var dragKey: Int?
+    @State private var dragHandle: Bool = false
 
     private var scale: CGFloat { fit.width / CGFloat(max(state.project.width, 1)) }
     private func screen(_ p: Vec2) -> CGPoint { CGPoint(x: fit.minX + CGFloat(p.x) * scale, y: fit.minY + CGFloat(p.y) * scale) }
@@ -145,6 +146,12 @@ struct MotionPathOverlay: View {
                     }
                 }
                 .allowsHitTesting(false)
+                // Bezier handles: on the key nearest the playhead (pull them out to curve the path) and on every key
+                // that is already curved. Drag a handle back onto its key to straighten that key again.
+                let focus = ks.indices.min(by: { abs(ks[$0].time - state.currentTime) < abs(ks[$1].time - state.currentTime) })
+                ForEach(ks.indices.filter { $0 == focus || ks[$0].spatialOut != nil || ks[$0].spatialIn != nil }, id: \.self) { k in
+                    handles(l, ks, k, view: view)
+                }
                 ForEach(ks.indices, id: \.self) { k in
                     if let sp = MotionPathMath.screenPoint(l, value: ks[k].value, project: view, time: ks[k].time) {
                         Rectangle()
@@ -169,6 +176,41 @@ struct MotionPathOverlay: View {
                 }
             }
             .coordinateSpace(name: "motionPath")
+        }
+    }
+
+    /// The two handle ends of key k (hollow = not curved yet), each 44 pt to grab.
+    @ViewBuilder
+    private func handles(_ l: Layer, _ ks: [Keyframe<Vec2>], _ k: Int, view: Project) -> some View {
+        let key = ks[k]
+        let curved = key.spatialOut != nil || key.spatialIn != nil
+        let outT = key.spatialOut ?? MotionPathHandles.defaultTangent(ks, k)
+        let inT = key.spatialIn ?? outT * -1
+        if let c = MotionPathMath.screenPoint(l, value: key.value, project: view, time: key.time) {
+            ForEach([true, false], id: \.self) { out in
+                if let h = MotionPathMath.screenPoint(l, value: key.value + (out ? outT : inT), project: view, time: key.time) {
+                    Path { p in p.move(to: screen(c)); p.addLine(to: screen(h)) }
+                        .stroke(Theme.accentGlow.opacity(curved ? 0.9 : 0.45), style: StrokeStyle(lineWidth: 1, dash: curved ? [] : [3, 3]))
+                        .allowsHitTesting(false)
+                    Circle()
+                        .fill(curved ? Theme.accent : Color.clear)
+                        .overlay(Circle().stroke(Theme.accentGlow, lineWidth: 1.5))
+                        .frame(width: 11, height: 11)
+                        .frame(width: 44, height: 44).contentShape(Rectangle())
+                        .position(screen(h))
+                        .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .named("motionPath"))
+                            .onChanged { v in
+                                if !dragHandle { dragHandle = true; state.beginEdit("Curve Motion Path"); state.beginLiveGesture() }
+                                guard let value = MotionPathMath.value(l, at: comp(v.location), project: view, time: key.time) else { return }
+                                let tangent = value - key.value
+                                state.mutateLayer { layer in
+                                    MotionPathHandles.setHandle(&layer.transform.position, key: k, out: out, tangent: tangent)
+                                }
+                            }
+                            .onEnded { _ in dragHandle = false; state.endLiveGesture(); state.endEdit() })
+                        .accessibilityLabel(out ? "Outgoing path handle" : "Incoming path handle")
+                }
+            }
         }
     }
 }

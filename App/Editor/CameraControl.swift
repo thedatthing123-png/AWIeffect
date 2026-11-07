@@ -165,11 +165,14 @@ struct CameraFrameOverlay: View {
 /// Rule-of-thirds grid over the comp.
 struct CompGrid: View {
     let fit: CGRect
+    /// Lines per side (3 = rule of thirds). Moves snap to these lines when Snap to Grid is on.
+    var divisions: Int = 3
     var body: some View {
         Canvas { ctx, _ in
             var p = Path()
-            for k in 1...2 {
-                let x = fit.minX + fit.width * CGFloat(k) / 3, y = fit.minY + fit.height * CGFloat(k) / 3
+            let n = max(2, divisions)
+            for k in 1..<n {
+                let x = fit.minX + fit.width * CGFloat(k) / CGFloat(n), y = fit.minY + fit.height * CGFloat(k) / CGFloat(n)
                 p.move(to: CGPoint(x: x, y: fit.minY)); p.addLine(to: CGPoint(x: x, y: fit.maxY))
                 p.move(to: CGPoint(x: fit.minX, y: y)); p.addLine(to: CGPoint(x: fit.maxX, y: y))
             }

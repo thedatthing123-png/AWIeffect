@@ -172,14 +172,15 @@ struct ThreeDPanel: View {
                                     keyed: { state.mutateLayer { $0.camera?.zoom.toggleKeyframe(at: t) } })
                                 Text("Low = wide angle, high = telephoto (zoomed in, flatter depth).").font(.caption).foregroundStyle(Theme.textDim)
                         // Like a real lens on a full-frame camera (AE uses the same 36 mm film width).
-                        HStack(spacing: 6) {
-                            ForEach([18.0, 35, 50, 85, 135], id: \.self) { mm in
+                        // Three per row, 44 pt each.
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
+                            ForEach([18.0, 24, 35, 50, 85, 135], id: \.self) { mm in
                                 Button {
                                     state.mutate("Lens \(Int(mm)) mm") { p in
                                         if let i = state.selectedIndex { p.layers[i].camera?.zoom.set(EditorState.zoom(forFocalLength: mm, compWidth: p.width), at: t) }
                                     }
                                 } label: {
-                                    Text("\(Int(mm))mm").font(.system(size: 11, weight: .bold)).frame(maxWidth: .infinity, minHeight: 30)
+                                    Text("\(Int(mm)) mm").font(.system(size: 12, weight: .bold)).frame(maxWidth: .infinity, minHeight: 44)
                                         .background(RoundedRectangle(cornerRadius: 8).fill(abs(EditorState.focalLength(zoom: c.zoom.value(at: t), compWidth: state.project.width) - mm) < 0.5 ? Theme.accent : Theme.raised))
                                         .foregroundStyle(Theme.text)
                                 }
@@ -198,14 +199,12 @@ struct ThreeDPanel: View {
                                 row("Focus Distance", c.focusDistance.value(at: t), 10...10000, anim: c.focusDistance,
                                     set: { v in state.mutateLayer { $0.camera?.focusDistance.set(v, at: t) } },
                                     keyed: { state.mutateLayer { $0.camera?.focusDistance.toggleKeyframe(at: t) } })
-                                Menu {
-                            ForEach(state.project.layers.filter { $0.is3D && $0.content != .camera && $0.content != .light }) { target in
-                                Button(target.name) { state.focusCamera(on: target.id) }
-                            }
-                        } label: {
-                            Label("Focus on a Layer", systemImage: "scope").font(.system(size: 13, weight: .semibold))
-                                .frame(maxWidth: .infinity, minHeight: 34).background(RoundedRectangle(cornerRadius: 9).fill(Theme.raised)).foregroundStyle(Theme.text)
-                        }
+                                // Tap the layer on the canvas (like Link) instead of hunting for its name.
+                                Button { state.pickCameraFocus() } label: {
+                                    Label("Focus on a Layer (tap it)", systemImage: "hand.tap").font(.system(size: 13, weight: .semibold))
+                                        .frame(maxWidth: .infinity, minHeight: 44).background(RoundedRectangle(cornerRadius: 9).fill(Theme.raised)).foregroundStyle(Theme.text)
+                                }
+                                .buttonStyle(.plain)
                         row("Aperture", c.aperture.value(at: t), 0...400, anim: c.aperture,
                                     set: { v in state.mutateLayer { $0.camera?.aperture.set(v, at: t) } },
                                     keyed: { state.mutateLayer { $0.camera?.aperture.toggleKeyframe(at: t) } })

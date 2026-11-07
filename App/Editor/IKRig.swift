@@ -154,8 +154,6 @@ extension EditorState {
 /// Rig panel: IK for limbs and collider switch.
 struct RigPanel: View {
     @ObservedObject var state: EditorState
-    @State private var upper: UUID?
-    @State private var controller: UUID?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -195,13 +193,18 @@ struct RigPanel: View {
                         } else {
                             Text("Select the LOWER part (forearm / shin), pick its upper part (upper arm / thigh), then Make IK. A controller is created at the limb's tip unless you pick one.")
                                 .font(.caption).foregroundStyle(Theme.textDim)
-                            picker("Upper Limb", selection: $upper, exclude: l.id)
-                            picker("Controller (optional)", selection: $controller, exclude: l.id)
-                            Button { if let u = upper { state.makeIK(upper: u, controller: controller) } } label: {
+                            picker("Upper Limb", selection: state.ikDraftUpper, exclude: l.id) { state.pickIKUpper() } clear: { state.ikDraftUpper = nil }
+                            picker("Controller (optional)", selection: state.ikDraftController, exclude: l.id) { state.pickIKController() } clear: { state.ikDraftController = nil }
+                            Button {
+                                if let u = state.ikDraftUpper, IKSolver.descendants(of: l.id, in: state.project).contains(u) == false, u != l.id {
+                                    state.makeIK(upper: u, controller: state.ikDraftController)
+                                    state.ikDraftUpper = nil; state.ikDraftController = nil
+                                }
+                            } label: {
                                 Label("Make IK", systemImage: "figure.arms.open").frame(maxWidth: .infinity)
                             }
                             .buttonStyle(PrimaryButtonStyle())
-                            .disabled(upper == nil)
+                            .disabled(state.ikDraftUpper == nil)
                         }
                     }
                     .padding(.horizontal, 12).padding(.bottom, 14)
@@ -210,19 +213,23 @@ struct RigPanel: View {
         }
     }
 
-    private func picker(_ title: String, selection: Binding<UUID?>, exclude: UUID) -> some View {
-        // Layers under the lower limb would make a link loop: never offer them.
+    /// Label + "tap a layer on the canvas" button + clear (three per row). Layers under the lower limb would make a
+    /// link loop, so a pick of one is shown as invalid and Make IK refuses it.
+    private func picker(_ title: String, selection: UUID?, exclude: UUID, pick: @escaping () -> Void, clear: @escaping () -> Void) -> some View {
         let below = IKSolver.descendants(of: exclude, in: state.project)
-        let options = state.project.layers.filter { $0.id != exclude && !below.contains($0.id) && $0.content != .camera && $0.content != .light && !$0.isAudioOnly }
-        return HStack {
-            Text(title).font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 130, alignment: .leading)
-            Menu {
-                Button("None") { selection.wrappedValue = nil }
-                ForEach(options) { o in Button(o.name) { selection.wrappedValue = o.id } }
-            } label: {
-                Text(options.first { $0.id == selection.wrappedValue }?.name ?? "Choose…").font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Theme.accentGlow).frame(maxWidth: .infinity, minHeight: 32)
+        let chosen = state.project.layers.first { $0.id == selection }
+        let invalid = selection.map { below.contains($0) || $0 == exclude } ?? false
+        return HStack(spacing: 6) {
+            Text(title).font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 110, alignment: .leading)
+            Button(action: pick) {
+                Label(chosen?.name ?? "Tap a Layer", systemImage: "hand.tap").font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                    .foregroundStyle(invalid ? Theme.danger : Theme.accentGlow).frame(maxWidth: .infinity, minHeight: 44)
                     .background(RoundedRectangle(cornerRadius: 9).fill(Theme.surface))
+            }
+            .buttonStyle(.plain)
+            if selection != nil {
+                Button(action: clear) { Image(systemName: "xmark.circle.fill").frame(width: 44, height: 44) }
+                    .buttonStyle(.plain).foregroundStyle(Theme.textDim).accessibilityLabel("Clear \(title)")
             }
         }
     }

@@ -193,7 +193,11 @@ struct LayerTransform: Codable, Equatable {
 
     init(position: Animated<Vec2>) { self.position = position }
 
-    private enum CodingKeys: String, CodingKey { case anchor, position, scale, rotation, opacity, positionZ, rotationX, rotationY }
+    /// Orient Along Path (AE Auto-Orient): rotation follows the motion path's direction on top of Rotation. nil = off.
+    var autoOrientStore: Bool? = nil
+    var autoOrient: Bool { get { autoOrientStore ?? false } set { autoOrientStore = newValue ? true : nil } }
+
+    private enum CodingKeys: String, CodingKey { case anchor, position, scale, rotation, opacity, positionZ, rotationX, rotationY, autoOrientStore }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -205,6 +209,7 @@ struct LayerTransform: Codable, Equatable {
         positionZ = try c.decodeIfPresent(Animated<Double>.self, forKey: .positionZ) ?? Animated(0)
         rotationX = try c.decodeIfPresent(Animated<Double>.self, forKey: .rotationX) ?? Animated(0)
         rotationY = try c.decodeIfPresent(Animated<Double>.self, forKey: .rotationY) ?? Animated(0)
+        autoOrientStore = try c.decodeIfPresent(Bool.self, forKey: .autoOrientStore)
     }
 }
 
@@ -437,6 +442,8 @@ struct Project: Codable, Equatable, Identifiable {
     var parentContext: [Layer]? = nil
     /// Beat / comp markers in seconds (optional so older saves still decode).
     var markerTimes: [Double]? = nil
+    /// User guides on the canvas (comp px), R2. nil in older projects.
+    var guides: [CanvasGuide]? = nil
     /// Auto-detected markers are tracked separately so re-analysis preserves manual taps.
     var detectedBeatTimes: [Double]? = nil
     /// Named, colored comp markers (separate from beat markers). nil in older projects.
