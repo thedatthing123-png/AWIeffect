@@ -15,7 +15,8 @@ struct Text3DTab: View {
                     state.beginEdit(on ? "Real 3D Text On" : "Real 3D Text Off")
                     state.mutateLayer { layer in
                         if on {
-                            layer.text?.text3D = layer.text?.text3D ?? Text3DOptions()
+                            let existing = layer.text?.text3D
+                            layer.text?.text3D = existing ?? Text3DOptions()
                             layer.is3D = true
                         } else { layer.text?.text3D = nil }
                     }
