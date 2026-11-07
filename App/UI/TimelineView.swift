@@ -301,7 +301,7 @@ struct TimelineView: View {
                          label: layer.isVisible ? "Hide Layer" : "Show Layer") { state.toggleVisibility(layer.id) }
             headerToggle(layer.id, layer.isLocked ? "lock.fill" : "lock.open", on: layer.isLocked, tint: Theme.warning,
                          label: layer.isLocked ? "Unlock Layer" : "Lock Layer") { state.toggleLock(layer.id) }
-            headerToggle("s.circle\(layer.isSolo ? ".fill" : "")", on: layer.isSolo, tint: Theme.ok,
+            headerToggle(layer.id, "s.circle\(layer.isSolo ? ".fill" : "")", on: layer.isSolo, tint: Theme.ok,
                          label: layer.isSolo ? "Unsolo Layer" : "Solo Layer") { state.toggleSolo(layer.id) }
         }
         .frame(width: headerWidth, height: rowHeight, alignment: .leading)
