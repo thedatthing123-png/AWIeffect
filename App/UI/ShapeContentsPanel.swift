@@ -39,7 +39,10 @@ struct ShapeContentsSection: View {
                                 Text(item.name).multilineTextAlignment(.leading)
                                 Spacer(minLength: 0)
                             }.frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
-                        }.buttonStyle(.plain).frame(minHeight: 44).accessibilityLabel("Select \(item.name)")
+                        }.buttonStyle(.plain).frame(minHeight: 44)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Select \(item.name)")
+                        .accessibilityAddTraits(.isButton)
                         Button {
                             state.editShapeContent(item.id, "Path Visibility") { $0.visible.toggle() }
                         } label: { Image(systemName: item.visible ? "eye" : "eye.slash").frame(width: 44, height: 44) }
