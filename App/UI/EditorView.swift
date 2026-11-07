@@ -11,6 +11,7 @@ struct EditorView: View {
     @State private var showKeyframeMover = false
     @ObservedObject private var layerClipboard = LayerClipboard.shared
     @ObservedObject private var textStudio = TextStudioSession.shared
+    @State private var layerOptionsOpen = false
     @State private var showLayerRename = false
     @State private var renameText = ""
     @State private var showHistory = false
@@ -22,16 +23,24 @@ struct EditorView: View {
     @State private var zoomBase: CGFloat = 1
     @State private var viewPan: CGSize = .zero
     @State private var panBase: CGSize?
+    @State private var penSession = PenSession()
     @State private var pen: (target: PenTarget, style: PenStyle)?
     @StateObject private var drawLauncher = DrawLauncher()
     @StateObject private var mediaLauncher = MediaLauncher()
     @State private var audioVideoItem: PhotosPickerItem?
     @StateObject private var trackLauncher = TrackLauncher()
+    @StateObject private var cutoutSession = CutoutSession()
     @State private var videoItem: PhotosPickerItem?
     @State private var replaceItem: PhotosPickerItem?
 
     init(state: EditorState, close: @escaping () -> Void) {
         #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-cutoutInline") {
+            state.select(state.project.layers.first?.id); state.panel = .cutout
+            let destination = state.mediaURL("cutout-fixture.png")
+            try? FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+            if !FileManager.default.fileExists(atPath: destination.path) { try? FileManager.default.copyItem(at: PreviewImage.url(), to: destination) }
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-shapeContents") {
             state.select(state.project.layers.first?.id); state.panel = .shape
         }
@@ -64,17 +73,24 @@ struct EditorView: View {
                 timelineGrip
                 // A panel open on a layer: the timeline shows just that layer's row, so the canvas stays big.
                 let compact = state.panel != .none && state.panel != .add && state.selectedLayerID != nil && !state.isMultiSelecting
-                TimelineView(state: state, compact: compact)
-                    .frame(height: compact ? 74 : timelineHeight)
+                TimelineView(state: state, compact: compact).equatable()
+                    .frame(height: compact ? 92 : timelineHeight)
                 TrimStrip(state: state, clock: state.clock)
-                BottomPanel(state: state, showPhotoPicker: $showPhotoPicker) { target, style in
-                    state.pause()
-                    pen = (target, style)
+                if let pen {
+                    PenOverlay(state: state, target: pen.target, style: pen.style, fit: penSession.fit,
+                               done: { self.pen = nil }, session: penSession, controlsOnly: true)
+                        .accessibilityIdentifier("pen-tool-panel")
+                } else {
+                    BottomPanel(state: state, showPhotoPicker: $showPhotoPicker) { target, style in
+                        state.pause(); penSession.reset()
+                        pen = (target, style)
+                    }
                 }
             }
         }
         .background(Theme.background.ignoresSafeArea())
         .environmentObject(drawLauncher)
+        .environmentObject(cutoutSession)
         // Every slider in the editor keeps its edits live while dragging (smooth, no full-editor rebuilds).
         .environment(\.scrubSession, ScrubSession(begin: { [weak state] in state?.beginScrub() }, end: { [weak state] in state?.endScrub() }))
         .onAppear {
@@ -88,7 +104,7 @@ struct EditorView: View {
             }
         }
         .onChange(of: canvasPicker.active) { _, active in if active { state.pause() } }
-        .onDisappear { canvasPicker.available = false; canvasPicker.finish(nil); if AILink.shared.editor === state { AILink.shared.editor = nil } }
+        .onDisappear { cutoutSession.close(); canvasPicker.available = false; canvasPicker.finish(nil); if AILink.shared.editor === state { AILink.shared.editor = nil } }
         .safeAreaInset(edge: .top, spacing: 0) {
             if let message = state.recoveryNotice {
                 HStack {
@@ -249,8 +265,16 @@ struct EditorView: View {
                 Image(systemName: "trash").font(.system(size: 18, weight: .semibold)).frame(width: 40, height: 40)
             }
             .accessibilityLabel("Delete Layer")
-            Menu {
+            Button { layerOptionsOpen = true } label: {
+                Image(systemName: "ellipsis.circle").font(.system(size: 22, weight: .regular)).frame(width: 40, height: 40)
+            }.accessibilityLabel("Layer Options")
+            .popover(isPresented: $layerOptionsOpen) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 2) {
+
                 Button { renameText = l.name; showLayerRename = true } label: { Label("Rename", systemImage: "character.cursor.ibeam") }
+                Button(role: .destructive) { state.rippleDeleteSelected() } label: { Label("Ripple Delete", systemImage: "delete.backward") }
+                Button { state.closeGapAtPlayhead() } label: { Label("Close Gap at Playhead", systemImage: "arrow.right.and.line.vertical.and.arrow.left") }.disabled(state.gapAtPlayhead() == nil)
                 Button { state.splitSelected() } label: { Label("Split at Playhead", systemImage: "scissors") }
                 Button { showKeyframeMover = true } label: { Label("Move Keyframes…", systemImage: "diamond") }
                 Button { state.copyKeyframes() } label: { Label("Copy Keyframes", systemImage: "doc.on.doc") }
@@ -289,10 +313,11 @@ struct EditorView: View {
                 Divider()
                 Button { state.beginMultiSelect(l.id) } label: { Label("Select Multiple", systemImage: "checklist") }
                 Button(role: .destructive) { state.deleteSelected() } label: { Label("Delete", systemImage: "trash") }
-            } label: {
-                Image(systemName: "ellipsis.circle").font(.system(size: 22, weight: .regular)).frame(width: 40, height: 40)
+
+                    }.buttonStyle(OpaqueMenuActionStyle { layerOptionsOpen = false })
+                }.padding(12).frame(width: 290, height: 440).foregroundStyle(Theme.text).background(Theme.background)
+                    .presentationBackground(Theme.background).presentationCompactAdaptation(.popover)
             }
-            .accessibilityLabel("Layer Options")
         }
         .foregroundStyle(Theme.text)
         .padding(.horizontal, 10)
@@ -360,13 +385,14 @@ struct EditorView: View {
             ZStack(alignment: .topLeading) {
                 LiveReader(live: state.live) { lp in
                 ClockReader(clock: state.clock) { t in
-                    MetalPreview(project: state.viewMode == .orbit && !state.looksThroughCamera ? OrbitView.scene(lp ?? state.project, orbit: state.orbit, time: t)
-                                    : (state.cameraView ? (lp ?? state.project) : state.freeViewProject(lp ?? state.project)),
+                    let cutProject = state.cutoutDisplayProject(lp ?? state.project)
+                    MetalPreview(project: state.viewMode == .orbit && !state.looksThroughCamera ? OrbitView.scene(cutProject, orbit: state.orbit, time: t)
+                                    : (state.cameraView ? cutProject : state.freeViewProject(cutProject)),
                                  time: t, redrawToken: state.redrawToken, mediaURL: { state.mediaURL($0) },
                                  viewZoom: state.canvasMode == .comp ? viewZoom : 1, viewPan: state.canvasMode == .comp ? viewPan : .zero,
                                  qualityCap: state.previewQuality.rawValue, isPlaying: state.isPlaying,
                                  // No RAM-cache writes mid-gesture: every frame changes, caching only churned memory.
-                                 cacheEnabled: state.canvasMode == .comp && lp == nil)
+                                 cacheEnabled: state.canvasMode == .comp && lp == nil && state.cutoutPreview == nil && state.cutoutPeekOriginal == nil)
                 }
                 }
                 if state.viewMode == .orbit && !state.looksThroughCamera {
@@ -403,7 +429,11 @@ struct EditorView: View {
                     ShapePathOverlay(state: state, fit: fit)
                 }
                 if let pen {
-                    PenOverlay(state: state, target: pen.target, style: pen.style, fit: fit) { self.pen = nil }
+                    PenOverlay(state: state, target: pen.target, style: pen.style, fit: fit,
+                               done: { self.pen = nil }, session: penSession)
+                }
+                if state.panel == .cutout, state.canvasMode == .comp, let model = cutoutSession.model {
+                    InlineCutoutOverlay(model: model, fit: fit)
                 }
                 if state.cutoutTool != .none, state.canvasMode == .comp {
                     CutoutBrushOverlay(state: state, fit: fit)
@@ -656,7 +686,7 @@ struct EditorView: View {
             .onEnded { _ in orbitZoomStart = nil }
     }
 
-    private var canvasToolActive: Bool { canvasPicker.active || trackLauncher.active || state.cutoutTool != .none }
+    private var canvasToolActive: Bool { canvasPicker.active || trackLauncher.active || state.cutoutTool != .none || state.panel == .cutout }
 
     private func canvasDrag(fit: CGRect) -> some Gesture {
         DragGesture(minimumDistance: 4)
@@ -852,66 +882,52 @@ struct TransportBar: View {
     @ObservedObject var state: EditorState
     @ObservedObject private var clipboard = LayerClipboard.shared
     @State private var showStylePaste = false
+    @State private var clipboardOpen = false
     @Binding var showHistory: Bool
     @Binding var viewZoom: CGFloat
     @Binding var zoomBase: CGFloat
     @Binding var viewPan: CGSize
 
     var body: some View {
-        // Seven primary controls; everything else lives in the More menu.
         HStack(spacing: 0) {
-            button("arrow.uturn.backward", label: "Undo", enabled: state.canUndo) { state.undo() }
-            button("arrow.uturn.forward", label: "Redo", enabled: state.canRedo) { state.redo() }
-            Spacer(minLength: 0)
-            button("chevron.left", label: "Previous Frame") { state.stepFrame(-1) }
+            button("arrow.uturn.backward", enabled: state.canUndo) { state.undo() }.accessibilityLabel("Undo")
+            button("arrow.uturn.forward", enabled: state.canRedo) { state.redo() }.accessibilityLabel("Redo")
+            ViewMenuButton(state: state, viewZoom: $viewZoom, zoomBase: $zoomBase, viewPan: $viewPan)
+            Spacer()
+            button("backward.end.fill") { state.pause(); state.seek(0) }.accessibilityLabel("Go to Start")
+            button("chevron.left") { state.stepFrame(-1) }.accessibilityLabel("Previous Frame")
             Button { state.togglePlay() } label: {
                 Image(systemName: state.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 20, weight: .bold))
-                    .frame(width: 48, height: 44)
+                    .frame(width: 38, height: 44)
             }
             .accessibilityLabel(state.isPlaying ? "Pause" : "Play")
-            button("chevron.right", label: "Next Frame") { state.stepFrame(1) }
-            Spacer(minLength: 0)
-            button("diamond.fill", label: "Key All", enabled: state.selectedLayer != nil, tint: state.selectedLayer != nil ? Theme.keyframe : nil) { state.keyAllTransform() }
-            Menu {
-                Section("Playback") {
-                    Button { state.pause(); state.seek(0) } label: { Label("Go to Start", systemImage: "backward.end.fill") }
-                    Button { state.pause(); state.seek(state.project.duration) } label: { Label("Go to End", systemImage: "forward.end.fill") }
-                    Toggle(isOn: $state.loop) { Label("Loop", systemImage: "repeat") }
-                }
-                Section("View") {
-                    Picker(selection: $state.cameraView) {
-                        Text("Camera View").tag(true)
-                        Text("Free View").tag(false)
-                    } label: { Label("View", systemImage: "video") }
-                    Toggle(isOn: $state.showGrid) { Label("Grid", systemImage: "grid") }
-                    Button { setZoom(viewZoom * 1.25) } label: { Label("Zoom In", systemImage: "plus.magnifyingglass") }
-                    Button { setZoom(viewZoom / 1.25) } label: { Label("Zoom Out", systemImage: "minus.magnifyingglass") }
-                    Button { setZoom(1); viewPan = .zero } label: { Label("Fit (\(Int((viewZoom * 100).rounded()))%)", systemImage: "arrow.up.left.and.down.right.magnifyingglass") }
-                }
-                Section("Timeline") {
-                    Button {
-                        if state.isMultiSelecting { state.endMultiSelect() }
-                        else if let id = state.selectedLayerID ?? state.project.layers.first?.id { state.beginMultiSelect(id) }
-                    } label: { Label(state.isMultiSelecting ? "Done Selecting" : "Select Multiple", systemImage: "checklist") }
-                    Button(role: .destructive) { state.rippleDeleteSelected() } label: { Label("Ripple Delete", systemImage: "delete.backward") }
-                        .disabled(state.selectedLayer == nil || state.selectedLayer?.isLocked == true)
-                    Button { state.closeGapAtPlayhead() } label: { Label("Close Gap at Playhead", systemImage: "arrow.right.and.line.vertical.and.arrow.left") }
-                        .disabled(state.gapAtPlayhead() == nil)
-                }
-                Section("Layer Clipboard") {
-                    Button("Copy Layer") { state.copyLayer() }.disabled(state.selectedLayer == nil || clipboard.busy)
-                    Button("Paste Layer") { state.pasteLayer() }.disabled(clipboard.payload == nil || clipboard.busy)
-                    Button("Paste Style…") { showStylePaste = true }.disabled(state.selectedLayer == nil || clipboard.payload == nil || clipboard.busy)
-                    Button("Replace Content from Copy") { state.pasteLayer(contentOnly: true) }.disabled(state.selectedLayer == nil || clipboard.payload == nil || clipboard.busy)
-                }
-                Button { showHistory = true } label: { Label("History…", systemImage: "clock.arrow.circlepath") }
-            } label: {
-                Image(systemName: "ellipsis.circle").font(.system(size: 17, weight: .semibold))
-                    .frame(width: 44, height: 44)
-                    .foregroundStyle(state.isMultiSelecting ? Theme.accentGlow : Theme.text)
+            button("chevron.right") { state.stepFrame(1) }.accessibilityLabel("Next Frame")
+            button("forward.end.fill") { state.pause(); state.seek(state.project.duration) }.accessibilityLabel("Go to End")
+            Spacer()
+            button("diamond.fill", enabled: state.selectedLayer != nil, tint: state.selectedLayer != nil ? Theme.keyframe : nil) { state.keyAllTransform() }
+                .accessibilityLabel("Key All")
+            button(state.loop ? "repeat" : "repeat.1", tint: state.loop ? Theme.accentGlow : Theme.textDim) { state.loop.toggle() }.accessibilityLabel("Loop")
+            button("checklist", tint: state.isMultiSelecting ? Theme.accentGlow : nil) {
+                if state.isMultiSelecting { state.endMultiSelect() }
+                else if let id = state.selectedLayerID ?? state.project.layers.first?.id { state.beginMultiSelect(id) }
             }
-            .accessibilityLabel("More")
+            .accessibilityLabel(state.isMultiSelecting ? "Done Selecting" : "Select Multiple")
+            Button { clipboardOpen = true } label: { Image(systemName: "doc.on.clipboard").frame(width: 27, height: 44) }
+                .accessibilityLabel("Layer Clipboard")
+                .popover(isPresented: $clipboardOpen) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        clipboardAction("Copy Layer", disabled: state.selectedLayer == nil || clipboard.busy) { state.copyLayer() }
+                        clipboardAction("Paste Layer", disabled: clipboard.payload == nil || clipboard.busy) { state.pasteLayer() }
+                        clipboardAction("Paste Style…", disabled: state.selectedLayer == nil || clipboard.payload == nil || clipboard.busy) { showStylePaste = true }
+                        clipboardAction("Replace Content from Copy", disabled: state.selectedLayer == nil || clipboard.payload == nil || clipboard.busy) { state.pasteLayer(contentOnly: true) }
+                        Divider()
+                        clipboardAction("Ripple Delete", disabled: state.selectedLayer == nil || state.selectedLayer?.isLocked == true) { state.rippleDeleteSelected() }
+                        clipboardAction("Close Gap at Playhead", disabled: state.gapAtPlayhead() == nil) { state.closeGapAtPlayhead() }
+                    }.padding(12).frame(width: 280).foregroundStyle(Theme.text).background(Theme.background)
+                        .presentationBackground(Theme.background).presentationCompactAdaptation(.popover)
+                }
+            button("clock.arrow.circlepath") { showHistory = true }.accessibilityLabel("History")
         }
         .foregroundStyle(Theme.text)
         .padding(.horizontal, 4)
@@ -920,16 +936,19 @@ struct TransportBar: View {
         .awiSheet(isPresented: $showStylePaste) { PasteLayerStyleSheet(state: state).presentationDetents([.medium, .large]) }
     }
 
-    private func setZoom(_ z: CGFloat) { withAnimation(.easeOut(duration: 0.18)) { viewZoom = min(8, max(0.25, z)); zoomBase = viewZoom } }
+    private func clipboardAction(_ title: String, disabled: Bool, _ action: @escaping () -> Void) -> some View {
+        Button { clipboardOpen = false; action() } label: {
+            Text(title).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).contentShape(Rectangle())
+        }.buttonStyle(.plain).disabled(disabled)
+    }
 
-    private func button(_ icon: String, label: String, enabled: Bool = true, tint: Color? = nil, _ action: @escaping () -> Void) -> some View {
+    private func button(_ icon: String, enabled: Bool = true, tint: Color? = nil, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: icon).font(.system(size: 16, weight: .semibold))
-                .frame(width: 44, height: 44)
+            Image(systemName: icon).font(.system(size: 15, weight: .semibold))
+                .frame(width: 27, height: 44)
                 .foregroundStyle(tint ?? (enabled ? Theme.text : Theme.textDim.opacity(0.4)))
         }
         .disabled(!enabled)
-        .accessibilityLabel(label)
     }
 }
 

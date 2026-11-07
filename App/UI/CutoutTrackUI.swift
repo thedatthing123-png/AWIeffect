@@ -74,52 +74,24 @@ extension EditorState {
 
 }
 
-/// AI cutout controls (image/video layers).
+/// Background removal has one entry point and shares the normal editor canvas.
 struct CutoutSection: View {
     @ObservedObject var state: EditorState
-    @State private var studio: CutoutStudioModel?
+    @EnvironmentObject private var session: CutoutSession
     var body: some View {
-        if let l = state.selectedLayer, l.mediaFile != nil, !(l.hasAudio && { if case .audio = l.content { return true }; return false }()) {
-            let c = l.cutout
-            VStack(alignment: .leading, spacing: 8) {
-                Text("AI Background Cutout").font(.system(size: 13, weight: .bold)).foregroundStyle(Theme.text)
-                Button {
-                    state.pause()
-                    if let file = l.mediaFile { studio = CutoutStudioModel(state: state, layer: l, url: state.mediaURL(file)) }
-                } label: {
-                    Label("Open Cutout Studio", systemImage: "scissors").font(.system(size: 14, weight: .bold)).frame(maxWidth: .infinity).padding(.vertical, 10)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Theme.accent)).foregroundStyle(.white)
-                }
-                .fullScreenCover(item: $studio) { CutoutStudioView(model: $0) }
-                Picker("Mode", selection: Binding(get: { c?.mode }, set: { m in
-                    if let m { var n = c ?? CutoutSettings(); n.mode = m; state.setCutout(n) } else { state.setCutout(nil) }
-                })) {
-                    Text("Off").tag(CutoutMode?.none)
-                    ForEach(CutoutMode.allCases) { Text($0.title).tag(CutoutMode?.some($0)) }
-                }
-                .pickerStyle(.menu).tint(Theme.accentGlow)
-                if let c {
-                    slider("Choke / Grow", c.choke, -10...10) { v in var n = c; n.choke = v; state.setCutout(n) }
-                    slider("Edge Feather", c.feather, 0...10) { v in var n = c; n.feather = v; state.setCutout(n) }
-                    slider("Edge Contrast", c.edgeContrast, 0...100) { v in var n = c; n.edgeContrast = v; state.setCutout(n) }
-                    if case .video = l.content {
-                        slider("Stability", c.stability, 0...100) { v in var n = c; n.stability = v; state.setCutout(n) }
-                    }
-                    Toggle("Invert (keep background)", isOn: Binding(get: { c.invert }, set: { b in var n = c; n.invert = b; state.setCutout(n) }))
-                        .tint(Theme.accent).foregroundStyle(Theme.text)
-                    CutoutRefineControls(state: state, c: c, isVideo: { if case .video = l.content { return true }; return false }())
-                    Text("Runs on-device. Stability smooths the edge between video frames; Edge Contrast cleans soft edges (keep it low for hair). For exact part-by-part cuts use Redraw → Select Brush.").font(.caption).foregroundStyle(Theme.textDim)
-                }
-            }
-            .padding(10).glass(radius: 12)
+        Group {
+            if let model = session.model { InlineCutoutControls(model: model) }
+            else { ProgressView().frame(maxWidth: .infinity, minHeight: 80) }
         }
-    }
-
-    private func slider(_ t: String, _ v: Double, _ r: ClosedRange<Double>, _ set: @escaping (Double) -> Void) -> some View {
-        HStack {
-            Text(t).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 96, alignment: .leading)
-            ValueScrubber(value: v, range: r, onChange: set)
+        .task(id: state.selectedLayerID) {
+            session.close()
+            guard let l = state.selectedLayer, !l.isAudioOnly, let file = l.mediaFile else { return }
+            state.pause(); state.cutoutTool = .none
+            session.model = CutoutStudioModel(state: state, layer: l, url: state.mediaURL(file))
         }
+        .onChange(of: state.selectedLayer?.cutout) { _, value in session.model?.sync(value) }
+        .onChange(of: state.currentTime) { _, _ in session.model?.followPlayhead() }
+        .onDisappear { session.close() }
     }
 }
 

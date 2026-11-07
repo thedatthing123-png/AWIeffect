@@ -26,87 +26,133 @@ extension EditorState {
     }
 }
 
-/// Source time is the value; its signed derivative is playback speed. Uses the same remap as audio/export.
+/// One inline editor, one source-time track. Source and speed graphs are views of the same editable keys.
 struct TimeRemapEditor: View {
     @ObservedObject var state: EditorState
-    @Environment(\.dismiss) private var dismiss
-    @State private var speedGraph = false
+    @State private var speedGraph = true
     @State private var selected: UUID?
     @State private var original: Animated<Double>?
     @State private var dragRange: ClosedRange<Double>?
+    @State private var showEase = false
     @State private var slow = 0.25
     @State private var fast = 1.6
     @State private var window = 0.4
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    if let layer = state.selectedLayer, layer.supportsSourceTiming {
-                        if let remap = layer.timeRemap {
-                            plot(layer, remap: remap).frame(height: 220)
-                            Text(speedGraph ? "Speed in ×: positive plays forward, zero holds, negative reverses. Change easing to shape speed between keys."
-                                 : "Horizontal = composition time; vertical = source time in seconds. Drag a key to change its timing and source frame.")
-                                .font(.caption).foregroundStyle(Theme.textDim)
-                            HStack {
-                                Button { state.toggleRemapKey() } label: {
-                                    Image(systemName: remap.hasKeyframe(at: state.currentTime) ? "diamond.fill" : "diamond")
-                                }.accessibilityLabel("Toggle source time keyframe")
-                                NumberField(value: layer.sourceTime(at: state.currentTime), label: "Source seconds", step: state.project.frameDuration, precision: 3) { state.setRemapValue($0) }
-                                Text(String(format: "%+.2f×", layer.playbackRate(at: state.currentTime))).monospacedDigit()
-                            }
-                            ForEach(remap.keyframes) { key in
-                                HStack {
-                                    Button { selected = key.id; state.seek(key.time) } label: {
-                                        Text(String(format: "%.3fs → %.3fs", key.time, key.value)).monospacedDigit()
-                                    }
-                                    Spacer()
-                                    Button("−1f") { nudge(key, in: layer, delta: -state.project.frameDuration) }
-                                    Button("+1f") { nudge(key, in: layer, delta: state.project.frameDuration) }
-                                }.font(.caption).buttonStyle(.bordered)
-                            }
-                            Button("Edit Segment Easing") {
-                                state.graphTimeRemap = true; state.graphEffect = nil; state.panel = .graph; dismiss()
-                            }.buttonStyle(.borderedProminent)
-                            Button("Reverse Playback") { state.reversePlayback() }.buttonStyle(.bordered)
-                        } else {
-                            Button("Enable Time Remap") { state.enableTimeRemap() }.buttonStyle(.borderedProminent)
-                        }
-                        Divider()
-                        Text("Velocity Ramp").font(.headline)
-                        Text("Creates a smooth fast–slow–fast ramp around the playhead, keeping the current source start/end frames and clip length. Fast and slow set the relative speed shape.")
-                            .font(.caption).foregroundStyle(Theme.textDim)
-                        NumberField(value: slow, label: "Slow weight", step: 0.01, precision: 2) { slow = min(16, max(0.01, $0)) }
-                        NumberField(value: fast, label: "Fast weight", step: 0.01, precision: 2) { fast = min(16, max(0.01, $0)) }
-                        NumberField(value: window, label: "Half window (seconds)", step: state.project.frameDuration, precision: 3) { window = min(30, max(0.02, $0)) }
-                        Button("Apply Ramp") { state.applySpeedRamp(slow: slow, fast: fast, window: window) }.buttonStyle(.bordered)
+        if let layer = state.selectedLayer, layer.supportsSourceTiming {
+            let remap = layer.timeRemap ?? baseMap(layer)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("Speed Remap").font(.system(size: 13, weight: .bold)).foregroundStyle(Theme.text)
+                    Spacer()
+                    if layer.timeRemap != nil {
+                        Button("Turn Off", role: .destructive) { state.disableTimeRemap(); selected = nil }.frame(minHeight: 44)
                     } else {
-                        Text("Select video, audio or a precomp to edit source timing.")
+                        Button("Time Remap") { state.enableTimeRemap() }.frame(minHeight: 44)
                     }
-                }.padding()
-            }.scrollDisabled(original != nil)
-            .safeAreaInset(edge: .top, spacing: 0) {
-                // Pinned so scrolled content can't slide the picker under the title.
-                if state.selectedLayer?.timeRemap != nil {
-                    Picker("Graph", selection: $speedGraph) {
-                        Text("Source Time").tag(false); Text("Playback Speed").tag(true)
-                    }.pickerStyle(.segmented).padding(.horizontal).padding(.vertical, 8).background(Theme.background)
                 }
-            }
-            .navigationTitle("Time & Velocity").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+                presetButtons
+                Picker("Graph", selection: $speedGraph) {
+                    Text("Source Time").tag(false); Text("Playback Speed").tag(true)
+                }.pickerStyle(.segmented).frame(minHeight: 44)
+                plot(layer, remap: remap).frame(height: 180)
+                Text(speedGraph ? "Speed in ×. Drag a key up/down for speed and sideways for timing; smooth both sides with segment easing."
+                     : "Source time in seconds. Drag a key to choose its timing and source frame.")
+                    .font(.caption).foregroundStyle(Theme.textDim)
+                keyControls(layer, remap: remap)
+                rampControls
+            }.foregroundStyle(Theme.text).tint(Theme.accent)
+            .awiSheet(isPresented: $showEase) { FlowGraphPanel(state: state, remapPopup: true).presentationDetents([.medium, .large]) }
+            .onDisappear { original = nil; dragRange = nil; state.remapDragging = false; state.endEdit() }
         }
-        .onDisappear { original = nil; dragRange = nil; state.endEdit() }
     }
-
+    private var presetButtons: some View {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(SpeedCurve.presets) { preset in
+                            Button(preset.name) { state.applySpeedCurve(preset.speeds); selected = nil }
+                                .buttonStyle(.bordered).frame(minHeight: 44)
+                        }
+                    }
+                }
+    }
+    private func keyControls(_ layer: Layer, remap: Animated<Double>) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Button { selected = state.addSourceTimeKey() } label: { Label("Add Key", systemImage: "plus.diamond").frame(maxWidth: .infinity, minHeight: 44) }
+                        .accessibilityLabel("Add source time keyframe")
+                    Button { removeKey() } label: { Label("Remove", systemImage: "minus.diamond").frame(maxWidth: .infinity, minHeight: 44) }
+                        .disabled(selectedKey(remap) == nil || layer.timeRemap == nil).accessibilityLabel("Remove source time keyframe")
+                    Button { state.graphTimeRemap = true; state.graphEffect = nil; showEase = true } label: {
+                        Label("Easing", systemImage: "point.topleft.down.to.point.bottomright.curvepath").frame(maxWidth: .infinity, minHeight: 44)
+                    }.disabled(remap.keyframes.count < 2 || layer.timeRemap == nil).accessibilityLabel("Edit Segment Easing")
+                }.font(.system(size: 11, weight: .semibold)).buttonStyle(.bordered)
+                HStack(spacing: 6) {
+                    NumberField(value: state.currentTime, label: "Key time", step: state.project.frameDuration, precision: 3) { time in
+                        if let key = selectedKey(remap) { nudge(key, in: layer, delta: time - key.time) } else { state.seek(time) }
+                    }
+                    NumberField(value: layer.sourceTime(at: state.currentTime), label: "Source seconds", step: state.project.frameDuration, precision: 3,
+                                onDragBegin: { state.beginEdit("Source Time") }, onDragEnd: { state.endEdit() }) { value in
+                        if state.selectedLayer?.timeRemap == nil { state.enableTimeRemap() }
+                        state.setRemapValue(value)
+                    }
+                }.frame(minHeight: 44)
+                HStack {
+                    Text("Speed").font(.caption)
+                    ValueScrubber(value: layer.playbackRate(at: state.currentTime), range: -16...16, step: 0.05, unit: "×",
+                                  onBegin: { state.beginEdit("Remap Speed") }, onChange: { rate in state.setSourceKeyRate(rate) }, onEnd: { state.endEdit() }, allowBeyond: true)
+                }.frame(minHeight: 44)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(layer.timeRemap?.keyframes ?? []) { key in
+                            Button { selected = key.id; state.seek(key.time) } label: {
+                                Text(String(format: "%.3fs → %.3fs", key.time, key.value)).font(.caption.monospacedDigit()).frame(minHeight: 44)
+                            }.buttonStyle(.bordered).tint(selected == key.id ? Theme.keyframe : Theme.accent)
+                        }
+                    }
+                }
+                if let key = selectedKey(remap) {
+                    HStack {
+                        Button("−1 frame") { nudge(key, in: layer, delta: -state.project.frameDuration) }.frame(maxWidth: .infinity, minHeight: 44)
+                        Button("+1 frame") { nudge(key, in: layer, delta: state.project.frameDuration) }.frame(maxWidth: .infinity, minHeight: 44)
+                    }.buttonStyle(.bordered)
+                }
+        }
+    }
+    private var rampControls: some View {
+        VStack(alignment: .leading, spacing: 8) {
+                Text("Ramp Shape").font(.caption.bold()).foregroundStyle(Theme.textDim)
+                HStack(spacing: 6) {
+                    NumberField(value: slow, label: "Slow", step: 0.01, precision: 2) { slow = min(16, max(0.01, $0)) }
+                    NumberField(value: fast, label: "Fast", step: 0.01, precision: 2) { fast = min(16, max(0.01, $0)) }
+                    NumberField(value: window, label: "Window", step: state.project.frameDuration, precision: 2) { window = min(30,max(0.02,$0)) }
+                }.frame(minHeight: 44)
+                Button("Apply Ramp at Playhead") { state.applySpeedRamp(slow: slow, fast: fast, window: window) }
+                    .buttonStyle(.bordered).frame(minHeight: 44)
+        }
+    }
+    private func selectedKey(_ a: Animated<Double>) -> Keyframe<Double>? {
+        a.keyframes.first { $0.id == selected } ?? a.keyframes.first { abs($0.time - state.currentTime) < keyframeTimeEpsilon }
+    }
+    private func removeKey() {
+        guard var a = state.selectedLayer?.timeRemap, let key = selectedKey(a) else { return }
+        a.keyframes.removeAll { $0.id == key.id }
+        state.mutate("Remove Remap Key") { p in if let i = state.selectedIndex { p.layers[i].timeRemap = a.keyframes.isEmpty ? nil : a } }
+        selected = nil; AudioPreview.shared.invalidate()
+    }
+    private func baseMap(_ l: Layer) -> Animated<Double> {
+        var a = Animated(l.sourceTime(at: l.inPoint))
+        a.insertKeyframe(Keyframe(time: l.inPoint, value: l.sourceTime(at: l.inPoint)))
+        a.insertKeyframe(Keyframe(time: l.outPoint, value: l.sourceTime(at: l.outPoint)))
+        return a
+    }
+    private func layerWithRemap(_ l: Layer, _ a: Animated<Double>) -> Layer { var l = l; l.timeRemap = a; return l }
     private func nudge(_ key: Keyframe<Double>, in layer: Layer, delta: Double) {
         guard var a = layer.timeRemap, let index = a.keyframes.firstIndex(where: { $0.id == key.id }) else { return }
         let t = state.project.snapToFrame(key.time + delta)
-        guard t >= layer.inPoint, t <= layer.outPoint,
-              !a.keyframes.contains(where: { $0.id != key.id && abs($0.time - t) < keyframeTimeEpsilon }) else { return }
+        guard t >= layer.inPoint, t <= layer.outPoint, !a.keyframes.contains(where: { $0.id != key.id && abs($0.time - t) < keyframeTimeEpsilon }) else { return }
         a.keyframes[index].time = t; a.keyframes.sort { $0.time < $1.time }
-        state.coalescedEdit("Move Remap Key") { $0.timeRemap = a }
-        state.seek(t); AudioPreview.shared.invalidate()
+        state.coalescedEdit("Move Remap Key") { $0.timeRemap = a }; state.seek(t); AudioPreview.shared.invalidate()
     }
 
     private func plot(_ layer: Layer, remap: Animated<Double>) -> some View {
@@ -136,28 +182,35 @@ struct TimeRemapEditor: View {
                     }
                     ctx.stroke(path, with: .color(Theme.accentGlow), lineWidth: 2)
                 }
-                if !speedGraph {
                     ForEach(remap.keyframes) { key in
                         Circle().fill(selected == key.id ? Theme.keyframe : .white)
-                            .frame(width: 12, height: 12).frame(width: 36, height: 36).contentShape(Circle())
+                            .frame(width: 12, height: 12).frame(width: 44, height: 44).contentShape(Rectangle())
                             .position(x: box.minX + CGFloat((key.time - layer.inPoint) / duration) * box.width,
-                                      y: box.maxY - CGFloat((key.value - lower) / (upper - lower)) * box.height)
+                                      y: box.maxY - CGFloat(((speedGraph ? layer.playbackRate(at: key.time) : key.value) - lower) / (upper - lower)) * box.height)
                             .onTapGesture { selected = key.id; state.seek(key.time) }
                             .accessibilityLabel(String(format: "Source key at %.3f seconds", key.time))
                             .highPriorityGesture(DragGesture(minimumDistance: 4, coordinateSpace: .named("remapPlot"))
                                 .onChanged { drag in
-                                    if original == nil { original = remap; dragRange = lower...upper; selected = key.id; state.pause(); state.beginEdit("Move Remap Key") }
+                                    if original == nil { original = remap; dragRange = lower...upper; selected = key.id; state.pause(); state.beginEdit("Move Remap Key"); state.remapDragging = true }
                                     guard var a = original, let k = a.keyframes.firstIndex(where: { $0.id == key.id }) else { return }
                                     let base = a.keyframes[k]
                                     let first = k > 0 ? a.keyframes[k - 1].time + state.project.frameDuration : layer.inPoint
                                     let last = k + 1 < a.keyframes.count ? a.keyframes[k + 1].time - state.project.frameDuration : layer.outPoint
                                     guard first <= last else { return }
                                     a.keyframes[k].time = min(last, max(first, state.project.snapToFrame(base.time + Double(drag.translation.width / box.width) * duration)))
-                                    a.keyframes[k].value = max(0, base.value - Double(drag.translation.height / box.height) * (upper - lower))
+                                    if speedGraph {
+                                        let rate = layerWithRemap(layer, original!).playbackRate(at: base.time) - Double(drag.translation.height / box.height) * (upper - lower)
+                                        a = RemapSpeedEditing.settingRate(rate, at: k, in: a)
+                                    } else {
+                                        a.keyframes[k].value = max(0, base.value - Double(drag.translation.height / box.height) * (upper - lower))
+                                    }
                                     state.mutateLayer { $0.timeRemap = a }
-                                }.onEnded { _ in original = nil; dragRange = nil; state.endEdit(); AudioPreview.shared.invalidate() })
+                                }.onEnded { _ in
+                                    original = nil; dragRange = nil; state.remapDragging = false; state.endEdit()
+                                    if let selected, let key = state.selectedLayer?.timeRemap?.keyframes.first(where: { $0.id == selected }) { state.seek(key.time) }
+                                    AudioPreview.shared.invalidate()
+                                })
                     }
-                }
                 VStack { HStack { Text(String(format: "%.2f", upper) + (speedGraph ? "×" : "s")); Spacer() }; Spacer()
                     HStack { Text(String(format: "%.2f", lower)); Spacer(); Text(String(format: "%.2fs", layer.outPoint)) }
                 }.font(.system(size: 10, design: .monospaced)).foregroundStyle(Theme.textDim).padding(5).allowsHitTesting(false)

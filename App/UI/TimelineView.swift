@@ -1,16 +1,26 @@
 import SwiftUI
 
 /// Alight Motion-style layer timeline: fixed playhead in the center, content scrolls under it.
-struct TimelineView: View {
-    @ObservedObject var state: EditorState
-    @ObservedObject private var clock: PlayClock
+struct TimelineView: View, Equatable {
+    let state: EditorState
+    private let contentRevision: Int
+    private let selection: UUID?
+    private let multi: Set<UUID>?
+    private let focus: [UUID]
+    static func == (a: Self, b: Self) -> Bool {
+        a.state === b.state && a.compact == b.compact && a.contentRevision == b.contentRevision &&
+        a.selection == b.selection && a.multi == b.multi && a.focus == b.focus
+    }
+    private let clock: PlayClock
     /// Only the selected layer's row (a panel is open).
     var compact = false
 
     init(state: EditorState, compact: Bool = false) {
         self.state = state
         self.compact = compact
-        _clock = ObservedObject(wrappedValue: state.clock)
+        contentRevision = state.propertyLaneCache.revision; selection = state.selectedLayerID
+        multi = state.multiSelection; focus = state.keyframeFocusEffects
+        clock = state.clock
     }
     /// Points per second.
     @State private var zoom: CGFloat = 90
@@ -42,7 +52,7 @@ struct TimelineView: View {
 
     private let rowHeight: CGFloat = 46
     private let laneHeight: CGFloat = 44
-    private let headerWidth: CGFloat = 132
+    private let headerWidth: CGFloat = 60
     private let rulerHeight: CGFloat = 44
 
     var body: some View {
@@ -50,7 +60,7 @@ struct TimelineView: View {
             let trackWidth = max(1, geo.size.width - headerWidth)
             // Playhead sits at the screen's horizontal center (track coordinates).
             let playheadX = geo.size.width / 2 - headerWidth
-            let offset = playheadX - CGFloat(clock.time) * zoom
+            let offset = playheadX
             ZStack(alignment: .topLeading) {
                 VStack(spacing: 0) {
                     HStack(spacing: 0) {
@@ -62,19 +72,21 @@ struct TimelineView: View {
                             Button { showMarkers = true } label: { Label("Markers…", systemImage: "list.bullet") }
                             Toggle("Frame Numbers", isOn: $rulerFrames)
                         } label: {
-                            HStack(spacing: 4) {
-                                Text(rulerFrames ? "\(Int((clock.time * state.project.fps).rounded()))f" : formatTimecode(clock.time, fps: state.project.fps))
+                            ClockReader(clock: clock) { time in
+                            HStack(spacing: 2) {
+                                Text(rulerFrames ? "\(Int((time * state.project.fps).rounded()))f" : formatTimecode(time, fps: state.project.fps))
                                     .accessibilityIdentifier("timeline-timecode")
-                                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
                                     .foregroundStyle(Theme.accentGlow)
                                 Image(systemName: "chevron.down").font(.system(size: 9, weight: .bold)).foregroundStyle(Theme.textDim)
                             }
                             .frame(width: headerWidth, height: rulerHeight)
                             .contentShape(Rectangle())
+                            }
                         }
                         .frame(width: headerWidth, height: rulerHeight)
                         .accessibilityLabel("Ruler and markers")
-                        ruler(width: trackWidth, offset: offset)
+                        ClockReader(clock: clock) { time in ruler(width: trackWidth, offset: offset - CGFloat(time) * zoom) }
                             .frame(width: trackWidth, height: rulerHeight)
                             .gesture(TimelineHorizontalPan(
                 canBegin: { multiDragStart == nil && liftLayer == nil && dragOriginal == nil },
@@ -99,7 +111,7 @@ struct TimelineView: View {
                                 let lifted = liftLayer == layer.id
                                 HStack(spacing: 0) {
                                     header(layer)
-                                    layerRow(layer, offset: offset)
+                                    ClockReader(clock: clock) { time in layerRow(layer, offset: offset - CGFloat(time) * zoom) }
                                         .frame(width: trackWidth, height: rowHeight, alignment: .topLeading)
                                         .clipped()
                                 }
@@ -128,12 +140,14 @@ struct TimelineView: View {
                     .allowsHitTesting(false)
                 // Tap the playhead head to drop / remove a beat marker (works while playing: tap along to the music).
                 Button { state.toggleBeatMarker() } label: {
-                    let onBeat = state.project.markers.contains { abs($0 - clock.time) < state.project.frameDuration * 1.5 }
+                    ClockReader(clock: clock) { time in
+                    let onBeat = state.project.markers.contains { abs($0 - time) < state.project.frameDuration * 1.5 }
                     Image(systemName: onBeat ? "diamond.fill" : "plus.diamond.fill")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(onBeat ? Theme.warning : .white)
                         .frame(width: 44, height: rulerHeight)
                         .contentShape(Rectangle())
+                    }
                 }
                 .buttonStyle(.plain)
                 .offset(x: headerWidth + playheadX - 22)
@@ -165,7 +179,7 @@ struct TimelineView: View {
 
     @ViewBuilder
     private func lanes(_ layer: Layer, offset: CGFloat, trackWidth: CGFloat) -> some View {
-        let list = layer.propertyLanes()
+        let list = state.propertyLaneCache.lanes(layer)
         ForEach(Array(list.enumerated()), id: \.element.id) { index, lane in
             HStack(spacing: 0) {
                 Button { if lane.graphable { graphTarget = GraphTarget(layerID: layer.id, laneID: lane.id) } } label: {
@@ -228,7 +242,7 @@ struct TimelineView: View {
     }
 
     private func laneTrack(_ layer: Layer, _ lane: PropertyLane, index: Int, lanes: [PropertyLane], offset: CGFloat) -> some View {
-        let x = { (t: Double) in offset + CGFloat(t) * zoom }
+        let x = { (t: Double) in offset + CGFloat(t - clock.time) * zoom }
         return ZStack(alignment: .topLeading) {
             Rectangle().fill(Color.white.opacity(index % 2 == 0 ? 0.03 : 0.015))
             if let m = marquee, m.layer == layer.id, (min(m.lane0, m.lane1)...max(m.lane0, m.lane1)).contains(index) {
@@ -238,30 +252,24 @@ struct TimelineView: View {
                     .frame(width: max(1, b - a), height: laneHeight).offset(x: a)
                     .allowsHitTesting(false)
             }
-            ForEach(lane.times, id: \.self) { t in
-                let picked = keySel?.layerID == layer.id && keySel?.contains(lane.id, t) == true
-                Image(systemName: "diamond.fill")
-                    .font(.system(size: picked ? 14 : 11))
-                    .foregroundStyle(picked ? Theme.keyframe : .white.opacity(0.85))
-                    .shadow(color: .black.opacity(0.5), radius: 1)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-                    .position(x: x(t), y: laneHeight / 2)
-                    .onTapGesture {
-                        var s = (keySel?.layerID == layer.id ? keySel : nil) ?? KeySelection(layerID: layer.id)
-                        s.toggle(lane.id, t)
-                        keySel = s.isEmpty ? nil : s
-                    }
-                    .highPriorityGesture(laneKeyDrag(layer, lane, t))
-                    .accessibilityLabel("\(lane.title) key at \(String(format: "%.2f", t)) seconds\(picked ? ", selected" : "")")
-            }
+            ClockReader(clock: clock) { time in
+                LaneKeyCanvas(times: lane.times, selected: keySel?.layerID == layer.id ? (keySel?.keys[lane.id] ?? []) : [],
+                              zoom: zoom, offset: offset - CGFloat(time) * zoom)
+            }.allowsHitTesting(false)
         }
         .contentShape(Rectangle())
-        .onTapGesture { keySel = nil }
+        .onTapGesture { point in
+            if let t = hitLaneKey(lane, x: point.x, origin: offset) {
+                var selected = (keySel?.layerID == layer.id ? keySel : nil) ?? KeySelection(layerID: layer.id)
+                selected.toggle(lane.id, t); keySel = selected.isEmpty ? nil : selected
+            } else { keySel = nil }
+        }
+        .simultaneousGesture(laneRowDrag(layer, lane, origin: offset))
         .gesture(LongPressGesture(minimumDuration: 0.3).sequenced(before: DragGesture(minimumDistance: 0))
             .onChanged { value in
-                guard case .second(true, let drag?) = value else { return }
-                let toT = { (px: CGFloat) in max(0, Double((px - offset) / zoom)) }
+                guard selDragOriginal == nil, case .second(true, let drag?) = value else { return }
+                let liveOffset = offset - CGFloat(clock.time) * zoom
+                let toT = { (px: CGFloat) in max(0, Double((px - liveOffset) / zoom)) }
                 let lane1 = max(0, min(lanes.count - 1, index + Int(floor(drag.location.y / laneHeight))))
                 if marquee == nil { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
                 marquee = (layer.id, index, toT(drag.startLocation.x), lane1, toT(drag.location.x))
@@ -273,12 +281,20 @@ struct TimelineView: View {
             .onEnded { _ in marquee = nil })
     }
 
-    /// Dragging a key moves the whole selection (an unselected key becomes the selection first).
-    private func laneKeyDrag(_ layer: Layer, _ lane: PropertyLane, _ t: Double) -> some Gesture {
-        DragGesture(minimumDistance: 3, coordinateSpace: .named("timeline"))
+    private func hitLaneKey(_ lane: PropertyLane, x: CGFloat, origin: CGFloat) -> Double? {
+        let at = Double((x - origin) / zoom) + clock.time
+        guard let nearest = lane.times.min(by: { abs($0 - at) < abs($1 - at) }), abs(nearest - at) * Double(zoom) <= 22 else { return nil }
+        return nearest
+    }
+
+    /// One recognizer per lane; diamonds are just drawing commands. Selection moves retain the original snapshot.
+    private func laneRowDrag(_ layer: Layer, _ lane: PropertyLane, origin: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 3)
             .onChanged { g in
                 if selDragOriginal == nil {
-                    guard let original = state.project.layers.first(where: { $0.id == layer.id }), !original.isLocked else { return }
+                    guard abs(g.translation.width) > abs(g.translation.height),
+                          let t = hitLaneKey(lane, x: g.startLocation.x, origin: origin),
+                          let original = state.project.layers.first(where: { $0.id == layer.id }), !original.isLocked else { return }
                     var s = keySel ?? KeySelection(layerID: layer.id)
                     if s.layerID != layer.id || !s.contains(lane.id, t) { s = KeySelection(layerID: layer.id, keys: [lane.id: [t]]) }
                     keySel = s; selDragBase = s; selDragOriginal = original
@@ -299,10 +315,9 @@ struct TimelineView: View {
         return HStack(spacing: 0) {
             headerToggle(layer.id, layer.isVisible ? "eye" : "eye.slash", on: layer.isVisible, tint: Theme.text,
                          label: layer.isVisible ? "Hide Layer" : "Show Layer") { state.toggleVisibility(layer.id) }
-            headerToggle(layer.id, layer.isLocked ? "lock.fill" : "lock.open", on: layer.isLocked, tint: Theme.warning,
-                         label: layer.isLocked ? "Unlock Layer" : "Lock Layer") { state.toggleLock(layer.id) }
-            headerToggle(layer.id, "s.circle\(layer.isSolo ? ".fill" : "")", on: layer.isSolo, tint: Theme.ok,
-                         label: layer.isSolo ? "Unsolo Layer" : "Solo Layer") { state.toggleSolo(layer.id) }
+            Image(systemName: inMulti ? "checkmark.circle.fill" : (layer.isGroup ? "folder.fill" : layer.content.symbol))
+                .font(.system(size: 11)).foregroundStyle(inMulti ? Theme.accentGlow : Theme.tagColor(layer.tag))
+                .frame(width: 28, height: rowHeight).contentShape(Rectangle())
         }
         .frame(width: headerWidth, height: rowHeight, alignment: .leading)
         // Parts of a group get a colored bar so you can see what's inside it; the layer's own tag sits beside it.
@@ -336,7 +351,7 @@ struct TimelineView: View {
         // A tap, not a Button: a Button swallows the header's hold, which starts range selection.
         Image(systemName: icon).font(.system(size: 14, weight: .semibold))
             .foregroundStyle(on ? tint : Theme.textDim.opacity(0.55))
-            .frame(width: 44, height: rowHeight)
+            .frame(width: 28, height: rowHeight)
             .contentShape(Rectangle())
             .onTapGesture { if state.isMultiSelecting { state.toggleInMulti(id) } else { action() } }
             .accessibilityElement()
@@ -493,17 +508,17 @@ struct TimelineView: View {
             // Open effects: each one's keys show in its own color and only those move; the rest fade back.
             let focused = editable ? state.keyframeFocusEffects.filter { id in layer.effects.contains { $0.id == id } } : []
             if focused.isEmpty {
-                ForEach(layer.keyframeMarkers, id: \.id) { marker in
+                ForEach(state.propertyLaneCache.markers(layer), id: \.id) { marker in
                     keyMarker(layer, marker.time, offset: offset, color: editable && abs(marker.time - clock.time) < 1e-3 ? Theme.keyframe : .white, effect: nil)
                 }
             } else {
-                ForEach(layer.keyframeMarkers, id: \.id) { marker in
+                ForEach(state.propertyLaneCache.markers(layer), id: \.id) { marker in
                     Image(systemName: "diamond.fill").font(.system(size: 9)).foregroundStyle(.white.opacity(0.3))
                         .frame(width: 22, height: 22).position(x: offset + CGFloat(marker.time) * zoom, y: rowHeight / 2)
                         .allowsHitTesting(false)
                 }
                 ForEach(Array(focused.enumerated()), id: \.element) { k, effect in
-                    ForEach(layer.keyframeMarkers(effect: effect), id: \.id) { marker in
+                    ForEach(state.propertyLaneCache.markers(layer, effect: effect), id: \.id) { marker in
                         keyMarker(layer, marker.time, offset: offset, color: EditorState.focusColors[k % EditorState.focusColors.count], effect: effect)
                     }
                 }
@@ -580,7 +595,7 @@ struct TimelineView: View {
             .onEnded { _ in dragOriginal = nil; keyDragTime = nil; state.endEdit() }
     }
 
-    private func canTwirl(_ layer: Layer) -> Bool { !compact && !layer.keyframeMarkers.isEmpty }
+    private func canTwirl(_ layer: Layer) -> Bool { !compact && !state.propertyLaneCache.markers(layer).isEmpty }
 
     /// Slip grip in the middle of a selected media clip: drag sideways to change which source frames play under
     /// the clip, without moving or resizing it.
@@ -642,6 +657,27 @@ struct RulerCanvas: View {
                 ctx.fill(Path(CGRect(x: max(0, x0), y: 0, width: min(size.width, x1) - max(0, x0), height: 3)), with: .color(Color.green.opacity(0.85)))
             }
             draw(&ctx, size)
+        }
+    }
+}
+
+/// Only this small canvas observes the moving offset; lane definitions, labels and gestures stay unchanged.
+private struct LaneKeyCanvas: View {
+    let times: [Double]
+    let selected: [Double]
+    let zoom: CGFloat
+    let offset: CGFloat
+    var body: some View {
+        Canvas { context, size in
+            for t in times {
+                let x = offset + CGFloat(t) * zoom
+                guard x >= -12 && x <= size.width + 12 else { continue }
+                let picked = selected.contains { abs($0 - t) < 1e-4 }, r: CGFloat = picked ? 7 : 5.5
+                var p = Path(); p.move(to: CGPoint(x: x, y: size.height / 2 - r))
+                p.addLine(to: CGPoint(x: x + r, y: size.height / 2)); p.addLine(to: CGPoint(x: x, y: size.height / 2 + r))
+                p.addLine(to: CGPoint(x: x - r, y: size.height / 2)); p.closeSubpath()
+                context.fill(p, with: .color(picked ? Theme.keyframe : .white.opacity(0.85)))
+            }
         }
     }
 }

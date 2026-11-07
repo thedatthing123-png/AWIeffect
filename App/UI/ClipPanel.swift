@@ -170,13 +170,10 @@ extension EditorState {
 struct ClipPanel: View {
     @ObservedObject var state: EditorState
     @EnvironmentObject private var trackLauncher: TrackLauncher
-    @State private var showTiming = false
     @State private var slowMoProgress: Double?
     @State private var slowMoMessage: String?
     @State private var twixtorFactor = 4.0
     @AppStorage("awi.freezeHold") private var freezeHold = 1.0
-    @State private var curve: [Double] = SpeedCurve.presets[1].speeds
-    @State private var curvePreset: String? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -184,13 +181,12 @@ struct ClipPanel: View {
             if let l = state.selectedLayer {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
+                        if l.supportsSourceTiming { TimeRemapEditor(state: state) }
                         timing(l)
-                        if l.supportsSourceTiming { speedCurve(l) }
                         if l.supportsSourceTiming && !l.isGroup { freeze(l) }
                         if case .video = l.content { twixtor(l) }
                         if l.hasAudio { sound(l) }
                         tools(l)
-                        CutoutSection(state: state)
                         Divider().overlay(Theme.stroke)
                         Button { state.panel = .beats } label: {
                             Label("Beat Sync (\(state.project.markers.count) markers)", systemImage: "metronome")
@@ -199,10 +195,9 @@ struct ClipPanel: View {
                         .buttonStyle(.bordered).foregroundStyle(Theme.text)
                     }
                     .padding(.horizontal, 12).padding(.bottom, 14)
-                }.accessibilityIdentifier("clip-settings-scroll")
+                }.scrollDisabled(state.remapDragging).accessibilityIdentifier("clip-settings-scroll")
             }
         }
-        .awiSheet(isPresented: $showTiming) { TimeRemapEditor(state: state) }
     }
 
     // MARK: Sections
@@ -222,12 +217,6 @@ struct ClipPanel: View {
                 Text("Trim moves a clip edge. Slip shows different footage inside the same clip position and length.")
                     .font(.caption).foregroundStyle(Theme.textDim)
             }
-        } else {
-            HStack {
-                Label("Speed curve / Time Remap is on", systemImage: "timer").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ok)
-                Spacer()
-                Button("Turn Off", role: .destructive) { state.disableTimeRemap() }.frame(minHeight: 44)
-            }
         }
         if l.hasAudio && l.timeRemap == nil {
             Toggle(isOn: Binding(get: { l.audioFX?.keepPitch ?? true }, set: { v in state.setAudioFX("Keep Pitch") { $0.keepPitch = v } })) {
@@ -237,36 +226,6 @@ struct ClipPanel: View {
                 }
             }
             .tint(Theme.accent).frame(minHeight: 44)
-        }
-    }
-
-    @ViewBuilder private func speedCurve(_ l: Layer) -> some View {
-        sectionTitle("SPEED CURVE")
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
-                ForEach(SpeedCurve.presets) { p in
-                    Button {
-                        curve = p.speeds; curvePreset = p.name
-                        state.applySpeedCurve(p.speeds)
-                    } label: {
-                        Text(p.name).font(.system(size: 13, weight: .semibold))
-                            .padding(.horizontal, 14).frame(minHeight: 44)
-                            .background(Capsule().fill(curvePreset == p.name ? Theme.accent : Theme.raised))
-                            .foregroundStyle(curvePreset == p.name ? Color.white : Theme.text)
-                    }.buttonStyle(.plain)
-                }
-            }
-        }
-        SpeedCurveEditor(speeds: $curve) { state.applySpeedCurve(curve); curvePreset = nil }
-            .frame(height: 140)
-        Text("Drag a point up for faster, down for slower. The clip keeps its first and last frame; the curve redistributes time between them. Fine-tune keys in the graph.")
-            .font(.caption).foregroundStyle(Theme.textDim)
-        HStack(spacing: 8) {
-            ToolTile(icon: "point.topleft.down.to.point.bottomright.curvepath", title: "Time Remap") {
-                if l.timeRemap == nil { state.enableTimeRemap() }
-                showTiming = true
-            }
-            ToolTile(icon: "arrow.uturn.backward", title: "Reset Speed") { state.disableTimeRemap() }
         }
     }
 
@@ -410,58 +369,6 @@ struct ClipPanel: View {
                           onEnd: { if undo { state.endEdit(); AudioPreview.shared.invalidate() } })
         }
         .frame(minHeight: 44)
-    }
-}
-
-/// Five-point speed curve (log scale, 0.1×–4×). Each drag applies once when the finger lifts.
-struct SpeedCurveEditor: View {
-    @Binding var speeds: [Double]
-    let commit: () -> Void
-    @State private var dragging: Int?
-
-    private func y(_ s: Double, _ h: CGFloat) -> CGFloat {
-        let lo = log(SpeedCurve.minSpeed), hi = log(SpeedCurve.maxSpeed)
-        return h - CGFloat((log(min(SpeedCurve.maxSpeed, max(SpeedCurve.minSpeed, s))) - lo) / (hi - lo)) * h
-    }
-    private func speed(_ y: CGFloat, _ h: CGFloat) -> Double {
-        let lo = log(SpeedCurve.minSpeed), hi = log(SpeedCurve.maxSpeed)
-        return exp(lo + Double(1 - min(1, max(0, y / max(h, 1)))) * (hi - lo))
-    }
-
-    var body: some View {
-        GeometryReader { geo in
-            let w = geo.size.width, h = geo.size.height - 20
-            let x = { (k: Int) -> CGFloat in 16 + (w - 32) * CGFloat(k) / CGFloat(max(1, speeds.count - 1)) }
-            ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: 10).fill(Theme.surface)
-                Path { p in let yy = y(1, h) + 10; p.move(to: CGPoint(x: 0, y: yy)); p.addLine(to: CGPoint(x: w, y: yy)) }
-                    .stroke(Theme.textDim.opacity(0.35), style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                Text("1×").font(.caption2).foregroundStyle(Theme.textDim).position(x: 12, y: y(1, h) + 2)
-                Path { p in
-                    for k in speeds.indices {
-                        let pt = CGPoint(x: x(k), y: y(speeds[k], h) + 10)
-                        if k == 0 { p.move(to: pt) } else {
-                            let prev = CGPoint(x: x(k - 1), y: y(speeds[k - 1], h) + 10)
-                            p.addCurve(to: pt, control1: CGPoint(x: (prev.x + pt.x) / 2, y: prev.y), control2: CGPoint(x: (prev.x + pt.x) / 2, y: pt.y))
-                        }
-                    }
-                }.stroke(Theme.accentGlow, lineWidth: 2.5)
-                ForEach(speeds.indices, id: \.self) { k in
-                    VStack(spacing: 0) {
-                        Circle().fill(dragging == k ? Theme.accent : Theme.keyframe).frame(width: 16, height: 16)
-                    }
-                    .frame(width: 44, height: 44).contentShape(Rectangle())
-                    .overlay(alignment: .top) {
-                        if dragging == k { Text(String(format: "%.2f×", speeds[k])).font(.caption2.monospacedDigit()).foregroundStyle(Theme.text).offset(y: -14) }
-                    }
-                    .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("speedCurve"))
-                        .onChanged { g in dragging = k; speeds[k] = speed(g.location.y - 10, h) }
-                        .onEnded { _ in dragging = nil; commit() })
-                    .position(x: x(k), y: y(speeds[k], h) + 10)
-                }
-            }
-            .coordinateSpace(name: "speedCurve")
-        }
     }
 }
 

@@ -28,12 +28,13 @@ extension Layer {
     /// Every animated property of this layer as a lane, in panel order. Lanes without keys are left out.
     func propertyLanes() -> [PropertyLane] {
         var lanes: [PropertyLane] = []
-        let source = self
+        // One working copy for a single pass through the disjoint property inventory. In particular, masks,
+        // text arrays and effect dictionaries are not copied-on-write again for every candidate lane.
+        var working = self
         func add(_ id: String, _ title: String, _ group: String, _ values: LaneValues = .none,
                  _ visit: @escaping (inout Layer, inout AnimationTraversal) -> Void) {
-            var copy = source
             var inspect = AnimationTraversal(operation: .inspect)
-            visit(&copy, &inspect)
+            visit(&working, &inspect)
             let times = Array(Set(inspect.times.map { ($0 * 10000).rounded() / 10000 })).sorted()
             guard !times.isEmpty else { return }
             lanes.append(PropertyLane(id: id, title: title, group: group, times: times, visit: visit, values: values))
@@ -189,22 +190,7 @@ extension Layer {
             }
         }
         if shapeOps != nil {
-            add("shapeOps", "Shape Operators", "Shape") { l, v in
-                guard l.shapeOps != nil else { return }
-                v.apply(&l.shapeOps!.offset)
-                v.apply(&l.shapeOps!.pucker)
-                if l.shapeOps!.repeater != nil {
-                    v.apply(&l.shapeOps!.repeater!.copies); v.apply(&l.shapeOps!.repeater!.position)
-                    v.apply(&l.shapeOps!.repeater!.scale); v.apply(&l.shapeOps!.repeater!.rotation)
-                    v.apply(&l.shapeOps!.repeater!.startOpacity); v.apply(&l.shapeOps!.repeater!.endOpacity)
-                }
-                if l.shapeOps!.wiggle != nil {
-                    v.apply(&l.shapeOps!.wiggle!.size); v.apply(&l.shapeOps!.wiggle!.detail); v.apply(&l.shapeOps!.wiggle!.speed)
-                }
-                if l.shapeOps!.zigzag != nil {
-                    v.apply(&l.shapeOps!.zigzag!.size); v.apply(&l.shapeOps!.zigzag!.ridges)
-                }
-            }
+            add("shapeOps", "Shape Operators", "Shape") { l, v in l.shapeOps?.traverse(&v) }
         }
         return lanes
     }

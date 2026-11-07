@@ -1,5 +1,8 @@
 import SwiftUI
 import AVFoundation
+import Metal
+import CoreImage
+import CoreVideo
 
 /// Frame-by-frame background removal: brush a selection, choose Keep or Cut, go to the next frame.
 /// Auto: draw a box and it follows the subject through the clip. A bad frame gets fixed alone; no other frame changes.
@@ -22,10 +25,11 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     @Published var dimImage: UIImage?
     @Published var selectionImage: UIImage?
     @Published var tool = Tool.brush
-    @Published var show = Show.overlay
+    @Published var show = Show.cut
     @Published var brushSize = 40.0
     @Published var snapEdges = true
     @Published var subtractStroke = false
+    @Published var keepBrush = true
     @Published var autoProgress: Double?
     @Published var bakedFrames: Set<Int> = []
     @Published var hasUndo = false
@@ -34,17 +38,23 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     private var undo: [(frame: Int, matte: MatteFrame?)] = []
     private var autoTask: Task<Void, Never>?
     private var loadID = 0
+    private var closed = false
+    private let previewID = UUID().uuidString
+    private var previewRevision = 0
+    private var previewTime: TimeInterval = 0
+    private let projectID: UUID
 
     var hasSelection: Bool { selection != nil }
     var manualFrames: Set<Int> { Set(settings.manualFrames) }
     var bakeID: String { settings.bakeID ?? "" }
 
     init(state: EditorState, layer: Layer, url: URL) {
-        self.state = state; self.layer = layer; self.url = url
+        self.state = state; self.layer = layer; self.url = url; projectID = state.project.id
         var video = false
         if case .video = layer.content { video = true }
         isVideo = video
         var s = layer.cutout ?? CutoutSettings(mode: .drawn)
+        if layer.cutout == nil { s.manualOnly = true }
         if s.bakeID == nil { s.bakeID = UUID().uuidString }
         var fps = s.bakeRate ?? 30
         var duration = 0.0
@@ -61,7 +71,38 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
         load()
     }
 
-    private func path(_ f: Int) -> URL { state.mediaURL(CutoutBake.fileName(bakeID, frame: f)) }
+    private func path(_ f: Int) -> URL {
+        let id = settings.bakeOverrides?[String(f)] ?? bakeID
+        return state.mediaURL(CutoutBake.fileName(id.isEmpty ? "none" : id, frame: f))
+    }
+    private var active: Bool { !closed && state.project.id == projectID && state.selectedLayerID == layer.id && state.project.layers.first(where: { $0.id == layer.id })?.content == layer.content }
+
+    func followPlayhead() {
+        guard isVideo else { return }
+        go(to: Int(layer.sourceTime(at: state.currentTime) * rate))
+        if autoProgress != nil { state.cutoutPreview = (layer.id, settings) }
+    }
+    func sync(_ value: CutoutSettings?) {
+        guard autoProgress == nil else { return }
+        let missing = value == nil
+        var value = value ?? CutoutSettings(mode: .drawn)
+        if missing { value.manualOnly = true }
+        if value.bakeID == nil { value.bakeID = UUID().uuidString }
+        value.bakeRate = value.bakeRate ?? rate
+        settings = value; scanBaked(); load()
+    }
+    private func publish(_ label: String) {
+        guard active else { return }
+        let id = layer.id, value = settings
+        state.mutate(label) { p in if let i = p.layers.firstIndex(where: { $0.id == id }) { p.layers[i].cutout = value } }
+        state.cutoutPreview = nil
+    }
+    func edge(_ label: String, _ change: (inout CutoutSettings) -> Void) {
+        change(&settings)
+        guard active, state.project.layers.first(where: { $0.id == layer.id })?.cutout != nil else { return }
+        let value = settings
+        state.coalescedEdit(label) { $0.cutout = value }
+    }
 
     private func scanBaked() {
         let prefix = "matte-\(bakeID)-"
@@ -71,6 +112,10 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
             guard n.hasPrefix(prefix), n.hasSuffix(".awimatte") else { return nil }
             return Int(n.dropFirst(prefix.count).dropLast(9))
         })
+        for (frame, id) in settings.bakeOverrides ?? [:] {
+            guard let f = Int(frame) else { continue }
+            if id.isEmpty { bakedFrames.remove(f) } else { bakedFrames.insert(f) }
+        }
     }
 
     func go(to f: Int) {
@@ -84,7 +129,8 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     private func load() {
         loadID += 1
         let id = loadID, f = frame, url = url, video = isVideo, rate = rate
-        let saved = path(f)
+        let saved = path(f), existing = state.project.layers.first(where: { $0.id == layer.id }), renderer = Renderer.shared
+        let media: (String) -> URL = { [state] in state.mediaURL($0) }
         Task.detached(priority: .userInitiated) {
             let cg: CGImage?
             if video { cg = VideoSources.shared.cgImage(url: url, time: (Double(f) + 0.5) / rate, maxSize: 1024) }
@@ -93,9 +139,15 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
                 let scaled = ci.transformed(by: CGAffineTransform(scaleX: k, y: k))
                 return CIContext().createCGImage(scaled, from: scaled.extent)
             } }
-            let stored = CutoutBake.load(saved)
+            var stored = CutoutBake.load(saved)
+            if stored == nil, let existing, existing.cutout != nil, let renderer,
+               let tex = CutoutEngine.shared.matte(for: existing, sourceTime: Double(f) / rate, mediaURL: media, device: renderer.device) {
+                var bytes = [UInt8](repeating: 0, count: tex.width * tex.height)
+                tex.getBytes(&bytes, bytesPerRow: tex.width, from: MTLRegionMake2D(0, 0, tex.width, tex.height), mipmapLevel: 0)
+                stored = MatteFrame(width: tex.width, height: tex.height, bytes: bytes)
+            }
             await MainActor.run {
-                guard id == self.loadID else { return }
+                guard id == self.loadID, !self.closed else { return }
                 self.pictureCG = cg
                 self.picture = cg.map { UIImage(cgImage: $0) }
                 if let cg { self.matte = stored ?? MatteFrame.filled(cg.width, cg.height, 255) }
@@ -140,6 +192,28 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
         selectionImage = selection.map { MatteFrame(width: w, height: h, bytes: $0) }?.image(color: (155, 92, 255))
     }
 
+    /// A temporary plain-brush matte follows the finger; the finished stroke uses Smart Edges and commits once.
+    func previewStroke(_ points: [CGPoint], radius: CGFloat) {
+        let now = Date.timeIntervalSinceReferenceDate
+        guard active, now - previewTime > 0.05, var m = matte else { return }
+        previewTime = now
+        var sel = [UInt8](repeating: 0, count: m.width * m.height)
+        let stroke = CutoutStroke(points: points.map { Vec2(Double($0.x), Double($0.y)) }, radius: Double(radius), subtract: false)
+        CutoutEngine.paint([stroke], into: &sel, w: m.width, h: m.height)
+        if keepBrush, !bakedFrames.contains(frame), state.selectedLayer?.cutout == nil { m = .filled(m.width, m.height, 0) }
+        m.apply(selection: sel, keep: keepBrush)
+        guard (try? CutoutBake.save(m, to: state.mediaURL(CutoutBake.fileName(previewID, frame: frame)))) != nil else { return }
+        var s = settings
+        if s.bakeOverrides == nil { s.bakeOverrides = [:] }
+        s.bakeOverrides?[String(frame)] = previewID
+        previewRevision += 1; s.bakeRevision = (s.bakeRevision ?? 0) + previewRevision
+        state.cutoutPreview = (layer.id, s)
+    }
+    func endStroke(_ points: [CGPoint], radius: CGFloat) {
+        addStroke(points, radius: radius); commit(keep: keepBrush)
+        state.cutoutPreview = nil
+    }
+
     func clearSelection() { selection = nil; selectionImage = nil }
 
     private func remember() {
@@ -148,69 +222,97 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
         hasUndo = true
     }
 
-    private func store(_ m: MatteFrame) {
+    private func store(_ m: MatteFrame, label: String = "Edit Cutout") {
+        guard active else { return }
+        let namespace = UUID().uuidString
+        do { try CutoutBake.save(m, to: state.mediaURL(CutoutBake.fileName(namespace, frame: frame))) }
+        catch { state.recoveryNotice = "Could not save cutout: " + error.localizedDescription; return }
         matte = m
-        try? CutoutBake.save(m, to: path(frame))
+        if settings.bakeOverrides == nil { settings.bakeOverrides = [:] }
+        settings.bakeOverrides?[String(frame)] = namespace
         bakedFrames.insert(frame)
         if !settings.manualFrames.contains(frame) { settings.manualFrames.append(frame) }
         settings.bakeRevision = (settings.bakeRevision ?? 0) + 1
-        refreshMatte()
+        refreshMatte(); publish(label)
     }
 
     /// Keep or Cut: only this frame changes.
     func commit(keep: Bool) {
         guard var m = matte, let sel = selection else { return }
-        remember()
+        if keep, !bakedFrames.contains(frame), state.selectedLayer?.cutout == nil { m = .filled(m.width, m.height, 0) }
         m.apply(selection: sel, keep: keep)
-        store(m)
+        store(m, label: keep ? "Keep Brush" : "Cut Brush")
         clearSelection()
     }
 
     func undoLast() {
-        guard let last = undo.popLast() else { return }
-        hasUndo = !undo.isEmpty
-        let f = last.frame
-        if let m = last.matte { try? CutoutBake.save(m, to: path(f)) } else {
-            try? FileManager.default.removeItem(at: path(f))
-            bakedFrames.remove(f)
-        }
-        settings.manualFrames.removeAll { $0 == f }
-        settings.bakeRevision = (settings.bakeRevision ?? 0) + 1
-        frame = f
-        load()
+        guard active else { return }; state.undo(); sync(state.selectedLayer?.cutout)
     }
 
     /// Starts this frame from the previous one's matte.
     func copyPrevious() {
         guard frame > 0, let m = CutoutBake.load(path(frame - 1)) else { return }
-        remember(); store(m)
+        store(m, label: "Copy Previous Matte")
     }
 
     /// Back to automatic for this frame.
     func resetFrame() {
-        remember()
-        try? FileManager.default.removeItem(at: path(frame))
-        bakedFrames.remove(frame)
-        settings.manualFrames.removeAll { $0 == frame }
+        guard active else { return }
+        if settings.bakeOverrides == nil { settings.bakeOverrides = [:] }
+        settings.bakeOverrides?[String(frame)] = ""
+        settings.manualOnly = false
+        bakedFrames.remove(frame); settings.manualFrames.removeAll { $0 == frame }
         settings.bakeRevision = (settings.bakeRevision ?? 0) + 1
-        load()
+        publish("Reset Cutout Frame"); load()
     }
 
     func runAuto(box: CGRect) {
-        guard isVideo, autoTask == nil else { return }
-        let job = CutoutBake.AutoJob(url: url, bakeID: bakeID, folder: { [state] in state.mediaURL($0) }, box: box,
-                                     startFrame: frame, lastFrame: lastFrame, rate: rate, mode: settings.mode, locked: manualFrames)
-        autoProgress = 0
-        tool = .brush
-        autoTask = Task.detached(priority: .userInitiated) { [weak self] in
-            let written = CutoutBake.runAuto(job) { p in
-                Task { @MainActor in self?.autoProgress = p }
+        guard active, autoTask == nil else { return }
+        let namespace = UUID().uuidString
+        autoProgress = 0; tool = .brush
+        if !isVideo {
+            guard let cg = pictureCG else { autoProgress = nil; return }
+            let mode = settings.mode
+            autoTask = Task.detached(priority: .userInitiated) { [weak self] in
+                guard let pb = CutoutEngine.mask(cg, mode: mode, pick: CGPoint(x: box.midX, y: box.midY)) ?? CutoutEngine.mask(cg, mode: mode) else {
+                    await MainActor.run { self?.autoProgress = nil; self?.autoTask = nil }; return
+                }
+                let w = CVPixelBufferGetWidth(pb), h = CVPixelBufferGetHeight(pb)
+                var bytes = [UInt8](repeating: 0, count: w * h)
+                CIContext().render(CIImage(cvPixelBuffer: pb), toBitmap: &bytes, rowBytes: w, bounds: CGRect(x: 0, y: 0, width: w, height: h), format: .L8, colorSpace: CGColorSpaceCreateDeviceGray())
+                var matte = MatteFrame(width: w, height: h, bytes: bytes)
+                CutoutBake.isolate(&matte, box: box.insetBy(dx: -box.width * 0.2, dy: -box.height * 0.2))
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    guard let self, self.active else { return }
+                    self.autoProgress = nil; self.autoTask = nil; self.store(matte, label: "Auto Cutout")
+                }
             }
+            return
+        }
+        let mode: CutoutMode = settings.mode
+        var job = CutoutBake.AutoJob(url: url, bakeID: namespace, folder: { [state] in state.mediaURL($0) }, box: box,
+                                    startFrame: frame, lastFrame: lastFrame, rate: rate, mode: mode, locked: manualFrames)
+        job.didWrite = { [weak self] f in
+            Task { @MainActor in
+                guard let self, self.active, self.autoProgress != nil else { return }
+                if self.settings.bakeOverrides == nil { self.settings.bakeOverrides = [:] }
+                self.settings.bakeOverrides?[String(f)] = namespace
+                self.settings.bakeRevision = (self.settings.bakeRevision ?? 0) + 1
+                self.bakedFrames.insert(f)
+                if f == self.frame { self.state.cutoutPreview = (self.layer.id, self.settings) }
+            }
+        }
+        autoTask = Task.detached(priority: .userInitiated) { [weak self] in
+            let written = CutoutBake.runAuto(job) { p in Task { @MainActor in if self?.active == true { self?.autoProgress = p } } }
             await MainActor.run {
-                guard let self else { return }
+                guard let self, self.active else { return }
+                if self.settings.bakeOverrides == nil { self.settings.bakeOverrides = [:] }
+                for f in written { self.settings.bakeOverrides?[String(f)] = namespace }
                 self.bakedFrames.formUnion(written)
                 self.settings.bakeRevision = (self.settings.bakeRevision ?? 0) + 1
                 self.autoProgress = nil; self.autoTask = nil
+                if !written.isEmpty { self.publish("Auto Cutout Clip") }
                 self.load()
             }
         }
@@ -218,206 +320,17 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
 
     func cancelAuto() { autoTask?.cancel() }
 
+    /// Leaving the tool never applies draft settings, nor commits a late-running automatic operation.
     func finish() {
-        autoTask?.cancel()
-        state.setCutout(settings)
-    }
-}
-
-struct CutoutStudioView: View {
-    @StateObject var model: CutoutStudioModel
-    @Environment(\.dismiss) private var dismiss
-    @State private var points: [CGPoint] = []
-    @State private var boxStart: CGPoint?
-    @State private var boxEnd: CGPoint?
-
-    var body: some View {
-        VStack(spacing: 0) {
-            topBar
-            canvas.frame(maxWidth: .infinity, maxHeight: .infinity)
-            controls
-        }
-        .background(Theme.background.ignoresSafeArea())
+        closed = true; loadID += 1; autoTask?.cancel()
+        if state.cutoutPreview?.layer == layer.id { state.cutoutPreview = nil }
+        if state.cutoutPeekOriginal == layer.id { state.cutoutPeekOriginal = nil }
     }
 
-    private var topBar: some View {
-        HStack(spacing: 10) {
-            Button { model.finish(); dismiss() } label: { Text("Done").font(.system(size: 14, weight: .bold)).foregroundStyle(Theme.accentGlow) }
-            Text("Cutout Studio").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.text)
-            Spacer()
-            Button { model.undoLast() } label: { Image(systemName: "arrow.uturn.backward") }.disabled(!model.hasUndo)
-                .foregroundStyle(model.hasUndo ? Theme.text : Theme.textDim.opacity(0.4)).accessibilityLabel("Undo")
-            Picker("", selection: $model.show) {
-                ForEach(CutoutStudioModel.Show.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-            }.pickerStyle(.segmented).frame(width: 210)
-        }
-        .padding(.horizontal, 12).frame(height: 48)
-    }
-
-    private var canvas: some View {
-        GeometryReader { g in
-            let rect = pictureRect(in: g.size)
-            ZStack(alignment: .topLeading) {
-                if let picture = model.picture {
-                    Group {
-                        switch model.show {
-                        case .original:
-                            Image(uiImage: picture).resizable()
-                        case .overlay:
-                            ZStack {
-                                Image(uiImage: picture).resizable()
-                                if let dim = model.dimImage { Image(uiImage: dim).resizable().opacity(0.55) }
-                            }
-                        case .cut:
-                            ZStack {
-                                Checker()
-                                Image(uiImage: picture).resizable().mask { if let m = model.matteImage { Image(uiImage: m).resizable() } else { Color.white } }
-                            }
-                        }
-                    }
-                    .frame(width: rect.width, height: rect.height).offset(x: rect.minX, y: rect.minY)
-                    if let sel = model.selectionImage {
-                        Image(uiImage: sel).resizable().opacity(0.6).frame(width: rect.width, height: rect.height).offset(x: rect.minX, y: rect.minY)
-                    }
-                } else {
-                    ProgressView().tint(Theme.accentGlow).frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                Canvas { ctx, _ in
-                    if points.count > 0 {
-                        var p = Path(); p.addLines(points.count == 1 ? [points[0], points[0]] : points)
-                        ctx.stroke(p, with: .color((model.subtractStroke ? Theme.danger : Theme.accentGlow).opacity(0.5)),
-                                   style: StrokeStyle(lineWidth: model.brushSize, lineCap: .round, lineJoin: .round))
-                    }
-                    if let a = boxStart, let b = boxEnd {
-                        ctx.stroke(Path(CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(a.x - b.x), height: abs(a.y - b.y))),
-                                   with: .color(Theme.ok), lineWidth: 2)
-                    }
-                }
-                .allowsHitTesting(false)
-                if let p = points.last, let picture = model.picture { loupe(picture, rect: rect, at: p, size: g.size) }
-            }
-            .contentShape(Rectangle())
-            .gesture(DragGesture(minimumDistance: 0).onChanged { v in
-                if model.tool == .brush { points.append(v.location) } else { boxStart = v.startLocation; boxEnd = v.location }
-            }.onEnded { v in
-                if model.tool == .brush {
-                    model.addStroke(points.map { uv($0, rect) }, radius: model.brushSize / 2 / max(rect.width, rect.height))
-                    points = []
-                } else if let a = boxStart {
-                    let p = uv(a, rect), q = uv(v.location, rect)
-                    let box = CGRect(x: min(p.x, q.x), y: min(p.y, q.y), width: abs(p.x - q.x), height: abs(p.y - q.y))
-                    boxStart = nil; boxEnd = nil
-                    if box.width > 0.02, box.height > 0.02 { model.runAuto(box: box) }
-                }
-            })
-        }
-        .clipped()
-    }
-
-    /// Shows what's under the finger, up and away from it.
-    private func loupe(_ picture: UIImage, rect: CGRect, at p: CGPoint, size: CGSize) -> some View {
-        let zoom: CGFloat = 3
-        return Image(uiImage: picture).resizable()
-            .frame(width: rect.width * zoom, height: rect.height * zoom)
-            .offset(x: 56 - (p.x - rect.minX) * zoom, y: 56 - (p.y - rect.minY) * zoom)
-            .frame(width: 112, height: 112, alignment: .topLeading)
-            .clipShape(Circle())
-            .overlay(Circle().stroke(.white, lineWidth: 3))
-            .overlay(Image(systemName: "plus").foregroundStyle(.white).shadow(radius: 1))
-            .position(x: min(max(62, p.x), size.width - 62), y: p.y > 150 ? p.y - 96 : p.y + 96)
-            .allowsHitTesting(false)
-    }
-
-    private func pictureRect(in size: CGSize) -> CGRect {
-        guard let p = model.picture, p.size.width > 0, p.size.height > 0 else { return CGRect(origin: .zero, size: size) }
-        let k = min(size.width / p.size.width, size.height / p.size.height)
-        let w = p.size.width * k, h = p.size.height * k
-        return CGRect(x: (size.width - w) / 2, y: (size.height - h) / 2, width: w, height: h)
-    }
-
-    private func uv(_ p: CGPoint, _ r: CGRect) -> CGPoint {
-        CGPoint(x: min(max(0, (p.x - r.minX) / max(1, r.width)), 1), y: min(max(0, (p.y - r.minY) / max(1, r.height)), 1))
-    }
-
-    private var controls: some View {
-        VStack(spacing: 8) {
-            if let progress = model.autoProgress {
-                HStack(spacing: 10) {
-                    ProgressView(value: progress).tint(Theme.accent)
-                    Text("\(Int(progress * 100))%").font(.system(size: 12, weight: .bold, design: .monospaced)).foregroundStyle(Theme.text)
-                    chip("Stop", "stop.fill") { model.cancelAuto() }
-                }
-            } else if model.hasSelection {
-                HStack(spacing: 8) {
-                    actionButton("Keep", "checkmark", Theme.ok) { model.commit(keep: true) }
-                    actionButton("Cut", "scissors", Theme.danger) { model.commit(keep: false) }
-                    chip("Clear", "xmark") { model.clearSelection() }
-                }
-            } else {
-                brushRow
-            }
-            if model.isVideo { frameRow }
-        }
-        .padding(.horizontal, 12).padding(.vertical, 8)
-        .background(Theme.surface)
-    }
-
-    private var brushRow: some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 8) {
-                Picker("", selection: $model.tool) {
-                    Text("Brush").tag(CutoutStudioModel.Tool.brush)
-                    if model.isVideo { Text("Auto Box").tag(CutoutStudioModel.Tool.box) }
-                }.pickerStyle(.segmented)
-                Toggle("Snap", isOn: $model.snapEdges).toggleStyle(.button).tint(Theme.accent).font(.system(size: 12, weight: .semibold))
-                Toggle("Erase", isOn: $model.subtractStroke).toggleStyle(.button).tint(Theme.accent).font(.system(size: 12, weight: .semibold))
-            }
-            if model.tool == .brush {
-                HStack {
-                    Text("Size").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textDim)
-                    Slider(value: $model.brushSize, in: 6...160).tint(Theme.accent)
-                }
-            } else {
-                Text("Draw a box around the subject. It follows through the clip and leaves frames you fixed by hand alone.")
-                    .font(.system(size: 12)).foregroundStyle(Theme.textDim).frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-    }
-
-    private var frameRow: some View {
-        VStack(spacing: 4) {
-            FrameMarks(last: model.lastFrame, baked: model.bakedFrames, manual: model.manualFrames, current: model.frame).frame(height: 8)
-            Slider(value: Binding(get: { Double(model.frame) }, set: { model.go(to: Int($0)) }), in: 0...Double(max(1, model.lastFrame)), step: 1).tint(Theme.accent)
-            HStack(spacing: 8) {
-                Button { model.go(to: model.frame - 1) } label: { Image(systemName: "chevron.left").frame(width: 44, height: 36) }.accessibilityLabel("Previous Frame")
-                Text("\(model.frame + 1) / \(model.lastFrame + 1)").font(.system(size: 12, weight: .bold, design: .monospaced)).foregroundStyle(Theme.text)
-                Button { model.go(to: model.frame + 1) } label: { Image(systemName: "chevron.right").frame(width: 44, height: 36) }.accessibilityLabel("Next Frame")
-                Spacer()
-                chip("Copy Prev", "doc.on.doc") { model.copyPrevious() }
-                chip("Reset", "arrow.counterclockwise") { model.resetFrame() }
-            }
-            .foregroundStyle(Theme.text)
-        }
-    }
-
-    private func actionButton(_ t: String, _ s: String, _ color: Color, _ a: @escaping () -> Void) -> some View {
-        Button(action: a) {
-            Label(t, systemImage: s).font(.system(size: 14, weight: .bold)).frame(maxWidth: .infinity).padding(.vertical, 11)
-                .background(RoundedRectangle(cornerRadius: 11).fill(color)).foregroundStyle(.white)
-        }
-        .accessibilityLabel(t)
-    }
-
-    private func chip(_ t: String, _ s: String, _ a: @escaping () -> Void) -> some View {
-        Button(action: a) {
-            Label(t, systemImage: s).font(.system(size: 12, weight: .semibold)).lineLimit(1).fixedSize()
-                .padding(.horizontal, 10).padding(.vertical, 8).background(Capsule().fill(Theme.raised)).foregroundStyle(Theme.text)
-        }
-    }
 }
 
 /// Which frames are done: blue = automatic, green = fixed by hand.
-private struct FrameMarks: View {
+struct FrameMarks: View {
     let last: Int
     let baked: Set<Int>
     let manual: Set<Int>
@@ -433,17 +346,5 @@ private struct FrameMarks: View {
             ctx.fill(Path(CGRect(x: CGFloat(current) * w, y: 0, width: max(2, w), height: size.height)), with: .color(.white))
         }
         .clipShape(Capsule())
-    }
-}
-
-private struct Checker: View {
-    var body: some View {
-        Canvas { ctx, size in
-            let cell: CGFloat = 12
-            for y in 0...Int(size.height / cell) { for x in 0...Int(size.width / cell) {
-                ctx.fill(Path(CGRect(x: CGFloat(x) * cell, y: CGFloat(y) * cell, width: cell, height: cell)),
-                         with: .color((x + y) % 2 == 0 ? Color(white: 0.85) : Color(white: 0.65)))
-            } }
-        }
     }
 }

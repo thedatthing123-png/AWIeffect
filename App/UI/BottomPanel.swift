@@ -74,7 +74,7 @@ struct BottomPanel: View {
                 case .cutout:
                     VStack(spacing: 0) {
                         PanelHeader(state: state, title: "Remove Background (AI)", showKeyNav: false)
-                        ScrollView { CutoutSection(state: state).padding(.horizontal, 12).padding(.bottom, 12) }
+                        ScrollView { CutoutSection(state: state).padding(.horizontal, 12).padding(.bottom, 12) }.accessibilityIdentifier("remove-bg-scroll")
                     }
                 case .style: StylePanel(state: state)
                 case .motionBlur: MotionBlurPanel(state: state)

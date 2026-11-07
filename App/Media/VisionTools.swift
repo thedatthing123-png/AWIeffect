@@ -52,6 +52,10 @@ struct CutoutSettings: Codable, Equatable {
     var pick: Vec2? = nil
     /// Cutout Studio: this layer's per-frame mattes, the rate they're stored at, and which frames were fixed by hand.
     var bakeID: String? = nil
+    /// Immutable per-action matte namespaces. Empty value means use live auto for that frame.
+    /// Nil preserves the original single bake namespace used by older projects.
+    var bakeOverrides: [String: String]? = nil
+    var manualOnly: Bool? = nil
     var bakeRate: Double? = nil
     var bakeRevision: Int? = nil
     var manualFramesStore: [Int]? = nil
@@ -120,6 +124,7 @@ final class CutoutEngine {
     func matte(for layer: Layer, sourceTime: Double, mediaURL: (String) -> URL, device: MTLDevice) -> MTLTexture? {
         guard let s = layer.cutout, let file = layer.mediaFile else { return nil }
         if let baked = bakedMatte(s, layer: layer, sourceTime: sourceTime, mediaURL: mediaURL, device: device) { return baked }
+        if s.manualOnly == true { return nil }
         var frameKey = 0
         var isVideo = false
         if case .video = layer.content { frameKey = Int((sourceTime * 30).rounded(.down)); isVideo = true }
@@ -171,11 +176,13 @@ final class CutoutEngine {
         guard let id = s.bakeID else { return nil }
         var frame = 0
         if case .video = layer.content { frame = Int((sourceTime * (s.bakeRate ?? 30)).rounded(.down)) }
-        let key = "baked|\(id)|\(frame)|\(s.bakeRevision ?? 0)"
+        let namespace = s.bakeOverrides?[String(frame)] ?? id
+        guard !namespace.isEmpty else { return nil }
+        let key = "baked|\(namespace)|\(frame)|\(s.bakeRevision ?? 0)"
         lock.lock()
         if let t = cache[key] { lock.unlock(); return t }
         lock.unlock()
-        guard let m = CutoutBake.load(mediaURL(CutoutBake.fileName(id, frame: frame))) else { return nil }
+        guard let m = CutoutBake.load(mediaURL(CutoutBake.fileName(namespace, frame: frame))) else { return nil }
         let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r8Unorm, width: m.width, height: m.height, mipmapped: false)
         d.usage = [.shaderRead]
         guard let tex = device.makeTexture(descriptor: d) else { return nil }

@@ -50,6 +50,11 @@ struct RootView: View {
 
     init() {
         #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-cutoutInline") {
+            var p = Project.new(name: "Inline Cutout Test", width: 256, height: 256, fps: 30, duration: 3)
+            p.layers = [p.makeLayer(name: "Picture", content: .image(fileName: "cutout-fixture.png", pixelWidth: 256, pixelHeight: 256), size: Vec2(256,256))]
+            _openProject = State(initialValue: p)
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-shapeContents") {
             var p = Project.new(name: "Shape Contents Test", width: 256, height: 256, fps: 30, duration: 3)
             var l = p.makeLayer(name: "Logo", content: .shape(.ellipse), size: Vec2(160,160))

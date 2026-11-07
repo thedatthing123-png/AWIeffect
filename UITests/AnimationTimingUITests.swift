@@ -14,28 +14,35 @@ final class AnimationTimingUITests: XCTestCase {
         let scroll = app.scrollViews["clip-settings-scroll"].firstMatch
         for _ in 0..<4 { if remap.isHittable { break }; scroll.swipeUp() }
         remap.tap()
-        let key = app.buttons["Toggle source time keyframe"].firstMatch
+        let sourceGraph = app.buttons["Source Time"].firstMatch
+        XCTAssertTrue(sourceGraph.waitForExistence(timeout: 5)); sourceGraph.tap()
+        let key = app.buttons["Add source time keyframe"].firstMatch
+        for _ in 0..<4 { if key.isHittable { break }; scroll.swipeUp() }
         XCTAssertTrue(key.waitForExistence(timeout: 8)); key.tap()
         XCTAssertTrue(app.buttons["1.000s → 1.000s"].waitForExistence(timeout: 3))
         let source = app.descendants(matching: .any)["number-Source seconds"].firstMatch
-        XCTAssertTrue(source.waitForExistence(timeout: 3)); source.tap()
+        XCTAssertTrue(source.waitForExistence(timeout: 3))
+        for _ in 0..<4 { if source.isHittable { break }; scroll.swipeUp() }
+        source.tap()
         let field = app.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 3))
         field.tap(); field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12) + "2\n")
         XCTAssertTrue(app.buttons["1.000s → 2.000s"].waitForExistence(timeout: 5))
         let point = app.descendants(matching: .any)["Source key at 1.000 seconds"].firstMatch
         XCTAssertTrue(point.exists)
+        for _ in 0..<4 { if point.isHittable { break }; scroll.swipeDown() }
         let center = point.coordinate(withNormalizedOffset: CGVector(dx: 0.5,dy: 0.5))
         center.press(forDuration: 0.1,thenDragTo: center.withOffset(CGVector(dx: 0,dy: -20)))
         XCTAssertFalse(app.buttons["1.000s → 2.000s"].exists, "Dragging the source key must edit its value, not scroll the sheet")
         save("remap-value")
         let speed = app.buttons["Playback Speed"].firstMatch
-        XCTAssertTrue(speed.isHittable, "The graph picker must not sit under the title")
+        for _ in 0..<4 { if speed.isHittable { break }; scroll.swipeDown() }
+        XCTAssertTrue(speed.isHittable, "The inline graph picker must remain reachable")
         speed.tap()
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH 'Speed in'")).firstMatch.waitForExistence(timeout: 3))
         save("remap-speed")
         let easing = app.buttons["Edit Segment Easing"].firstMatch
-        if !easing.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        for _ in 0..<4 { if easing.isHittable { break }; scroll.swipeUp() }
         easing.tap()
         XCTAssertTrue(app.staticTexts["Graph"].firstMatch.waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Time Remap"].firstMatch.exists)

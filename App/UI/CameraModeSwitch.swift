@@ -88,6 +88,7 @@ struct ViewMenuButton: View {
             .padding(14)
             .frame(width: 290)
             .background(Theme.background)
+            .presentationBackground(Theme.background)
             .presentationCompactAdaptation(.popover)
         }
     }

@@ -127,7 +127,8 @@ extension EditorState {
 
     /// Enables AE-style Time Remap with keyframes matching the current speed.
     func enableTimeRemap() {
-        guard let i = selectedIndex, project.layers[i].supportsSourceTiming, project.layers[i].timeRemap == nil else { return }
+        let snapshot = live.project ?? project
+        guard let i = selectedIndex, snapshot.layers.indices.contains(i), snapshot.layers[i].supportsSourceTiming, snapshot.layers[i].timeRemap == nil else { return }
         mutate("Enable Time Remap") { p in
             let l = p.layers[i]
             var a = Animated(l.sourceStart)

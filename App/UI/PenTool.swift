@@ -96,24 +96,55 @@ extension EditorState {
 /// - Or tap the canvas to drop a point right there; drag while dropping to pull a curve.
 /// - Tap a point to select it: the pad then moves that point (or its curve handle in Curve mode), Delete removes it.
 /// - Drag a point on the canvas to move it. Points are unlimited; the path only closes when you press Close.
+@MainActor final class PenSession: ObservableObject {
+    @Published var fit: CGRect = .zero
+    var loaded = false
+    @Published var vertices: [PathVertex] = []
+    @Published var closed: Bool = false
+    @Published var selected: Int? = nil
+    @Published var cursor: Vec2? = nil
+    @Published var curveMode: Bool = false
+    @Published var dragStart: CGPoint? = nil
+    @Published var dragVertex: Int? = nil
+    @Published var dragVertexStart: Vec2? = nil
+    @Published var freehand: [Vec2] = []
+    @Published var broken: Bool = false
+    @Published var dragHandle: MaskHandleSide? = nil
+    func reset() {
+        loaded = false
+        vertices = []
+        closed = false
+        selected = nil
+        cursor = nil
+        curveMode = false
+        dragStart = nil
+        dragVertex = nil
+        dragVertexStart = nil
+        freehand = []
+        broken = false
+        dragHandle = nil
+    }
+}
+
 struct PenOverlay: View {
     @ObservedObject var state: EditorState
     let target: PenTarget
     let style: PenStyle
     let fit: CGRect
     let done: () -> Void
-    @State private var vertices: [PathVertex] = []
-    @State private var closed = false
-    @State private var selected: Int?
-    @State private var cursor: Vec2?
-    @State private var curveMode = false
-    @State private var dragStart: CGPoint?
-    @State private var dragVertex: Int?
-    @State private var dragVertexStart: Vec2?
-    @State private var freehand: [Vec2] = []
-    /// Broken handles: each side of a point bends on its own (sharp corner with curves). Off = mirrored (smooth).
-    @State private var broken = false
-    @State private var dragHandle: MaskHandleSide?
+    @ObservedObject var session: PenSession
+    var controlsOnly = false
+    private var vertices: [PathVertex] { get { session.vertices } nonmutating set { session.vertices = newValue } }
+    private var closed: Bool { get { session.closed } nonmutating set { session.closed = newValue } }
+    private var selected: Int? { get { session.selected } nonmutating set { session.selected = newValue } }
+    private var cursor: Vec2? { get { session.cursor } nonmutating set { session.cursor = newValue } }
+    private var curveMode: Bool { get { session.curveMode } nonmutating set { session.curveMode = newValue } }
+    private var dragStart: CGPoint? { get { session.dragStart } nonmutating set { session.dragStart = newValue } }
+    private var dragVertex: Int? { get { session.dragVertex } nonmutating set { session.dragVertex = newValue } }
+    private var dragVertexStart: Vec2? { get { session.dragVertexStart } nonmutating set { session.dragVertexStart = newValue } }
+    private var freehand: [Vec2] { get { session.freehand } nonmutating set { session.freehand = newValue } }
+    private var broken: Bool { get { session.broken } nonmutating set { session.broken = newValue } }
+    private var dragHandle: MaskHandleSide? { get { session.dragHandle } nonmutating set { session.dragHandle = newValue } }
 
     private var isMask: Bool { if case .mask = target { return true }; return false }
     private var scale: Double { Double(fit.width) / Double(state.project.width) }
@@ -122,6 +153,13 @@ struct PenOverlay: View {
     private var cursorPoint: Vec2 { cursor ?? Vec2(Double(state.project.width) / 2, Double(state.project.height) / 2) }
 
     var body: some View {
+        Group {
+        if controlsOnly {
+            VStack(spacing: 6) {
+                topBar
+                if style == .points { controls }
+            }.padding(.vertical, 6).background(Theme.background)
+        } else {
         ZStack(alignment: .top) {
             Color.black.opacity(0.001)
                 .gesture(style == .points ? AnyGesture(pointsGesture.map { _ in () }) : AnyGesture(freehandGesture.map { _ in () }))
@@ -169,14 +207,16 @@ struct PenOverlay: View {
                     .position(c).allowsHitTesting(false)
                 }
             }
-            topBar
-            if style == .points {
-                VStack { Spacer(); controls }
-            }
-        }.onAppear { loadShapePath() }
+        }
+        .accessibilityElement(children: .contain).accessibilityIdentifier("pen-canvas")
+        .onAppear { session.fit = fit; loadShapePath() }
+        .onChange(of: fit) { _, value in session.fit = value }
+        }
+        }
     }
 
     private func loadShapePath() {
+        guard !session.loaded else { return }; session.loaded = true
         if case .shapePath(let layer, let content) = target,
            let p = state.shapePenPath(layer: layer, content: content) {
             vertices = p.vertices; closed = p.closed

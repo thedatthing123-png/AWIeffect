@@ -137,6 +137,7 @@ enum CutoutBake {
         var mode: CutoutMode
         /// Frames edited by hand are never overwritten.
         var locked: Set<Int>
+        var didWrite: ((Int) -> Void)? = nil
     }
 
     /// Follows the box through the clip from the current frame in both directions and writes a matte per frame.
@@ -163,7 +164,7 @@ enum CutoutBake {
 
         func emit(_ index: Int, _ m: MatteFrame) {
             guard !job.locked.contains(index) else { return }
-            if (try? save(m, to: job.folder(fileName(job.bakeID, frame: index)))) != nil { written.insert(index) }
+            if (try? save(m, to: job.folder(fileName(job.bakeID, frame: index)))) != nil { written.insert(index); job.didWrite?(index) }
         }
 
         for f in frames {

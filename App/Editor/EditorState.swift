@@ -74,11 +74,13 @@ final class PlayClock: ObservableObject {
 @MainActor
 final class EditorState: ObservableObject {
     @Published var project: Project {
-        didSet { scheduleAutosave() }
+        didSet { propertyLaneCache.invalidate(old: oldValue, new: project); scheduleAutosave() }
     }
+    let propertyLaneCache = PropertyLaneCache()
     let clock = PlayClock()
     let live = LiveCanvas()
     /// Puppet: drags keyframe pins at the playhead.
+    @Published var remapDragging = false
     @Published var puppetAnimate = true
     /// Puppet: taps add pins only while Place is on; off = pins stay put and drags only move them.
     @Published var puppetPlace = true
@@ -108,6 +110,9 @@ final class EditorState: ObservableObject {
     /// The searchable Add Light browser.
     @Published var showLightBrowser = false
     /// Cutout refine tools on the canvas.
+    /// Ephemeral cutout preview: never autosaved or exported until an actual action commits.
+    @Published var cutoutPreview: (layer: UUID, settings: CutoutSettings)? = nil
+    @Published var cutoutPeekOriginal: UUID? = nil
     @Published var cutoutTool: CutoutTool = .none
     @Published var cutoutBrushSubtract = false
     @Published var cutoutBrushSize = 40.0

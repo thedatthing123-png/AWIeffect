@@ -32,6 +32,8 @@ struct SavedEase: Codable, Equatable, Identifiable {
 /// then tap a curve or drag the handles. Changes apply live; the dot replays the motion so you feel the timing.
 struct FlowGraphPanel: View {
     @ObservedObject var state: EditorState
+    var remapPopup = false
+    @Environment(\.dismiss) private var dismiss
     @State private var key: PropertyKey?            // nil = all animated properties
     @State private var speedView = false
     @AppStorage("awi.myCurves") private var savedData = Data()
@@ -41,7 +43,10 @@ struct FlowGraphPanel: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            PanelHeader(state: state, title: "Graph")
+            if remapPopup {
+                HStack { Text("Graph").font(.headline); Spacer(); Button("Done") { dismiss() }.frame(minHeight: 44) }
+                    .foregroundStyle(Theme.text).padding(.horizontal, 12)
+            } else { PanelHeader(state: state, title: "Graph") }
             if state.animatedKeys.isEmpty && state.effectGraphTargets.isEmpty && state.selectedLayer?.timeRemap == nil {
                 VStack(spacing: 8) {
                     Image(systemName: "point.topleft.down.to.point.bottomright.curvepath").font(.system(size: 28)).foregroundStyle(Theme.textDim)

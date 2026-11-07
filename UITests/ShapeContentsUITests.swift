@@ -20,6 +20,10 @@ final class ShapeContentsUITests: XCTestCase {
         XCTAssertTrue(edit.isHittable); edit.tap()
         XCTAssertTrue(app.buttons["Done"].firstMatch.waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Cancel"].firstMatch.exists)
+        let panel = app.otherElements["pen-tool-panel"].firstMatch
+        let canvas = app.otherElements["pen-canvas"].firstMatch
+        XCTAssertTrue(panel.exists); XCTAssertTrue(canvas.exists)
+        XCTAssertGreaterThanOrEqual(panel.frame.minY, canvas.frame.maxY - 2, "Pen controls belong below the canvas")
         save("shape-selected-pen")
         app.buttons["Cancel"].firstMatch.tap()
         XCTAssertTrue(app.buttons["Select Accent"].firstMatch.waitForExistence(timeout: 5))
