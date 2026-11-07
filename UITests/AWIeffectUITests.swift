@@ -286,8 +286,8 @@ final class AWIeffectUITests: XCTestCase {
         tap("Done Typing")
         sleep(1)
         snap("ov-text-studio")
-        for s in ["Letters", "Animate", "Counter", "3D"] {
-            tap(s)
+        for s in ["Animate", "Presets", "3D"] {
+            tap("Text Studio Tab " + s)
             sleep(1)
             snap("ov-text-" + s.lowercased())
         }

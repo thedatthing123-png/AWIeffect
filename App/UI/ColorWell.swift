@@ -39,6 +39,9 @@ struct AWIColorWell: View {
                     RoundedRectangle(cornerRadius: 7).strokeBorder(Color.white.opacity(0.35), lineWidth: 1)
                 }
                 .frame(width: 34, height: 28)
+                // 44 pt touch target around the swatch.
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel(title.isEmpty ? "Color" : title)

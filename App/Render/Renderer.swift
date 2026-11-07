@@ -661,6 +661,50 @@ final class Renderer {
                 continue
             }
 
+            // Real 3D text (Text Studio 3D tab): extruded, bevelled letters through the scene camera; the letter
+            // animators drive each letter's real 3D transform.
+            if case .text = layer.content, let options3D = layer.text?.text3D, let text3D = Text3DRenderer.shared {
+                let mw = min(2048, comp.width), mh = min(2048, comp.height)
+                let shotSize = CGSize(width: mw, height: mh)
+                var blurred: MTLTexture?
+                if project.blurs(layer) {
+                    let open = project.shutterOpen
+                    let n = max(2, min(Renderer.blurSampleCap.map { min($0, 8) } ?? 8, project.blurSamples))
+                    let shots: [MTLTexture] = (0..<n).compactMap { k in
+                        let t = time + open.start + open.length * Double(k) / Double(n - 1)
+                        let sample = Self.resolveParenting(ExpressionResolver.resolve(rawProject, time: t), time: t)
+                        let at = sample.layers.first { $0.id == layer.id } ?? layer
+                        let p = Self.modelPlacement(at, project: sample, camera: Self.activeCamera(sample, time: t), time: t)
+                        return text3D.render(glyphs: Self.text3DGlyphs(at, time: t, beats: textBeats), options: at.text?.text3D ?? options3D,
+                                             time: t, placement: p, size: shotSize, pool: pool)
+                    }
+                    if shots.count == n {
+                        let whole = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(mw) / 2, Double(mh) / 2, 1)))
+                        blurred = shutterAverage(n, comp: comp, pool: pool, cb: cb) { k, target in
+                            drawQuad(cb: cb, target: target, matrix: whole, halfSize: Vec2(Double(mw) / 2, Double(mh) / 2), aa: 1, opacity: 1,
+                                     layer: layer, time: time, source: .model(shots[k]), premultipliedImage: true, blendOverride: .normal)
+                        }
+                    }
+                }
+                let placement = Self.modelPlacement(layer, project: project, camera: camera, time: time)
+                if var picture = blurred ?? text3D.render(glyphs: Self.text3DGlyphs(layer, time: time, beats: textBeats), options: options3D,
+                                                         time: time, placement: placement, size: shotSize, pool: pool) {
+                    for e in layer.effects where e.isEnabled {
+                        guard let d = EffectRegistry.definition(e.typeID), !d.isTransformEffect, case .pixels(let run) = d.stage else { continue }
+                        picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: renderScale, pool: pool))
+                    }
+                    let dof3D = Self.dofSigma(layer, camera: camera, time: time) * renderScale
+                    if dof3D > 0.5, let blur = EffectRegistry.definition("ae.gaussianBlur"), case .pixels(let run) = blur.stage {
+                        let e = EffectInstance(typeID: "ae.gaussianBlur", params: ["blurriness": .number(Animated(dof3D))])
+                        picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: 1, pool: pool))
+                    }
+                    let whole = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(comp.width) / 2, Double(comp.height) / 2, 1)))
+                    drawQuad(cb: cb, target: comp, matrix: whole, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 1, opacity: opacity,
+                             layer: layer, time: time, source: .model(picture), premultipliedImage: true)
+                }
+                continue
+            }
+
             let M = Self.placementMatrix(layer, camera: camera, time: time, renderScale: renderScale)
             if abs(M.determinant) < 1e-12 || !(0..<3).allSatisfy({ column in (0..<3).allSatisfy { M[column][$0].isFinite } }) { continue }
             let hs = Self.layerHalfSize(layer, time: time)

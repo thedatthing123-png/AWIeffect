@@ -7,6 +7,7 @@ extension EditorState {
             var l = p.makeLayer(name: "Text \(p.layers.count + 1)", content: .text, size: Vec2(10, 10))
             let size = Double(min(p.width, p.height)) * 0.12
             l.text = TextData(string: "Text", fontSize: size)
+            l.text?.ensureCharIDs()
             p.layers.insert(l, at: 0)
             selectedLayerID = l.id
         }
@@ -30,12 +31,10 @@ extension EditorState {
         mutateLayer { l in if l.text != nil { change(&l.text!) } }
     }
 
+    /// Older entry point (AI Link): forwards to the preset library, which adds a removable tagged group and never
+    /// deletes the user's own animators.
     func applyTextPreset(_ preset: TextPreset, duration: Double = 1.0) {
-        guard let l = selectedLayer else { return }
-        let start = max(l.inPoint, currentTime)
-        editText("Text Preset \(preset.name)") { t in
-            t.animators = preset.make(start, max(0.05, duration))
-        }
+        applyLibraryPreset(preset, duration: duration)
     }
 }
 
@@ -54,7 +53,8 @@ struct TextPresetTile: View {
             }
             .frame(height: 64)
             .clipShape(RoundedRectangle(cornerRadius: 10))
-            Text(preset.name).font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.text).lineLimit(1)
+            Text(preset.name).font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.text)
+                .lineLimit(2).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
         }
         .onReceive(timer) { _ in if !frames.isEmpty && !isUITesting { frameIndex += 1 } }
         .onAppear { if frames.isEmpty { TextPresetPreviews.frames(for: preset) { frames = $0 } } }
@@ -64,6 +64,7 @@ struct TextPresetTile: View {
 /// Live-rendered looping previews of text presets on a black background.
 enum TextPresetPreviews {
     private static var cache: [String: [UIImage]] = [:]
+    private static var order: [String] = []
     private static let queue = DispatchQueue(label: "awi.textpreviews", qos: .userInitiated)
 
     static func project(for preset: TextPreset) -> Project {
@@ -83,239 +84,73 @@ enum TextPresetPreviews {
             let imgs = (0..<19).compactMap { i in
                 r.renderImage(project: p, time: Double(i) / 12, maxDimension: 320, mediaURL: { URL(fileURLWithPath: $0) })
             }
-            DispatchQueue.main.async { cache[preset.id] = imgs; completion(imgs) }
+            DispatchQueue.main.async {
+                // Bounded: the oldest previews are dropped first.
+                cache[preset.id] = imgs
+                order.removeAll { $0 == preset.id }
+                order.append(preset.id)
+                while order.count > 60 { cache[order.removeFirst()] = nil }
+                completion(imgs)
+            }
         }
     }
 }
 
-struct AnimatorCard: View {
-    @ObservedObject var state: EditorState
-    let animator: TextAnimator
-    @State private var open = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Button { open.toggle() } label: {
-                    Image(systemName: "chevron.right").rotationEffect(.degrees(open ? 90 : 0)).frame(width: 24, height: 28)
-                }
-                Text(animator.name).font(.system(size: 14, weight: .semibold))
-                Spacer()
-                Button { edit("Toggle Animator") { $0.isEnabled.toggle() } } label: {
-                    Image(systemName: animator.isEnabled ? "eye" : "eye.slash").frame(width: 30, height: 28)
-                }
-                Menu {
-                    Button { state.editText("Duplicate Animator") { t in
-                        if let i = t.animators.firstIndex(where: { $0.id == animator.id }) { var c = t.animators[i]; c.id = UUID(); c.name += " copy"; t.animators.insert(c, at: i + 1) }
-                    } } label: { Label("Duplicate", systemImage: "plus.square.on.square") }
-                    Button { state.editText("Move Animator") { t in
-                        if let i = t.animators.firstIndex(where: { $0.id == animator.id }), i > 0 { t.animators.swapAt(i, i - 1) }
-                    } } label: { Label("Move Up", systemImage: "arrow.up") }
-                    Button(role: .destructive) {
-                        state.editText("Delete Animator") { t in t.animators.removeAll { $0.id == animator.id } }
-                    } label: { Label("Delete", systemImage: "trash") }
-                } label: { Image(systemName: "ellipsis").frame(width: 30, height: 28) }
-            }
-            .foregroundStyle(Theme.text)
-            if open {
-                Picker("Selector", selection: Binding(get: { animator.selector.kind }, set: { k in edit("Selector") { $0.selector.kind = k } })) {
-                    Text("Range").tag(SelectorKind.range); Text("Wiggly").tag(SelectorKind.wiggly); Text("Wave").tag(SelectorKind.wave)
-                }
-                .pickerStyle(.segmented)
-                Picker("Based On", selection: Binding(get: { animator.selector.basedOn }, set: { b in edit("Based On") { $0.selector.basedOn = b } })) {
-                    ForEach(TextUnit.allCases) { Text($0.title).tag($0) }
-                }
-                .foregroundStyle(Theme.text)
-                if animator.selector.kind == .range {
-                    Picker("Shape", selection: Binding(get: { animator.selector.shape }, set: { s in edit("Shape") { $0.selector.shape = s } })) {
-                        ForEach(SelectorShape.allCases) { Text($0.title).tag($0) }
-                    }
-                    keyed("Start", animator.selector.start, -100...200, \.selector.start)
-                    keyed("End", animator.selector.end, -100...200, \.selector.end)
-                    keyed("Offset", animator.selector.offset, -200...200, \.selector.offset)
-                    slider("Ease High", animator.selector.easeHigh, -100...100) { a, v, _ in a.selector.easeHigh = v }
-                    slider("Ease Low", animator.selector.easeLow, -100...100) { a, v, _ in a.selector.easeLow = v }
-                    Toggle("Randomize Order", isOn: Binding(get: { animator.selector.randomize }, set: { b in edit("Randomize") { $0.selector.randomize = b } }))
-                        .tint(Theme.accent).foregroundStyle(Theme.text)
-                    if animator.selector.randomize {
-                        slider("Random Seed", Double(animator.selector.seed), 0...999) { a, v, _ in a.selector.seed = Int(v) }
-                    }
-                } else {
-                    slider(animator.selector.kind == .wave ? "Waves/sec" : "Wiggles/sec", animator.selector.frequency.value(at: state.currentTime), 0...30) { a, v, t in
-                        a.selector.frequency.set(v, at: t)
-                    }
-                    if animator.selector.kind == .wave {
-                        slider("Letters/wave", animator.selector.spread.value(at: state.currentTime), 1...30) { a, v, t in a.selector.spread.set(v, at: t) }
-                    }
-                }
-                keyed("Amount", animator.selector.amount, -100...100, \.selector.amount)
-                if animator.selector.kind != .range {
-                    slider("Min Amount", animator.selector.minAmount, -100...100) { a, v, _ in a.selector.minAmount = v }
-                    slider("Max Amount", animator.selector.maxAmount, -100...100) { a, v, _ in a.selector.maxAmount = v }
-                }
-                Divider().overlay(Theme.stroke)
-                HStack {
-                    Text("PROPERTIES").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
-                    Spacer()
-                    Menu {
-                        prop("Position", animator.properties.position == nil) { $0.position = Animated(Vec2(0, -60)) }
-                        prop("Scale", animator.properties.scale == nil) { $0.scale = Animated(Vec2(0, 0)) }
-                        prop("Rotation", animator.properties.rotation == nil) { $0.rotation = Animated(90) }
-                        prop("Opacity", animator.properties.opacity == nil) { $0.opacity = Animated(0) }
-                        prop("Fill Color", animator.properties.fill == nil) { $0.fill = Animated(RGBA(hex: 0x9B5CFF)) }
-                        prop("Tracking", animator.properties.tracking == nil) { $0.tracking = Animated(40) }
-                        prop("Skew", animator.properties.skew == nil) { $0.skew = Animated(20) }
-                        prop("Blur", animator.properties.blur == nil) { $0.blur = Animated(12) }
-                        prop("Character Offset", animator.properties.characterOffset == nil) { $0.characterOffset = Animated(10) }
-                        prop("Rotation X (3D)", animator.properties.rotationX == nil) { $0.rotationX = Animated(90) }
-                        prop("Rotation Y (3D)", animator.properties.rotationY == nil) { $0.rotationY = Animated(90) }
-                        prop("Position Z (3D)", animator.properties.positionZ == nil) { $0.positionZ = Animated(400) }
-                        prop("Outline", animator.properties.outline == nil) { $0.outline = Animated(4) }
-                    } label: {
-                        Label("Add Property", systemImage: "plus.circle.fill").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.accentGlow)
-                    }
-                }
-                if let pos = animator.properties.position?.value(at: state.currentTime) {
-                    slider("Position X", pos.x, -1000...1000) { a, v, t in a.properties.position?.set(Vec2(v, pos.y), at: t) }
-                    slider("Position Y", pos.y, -1000...1000) { a, v, t in a.properties.position?.set(Vec2(pos.x, v), at: t) }
-                }
-                if let sc = animator.properties.scale?.value(at: state.currentTime) {
-                    slider("Scale X", sc.x, -400...400) { a, v, t in let y = a.properties.scale?.value(at: t).y ?? v; a.properties.scale?.set(Vec2(v, y), at: t) }
-                    slider("Scale Y", sc.y, -400...400) { a, v, t in let x = a.properties.scale?.value(at: t).x ?? v; a.properties.scale?.set(Vec2(x, v), at: t) }
-                }
-                if let r = animator.properties.rotation?.value(at: state.currentTime) {
-                    slider("Rotation", r, -720...720) { a, v, t in a.properties.rotation?.set(v, at: t) }
-                }
-                if let o = animator.properties.opacity?.value(at: state.currentTime) {
-                    slider("Opacity", o, 0...100) { a, v, t in a.properties.opacity?.set(v, at: t) }
-                }
-                if let tr = animator.properties.tracking?.value(at: state.currentTime) {
-                    slider("Tracking", tr, -100...400) { a, v, t in a.properties.tracking?.set(v, at: t) }
-                }
-                if let sk = animator.properties.skew?.value(at: state.currentTime) {
-                    slider("Skew", sk, -70...70) { a, v, t in a.properties.skew?.set(v, at: t) }
-                }
-                if let bl = animator.properties.blur?.value(at: state.currentTime) {
-                    slider("Blur", bl, 0...100) { a, v, t in a.properties.blur?.set(v, at: t) }
-                }
-                if let co = animator.properties.characterOffset?.value(at: state.currentTime) {
-                    slider("Char Offset", co, -40...40) { a, v, t in a.properties.characterOffset?.set(v, at: t) }
-                }
-                if let v0 = animator.properties.rotationX?.value(at: state.currentTime) {
-                    slider("Rotation X", v0, -360...360) { a, v, t in a.properties.rotationX?.set(v, at: t) }
-                }
-                if let v0 = animator.properties.rotationY?.value(at: state.currentTime) {
-                    slider("Rotation Y", v0, -360...360) { a, v, t in a.properties.rotationY?.set(v, at: t) }
-                }
-                if let v0 = animator.properties.positionZ?.value(at: state.currentTime) {
-                    slider("Position Z", v0, -900...5000) { a, v, t in a.properties.positionZ?.set(v, at: t) }
-                }
-                if let v0 = animator.properties.outline?.value(at: state.currentTime) {
-                    slider("Outline", v0, 0...40) { a, v, t in a.properties.outline?.set(v, at: t) }
-                }
-                if let c = animator.properties.fill?.value(at: state.currentTime) {
-                    AWIColorWell("Fill Color", selection: Binding(get: { Color(c) }, set: { col in
-                        let t = state.currentTime
-                        edit("Animator Color") { $0.properties.fill?.set(col.rgba, at: t) }
-                    })).foregroundStyle(Theme.text)
-                }
-            }
-        }
-        .padding(10).glass(radius: 12)
-    }
-
-    /// Slider with a keyframe diamond (AE stopwatch) for an animatable selector value.
-    private func keyed(_ title: String, _ anim: Animated<Double>, _ range: ClosedRange<Double>, _ path: WritableKeyPath<TextAnimator, Animated<Double>>) -> some View {
-        let t = state.currentTime
-        return HStack(spacing: 4) {
-            KeyframeDiamond(filled: anim.hasKeyframe(at: t), animated: anim.isAnimated) {
-                edit("Keyframe \(title)") { $0[keyPath: path].toggleKeyframe(at: t) }
-            }
-            slider(title, anim.value(at: t), range) { a, v, tt in a[keyPath: path].set(v, at: tt) }
-        }
-    }
-
-    private func prop(_ title: String, _ available: Bool, _ add: @escaping (inout TextAnimatorProperties) -> Void) -> some View {
-        Button(title) { edit("Add \(title)") { add(&$0.properties) } }.disabled(!available)
-    }
-
-    private func edit(_ label: String, _ change: (inout TextAnimator) -> Void) {
-        state.editText(label) { t in
-            if let i = t.animators.firstIndex(where: { $0.id == animator.id }) { change(&t.animators[i]) }
-        }
-    }
-
-    private func slider(_ title: String, _ value: Double, _ range: ClosedRange<Double>,
-                        _ set: @escaping (inout TextAnimator, Double, Double) -> Void) -> some View {
-        HStack {
-            Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 84, alignment: .leading)
-            ValueScrubber(value: value, range: range, onBegin: { state.beginEdit(title) }, onChange: { v in
-                let t = state.currentTime
-                state.editTextContinuous { td in
-                    if let i = td.animators.firstIndex(where: { $0.id == animator.id }) { set(&td.animators[i], v, t) }
-                }
-            }, onEnd: { state.endEdit() })
-        }
-    }
-}
-
+/// Font browser: search, favorites, and every row previews your own text in that font.
 struct FontPicker: View {
     let current: String
+    var sample: String = ""
     let pick: (String) -> Void
     @State private var query = ""
-    @State private var tab = 0
+    @State private var tab = 1
     @State private var showImport = false
     @ObservedObject private var library = FontLibrary.shared
+    @AppStorage("awi.favFonts") private var favRaw = ""
+    @Environment(\.dismiss) private var dismiss
+
+    private var favorites: [String] { favRaw.split(separator: "|").map(String.init) }
+    private var preview: String {
+        let s = sample.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
+        if s.isEmpty { return "The quick brown fox" }
+        return s.count > 28 ? String(s.prefix(28)) + "…" : s
+    }
+
+    private func toggleFavorite(_ ps: String) {
+        var f = favorites
+        if let i = f.firstIndex(of: ps) { f.remove(at: i) } else { f.insert(ps, at: 0) }
+        favRaw = f.joined(separator: "|")
+    }
+
+    private func matches(_ name: String) -> Bool { query.isEmpty || name.localizedCaseInsensitiveContains(query) }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("", selection: $tab) {
-                    Text("Library").tag(0); Text("On Device").tag(1)
-                }
-                .pickerStyle(.segmented).padding(12)
+                TSSegmented(options: [(0, "★ Favorites"), (1, "On Device"), (2, "Download")], selection: tab, label: "Fonts") { tab = $0 }
+                    .padding(12)
                 List {
-                    if tab == 0 {
-                        ForEach(FontLibrary.catalog.filter { query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) }) { fam in
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    let ps = library.installed[fam.name]?.first
-                                    Text(fam.name).font(ps.map { .custom($0, size: 20) } ?? .system(size: 17, weight: .semibold))
-                                        .foregroundStyle(Theme.text)
-                                    Text(fam.style).font(.caption).foregroundStyle(Theme.textDim)
-                                }
-                                Spacer()
-                                if let ps = library.installed[fam.name]?.first {
-                                    Button("Use") { pick(ps) }.buttonStyle(.borderedProminent).tint(Theme.accent)
-                                } else if library.downloading.contains(fam.name) {
-                                    ProgressView()
-                                } else {
-                                    Button { library.download(fam.name) } label: { Image(systemName: "arrow.down.circle.fill").font(.title3) }
-                                        .foregroundStyle(Theme.accentGlow)
-                                }
-                            }
+                    switch tab {
+                    case 0:
+                        if favorites.isEmpty {
+                            Text("Tap ☆ on any font to keep it here.").font(.caption).foregroundStyle(Theme.textDim)
                         }
-                    } else {
-                        ForEach(TextEngine.availableFonts().filter { query.isEmpty || $0.localizedCaseInsensitiveContains(query) }, id: \.self) { f in
-                            Button { pick(f) } label: {
-                                HStack {
-                                    Text(f).font(.custom(f, size: 18)).foregroundStyle(Theme.text)
-                                    Spacer()
-                                    if f == current { Image(systemName: "checkmark").foregroundStyle(Theme.accent) }
-                                }
-                            }
-                        }
+                        ForEach(favorites.filter(matches), id: \.self) { f in row(f) }
+                    case 1:
+                        ForEach(TextEngine.availableFonts().filter(matches), id: \.self) { f in row(f) }
+                    default:
+                        ForEach(FontLibrary.catalog.filter { matches($0.name) || matches($0.style) }) { fam in catalogRow(fam) }
                     }
                 }
                 .scrollContentBackground(.hidden)
             }
             .background(Theme.background)
-            .searchable(text: $query)
+            .searchable(text: $query, prompt: "Search fonts")
             .navigationTitle("Fonts")
             .toolbarBackground(Theme.background, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Done") { dismiss() } }
                 ToolbarItem(placement: .primaryAction) {
                     Button { showImport = true } label: { Label("Import", systemImage: "square.and.arrow.down") }
                 }
@@ -324,5 +159,55 @@ struct FontPicker: View {
                 if case .success(let u) = r, library.importFont(from: u) { tab = 1 }
             }
         }
+    }
+
+    /// [☆] [your text in the font + its name] [✓ when current] — the preview itself is the "use" button.
+    private func row(_ f: String) -> some View {
+        HStack(spacing: 6) {
+            Button { toggleFavorite(f) } label: {
+                Image(systemName: favorites.contains(f) ? "star.fill" : "star").foregroundStyle(favorites.contains(f) ? Theme.warning : Theme.textDim)
+                    .frame(width: TS.tap, height: TS.tap).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(favorites.contains(f) ? "Unfavorite \(f)" : "Favorite \(f)")
+            Button { pick(f); dismiss() } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(preview).font(.custom(f, size: 22)).foregroundStyle(Theme.text).lineLimit(1).minimumScaleFactor(0.5)
+                        Text(FontLibrary.displayName(f)).font(.caption).foregroundStyle(Theme.textDim).lineLimit(1)
+                    }
+                    Spacer(minLength: 4)
+                    if f == current { Image(systemName: "checkmark").foregroundStyle(Theme.accent) }
+                }
+                .frame(minHeight: TS.tap).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Use font \(FontLibrary.displayName(f))")
+        }
+        .listRowBackground(Theme.surface)
+    }
+
+    private func catalogRow(_ fam: FontLibrary.Family) -> some View {
+        let ps = library.installed[fam.name]?.first
+        return HStack(spacing: 6) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(ps == nil ? fam.name : preview).font(ps.map { .custom($0, size: 22) } ?? .system(size: 17, weight: .semibold))
+                    .foregroundStyle(Theme.text).lineLimit(1).minimumScaleFactor(0.5)
+                Text("\(fam.name) · \(fam.style)").font(.caption).foregroundStyle(Theme.textDim)
+            }
+            Spacer(minLength: 4)
+            if let ps {
+                Button("Use") { pick(ps); dismiss() }.buttonStyle(.borderedProminent).tint(Theme.accent).frame(minHeight: TS.tap)
+            } else if library.downloading.contains(fam.name) {
+                ProgressView().frame(width: TS.tap, height: TS.tap)
+            } else {
+                Button { library.download(fam.name) } label: {
+                    Image(systemName: "arrow.down.circle.fill").font(.title3).frame(width: TS.tap, height: TS.tap)
+                }
+                .foregroundStyle(Theme.accentGlow)
+                .accessibilityLabel("Download \(fam.name)")
+            }
+        }
+        .listRowBackground(Theme.surface)
     }
 }

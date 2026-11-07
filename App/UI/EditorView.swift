@@ -10,6 +10,7 @@ struct EditorView: View {
     @State private var showPasteStyle = false
     @State private var showKeyframeMover = false
     @ObservedObject private var layerClipboard = LayerClipboard.shared
+    @ObservedObject private var textStudio = TextStudioSession.shared
     @State private var showLayerRename = false
     @State private var renameText = ""
     @State private var showHistory = false
@@ -48,6 +49,11 @@ struct EditorView: View {
             if state.textTyping {
                 // Typing: the timeline and panels step aside so the canvas (your text) stays above the keyboard.
                 TypeBar(state: state)
+            } else if textStudio.expanded, state.panel == .text, state.selectedLayer?.text != nil {
+                // Expanded Text Studio: the canvas stays live on top, the studio takes the rest of the screen.
+                TextPanel(state: state)
+                    .frame(height: UIScreen.main.bounds.height * 0.56)
+                    .background(Theme.background)
             } else {
                 TransportBar(state: state, showHistory: $showHistory, viewZoom: $viewZoom, zoomBase: $zoomBase, viewPan: $viewPan)
                     // Tap the empty bar to get out of a selection.
@@ -414,6 +420,9 @@ struct EditorView: View {
                     }
                     .allowsHitTesting(false)
                 }
+                if pen == nil, state.canvasMode == .comp, state.panel == .text || state.textTyping, state.selectedLayer?.text != nil {
+                    TextCanvasOverlay(state: state, fit: fit)
+                }
                 if state.linkPicking {
                     LinkPickOverlay(state: state, fit: fit)
                     VStack {
@@ -468,10 +477,17 @@ struct EditorView: View {
             .simultaneousGesture(MagnificationGesture()
                 .onChanged { m in
                     guard state.canvasMode == .comp else { return }
+                    // Text Studio open: pinch sizes the selected letters (or the whole text).
+                    if state.panel == .text, state.selectedLayer?.text != nil, !magActive {
+                        TextStudioSession.shared.pinch(state, scale: Double(m)); return
+                    }
                     pinchScale = Double(m); magActive = true
                     updatePinch()
                 }
-                .onEnded { _ in magActive = false; finishPinch() }, including: pen == nil && !canvasToolActive ? .all : .subviews)
+                .onEnded { _ in
+                    if TextStudioSession.shared.isPinching { TextStudioSession.shared.endPinch(state); return }
+                    magActive = false; finishPinch()
+                }, including: pen == nil && !canvasToolActive ? .all : .subviews)
             .simultaneousGesture(RotationGesture()
                 .onChanged { a in
                     guard state.canvasMode == .comp else { return }

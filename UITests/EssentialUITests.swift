@@ -56,8 +56,9 @@ final class EssentialUITests: XCTestCase {
         createProject()
         tap("Text")
         tap("Done Typing")
-        tap("Animate")
-        XCTAssertTrue(app.staticTexts["Presets start at the playhead and are made of normal animators: open Animators to tweak them."].waitForExistence(timeout: 15), "Preset browser did not open")
+        tap("Text Studio Tab Animate")
+        XCTAssertTrue(app.buttons["Add Animator"].firstMatch.waitForExistence(timeout: 15), "Animate tab did not open")
+        tap("Text Studio Tab Presets")
         XCTAssertEqual(app.state, .runningForeground)
     }
     func testGroupOpensItsOwnEditorAndReturnsToParent() {
