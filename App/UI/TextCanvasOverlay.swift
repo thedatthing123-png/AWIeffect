@@ -2,7 +2,7 @@ import SwiftUI
 import simd
 
 /// Where the letters of a text layer are on screen right now (animated offsets included).
-struct TextCanvasGeometry {
+@MainActor struct TextCanvasGeometry {
     struct Glyph {
         let charIndex: Int
         let id: UInt32

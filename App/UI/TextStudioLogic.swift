@@ -108,6 +108,7 @@ enum TextPropKey: String, CaseIterable, Identifiable {
         case .directionalBlurAngle: return -180...180
         case .outline: return 0...40
         case .characterOffset: return -40...40
+        case .fill, .strokeColor: return 0...1   // colors use a color well, not a scrubber
         }
     }
 
@@ -459,7 +460,7 @@ enum TextStudioLogic {
 
 /// What the canvas and the Studio share while editing one text layer: letter selection (by stable ids, so it never
 /// drifts), the typing caret and whether the Studio fills the screen.
-final class TextStudioSession: ObservableObject {
+@MainActor final class TextStudioSession: ObservableObject {
     static let shared = TextStudioSession()
 
     @Published var layerID: UUID?

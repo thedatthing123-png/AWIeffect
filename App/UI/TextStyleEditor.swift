@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Row builders for keyframable text values. `write` hands the caller's Animated value to the edit.
-struct TextRows {
+@MainActor struct TextRows {
     let state: EditorState
 
     typealias Writer<V: Interpolatable> = (inout TextData, (inout Animated<V>) -> Void) -> Void
@@ -38,7 +38,7 @@ struct TextRows {
 }
 
 /// Style stack edits addressed by layer id (robust to reordering while a card is on screen).
-enum TextStyleOps {
+@MainActor enum TextStyleOps {
     static func withStyle(_ td: inout TextData, _ change: (inout TextStyleStack) -> Void) {
         var s = td.style ?? TextStyleStack()
         change(&s)
