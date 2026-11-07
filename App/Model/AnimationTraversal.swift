@@ -125,6 +125,18 @@ extension Layer {
             if text!.counter != nil { visit.apply(&text!.counter!.value) }
             visit.apply(&text!.baselineShift)
             if text!.style != nil { text!.style!.traverse(&visit) }
+            // Real 3D text: depth, bevel, materials and environment keyframes show on the timeline too.
+            if var t3 = text!.text3D {
+                visit.apply(&t3.extrusion); visit.apply(&t3.bevelSize)
+                visit.apply(&t3.environmentIntensity); visit.apply(&t3.environmentRotation)
+                for k in 0..<3 {
+                    var m = k == 0 ? t3.front : (k == 1 ? t3.bevel : t3.side)
+                    visit.apply(&m.color); visit.apply(&m.metalness); visit.apply(&m.roughness); visit.apply(&m.emission)
+                    visit.apply(&m.clearcoat); visit.apply(&m.opacity); visit.apply(&m.transmission)
+                    if k == 0 { t3.front = m } else if k == 1 { t3.bevel = m } else { t3.side = m }
+                }
+                text!.text3D = t3
+            }
             for i in text!.animators.indices {
                 var sels = text!.animators[i].allSelectors
                 for k in sels.indices { sels[k].traverse(&visit) }
