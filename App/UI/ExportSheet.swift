@@ -2,6 +2,7 @@ import SwiftUI
 import Photos
 import AVFoundation
 import AVKit
+import UniformTypeIdentifiers
 
 /// After export: the finished video plays first (like Alight Motion's showcase), then save, share or go back to editing.
 struct ExportPreview: View {
@@ -27,8 +28,10 @@ struct ExportPreview: View {
             }
             if let message { Text(message).font(.footnote).foregroundStyle(Theme.textDim) }
             HStack(spacing: 10) {
-                Button { onSave() } label: { Label("Save to Photos", systemImage: "photo.on.rectangle").frame(maxWidth: .infinity) }
-                    .buttonStyle(PrimaryButtonStyle()).disabled(saving)
+                if PhotoLibrarySaver.resourceType(for: url) != nil {
+                    Button { onSave() } label: { Label("Save to Photos", systemImage: "photo.on.rectangle").frame(maxWidth: .infinity) }
+                        .buttonStyle(PrimaryButtonStyle()).disabled(saving)
+                }
                 ShareLink(item: url) { Label("Share", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity) }
                     .frame(maxWidth: .infinity).padding(.vertical, 12).glass(radius: 12).foregroundStyle(Theme.text)
             }
@@ -36,7 +39,8 @@ struct ExportPreview: View {
         }
         .background(Theme.background.ignoresSafeArea())
         .onAppear {
-            guard PhotoLibrarySaver.resourceType(for: url) == .video else { return }
+            let isAudio = UTType(filenameExtension: url.pathExtension.lowercased())?.conforms(to: .audio) == true
+            guard PhotoLibrarySaver.resourceType(for: url) == .video || isAudio else { return }
             let item = AVPlayerItem(url: url)
             let q = AVQueuePlayer()
             looper = AVPlayerLooper(player: q, templateItem: item)
@@ -56,10 +60,14 @@ struct ExportSheet: View {
     @State private var exporter: Exporter?
     @State private var resultURL: URL?
     @State private var message: String?
-    @State private var showShare = false
     @State private var rangeMode = "All"
+    @State private var preset: String?
+    @State private var frameFormat: FrameFormat = .pngAlpha
     @State private var showPreview = false
     @Environment(\.dismiss) private var dismissSheet
+
+    private static let videoFormats: [ExportFormat] = [.mp4, .transparent, .prores422, .prores4444, .gif, .pngSequence]
+    private static let audioFormats: [ExportFormat] = [.audioM4A, .audioWAV]
 
     var body: some View {
         NavigationStack {
@@ -68,69 +76,89 @@ struct ExportSheet: View {
                     let root = state.rootProject
                     let (w, h) = outputDims(root)
                     HStack {
-                        stat("Output", "\(w)×\(h)")
-                        stat("Frame rate", "\(Int(settings.format == .gif ? Exporter.gifOutput(root, settings: settings).fps : (settings.fps ?? root.fps))) fps")
+                        stat("Output", settings.format.isAudioOnly ? "Sound only" : "\(w)×\(h)")
+                        stat("Frame rate", settings.format.isAudioOnly ? "—" : "\(Int(settings.format == .gif ? Exporter.gifOutput(root, settings: settings).fps : (settings.fps ?? root.fps))) fps")
                         stat("Est. size", estimatedSize)
                     }
+                    section("Presets") {
+                        chips(ExportPreset.all, selected: ExportPreset.all.first { $0.name == preset }, title: { $0.name }) { p in
+                            settings = p.apply(to: settings, project: root); preset = p.name
+                        }
+                        if let p = ExportPreset.all.first(where: { $0.name == preset }), p.aspectMismatch(root) {
+                            Text("This project isn't \(p.vertical ? "9:16 vertical" : "landscape"). The preset keeps your frame; the platform may add bars or crop.")
+                                .font(.caption).foregroundStyle(Theme.warning)
+                        }
+                    }
                     section("Format") {
-                        chips(ExportFormat.allCases, selected: settings.format, title: { $0.rawValue }) { settings.format = $0 }
-                        Text("MOV (alpha) preserves empty background transparency. MP4 has no alpha channel. Add a background layer when you want an opaque frame.").font(.caption).foregroundStyle(Theme.textDim)
+                        chips(Self.videoFormats, selected: settings.format, title: { $0.rawValue }) { settings.format = $0; preset = nil }
+                        chips(Self.audioFormats, selected: settings.format, title: { $0.rawValue }) { settings.format = $0; preset = nil }
+                        if settings.format == .mp4 {
+                            Picker("Codec", selection: $settings.codec) {
+                                ForEach(VideoCodec.allCases) { Text($0.rawValue).tag($0) }
+                            }.pickerStyle(.segmented).frame(minHeight: 44)
+                        }
+                        Label(settings.format.codecName(settings.codec), systemImage: "cpu")
+                            .font(.caption).foregroundStyle(Theme.textDim)
+                        if settings.format.keepsAlpha {
+                            Text("Empty background stays transparent. Add a background layer for an opaque frame.").font(.caption).foregroundStyle(Theme.textDim)
+                        }
                         if settings.format == .gif {
                             Text("GIF is limited to \(Int(Exporter.gifMaxDimension)) px on the long side and \(Int(Exporter.gifMaxFPS)) fps, with no sound.")
                                 .font(.caption).foregroundStyle(Theme.warning)
                         }
                     }
-                    section("Resolution") {
-                        let shortSide = Double(min(state.rootProject.width, state.rootProject.height))
-                        chips([480.0, 720, 1080, 1440, 2160], selected: (shortSide * settings.scale).rounded(),
-                              title: { [480: "480p", 720: "720p", 1080: "1080p", 1440: "2K", 2160: "4K"][$0] ?? "" }) { v in
-                            settings.scale = v / shortSide
-                        }
-                        // Custom: any size (short side in px), keeps the project's shape.
-                        HStack(spacing: 8) {
-                            Text("Custom").font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.textDim)
-                            NumberField(value: (shortSide * settings.scale).rounded(), label: "px") { v in
-                                settings.scale = min(4, max(0.05, v / shortSide))
+                    if !settings.format.isAudioOnly {
+                        section("Resolution") {
+                            let shortSide = Double(min(root.width, root.height))
+                            chips([480.0, 720, 1080, 1440, 2160], selected: (shortSide * settings.scale).rounded(),
+                                  title: { [480: "480p", 720: "720p", 1080: "1080p", 1440: "2K", 2160: "4K"][$0] ?? "" }) { v in
+                                settings.scale = v / shortSide; preset = nil
                             }
-                            let (cw, ch) = Exporter.outputSize(state.rootProject, scale: settings.scale)
-                            Text("\(cw)×\(ch)").font(.system(size: 12, design: .monospaced)).foregroundStyle(Theme.textDim)
+                            HStack(spacing: 8) {
+                                Text("Custom").font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 64, alignment: .leading)
+                                ValueScrubber(value: (shortSide * settings.scale).rounded(), range: 64...4320, step: 2, unit: " px", onChange: { v in
+                                    settings.scale = min(4, max(0.05, v / shortSide)); preset = nil
+                                })
+                            }.frame(minHeight: 44)
                         }
-                    }
-                    section("Frame Rate") {
-                        chips([0.0, 24, 25, 30, 50, 60], selected: settings.fps ?? 0, title: { $0 == 0 ? "Project" : "\(Int($0))" }) { v in
-                            settings.fps = v == 0 ? nil : v
+                        section("Frame Rate") {
+                            chips([0.0, 24, 25, 30, 50, 60], selected: settings.fps ?? 0, title: { $0 == 0 ? "Project" : "\(Int($0))" }) { v in
+                                settings.fps = v == 0 ? nil : v; preset = nil
+                            }
                         }
                     }
                     section("Range") {
-                        chips(["All", "From Playhead", "Selected Layer"], selected: rangeMode, title: { $0 }) { m in
-                            rangeMode = m
-                            switch m {
-                            // Export always renders the root comp, so times inside an open group / pre-comp are mapped out.
-                            case "From Playhead": settings.start = state.rootTime(state.currentTime); settings.end = nil
-                            case "Selected Layer":
-                                if let l = state.selectedLayer {
-                                    let a = state.rootTime(l.inPoint), b = state.rootTime(l.outPoint)
-                                    settings.start = max(0, min(a, b)); settings.end = min(state.rootProject.duration, max(a, b))
-                                }
-                            default: settings.start = 0; settings.end = nil
+                        chips(["All", "From Playhead", "Selected Layer", "Custom"], selected: rangeMode, title: { $0 }) { pickRange($0) }
+                        if rangeMode == "Custom" {
+                            let dur = root.duration
+                            HStack {
+                                Text("In").font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 64, alignment: .leading)
+                                ValueScrubber(value: settings.start, range: 0...max(0.01, dur), step: root.frameDuration, unit: "s", onChange: { v in
+                                    settings.start = min(max(0, v), (settings.end ?? dur) - root.frameDuration)
+                                })
+                            }.frame(minHeight: 44)
+                            HStack {
+                                Text("Out").font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 64, alignment: .leading)
+                                ValueScrubber(value: settings.end ?? dur, range: 0...max(0.01, dur), step: root.frameDuration, unit: "s", onChange: { v in
+                                    settings.end = min(dur, max(settings.start + root.frameDuration, v))
+                                })
+                            }.frame(minHeight: 44)
+                            HStack(spacing: 8) {
+                                Button("In at Playhead") { settings.start = min(state.rootTime(state.currentTime), (settings.end ?? dur) - root.frameDuration) }
+                                    .frame(maxWidth: .infinity, minHeight: 44).glass(radius: 12)
+                                Button("Out at Playhead") { settings.end = max(settings.start + root.frameDuration, state.rootTime(state.currentTime)) }
+                                    .frame(maxWidth: .infinity, minHeight: 44).glass(radius: 12)
                             }
+                            .foregroundStyle(Theme.text)
                         }
-                        Text(String(format: "%.2fs → %.2fs", settings.start, settings.end ?? state.rootProject.duration))
+                        Text(String(format: "%.2fs → %.2fs", settings.start, settings.end ?? root.duration))
                             .font(.caption.monospaced()).foregroundStyle(Theme.textDim)
                     }
-                    if settings.format == .mp4 {
-                        section("Codec") {
-                            Picker("", selection: $settings.codec) {
-                                ForEach(VideoCodec.allCases) { Text($0.rawValue).tag($0) }
-                            }.pickerStyle(.segmented)
-                        }
-                    }
-                    if settings.format != .gif {
-                        section("Quality \(Int(settings.bitrateMbps)) Mbps") {
-                            chips([8.0, 20, 40, 80], selected: settings.bitrateMbps, title: { [8: "Low", 20: "Good", 40: "High", 80: "Max"][$0] ?? "" }) {
-                                settings.bitrateMbps = $0
-                            }
-                            Slider(value: $settings.bitrateMbps, in: 4...120, step: 1).tint(Theme.accent)
+                    if settings.format.usesBitrate {
+                        // The one quality control: drag or tap to type the Mbps (for 1080p30; scaled to your size and rate).
+                        section("Quality · \(qualityName)") {
+                            ValueScrubber(value: settings.bitrateMbps, range: 4...120, step: 1, unit: " Mbps", onChange: { settings.bitrateMbps = $0; preset = nil })
+                                .frame(minHeight: 44)
                         }
                     }
 
@@ -138,24 +166,29 @@ struct ExportSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             ProgressView(value: progress).tint(Theme.accent)
                             Text("Rendering \(Int(progress * 100))%").font(.caption).foregroundStyle(Theme.textDim)
-                            Button("Cancel", role: .destructive) { exporter?.cancel() }
+                            Button("Cancel", role: .destructive) { exporter?.cancel() }.frame(minHeight: 44)
                         }
                     } else {
-                        Button(settings.format == .gif ? "Export GIF" : "Export Video (\(settings.format.rawValue))") { start() }.buttonStyle(PrimaryButtonStyle())
-                        Button("Save Current Frame as PNG") { saveFrame() }
-                            .frame(maxWidth: .infinity).padding(.vertical, 12).glass(radius: 12)
-                            .foregroundStyle(Theme.text)
+                        Button("Export \(settings.format.rawValue)") { start() }.buttonStyle(PrimaryButtonStyle())
+                        section("Current Frame") {
+                            chips(FrameFormat.allCases, selected: frameFormat, title: { $0.rawValue }) { frameFormat = $0 }
+                            Button("Save Current Frame as \(frameFormat == .jpg ? "JPG" : "PNG")") { saveFrame() }
+                                .frame(maxWidth: .infinity, minHeight: 44).glass(radius: 12)
+                                .foregroundStyle(Theme.text)
+                        }
                     }
                     if let message {
                         Text(message).font(.footnote).foregroundStyle(Theme.textDim)
                     }
                     if let resultURL {
                         HStack(spacing: 10) {
-                            Button { saveToPhotos(resultURL) } label: { Label(saving ? "Saving…" : "Save to Photos", systemImage: "photo.on.rectangle") }
-                                .disabled(saving)
-                                .frame(maxWidth: .infinity).padding(.vertical, 12).glass(radius: 12)
-                            ShareLink(item: resultURL) { Label("Share", systemImage: "square.and.arrow.up") }
-                                .frame(maxWidth: .infinity).padding(.vertical, 12).glass(radius: 12)
+                            if PhotoLibrarySaver.resourceType(for: resultURL) != nil {
+                                Button { saveToPhotos(resultURL) } label: { Label(saving ? "Saving…" : "Save to Photos", systemImage: "photo.on.rectangle") }
+                                    .disabled(saving)
+                                    .frame(maxWidth: .infinity, minHeight: 44).glass(radius: 12)
+                            }
+                            ShareLink(item: resultURL) { Label("Share / Save to Files", systemImage: "square.and.arrow.up") }
+                                .frame(maxWidth: .infinity, minHeight: 44).glass(radius: 12)
                         }
                         .foregroundStyle(Theme.text)
                     }
@@ -177,6 +210,30 @@ struct ExportSheet: View {
         }
     }
 
+    private var qualityName: String {
+        switch settings.bitrateMbps {
+        case ..<12: return "Low"
+        case ..<30: return "Good"
+        case ..<60: return "High"
+        default: return "Max"
+        }
+    }
+
+    private func pickRange(_ m: String) {
+        rangeMode = m
+        switch m {
+        // Export always renders the root comp, so times inside an open group / pre-comp are mapped out.
+        case "From Playhead": settings.start = state.rootTime(state.currentTime); settings.end = nil
+        case "Selected Layer":
+            if let l = state.selectedLayer {
+                let a = state.rootTime(l.inPoint), b = state.rootTime(l.outPoint)
+                settings.start = max(0, min(a, b)); settings.end = min(state.rootProject.duration, max(a, b))
+            }
+        case "Custom": settings.end = settings.end ?? state.rootProject.duration
+        default: settings.start = 0; settings.end = nil
+        }
+    }
+
     private func outputDims(_ root: Project) -> (Int, Int) {
         if settings.format == .gif { let g = Exporter.gifOutput(root, settings: settings); return (g.width, g.height) }
         return Exporter.outputSize(root, scale: settings.scale)
@@ -184,16 +241,16 @@ struct ExportSheet: View {
 
     private var estimatedSize: String {
         let mb = Exporter.estimatedBytes(state.rootProject, settings: settings) / 1_000_000
-        return mb < 1 ? "<1 MB" : "~\(Int(mb.rounded())) MB"
+        return mb < 1 ? "<1 MB" : mb >= 1000 ? String(format: "~%.1f GB", mb / 1000) : "~\(Int(mb.rounded())) MB"
     }
 
-    private func chips<T: Hashable>(_ items: [T], selected: T, title: @escaping (T) -> String, pick: @escaping (T) -> Void) -> some View {
+    private func chips<T: Hashable>(_ items: [T], selected: T?, title: @escaping (T) -> String, pick: @escaping (T) -> Void) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 ForEach(items, id: \.self) { it in
                     Button { pick(it) } label: {
                         Text(title(it)).font(.system(size: 13, weight: .semibold))
-                            .padding(.horizontal, 12).padding(.vertical, 8)
+                            .padding(.horizontal, 14).frame(minHeight: 44)
                             .background(Capsule().fill(it == selected ? Theme.accent : Theme.raised))
                             .foregroundStyle(it == selected ? Color.white : Theme.text)
                     }
@@ -239,7 +296,7 @@ struct ExportSheet: View {
                 await MainActor.run {
                     resultURL = url
                     message = "Export finished."
-                    showPreview = true
+                    showPreview = PhotoLibrarySaver.resourceType(for: url) != nil || s.format.isAudioOnly
                     exporting = false
                     UIApplication.shared.isIdleTimerDisabled = false
                     UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -268,20 +325,14 @@ struct ExportSheet: View {
     }
 
     private func saveFrame() {
-        guard let r = Renderer.shared else { return }
-        let pid = state.rootProject.id
+        let root = state.rootProject
         let store = state.store
+        let pid = root.id
         // The root comp at the matching root time (inside a group the open comp is only part of the picture).
-        var frameProject = state.rootProject
-        frameProject.background.a = 0
-        guard let img = r.renderImage(project: frameProject, time: state.rootTime(state.currentTime),
-                                      maxDimension: Double(max(frameProject.width, frameProject.height)),
-                                      mediaURL: { store.mediaURL($0, projectID: pid) }),
-              let data = img.pngData() else { message = "Couldn't render frame."; return }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString)-frame.png")
-        do { try data.write(to: url, options: .atomic) }
-        catch { message = error.localizedDescription; return }
-        resultURL = url
-        message = "Frame ready."
+        do {
+            resultURL = try Exporter.renderFrame(project: root, time: state.rootTime(state.currentTime), scale: settings.scale,
+                                                 format: frameFormat, mediaURL: { store.mediaURL($0, projectID: pid) })
+            message = "Frame ready."
+        } catch { message = error.localizedDescription }
     }
 }

@@ -339,6 +339,8 @@ struct Layer: Codable, Equatable, Identifiable {
     var acceptsShadows = true
     /// Named, colored layer markers (times relative to the layer's in point, so they travel with the clip).
     var layerMarkers: [TimelineMarker]? = nil
+    /// Audio effects (EQ, compressor, pitch, ducking); nil = untouched sound.
+    var audioFX: LayerAudioFX? = nil
 
     init(id: UUID = UUID(), name: String, content: LayerContent, tag: LayerTag = .purple, outPoint: Double,
          transform: LayerTransform, size: Animated<Vec2>) {
@@ -403,6 +405,7 @@ struct Layer: Codable, Equatable, Identifiable {
         castsShadows = try c.decodeIfPresent(Bool.self, forKey: .castsShadows) ?? false
         acceptsShadows = try c.decodeIfPresent(Bool.self, forKey: .acceptsShadows) ?? true
         layerMarkers = try c.decodeIfPresent([TimelineMarker].self, forKey: .layerMarkers)
+        audioFX = try c.decodeIfPresent(LayerAudioFX.self, forKey: .audioFX)
     }
 
     func isActive(at time: Double) -> Bool { isVisible && time >= inPoint && time < outPoint }

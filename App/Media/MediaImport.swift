@@ -199,16 +199,25 @@ final class AudioPreview {
         let comp = AVMutableComposition()
         var retainedSources: [RetimedAudio.Source] = []
         var params: [AVMutableAudioMixInputParameters] = []
+        var tracks: [UUID: (track: AVMutableCompositionTrack, param: Int, layer: Layer)] = [:]
         for l in project.layers where l.isVisible && l.hasAudio {
             guard let file = l.mediaFile else { continue }
             if isCancelled() || Task.isCancelled { throw ExportError.cancelled }
-            let retimed = l.timeRemap != nil || l.speed < 0 || l.timeFX?.freezeAt != nil
-            let asset: AVURLAsset
+            // Tape-style speed (Keep Pitch off) resamples like a remap, so the pitch follows the speed.
+            let tapeSpeed = l.audioFX?.keepPitch == false && abs(l.speed - 1) > 1e-3
+            let retimed = l.timeRemap != nil || l.speed < 0 || l.timeFX?.freezeAt != nil || tapeSpeed
+            var asset: AVURLAsset
             if retimed {
                 let source = try RetimedAudio.source(for: l, source: mediaURL(file), isCancelled: isCancelled)
                 retainedSources.append(source)
                 asset = source.asset
             } else { asset = AVURLAsset(url: mediaURL(file)) }
+            // EQ / compressor / pitch: same timing, processed sound.
+            if let fx = l.audioFX, fx.needsProcessing {
+                let processed = try AudioFXRender.process(asset, fx: fx, isCancelled: isCancelled)
+                retainedSources.append(processed)
+                asset = processed.asset
+            }
             guard let src = asset.tracks(withMediaType: .audio).first,
                   let dst = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) else {
                 throw ExportError.writer("Cannot load audio for \(l.name).")
@@ -243,9 +252,24 @@ final class AudioPreview {
                 }
                 if let last = ks.last { p.setVolume(Float(last.value / 100), at: CMTime(seconds: last.time, preferredTimescale: 600)) }
             }
+            tracks[l.id] = (dst, params.count, l)
             params.append(p)
         }
         guard !params.isEmpty else { return nil }
+        // Fades and ducking: the volume becomes a sampled envelope (keys × fade curve × duck gain).
+        for (_, entry) in tracks {
+            guard let fx = entry.layer.audioFX, fx.needsEnvelope else { continue }
+            let end = min(project.duration, comp.duration.seconds)
+            guard end > 0 else { continue }
+            var gains: [Float] = []
+            if let keyID = fx.duckUnder, keyID != entry.layer.id, let key = tracks[keyID] {
+                let levels = try AudioDucking.levels(of: key.track, in: comp, until: end, isCancelled: isCancelled)
+                gains = AudioDucking.gains(levelsDB: levels, amountDB: fx.duckAmount, release: fx.duckRelease)
+            }
+            let p = AVMutableAudioMixInputParameters(track: entry.track)
+            AudioDucking.apply(gains: gains, layer: entry.layer, to: p, end: end)
+            params[entry.param] = p
+        }
         let mix = AVMutableAudioMix()
         mix.inputParameters = params
         return AudioTimeline(composition: comp, mix: mix, sources: retainedSources)

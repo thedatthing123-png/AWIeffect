@@ -10,6 +10,7 @@ struct HomeView: View {
     @State private var renameText = ""
     @State private var versionsTarget: ProjectSummary?
     @State private var shareFile: SharedFile?
+    @State private var shareFiles: [URL] = []
     @State private var showSettings = false
     @State private var showImporter = false
     @State private var importURL: URL?
@@ -19,6 +20,18 @@ struct HomeView: View {
     @State private var pendingRestore: (project: ProjectSummary, url: URL)?
     @State private var deleted: [DeletedProject] = []
     @State private var showDeleted = false
+    @State private var search = ""
+    @AppStorage("awi.homeSort") private var sortRaw = ProjectSort.modified.rawValue
+    @State private var selecting = false
+    @State private var selection = Set<UUID>()
+    @State private var pendingBulkDelete = false
+    @State private var namingVersion: ProjectSummary?
+    @State private var versionName = ""
+    @State private var versionsRefresh = 0
+
+    private var shown: [ProjectSummary] {
+        ProjectSort(rawValue: sortRaw).map { ProjectSort.apply($0, to: projects, search: search) } ?? projects
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -44,9 +57,11 @@ struct HomeView: View {
                     if projects.isEmpty {
                         emptyState
                     } else {
-                        Text("Latest projects").font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.text)
-                            .padding(.top, 6)
-                        ForEach(projects) { p in projectRow(p) }
+                        listControls
+                        if shown.isEmpty {
+                            Text("No project matches “\(search)”.").font(.subheadline).foregroundStyle(Theme.textDim).padding(.vertical, 20)
+                        }
+                        ForEach(shown) { p in projectRow(p) }
                     }
                     if !deleted.isEmpty {
                         Button { showDeleted = true } label: {
@@ -66,9 +81,18 @@ struct HomeView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 40)
             }
+            if selecting { selectionBar }
         }
         .onAppear(perform: reload)
+        .confirmationDialog("Delete \(selection.count) projects?", isPresented: $pendingBulkDelete, titleVisibility: .visible) {
+            Button("Delete \(selection.count)", role: .destructive) {
+                for id in selection { ProjectStore.shared.delete(id) }
+                selection = []; selecting = false; reload()
+            }
+        } message: { Text("They move to Recently Deleted for 30 days, where you can restore them.") }
+
         .sheet(item: $shareFile) { f in ActivitySheet(items: [f.url]) }
+        .sheet(isPresented: Binding(get: { !shareFiles.isEmpty }, set: { if !$0 { shareFiles = [] } })) { ActivitySheet(items: shareFiles) }
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.aep, .xml, UTType(filenameExtension: "awi") ?? .data, .data]) { result in
             guard case .success(let url) = result else { return }
             importURL = url
@@ -96,15 +120,44 @@ struct HomeView: View {
         .sheet(item: $versionsTarget) { t in
             NavigationStack {
                 List {
-                    let urls = ProjectStore.shared.versions(for: t.id)
-                    if urls.isEmpty { Text("No saved versions yet — they're made automatically every couple of minutes while you edit.").foregroundStyle(Theme.textDim) }
+                    let urls = versionsRefresh >= 0 ? ProjectStore.shared.versions(for: t.id) : []
+                    Button { versionName = ""; namingVersion = t } label: {
+                        Label("Save Named Version of Current State", systemImage: "bookmark").frame(minHeight: 44)
+                    }
+                    if urls.isEmpty { Text("No saved versions yet — they're made automatically while you edit.").foregroundStyle(Theme.textDim) }
                     ForEach(urls, id: \.self) { u in
                         Button { pendingRestore = (t, u) } label: {
-                            Text(((try? u.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()).formatted(date: .abbreviated, time: .shortened))
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 6).fill(Color.black)
+                                    if let img = ProjectStore.shared.versionThumbnail(u) { Image(uiImage: img).resizable().scaledToFit() }
+                                    else { Image(systemName: "clock").foregroundStyle(Theme.textDim) }
+                                }
+                                .frame(width: 52, height: 52).clipShape(RoundedRectangle(cornerRadius: 6))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(ProjectStore.shared.versionName(u) ?? "Autosave").font(.system(size: 15, weight: .semibold))
+                                    Text(((try? u.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()).formatted(date: .abbreviated, time: .shortened))
+                                        .font(.caption).foregroundStyle(Theme.textDim)
+                                }
+                            }
                         }
+                        .swipeActions { Button("Delete", role: .destructive) { ProjectStore.shared.deleteVersion(u); versionsRefresh += 1 } }
                     }
                 }
                 .navigationTitle("Restore \(t.name)").navigationBarTitleDisplayMode(.inline)
+                .alert("Name this version", isPresented: Binding(get: { namingVersion != nil }, set: { if !$0 { namingVersion = nil } })) {
+                    TextField("e.g. Before the drop", text: $versionName)
+                    Button("Save") {
+                        if let t = namingVersion, let proj = try? ProjectStore.shared.load(t.id) {
+                            let n = versionName.trimmingCharacters(in: .whitespaces)
+                            do { try ProjectStore.shared.saveNamedVersion(proj, name: n.isEmpty ? "Version" : n, thumbnail: t.thumbnail) }
+                            catch { importError = "Couldn't save the version: " + error.localizedDescription }
+                            versionsRefresh += 1
+                        }
+                        namingVersion = nil
+                    }
+                    Button("Cancel", role: .cancel) { namingVersion = nil }
+                }
                 .confirmationDialog("Restore this version?", isPresented: Binding(get: { pendingRestore != nil }, set: { if !$0 { pendingRestore = nil } }),
                                     titleVisibility: .visible) {
                     Button("Restore") {
@@ -194,9 +247,15 @@ struct HomeView: View {
 
     private func projectRow(_ p: ProjectSummary) -> some View {
         Button {
-            if let proj = try? ProjectStore.shared.load(p.id) { open(proj) }
+            if selecting {
+                if selection.contains(p.id) { selection.remove(p.id) } else { selection.insert(p.id) }
+            } else if let proj = try? ProjectStore.shared.load(p.id) { open(proj) }
         } label: {
             HStack(spacing: 14) {
+                if selecting {
+                    Image(systemName: selection.contains(p.id) ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 22)).foregroundStyle(selection.contains(p.id) ? Theme.accent : Theme.textDim)
+                }
                 ZStack {
                     RoundedRectangle(cornerRadius: 10).fill(Color.black)
                     if let t = p.thumbnail {
@@ -222,12 +281,22 @@ struct HomeView: View {
                     Text(p.modifiedAt, style: .relative).font(.system(size: 11)).foregroundStyle(Theme.textDim)
                 }
                 Spacer()
+                if !selecting {
+                    Menu { cardActions(p) } label: {
+                        Image(systemName: "ellipsis").font(.system(size: 17, weight: .bold)).foregroundStyle(Theme.text)
+                            .frame(width: 44, height: 44).contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("Actions for \(p.name)")
+                }
             }
             .padding(12)
             .glass()
         }
         .buttonStyle(.plain)
-        .contextMenu {
+        .contextMenu { cardActions(p) }
+    }
+
+    @ViewBuilder private func cardActions(_ p: ProjectSummary) -> some View {
             Button { renameText = p.name; renameTarget = p } label: { Label("Rename", systemImage: "character.cursor.ibeam") }
             Button { _ = try? ProjectStore.shared.duplicate(p.id); reload() } label: { Label("Duplicate", systemImage: "plus.square.on.square") }
             Button { versionsTarget = p } label: { Label("Restore Version", systemImage: "clock.arrow.circlepath") }
@@ -235,7 +304,59 @@ struct HomeView: View {
                 if let proj = try? ProjectStore.shared.load(p.id), let url = try? ProjectPackage.export(proj) { shareFile = SharedFile(url: url) }
             } label: { Label("Share Project File (.awi)", systemImage: "square.and.arrow.up") }
             Button(role: .destructive) { pendingDelete = p } label: { Label("Delete", systemImage: "trash") }
+    }
+
+    /// Search (row 1), then title, sort and select (row 2).
+    private var listControls: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass").foregroundStyle(Theme.textDim)
+                TextField("Search projects", text: $search).foregroundStyle(Theme.text).submitLabel(.search)
+                if !search.isEmpty {
+                    Button { search = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.textDim).frame(width: 44, height: 44) }
+                        .accessibilityLabel("Clear search")
+                }
+            }
+            .padding(.horizontal, 12).frame(minHeight: 44).glass(radius: 12)
+            HStack {
+                Text("Projects (\(projects.count))").font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.text)
+                Spacer()
+                Menu {
+                    Picker("Sort", selection: $sortRaw) {
+                        ForEach(ProjectSort.allCases) { Text($0.title).tag($0.rawValue) }
+                    }
+                } label: {
+                    Label(ProjectSort(rawValue: sortRaw)?.title ?? "Sort", systemImage: "arrow.up.arrow.down")
+                        .font(.system(size: 13, weight: .semibold)).frame(minHeight: 44)
+                }
+                Button(selecting ? "Done" : "Select") { selecting.toggle(); selection = [] }
+                    .font(.system(size: 13, weight: .semibold)).frame(minWidth: 60, minHeight: 44)
+            }
+            .foregroundStyle(Theme.accentGlow)
         }
+        .padding(.top, 6)
+    }
+
+    /// Actions for the selected projects (3 buttons).
+    private var selectionBar: some View {
+        HStack(spacing: 8) {
+            Button {
+                for id in selection { _ = try? ProjectStore.shared.duplicate(id) }
+                selection = []; selecting = false; reload()
+            } label: { Label("Duplicate", systemImage: "plus.square.on.square").frame(maxWidth: .infinity, minHeight: 44) }
+            Button {
+                let urls = selection.compactMap { id in (try? ProjectStore.shared.load(id)).flatMap { try? ProjectPackage.export($0) } }
+                if !urls.isEmpty { shareFiles = urls }
+            } label: { Label("Share", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity, minHeight: 44) }
+            Button(role: .destructive) { pendingBulkDelete = true } label: {
+                Label("Delete", systemImage: "trash").frame(maxWidth: .infinity, minHeight: 44)
+            }
+        }
+        .disabled(selection.isEmpty)
+        .font(.system(size: 13, weight: .semibold))
+        .foregroundStyle(Theme.text)
+        .padding(.horizontal, 16).padding(.vertical, 8)
+        .background(Theme.surface.ignoresSafeArea())
     }
 
     private func reload() {
@@ -312,9 +433,9 @@ struct CreateProjectSheet: View {
     static let rates: [Double] = [24, 25, 30, 60]
 
     @State private var name = "Project \(Int.random(in: 100...999))"
-    @State private var aspect = aspects[0]
-    @State private var shortSide = 1080
-    @State private var fps: Double = 60
+    @State private var aspect = aspects.first { $0.label == AppSettings.defaultAspect } ?? aspects[0]
+    @State private var shortSide = AppSettings.defaultShortSide
+    @State private var fps: Double = AppSettings.defaultFPS
     /// No duration to pick (Alight Motion): the project is as long as its clips; new layers start at 5 s.
     private let duration: Double = 5
     @State private var background = Color.black
@@ -440,4 +561,29 @@ struct ActivitySheet: UIViewControllerRepresentable {
     let items: [Any]
     func makeUIViewController(context: Context) -> UIActivityViewController { UIActivityViewController(activityItems: items, applicationActivities: nil) }
     func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
+}
+
+/// Project list ordering (search matches the name, case- and accent-insensitive).
+enum ProjectSort: String, CaseIterable, Identifiable {
+    case modified, name, size, duration
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .modified: return "Last Edited"
+        case .name: return "Name"
+        case .size: return "Largest Frame"
+        case .duration: return "Longest"
+        }
+    }
+
+    static func apply(_ sort: ProjectSort, to list: [ProjectSummary], search: String) -> [ProjectSummary] {
+        let q = search.trimmingCharacters(in: .whitespaces)
+        let filtered = q.isEmpty ? list : list.filter { $0.name.range(of: q, options: [.caseInsensitive, .diacriticInsensitive]) != nil }
+        switch sort {
+        case .modified: return filtered.sorted { $0.modifiedAt > $1.modifiedAt }
+        case .name: return filtered.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        case .size: return filtered.sorted { $0.width * $0.height > $1.width * $1.height }
+        case .duration: return filtered.sorted { $0.duration > $1.duration }
+        }
+    }
 }
