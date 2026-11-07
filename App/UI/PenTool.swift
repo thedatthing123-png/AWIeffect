@@ -246,7 +246,7 @@ struct PenOverlay: View {
         VStack(spacing: 6) {
             SwipePad(hint: selected == nil ? "Swipe to move the cursor" : (curveMode ? "Swipe to bend the curve" : "Swipe to move the point"),
                      gain: Double(state.project.width) * 0.8) { d in padMoved(Vec2(Double(d.width), Double(d.height))) }
-                .frame(height: 70)
+                .frame(height: 90)
             // Three per row: build the path, then shape the point.
             HStack(spacing: 6) {
                 penButton(selected == nil ? "Add Point" : "Done Editing", selected == nil ? "plus.circle.fill" : "checkmark.circle") {
