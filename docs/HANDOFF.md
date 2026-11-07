@@ -73,7 +73,9 @@ Each is a branch based on 73d4991. Merge into feat/effects-remake, then build, f
   gradient fill, layer styles (inner shadow, glows, gradient overlay, stroke position), compact blend picker, track matte from any layer,
   particles emitter handle / color over life / burst / floor collide.
 
-To merge: `git merge --no-edit worktree-agent-<id>` for each (check `git -C .claude/worktrees/agent-<id> log --oneline -3` for the latest commit first), push, run CI, fix errors.
+These branches are also pushed to GitHub as `renewal/<id>` (e.g. `origin/renewal/a007f2cba8c2e3add`); if the R2/R4 work continued after
+2026-11-07 the newest commits may only be local — push again from `.claude/worktrees/`.
+To merge: `git merge --no-edit worktree-agent-<id>` (or `origin/renewal/<id>`) for each (check `git -C .claude/worktrees/agent-<id> log --oneline -3` for the latest commit first), push, run CI, fix errors.
 
 ## Open decisions / notes
 - Motion Sketch currently clears position keys after the sketched range (AE keeps them) — ask the owner which they want.
