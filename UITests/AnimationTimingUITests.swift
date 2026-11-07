@@ -12,17 +12,17 @@ final class AnimationTimingUITests: XCTestCase {
         let remap = app.buttons["Time Remap"].firstMatch
         XCTAssertTrue(remap.waitForExistence(timeout: 15))
         let scroll = app.scrollViews["clip-settings-scroll"].firstMatch
-        for _ in 0..<4 { if remap.isHittable { break }; scroll.swipeUp() }
+        for _ in 0..<8 { if remap.isHittable { break }; scrollPanel(scroll, up: true) }
         remap.tap()
         let sourceGraph = app.buttons["Source Time"].firstMatch
         XCTAssertTrue(sourceGraph.waitForExistence(timeout: 5)); sourceGraph.tap()
         let key = app.buttons["Add source time keyframe"].firstMatch
-        for _ in 0..<4 { if key.isHittable { break }; scroll.swipeUp() }
+        for _ in 0..<8 { if key.isHittable { break }; scrollPanel(scroll, up: true) }
         XCTAssertTrue(key.waitForExistence(timeout: 8)); key.tap()
         XCTAssertTrue(app.buttons["1.000s → 1.000s"].waitForExistence(timeout: 3))
         let source = app.descendants(matching: .any)["number-Source seconds"].firstMatch
         XCTAssertTrue(source.waitForExistence(timeout: 3))
-        for _ in 0..<4 { if source.isHittable { break }; scroll.swipeUp() }
+        for _ in 0..<8 { if source.isHittable { break }; scrollPanel(scroll, up: true) }
         source.tap()
         let field = app.textFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 3))
@@ -35,7 +35,9 @@ final class AnimationTimingUITests: XCTestCase {
         for _ in 0..<8 {
             let y = point.frame.midY, viewport = scroll.frame.insetBy(dx: 0, dy: 28)
             if viewport.contains(CGPoint(x: point.frame.midX, y: y)) { break }
-            if y > viewport.maxY { scroll.swipeUp() } else { scroll.swipeDown() }
+            let delta = min(60, max(-60, y - viewport.midY))
+            let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+            start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -delta)))
         }
         XCTAssertTrue(scroll.frame.insetBy(dx: 0, dy: 20).contains(CGPoint(x: point.frame.midX, y: point.frame.midY)))
         save("remap-before-drag")
@@ -44,13 +46,13 @@ final class AnimationTimingUITests: XCTestCase {
         XCTAssertFalse(app.buttons["1.000s → 2.000s"].exists, "Dragging the source key must edit its value, not scroll the sheet")
         save("remap-value")
         let speed = app.buttons["Playback Speed"].firstMatch
-        for _ in 0..<4 { if speed.isHittable { break }; scroll.swipeDown() }
+        for _ in 0..<8 { if speed.isHittable { break }; scrollPanel(scroll, up: false) }
         XCTAssertTrue(speed.isHittable, "The inline graph picker must remain reachable")
         speed.tap()
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH 'Speed in'")).firstMatch.waitForExistence(timeout: 3))
         save("remap-speed")
         let easing = app.buttons["Edit Segment Easing"].firstMatch
-        for _ in 0..<4 { if easing.isHittable { break }; scroll.swipeUp() }
+        for _ in 0..<8 { if easing.isHittable { break }; scrollPanel(scroll, up: true) }
         easing.tap()
         XCTAssertTrue(app.staticTexts["Graph"].firstMatch.waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Time Remap"].firstMatch.exists)
@@ -69,6 +71,12 @@ final class AnimationTimingUITests: XCTestCase {
         XCTAssertTrue(app.buttons["1.000 s"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["3.000 s"].exists)
         save("keyframe-selection")
+    }
+
+    private func scrollPanel(_ scroll: XCUIElement, up: Bool) {
+        // Short gutter drags avoid both value scrubbers and overshooting a 200pt panel.
+        let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+        start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: up ? -60 : 60)))
     }
 
     private func save(_ name: String) {
