@@ -7,6 +7,144 @@ extension AILink {
     func handleAdvanced(_ r: HTTPRequest, editor e: EditorState) -> HTTPResponse? {
         let a = ((try? JSONSerialization.jsonObject(with: r.body)) as? [String: Any]) ?? [:]
         switch (r.method, r.path) {
+        case ("GET", "/capabilities"):
+            return .json([
+                "mcp": "AI Link Advanced",
+                "native": ["timeline", "effects", "presets", "easing", "graph", "expressions",
+                           "3dModel", "3dText", "timeRemap", "precomps", "groups", "puppet",
+                           "ikRig", "physicsBake", "drawStrokes", "textAnimators", "layerPatches",
+                           "projectPatches", "keyframeVelocity"],
+                "patchableLayerFields": ["text", "masks", "path", "stroke", "shapeOps", "model3D",
+                                         "light", "camera", "ik", "timeFX", "cutout", "extrude",
+                                         "trackMatte", "transform", "effects", "volume", "timeRemap"],
+                "notes": "Native feature commands plus validated Codable patching. Open app to render or draw. Does not support export or standalone cache control yet."
+            ])
+        case ("POST", "/groups/create"):
+            guard let ids = a["layers"] as? [String], !ids.isEmpty, ids.count <= 256 else {
+                return .json(["error": "requires layers array"], status: 400)
+            }
+            let valid = ids.compactMap(UUID.init(uuidString:))
+            guard valid.count == ids.count,
+                  valid.allSatisfy({ id in e.project.layers.contains(where: { $0.id == id }) }) else {
+                return .json(["error": "all layers must exist"], status: 400)
+            }
+            e.multiSelection = Set(valid)
+            e.groupSelected()
+            return .json(["ok": true, "group": e.selectedLayerID?.uuidString ?? ""])
+        case ("POST", "/groups/ungroup"):
+            guard let id = Self.uuid(a["layer"]),
+                  let layer = e.project.layers.first(where: { $0.id == id }), layer.isGroup else {
+                return .json(["error": "requires group layer"], status: 400)
+            }
+            e.select(id); e.ungroupSelected()
+            return .json(["ok": true])
+        case ("POST", "/rig/ik"):
+            guard let lower = Self.uuid(a["lower"]), let upper = Self.uuid(a["upper"]),
+                  lower != upper,
+                  e.project.layers.contains(where: { $0.id == lower }),
+                  e.project.layers.contains(where: { $0.id == upper }) else {
+                return .json(["error": "requires existing upper and lower layer IDs"], status: 400)
+            }
+            let controller = Self.uuid(a["controller"])
+            guard controller == nil || e.project.layers.contains(where: { $0.id == controller }) else {
+                return .json(["error": "controller does not exist"], status: 400)
+            }
+            e.select(lower); e.makeIK(upper: upper, controller: controller)
+            return .json(["ok": true, "controller": e.selectedLayerID?.uuidString ?? ""])
+        case ("POST", "/rig/remove"):
+            guard let id = Self.uuid(a["layer"]), let layer = e.project.layers.first(where: { $0.id == id }),
+                  layer.ik != nil else { return .json(["error": "layer has no IK rig"], status: 400) }
+            e.select(id); e.removeIK()
+            return .json(["ok": true])
+        case ("POST", "/puppet/pin"):
+            guard let id = Self.uuid(a["layer"]),
+                  e.project.layers.contains(where: { $0.id == id }),
+                  let position = Self.vec(a["point"]),
+                  position.x.isFinite, position.y.isFinite else {
+                return .json(["error": "requires layer and comp-space point [x,y]"], status: 400)
+            }
+            e.select(id)
+            let operation = a["operation"] as? String ?? "add"
+            let index = a["index"] as? Int ?? -1
+            switch operation {
+            case "add": e.addPuppetPin(atComp: position)
+            case "move":
+                guard index >= 0 && index < e.puppetPins.count else {
+                    return .json(["error": "invalid pin index"], status: 400)
+                }
+                e.movePuppetPin(index, toComp: position)
+            case "remove":
+                guard index >= 0 && index < e.puppetPins.count else {
+                    return .json(["error": "invalid pin index"], status: 400)
+                }
+                e.removePuppetPin(index)
+            case "starch":
+                guard index >= 0 && index < e.puppetPins.count else {
+                    return .json(["error": "invalid pin index"], status: 400)
+                }
+                e.togglePuppetStarch(index)
+            case "reset": e.resetPuppetPose()
+            default: return .json(["error": "operation must be add|move|remove|starch|reset"], status: 400)
+            }
+            return .json(["ok": true, "pins": e.puppetPins.count])
+        case ("POST", "/physics/bake"):
+            guard let strings = a["dynamic"] as? [String],
+                  !strings.isEmpty, strings.count <= 100,
+                  strings.allSatisfy({ UUID(uuidString: $0) != nil }),
+                  let dynamics = Optional(strings.compactMap(UUID.init(uuidString:))),
+                  dynamics.count == strings.count,
+                  dynamics.allSatisfy({ id in e.project.layers.contains(where: { $0.id == id }) }) else {
+                return .json(["error": "requires existing dynamic layer IDs"], status: 400)
+            }
+            let staticNames = (a["static"] as? [String]) ?? []
+            let statics = staticNames.compactMap(UUID.init(uuidString:))
+            guard statics.count == staticNames.count,
+                  statics.allSatisfy({ id in e.project.layers.contains(where: { $0.id == id }) }) else {
+                return .json(["error": "invalid static layers"], status: 400)
+            }
+            var settings = PhysicsSettings()
+            if let gravity = (a["gravity"] as? NSNumber)?.doubleValue, gravity.isFinite { settings.gravity = gravity }
+            if let bounce = (a["bounciness"] as? NSNumber)?.doubleValue, bounce.isFinite { settings.bounciness = min(1, max(0, bounce)) }
+            if let friction = (a["friction"] as? NSNumber)?.doubleValue, friction.isFinite { settings.friction = min(1, max(0, friction)) }
+            if let duration = (a["duration"] as? NSNumber)?.doubleValue, duration.isFinite { settings.duration = min(20, max(0.1, duration)) }
+            if let substeps = a["substeps"] as? Int { settings.substeps = min(24, max(1, substeps)) }
+            if let wind = Self.vec(a["wind"]), wind.x.isFinite, wind.y.isFinite { settings.wind = wind }
+            if let launch = Self.vec(a["launch"]), launch.x.isFinite, launch.y.isFinite { settings.launch = launch }
+            e.bakePhysics(dynamicIDs: dynamics, staticIDs: statics, settings: settings)
+            return .json(["ok": true, "baked": dynamics.count])
+        case ("POST", "/keyframes/velocity"):
+            guard let id = Self.uuid(a["layer"]), e.project.layers.contains(where: { $0.id == id }),
+                  let i = (a["inInfluence"] as? NSNumber)?.doubleValue,
+                  let ispeed = (a["inSpeed"] as? NSNumber)?.doubleValue,
+                  let o = (a["outInfluence"] as? NSNumber)?.doubleValue,
+                  let ospeed = (a["outSpeed"] as? NSNumber)?.doubleValue,
+                  [i, ispeed, o, ospeed].allSatisfy({ $0.isFinite }) else {
+                return .json(["error": "requires layer, inInfluence, inSpeed, outInfluence, outSpeed"], status: 400)
+            }
+            e.select(id)
+            if let t = (a["time"] as? NSNumber)?.doubleValue, t.isFinite { e.seek(t) }
+            e.applyKeyframeVelocity(inInfluence: i, inSpeed: ispeed, outInfluence: o, outSpeed: ospeed)
+            return .json(["ok": true])
+        case ("POST", "/project/patch"):
+            guard let changes = a["set"] as? [String: Any], !changes.isEmpty else {
+                return .json(["error": "requires set object"], status: 400)
+            }
+            let protected: Set<String> = ["id", "layers", "precompList", "parentContext", "precompDepth"]
+            guard protected.isDisjoint(with: changes.keys),
+                  let data = try? JSONEncoder().encode(e.project),
+                  var json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+                return .json(["error": "cannot patch protected project fields"], status: 400)
+            }
+            Self.deepMerge(&json, changes)
+            guard let updatedData = try? JSONSerialization.data(withJSONObject: json),
+                  let newProject = try? JSONDecoder().decode(Project.self, from: updatedData),
+                  newProject.id == e.project.id, newProject.width >= 16, newProject.height >= 16,
+                  newProject.width <= 8192, newProject.height <= 8192, newProject.fps.isFinite,
+                  newProject.fps > 0, newProject.fps <= 240, newProject.layers == e.project.layers else {
+                return .json(["error": "project patch did not decode/validate"], status: 400)
+            }
+            e.mutate("AI Project Settings") { $0 = newProject }
+            return .json(["ok": true])
         case ("POST", "/draw/strokes"):
             // Paint with the existing Metal Draw Studio brush engine; save through its existing linked-document path.
             guard UIApplication.shared.applicationState != .background else {
