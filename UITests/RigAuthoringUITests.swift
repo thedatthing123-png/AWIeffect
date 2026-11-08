@@ -1,6 +1,39 @@
 import XCTest
 
 final class RigAuthoringUITests: XCTestCase {
+    func testWeightPaintingLivesOnCanvasAndPinchDoesNotPaint() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-rigAuthoring"]
+        app.launch()
+        let draw = app.buttons["Draw Bones"].firstMatch
+        XCTAssertTrue(draw.waitForExistence(timeout: 15)); draw.tap()
+        let bones = app.descendants(matching: .any)["Draw connected bones"].firstMatch
+        XCTAssertTrue(bones.waitForExistence(timeout: 5))
+        let start = bones.coordinate(withNormalizedOffset: CGVector(dx: 0.35,dy: 0.5))
+        start.press(forDuration: 0.1,thenDragTo: bones.coordinate(withNormalizedOffset: CGVector(dx: 0.6,dy: 0.5)))
+        app.buttons["Done"].firstMatch.tap()
+        let bind = app.buttons["Bind Mesh"].firstMatch
+        XCTAssertTrue(bind.waitForExistence(timeout: 5)); bind.tap()
+        app.buttons["Weights"].firstMatch.tap()
+        let canvas = app.descendants(matching: .any)["Paint bone weights"].firstMatch
+        XCTAssertTrue(canvas.waitForExistence(timeout: 5))
+        let before = canvas.value as? String
+        let point = canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.5,dy: 0.5))
+        point.press(forDuration: 0.1,thenDragTo: point.withOffset(CGVector(dx: 35,dy: 0)))
+        let painted = canvas.value as? String
+        XCTAssertNotEqual(painted,before)
+        canvas.pinch(withScale: 1.3,velocity: 1)
+        XCTAssertEqual(canvas.value as? String,painted,"Navigating the view must cancel any brush preview")
+        let image = XCUIScreen.main.screenshot()
+        let attachment = XCTAttachment(screenshot: image)
+        attachment.name = "bone-weight-painting"; attachment.lifetime = .keepAlways; add(attachment)
+        try? FileManager.default.createDirectory(atPath: "/tmp/awi-ui",withIntermediateDirectories: true)
+        try? image.pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/awi-ui/bone-weight-painting.png"))
+        app.buttons["Done"].firstMatch.tap()
+        XCTAssertFalse(canvas.exists)
+    }
+
     func testDrawConnectedBoneChainAndPoseItOnCanvas() {
         continueAfterFailure = false
         let app = XCUIApplication()

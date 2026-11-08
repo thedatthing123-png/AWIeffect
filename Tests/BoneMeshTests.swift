@@ -52,6 +52,24 @@ final class BoneMeshTests: XCTestCase {
         XCTAssertNil(copy.frameMatrices)
     }
 
+    func testPaintingNormalizesWeightsAndPreservesLockedInfluences() throws {
+        let sources = (0..<3).map { _ in BoneMeshSource(id: UUID(),matrix: matrix_identity_double3x3,tip: Vec2(80,0)) }
+        var mesh = try XCTUnwrap(BoneMeshBinding.bind(halfSize: Vec2(100,100),detail: 8,bones: sources))
+        let original = mesh.vertices
+        mesh.lockedBoneIDs = [sources[2].id]
+        XCTAssertTrue(mesh.paint([BoneWeightDab(center: .zero,amount: 0.9)],selected: 0,radius: 100,mode: .paint))
+        for (before,after) in zip(original,mesh.vertices) {
+            XCTAssertEqual(before.weights.first { $0.bone == 2 }?.amount,after.weights.first { $0.bone == 2 }?.amount)
+            XCTAssertEqual(after.weights.reduce(0) { $0+$1.amount },1,accuracy: 1e-12)
+        }
+        XCTAssertFalse(mesh.paint([BoneWeightDab(center: .zero,amount: 1)],selected: 2,radius: 100,mode: .erase))
+        XCTAssertTrue(mesh.isValid)
+        _ = mesh.paint([BoneWeightDab(center: .zero,amount: 0.5)],selected: 0,radius: 100,mode: .smooth)
+        _ = mesh.paint([BoneWeightDab(center: .zero,amount: 0.8)],selected: 0,radius: 100,mode: .erase)
+        XCTAssertTrue(mesh.isValid)
+        for vertex in mesh.vertices { XCTAssertEqual(vertex.weights.reduce(0) { $0+$1.amount },1,accuracy: 1e-12) }
+    }
+
     func testMetalSkinningMovesPixelsAndRefreshesImportedWeights() throws {
         let device = try XCTUnwrap(MTLCreateSystemDefaultDevice())
         let queue = try XCTUnwrap(device.makeCommandQueue())

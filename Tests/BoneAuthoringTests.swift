@@ -11,6 +11,64 @@ final class BoneAuthoringTests: XCTestCase {
         return (EditorState(project: p, store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))), art.id)
     }
 
+    func testBoundArtworkCarriesAnIndependentRigWhenDuplicated() throws {
+        let (s, art) = state()
+        let bone = try XCTUnwrap(s.addBone(artworkID: art, parentID: nil, start: .zero, end: Vec2(100,0)))
+        s.select(bone); s.bindBoneMesh(); s.select(art)
+        let original = try XCTUnwrap(s.selectedLayer?.boneMesh)
+        s.duplicateSelected()
+        let copy = try XCTUnwrap(s.selectedLayer)
+        let binding = try XCTUnwrap(copy.boneMesh)
+        XCTAssertNotEqual(copy.id, art); XCTAssertNotEqual(binding.id, original.id)
+        XCTAssertTrue(binding.boneIDs.contains(copy.id)); XCTAssertFalse(binding.boneIDs.contains(art))
+        let newBone = try XCTUnwrap(s.project.layers.first { $0.bone?.artworkID == copy.id })
+        XCTAssertEqual(newBone.parentID, copy.id); XCTAssertTrue(binding.boneIDs.contains(newBone.id))
+        XCTAssertFalse(binding.boneIDs.contains(bone))
+    }
+
+    func testWeightStrokePreviewCommitCancelAndUndo() throws {
+        let (s, art) = state()
+        let bone = try XCTUnwrap(s.addBone(artworkID: art, parentID: nil, start: .zero, end: Vec2(100,0)))
+        s.select(bone); s.bindBoneMesh(); s.beginBoneWeights()
+        let original = try XCTUnwrap(s.rigArtwork?.boneMesh), history = s.undoStack.count
+        s.boneWeightRadius = 180; s.boneWeightStrength = 100; s.boneWeightBoneID = art
+        XCTAssertTrue(s.paintBoneWeights([BoneWeightDab(center: .zero,amount: 1)],beginStroke: true))
+        XCTAssertEqual(s.rigArtwork?.boneMesh,original); XCTAssertEqual(s.undoStack.count,history)
+        XCTAssertNotEqual(s.canvasProject.layers.first { $0.id == art }?.boneMesh,original)
+        s.finishBoneWeightStroke(commit: false)
+        XCTAssertEqual(s.rigArtwork?.boneMesh,original); XCTAssertEqual(s.undoStack.count,history)
+        XCTAssertTrue(s.paintBoneWeights([BoneWeightDab(center: .zero,amount: 1)],beginStroke: true))
+        s.finishBoneWeightStroke(commit: true)
+        XCTAssertNotEqual(s.rigArtwork?.boneMesh,original); XCTAssertEqual(s.undoStack.count,history+1)
+        s.undo(); XCTAssertEqual(s.rigArtwork?.boneMesh,original)
+        s.redo(); XCTAssertNotEqual(s.rigArtwork?.boneMesh,original)
+        s.finishBoneWeights(); XCTAssertNil(s.boneWeightPreview)
+    }
+
+    func testBonePaletteSurvivesNestedRenderingAndGlobalArtworkMotion() throws {
+        let (s, art) = state()
+        let bone = try XCTUnwrap(s.addBone(artworkID: art, parentID: nil, start: .zero, end: Vec2(100,0)))
+        s.select(bone); s.bindBoneMesh()
+        let index = try XCTUnwrap(s.project.layers.firstIndex { $0.id == bone })
+        s.project.layers[index].transform.rotation = Animated(90)
+        let resolved = Renderer.resolveParenting(s.project,time: 0)
+        let mesh = try XCTUnwrap(resolved.layers.first { $0.id == art }?.boneMesh)
+        let palette = try XCTUnwrap(mesh.frameMatrices), bi = try XCTUnwrap(mesh.boneIDs.firstIndex(of: bone))
+        let point = palette[bi].apply(Vec2(100,0))
+        XCTAssertEqual(point.x,0,accuracy: 1e-8); XCTAssertEqual(point.y,100,accuracy: 1e-8)
+        let nested = Renderer.resolveParenting(resolved,time: 0)
+        XCTAssertEqual(nested.layers.first { $0.id == art }?.boneMesh?.frameMatrices,palette)
+        let ai = try XCTUnwrap(s.project.layers.firstIndex { $0.id == art })
+        s.project.layers[ai].transform.scale = Animated(Vec2(190,60))
+        s.project.layers[ai].transform.rotation = Animated(35)
+        let changed = Renderer.resolveParenting(s.project,time: 0)
+        let after = try XCTUnwrap(changed.layers.first { $0.id == art }?.boneMesh?.frameMatrices)
+        for (a,b) in zip(palette,after) {
+            XCTAssertEqual(a.a,b.a,accuracy: 1e-8); XCTAssertEqual(a.b,b.b,accuracy: 1e-8)
+            XCTAssertEqual(a.x,b.x,accuracy: 1e-8); XCTAssertEqual(a.y,b.y,accuracy: 1e-8)
+        }
+    }
+
     func testConnectedBonesUseExistingTransformsAndPoseHierarchy() throws {
         let (s, art) = state()
         s.select(art); s.beginBoneDrawing()

@@ -114,7 +114,7 @@ enum LayerClipboardFiles {
 extension EditorState {
     func copyLayer() {
         guard let selected = selectedLayer, !LayerClipboard.shared.busy else { return }
-        let ids = Self.descendantIDs(of: selected.id, in: project).union([selected.id])
+        let ids = expandedLayerIDs(Self.descendantIDs(of: selected.id, in: project).union([selected.id]))
         var source = project
         Self.unparentKeepingWorld(&source) { ids.contains($0.id) && $0.parentID.map { !ids.contains($0) } == true }
         let layers = source.layers.filter { ids.contains($0.id) }

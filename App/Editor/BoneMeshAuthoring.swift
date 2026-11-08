@@ -32,7 +32,7 @@ extension EditorState {
         boneWeightBoneID = mesh.boneIDs.contains(selectedLayerID ?? UUID()) ? selectedLayerID : mesh.boneIDs.dropFirst().first ?? mesh.boneIDs.first
         boneWeightArtworkID = art.id
     }
-    func finishBoneWeights() { boneWeightArtworkID = nil; boneWeightBoneID = nil }
+    func finishBoneWeights() { finishBoneWeightStroke(commit: false); boneWeightArtworkID = nil; boneWeightBoneID = nil }
 
     func toggleBoneWeightLock(_ id: UUID) {
         guard let owner = boneWeightArtworkID else { return }
@@ -45,18 +45,26 @@ extension EditorState {
         }
     }
 
-    /// No undo entry is created until a dab actually changes a vertex.
+    /// A stroke is a preview transaction. A second finger cancels it without changing document or history.
     @discardableResult
     func paintBoneWeights(_ dabs: [BoneWeightDab], beginStroke: Bool) -> Bool {
-        let source = live.project ?? project
         guard let owner = boneWeightArtworkID, let selected = boneWeightBoneID,
-              let art = source.layers.first(where: { $0.id == owner }), !art.isLocked,
-              var mesh = art.boneMesh, let index = mesh.boneIDs.firstIndex(of: selected),
+              let art = project.layers.first(where: { $0.id == owner }), !art.isLocked,
+              var mesh = boneWeightPreview ?? art.boneMesh, let index = mesh.boneIDs.firstIndex(of: selected),
               mesh.paint(dabs, selected: index, radius: boneWeightRadius, mode: boneWeightBrush) else { return false }
-        if beginStroke { beginPanelGesture("Paint Weights") }
-        mutate("Paint Weights") { p in if let i = p.layers.firstIndex(where: { $0.id == owner }) { p.layers[i].boneMesh = mesh } }
+        boneWeightPreview = mesh; redrawToken &+= 1
         return true
     }
+
+    func finishBoneWeightStroke(commit: Bool) {
+        let mesh = boneWeightPreview; boneWeightPreview = nil
+        guard commit, let mesh, let owner = boneWeightArtworkID,
+              let art = project.layers.first(where: { $0.id == owner }), !art.isLocked, mesh != art.boneMesh else {
+            if mesh != nil { redrawToken &+= 1 }; return
+        }
+        mutate("Paint Weights") { p in if let i = p.layers.firstIndex(where: { $0.id == owner }) { p.layers[i].boneMesh = mesh } }
+    }
+
 }
 
 struct BoneMeshControls: View {
@@ -75,16 +83,16 @@ struct BoneMeshControls: View {
                     }.pickerStyle(.segmented).frame(minHeight: 44)
                     HStack {
                         Text("Size").font(.caption).frame(width: 60,alignment: .leading)
-                        ValueScrubber(value: state.boneWeightRadius,range: 2...1000,unit: " px",onChange: { state.boneWeightRadius = $0 }).frame(height: 44)
+                        ValueScrubber(value: state.boneWeightRadius,range: 2...1000,unit: " px",onChange: { state.boneWeightRadius = $0 }).frame(height: 44).environment(\.scrubSession, ScrubSession())
                     }
                     HStack {
                         Text("Strength").font(.caption).frame(width: 60,alignment: .leading)
-                        ValueScrubber(value: state.boneWeightStrength,range: 1...100,unit: "%",onChange: { state.boneWeightStrength = $0 }).frame(height: 44)
+                        ValueScrubber(value: state.boneWeightStrength,range: 1...100,unit: "%",onChange: { state.boneWeightStrength = $0 }).frame(height: 44).environment(\.scrubSession, ScrubSession())
                     }
                     ForEach(mesh.boneIDs,id: \.self) { id in
                         HStack(spacing: 8) {
                             Button {
-                                state.boneWeightBoneID = id
+                                state.finishBoneWeightStroke(commit: false); state.boneWeightBoneID = id
                             } label: {
                                 HStack {
                                     Image(systemName: state.boneWeightBoneID == id ? "circle.inset.filled" : "circle")
@@ -107,7 +115,7 @@ struct BoneMeshControls: View {
             } else if state.project.layers.contains(where: { $0.bone?.artworkID == art.id }) && state.boneDrawingArtworkID == nil {
                 HStack {
                     Text("Mesh Detail").font(.caption).frame(width: 84,alignment: .leading)
-                    ValueScrubber(value: state.boneMeshDetail,range: 4...128,step: 1,onChange: { state.boneMeshDetail = $0 }).frame(height: 44)
+                    ValueScrubber(value: state.boneMeshDetail,range: 4...128,step: 1,onChange: { state.boneMeshDetail = $0 }).frame(height: 44).environment(\.scrubSession, ScrubSession())
                 }
                 Button { state.bindBoneMesh() } label: { Label("Bind Mesh",systemImage: "square.grid.3x3").frame(maxWidth: .infinity,minHeight: 44) }
                     .buttonStyle(PrimaryButtonStyle())

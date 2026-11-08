@@ -47,6 +47,15 @@ extension EditorState {
         for layer in project.layers where ids.contains(layer.id) && layer.isGroup {
             result.formUnion(Self.descendantIDs(of: layer.id, in: project))
         }
+        // Skeletons belong to their artwork. Copying/grouping a bound image must carry its editable rig,
+        // rather than silently dropping skinning or leaving the copy controlled by the original bones.
+        let artwork = result
+        for layer in project.layers {
+            if layer.bone.map({ artwork.contains($0.artworkID) }) == true || layer.ik?.spaceID.map(artwork.contains) == true {
+                result.insert(layer.id)
+                if let rig = layer.ik { result.insert(rig.upperID); result.insert(rig.controllerID) }
+            }
+        }
         return result
     }
 

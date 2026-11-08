@@ -97,8 +97,16 @@ struct BoneMeshBinding: Codable, Equatable {
         var vertices: [BoneMeshVertex] = []; vertices.reserveCapacity((columns+1)*(rows+1))
         for j in 0...rows { for i in 0...columns {
             let rest = Vec2(-halfSize.x + 2*halfSize.x*Double(i)/Double(columns), -halfSize.y + 2*halfSize.y*Double(j)/Double(rows))
-            let nearest = segments.enumerated().map { (index: $0.offset, distance: distanceSquared(rest, from: $0.element.0, to: $0.element.1)) }
-                .sorted { $0.distance == $1.distance ? $0.index < $1.index : $0.distance < $1.distance }.prefix(4)
+            var distances: [(index: Int, distance: Double)] = []
+            distances.reserveCapacity(segments.count)
+            for (index,segment) in segments.enumerated() {
+                distances.append((index: index,distance: distanceSquared(rest,from: segment.0,to: segment.1)))
+            }
+            distances.sort { lhs,rhs in
+                if lhs.distance == rhs.distance { return lhs.index < rhs.index }
+                return lhs.distance < rhs.distance
+            }
+            let nearest = distances.prefix(4)
             let raw = nearest.map { BoneMeshWeight(bone: $0.index, amount: 1/max(floorDistance, $0.distance)) }
             let total = raw.reduce(0) { $0+$1.amount }
             guard total.isFinite, total > 0 else { return nil }

@@ -100,8 +100,9 @@ final class EditorState: ObservableObject {
     var layerPickPrompt = "Tap a layer"
     /// Make-IK picks (kept here: the Rig panel closes while you tap a layer on the canvas).
     @Published var boneMeshDetail = 32.0
-    @Published var boneWeightArtworkID: UUID?
-    @Published var boneWeightBoneID: UUID?
+    @Published var boneWeightArtworkID: UUID? { didSet { if oldValue != boneWeightArtworkID { redrawToken &+= 1 } } }
+    @Published var boneWeightBoneID: UUID? { didSet { if oldValue != boneWeightBoneID { redrawToken &+= 1 } } }
+    @Published var boneWeightPreview: BoneMeshBinding?
     @Published var boneWeightRadius = 80.0
     @Published var boneWeightStrength = 35.0
     @Published var boneWeightBrush: BoneWeightBrush = .paint
@@ -162,8 +163,11 @@ final class EditorState: ObservableObject {
     var multiDragStarts: [UUID: Vec2] = [:]
     /// What the canvas should draw right now (the live gesture copy, else the project).
     var canvasProject: Project {
-        var shown = live.project ?? project
-        if let id = boneWeightArtworkID, let i = shown.layers.firstIndex(where: { $0.id == id }), var mesh = shown.layers[i].boneMesh {
+        boneMeshDisplayProject(live.project ?? project)
+    }
+    func boneMeshDisplayProject(_ original: Project) -> Project {
+        var shown = original
+        if let id = boneWeightArtworkID, let i = shown.layers.firstIndex(where: { $0.id == id }), var mesh = boneWeightPreview ?? shown.layers[i].boneMesh {
             mesh.frameMatrices = Array(repeating: .identity, count: mesh.boneIDs.count)
             mesh.frameTime = currentTime; mesh.frameSource = nil
             mesh.previewWeightIndex = boneWeightBoneID.flatMap { mesh.boneIDs.firstIndex(of: $0) }
@@ -450,6 +454,12 @@ final class EditorState: ObservableObject {
     func duplicateSelected() {
         guard let i = selectedIndex else { return }
         if project.layers[i].isGroup { duplicateGroup(project.layers[i].id); return }
+        let selected = project.layers[i].id
+        if expandedLayerIDs([selected]).count > 1 {
+            multiSelection = [selected]; duplicateMulti()
+            selectedLayerID = multiSelection?.first; multiSelection = nil
+            return
+        }
         mutate("Duplicate Layer") { p in
             var copy = p.layers[i]
             copy.id = UUID()

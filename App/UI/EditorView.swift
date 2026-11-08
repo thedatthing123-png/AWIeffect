@@ -396,14 +396,14 @@ struct EditorView: View {
             ZStack(alignment: .topLeading) {
                 LiveReader(live: state.live) { lp in
                 ClockReader(clock: state.clock) { t in
-                    let cutProject = state.cutoutDisplayProject(lp ?? state.project)
+                    let cutProject = state.cutoutDisplayProject(state.boneMeshDisplayProject(lp ?? state.project))
                     MetalPreview(project: state.viewMode == .orbit && !state.looksThroughCamera ? OrbitView.scene(cutProject, orbit: state.orbit, time: t)
                                     : (state.cameraView ? cutProject : state.freeViewProject(cutProject)),
                                  time: t, redrawToken: state.redrawToken, mediaURL: { state.mediaURL($0) },
                                  viewZoom: state.canvasMode == .comp ? viewZoom : 1, viewPan: state.canvasMode == .comp ? viewPan : .zero,
                                  qualityCap: state.previewQuality.rawValue, isPlaying: state.isPlaying,
                                  // No RAM-cache writes mid-gesture: every frame changes, caching only churned memory.
-                                 cacheEnabled: state.canvasMode == .comp && lp == nil && state.cutoutPreview == nil && state.cutoutPeekOriginal == nil)
+                                 cacheEnabled: state.canvasMode == .comp && lp == nil && state.cutoutPreview == nil && state.cutoutPeekOriginal == nil && state.boneWeightArtworkID == nil)
                 }
                 }
                 if state.viewMode == .orbit && !state.looksThroughCamera {
@@ -429,7 +429,7 @@ struct EditorView: View {
                 if state.showGrid { CompGrid(fit: fit, divisions: state.gridDivisions) }
                 if state.canvasMode == .comp { GuidesOverlay(state: state, fit: fit) }
                 // 3D camera: two fingers dragged together slide the camera.
-                if state.canvasMode == .comp, state.cameraView, let cam = state.activeCameraLayer, EditorState.cameraIs3D(cam) {
+                if state.canvasMode == .comp, state.panel != .rig, state.cameraView, let cam = state.activeCameraLayer, EditorState.cameraIs3D(cam) {
                     TwoFingerPan(onBegan: { panCamera = state.beginCameraGesture() }, onChanged: { d in
                         guard let c = panCamera else { return }
                         let k = Double(state.project.width) / Double(max(fit.width, 1))
@@ -466,13 +466,22 @@ struct EditorView: View {
                     ClockReader(clock: state.clock) { _ in
                         LiveReader(live: state.live) { _ in
                             ZStack {
+                                if state.boneWeightArtworkID != nil {
+                                    BoneWeightCanvasOverlay(state: state, fit: fit)
+                                } else {
                                 BoneOverlay(state: state, fit: fit)
                                 RigEndpointOverlay(state: state, fit: fit)
                                 RigControllersOverlay(state: state, fit: fit)
                                 SkeletonCanvasOverlay(state: state, fit: fit)
+                                }
                             }
                         }
                     }
+                }
+                if state.panel == .rig, state.canvasMode == .comp {
+                    TwoFingerPan(onBegan: { state.finishBoneWeightStroke(commit: false); panBase = viewPan }, onChanged: { d in
+                        if let base = panBase { viewPan = CGSize(width: base.width + d.width, height: base.height + d.height) }
+                    }, onEnded: { panBase = nil })
                 }
                 if let r = marqueeRect { MarqueeOverlay(rect: r) }
                 if state.panel == .puppet, state.canvasMode == .comp {
@@ -554,6 +563,10 @@ struct EditorView: View {
             .simultaneousGesture(MagnificationGesture()
                 .onChanged { m in
                     guard state.canvasMode == .comp else { return }
+                    if state.panel == .rig {
+                        state.finishBoneWeightStroke(commit: false)
+                        viewZoom = min(8, max(0.25, zoomBase * m)); return
+                    }
                     // Text Studio open: pinch sizes the selected letters (or the whole text).
                     if state.panel == .text, state.selectedLayer?.text != nil, !magActive {
                         TextStudioSession.shared.pinch(state, scale: Double(m)); return
@@ -562,12 +575,14 @@ struct EditorView: View {
                     updatePinch()
                 }
                 .onEnded { _ in
+                    if state.panel == .rig { zoomBase = viewZoom; return }
                     if TextStudioSession.shared.isPinching { TextStudioSession.shared.endPinch(state); return }
                     magActive = false; finishPinch()
                 }, including: pen == nil && !canvasToolActive ? .all : .subviews)
             .simultaneousGesture(RotationGesture()
                 .onChanged { a in
                     guard state.canvasMode == .comp else { return }
+                    guard state.panel != .rig else { return }
                     pinchAngle = a.degrees; rotActive = true
                     updatePinch()
                 }
