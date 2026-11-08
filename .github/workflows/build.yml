@@ -84,7 +84,7 @@ jobs:
             FILTER=(-only-testing:AWIeffectTests/InlineToolsTests -only-testing:AWIeffectUITests/InlineToolsUITests -only-testing:AWIeffectUITests/EditorPolishUITests -only-testing:AWIeffectUITests/StabilityUITests -only-testing:AWIeffectUITests/AnimationTimingUITests)
           fi
           if [[ "${{ inputs.validation }}" == "authoring" ]]; then
-            FILTER=(-only-testing:AWIeffectTests/BoneAuthoringTests -only-testing:AWIeffectTests/BugBatchBTests -only-testing:AWIeffectTests/TextStudioTests -only-testing:AWIeffectTests/AdvancedAuthoringRenderTests -only-testing:AWIeffectTests/GraphRemakeTests -only-testing:AWIeffectUITests/RigAuthoringUITests)
+            FILTER=(-only-testing:AWIeffectTests/BoneMeshTests -only-testing:AWIeffectTests/BoneAuthoringTests -only-testing:AWIeffectTests/BugBatchBTests -only-testing:AWIeffectTests/TextStudioTests -only-testing:AWIeffectTests/AdvancedAuthoringRenderTests -only-testing:AWIeffectTests/GraphRemakeTests -only-testing:AWIeffectUITests/RigAuthoringUITests)
           fi
           xcodebuild test -jobs 2 "${FILTER[@]}" \
             -project AWIeffect.xcodeproj -scheme AWIeffect \

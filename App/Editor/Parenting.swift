@@ -40,9 +40,10 @@ extension Renderer {
     }
 
     /// Bakes parenting into absolute transform values for this frame.
-    static func resolveParenting(_ raw: Project, time: Double) -> Project {
+    static func resolveParenting(_ raw: Project, time: Double, meshSource: Project? = nil) -> Project {
         // IK poses limbs first; parenting then carries the lower limbs along.
         var p = AutoOrient.apply(IKSolver.apply(raw, time: time), time: time)
+        BoneMeshEvaluation.prepare(&p, source: meshSource ?? raw, time: time)
         // This is a frame snapshot. Nested groups/mattes encode it again; retaining live IK constraints would
         // solve already-world-space rotations as local FK values a second time. The editable raw project stays intact.
         for i in p.layers.indices where p.layers[i].ik != nil { p.layers[i].ik = nil }

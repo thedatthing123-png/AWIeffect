@@ -99,6 +99,12 @@ final class EditorState: ObservableObject {
     var layerPickReturnPanel: ToolPanel = .transform
     var layerPickPrompt = "Tap a layer"
     /// Make-IK picks (kept here: the Rig panel closes while you tap a layer on the canvas).
+    @Published var boneMeshDetail = 32.0
+    @Published var boneWeightArtworkID: UUID?
+    @Published var boneWeightBoneID: UUID?
+    @Published var boneWeightRadius = 80.0
+    @Published var boneWeightStrength = 35.0
+    @Published var boneWeightBrush: BoneWeightBrush = .paint
     @Published var boneDrawingArtworkID: UUID?
     @Published var boneDrawingParentID: UUID?
     @Published var ikDraftUpper: UUID?
@@ -155,7 +161,18 @@ final class EditorState: ObservableObject {
     /// Start positions of every selected layer while a multi-selection is dragged on the canvas.
     var multiDragStarts: [UUID: Vec2] = [:]
     /// What the canvas should draw right now (the live gesture copy, else the project).
-    var canvasProject: Project { live.project ?? project }
+    var canvasProject: Project {
+        var shown = live.project ?? project
+        if let id = boneWeightArtworkID, let i = shown.layers.firstIndex(where: { $0.id == id }), var mesh = shown.layers[i].boneMesh {
+            mesh.frameMatrices = Array(repeating: .identity, count: mesh.boneIDs.count)
+            mesh.frameTime = currentTime; mesh.frameSource = nil
+            mesh.previewWeightIndex = boneWeightBoneID.flatMap { mesh.boneIDs.firstIndex(of: $0) }
+            shown.layers[i].boneMesh = mesh
+            shown.layers[i].effects.removeAll { !(EffectRegistry.definition($0.typeID)?.isTransformEffect ?? false) }
+            shown.layers[i].motionBlur = false; shown.motionBlurOn = false; shown.smoothMotionStore = false
+        }
+        return shown
+    }
     var currentTime: Double = 0 {
         willSet { if !isPlaying && newValue != currentTime { objectWillChange.send() } }
         didSet { if clock.time != currentTime { clock.time = currentTime } }

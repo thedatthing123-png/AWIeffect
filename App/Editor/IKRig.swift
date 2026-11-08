@@ -241,6 +241,8 @@ struct RigPanel: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
                         BoneAuthoringControls(state: state)
+                        BoneMeshControls(state: state)
+                        if state.boneWeightArtworkID == nil {
                         Toggle("Collider (IK tips and physics bodies can't go through this layer)", isOn: Binding(get: { l.isCollider }, set: { b in
                             state.mutate("Collider") { p in if let i = state.selectedIndex { p.layers[i].isCollider = b } }
                         }))
@@ -302,6 +304,7 @@ struct RigPanel: View {
                             }
                             .buttonStyle(PrimaryButtonStyle())
                             .disabled(state.ikDraftUpper == nil)
+                        }
                         }
                     }
                     .padding(.horizontal, 12).padding(.bottom, 14)

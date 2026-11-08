@@ -11,14 +11,15 @@ extension EditorState {
     var rigArtworkID: UUID? {
         guard let layer = selectedLayer else { return nil }
         if let bone = layer.bone { return bone.artworkID }
+        if let owner = selectedIKLayer?.bone?.artworkID { return owner }
         guard !layer.isNull, !layer.isGroup, !layer.isAudioOnly,
-              layer.content != .camera, layer.content != .light, layer.content != .adjustment else { return nil }
+              layer.content != .camera, layer.content != .light, layer.content != .adjustment, layer.content != .model else { return nil }
         return layer.id
     }
 
     func beginBoneDrawing() {
         guard let id = rigArtworkID else { return }
-        pause()
+        pause(); finishBoneWeights()
         ikDraftUpper = nil; ikDraftController = nil; ikDraftTip = nil
         boneDrawingArtworkID = id
         boneDrawingParentID = selectedLayer?.bone == nil ? nil : selectedLayerID
@@ -88,7 +89,7 @@ extension EditorState {
 struct BoneAuthoringControls: View {
     @ObservedObject var state: EditorState
     var body: some View {
-        if state.rigArtworkID != nil || state.boneDrawingArtworkID != nil {
+        if state.boneWeightArtworkID == nil && (state.rigArtworkID != nil || state.boneDrawingArtworkID != nil) {
             HStack(spacing: 8) {
                 if state.boneDrawingArtworkID != nil {
                     Text("Drag the next bone from the highlighted tip").font(.caption).foregroundStyle(Theme.textDim)
@@ -259,6 +260,14 @@ private struct BoneSegmentHandle: View {
 extension Layer {
     /// Cloning a composition must point its rig at the cloned artwork and joints.
     mutating func remapRigReferences(_ ids: [UUID: UUID], keepExternal: Bool = true) {
+        if var mesh = boneMesh {
+            let mapped = mesh.boneIDs.compactMap { ids[$0] ?? (keepExternal ? $0 : nil) }
+            if mapped.count == mesh.boneIDs.count {
+                mesh.id = UUID(); mesh.boneIDs = mapped
+                mesh.lockedBoneIDs = mesh.lockedBoneIDs?.compactMap { ids[$0] ?? (keepExternal ? $0 : nil) }
+                mesh.changed(); boneMesh = mesh
+            } else { boneMesh = nil }
+        }
         if let settings = bone {
             if let replacement = ids[settings.artworkID] { bone?.artworkID = replacement }
             else if !keepExternal { bone = nil }
