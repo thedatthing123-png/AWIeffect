@@ -5,6 +5,7 @@ import UIKit
 /// No rendering, UI, media format, or project persistence implementation is changed here.
 extension AILink {
     func handleAdvanced(_ r: HTTPRequest, editor e: EditorState) -> HTTPResponse? {
+        if let exported = AILinkExportJobs.shared.handle(r, editor: e) { return exported }
         let a = ((try? JSONSerialization.jsonObject(with: r.body)) as? [String: Any]) ?? [:]
         switch (r.method, r.path) {
         case ("POST", "/text/animators"):
