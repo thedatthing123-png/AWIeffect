@@ -28,9 +28,16 @@ final class RigAuthoringUITests: XCTestCase {
         let endpoint = app.descendants(matching: .any)["Limb end joint"].firstMatch
         XCTAssertTrue(endpoint.waitForExistence(timeout: 15))
         XCTAssertGreaterThanOrEqual(endpoint.frame.width, 44)
+        XCTAssertLessThanOrEqual(endpoint.frame.width, 45)
+        XCTAssertLessThanOrEqual(endpoint.frame.height, 45)
+        let originalTip = endpoint.value as? String
         let start = endpoint.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
         start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 34, dy: -15)))
-        app.buttons["Make IK"].firstMatch.tap()
+        XCTAssertNotEqual(endpoint.value as? String, originalTip, "Dragging the joint must edit its rest point, not move or deselect the image")
+        let makeIK = app.buttons["Make IK"].firstMatch
+        for _ in 0..<5 where !makeIK.exists || !makeIK.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        XCTAssertTrue(makeIK.exists)
+        makeIK.tap()
         let target = app.descendants(matching: .any)["Pose Forearm Controller"].firstMatch
         XCTAssertTrue(target.waitForExistence(timeout: 5))
         XCTAssertFalse(endpoint.exists)

@@ -513,7 +513,8 @@ struct EditorView: View {
                         MaskSelectionOverlay(state: state, fit: fit)
                     }
                 }
-                if pen == nil, state.canvasMode == .comp, let id = state.selectedLayerID {
+                if pen == nil, state.canvasMode == .comp,
+                   !(state.panel == .text && textStudio.hasSelection), let id = state.selectedLayerID {
                     LiveReader(live: state.live) { lp in
                         ClockReader(clock: state.clock) { t in
                             let raw = lp ?? state.project
@@ -546,7 +547,7 @@ struct EditorView: View {
             }
             .clipped()
             .contentShape(Rectangle())
-            .gesture(canvasDrag(fit: fit), including: pen == nil && !canvasToolActive && state.canvasMode == .comp ? .all : .subviews)
+            .gesture(canvasDrag(fit: fit), including: pen == nil && !canvasToolActive && state.canvasMode == .comp && state.panel != .rig ? .all : .subviews)
             // Two fingers, like Alight Motion: with a layer selected, pinch scales it and twisting rotates it (both at
             // once); with nothing selected the pinch zooms the canvas view.
             .simultaneousGesture(MagnificationGesture()
@@ -577,6 +578,8 @@ struct EditorView: View {
                 guard pen == nil && !canvasToolActive && state.canvasMode == .comp else { return }
                 // Link mode: the tapped layer becomes the parent.
                 if state.linkPicking { state.endLinkPick(parent: layerAt(v.location, fit: fit)); return }
+                // Rig handles own the canvas: a target/rest-joint gesture must not deselect the limb.
+                if state.panel == .rig { return }
                 // Puppet panel open: taps drop pins instead of selecting layers.
                 if state.panel == .puppet, state.selectedLayerID != nil {
                     // Place on: a tap drops a pin (unless it lands on one). Place off: taps never add pins.

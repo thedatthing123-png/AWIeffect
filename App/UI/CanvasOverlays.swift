@@ -205,6 +205,7 @@ struct RigEndpointOverlay: View {
             .onChange(of: layer.id) { _, _ in dragStart = nil }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Limb end joint")
+            .accessibilityValue(String(format: "%.1f, %.1f", state.ikRestTip(for: layer).x, state.ikRestTip(for: layer).y))
             .accessibilityHint("Drag onto the wrist or ankle before making IK")
         }
     }
