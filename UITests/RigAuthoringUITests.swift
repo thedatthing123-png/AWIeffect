@@ -42,10 +42,12 @@ final class RigAuthoringUITests: XCTestCase {
         XCTAssertTrue(target.waitForExistence(timeout: 5))
         XCTAssertFalse(endpoint.exists)
         XCTAssertGreaterThanOrEqual(target.frame.width, 44)
-        let before = target.frame
+        XCTAssertLessThanOrEqual(target.frame.width, 45)
+        XCTAssertLessThanOrEqual(target.frame.height, 45)
+        let before = target.value as? String
         let hand = target.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
         hand.press(forDuration: 0.1, thenDragTo: hand.withOffset(CGVector(dx: -30, dy: 25)))
-        XCTAssertNotEqual(target.frame.origin.x, before.origin.x, "Direct posing must move the target")
+        XCTAssertNotEqual(target.value as? String, before, "Direct posing must move the target")
         XCTAssertTrue(app.buttons["Remove IK"].firstMatch.exists, "Posing must keep the existing Rig panel available")
         let image = XCUIScreen.main.screenshot()
         let attachment = XCTAttachment(screenshot: image)

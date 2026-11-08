@@ -258,12 +258,12 @@ private struct RigControllerHandle: View {
                 .onTapGesture {
                     state.select(controllerID)
                 }
-                .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                .highPriorityGesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
                     .updating($dragging) { _, active, _ in active = true }
                     .onChanged { value in
                         if start == nil {
                             start = point
-                            state.select(controllerID)
+                            if state.selectedLayerID != controllerID { state.select(controllerID) }
                             state.pause()
                             state.beginEdit("Pose IK")
                             state.beginLiveGesture()
@@ -277,6 +277,7 @@ private struct RigControllerHandle: View {
                 .onDisappear { finish() }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Pose \(name)")
+                .accessibilityValue(String(format: "%.1f, %.1f", point.x, point.y))
                 .accessibilityHint("Drag the target to pose its connected limb")
         }
     }
