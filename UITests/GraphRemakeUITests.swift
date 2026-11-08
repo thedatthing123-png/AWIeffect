@@ -47,9 +47,14 @@ final class GraphRemakeUITests: XCTestCase {
             let viewport = scroll.frame.insetBy(dx: 0,dy: 24)
             if e.exists && viewport.contains(CGPoint(x: e.frame.midX,y: e.frame.midY)) { return }
             // Lazy tiles have no frame until scrolled into view. Search down, not toward CGRect.zero.
-            let delta = e.exists ? min(60,max(-60,e.frame.midY-viewport.midY)) : 60
+            let distance: CGFloat
+            if !e.exists { distance = 80 }
+            else if e.frame.midY < viewport.minY { distance = e.frame.midY - viewport.minY - 20 }
+            else { distance = e.frame.midY - viewport.maxY + 20 }
+            let delta = min(100,max(-100,distance))
             let p = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.01,dy: 0.5))
-            p.press(forDuration: 0.05,thenDragTo: p.withOffset(CGVector(dx: 0,dy: -delta)))
+            // Hold after the drag so scroll inertia cannot repeatedly overshoot the handle.
+            p.press(forDuration: 0.05,thenDragTo: p.withOffset(CGVector(dx: 0,dy: -delta)), withVelocity: .slow, thenHoldForDuration: 0.3)
         }
         XCTAssertTrue(e.isHittable, "Graph control must remain reachable")
     }
