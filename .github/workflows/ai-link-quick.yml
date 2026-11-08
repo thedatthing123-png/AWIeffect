@@ -1,0 +1,51 @@
+name: AI Link Quick IPA
+on:
+  push:
+    branches: [feature/ai-link-timeline-inspection]
+  workflow_dispatch:
+
+jobs:
+  quick-ipa:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 26.6
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app
+          xcodebuild -version
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Parse Swift sources
+        run: find App -name '*.swift' -print0 | xargs -0 xcrun swiftc -frontend -parse
+      - name: Archive unsigned app
+        run: |
+          set -o pipefail
+          xcodebuild archive -jobs 2 \
+            -project AWIeffect.xcodeproj -scheme AWIeffect \
+            -configuration Release -destination "generic/platform=iOS" \
+            -archivePath build/AWIeffect.xcarchive \
+            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee archive.log | grep -E "error:|warning:|ARCHIVE" || {
+              test -d build/AWIeffect.xcarchive/Products/Applications/AWIeffect.app || exit 1
+            }
+          test -d build/AWIeffect.xcarchive/Products/Applications/AWIeffect.app
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -R build/AWIeffect.xcarchive/Products/Applications/AWIeffect.app Payload/
+          test -f Payload/AWIeffect.app/Assets.car
+          zip -qry AWIeffect-AILink-quick.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AWIeffect-AILink-quick-ipa
+          path: AWIeffect-AILink-quick.ipa
+      - name: Upload build log if failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-link-quick-build-log
+          path: archive.log
+          if-no-files-found: ignore
