@@ -37,6 +37,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     private var selection: [UInt8]?
     private var undo: [(frame: Int, matte: MatteFrame?)] = []
     private var autoTask: Task<Void, Never>?
+    private var autoGeneration = 0
     private var loadID = 0
     private var loadedFrame: Int?
     @Published private(set) var frameLoading = false
@@ -45,13 +46,14 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     private var previewRevision = 0
     private var previewTime: TimeInterval = 0
     private let projectID: UUID
+    private var committedSettings: CutoutSettings?
 
     var hasSelection: Bool { selection != nil }
     var manualFrames: Set<Int> { Set(settings.manualFrames) }
     var bakeID: String { settings.bakeID ?? "" }
 
     init(state: EditorState, layer: Layer, url: URL) {
-        self.state = state; self.layer = layer; self.url = url; projectID = state.project.id
+        self.state = state; self.layer = layer; self.url = url; projectID = state.project.id; committedSettings = layer.cutout
         var video = false
         if case .video = layer.content { video = true }
         isVideo = video
@@ -91,12 +93,14 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     }
     func sync(_ value: CutoutSettings?) {
         guard autoProgress == nil else { return }
+        let previous = committedSettings
+        committedSettings = value
         let missing = value == nil
         var value = value ?? CutoutSettings(mode: .drawn)
         if missing { value.manualOnly = true }
         if value.bakeID == nil { value.bakeID = UUID().uuidString }
         value.bakeRate = value.bakeRate ?? rate
-        let matteChanged = settings.bakeID != value.bakeID || settings.bakeOverrides != value.bakeOverrides || settings.bakeRevision != value.bakeRevision || settings.manualOnly != value.manualOnly || settings.mode != value.mode
+        let matteChanged = (previous == nil) != (committedSettings == nil) || previous?.bakeID != committedSettings?.bakeID || previous?.bakeOverrides != committedSettings?.bakeOverrides || previous?.bakeRevision != committedSettings?.bakeRevision || previous?.manualOnly != committedSettings?.manualOnly || previous?.mode != committedSettings?.mode
         settings = value
         if matteChanged { scanBaked(); load() }
     }
@@ -291,7 +295,8 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
 
     func runAuto(box: CGRect) {
         guard active, autoTask == nil else { return }
-        let namespace = UUID().uuidString
+        autoGeneration += 1
+        let generation = autoGeneration, namespace = UUID().uuidString
         autoProgress = 0; tool = .brush
         if !isVideo {
             guard let cg = pictureCG else { autoProgress = nil; return }
@@ -307,7 +312,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
                 CutoutBake.isolate(&matte, box: box.insetBy(dx: -box.width * 0.2, dy: -box.height * 0.2))
                 guard !Task.isCancelled else { return }
                 await MainActor.run {
-                    guard let self, self.active else { return }
+                    guard let self, self.active, self.autoGeneration == generation else { return }
                     self.autoProgress = nil; self.autoTask = nil; self.store(matte, label: "Auto Cutout")
                 }
             }
@@ -318,7 +323,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
                                     startFrame: frame, lastFrame: lastFrame, rate: rate, mode: mode, locked: manualFrames)
         job.didWrite = { [weak self] f in
             Task { @MainActor in
-                guard let self, self.active, self.autoProgress != nil else { return }
+                guard let self, self.active, self.autoGeneration == generation, self.autoProgress != nil else { return }
                 if self.settings.bakeOverrides == nil { self.settings.bakeOverrides = [:] }
                 self.settings.bakeOverrides?[String(f)] = namespace
                 self.settings.bakeRevision = (self.settings.bakeRevision ?? 0) + 1
@@ -329,7 +334,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
         autoTask = Task.detached(priority: .userInitiated) { [weak self] in
             let written = CutoutBake.runAuto(job) { p in Task { @MainActor in if self?.active == true { self?.autoProgress = p } } }
             await MainActor.run {
-                guard let self, self.active else { return }
+                guard let self, self.active, self.autoGeneration == generation else { return }
                 if self.settings.bakeOverrides == nil { self.settings.bakeOverrides = [:] }
                 for f in written { self.settings.bakeOverrides?[String(f)] = namespace }
                 self.bakedFrames.formUnion(written)
@@ -341,7 +346,12 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
         }
     }
 
-    func cancelAuto() { autoTask?.cancel() }
+    func cancelAuto() {
+        guard autoTask != nil else { return }
+        autoTask?.cancel(); autoTask = nil; autoGeneration += 1; autoProgress = nil
+        if settings.bakeOverrides != committedSettings?.bakeOverrides { publish("Stop Automatic Cutout") }
+        state.cutoutPreview = nil; load()
+    }
 
     /// Leaving the tool never applies draft settings, nor commits a late-running automatic operation.
     func finish() {

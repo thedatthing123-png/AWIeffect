@@ -1,5 +1,6 @@
 import XCTest
 import Metal
+import Combine
 @testable import AWIeffect
 
 @MainActor final class InlineToolsTests: XCTestCase {
@@ -22,6 +23,25 @@ import Metal
         model.automatic(); model.restoreOriginal(); XCTAssertNil(s.selectedLayer?.cutout)
         model.finish()
     }
+    func testAutoRefreshesRefinementMatteButEdgeChangesDoNotReloadMedia() async {
+        let s = editor()
+        let model = CutoutStudioModel(state: s, layer: s.project.layers[0], url: s.mediaURL("missing.png"))
+        func loaded() async {
+            let ready = expectation(description: "Refinement load completes")
+            let subscription = model.$frameLoading.filter { !$0 }.first().sink { _ in ready.fulfill() }
+            await fulfillment(of: [ready], timeout: 10)
+            withExtendedLifetime(subscription) {}
+        }
+        await loaded()
+        model.automatic(); model.sync(s.selectedLayer?.cutout)
+        XCTAssertTrue(model.frameLoading, "Switching on automatic cutout must refresh the matte that refinement brushes use")
+        await loaded()
+        model.edge("Edge Feather") { $0.feather = 3 }; s.endEdit()
+        model.sync(s.selectedLayer?.cutout)
+        XCTAssertFalse(model.frameLoading, "An edge slider must not decode the source and reload its matte again")
+        model.finish()
+    }
+
     func testClosedRowsDoNotBuildPropertyLanesAndShortClipExpanderStaysInside() {
         let s = editor()
         var l = s.project.layers[0]
