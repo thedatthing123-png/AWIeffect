@@ -318,6 +318,24 @@ final class BugBatchBTests: XCTestCase {
         XCTAssertEqual(s.undoStack.count, undoCount)
     }
 
+    func testResolvedIKPoseIsIdempotentForNestedGroupRendering() throws {
+        let (p, upper, lower) = limbProject()
+        let s = state(p)
+        s.select(lower); s.makeIK(upper: upper, controller: nil)
+        let controller = try XCTUnwrap(s.selectedLayerID)
+        s.poseIKController(controller, atCanvas: Vec2(180, 170))
+        let once = Renderer.resolveParenting(s.project, time: 0)
+        let twice = Renderer.resolveParenting(once, time: 0)
+        for id in [upper, lower, controller] {
+            let first = try XCTUnwrap(once.layers.first { $0.id == id })
+            let second = try XCTUnwrap(twice.layers.first { $0.id == id })
+            XCTAssertEqual(first.transform.position.value(at: 0), second.transform.position.value(at: 0))
+            XCTAssertEqual(first.transform.rotation.value(at: 0), second.transform.rotation.value(at: 0), accuracy: 1e-8)
+        }
+        XCTAssertNotNil(s.project.layers.first { $0.id == lower }?.ik, "Rendering must not remove the editable constraint")
+        XCTAssertNil(once.layers.first { $0.id == lower }?.ik, "A baked frame cannot solve its live constraint again")
+    }
+
     func testIKDraftEndpointBelongsToItsLayer() {
         let (p, upper, lower) = limbProject()
         let s = state(p)
