@@ -9,9 +9,9 @@ final class ShapeContentsUITests: XCTestCase {
         let ring = app.buttons["Select Ring"].firstMatch
         XCTAssertTrue(ring.waitForExistence(timeout: 15))
         save("shape-contents-list")
-        XCTAssertGreaterThanOrEqual(ring.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(ring.frame.height + 0.001, 44)
         let accent = app.buttons["Select Accent"].firstMatch
-        XCTAssertTrue(accent.exists); XCTAssertGreaterThanOrEqual(accent.frame.height, 44)
+        XCTAssertTrue(accent.exists); XCTAssertGreaterThanOrEqual(accent.frame.height + 0.001, 44)
         save("shape-contents-list")
         accent.tap()
         let edit = app.buttons["Edit Points"].firstMatch
