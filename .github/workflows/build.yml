@@ -14,7 +14,7 @@ on:
       validation:
         description: Test scope (audit runs do not publish an IPA)
         type: choice
-        options: [all, audit, timing, stability, quick]
+        options: [all, audit, timing, stability, authoring, quick]
         default: all
 
 concurrency:
@@ -82,6 +82,9 @@ jobs:
           fi
           if [[ "${{ inputs.validation }}" == "stability" ]]; then
             FILTER=(-only-testing:AWIeffectTests/InlineToolsTests -only-testing:AWIeffectUITests/InlineToolsUITests -only-testing:AWIeffectUITests/EditorPolishUITests -only-testing:AWIeffectUITests/StabilityUITests -only-testing:AWIeffectUITests/AnimationTimingUITests)
+          fi
+          if [[ "${{ inputs.validation }}" == "authoring" ]]; then
+            FILTER=(-only-testing:AWIeffectTests/BugBatchBTests -only-testing:AWIeffectTests/TextStudioTests -only-testing:AWIeffectTests/AdvancedAuthoringRenderTests -only-testing:AWIeffectTests/GraphRemakeTests -only-testing:AWIeffectUITests/RigAuthoringUITests)
           fi
           xcodebuild test -jobs 2 "${FILTER[@]}" \
             -project AWIeffect.xcodeproj -scheme AWIeffect \
