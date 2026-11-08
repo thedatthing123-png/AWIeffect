@@ -5,6 +5,7 @@ struct ParameterCurveEditor: View {
     let ease: SavedEase
     let onChange: (EaseCurve, Bool) -> Void
     @State private var original: EaseCurve?
+    @GestureState private var dragging = false
 
     var body: some View {
         GeometryReader { geo in
@@ -16,6 +17,13 @@ struct ParameterCurveEditor: View {
                 }
             }.coordinateSpace(name: "parameterCurve")
         }
+        .onChange(of: dragging) { _, active in
+            if !active, original != nil {
+                original = nil
+                if let curve = ease.curve { onChange(curve, true) }
+            }
+        }
+        .onChange(of: ease.curve?.kind) { _, _ in original = nil }
     }
 
     private func handle(_ curve: EaseCurve, first: Bool, spec: (String, ClosedRange<Double>, Double), width: CGFloat, y: CGFloat) -> some View {
@@ -34,6 +42,7 @@ struct ParameterCurveEditor: View {
             }
             .position(x: 24 + CGFloat(f) * max(1, width - 48), y: y)
             .highPriorityGesture(DragGesture(minimumDistance: 2, coordinateSpace: .named("parameterCurve"))
+                .updating($dragging) { _, active, _ in active = true }
                 .onChanged { drag in
                     if original == nil { original = curve }
                     onChange(Self.translated(original ?? curve, first: first, delta: drag.translation.width, width: width), false)

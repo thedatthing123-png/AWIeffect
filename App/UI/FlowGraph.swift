@@ -342,7 +342,7 @@ struct FlowGraphPanel: View {
     private func presetTile(_ title: String, ease: SavedEase) -> some View {
         let on = current.map { $0.interpolation == ease.interpolation && $0.curve?.kind == ease.curve?.kind
             && (ease.curve != nil || ($0.out == ease.out && $0.into == ease.into)) } ?? false
-        return Button { apply(ease) } label: {
+        return Button { if !on { apply(ease) } } label: {
             HStack(spacing: 6) {
                 CurvePlot(ease: ease, speed: false, thumb: true).frame(width: 30, height: 22)
                 Text(title).font(.system(size: 11, weight: .semibold)).fixedSize(horizontal: false, vertical: true)

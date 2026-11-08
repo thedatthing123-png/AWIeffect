@@ -1,4 +1,4 @@
-# Graph editor — Build 23
+# Graph editor — Build 24
 
 Inspected the existing EaseCurve / Animated / FlowGraph / CurveEditor implementations, timing and reversal tests,
 shared remap easing popup, property/effect targets, saved curves and MotionTools loop expressions before editing.

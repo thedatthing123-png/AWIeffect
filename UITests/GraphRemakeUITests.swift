@@ -39,7 +39,8 @@ final class GraphRemakeUITests: XCTestCase {
         for _ in 0..<18 {
             let viewport = scroll.frame.insetBy(dx: 0,dy: 24)
             if e.exists && viewport.contains(CGPoint(x: e.frame.midX,y: e.frame.midY)) { return }
-            let delta = min(60,max(-60,e.frame.midY-viewport.midY))
+            // Lazy tiles have no frame until scrolled into view. Search down, not toward CGRect.zero.
+            let delta = e.exists ? min(60,max(-60,e.frame.midY-viewport.midY)) : 60
             let p = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.01,dy: 0.5))
             p.press(forDuration: 0.05,thenDragTo: p.withOffset(CGVector(dx: 0,dy: -delta)))
         }
