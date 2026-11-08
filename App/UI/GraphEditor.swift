@@ -269,6 +269,7 @@ struct CurveEditor: View {
                     .position(x: geo.size.width / 2, y: geo.size.height - 12)
             }.coordinateSpace(name: "easeGraph").clipShape(RoundedRectangle(cornerRadius: 14))
         }
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("bezier-editor")
         .onChange(of: dragging) { _, active in
             if !active, startOut != nil || startIn != nil {
