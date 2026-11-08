@@ -39,6 +39,18 @@ extension AILink {
         }
         guard let e = editor else { return r.path.hasPrefix("/layers") || r.path.hasPrefix("/effects") || r.path.hasPrefix("/presets") || r.path.hasPrefix("/ease") || r.path == "/render/sheet" ? .noProject : nil }
         switch (r.method, r.path) {
+        case ("GET", "/timeline"):
+            // Compact, read-only timeline inspection; does not touch selection or undo history.
+            let layers: [[String: Any]] = e.project.layers.enumerated().map { index, layer in
+                ["index": index, "id": layer.id.uuidString, "name": layer.name,
+                 "inPoint": layer.inPoint, "outPoint": layer.outPoint,
+                 "speed": layer.speed, "visible": layer.isVisible,
+                 "is3D": layer.is3D, "effects": layer.effects.map { ["id": $0.id.uuidString, "type": $0.typeID] }]
+            }
+            return .json(["name": e.project.name, "fps": e.project.fps,
+                          "duration": e.project.duration, "time": e.currentTime,
+                          "selected": e.selectedLayerID?.uuidString ?? "",
+                          "layers": layers])
         case ("POST", "/layers/add"): return addLayer(a, e)
         case ("POST", "/layers/edit"): return editLayer(a, e)
         case ("POST", "/layers/delete"):
