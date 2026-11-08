@@ -153,7 +153,7 @@ extension EditorState {
             }
         }
         ikDraftTip = nil
-        selectedLayerID = lower.id
+        selectedLayerID = ctrlID
         panel = .rig
     }
 
@@ -174,9 +174,16 @@ extension EditorState {
         }
     }
 
+    var selectedIKLayer: Layer? {
+        guard let selected = selectedLayer else { return nil }
+        return selected.ik != nil ? selected : project.layers.first { $0.ik?.controllerID == selected.id }
+    }
+
     func removeIK() {
-        guard let i = selectedIndex else { return }
-        mutate("Remove IK") { $0.layers[i].ik = nil }
+        guard let owner = selectedIKLayer else { return }
+        mutate("Remove IK") { p in
+            if let i = p.layers.firstIndex(where: { $0.id == owner.id }) { p.layers[i].ik = nil }
+        }
     }
 }
 
@@ -196,16 +203,16 @@ struct RigPanel: View {
                         .tint(Theme.accent).foregroundStyle(Theme.text)
                         Divider().overlay(Theme.stroke)
                         Text("IK (TWO-BONE LIMB)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
-                        if let rig = l.ik {
-                            Text("This layer is the lower limb. Move the controller to pose the limb.").font(.caption).foregroundStyle(Theme.textDim)
+                        if let owner = state.selectedIKLayer, let rig = owner.ik {
+                            Text("Move the controller to pose the limb. Its position keys use the normal timeline and graph.").font(.caption).foregroundStyle(Theme.textDim)
                             Toggle("Bend the other way", isOn: Binding(get: { rig.flip }, set: { b in
-                                state.mutate("IK Bend") { p in if let i = state.selectedIndex { p.layers[i].ik?.flip = b } }
+                                state.mutate("IK Bend") { p in if let i = p.layers.firstIndex(where: { $0.id == owner.id }) { p.layers[i].ik?.flip = b } }
                             }))
                             .tint(Theme.accent).foregroundStyle(Theme.text)
                             HStack {
                                 Text("IK / FK").font(.system(size: 13)).foregroundStyle(Theme.text)
                                 Slider(value: Binding(get: { (rig.blend ?? 1) * 100 }, set: { v in
-                                    state.mutate("IK Blend") { p in if let i = state.selectedIndex { p.layers[i].ik?.blend = min(1, max(0, v / 100)) } }
+                                    state.mutate("IK Blend") { p in if let i = p.layers.firstIndex(where: { $0.id == owner.id }) { p.layers[i].ik?.blend = min(1, max(0, v / 100)) } }
                                 }), in: 0...100, onEditingChanged: { editing in
                                     if editing { state.beginPanelGesture("IK Blend") } else { state.endPanelGesture() }
                                 })

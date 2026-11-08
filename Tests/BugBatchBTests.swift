@@ -243,6 +243,26 @@ final class BugBatchBTests: XCTestCase {
         XCTAssertEqual(s.project.layers[ci].transform.position, before.layers[ci].transform.position)
     }
 
+    func testRigTargetUsesNormalTransportKeysAndCanRemoveConstraint() throws {
+        let (p, upper, lower) = limbProject()
+        let s = state(p)
+        s.select(lower)
+        s.makeIK(upper: upper, controller: nil)
+        let rig = try XCTUnwrap(s.project.layers.first { $0.id == lower }?.ik)
+        XCTAssertEqual(s.selectedLayerID, rig.controllerID)
+        XCTAssertEqual(s.selectedIKLayer?.id, lower)
+        s.keyAllTransform()
+        s.currentTime = 1
+        s.poseIKController(rig.controllerID, atCanvas: Vec2(220, 130))
+        let controller = try XCTUnwrap(s.project.layers.first { $0.id == rig.controllerID })
+        XCTAssertEqual(controller.transform.position.keyframes.count, 2)
+        XCTAssertTrue(controller.transform.positionZ.hasKeyframe(at: 1))
+        s.removeIK()
+        XCTAssertNil(s.project.layers.first { $0.id == lower }?.ik)
+        s.undo()
+        XCTAssertNotNil(s.project.layers.first { $0.id == lower }?.ik)
+    }
+
     func testIKDraftEndpointBelongsToItsLayer() {
         let (p, upper, lower) = limbProject()
         let s = state(p)

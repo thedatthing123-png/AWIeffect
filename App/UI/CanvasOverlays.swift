@@ -178,7 +178,7 @@ struct RigEndpointOverlay: View {
     @GestureState private var dragging = false
 
     var body: some View {
-        if let layer = state.selectedLayer, layer.ik == nil, state.ikDraftController == nil,
+        if let layer = state.selectedLayer, state.selectedIKLayer == nil, state.ikDraftController == nil,
            state.ikDraftUpper != nil,
            let placement = state.displayPlacement(of: layer.id),
            let tip = LayerPlacement.projected(state.ikRestTip(for: layer), by: placement) {
@@ -245,13 +245,14 @@ private struct RigControllerHandle: View {
                 .frame(width: 44, height: 44).contentShape(Rectangle())
                 .position(x: fit.minX + CGFloat(point.x) * scale, y: fit.minY + CGFloat(point.y) * scale)
                 .onTapGesture {
-                    if let owner = project.layers.first(where: { $0.ik?.controllerID == controllerID }) { state.select(owner.id) }
+                    state.select(controllerID)
                 }
                 .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
                     .updating($dragging) { _, active, _ in active = true }
                     .onChanged { value in
                         if start == nil {
                             start = point
+                            state.select(controllerID)
                             state.pause()
                             state.beginEdit("Pose IK")
                             state.beginLiveGesture()
