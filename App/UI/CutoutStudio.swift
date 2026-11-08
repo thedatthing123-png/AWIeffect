@@ -303,7 +303,10 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
             let mode = settings.mode
             autoTask = Task.detached(priority: .userInitiated) { [weak self] in
                 guard let pb = CutoutEngine.mask(cg, mode: mode, pick: CGPoint(x: box.midX, y: box.midY)) ?? CutoutEngine.mask(cg, mode: mode) else {
-                    await MainActor.run { self?.autoProgress = nil; self?.autoTask = nil }; return
+                    await MainActor.run {
+                        guard let self, self.active, self.autoGeneration == generation else { return }
+                        self.autoProgress = nil; self.autoTask = nil
+                    }; return
                 }
                 let w = CVPixelBufferGetWidth(pb), h = CVPixelBufferGetHeight(pb)
                 var bytes = [UInt8](repeating: 0, count: w * h)
@@ -332,7 +335,12 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
             }
         }
         autoTask = Task.detached(priority: .userInitiated) { [weak self] in
-            let written = CutoutBake.runAuto(job) { p in Task { @MainActor in if self?.active == true { self?.autoProgress = p } } }
+            let written = CutoutBake.runAuto(job) { p in
+                Task { @MainActor in
+                    guard let self, self.active, self.autoGeneration == generation else { return }
+                    self.autoProgress = p
+                }
+            }
             await MainActor.run {
                 guard let self, self.active, self.autoGeneration == generation else { return }
                 if self.settings.bakeOverrides == nil { self.settings.bakeOverrides = [:] }
