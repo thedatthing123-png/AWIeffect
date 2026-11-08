@@ -192,6 +192,82 @@ final class BugBatchBTests: XCTestCase {
         XCTAssertNil(s.project.layers.first { $0.id == lower }?.parentID)
     }
 
+    func testIKBindsAuthoredEndpointWithoutChangingArtworkOrAddingDraftUndo() throws {
+        let (p, upper, lower) = limbProject()
+        let s = state(p)
+        s.select(lower)
+        let undoCount = s.undoStack.count
+        let endpoint = Vec2(70, -15) // A sideways forearm, not the image's bottom edge.
+        s.ikDraftTip = (lower, endpoint)
+        XCTAssertEqual(s.undoStack.count, undoCount)
+        let before = Renderer.resolveParenting(s.project, time: 0)
+        let drawnBefore = try XCTUnwrap(before.layers.first { $0.id == lower })
+        let m = Renderer.layerMatrix(drawnBefore, time: 0, renderScale: 1)
+        let expected = m * SIMD3(endpoint.x, endpoint.y, 1)
+        s.makeIK(upper: upper, controller: nil)
+        let bound = try XCTUnwrap(s.project.layers.first { $0.id == lower }?.ik)
+        let controller = try XCTUnwrap(s.project.layers.first { $0.id == bound.controllerID })
+        XCTAssertEqual(controller.transform.position.staticValue.x, expected.x, accuracy: 1e-8)
+        XCTAssertEqual(controller.transform.position.staticValue.y, expected.y, accuracy: 1e-8)
+        let after = Renderer.resolveParenting(s.project, time: 0)
+        let posed = try XCTUnwrap(after.layers.first { $0.id == lower })
+        XCTAssertEqual(posed.transform.rotation.value(at: 0), drawnBefore.transform.rotation.value(at: 0), accuracy: 1e-7)
+        XCTAssertEqual(s.undoStack.count, undoCount + 1)
+        XCTAssertNil(s.ikDraftTip)
+        s.undo()
+        XCTAssertEqual(s.project.layers.count, p.layers.count)
+        XCTAssertNil(s.project.layers.first { $0.id == lower }?.ik)
+    }
+
+    func testDirectIKPosePreservesKeysAndCoalescesUndo() throws {
+        let (p, upper, lower) = limbProject()
+        let s = state(p)
+        s.select(lower)
+        s.makeIK(upper: upper, controller: nil)
+        let rig = try XCTUnwrap(s.project.layers.first { $0.id == lower }?.ik)
+        let ci = try XCTUnwrap(s.project.layers.firstIndex { $0.id == rig.controllerID })
+        let original = s.project.layers[ci].transform.position.staticValue
+        s.project.layers[ci].transform.position.insertKeyframe(Keyframe(time: 0, value: original, interpolation: .linear))
+        let before = s.project
+        let undoCount = s.undoStack.count
+        s.beginEdit("Pose IK")
+        s.beginLiveGesture()
+        s.poseIKController(rig.controllerID, atCanvas: Vec2(220, 140))
+        s.poseIKController(rig.controllerID, atCanvas: Vec2(230, 150))
+        s.endLiveGesture()
+        s.endEdit()
+        XCTAssertEqual(s.undoStack.count, undoCount + 1)
+        XCTAssertEqual(s.project.layers[ci].transform.position.value(at: 0), Vec2(230, 150))
+        XCTAssertEqual(s.project.layers.first { $0.id == lower }?.transform.position.keyframes.count, 2)
+        s.undo()
+        XCTAssertEqual(s.project.layers[ci].transform.position, before.layers[ci].transform.position)
+    }
+
+    func testIKDraftEndpointBelongsToItsLayer() {
+        let (p, upper, lower) = limbProject()
+        let s = state(p)
+        s.ikDraftTip = (lower, Vec2(75, 10))
+        let other = p.layers.first { $0.id == upper }!
+        XCTAssertEqual(s.ikRestTip(for: other), Vec2(0, 50))
+    }
+
+    func testIKExistingControllerDefinesBindEndpoint() throws {
+        var (p, upper, lower) = limbProject()
+        var controller = p.makeLayer(name: "hand", content: .solid, size: Vec2(10, 10))
+        controller.isNull = true
+        controller.transform.position = Animated(Vec2(260, 130))
+        p.layers.insert(controller, at: 0)
+        let s = state(p)
+        s.select(lower)
+        s.makeIK(upper: upper, controller: controller.id)
+        let rig = try XCTUnwrap(s.project.layers.first { $0.id == lower }?.ik)
+        XCTAssertEqual(rig.l2, hypot(60, 30), accuracy: 1e-8)
+        let posed = try XCTUnwrap(Renderer.resolveParenting(s.project, time: 0).layers.first { $0.id == lower })
+        XCTAssertEqual(posed.transform.rotation.value(at: 0), 0, accuracy: 1e-7,
+                       "Binding to a controller at the intended wrist must not rotate the artwork")
+        XCTAssertEqual(s.project.layers.count, p.layers.count)
+    }
+
     func testIKRejectsLinkLoopsAndPickerExcludesDescendants() {
         var (p, _, lower) = limbProject()
         var hand = p.makeLayer(name: "hand", content: .solid, size: Vec2(20, 20))

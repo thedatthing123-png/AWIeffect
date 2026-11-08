@@ -453,7 +453,15 @@ struct EditorView: View {
                     ClockReader(clock: state.clock) { _ in AimGizmoOverlay(state: state, fit: fit) }
                 }
                 if state.panel == .rig, state.canvasMode == .comp {
-                    ClockReader(clock: state.clock) { _ in BoneOverlay(state: state, fit: fit) }
+                    ClockReader(clock: state.clock) { _ in
+                        LiveReader(live: state.live) { _ in
+                            ZStack {
+                                BoneOverlay(state: state, fit: fit)
+                                RigEndpointOverlay(state: state, fit: fit)
+                                RigControllersOverlay(state: state, fit: fit)
+                            }
+                        }
+                    }
                 }
                 if let r = marqueeRect { MarqueeOverlay(rect: r) }
                 if state.panel == .puppet, state.canvasMode == .comp {

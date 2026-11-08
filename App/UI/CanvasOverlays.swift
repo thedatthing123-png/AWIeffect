@@ -126,7 +126,7 @@ struct BoneOverlay: View {
         let s = fit.width / CGFloat(max(state.project.width, 1))
         // Read the editor on the main actor; the Canvas drawing closure isn't main-actor isolated.
         let t = state.currentTime
-        let view = state.canvasViewProject(state.project)
+        let view = state.canvasViewProject(state.live.project ?? state.project)
         let selectedID = state.selectedLayerID
         let fit = self.fit
         Canvas { ctx, _ in
@@ -163,5 +163,111 @@ struct MarqueeOverlay: View {
             .frame(width: rect.width, height: rect.height)
             .position(x: rect.midX, y: rect.midY)
             .allowsHitTesting(false)
+    }
+}
+
+
+/// A rest endpoint is a canvas handle, not another tool drawer. Draft changes do not touch the project.
+struct RigEndpointOverlay: View {
+    @ObservedObject var state: EditorState
+    let fit: CGRect
+    @State private var dragStart: Vec2?
+    @GestureState private var dragging = false
+
+    var body: some View {
+        if let layer = state.selectedLayer, layer.ik == nil, state.ikDraftController == nil,
+           state.ikDraftUpper != nil,
+           let placement = state.displayPlacement(of: layer.id),
+           let tip = LayerPlacement.projected(state.ikRestTip(for: layer), by: placement) {
+            let scale = fit.width / CGFloat(max(1, state.project.width))
+            let point = CGPoint(x: fit.minX + CGFloat(tip.x) * scale, y: fit.minY + CGFloat(tip.y) * scale)
+            ZStack {
+                Circle().fill(Theme.warning).frame(width: 14, height: 14)
+                Circle().stroke(.black, lineWidth: 2).frame(width: 18, height: 18)
+                Image(systemName: "plus").font(.system(size: 24, weight: .light)).foregroundStyle(Theme.warning)
+            }
+            .frame(width: 44, height: 44).contentShape(Rectangle())
+            .position(point)
+            .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                .updating($dragging) { _, active, _ in active = true }
+                .onChanged { value in
+                    if dragStart == nil { dragStart = tip }
+                    guard let start = dragStart else { return }
+                    let canvas = start + Vec2(Double(value.translation.width / scale), Double(value.translation.height / scale))
+                    guard let local = state.layerLocal(fromComp: canvas), local.x.isFinite, local.y.isFinite else { return }
+                    state.ikDraftTip = (layer.id, local)
+                }
+                .onEnded { _ in dragStart = nil })
+            .onChange(of: dragging) { _, active in if !active { dragStart = nil } }
+            .onChange(of: layer.id) { _, _ in dragStart = nil }
+            .accessibilityLabel("Limb end joint")
+            .accessibilityHint("Drag onto the wrist or ankle before making IK")
+        }
+    }
+}
+
+
+/// Targets stay on the character while the Rig panel is open. Only targets have hit areas; bones remain visual.
+struct RigControllersOverlay: View {
+    @ObservedObject var state: EditorState
+    let fit: CGRect
+
+    var body: some View {
+        let source = state.live.project ?? state.project
+        let ids = Array(Set(source.layers.compactMap { $0.ik?.controllerID })).sorted { $0.uuidString < $1.uuidString }
+        ForEach(ids, id: \.self) { id in
+            RigControllerHandle(state: state, controllerID: id, fit: fit)
+        }
+    }
+}
+
+private struct RigControllerHandle: View {
+    @ObservedObject var state: EditorState
+    let controllerID: UUID
+    let fit: CGRect
+    @State private var start: Vec2?
+    @GestureState private var dragging = false
+
+    var body: some View {
+        let project = state.live.project ?? state.project
+        let view = state.canvasViewProject(project)
+        if let controller = project.layers.first(where: { $0.id == controllerID }),
+           let point = MotionPathMath.screenPoint(controller, value: controller.transform.position.value(at: state.currentTime),
+                                                  project: view, time: state.currentTime) {
+            let scale = fit.width / CGFloat(max(1, project.width))
+            Circle().stroke(Theme.warning, lineWidth: 2)
+                .background(Circle().fill(.black.opacity(0.35)))
+                .frame(width: 22, height: 22)
+                .frame(width: 44, height: 44).contentShape(Rectangle())
+                .position(x: fit.minX + CGFloat(point.x) * scale, y: fit.minY + CGFloat(point.y) * scale)
+                .onTapGesture {
+                    if let owner = project.layers.first(where: { $0.ik?.controllerID == controllerID }) { state.select(owner.id) }
+                }
+                .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                    .updating($dragging) { _, active, _ in active = true }
+                    .onChanged { value in
+                        if start == nil {
+                            start = point
+                            state.pause()
+                            state.beginEdit("Pose IK")
+                            state.beginLiveGesture()
+                        }
+                        guard let start else { return }
+                        let target = start + Vec2(Double(value.translation.width / scale), Double(value.translation.height / scale))
+                        state.poseIKController(controllerID, atCanvas: target)
+                    }
+                    .onEnded { _ in finish() })
+                .onChange(of: dragging) { _, active in if !active { finish() } }
+                .onDisappear { finish() }
+                .accessibilityLabel("Pose \(controller.name)")
+                .accessibilityHint("Drag the target to pose its connected limb")
+        }
+    }
+
+    private func finish() {
+        guard start != nil else { return }
+        start = nil
+        state.endLiveGesture()
+        state.endEdit()
     }
 }

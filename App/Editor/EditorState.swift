@@ -101,6 +101,8 @@ final class EditorState: ObservableObject {
     /// Make-IK picks (kept here: the Rig panel closes while you tap a layer on the canvas).
     @Published var ikDraftUpper: UUID?
     @Published var ikDraftController: UUID?
+    /// Rest endpoint in artwork coordinates, owned by one layer; changing selection cannot reuse another limb's tip.
+    @Published var ikDraftTip: (layerID: UUID, point: Vec2)?
     var sketchStartTime: Double?
     var sketchStartClock: CFTimeInterval = 0
     /// Motion Sketch samples per layer (multi-selection records every moved layer).

@@ -98,6 +98,12 @@ enum IKSolver {
 }
 
 extension EditorState {
+    /// Endpoint lives in artwork space so moving the camera does not change the bind pose.
+    func ikRestTip(for layer: Layer) -> Vec2 {
+        if let draft = ikDraftTip, draft.layerID == layer.id { return draft.point }
+        return Vec2(0, Renderer.layerHalfSize(layer, time: currentTime).y)
+    }
+
     /// Rigs the selected layer as the lower limb: `upper` must be its parent; the controller sits at the limb's tip.
     /// Makes a controller null at the tip when none is given.
     func makeIK(upper: UUID, controller: UUID?) {
@@ -110,12 +116,17 @@ extension EditorState {
         guard let up = disp.layers.first(where: { $0.id == upper }), let lo = disp.layers.first(where: { $0.id == lower.id }) else { return }
         // Tip = bottom center of the lower limb (where a hand / foot attaches), in comp space.
         let M = Renderer.layerMatrix(lo, time: t, renderScale: 1)
-        let hs = Renderer.layerHalfSize(lo, time: t)
-        let tipW = M * SIMD3(0, hs.y, 1)
-        let tip = Vec2(tipW.x, tipW.y)
+        let localTip = ikRestTip(for: lower)
+        let tipW = M * SIMD3(localTip.x, localTip.y, 1)
+        // A picked controller defines the end joint at bind time, rather than silently using the image edge.
+        let tip = controller.flatMap { id in disp.layers.first(where: { $0.id == id }) }
+            .map { $0.transform.position.value(at: t) } ?? Vec2(tipW.x, tipW.y)
+        guard tip.x.isFinite, tip.y.isFinite else { return }
         let s = up.transform.position.value(at: t), e = lo.transform.position.value(at: t)
         let l1 = hypot(e.x - s.x, e.y - s.y), l2 = hypot(tip.x - e.x, tip.y - e.y)
         guard l1 > 1, l2 > 1 else { return }
+        // Preserve the authored elbow side. Always choosing the positive branch can flip a limb on bind.
+        let bend = (tip.x - s.x) * (e.y - s.y) - (tip.y - s.y) * (e.x - s.x) < 0
         let rest1 = atan2(e.y - s.y, e.x - s.x) * 180 / .pi - up.transform.rotation.value(at: t)
         let rest2 = atan2(tip.y - e.y, tip.x - e.x) * 180 / .pi - lo.transform.rotation.value(at: t)
         var ctrlID = controller ?? UUID()
@@ -138,11 +149,29 @@ extension EditorState {
                 p.layers.insert(n, at: 0)
             }
             if let li2 = p.layers.firstIndex(where: { $0.id == lower.id }) {
-                p.layers[li2].ik = IKRig(upperID: upper, controllerID: ctrlID, l1: l1, l2: l2, rest1: rest1, rest2: rest2)
+                p.layers[li2].ik = IKRig(upperID: upper, controllerID: ctrlID, flip: bend, l1: l1, l2: l2, rest1: rest1, rest2: rest2)
             }
         }
-        selectedLayerID = ctrlID
-        panel = .transform
+        ikDraftTip = nil
+        selectedLayerID = lower.id
+        panel = .rig
+    }
+
+    /// Direct controller posing shares the normal position tracks and paired depth keys.
+    func poseIKController(_ id: UUID, atCanvas target: Vec2) {
+        let source = live.project ?? project
+        guard source.layers.contains(where: { $0.ik?.controllerID == id }),
+              let controller = source.layers.first(where: { $0.id == id }),
+              let local = MotionPathMath.value(controller, at: target,
+                                               project: canvasViewProject(source), time: currentTime),
+              local.x.isFinite, local.y.isFinite else { return }
+        let time = currentTime
+        mutate("Pose IK") { p in
+            guard let i = p.layers.firstIndex(where: { $0.id == id }) else { return }
+            let before = p.layers[i].transform
+            p.layers[i].transform.position.set(local, at: time)
+            p.layers[i].transform.pairPositionKeys(previous: before, at: time)
+        }
     }
 
     func removeIK() {
@@ -186,12 +215,12 @@ struct RigPanel: View {
                             }
                             .frame(minHeight: 44)
                             HStack {
-                                Button("Select Controller") { state.select(rig.controllerID) }
+                                Button("Select Controller") { state.select(rig.controllerID); state.panel = .transform }
                                 Spacer()
                                 Button("Remove IK", role: .destructive) { state.removeIK() }
                             }
                         } else {
-                            Text("Select the LOWER part (forearm / shin), pick its upper part (upper arm / thigh), then Make IK. A controller is created at the limb's tip unless you pick one.")
+                            Text("Select the LOWER part (forearm / shin), pick its upper part (upper arm / thigh), then place the end joint on the canvas at the wrist or ankle. Make IK binds this pose; moving its controller poses the limb.")
                                 .font(.caption).foregroundStyle(Theme.textDim)
                             picker("Upper Limb", selection: state.ikDraftUpper, exclude: l.id) { state.pickIKUpper() } clear: { state.ikDraftUpper = nil }
                             picker("Controller (optional)", selection: state.ikDraftController, exclude: l.id) { state.pickIKController() } clear: { state.ikDraftController = nil }
