@@ -67,6 +67,11 @@ extension Layer {
         }
         add("c.volume", "Volume", "Audio", scalar(\.volume), path(\.volume))
         add("c.timeRemap", "Time Remap", "Time", .scalar(get: { $0.timeRemap }, set: { $0.timeRemap = $1 })) { l, v in v.apply(&l.timeRemap) }
+        if ik != nil {
+            add("rig.mix", "IK / FK Mix", "Rig", .scalar(get: { $0.ik?.mix }, set: { $0.ik?.mix = $1 })) { l, v in
+                if l.ik != nil { v.apply(&l.ik!.mix) }
+            }
+        }
         if shapeContents == nil { add("c.path", "Path", "Shape") { l, v in v.apply(&l.path) } }
 
         for item in shapeContents ?? [] where item.component != nil {

@@ -64,4 +64,4 @@ Behavioral references, not copied implementation:
 
 ## Current status
 
-Initial code changes: authored endpoint handle, controller-based endpoint capture, bind bend-side preservation, direct target posing with gesture coalescing, and a direct selected-letter rotation handle that reuses the existing animator. Unit and rig interaction tests are added; macOS CI and visual validation are pending. The mesh binding, typography extensions and full integration above are not implemented or verified yet. No new IPA is approved by this document.
+Initial code changes: authored endpoint handle, controller-based endpoint capture, bind bend-side preservation, direct target posing with gesture coalescing, keyframeable IK/FK mixing in the shared animation traversal/property graph, target-cycle guards, and a direct selected-letter rotation handle that reuses the existing animator. Unit and rig interaction tests are added; macOS CI and visual validation are pending. The mesh binding, typography extensions and full integration above are not implemented or verified yet. No new IPA is approved by this document.

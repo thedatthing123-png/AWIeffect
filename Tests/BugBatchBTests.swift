@@ -263,6 +263,47 @@ final class BugBatchBTests: XCTestCase {
         XCTAssertNotNil(s.project.layers.first { $0.id == lower }?.ik)
     }
 
+    func testIKMixIsGraphableRetimedAndBackwardCompatible() throws {
+        let (p, upper, lower) = limbProject()
+        let s = state(p)
+        s.select(lower); s.makeIK(upper: upper, controller: nil)
+        var layer = try XCTUnwrap(s.project.layers.first { $0.id == lower })
+        layer.ik?.blend = 0.25
+        XCTAssertEqual(layer.ik?.mixValue(at: 0), 0.25)
+        var mix = Animated(0.25)
+        mix.insertKeyframe(Keyframe(time: 0, value: 0.25, interpolation: .linear))
+        mix.insertKeyframe(Keyframe(time: 1, value: 1, interpolation: .linear))
+        layer.ik?.mix = mix
+        XCTAssertEqual(try XCTUnwrap(layer.ik?.mixValue(at: 0.5)), 0.625, accuracy: 1e-8)
+        let lane = try XCTUnwrap(layer.propertyLanes().first { $0.id == "rig.mix" })
+        XCTAssertTrue(lane.graphable)
+        XCTAssertEqual(lane.times, [0, 1])
+        var shift = AnimationTraversal(operation: .shift(2))
+        layer.traverseAnimations(&shift)
+        XCTAssertEqual(layer.ik?.mix?.keyframeTimes, [2, 3])
+        let copy = try JSONDecoder().decode(Layer.self, from: JSONEncoder().encode(layer))
+        XCTAssertEqual(copy.ik?.mix, layer.ik?.mix)
+        layer.ik?.mix = nil
+        let legacy = try JSONDecoder().decode(Layer.self, from: JSONEncoder().encode(layer))
+        XCTAssertEqual(legacy.ik?.mixValue(at: 100), 0.25)
+    }
+
+    func testIKRejectsTargetsUnderEitherConstrainedBoneAndMissingTargets() {
+        var (p, upper, lower) = limbProject()
+        var target = p.makeLayer(name: "Invalid target", content: .solid, size: Vec2(20, 20))
+        target.parentID = upper
+        p.layers.insert(target, at: 0)
+        let s = state(p)
+        s.select(lower)
+        let before = s.project
+        let undoCount = s.undoStack.count
+        for id in [upper, target.id, UUID()] {
+            s.makeIK(upper: upper, controller: id)
+            XCTAssertEqual(s.project, before)
+            XCTAssertEqual(s.undoStack.count, undoCount)
+        }
+    }
+
     func testIKDraftEndpointBelongsToItsLayer() {
         let (p, upper, lower) = limbProject()
         let s = state(p)

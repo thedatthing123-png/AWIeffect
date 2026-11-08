@@ -15,6 +15,9 @@ struct IKRig: Codable, Equatable {
     var rest2: Double
     /// IK / FK blend 0...1 (nil = 1, full IK). Below 1 the limb's own rotation keys mix back in.
     var blend: Double? = nil
+    /// Animated replacement; old projects retain their legacy constant blend until it is edited.
+    var mix: Animated<Double>? = nil
+    func mixValue(at time: Double) -> Double { mix?.value(at: time) ?? blend ?? 1 }
 }
 
 enum IKSolver {
@@ -89,7 +92,7 @@ enum IKSolver {
             let lowerWorld = a2 * 180 / .pi - rig.rest2
             guard upperWorld.isFinite, lowerWorld.isFinite else { continue }
             // FK/IK blend: at 100 % the solve wins; below that the limbs' own rotation keys show through.
-            let w = rig.blend ?? 1
+            let w = rig.mixValue(at: time)
             let fkUpper = upper.transform.rotation.value(at: time), fkLower = q.layers[li].transform.rotation.value(at: time)
             q.layers[ui].transform.rotation = Animated(blendAngle(fk: fkUpper, ik: upperWorld - parentRot, w: w))
             q.layers[li].transform.rotation = Animated(blendAngle(fk: fkLower, ik: lowerWorld - upperWorld, w: w))
@@ -112,10 +115,14 @@ extension EditorState {
         // No link loops: the upper limb (and the controller) can't hang under the lower limb.
         let below = IKSolver.descendants(of: lower.id, in: project)
         guard !below.contains(upper), controller.map({ $0 != lower.id && !below.contains($0) }) ?? true else { return }
+        if let controller {
+            let constrained = IKSolver.descendants(of: upper, in: project).union([upper, lower.id])
+            guard project.layers.contains(where: { $0.id == controller }), !constrained.contains(controller) else { return }
+        }
         let t = currentTime
         let disp = displayProject
         guard let up = disp.layers.first(where: { $0.id == upper }), let lo = disp.layers.first(where: { $0.id == lower.id }) else { return }
-        // Tip = bottom center of the lower limb (where a hand / foot attaches), in comp space.
+        // Bind endpoint in comp space; its rest handle is authored in artwork coordinates.
         let M = Renderer.layerMatrix(lo, time: t, renderScale: 1)
         let localTip = ikRestTip(for: lower)
         let tipW = M * SIMD3(localTip.x, localTip.y, 1)
@@ -212,14 +219,31 @@ struct RigPanel: View {
                             .tint(Theme.accent).foregroundStyle(Theme.text)
                             HStack {
                                 Text("IK / FK").font(.system(size: 13)).foregroundStyle(Theme.text)
-                                Slider(value: Binding(get: { (rig.blend ?? 1) * 100 }, set: { v in
-                                    state.mutate("IK Blend") { p in if let i = p.layers.firstIndex(where: { $0.id == owner.id }) { p.layers[i].ik?.blend = min(1, max(0, v / 100)) } }
-                                }), in: 0...100, onEditingChanged: { editing in
-                                    if editing { state.beginPanelGesture("IK Blend") } else { state.endPanelGesture() }
-                                })
-                                .tint(Theme.accent)
-                                Text("\(Int(((rig.blend ?? 1) * 100).rounded()))% IK").font(.system(size: 12, weight: .semibold).monospacedDigit())
-                                    .foregroundStyle(Theme.textDim).frame(width: 64, alignment: .trailing)
+                                Button {
+                                    let time = state.currentTime
+                                    state.mutate("Key IK / FK") { p in
+                                        guard let i = p.layers.firstIndex(where: { $0.id == owner.id }) else { return }
+                                        var mix = p.layers[i].ik?.mix ?? Animated(rig.mixValue(at: time))
+                                        mix.toggleKeyframe(at: time)
+                                        p.layers[i].ik?.mix = mix
+                                    }
+                                } label: {
+                                    Image(systemName: rig.mix?.hasKeyframe(at: state.currentTime) == true ? "diamond.fill" : "diamond")
+                                        .foregroundStyle(Theme.keyframe).frame(width: 44, height: 44)
+                                }
+                                .buttonStyle(.plain).accessibilityLabel("Key IK / FK")
+                                ValueScrubber(value: rig.mixValue(at: state.currentTime) * 100, range: 0...100, unit: "%",
+                                    onBegin: { state.beginPanelGesture("IK Blend") }, onChange: { value in
+                                        let time = state.currentTime
+                                        state.mutate("IK Blend") { p in
+                                            guard let i = p.layers.firstIndex(where: { $0.id == owner.id }) else { return }
+                                            var mix = p.layers[i].ik?.mix ?? Animated(rig.mixValue(at: time))
+                                            mix.set(min(1, max(0, value / 100)), at: time)
+                                            p.layers[i].ik?.mix = mix
+                                        }
+                                    }, onEnd: { state.endPanelGesture() })
+                                    .frame(height: 44)
+                                    .accessibilityLabel("IK / FK Mix")
                             }
                             .frame(minHeight: 44)
                             HStack {
