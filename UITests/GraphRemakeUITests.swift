@@ -19,6 +19,9 @@ final class GraphRemakeUITests: XCTestCase {
         let start = cycles.coordinate(withNormalizedOffset: CGVector(dx: 0.5,dy: 0.5))
         start.press(forDuration: 0.1,thenDragTo: start.withOffset(CGVector(dx: 50,dy: 0)))
         XCTAssertNotEqual(cycles.value as? String, before)
+        let tuned = cycles.value as? String
+        bring(repeatButton, scroll: scroll); repeatButton.tap()
+        XCTAssertEqual(cycles.value as? String, tuned, "Tapping the active graph must preserve its edits")
         save("graph-repeat")
         let back = app.buttons["Back & Forth"].firstMatch; bring(back, scroll: scroll); back.tap()
         let smooth = app.descendants(matching: .any)["Smoothness handle"].firstMatch
@@ -32,6 +35,10 @@ final class GraphRemakeUITests: XCTestCase {
         let bounce = app.buttons["Bounce"].firstMatch; bring(bounce, scroll: scroll); bounce.tap()
         let bounces = app.descendants(matching: .any)["Bounces handle"].firstMatch
         XCTAssertTrue(bounces.waitForExistence(timeout: 5)); bring(bounces, scroll: scroll)
+        let count = bounces.value as? String
+        let b = bounces.coordinate(withNormalizedOffset: CGVector(dx: 0.5,dy: 0.5))
+        b.press(forDuration: 0.1,thenDragTo: b.withOffset(CGVector(dx: 50,dy: 0)))
+        XCTAssertNotEqual(bounces.value as? String, count, "Bounce must be editable too")
         save("graph-bounce")
         XCTAssertFalse(app.buttons["Sine In"].exists, "Duplicate fixed curves should not clutter the new catalog")
     }

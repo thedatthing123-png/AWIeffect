@@ -12,6 +12,8 @@ extension EditorState {
     }
 
     func setRemapEase(segment: Int?, ease: SavedEase, continuous: Bool = false) {
+        // Cyclic property easing must not turn source-time playback into repeated footage.
+        guard ![EaseCurve.Kind.cycleRepeat, .cyclePingPong].contains(ease.curve?.kind ?? .sineIn) else { return }
         guard let i = selectedIndex, var a = project.layers[i].timeRemap, a.keyframes.count >= 2 else { return }
         if continuous { beginEdit("Remap Easing") }
         for k in segment.map({ [$0] }) ?? Array(0..<(a.keyframes.count - 1)) where k >= 0 && k + 1 < a.keyframes.count {

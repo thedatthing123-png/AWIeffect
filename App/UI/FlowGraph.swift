@@ -245,6 +245,7 @@ struct FlowGraphPanel: View {
                 HStack(spacing: 6) {
                     small("Copy", "doc.on.doc") { Self.clipboard = e }
                     small("Paste", "doc.on.clipboard") { if let c = Self.clipboard { apply(c) } }
+                        .disabled(Self.clipboard == nil || (state.graphTimeRemap && [.cycleRepeat, .cyclePingPong].contains(Self.clipboard?.curve?.kind ?? .sineIn)))
                     small("Save", "star") {
                         var list = saved
                         var n = e; n.id = UUID(); n.name = "My Curve \(list.count + 1)"

@@ -86,6 +86,21 @@ final class GraphRemakeTests: XCTestCase {
         state.redo(); XCTAssertEqual(state.project.layers[0].transform.position.keyframes[0].curve, changed)
     }
 
+    @MainActor func testPropertyLoopCannotBePastedIntoSourceTimeRemap() {
+        var p = Project.new(name: "Remap isolation", width: 64, height: 64, fps: 30, duration: 3)
+        let nested = Project.new(name: "Source", width: 64, height: 64, fps: 30, duration: 3)
+        p.precomps = [nested]
+        let layer = p.makeLayer(name: "Comp", content: .precomp(id: nested.id), size: Vec2(64,64))
+        p.layers = [layer]
+        let store = ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
+        let state = EditorState(project: p, store: store); state.select(layer.id); state.enableTimeRemap()
+        let original = state.project
+        for kind in [EaseCurve.Kind.cycleRepeat, .cyclePingPong] {
+            state.setRemapEase(segment: 0, ease: SavedEase(name: "loop", interpolation: .bezier, out: .easyOut, into: .easyIn, curve: EaseCurve(kind)))
+            XCTAssertEqual(state.project, original)
+        }
+    }
+
     @MainActor func testAnimatedCurveMotionArtifact() throws {
         let folder = URL(fileURLWithPath: "/tmp/awi-graphs", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
