@@ -37,6 +37,7 @@ struct FlowGraphPanel: View {
     @State private var key: PropertyKey?            // nil = all animated properties
     @State private var speedView = false
     @State private var family = "Easing"
+    @State private var scrubbingHandle = false
     @AppStorage("awi.myCurves") private var savedData = Data()
     private static var clipboard: SavedEase?
 
@@ -78,6 +79,7 @@ struct FlowGraphPanel: View {
                 }
             }
         }
+        .onDisappear { state.endEdit(); scrubbingHandle = false }
         .onChange(of: state.graphTimeRemap) { _, remap in if remap && family == "Loops" { family = "Easing" } }
         .onChange(of: current?.curve?.kind) { _, _ in selectFamily() }
         .onAppear {
@@ -235,7 +237,7 @@ struct FlowGraphPanel: View {
                     handleFields(e, outgoing: false)
                 }
                 if let c = e.curve, let pa = c.kind.paramA {
-                    paramRow(pa.0, value: c.a, range: pa.1) { v in var n = e; n.curve?.a = v; apply(n, continuous: true) }
+                    paramRow(pa.0, value: c.a, range: pa.1) { v in var n = e; n.curve?.a = [.cycleRepeat, .cyclePingPong, .bounceIn, .bounceOut].contains(c.kind) ? v.rounded() : v; apply(n, continuous: true) }
                 }
                 if let c = e.curve, let pb = c.kind.paramB {
                     paramRow(pb.0, value: c.b, range: pb.1) { v in var n = e; n.curve?.b = v; apply(n, continuous: true) }
@@ -257,17 +259,17 @@ struct FlowGraphPanel: View {
     private func handleFields(_ e: SavedEase, outgoing: Bool) -> some View {
         let h = outgoing ? e.out : e.into
         return HStack(spacing: 6) {
-            NumberField(value: h.x, label: outgoing ? "Out X" : "In X", step: 0.01, precision: 2,
-                        onDragBegin: { state.beginEdit("Edit Easing") }, onDragEnd: { state.endEdit() }) { v in
+            NumberField(value: h.x, label: outgoing ? "Out X" : "In X", step: 0.01, precision: 2, controlHeight: 44,
+                        onDragBegin: { scrubbingHandle = true; state.beginEdit("Edit Easing") }, onDragEnd: { state.endEdit(); scrubbingHandle = false }) { v in
                 var n = e
                 if outgoing { n.out.x = min(1, max(0, v)) } else { n.into.x = min(1, max(0, v)) }
-                apply(n, continuous: true)
+                apply(n, continuous: scrubbingHandle)
             }
-            NumberField(value: h.y, label: outgoing ? "Out Y" : "In Y", step: 0.01, precision: 2,
-                        onDragBegin: { state.beginEdit("Edit Easing") }, onDragEnd: { state.endEdit() }) { v in
+            NumberField(value: h.y, label: outgoing ? "Out Y" : "In Y", step: 0.01, precision: 2, controlHeight: 44,
+                        onDragBegin: { scrubbingHandle = true; state.beginEdit("Edit Easing") }, onDragEnd: { state.endEdit(); scrubbingHandle = false }) { v in
                 var n = e
                 if outgoing { n.out.y = min(1.8, max(-0.8, v)) } else { n.into.y = min(1.8, max(-0.8, v)) }
-                apply(n, continuous: true)
+                apply(n, continuous: scrubbingHandle)
             }
         }.frame(minHeight: 44)
     }
@@ -390,9 +392,12 @@ struct CurvePlot: View {
                              at: CGPoint(x: box.minX, y: 4), anchor: .topLeading)
                 }
             }
+            // Fit overshoot and anticipation without changing the mathematical curve.
+            let low = speed ? 0 : min(0, ys.min() ?? 0)
+            let high = speed ? 1 : max(1, ys.max() ?? 1)
             var path = Path()
             for (i, y) in ys.enumerated() {
-                let p = CGPoint(x: box.minX + CGFloat(i) / CGFloat(n) * box.width, y: box.maxY - CGFloat(y) * box.height)
+                let p = CGPoint(x: box.minX + CGFloat(i) / CGFloat(n) * box.width, y: box.maxY - CGFloat((y - low) / (high - low)) * box.height)
                 if i == 0 { path.move(to: p) } else { path.addLine(to: p) }
             }
             ctx.stroke(path, with: .color(Theme.accentGlow), style: StrokeStyle(lineWidth: thumb ? 1.6 : 3, lineCap: .round, lineJoin: .round))

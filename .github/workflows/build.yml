@@ -162,6 +162,14 @@ jobs:
           path: /tmp/awi-shapes
           if-no-files-found: ignore
 
+      - name: Upload graph motion renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: graph-renders
+          path: /tmp/awi-graphs
+          if-no-files-found: ignore
+
       - name: Archive (unsigned)
         if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' }}
         run: |

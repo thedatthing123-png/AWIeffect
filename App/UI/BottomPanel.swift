@@ -252,6 +252,7 @@ struct NumberField: View {
     let label: String
     var step: Double = 1
     var precision: Int = 1
+    var controlHeight: CGFloat = 34
     var active: Bool? = nil
     var onActivate: (() -> Void)? = nil
     /// Called when a drag starts / ends (one undo step and live edits for the whole drag).
@@ -300,7 +301,7 @@ struct NumberField: View {
                     .onChange(of: touching) { _, down in if !down { finishDrag() } }
             }
         }
-        .padding(.horizontal, 8).frame(minWidth: 0).frame(height: 34)
+        .padding(.horizontal, 8).frame(minWidth: 0).frame(height: controlHeight)
         .background(RoundedRectangle(cornerRadius: 9).fill(active == true ? Theme.accent.opacity(0.16) : Theme.surface))
         .overlay(RoundedRectangle(cornerRadius: 9).stroke(active == true ? Theme.accent.opacity(0.7) : .clear, lineWidth: 1).allowsHitTesting(false))
         .contentShape(Rectangle())

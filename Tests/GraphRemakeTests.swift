@@ -1,9 +1,13 @@
 import XCTest
+import UIKit
+import ImageIO
+import UniformTypeIdentifiers
 @testable import AWIeffect
 
 final class GraphRemakeTests: XCTestCase {
     private func animation(_ kind: EaseCurve.Kind, cycles: Double = 3, smoothness: Double = 1) -> Animated<Double> {
-        var c = EaseCurve(kind); c.a = cycles; c.b = smoothness
+        var c = EaseCurve(kind); c.a = cycles
+        if [.cycleRepeat, .cyclePingPong].contains(kind) { c.b = smoothness }
         var a = Animated(10.0)
         a.insertKeyframe(Keyframe(time: 0, value: 10, interpolation: .bezier))
         a.insertKeyframe(Keyframe(time: 3, value: 0))
@@ -64,4 +68,51 @@ final class GraphRemakeTests: XCTestCase {
         let legacy = try JSONDecoder().decode(EaseCurve.self, from: Data("{\"kind\":\"bounceOut\",\"a\":3,\"b\":0.45}".utf8))
         XCTAssertEqual(legacy, EaseCurve(.bounceOut))
     }
+    @MainActor func testLoopEditingKeepsOtherSegmentsAndUndoRestoresThem() {
+        var p = Project.new(name: "Graph Undo", width: 64, height: 64, fps: 30, duration: 3)
+        var l = p.makeLayer(name: "Shape", content: .solid, size: Vec2(16,16))
+        for t in [0.0,1,2] { l.transform.position.insertKeyframe(Keyframe(time: t,value: Vec2(t*10,32))) }
+        l.transform.position.keyframes[1].curve = EaseCurve(.elasticOut)
+        p.layers = [l]
+        let store = ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))
+        let state = EditorState(project: p, store: store); state.select(l.id)
+        state.setEase(.position, segment: 0, interpolation: .bezier, out: .easyOut, into: .easyIn, curve: EaseCurve(.cyclePingPong), continuous: true)
+        var changed = EaseCurve(.cyclePingPong); changed.a = 5
+        state.setEase(.position, segment: 0, interpolation: .bezier, out: .easyOut, into: .easyIn, curve: changed, continuous: true)
+        state.endEdit()
+        XCTAssertEqual(state.project.layers[0].transform.position.keyframes[0].curve, changed)
+        XCTAssertEqual(state.project.layers[0].transform.position.keyframes[1].curve, l.transform.position.keyframes[1].curve)
+        state.undo(); XCTAssertEqual(state.project, p)
+        state.redo(); XCTAssertEqual(state.project.layers[0].transform.position.keyframes[0].curve, changed)
+    }
+
+    @MainActor func testAnimatedCurveMotionArtifact() throws {
+        let folder = URL(fileURLWithPath: "/tmp/awi-graphs", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let file = folder.appendingPathComponent("graph-motion.gif")
+        let destination = try XCTUnwrap(CGImageDestinationCreateWithURL(file as CFURL, UTType.gif.identifier as CFString, 90, nil))
+        CGImageDestinationSetProperties(destination, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+        let curves = [animation(.cycleRepeat), animation(.cyclePingPong), animation(.bounceOut)]
+        let names = ["Repeat — instant reset", "Back & Forth — smooth return", "Bounce — gravity and recoil"]
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 400,height: 216))
+        for frame in 0..<90 {
+            let t = Double(frame) / 30
+            let image = renderer.image { ctx in
+                UIColor(white: 0.06,alpha: 1).setFill(); ctx.fill(CGRect(x: 0,y: 0,width: 400,height: 216))
+                for row in 0..<3 {
+                    let y = CGFloat(row * 72)
+                    (names[row] as NSString).draw(at: CGPoint(x: 12,y: y+3), withAttributes: [.font: UIFont.systemFont(ofSize: 13), .foregroundColor: UIColor.white])
+                    let value = curves[row].value(at: t)
+                    XCTAssertTrue(value.isFinite)
+                    UIColor(white: 0.3,alpha: 1).setStroke()
+                    ctx.cgContext.move(to: CGPoint(x: 36,y: y+45)); ctx.cgContext.addLine(to: CGPoint(x: 364,y: y+45)); ctx.cgContext.strokePath()
+                    UIColor(red: 0.64,green: 0.36,blue: 1,alpha: 1).setFill()
+                    ctx.cgContext.fillEllipse(in: CGRect(x: 28 + value / 10 * 328,y: Double(y+37),width: 16,height: 16))
+                }
+            }
+            CGImageDestinationAddImage(destination, try XCTUnwrap(image.cgImage), [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 1.0/30]] as CFDictionary)
+        }
+        XCTAssertTrue(CGImageDestinationFinalize(destination))
+    }
+
 }
