@@ -14,7 +14,7 @@ on:
       validation:
         description: Test scope (audit runs do not publish an IPA)
         type: choice
-        options: [all, audit, timing, quick]
+        options: [all, audit, timing, stability, quick]
         default: all
 
 concurrency:
@@ -79,6 +79,9 @@ jobs:
           fi
           if [[ "${{ inputs.validation }}" == "timing" ]]; then
             FILTER=(-only-testing:AWIeffectUITests/AnimationTimingUITests -only-testing:AWIeffectUITests/GraphRemakeUITests -only-testing:AWIeffectTests/GraphRemakeTests)
+          fi
+          if [[ "${{ inputs.validation }}" == "stability" ]]; then
+            FILTER=(-only-testing:AWIeffectTests/InlineToolsTests -only-testing:AWIeffectUITests/InlineToolsUITests -only-testing:AWIeffectUITests/EditorPolishUITests -only-testing:AWIeffectUITests/StabilityUITests -only-testing:AWIeffectUITests/AnimationTimingUITests)
           fi
           xcodebuild test -jobs 2 "${FILTER[@]}" \
             -project AWIeffect.xcodeproj -scheme AWIeffect \
@@ -171,7 +174,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Archive (unsigned)
-        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' }}
+        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' && inputs.validation != 'stability' }}
         run: |
           set -o pipefail
           set +e
@@ -198,7 +201,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Package IPA
-        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' }}
+        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' && inputs.validation != 'stability' }}
         run: |
           mkdir -p Payload
           cp -R build/AWIeffect.xcarchive/Products/Applications/AWIeffect.app Payload/
@@ -211,7 +214,7 @@ jobs:
           ls -lh AWIeffect.ipa
 
       - name: Upload IPA
-        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' }}
+        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' && inputs.validation != 'stability' }}
         uses: actions/upload-artifact@v4
         with:
           name: AWIeffect-ipa

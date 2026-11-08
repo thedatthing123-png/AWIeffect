@@ -4,14 +4,26 @@ final class InlineToolsUITests: XCTestCase {
     func testRestoredTransportAndInlineRemoveBG() {
         continueAfterFailure = false
         let app = XCUIApplication(); app.launchArguments = ["-uiTesting", "-uiTesting-cutoutInline"]; app.launch()
-        XCTAssertTrue(app.buttons["Auto Box"].firstMatch.waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["Auto Remove Background"].firstMatch.waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["Auto Box"].firstMatch.exists)
+        app.buttons["Auto Remove Background"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Restore Original"].firstMatch.waitForExistence(timeout: 5))
+        app.buttons["Restore Original"].firstMatch.tap()
+        XCTAssertFalse(app.buttons["Restore Original"].firstMatch.exists)
         for name in ["Undo", "Redo", "View options", "Go to Start", "Previous Frame", "Play", "Next Frame", "Go to End", "Key All", "Loop", "Select Multiple", "Layer Clipboard", "History"] {
             XCTAssertTrue(app.buttons[name].firstMatch.exists, "Missing one-tap transport control: \(name)")
         }
         XCTAssertFalse(app.buttons["Open Cutout Studio"].exists)
         save("inline-transport-header-remove-bg")
         let scroll = app.scrollViews["remove-bg-scroll"]
-        for page in 0..<4 { scroll.swipeUp(); save("inline-remove-bg-\(page)") }
+        let before = app.buttons["Auto Remove Background"].firstMatch.frame.minY
+        for page in 0..<4 {
+            // The middle contains Hold Original and scrubbers; use the panel gutter to scroll.
+            let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.75))
+            start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -140)))
+            if page == 0 { XCTAssertLessThan(app.buttons["Auto Remove Background"].firstMatch.frame.minY, before - 20) }
+            save("inline-remove-bg-\(page)")
+        }
     }
     private func save(_ name: String) {
         let shot = XCUIScreen.main.screenshot()

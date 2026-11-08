@@ -7,7 +7,17 @@ struct KeyframeMoverSheet: View {
     @State private var message: String?
 
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            HStack {
+                Button(selection.isEmpty ? "Select All" : "Clear") {
+                    selection = selection.isEmpty ? Set(state.selectedLayer?.keyframeMarkers.map(\.id) ?? []) : []
+                    message = nil
+                }.frame(minWidth: 76, minHeight: 44)
+                Spacer()
+                Text("Move Keyframes").font(.headline)
+                Spacer()
+                Button("Done") { dismiss() }.frame(minWidth: 60, minHeight: 44)
+            }.padding(.horizontal, 12)
             List {
                 if let layer = state.selectedLayer {
                     if layer.keyframeTimes.isEmpty { Text("This layer has no keyframes yet.") }
@@ -40,16 +50,6 @@ struct KeyframeMoverSheet: View {
                         if let message { Text(message).font(.caption).foregroundStyle(Theme.textDim) }
                     }
                 }
-            }
-            .navigationTitle("Move Keyframes")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(selection.isEmpty ? "Select All" : "Clear") {
-                        selection = selection.isEmpty ? Set(state.selectedLayer?.keyframeMarkers.map(\.id) ?? []) : []
-                        message = nil
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
             }
         }
     }

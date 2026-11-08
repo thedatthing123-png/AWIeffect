@@ -8,7 +8,7 @@ import CoreVideo
 /// Auto: draw a box and it follows the subject through the clip. A bad frame gets fixed alone; no other frame changes.
 @MainActor
 final class CutoutStudioModel: ObservableObject, Identifiable {
-    enum Tool { case brush, box }
+    enum Tool { case none, brush, box }
     enum Show: String, CaseIterable { case cut = "Cutout", overlay = "Overlay", original = "Original" }
 
     let state: EditorState
@@ -24,7 +24,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     @Published var matteImage: UIImage?
     @Published var dimImage: UIImage?
     @Published var selectionImage: UIImage?
-    @Published var tool = Tool.brush
+    @Published var tool = Tool.none
     @Published var show = Show.cut
     @Published var brushSize = 40.0
     @Published var snapEdges = true
@@ -37,19 +37,23 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     private var selection: [UInt8]?
     private var undo: [(frame: Int, matte: MatteFrame?)] = []
     private var autoTask: Task<Void, Never>?
+    private var autoGeneration = 0
     private var loadID = 0
+    private var loadedFrame: Int?
+    @Published private(set) var frameLoading = false
     private var closed = false
     private let previewID = UUID().uuidString
     private var previewRevision = 0
     private var previewTime: TimeInterval = 0
     private let projectID: UUID
+    private var committedSettings: CutoutSettings?
 
     var hasSelection: Bool { selection != nil }
     var manualFrames: Set<Int> { Set(settings.manualFrames) }
     var bakeID: String { settings.bakeID ?? "" }
 
     init(state: EditorState, layer: Layer, url: URL) {
-        self.state = state; self.layer = layer; self.url = url; projectID = state.project.id
+        self.state = state; self.layer = layer; self.url = url; projectID = state.project.id; committedSettings = layer.cutout
         var video = false
         if case .video = layer.content { video = true }
         isVideo = video
@@ -79,18 +83,40 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
 
     func followPlayhead() {
         guard isVideo else { return }
-        go(to: Int(layer.sourceTime(at: state.currentTime) * rate))
+        let target = min(lastFrame, max(0, Int(layer.sourceTime(at: state.currentTime) * rate)))
+        // The normal video renderer already decodes playback. Do not launch a second detached image/matte decode
+        // for every playhead tick merely to keep the refinement panel open.
+        if state.isPlaying || tool == .none { frame = target; return }
+        if target != frame { go(to: target) }
+        else if loadedFrame != frame && !frameLoading { load() }
         if autoProgress != nil { state.cutoutPreview = (layer.id, settings) }
     }
     func sync(_ value: CutoutSettings?) {
         guard autoProgress == nil else { return }
+        let previous = committedSettings
+        committedSettings = value
         let missing = value == nil
         var value = value ?? CutoutSettings(mode: .drawn)
         if missing { value.manualOnly = true }
         if value.bakeID == nil { value.bakeID = UUID().uuidString }
         value.bakeRate = value.bakeRate ?? rate
-        settings = value; scanBaked(); load()
+        let matteChanged = (previous == nil) != (committedSettings == nil) || previous?.bakeID != committedSettings?.bakeID || previous?.bakeOverrides != committedSettings?.bakeOverrides || previous?.bakeRevision != committedSettings?.bakeRevision || previous?.manualOnly != committedSettings?.manualOnly || previous?.mode != committedSettings?.mode
+        settings = value
+        if matteChanged { scanBaked(); load() }
     }
+    /// The original live automatic matte path: one action, no box or brush required.
+    func automatic() {
+        guard active, autoProgress == nil else { return }
+        state.pause(); tool = .none
+        settings.manualOnly = false
+        publish("Automatic Background Removal")
+    }
+    func restoreOriginal() {
+        guard active, autoProgress == nil else { return }
+        tool = .none; state.cutoutPreview = nil; state.cutoutPeekOriginal = nil
+        state.setCutout(nil)
+    }
+
     private func publish(_ label: String) {
         guard active else { return }
         let id = layer.id, value = settings
@@ -127,7 +153,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     }
 
     private func load() {
-        loadID += 1
+        loadID += 1; frameLoading = true; matte = nil; pictureCG = nil
         let id = loadID, f = frame, url = url, video = isVideo, rate = rate
         let saved = path(f), existing = state.project.layers.first(where: { $0.id == layer.id }), renderer = Renderer.shared
         let media: (String) -> URL = { [state] in state.mediaURL($0) }
@@ -148,6 +174,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
             }
             await MainActor.run {
                 guard id == self.loadID, !self.closed else { return }
+                self.frameLoading = false; self.loadedFrame = f
                 self.pictureCG = cg
                 self.picture = cg.map { UIImage(cgImage: $0) }
                 if let cg { self.matte = stored ?? MatteFrame.filled(cg.width, cg.height, 255) }
@@ -268,14 +295,18 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
 
     func runAuto(box: CGRect) {
         guard active, autoTask == nil else { return }
-        let namespace = UUID().uuidString
+        autoGeneration += 1
+        let generation = autoGeneration, namespace = UUID().uuidString
         autoProgress = 0; tool = .brush
         if !isVideo {
             guard let cg = pictureCG else { autoProgress = nil; return }
             let mode = settings.mode
             autoTask = Task.detached(priority: .userInitiated) { [weak self] in
                 guard let pb = CutoutEngine.mask(cg, mode: mode, pick: CGPoint(x: box.midX, y: box.midY)) ?? CutoutEngine.mask(cg, mode: mode) else {
-                    await MainActor.run { self?.autoProgress = nil; self?.autoTask = nil }; return
+                    await MainActor.run {
+                        guard let self, self.active, self.autoGeneration == generation else { return }
+                        self.autoProgress = nil; self.autoTask = nil
+                    }; return
                 }
                 let w = CVPixelBufferGetWidth(pb), h = CVPixelBufferGetHeight(pb)
                 var bytes = [UInt8](repeating: 0, count: w * h)
@@ -284,7 +315,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
                 CutoutBake.isolate(&matte, box: box.insetBy(dx: -box.width * 0.2, dy: -box.height * 0.2))
                 guard !Task.isCancelled else { return }
                 await MainActor.run {
-                    guard let self, self.active else { return }
+                    guard let self, self.active, self.autoGeneration == generation else { return }
                     self.autoProgress = nil; self.autoTask = nil; self.store(matte, label: "Auto Cutout")
                 }
             }
@@ -295,7 +326,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
                                     startFrame: frame, lastFrame: lastFrame, rate: rate, mode: mode, locked: manualFrames)
         job.didWrite = { [weak self] f in
             Task { @MainActor in
-                guard let self, self.active, self.autoProgress != nil else { return }
+                guard let self, self.active, self.autoGeneration == generation, self.autoProgress != nil else { return }
                 if self.settings.bakeOverrides == nil { self.settings.bakeOverrides = [:] }
                 self.settings.bakeOverrides?[String(f)] = namespace
                 self.settings.bakeRevision = (self.settings.bakeRevision ?? 0) + 1
@@ -304,9 +335,14 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
             }
         }
         autoTask = Task.detached(priority: .userInitiated) { [weak self] in
-            let written = CutoutBake.runAuto(job) { p in Task { @MainActor in if self?.active == true { self?.autoProgress = p } } }
+            let written = CutoutBake.runAuto(job) { p in
+                Task { @MainActor in
+                    guard let self, self.active, self.autoGeneration == generation else { return }
+                    self.autoProgress = p
+                }
+            }
             await MainActor.run {
-                guard let self, self.active else { return }
+                guard let self, self.active, self.autoGeneration == generation else { return }
                 if self.settings.bakeOverrides == nil { self.settings.bakeOverrides = [:] }
                 for f in written { self.settings.bakeOverrides?[String(f)] = namespace }
                 self.bakedFrames.formUnion(written)
@@ -318,7 +354,12 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
         }
     }
 
-    func cancelAuto() { autoTask?.cancel() }
+    func cancelAuto() {
+        guard autoTask != nil else { return }
+        autoTask?.cancel(); autoTask = nil; autoGeneration += 1; autoProgress = nil
+        if settings.bakeOverrides != committedSettings?.bakeOverrides { publish("Stop Automatic Cutout") }
+        state.cutoutPreview = nil; load()
+    }
 
     /// Leaving the tool never applies draft settings, nor commits a late-running automatic operation.
     func finish() {

@@ -20,10 +20,23 @@ struct InlineCutoutControls: View {
     @ObservedObject var model: CutoutStudioModel
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            Button { model.automatic() } label: {
+                Label("Auto Remove Background", systemImage: "person.crop.rectangle.badge.minus")
+                    .font(.system(size: 14, weight: .semibold)).frame(maxWidth: .infinity, minHeight: 44)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Theme.accent)).foregroundStyle(.white)
+            }.buttonStyle(.plain).disabled(model.autoProgress != nil)
+            Picker("Subject", selection: Binding(get: { model.settings.mode }, set: { mode in model.edge("Cutout Subject") { $0.mode = mode } })) {
+                Text("People").tag(CutoutMode.realistic)
+                Text("Object").tag(CutoutMode.object)
+                Text("Anime").tag(CutoutMode.drawn)
+            }.pickerStyle(.segmented).frame(minHeight: 44).disabled(model.autoProgress != nil)
+            if model.state.selectedLayer?.cutout != nil {
+                Button("Restore Original") { model.restoreOriginal() }.frame(maxWidth: .infinity, minHeight: 44).buttonStyle(.bordered)
+            }
             HStack(spacing: 8) {
-                mode("Keep", icon: "paintbrush.pointed", on: model.tool == .brush && model.keepBrush) { model.tool = .brush; model.keepBrush = true }
-                mode("Cut", icon: "scissors", on: model.tool == .brush && !model.keepBrush) { model.tool = .brush; model.keepBrush = false }
-                mode("Auto Box", icon: "viewfinder", on: model.tool == .box) { model.tool = .box }
+                mode("Keep", icon: "paintbrush.pointed", on: model.tool == .brush && model.keepBrush) { model.state.pause(); model.tool = .brush; model.keepBrush = true; model.followPlayhead() }
+                mode("Cut", icon: "scissors", on: model.tool == .brush && !model.keepBrush) { model.state.pause(); model.tool = .brush; model.keepBrush = false; model.followPlayhead() }
+                mode("Auto Box", icon: "viewfinder", on: model.tool == .box) { model.state.pause(); model.tool = .box; model.followPlayhead() }
             }
             if let progress = model.autoProgress {
                 HStack {
@@ -32,6 +45,8 @@ struct InlineCutoutControls: View {
                     Button("Stop") { model.cancelAuto() }.frame(minWidth: 60, minHeight: 44)
                 }
             }
+            if model.frameLoading && model.tool != .none { ProgressView("Loading frame").frame(minHeight: 44) }
+            if model.tool == .brush {
             HStack {
                 Text("Brush Size").font(.caption).frame(width: 88, alignment: .leading)
                 ValueScrubber(value: model.brushSize, range: 4...180, step: 1, onChange: { model.brushSize = $0 })
@@ -44,11 +59,14 @@ struct InlineCutoutControls: View {
                         .onEnded { _ in model.state.cutoutPeekOriginal = nil })
                     .accessibilityLabel("Hold Original")
             }
-            Text(model.tool == .box ? "Drag a box around the subject. Video adapts across frames and keeps your manual fixes." : "Paint to \(model.keepBrush ? "keep" : "remove"). The canvas shows the cut result as you work.")
+            } else {
+                Text("Hold Original").font(.caption.bold()).frame(maxWidth: .infinity, minHeight: 44)
+                    .background(RoundedRectangle(cornerRadius: 9).fill(Theme.raised)).contentShape(Rectangle())
+                    .gesture(DragGesture(minimumDistance: 0).onChanged { _ in model.state.cutoutPeekOriginal = model.layer.id }
+                        .onEnded { _ in model.state.cutoutPeekOriginal = nil })
+            }
+            Text(model.tool == .none ? "Tap Auto Remove Background. Use Keep, Cut or Auto Box only when you want to refine the result." : model.tool == .box ? "Drag a box around the subject. Video adapts across frames and keeps your manual fixes." : "Paint to \(model.keepBrush ? "keep" : "remove"). The canvas shows the cut result as you work.")
                 .font(.caption).foregroundStyle(Theme.textDim)
-            Picker("Subject", selection: Binding(get: { model.settings.mode }, set: { mode in model.edge("Cutout Subject") { $0.mode = mode } })) {
-                ForEach(CutoutMode.allCases) { mode in Text(mode.title).tag(mode) }
-            }.frame(minHeight: 44).pickerStyle(.menu)
             edge("Choke / Grow", model.settings.choke, -20...20) { $0.choke = $1 }
             edge("Edge Feather", model.settings.feather, 0...20) { $0.feather = $1 }
             edge("Edge Contrast", model.settings.edgeContrast, 0...100) { $0.edgeContrast = $1 }
@@ -96,7 +114,7 @@ struct InlineCutoutOverlay: View {
     @State private var boxStart: CGPoint?
     @State private var end: CGPoint?
     var body: some View {
-        if let m = model.state.displayPlacement(of: model.layer.id) {
+        if model.tool != .none, let m = model.state.displayPlacement(of: model.layer.id) {
             let hs = Renderer.layerHalfSize(model.layer, time: model.state.currentTime)
             let scale = Double(fit.width) / Double(model.state.project.width)
             ZStack(alignment: .topLeading) {
@@ -112,7 +130,7 @@ struct InlineCutoutOverlay: View {
                 }.allowsHitTesting(false)
             }.contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0).onChanged { g in
-                guard model.autoProgress == nil else { return }
+                guard model.autoProgress == nil, !model.frameLoading else { return }
                 if points.isEmpty && boxStart == nil { model.state.pause(); model.followPlayhead() }
                 if model.tool == .brush {
                     points.append(g.location)
@@ -120,6 +138,7 @@ struct InlineCutoutOverlay: View {
                 } else { boxStart = g.startLocation; end = g.location }
             }.onEnded { g in
                 guard model.autoProgress == nil else { points = []; boxStart = nil; end = nil; return }
+                if model.frameLoading { points = []; boxStart = nil; end = nil; return }
                 if model.tool == .brush {
                     model.endStroke(points.map { uv($0, matrix: m, half: hs, scale: scale) }, radius: model.brushSize / 2 / max(1, max(hs.x,hs.y) * 2 * scale))
                     points = []
