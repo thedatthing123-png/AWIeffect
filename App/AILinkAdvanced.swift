@@ -7,6 +7,107 @@ extension AILink {
     func handleAdvanced(_ r: HTTPRequest, editor e: EditorState) -> HTTPResponse? {
         let a = ((try? JSONSerialization.jsonObject(with: r.body)) as? [String: Any]) ?? [:]
         switch (r.method, r.path) {
+        case ("POST", "/text/animators"):
+            guard let id = Self.uuid(a["layer"]), let idx = e.project.layers.firstIndex(where: { $0.id == id }),
+                  e.project.layers[idx].text != nil else {
+                return .json(["error": "requires text layer"], status: 400)
+            }
+            let operation = a["operation"] as? String ?? "add"
+            switch operation {
+            case "add":
+                let name = (a["name"] as? String) ?? "AI Animator"
+                guard !name.isEmpty, name.count <= 100 else { return .json(["error": "invalid animator name"], status: 400) }
+                let animator = TextAnimator(name: name)
+                e.mutate("AI Add Text Animator") { $0.layers[idx].text?.animators.append(animator) }
+                return .json(["ok": true, "id": animator.id.uuidString])
+            case "remove":
+                guard let aid = Self.uuid(a["animator"]),
+                      e.project.layers[idx].text?.animators.contains(where: { $0.id == aid }) == true else {
+                    return .json(["error": "animator not found"], status: 400)
+                }
+                e.mutate("AI Remove Text Animator") { $0.layers[idx].text?.animators.removeAll { $0.id == aid } }
+                return .json(["ok": true])
+            case "list":
+                return .json(["animators": e.project.layers[idx].text?.animators.map {
+                    ["id": $0.id.uuidString, "name": $0.name, "enabled": $0.isEnabled] as [String: Any]
+                } ?? []])
+            default: return .json(["error": "operation must be add|remove|list"], status: 400)
+            }
+        case ("POST", "/masks/path"):
+            guard let id = Self.uuid(a["layer"]),
+                  let idx = e.project.layers.firstIndex(where: { $0.id == id }),
+                  let points = a["points"] as? [[NSNumber]],
+                  points.count >= 3, points.count <= 300 else {
+                return .json(["error": "requires layer and 3...300 path points"], status: 400)
+            }
+            var vertices: [PathVertex] = []
+            for point in points {
+                guard point.count == 2, point.allSatisfy({ $0.doubleValue.isFinite }) else {
+                    return .json(["error": "each point must be [x,y]"], status: 400)
+                }
+                vertices.append(PathVertex(point: Vec2(point[0].doubleValue, point[1].doubleValue)))
+            }
+            var mask = LayerMask(path: Animated(BezierPath(vertices: vertices, closed: true)))
+            if let name = a["name"] as? String { mask.name = name }
+            if let mode = a["mode"] as? String, let m = MaskMode(rawValue: mode) { mask.mode = m }
+            if let inverse = a["inverted"] as? Bool { mask.inverted = inverse }
+            if let feather = (a["feather"] as? NSNumber)?.doubleValue, feather.isFinite {
+                mask.feather = Animated(min(5000, max(0, feather)))
+            }
+            e.mutate("AI Add Mask") { $0.layers[idx].masks.append(mask) }
+            return .json(["ok": true, "mask": mask.id.uuidString])
+        case ("POST", "/physics/soft-body"):
+            guard let id = Self.uuid(a["layer"]), e.project.layers.contains(where: { $0.id == id }),
+                  let type = a["material"] as? String, let material = SoftMaterial(rawValue: type) else {
+                return .json(["error": "requires layer and valid SoftMaterial"], status: 400)
+            }
+            let drop = (a["drop"] as? NSNumber)?.doubleValue ?? 150
+            let gravity = (a["gravity"] as? NSNumber)?.doubleValue ?? 1800
+            let duration = (a["duration"] as? NSNumber)?.doubleValue ?? 2
+            guard [drop, gravity, duration].allSatisfy({ $0.isFinite }),
+                  duration >= 0.1, duration <= 10 else {
+                return .json(["error": "invalid soft-body settings"], status: 400)
+            }
+            e.select(id)
+            e.bakeSoftBody(material, drop: drop, gravity: gravity, duration: duration,
+                           floorAtBottom: a["floorAtBottom"] as? Bool ?? true)
+            return .json(["ok": true])
+        case ("POST", "/draw/layer"):
+            guard UIApplication.shared.applicationState != .background else {
+                return .json(["error": "Art Studio needs foreground app"], status: 409)
+            }
+            guard let id = Self.uuid(a["layer"]),
+                  let layer = e.project.layers.first(where: { $0.id == id }),
+                  layer.drawingID != nil,
+                  let engine = e.makeDrawEngine(editing: layer) else {
+                return .json(["error": "requires existing linked Art Studio drawing"], status: 400)
+            }
+            let index = a["index"] as? Int ?? engine.activeIndex
+            guard engine.layers.indices.contains(index) else { return .json(["error": "invalid drawing layer index"], status: 400) }
+            engine.activeIndex = index
+            let op = a["operation"] as? String ?? "set"
+            switch op {
+            case "add": _ = engine.addLayer(name: a["name"] as? String)
+            case "duplicate": engine.duplicateActiveLayer()
+            case "delete":
+                guard engine.layers.count > 1 else { return .json(["error": "cannot delete last drawing layer"], status: 400) }
+                engine.deleteActiveLayer()
+            case "up": engine.moveActiveLayer(up: true)
+            case "down": engine.moveActiveLayer(up: false)
+            case "set":
+                guard let active = engine.activeLayer else { return .json(["error": "drawing layer not found"], status: 400) }
+                if let name = a["name"] as? String { active.name = name }
+                if let opacity = (a["opacity"] as? NSNumber)?.doubleValue, opacity.isFinite {
+                    active.opacity = min(1, max(0, opacity))
+                }
+                if let blend = a["blend"] as? String, let mode = BlendMode(rawValue: blend) { active.blend = mode }
+                if let visible = a["visible"] as? Bool { active.visible = visible }
+                if let clipping = a["clipping"] as? Bool { active.clipping = clipping }
+                if let locked = a["alphaLock"] as? Bool { active.alphaLock = locked }
+            default: return .json(["error": "operation must be add|duplicate|delete|up|down|set"], status: 400)
+            }
+            e.finishDrawing(engine, editing: id)
+            return .json(["ok": true, "drawingLayers": engine.layers.count])
         case ("GET", "/capabilities"):
             return .json([
                 "mcp": "AI Link Advanced",
