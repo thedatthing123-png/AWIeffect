@@ -169,7 +169,7 @@ extension EditorState {
     func poseIKController(_ id: UUID, atCanvas target: Vec2) {
         let source = live.project ?? project
         guard source.layers.contains(where: { $0.ik?.controllerID == id }),
-              let controller = source.layers.first(where: { $0.id == id }),
+              let controller = source.layers.first(where: { $0.id == id }), !controller.isLocked,
               let local = MotionPathMath.value(controller, at: target,
                                                project: canvasViewProject(source), time: currentTime),
               local.x.isFinite, local.y.isFinite else { return }

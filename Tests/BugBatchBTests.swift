@@ -304,6 +304,20 @@ final class BugBatchBTests: XCTestCase {
         }
     }
 
+    func testDirectIKPoseDoesNotEditLockedController() throws {
+        let (p, upper, lower) = limbProject()
+        let s = state(p)
+        s.select(lower); s.makeIK(upper: upper, controller: nil)
+        let controller = try XCTUnwrap(s.selectedLayerID)
+        let i = try XCTUnwrap(s.project.layers.firstIndex { $0.id == controller })
+        s.project.layers[i].isLocked = true
+        let before = s.project
+        let undoCount = s.undoStack.count
+        s.poseIKController(controller, atCanvas: Vec2(220, 130))
+        XCTAssertEqual(s.project, before)
+        XCTAssertEqual(s.undoStack.count, undoCount)
+    }
+
     func testIKDraftEndpointBelongsToItsLayer() {
         let (p, upper, lower) = limbProject()
         let s = state(p)

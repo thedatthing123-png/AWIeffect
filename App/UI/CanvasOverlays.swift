@@ -219,9 +219,21 @@ struct RigControllersOverlay: View {
 
     var body: some View {
         let source = state.live.project ?? state.project
-        let ids = Array(Set(source.layers.compactMap { $0.ik?.controllerID })).sorted { $0.uuidString < $1.uuidString }
-        ForEach(ids, id: \.self) { id in
-            RigControllerHandle(state: state, controllerID: id, fit: fit)
+        let view = state.canvasViewProject(source)
+        let time = state.currentTime
+        let resolved = Renderer.resolveParenting(view, time: time)
+        let camera = Renderer.activeCamera(view, time: time)
+        let world = Dictionary(resolved.layers.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let ids = Set(source.layers.compactMap { $0.ik?.controllerID })
+        // Resolve the hierarchy once for the overlay, not once for every hand/foot handle.
+        ForEach(source.layers.filter { ids.contains($0.id) }) { controller in
+            if let layer = world[controller.id],
+               let point = LayerPlacement.projected(layer.transform.anchor.value(at: time),
+                   by: Renderer.placementMatrix(layer, camera: camera, time: time, renderScale: 1)) {
+                RigControllerHandle(state: state, controllerID: controller.id, name: controller.name,
+                                    point: point, fit: fit)
+                    .allowsHitTesting(!controller.isLocked)
+            }
         }
     }
 }
@@ -229,17 +241,15 @@ struct RigControllersOverlay: View {
 private struct RigControllerHandle: View {
     @ObservedObject var state: EditorState
     let controllerID: UUID
+    let name: String
+    let point: Vec2
     let fit: CGRect
     @State private var start: Vec2?
     @GestureState private var dragging = false
 
     var body: some View {
-        let project = state.live.project ?? state.project
-        let view = state.canvasViewProject(project)
-        if let controller = project.layers.first(where: { $0.id == controllerID }),
-           let point = MotionPathMath.screenPoint(controller, value: controller.transform.position.value(at: state.currentTime),
-                                                  project: view, time: state.currentTime) {
-            let scale = fit.width / CGFloat(max(1, project.width))
+        let scale = fit.width / CGFloat(max(1, state.project.width))
+        Group {
             Circle().stroke(Theme.warning, lineWidth: 2)
                 .background(Circle().fill(.black.opacity(0.35)))
                 .frame(width: 22, height: 22)
@@ -266,7 +276,7 @@ private struct RigControllerHandle: View {
                 .onChange(of: dragging) { _, active in if !active { finish() } }
                 .onDisappear { finish() }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Pose \(controller.name)")
+                .accessibilityLabel("Pose \(name)")
                 .accessibilityHint("Drag the target to pose its connected limb")
         }
     }
