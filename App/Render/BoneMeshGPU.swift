@@ -18,6 +18,10 @@ final class BoneMeshGPU {
     private static var cache: [Key: Buffers] = [:]
     private static var serial: UInt64 = 0
 
+    static func clearCache() {
+        lock.lock(); cache.removeAll(); lock.unlock()
+    }
+
     private static func resources(_ mesh: BoneMeshBinding, device: MTLDevice) -> (MTLRenderPipelineState, Buffers)? {
         lock.lock(); defer { lock.unlock() }
         serial &+= 1

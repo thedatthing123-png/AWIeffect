@@ -11,6 +11,7 @@ struct AWIeffectApp: App {
         NotificationCenter.default.addObserver(forName: UIApplication.didReceiveMemoryWarningNotification, object: nil, queue: .main) { _ in
             Renderer.shared?.clearImageCache()
             VideoSources.shared.purgeCache()
+            BoneMeshGPU.clearCache()
             ModelRenderer.shared?.clear()
             CutoutEngine.shared.clear()
             EffectThumbnails.shared.clear()
