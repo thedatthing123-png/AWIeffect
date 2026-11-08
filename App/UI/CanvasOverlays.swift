@@ -240,7 +240,7 @@ struct RigControllersOverlay: View {
             return Renderer.placementMatrix(layer, camera: camera, time: time, renderScale: 1)
         }
         // Resolve the hierarchy once for the overlay, not once for every hand/foot handle.
-        ForEach(source.layers.filter { ids.contains($0.id) }) { controller in
+        return ForEach(source.layers.filter { ids.contains($0.id) }) { controller in
             if let layer = world[controller.id],
                let point = LayerPlacement.projected(layer.transform.anchor.value(at: time),
                    by: placement(layer)) {
