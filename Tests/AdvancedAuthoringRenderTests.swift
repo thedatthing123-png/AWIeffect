@@ -7,6 +7,43 @@ import UniformTypeIdentifiers
 
 @MainActor
 final class AdvancedAuthoringRenderTests: XCTestCase {
+    func testEditableLetterPoseMotionArtifact() throws {
+        var project = Project.new(name: "Letters — editable fan pose", width: 600, height: 600, fps: 30, duration: 2)
+        var layer = project.makeLayer(name: "HELLO", content: .text, size: Vec2(500, 200))
+        var text = TextData(string: "HELLO")
+        text.fontSize = 100; text.ensureCharIDs()
+        let layout = TextEngine.shared.layout(text, time: 0)
+        for (index, id) in text.resolvedCharIDs.enumerated() {
+            guard let glyph = layout.glyphs.first(where: { $0.charIndex == index }) else { continue }
+            let i = TextStudioLogic.ensureSelectionAnimator(&text, ids: [id])
+            let angle = Double(index - 2) * 25
+            let target = Vec2(Double(index - 2) * 65, -120 + abs(Double(index - 2)) * 35)
+            var position = Animated(Vec2.zero)
+            position.insertKeyframe(Keyframe(time: 0, value: .zero, interpolation: .linear))
+            position.insertKeyframe(Keyframe(time: 1, value: target - glyph.center, interpolation: .linear))
+            position.insertKeyframe(Keyframe(time: 2, value: .zero, interpolation: .linear))
+            text.animators[i].properties.position = position
+            var rotation = Animated(0.0)
+            rotation.insertKeyframe(Keyframe(time: 0, value: 0, interpolation: .linear))
+            rotation.insertKeyframe(Keyframe(time: 1, value: angle, interpolation: .linear))
+            rotation.insertKeyframe(Keyframe(time: 2, value: 0, interpolation: .linear))
+            text.animators[i].properties.rotation = rotation
+        }
+        layer.text = text; project.layers = [layer]
+        let folder = URL(fileURLWithPath: "/tmp/awi-authoring", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try JSONEncoder().encode(project).write(to: folder.appendingPathComponent("letter-fan.json"))
+        let renderer = try XCTUnwrap(Renderer.shared)
+        let gif = try XCTUnwrap(CGImageDestinationCreateWithURL(folder.appendingPathComponent("letter-fan.gif") as CFURL, UTType.gif.identifier as CFString, 60, nil))
+        CGImageDestinationSetProperties(gif, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+        for frame in 0..<60 {
+            let image = try XCTUnwrap(renderer.renderImage(project: project, time: Double(frame) / 30, maxDimension: 360, mediaURL: { URL(fileURLWithPath: $0) }))
+            CGImageDestinationAddImage(gif, try XCTUnwrap(image.cgImage), [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 1.0 / 30]] as CFDictionary)
+            if frame % 15 == 0 { try XCTUnwrap(image.pngData()).write(to: folder.appendingPathComponent("letters-\(frame).png")) }
+        }
+        XCTAssertTrue(CGImageDestinationFinalize(gif))
+    }
+
     func testEditableRigMotionRenderAndRoundTrip() throws {
         var p = Project.new(name: "Sideways arm — editable IK", width: 600, height: 600, fps: 30, duration: 2)
         var upper = p.makeLayer(name: "Upper arm", content: .solid, size: Vec2(130, 34))
