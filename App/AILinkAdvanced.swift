@@ -7,6 +7,59 @@ extension AILink {
     func handleAdvanced(_ r: HTTPRequest, editor e: EditorState) -> HTTPResponse? {
         let a = ((try? JSONSerialization.jsonObject(with: r.body)) as? [String: Any]) ?? [:]
         switch (r.method, r.path) {
+        case ("POST", "/draw/strokes"):
+            // Paint with the existing Metal Draw Studio brush engine; save through its existing linked-document path.
+            guard UIApplication.shared.applicationState != .background else {
+                return .json(["error": "drawing requires AWIeffect in the foreground"], status: 409)
+            }
+            guard let strokes = a["strokes"] as? [[String: Any]],
+                  !strokes.isEmpty, strokes.count <= 128 else {
+                return .json(["error": "requires 1...128 brush strokes"], status: 400)
+            }
+            let existingID = Self.uuid(a["layer"])
+            let existingLayer = existingID.flatMap { id in e.project.layers.first(where: { $0.id == id }) }
+            if existingID != nil && existingLayer?.drawingID == nil {
+                return .json(["error": "layer is not an Art Studio drawing"], status: 400)
+            }
+            var paths: [[(SIMD2<Double>, Double)]] = []
+            var pointsTotal = 0
+            for stroke in strokes {
+                guard let points = stroke["points"] as? [[NSNumber]], !points.isEmpty else {
+                    return .json(["error": "each stroke needs points [[x,y,pressure?], ...]"], status: 400)
+                }
+                pointsTotal += points.count
+                guard pointsTotal <= 16000 else { return .json(["error": "too many brush points"], status: 400) }
+                var path: [(SIMD2<Double>, Double)] = []
+                for point in points {
+                    guard point.count >= 2, point.count <= 3,
+                          point.allSatisfy({ $0.doubleValue.isFinite }) else {
+                        return .json(["error": "invalid point"], status: 400)
+                    }
+                    path.append((SIMD2(point[0].doubleValue, point[1].doubleValue),
+                                 point.count == 3 ? min(1, max(0, point[2].doubleValue)) : 1))
+                }
+                paths.append(path)
+            }
+            guard let engine = e.makeDrawEngine(editing: existingLayer) else {
+                return .json(["error": "Draw Studio Metal engine unavailable"], status: 503)
+            }
+            if let kind = a["brush"] as? String, let b = BrushKind(rawValue: kind) { engine.brush.kind = b }
+            if let size = (a["size"] as? NSNumber)?.doubleValue, size.isFinite {
+                engine.brush.size = min(400, max(0.5, size))
+            }
+            if let opacity = (a["opacity"] as? NSNumber)?.doubleValue, opacity.isFinite {
+                engine.brush.opacity = min(1, max(0, opacity))
+            }
+            if let c = Self.color(a["color"]) { engine.brush.color = c }
+            for path in paths {
+                guard let first = path.first else { continue }
+                engine.beginStroke(at: first.0, pressure: first.1)
+                for point in path.dropFirst() { engine.continueStroke(to: point.0, pressure: point.1) }
+                engine.endStroke()
+            }
+            e.finishDrawing(engine, editing: existingID)
+            return .json(["ok": true, "layer": e.selectedLayerID?.uuidString ?? existingID?.uuidString ?? "",
+                          "strokes": paths.count, "points": pointsTotal])
         case ("POST", "/layers/model"):
             guard let f = a["file"] as? String,
                   !f.isEmpty, (f as NSString).lastPathComponent == f,
