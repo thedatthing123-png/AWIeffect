@@ -47,6 +47,7 @@ struct EditorView: View {
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-animationTiming") {
             state.select(state.project.layers.first?.id); state.currentTime = 1; state.panel = .clip
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-graph") { state.panel = .graph }
         #endif
         _state = StateObject(wrappedValue: state)
         self.close = close

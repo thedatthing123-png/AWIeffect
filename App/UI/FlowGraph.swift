@@ -36,6 +36,7 @@ struct FlowGraphPanel: View {
     @Environment(\.dismiss) private var dismiss
     @State private var key: PropertyKey?            // nil = all animated properties
     @State private var speedView = false
+    @State private var family = "Easing"
     @AppStorage("awi.myCurves") private var savedData = Data()
     private static var clipboard: SavedEase?
 
@@ -56,17 +57,31 @@ struct FlowGraphPanel: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity).padding()
             } else {
                 propertyChips
-                HStack(alignment: .top, spacing: 8) {
-                    VStack(spacing: 6) {
-                        graph
+                GeometryReader { available in
+                ScrollView {
+                    VStack(spacing: 10) {
+                        Picker("Curve section", selection: $family) {
+                            Text("Easing").tag("Easing")
+                            Text("Motion").tag("Motion")
+                            if !state.graphTimeRemap { Text("Loops").tag("Loops") }
+                        }.pickerStyle(.segmented).frame(minHeight: 44)
+                        graph.frame(height: min(240, max(104, available.size.height - 54)))
+                        if let c = current?.curve, let a = c.kind.paramA {
+                            Text("Bottom: " + a.0 + (c.kind.paramB.map { " · Top: " + $0.0 } ?? ""))
+                                .font(.caption).foregroundStyle(Theme.textDim)
+                        }
+                        if let c = current?.curve { Text(c.kind.title).font(.subheadline.bold()).foregroundStyle(Theme.text) }
                         controls
-                    }
-                    presetColumn.frame(width: 118)
+                        presetColumn
+                    }.padding(.horizontal, 12).padding(.bottom, 12)
+                }.accessibilityIdentifier("graph-scroll")
                 }
-                .padding(.horizontal, 10).padding(.bottom, 8)
             }
         }
+        .onChange(of: state.graphTimeRemap) { _, remap in if remap && family == "Loops" { family = "Easing" } }
+        .onChange(of: current?.curve?.kind) { _, _ in selectFamily() }
         .onAppear {
+            selectFamily()
             if let k = key, !state.animatedKeys.contains(k) { key = nil }
             if state.graphTimeRemap && state.selectedLayer?.timeRemap == nil { state.graphTimeRemap = false }
             if !state.graphTimeRemap, state.graphEffect == nil, state.animatedKeys.isEmpty {
@@ -145,7 +160,7 @@ struct FlowGraphPanel: View {
             .foregroundStyle(Theme.text)
             .padding(.horizontal, 10)
         }
-        .frame(height: 36)
+        .frame(height: 44)
     }
 
     private var currentSegmentDuration: Double {
@@ -168,7 +183,7 @@ struct FlowGraphPanel: View {
     private func chip(_ title: String, selected: Bool, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title).font(.system(size: 12, weight: .semibold))
-                .padding(.horizontal, 10).padding(.vertical, 6)
+                .padding(.horizontal, 10).frame(minHeight: 44)
                 .background(Capsule().fill(selected ? Theme.accent : Theme.raised))
                 .foregroundStyle(selected ? .white : Theme.text)
         }
@@ -184,13 +199,19 @@ struct FlowGraphPanel: View {
                         apply(n, continuous: true)
                         if done { state.endEdit() }
                     }
+                } else if let curve = e.curve, curve.kind.paramA != nil, !speedView {
+                    ParameterCurveEditor(ease: e) { value, done in
+                        var n = e; n.curve = value
+                        apply(n, continuous: true)
+                        if done { state.endEdit() }
+                    }
                 } else {
                     CurvePlot(ease: e, speed: speedView, valueDelta: remapValueDelta,
                               segmentDuration: currentSegmentDuration)
                 }
                 ReplayDot(ease: e).allowsHitTesting(false)
             }
-            .frame(minHeight: 120)
+            .frame(minHeight: 100)
         } else {
             // One keyframe only: there's no segment yet. Draw the curve a new segment would get and say why.
             ZStack {
@@ -199,13 +220,20 @@ struct FlowGraphPanel: View {
                 Text("Add a second keyframe to shape this curve.")
                     .font(.system(size: 12)).foregroundStyle(Theme.textDim).multilineTextAlignment(.center).padding(.horizontal, 24)
             }
-            .frame(minHeight: 120)
+            .frame(minHeight: 100)
         }
     }
 
     @ViewBuilder private var controls: some View {
         if let e = current {
             VStack(spacing: 6) {
+                Picker("Graph view", selection: $speedView) {
+                    Text("Value").tag(false); Text("Speed").tag(true)
+                }.pickerStyle(.segmented).frame(minHeight: 44)
+                if e.curve == nil && e.interpolation == .bezier {
+                    handleFields(e, outgoing: true)
+                    handleFields(e, outgoing: false)
+                }
                 if let c = e.curve, let pa = c.kind.paramA {
                     paramRow(pa.0, value: c.a, range: pa.1) { v in var n = e; n.curve?.a = v; apply(n, continuous: true) }
                 }
@@ -213,7 +241,6 @@ struct FlowGraphPanel: View {
                     paramRow(pb.0, value: c.b, range: pb.1) { v in var n = e; n.curve?.b = v; apply(n, continuous: true) }
                 }
                 HStack(spacing: 6) {
-                    small(speedView ? "Value" : "Speed", "speedometer") { speedView.toggle() }
                     small("Copy", "doc.on.doc") { Self.clipboard = e }
                     small("Paste", "doc.on.clipboard") { if let c = Self.clipboard { apply(c) } }
                     small("Save", "star") {
@@ -227,10 +254,28 @@ struct FlowGraphPanel: View {
         }
     }
 
+    private func handleFields(_ e: SavedEase, outgoing: Bool) -> some View {
+        let h = outgoing ? e.out : e.into
+        return HStack(spacing: 6) {
+            NumberField(value: h.x, label: outgoing ? "Out X" : "In X", step: 0.01, precision: 2,
+                        onDragBegin: { state.beginEdit("Edit Easing") }, onDragEnd: { state.endEdit() }) { v in
+                var n = e
+                if outgoing { n.out.x = min(1, max(0, v)) } else { n.into.x = min(1, max(0, v)) }
+                apply(n, continuous: true)
+            }
+            NumberField(value: h.y, label: outgoing ? "Out Y" : "In Y", step: 0.01, precision: 2,
+                        onDragBegin: { state.beginEdit("Edit Easing") }, onDragEnd: { state.endEdit() }) { v in
+                var n = e
+                if outgoing { n.out.y = min(1.8, max(-0.8, v)) } else { n.into.y = min(1.8, max(-0.8, v)) }
+                apply(n, continuous: true)
+            }
+        }.frame(minHeight: 44)
+    }
+
     private func paramRow(_ label: String, value: Double, range: ClosedRange<Double>, _ set: @escaping (Double) -> Void) -> some View {
         HStack(spacing: 8) {
             Text(label).font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.textDim).frame(width: 74, alignment: .leading)
-            ValueScrubber(value: value, range: range, onChange: set, onEnd: { state.endEdit() })
+            ValueScrubber(value: value, range: range, step: ["Cycles", "Bounces"].contains(label) ? 1 : 0.01, onChange: set, onEnd: { state.endEdit() })
         }
     }
 
@@ -240,31 +285,45 @@ struct FlowGraphPanel: View {
                 Image(systemName: icon).font(.system(size: 12, weight: .semibold))
                 Text(title).font(.system(size: 9, weight: .semibold))
             }
-            .frame(maxWidth: .infinity, minHeight: 34)
+            .frame(maxWidth: .infinity, minHeight: 44)
             .background(RoundedRectangle(cornerRadius: 8).fill(Theme.raised))
             .foregroundStyle(Theme.text)
         }
         .buttonStyle(.plain)
     }
 
+    private func selectFamily() {
+        guard let kind = current?.curve?.kind else { family = "Easing"; return }
+        if [.cycleRepeat, .cyclePingPong].contains(kind) && !state.graphTimeRemap { family = "Loops" }
+        else if kind.paramA != nil { family = "Motion" }
+        else { family = "Easing" }
+    }
+
     private var presetColumn: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 6) {
-                if !saved.isEmpty {
-                    section("My Curves")
-                    ForEach(saved) { s in presetTile(s.name, ease: s) }
+        VStack(alignment: .leading, spacing: 8) {
+            if family == "Easing" {
+                section("Easing")
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
+                    ForEach(EasePreset.all.filter { ["linear", "easy", "in", "out", "hold"].contains($0.id) }) { p in
+                        presetTile(p.name, ease: SavedEase(name: p.name, interpolation: p.interpolation, out: p.out, into: p.into, curve: nil))
+                    }
+                    presetTile("Custom", ease: SavedEase(name: "Custom", interpolation: .bezier, out: current?.out ?? .easyOut, into: current?.into ?? .easyIn, curve: nil))
                 }
-                section("Basic")
-                ForEach(EasePreset.all) { p in
-                    presetTile(p.name, ease: SavedEase(name: p.name, interpolation: p.interpolation, out: p.out, into: p.into, curve: nil))
+            } else if family == "Motion" {
+                section("Motion")
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
+                    ForEach([EaseCurve.Kind.bounceOut, .bounceIn, .elasticOut, .elasticIn, .backOut, .backIn], id: \.self) { curveTile($0) }
                 }
-                section("Bounce & Spring")
-                ForEach([EaseCurve.Kind.bounceOut, .bounceIn, .elasticOut, .elasticIn, .backOut, .backIn, .backInOut, .overshoot], id: \.self) { k in
-                    curveTile(k)
-                }
-                section("Ease")
-                ForEach(EaseCurve.Kind.allCases.filter { ![.bounceOut, .bounceIn, .elasticOut, .elasticIn, .backOut, .backIn, .backInOut, .overshoot].contains($0) }) { k in
-                    curveTile(k)
+            } else {
+                section("Loops between these keys")
+                HStack(spacing: 6) { curveTile(.cycleRepeat); curveTile(.cyclePingPong) }
+                Text("Repeat snaps to the first value. Back & Forth returns to it. Cycles controls the forward passes; Smoothness rounds each turn. Both land on the final key.")
+                    .font(.caption).foregroundStyle(Theme.textDim)
+            }
+            if !saved.isEmpty {
+                section("My Curves")
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
+                    ForEach(saved.filter { !state.graphTimeRemap || ![.cycleRepeat, .cyclePingPong].contains($0.curve?.kind ?? .sineIn) }) { presetTile($0.name, ease: $0) }
                 }
             }
         }
@@ -284,10 +343,10 @@ struct FlowGraphPanel: View {
         return Button { apply(ease) } label: {
             HStack(spacing: 6) {
                 CurvePlot(ease: ease, speed: false, thumb: true).frame(width: 30, height: 22)
-                Text(title).font(.system(size: 10, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
+                Text(title).font(.system(size: 11, weight: .semibold)).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
             }
-            .padding(5)
+            .padding(6).frame(maxWidth: .infinity, minHeight: 44)
             .background(RoundedRectangle(cornerRadius: 8).fill(on ? Theme.accent.opacity(0.35) : Theme.raised))
             .foregroundStyle(Theme.text)
         }
@@ -321,17 +380,14 @@ struct CurvePlot: View {
             var ys: [Double] = (0...n).map { ease.progress(Double($0) / Double(n)) }
             if speed {
                 let rates = (0...n).map { ease.velocity(at: Double($0) / Double(n), valueDelta: valueDelta ?? 1, duration: segmentDuration) }
-                if valueDelta != nil {
+                do {
                     let low = min(0, rates.min() ?? 0), high = max(0.01, rates.max() ?? 0)
                     ys = rates.map { ($0 - low) / (high - low) }
                     let y = box.maxY - CGFloat(-low / (high - low)) * box.height
                     var zero = Path(); zero.move(to: CGPoint(x: box.minX, y: y)); zero.addLine(to: CGPoint(x: box.maxX, y: y))
                     ctx.stroke(zero, with: .color(Theme.textDim), style: StrokeStyle(lineWidth: 1, dash: [3,3]))
-                    ctx.draw(Text(String(format: "%+.2f× / %+.2f×", low, high)).font(.system(size: 10, design: .monospaced)).foregroundColor(Theme.textDim),
+                    ctx.draw(Text(String(format: "%+.2f / %+.2f", low, high) + (valueDelta != nil ? " ×" : " progress/s")).font(.system(size: 10, design: .monospaced)).foregroundColor(Theme.textDim),
                              at: CGPoint(x: box.minX, y: 4), anchor: .topLeading)
-                } else {
-                    let peak = max(rates.map { abs($0) }.max() ?? 1, 1e-6)
-                    ys = rates.map { abs($0) / peak }
                 }
             }
             var path = Path()

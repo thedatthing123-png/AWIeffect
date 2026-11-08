@@ -82,7 +82,7 @@ struct EaseCurve: Codable, Equatable, Hashable {
         case sineIn, sineOut, sineInOut, quadIn, quadOut, quadInOut, cubicIn, cubicOut, cubicInOut
         case quartIn, quartOut, quartInOut, quintIn, quintOut, quintInOut, expoIn, expoOut, expoInOut
         case circIn, circOut, circInOut, backIn, backOut, backInOut, bounceOut, bounceIn, elasticOut, elasticIn
-        case overshoot, smoothStop, snap
+        case overshoot, smoothStop, snap, cycleRepeat, cyclePingPong
         var id: String { rawValue }
 
         var title: String {
@@ -118,12 +118,15 @@ struct EaseCurve: Codable, Equatable, Hashable {
             case .overshoot: return "Overshoot"
             case .smoothStop: return "Smooth Stop"
             case .snap: return "Snap"
+            case .cycleRepeat: return "Repeat"
+            case .cyclePingPong: return "Back & Forth"
             }
         }
 
         /// Settings the curve has (labels for a and b); nil = none.
         var paramA: (String, ClosedRange<Double>, Double)? {
             switch self {
+            case .cycleRepeat, .cyclePingPong: return ("Cycles", 1...12, 3)
             case .bounceOut, .bounceIn: return ("Bounces", 1...8, 3)
             case .elasticOut, .elasticIn: return ("Wobbles", 1...10, 3)
             case .backIn, .backOut, .backInOut, .overshoot: return ("Overshoot", 0...4, 1.7)
@@ -132,6 +135,7 @@ struct EaseCurve: Codable, Equatable, Hashable {
         }
         var paramB: (String, ClosedRange<Double>, Double)? {
             switch self {
+            case .cycleRepeat, .cyclePingPong: return ("Smoothness", 0...1, 1)
             case .bounceOut, .bounceIn: return ("Bounciness", 0.15...0.8, 0.45)
             case .elasticOut, .elasticIn: return ("Settle", 1...14, 6)
             default: return nil
@@ -196,6 +200,16 @@ struct EaseCurve: Codable, Equatable, Hashable {
         case .elasticIn: return 1 - Self.elastic(1 - x, wobbles: a, settle: b)
         case .smoothStop: return 1 - pow(1 - x, 6)
         case .snap: return x < 0.5 ? 16 * pow(x, 5) : 1 - pow(-2 * x + 2, 5) / 2
+        case .cycleRepeat, .cyclePingPong:
+            // Integer counts keep the last keyed value exact. A back/forth cycle adds two legs,
+            // so N cycles = N forward passes and N-1 returns, ending at the second key.
+            let count = max(1, min(12, Int((a.isFinite ? a : 3).rounded())))
+            if x >= 1 { return 1 }
+            let legs = kind == .cycleRepeat ? count : 2 * count - 1
+            let phase = x * Double(legs), leg = Int(phase), fraction = phase - Double(leg)
+            let ramp = kind == .cyclePingPong && leg % 2 == 1 ? 1 - fraction : fraction
+            let smooth = min(1, max(0, b.isFinite ? b : 1))
+            return ramp * (1 - smooth) + (0.5 - 0.5 * cos(.pi * ramp)) * smooth
         }
     }
 

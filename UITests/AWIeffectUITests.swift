@@ -265,6 +265,16 @@ final class AWIeffectUITests: XCTestCase {
         tap("Graph")
         sleep(1)
         snap("ov-graph")
+        tap("Motion")
+        let graphScroll = app.scrollViews["graph-scroll"].firstMatch
+        if graphScroll.exists {
+            for _ in 0..<7 {
+                let bounce = app.buttons["Bounce"].firstMatch
+                if bounce.exists && graphScroll.frame.contains(CGPoint(x: bounce.frame.midX, y: bounce.frame.midY)) { break }
+                let start = graphScroll.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.6))
+                start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -70)))
+            }
+        }
         tap("Bounce")
         sleep(1)
         snap("ov-graph-bounce")
