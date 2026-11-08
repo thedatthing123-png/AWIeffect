@@ -99,6 +99,15 @@ struct RootView: View {
             p.layers = [group, child, outside]
             _openProject = State(initialValue: p)
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-rigAuthoring") {
+            var p = Project.new(name: "Rig Authoring Test", width: 600, height: 600, fps: 30, duration: 4)
+            var lower = p.makeLayer(name: "Forearm", content: .solid, size: Vec2(140, 38))
+            lower.transform.position = Animated(Vec2(300, 280))
+            var upper = p.makeLayer(name: "Upper Arm", content: .solid, size: Vec2(140, 38))
+            upper.transform.position = Animated(Vec2(170, 280))
+            p.layers = [lower, upper]
+            _openProject = State(initialValue: p)
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-animationTiming") {
             var p = Project.new(name: "Timing Interaction Test", width: 128, height: 128, fps: 30, duration: 4)
             var nested = Project.new(name: "Source", width: 128, height: 128, fps: 30, duration: 4, background: RGBA(0,0,0,0))

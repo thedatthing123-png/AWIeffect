@@ -131,9 +131,12 @@ struct BoneOverlay: View {
         let fit = self.fit
         Canvas { ctx, _ in
             let resolved = Renderer.resolveParenting(view, time: t)
+            let camera = Renderer.activeCamera(view, time: t)
+            let layers = Dictionary(resolved.layers.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             func joint(_ id: UUID) -> CGPoint? {
-                guard let l = resolved.layers.first(where: { $0.id == id }),
-                      let p = LayerPlacement.projected(l.transform.position.value(at: t), by: LayerPlacement.positionMatrix(l, project: resolved, time: t)) else { return nil }
+                guard let l = layers[id],
+                      let p = LayerPlacement.projected(l.transform.anchor.value(at: t),
+                          by: Renderer.placementMatrix(l, camera: camera, time: t, renderScale: 1)) else { return nil }
                 return CGPoint(x: fit.minX + CGFloat(p.x) * s, y: fit.minY + CGFloat(p.y) * s)
             }
             for l in view.layers {
@@ -200,6 +203,7 @@ struct RigEndpointOverlay: View {
                 .onEnded { _ in dragStart = nil })
             .onChange(of: dragging) { _, active in if !active { dragStart = nil } }
             .onChange(of: layer.id) { _, _ in dragStart = nil }
+            .accessibilityElement(children: .ignore)
             .accessibilityLabel("Limb end joint")
             .accessibilityHint("Drag onto the wrist or ankle before making IK")
         }
@@ -259,6 +263,7 @@ private struct RigControllerHandle: View {
                     .onEnded { _ in finish() })
                 .onChange(of: dragging) { _, active in if !active { finish() } }
                 .onDisappear { finish() }
+                .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Pose \(controller.name)")
                 .accessibilityHint("Drag the target to pose its connected limb")
         }

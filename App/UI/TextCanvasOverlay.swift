@@ -169,6 +169,9 @@ struct TextCanvasOverlay: View {
                     .gesture(drag(geo, layerText: layer.text ?? text, time: t))
                     .simultaneousGesture(SpatialTapGesture().onEnded { v in tap(geo, at: v.location) })
                     .accessibilityLabel("Text Letters")
+                if !state.textTyping, !session.selectedIDs.isEmpty {
+                    LetterRotationHandle(state: state, geometry: geo, ids: session.selectedIDs)
+                }
             }
             .onAppear { session.follow(id) }
         }
@@ -221,5 +224,71 @@ struct TextCanvasOverlay: View {
                 if case .move? = mode { state.endPanelGesture() }
                 mode = nil
             }
+    }
+}
+
+
+/// One direct rotation handle for the current letter selection. Uses existing stable-ID animator tracks.
+private struct LetterRotationHandle: View {
+    @ObservedObject var state: EditorState
+    let geometry: TextCanvasGeometry
+    let ids: [UInt32]
+    @State private var pose: Pose?
+    @GestureState private var dragging = false
+
+    private struct Pose {
+        let center: CGPoint
+        let handle: CGPoint
+        let base: Double
+        var previous: Double
+        var accumulated = 0.0
+    }
+
+    var body: some View {
+        let points = geometry.glyphs.filter { ids.contains($0.id) }.flatMap(\.quad)
+        if let minX = points.map(\.x).min(), let maxX = points.map(\.x).max(),
+           let minY = points.map(\.y).min(), let maxY = points.map(\.y).max() {
+            let center = CGPoint(x: (minX + maxX) / 2, y: (minY + maxY) / 2)
+            let handle = CGPoint(x: min(max(geometry.fit.minX + 22, center.x), geometry.fit.maxX - 22),
+                                 y: max(geometry.fit.minY + 22, minY - 30))
+            Image(systemName: "arrow.clockwise")
+                .font(.system(size: 17, weight: .semibold)).foregroundStyle(Theme.accentGlow)
+                .frame(width: 44, height: 44).background(Circle().fill(Theme.surface))
+                .contentShape(Circle()).position(handle)
+                .gesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                    .updating($dragging) { _, active, _ in active = true }
+                    .onChanged { value in
+                        if pose == nil {
+                            guard let text = state.selectedLayer?.text else { return }
+                            pose = Pose(center: center, handle: handle,
+                                        base: TextStudioLogic.selectionRotation(text, ids: ids, at: state.currentTime),
+                                        previous: Double(atan2(handle.y - center.y, handle.x - center.x)))
+                            state.beginPanelGesture("Rotate Letters")
+                        }
+                        guard var p = pose else { return }
+                        let point = CGPoint(x: p.handle.x + value.translation.width, y: p.handle.y + value.translation.height)
+                        guard hypot(point.x - p.center.x, point.y - p.center.y) > 4 else { return }
+                        let angle = Double(atan2(point.y - p.center.y, point.x - p.center.x))
+                        var delta = angle - p.previous
+                        if delta > .pi { delta -= 2 * .pi }
+                        if delta < -.pi { delta += 2 * .pi }
+                        p.accumulated += Double(delta) * 180 / .pi
+                        p.previous = angle
+                        pose = p
+                        let time = state.currentTime
+                        state.editTextContinuous { TextStudioLogic.setSelectionRotation(&$0, ids: ids, to: p.base + p.accumulated, at: time) }
+                    }
+                    .onEnded { _ in finish() })
+                .onChange(of: dragging) { _, active in if !active { finish() } }
+                .onDisappear { finish() }
+                .accessibilityLabel("Rotate selected letters")
+                .accessibilityHint("Drag around the selection; edits its existing rotation animator")
+        }
+    }
+
+    private func finish() {
+        guard pose != nil else { return }
+        pose = nil
+        state.endPanelGesture()
     }
 }

@@ -48,6 +48,11 @@ struct EditorView: View {
             state.select(state.project.layers.first?.id); state.currentTime = 1; state.panel = .clip
         }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-graph") { state.panel = .graph }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-rigAuthoring") {
+            state.select(state.project.layers.first?.id)
+            state.ikDraftUpper = state.project.layers.last?.id
+            state.panel = .rig
+        }
         #endif
         _state = StateObject(wrappedValue: state)
         self.close = close

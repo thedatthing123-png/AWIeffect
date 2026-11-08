@@ -23,6 +23,23 @@ final class TextStudioTests: XCTestCase {
         XCTAssertEqual(t.animators[0].properties.position?.value(at: 0), Vec2(15, 0))
     }
 
+    func testDirectLetterRotationReusesAnimatorAndPreservesPosition() throws {
+        var t = text("PHANTOM")
+        let ids = TextStudioLogic.ids(t, range: 0..<2)
+        TextStudioLogic.offsetSelection(&t, ids: ids, by: Vec2(40, 20), at: 0)
+        TextStudioLogic.setSelectionRotation(&t, ids: ids, to: 30, at: 0)
+        XCTAssertEqual(t.animators.count, 1)
+        XCTAssertEqual(t.animators[0].properties.position?.staticValue, Vec2(40, 20))
+        t.animators[0].properties.rotation?.insertKeyframe(Keyframe(time: 0, value: 30, interpolation: .linear))
+        TextStudioLogic.setSelectionRotation(&t, ids: ids, to: 120, at: 1)
+        XCTAssertEqual(t.animators[0].properties.rotation?.keyframes.count, 2)
+        XCTAssertEqual(TextStudioLogic.selectionRotation(t, ids: ids, at: 0.5), 75, accuracy: 1e-8)
+        let encoded = try JSONEncoder().encode(t)
+        let copy = try JSONDecoder().decode(TextData.self, from: encoded)
+        XCTAssertEqual(copy.animators[0].selector.targetIDs, ids)
+        XCTAssertEqual(TextStudioLogic.selectionRotation(copy, ids: ids, at: 1), 120)
+    }
+
     func testSelectionSurvivesEditsBeforeIt() {
         var t = text("HELLO")
         let ids = TextStudioLogic.ids(t, range: 3..<5)

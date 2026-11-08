@@ -309,6 +309,19 @@ enum TextStudioLogic {
         else { t.animators[i].properties.anchor?.set(value, at: time) }
     }
 
+    static func selectionRotation(_ t: TextData, ids: [UInt32], at time: Double) -> Double {
+        guard let i = selectionAnimatorIndex(t, ids: ids) else { return 0 }
+        return t.animators[i].properties.rotation?.value(at: time) ?? 0
+    }
+
+    /// Direct posing edits the same animator the graph and property rows already use.
+    static func setSelectionRotation(_ t: inout TextData, ids: [UInt32], to value: Double, at time: Double) {
+        guard !ids.isEmpty, value.isFinite else { return }
+        let i = ensureSelectionAnimator(&t, ids: ids)
+        if t.animators[i].properties.rotation == nil { t.animators[i].properties.rotation = Animated(value) }
+        else { t.animators[i].properties.rotation?.set(value, at: time) }
+    }
+
     /// A new animator that targets exactly these letters (Animate tab "Animate Selected Letters").
     @discardableResult
     static func animateSelection(_ t: inout TextData, ids: [UInt32], add key: TextPropKey? = nil) -> UUID? {
