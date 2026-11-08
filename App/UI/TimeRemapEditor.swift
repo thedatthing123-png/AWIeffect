@@ -33,6 +33,7 @@ struct TimeRemapEditor: View {
     @State private var selected: UUID?
     @State private var original: Animated<Double>?
     @State private var dragRange: ClosedRange<Double>?
+    @GestureState private var draggingKey = false
     @State private var showEase = false
     @State private var slow = 0.25
     @State private var fast = 1.6
@@ -64,6 +65,13 @@ struct TimeRemapEditor: View {
             }.foregroundStyle(Theme.text).tint(Theme.accent)
             .awiSheet(isPresented: $showEase) { FlowGraphPanel(state: state, remapPopup: true).presentationDetents([.medium, .large]) }
             .onDisappear { original = nil; dragRange = nil; state.remapDragging = false; state.endEdit() }
+            .onChange(of: draggingKey) { _, dragging in
+                // SwiftUI may cancel a key gesture when its live value changes the plot.
+                // GestureState resets on cancellation as well as a normal finger release.
+                if !dragging {
+                    original = nil; dragRange = nil; state.remapDragging = false; state.endEdit()
+                }
+            }
         }
     }
     private var presetButtons: some View {
@@ -191,6 +199,7 @@ struct TimeRemapEditor: View {
                             .position(x: box.minX + CGFloat((key.time - layer.inPoint) / duration) * box.width,
                                       y: box.maxY - CGFloat(((speedGraph ? layer.playbackRate(at: key.time) : key.value) - lower) / (upper - lower)) * box.height)
                             .highPriorityGesture(DragGesture(minimumDistance: 4, coordinateSpace: .named("remapPlot"))
+                                .updating($draggingKey) { _, active, _ in active = true }
                                 .onChanged { drag in
                                     if original == nil { original = remap; dragRange = lower...upper; selected = key.id; state.pause(); state.beginEdit("Move Remap Key"); state.remapDragging = true }
                                     guard var a = original, let k = a.keyframes.firstIndex(where: { $0.id == key.id }) else { return }
