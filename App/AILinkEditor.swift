@@ -38,6 +38,7 @@ extension AILink {
         default: break
         }
         guard let e = editor else { return r.path.hasPrefix("/layers") || r.path.hasPrefix("/effects") || r.path.hasPrefix("/presets") || r.path.hasPrefix("/ease") || r.path == "/render/sheet" ? .noProject : nil }
+        if let advanced = handleAdvanced(r, editor: e) { return advanced }
         switch (r.method, r.path) {
         case ("GET", "/timeline"):
             // Compact, read-only timeline inspection; does not touch selection or undo history.
