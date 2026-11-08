@@ -8,7 +8,7 @@ import CoreVideo
 /// Auto: draw a box and it follows the subject through the clip. A bad frame gets fixed alone; no other frame changes.
 @MainActor
 final class CutoutStudioModel: ObservableObject, Identifiable {
-    enum Tool { case brush, box }
+    enum Tool { case none, brush, box }
     enum Show: String, CaseIterable { case cut = "Cutout", overlay = "Overlay", original = "Original" }
 
     let state: EditorState
@@ -24,7 +24,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     @Published var matteImage: UIImage?
     @Published var dimImage: UIImage?
     @Published var selectionImage: UIImage?
-    @Published var tool = Tool.brush
+    @Published var tool = Tool.none
     @Published var show = Show.cut
     @Published var brushSize = 40.0
     @Published var snapEdges = true
@@ -38,6 +38,8 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     private var undo: [(frame: Int, matte: MatteFrame?)] = []
     private var autoTask: Task<Void, Never>?
     private var loadID = 0
+    private var loadedFrame: Int?
+    @Published private(set) var frameLoading = false
     private var closed = false
     private let previewID = UUID().uuidString
     private var previewRevision = 0
@@ -79,7 +81,12 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
 
     func followPlayhead() {
         guard isVideo else { return }
-        go(to: Int(layer.sourceTime(at: state.currentTime) * rate))
+        let target = min(lastFrame, max(0, Int(layer.sourceTime(at: state.currentTime) * rate)))
+        // The normal video renderer already decodes playback. Do not launch a second detached image/matte decode
+        // for every playhead tick merely to keep the refinement panel open.
+        if state.isPlaying || tool == .none { frame = target; return }
+        if target != frame { go(to: target) }
+        else if loadedFrame != frame && !frameLoading { load() }
         if autoProgress != nil { state.cutoutPreview = (layer.id, settings) }
     }
     func sync(_ value: CutoutSettings?) {
@@ -89,8 +96,23 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
         if missing { value.manualOnly = true }
         if value.bakeID == nil { value.bakeID = UUID().uuidString }
         value.bakeRate = value.bakeRate ?? rate
-        settings = value; scanBaked(); load()
+        let matteChanged = settings.bakeID != value.bakeID || settings.bakeOverrides != value.bakeOverrides || settings.bakeRevision != value.bakeRevision || settings.manualOnly != value.manualOnly || settings.mode != value.mode
+        settings = value
+        if matteChanged { scanBaked(); load() }
     }
+    /// The original live automatic matte path: one action, no box or brush required.
+    func automatic() {
+        guard active, autoProgress == nil else { return }
+        state.pause(); tool = .none
+        settings.manualOnly = false
+        publish("Automatic Background Removal")
+    }
+    func restoreOriginal() {
+        guard active, autoProgress == nil else { return }
+        tool = .none; state.cutoutPreview = nil; state.cutoutPeekOriginal = nil
+        state.setCutout(nil)
+    }
+
     private func publish(_ label: String) {
         guard active else { return }
         let id = layer.id, value = settings
@@ -127,7 +149,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     }
 
     private func load() {
-        loadID += 1
+        loadID += 1; frameLoading = true; matte = nil; pictureCG = nil
         let id = loadID, f = frame, url = url, video = isVideo, rate = rate
         let saved = path(f), existing = state.project.layers.first(where: { $0.id == layer.id }), renderer = Renderer.shared
         let media: (String) -> URL = { [state] in state.mediaURL($0) }
@@ -148,6 +170,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
             }
             await MainActor.run {
                 guard id == self.loadID, !self.closed else { return }
+                self.frameLoading = false; self.loadedFrame = f
                 self.pictureCG = cg
                 self.picture = cg.map { UIImage(cgImage: $0) }
                 if let cg { self.matte = stored ?? MatteFrame.filled(cg.width, cg.height, 255) }

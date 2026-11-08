@@ -8,3 +8,6 @@
 - Validate changes against related editing workflows, saved projects and rendering, not just isolated compilation.
 
 - Never move a working one-tap control into a menu, and never cut buttons to hit a count or look clean. Controls live on the clip, layer, canvas or bar being worked on as purposeful one-tap buttons. Menus hold rare actions only.
+
+- A transport-bar layout restoration applies only to that bar. Preserve the last accepted timeline/header and its newer controls unless the user explicitly asks to change them.
+- Do not treat green tests as proof that an editing workflow is usable. Compare the changed workflow with the accepted build, including short clips, expanded lanes and automatic cutout.

@@ -52,7 +52,7 @@ struct TimelineView: View, Equatable {
 
     private let rowHeight: CGFloat = 46
     private let laneHeight: CGFloat = 44
-    private let headerWidth: CGFloat = 60
+    private let headerWidth: CGFloat = 132
     private let rulerHeight: CGFloat = 44
 
     var body: some View {
@@ -73,10 +73,10 @@ struct TimelineView: View, Equatable {
                             Toggle("Frame Numbers", isOn: $rulerFrames)
                         } label: {
                             ClockReader(clock: clock) { time in
-                            HStack(spacing: 2) {
+                            HStack(spacing: 4) {
                                 Text(rulerFrames ? "\(Int((time * state.project.fps).rounded()))f" : formatTimecode(time, fps: state.project.fps))
                                     .accessibilityIdentifier("timeline-timecode")
-                                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
                                     .foregroundStyle(Theme.accentGlow)
                                 Image(systemName: "chevron.down").font(.system(size: 9, weight: .bold)).foregroundStyle(Theme.textDim)
                             }
@@ -111,7 +111,7 @@ struct TimelineView: View, Equatable {
                                 let lifted = liftLayer == layer.id
                                 HStack(spacing: 0) {
                                     header(layer)
-                                    ClockReader(clock: clock) { time in layerRow(layer, offset: offset - CGFloat(time) * zoom) }
+                                    ClockReader(clock: clock) { time in layerRow(layer, offset: offset - CGFloat(time) * zoom, trackWidth: trackWidth) }
                                         .frame(width: trackWidth, height: rowHeight, alignment: .topLeading)
                                         .clipped()
                                 }
@@ -315,9 +315,10 @@ struct TimelineView: View, Equatable {
         return HStack(spacing: 0) {
             headerToggle(layer.id, layer.isVisible ? "eye" : "eye.slash", on: layer.isVisible, tint: Theme.text,
                          label: layer.isVisible ? "Hide Layer" : "Show Layer") { state.toggleVisibility(layer.id) }
-            Image(systemName: inMulti ? "checkmark.circle.fill" : (layer.isGroup ? "folder.fill" : layer.content.symbol))
-                .font(.system(size: 11)).foregroundStyle(inMulti ? Theme.accentGlow : Theme.tagColor(layer.tag))
-                .frame(width: 28, height: rowHeight).contentShape(Rectangle())
+            headerToggle(layer.id, layer.isLocked ? "lock.fill" : "lock.open", on: layer.isLocked, tint: Theme.warning,
+                         label: layer.isLocked ? "Unlock Layer" : "Lock Layer") { state.toggleLock(layer.id) }
+            headerToggle(layer.id, "s.circle\(layer.isSolo ? ".fill" : "")", on: layer.isSolo, tint: Theme.ok,
+                         label: layer.isSolo ? "Unsolo Layer" : "Solo Layer") { state.toggleSolo(layer.id) }
         }
         .frame(width: headerWidth, height: rowHeight, alignment: .leading)
         // Parts of a group get a colored bar so you can see what's inside it; the layer's own tag sits beside it.
@@ -351,7 +352,7 @@ struct TimelineView: View, Equatable {
         // A tap, not a Button: a Button swallows the header's hold, which starts range selection.
         Image(systemName: icon).font(.system(size: 14, weight: .semibold))
             .foregroundStyle(on ? tint : Theme.textDim.opacity(0.55))
-            .frame(width: 28, height: rowHeight)
+            .frame(width: 44, height: rowHeight)
             .contentShape(Rectangle())
             .onTapGesture { if state.isMultiSelecting { state.toggleInMulti(id) } else { action() } }
             .accessibilityElement()
@@ -436,7 +437,7 @@ struct TimelineView: View, Equatable {
         }
     }
 
-    private func layerRow(_ layer: Layer, offset: CGFloat) -> some View {
+    private func layerRow(_ layer: Layer, offset: CGFloat, trackWidth: CGFloat) -> some View {
         let selected = state.multiSelection.map { $0.contains(layer.id) } ?? (layer.id == state.selectedLayerID)
         let editable = selected && !state.isMultiSelecting && !layer.isLocked
         let color = Theme.tagColor(layer.tag)
@@ -455,7 +456,7 @@ struct TimelineView: View, Equatable {
                         Text(layer.name).font(.system(size: 11, weight: .semibold)).lineLimit(1)
                     }
                     .foregroundStyle(.white)
-                    .padding(.leading, (editable ? 24 : 8) + (canTwirl(layer) && w >= 120 ? 40 : 0))
+                    .padding(.leading, (editable ? 24 : 8) + (canTwirl(layer) && w >= 120 ? 44 : 0))
                     .offset(x: max(0, -x0))
                     .allowsHitTesting(false)
                 }
@@ -493,16 +494,19 @@ struct TimelineView: View, Equatable {
                 // Twirl: one lane per animated property opens under the row.
                 let open = expanded.contains(layer.id)
                 Button {
-                    if open { expanded.remove(layer.id) } else { expanded.insert(layer.id) }
+                    if open { expanded.remove(layer.id) } else { state.selectedLayerID = layer.id; expanded.insert(layer.id) }
                     if keySel?.layerID == layer.id && open { keySel = nil }
                 } label: {
                     Image(systemName: open ? "chevron.down" : "chevron.right").font(.system(size: 12, weight: .bold))
                         .foregroundStyle(.white)
-                        .frame(width: 40, height: rowHeight - 4)
+                        .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
-                .offset(x: w >= 120 ? max(x0, 0) + (editable ? 22 : 2) : x0 + w + 22, y: 2)
+                .buttonStyle(.plain).zIndex(3)
+                // The icon stays inside the visible clip, even when its duration is very short.
+                .offset(x: Self.expanderOffset(clipX: x0, clipWidth: w, trackWidth: trackWidth, editable: editable), y: 2)
+                .opacity(x0 + w > 0 && x0 < trackWidth ? 1 : 0)
+                .allowsHitTesting(x0 + w > 0 && x0 < trackWidth)
                 .accessibilityLabel(open ? "Close property lanes" : "Open property lanes")
             }
             // Open effects: each one's keys show in its own color and only those move; the rest fade back.
@@ -593,6 +597,13 @@ struct TimelineView: View, Equatable {
                 state.moveKeyframes(of: o, from: origin, to: state.snapTime(origin + Double(g.translation.width / zoom), tolerance: Double(8 / zoom)), effect: effect)
             }
             .onEnded { _ in dragOriginal = nil; keyDragTime = nil; state.endEdit() }
+    }
+
+    static func expanderOffset(clipX: CGFloat, clipWidth: CGFloat, trackWidth: CGFloat, editable: Bool) -> CGFloat {
+        let start = max(0, clipX), end = min(trackWidth, clipX + clipWidth)
+        let visible = max(0, end - start)
+        if visible < 88 { return start + visible / 2 - 22 }
+        return start + (editable ? 22 : 2)
     }
 
     private func canTwirl(_ layer: Layer) -> Bool { !compact && !state.propertyLaneCache.markers(layer).isEmpty }

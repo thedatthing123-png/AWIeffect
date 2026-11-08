@@ -9,6 +9,36 @@ import Metal
         let state = EditorState(project: p, store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
         state.select(p.layers[0].id); return state
     }
+    func testAutomaticCutoutIsOneActionAndCanBeRestoredWithoutBrushing() {
+        let s = editor(), before = s.project
+        let model = CutoutStudioModel(state: s, layer: s.project.layers[0], url: s.mediaURL("missing.png"))
+        XCTAssertEqual(model.tool, .none)
+        model.automatic()
+        XCTAssertEqual(s.selectedLayer?.cutout?.manualOnly, false)
+        XCTAssertEqual(s.selectedLayer?.cutout?.mode, .drawn)
+        XCTAssertEqual(model.tool, .none)
+        XCTAssertTrue(s.canUndo)
+        s.undo(); XCTAssertEqual(s.project, before)
+        model.automatic(); model.restoreOriginal(); XCTAssertNil(s.selectedLayer?.cutout)
+        model.finish()
+    }
+    func testClosedRowsDoNotBuildPropertyLanesAndShortClipExpanderStaysInside() {
+        let s = editor()
+        var l = s.project.layers[0]
+        for k in 0..<80 { l.transform.rotation.insertKeyframe(Keyframe(time: Double(k)/10,value: Double(k))) }
+        s.project.layers[0] = l
+        for _ in 0..<1000 { _ = s.propertyLaneCache.markers(l) }
+        XCTAssertEqual(s.propertyLaneCache.builds, 0, "Normal clip rows must not build expanded property metadata")
+        _ = s.propertyLaneCache.lanes(l); XCTAssertEqual(s.propertyLaneCache.builds, 1)
+        for width: CGFloat in [4,12,27,60,120,300] {
+            for start: CGFloat in [-8,0,60,220] where start+width > 0 {
+                let x = TimelineView.expanderOffset(clipX: start,clipWidth: width,trackWidth: 258,editable: false)+22
+                XCTAssertGreaterThanOrEqual(x,max(0,start))
+                XCTAssertLessThanOrEqual(x,min(258,start+width))
+            }
+        }
+    }
+
     func testOpeningAndLeavingCutoutDoesNotApplyAnything() {
         let s = editor(), before = s.project
         let model = CutoutStudioModel(state: s, layer: s.project.layers[0], url: s.mediaURL("missing.png"))

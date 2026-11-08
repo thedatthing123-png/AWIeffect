@@ -63,6 +63,24 @@ struct RootView: View {
             l.shapeContents = [ShapeContent(name: "Ring", component: a), ShapeContent(name: "Accent", component: b)]
             p.layers = [l]; _openProject = State(initialValue: p)
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-stability") {
+            var p = Project.new(name: "Timeline Stability", width: 128, height: 128, fps: 30, duration: 6)
+            var short = p.makeLayer(name: "Short Clip", content: .solid, size: Vec2(24,24))
+            short.inPoint = 1; short.outPoint = 1.3
+            short.transform.rotation.insertKeyframe(Keyframe(time: 1,value: 0))
+            short.transform.rotation.insertKeyframe(Keyframe(time: 1.3,value: 45))
+            p.layers.append(short)
+            var many = p.makeLayer(name: "Many Keys", content: .solid, size: Vec2(24,24))
+            for frame in 0...60 {
+                let t = Double(frame) / 10
+                many.transform.position.insertKeyframe(Keyframe(time: t,value: Vec2(32+t*5,64)))
+                many.transform.rotation.insertKeyframe(Keyframe(time: t,value: t*10))
+                many.transform.opacity.insertKeyframe(Keyframe(time: t,value: 1))
+            }
+            p.layers.append(many)
+            for n in 3...24 { p.layers.append(p.makeLayer(name: "Layer \(n)", content: .solid, size: Vec2(12,12))) }
+            _openProject = State(initialValue: p)
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-manyLayers") {
             var project = Project.new(name: "Timeline Scroll Test", width: 128, height: 128, fps: 30, duration: 8, background: .black)
             for n in 1...40 {

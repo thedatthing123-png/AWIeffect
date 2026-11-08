@@ -91,6 +91,7 @@ struct CutoutSection: View {
         }
         .onChange(of: state.selectedLayer?.cutout) { _, value in session.model?.sync(value) }
         .onChange(of: state.currentTime) { _, _ in session.model?.followPlayhead() }
+        .onChange(of: state.isPlaying) { _, playing in if !playing { session.model?.followPlayhead() } }
         .onDisappear { session.close() }
     }
 }
