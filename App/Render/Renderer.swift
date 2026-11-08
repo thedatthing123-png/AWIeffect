@@ -237,7 +237,7 @@ final class Renderer {
     }
 
     /// Echo trails: each echoing layer gets delayed, fading copies stacked underneath it (all keyframes and media delayed).
-    static func expandEchoes(_ p: Project) -> Project {
+    static func expandEchoes(_ p: Project, time: Double? = nil) -> Project {
         guard p.layers.contains(where: { ($0.timeFX?.echoCount ?? 0) > 0 }) else { return p }
         var q = p
         var out: [Layer] = []
@@ -254,6 +254,13 @@ final class Renderer {
                 c.shiftTiming(by: Double(k) * fx.echoDelay, duration: p.duration)
                 c.inPoint = l.inPoint
                 c.transform.opacity = c.transform.opacity.mapped { $0 * pow(max(0, min(1, fx.echoDecay)), Double(k)) }
+                if let time, var mesh = l.boneMesh, let captured = mesh.frameSource {
+                    let sampleTime = time-Double(k)*fx.echoDelay
+                    let posed = AutoOrient.apply(IKSolver.apply(ExpressionResolver.resolve(captured.project,time: sampleTime),time: sampleTime),time: sampleTime)
+                    mesh.frameMatrices = BoneMeshEvaluation.palette(mesh,artworkID: l.id,posed: posed,time: sampleTime)
+                    mesh.frameTime = time
+                    c.boneMesh = mesh
+                }
                 out.append(c)
             }
         }
@@ -513,7 +520,16 @@ final class Renderer {
         let resolved = ExpressionResolver.resolve(rawProject, time: time)
         // Echo needs parenting baked over time (costly); everything else bakes just this frame.
         let hasEcho = resolved.layers.contains { ($0.timeFX?.echoCount ?? 0) > 0 }
-        let project = hasEcho ? Self.expandEchoes(Self.resolveParentingAnimated(resolved)) : Self.resolveParenting(resolved, time: time, meshSource: rawProject)
+        let project: Project
+        if hasEcho {
+            var animated = Self.resolveParentingAnimated(resolved)
+            if resolved.layers.contains(where: { $0.boneMesh != nil }) {
+                let frame = Self.resolveParenting(resolved,time: time,meshSource: rawProject)
+                let meshes = Dictionary(frame.layers.compactMap { l in l.boneMesh.map { (l.id,$0) } },uniquingKeysWith: { first,_ in first })
+                for i in animated.layers.indices { if let mesh = meshes[animated.layers[i].id] { animated.layers[i].boneMesh = mesh } }
+            }
+            project = Self.expandEchoes(animated,time: time)
+        } else { project = Self.resolveParenting(resolved, time: time, meshSource: rawProject) }
         var shutterProjects: [Double: Project] = [:]
         func samplePlacement(_ layer: Layer, at sampleTime: Double) -> simd_double3x3 {
             let sample: Project
@@ -598,6 +614,11 @@ final class Renderer {
             if !layer.is3D && camera.projects2DDepth && layer.transform.positionZ.value(at: time) - camera.world.columns.3.z <= max(1, abs(camera.zoom) * 0.01) { continue }
             let opacity = layer.transform.opacity.value(at: time) / 100
             if opacity <= 0 { continue }
+            // Skin deformation moves pixels even when the artwork's layer matrix is stationary. Sample the
+            // complete evaluated layer (bones, camera, masks and effects), not a frozen skinned texture.
+            if layer.boneMesh != nil, project.blurs(layer),
+               encodeSkinnedShutter(layer, project: project, time: time, renderScale: renderScale,
+                                    comp: comp, cb: cb, pool: pool, mediaURL: mediaURL) { continue }
             if layer.effects.contains(where: { $0.isEnabled && $0.typeID == "awi18.displacementMap" && $0.choice("target") == 1 }) {
                 encodeBackdropDisplacement(layer, matte: matteSources[layer.id], project: project, time: time, renderScale: renderScale,
                                            opacity: opacity, comp: comp, cb: cb, pool: pool, mediaURL: mediaURL)
@@ -1094,6 +1115,56 @@ final class Renderer {
             return .model(tex)
         case .adjustment, .text, .audio, .camera, .light: return nil
         }
+    }
+
+    /// Full correlated shutter samples for weighted artwork. The mesh topology remains cached across shots.
+    private func encodeSkinnedShutter(_ layer: Layer, project: Project, time: Double, renderScale: Double,
+                                      comp: MTLTexture, cb: MTLCommandBuffer, pool: TexturePool,
+                                      mediaURL: (String) -> URL) -> Bool {
+        guard currentDepth < 7, let mesh = layer.boneMesh, mesh.previewWeightIndex == nil,
+              var source = BoneMeshEvaluation.sampleProject(mesh, artworkID: layer.id),
+              let owner = source.layers.firstIndex(where: { $0.id == layer.id }) else { return false }
+        let shutter = project.shutterOpen
+        guard shutter.length > 0 else { return false }
+        let corners = [Vec2(-mesh.halfSize.x,-mesh.halfSize.y),Vec2(mesh.halfSize.x,-mesh.halfSize.y),
+                       Vec2(mesh.halfSize.x,mesh.halfSize.y),Vec2(-mesh.halfSize.x,mesh.halfSize.y)]
+        var previous: [Vec2] = [], distances: [Double] = []
+        for probe in 0...4 {
+            let t = time+shutter.start+shutter.length*Double(probe)/4
+            let pose = Self.resolveParenting(ExpressionResolver.resolve(source,time: t),time: t)
+            guard let art = pose.layers.first(where: { $0.id == layer.id }), let palette = art.boneMesh?.frameMatrices else { return false }
+            let placement = Self.placementMatrix(art,camera: Self.activeCamera(pose,time: t),time: t,renderScale: renderScale)
+            let points = palette.flatMap { matrix in corners.compactMap { LayerPlacement.projected(matrix.apply($0),by: placement) } }
+            if probe == 0 { distances = Array(repeating: 0,count: points.count) }
+            else if points.count == previous.count {
+                for i in points.indices { distances[i] += hypot(points[i].x-previous[i].x,points[i].y-previous[i].y) }
+            }
+            previous = points
+        }
+        let travel = distances.max() ?? 0
+        guard travel.isFinite, travel > 0.5 else { return false }
+        let cap = max(2,min(project.blurSamples,Self.blurSampleCap ?? project.blurSamples))
+        let count = max(2,min(cap,Int(min(Double(cap),ceil(travel/1.5)))+1))
+        source.width = project.width; source.height = project.height
+        source.background = RGBA(0,0,0,0); source.motionBlurEnabled = false; source.smoothMotion = false
+        source.precompDepth = currentDepth+1
+        // Retain all dependencies for parenting, expressions, references, mattes and lights. Only the owner draws.
+        for i in source.layers.indices {
+            source.layers[i].isSolo = false
+            if i != owner {
+                source.layers[i].trackMatte = .none; source.layers[i].clipToBelow = false
+                if source.layers[i].content != .camera && source.layers[i].content != .light { source.layers[i].isVisible = false }
+            }
+        }
+        source.layers[owner].groupID = nil; source.layers[owner].blendMode = .normal
+        let average = shutterAverage(count,comp: comp,pool: pool,cb: cb) { k,target in
+            let t = time+shutter.start+shutter.length*Double(k)/Double(count-1)
+            encode(project: source,time: t,renderScale: renderScale,into: target,commandBuffer: cb,pool: pool,mediaURL: mediaURL)
+        }
+        let center = simd_double3x3(columns: (SIMD3(1,0,0),SIMD3(0,1,0),SIMD3(Double(comp.width)/2,Double(comp.height)/2,1)))
+        drawQuad(cb: cb,target: comp,matrix: center,halfSize: Vec2(Double(comp.width)/2,Double(comp.height)/2),aa: 0.5,
+                 opacity: 1,layer: layer,time: time,source: .image(average),premultipliedImage: true)
+        return true
     }
 
     /// Averages `count` renders: each sample is drawn alone, then added at weight 1/count.

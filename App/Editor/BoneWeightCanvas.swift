@@ -50,7 +50,10 @@ struct BoneWeightCanvasOverlay: View {
             }
         }
         .onChange(of: state.boneWeightBoneID) { _, _ in cancel() }
-        .onDisappear { cancel() }
+        .onChange(of: state.selectedLayerID) { _, _ in
+            if state.rigArtworkID != state.boneWeightArtworkID { state.finishBoneWeights(); cancel() }
+        }
+        .onDisappear { cancel(); state.finishBoneWeights() }
     }
     private func cancel() { state.finishBoneWeightStroke(commit: false); lastPoint = nil; cursor = nil }
 }

@@ -18,6 +18,7 @@ final class RigAuthoringUITests: XCTestCase {
         app.buttons["Weights"].firstMatch.tap()
         let canvas = app.descendants(matching: .any)["Paint bone weights"].firstMatch
         XCTAssertTrue(canvas.waitForExistence(timeout: 5))
+        app.buttons["Erase"].firstMatch.tap()
         let before = canvas.value as? String
         let point = canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.5,dy: 0.5))
         point.press(forDuration: 0.1,thenDragTo: point.withOffset(CGVector(dx: 35,dy: 0)))

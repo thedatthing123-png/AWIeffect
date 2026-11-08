@@ -14,9 +14,12 @@ extension EditorState {
             sources.append(BoneMeshSource(id: bone.id, matrix: parent * Renderer.layerMatrix(bone, time: time, renderScale: 1), tip: tip))
         }
         guard sources.count > 1 else { recoveryNotice = "Draw a bone chain before binding the mesh."; return }
-        guard let mesh = BoneMeshBinding.bind(halfSize: Renderer.layerHalfSize(art, time: time), detail: Int(boneMeshDetail), bones: sources) else {
+        guard var mesh = BoneMeshBinding.bind(halfSize: Renderer.layerHalfSize(art, time: time), detail: Int(boneMeshDetail), bones: Array(sources.dropFirst())) else {
             recoveryNotice = "The mesh could not bind. Check that the artwork and bones have nonzero size and scale."; return
         }
+        // The artwork is an available rigid influence for erasing weights, not an automatic competing joint.
+        mesh.boneIDs.insert(art.id,at: 0); mesh.inverseBinds.insert(.identity,at: 0)
+        for i in mesh.vertices.indices { for j in mesh.vertices[i].weights.indices { mesh.vertices[i].weights[j].bone += 1 } }
         mutate("Bind Mesh") { p in if let i = p.layers.firstIndex(where: { $0.id == art.id }) { p.layers[i].boneMesh = mesh } }
     }
 

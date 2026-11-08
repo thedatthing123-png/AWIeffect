@@ -7,6 +7,43 @@ import UniformTypeIdentifiers
 
 @MainActor
 final class AdvancedAuthoringRenderTests: XCTestCase {
+    func testWeightedMeshMotionArtifactAndShutterDeformation() throws {
+        var p = Project.new(name: "Flexible strip — editable weights",width: 400,height: 400,fps: 12,duration: 2,background: RGBA(0,0,0,0))
+        var art = p.makeLayer(name: "Flexible artwork",content: .solid,size: Vec2(240,40))
+        art.fill = Animated(RGBA(0.15,0.8,0.95,1)); p.layers = [art]
+        let s = EditorState(project: p,store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        let upper = try XCTUnwrap(s.addBone(artworkID: art.id,parentID: nil,start: Vec2(-120,0),end: .zero))
+        let lower = try XCTUnwrap(s.addBone(artworkID: art.id,parentID: upper,start: .zero,end: Vec2(120,0)))
+        s.select(lower); s.bindBoneMesh()
+        let li = try XCTUnwrap(s.project.layers.firstIndex { $0.id == lower })
+        s.project.layers[li].transform.rotation.insertKeyframe(Keyframe(time: 0,value: 0,interpolation: .linear))
+        s.project.layers[li].transform.rotation.insertKeyframe(Keyframe(time: 1,value: 110,interpolation: .linear))
+        s.project.layers[li].transform.rotation.insertKeyframe(Keyframe(time: 2,value: 0,interpolation: .linear))
+        let copy = try JSONDecoder().decode(Project.self,from: JSONEncoder().encode(s.project))
+        let renderer = try XCTUnwrap(Renderer.shared)
+        let a = try XCTUnwrap(renderer.renderPixels(project: copy,time: 0,preserveAlpha: true,mediaURL: { URL(fileURLWithPath: $0) }))
+        let b = try XCTUnwrap(renderer.renderPixels(project: copy,time: 1,preserveAlpha: true,mediaURL: { URL(fileURLWithPath: $0) }))
+        XCTAssertNotEqual(a.rgba,b.rgba,"Stationary artwork must deform from bone motion")
+        var blurred = copy; blurred.motionBlurEnabled = true; blurred.shutterAngle = 360; blurred.blurSamples = 12
+        let ai = try XCTUnwrap(blurred.layers.firstIndex { $0.id == art.id }); blurred.layers[ai].motionBlur = true
+        let sharp = try XCTUnwrap(renderer.renderPixels(project: copy,time: 0.5,preserveAlpha: true,mediaURL: { URL(fileURLWithPath: $0) }))
+        let soft = try XCTUnwrap(renderer.renderPixels(project: blurred,time: 0.5,preserveAlpha: true,mediaURL: { URL(fileURLWithPath: $0) }))
+        XCTAssertNotEqual(sharp.rgba,soft.rgba,"Bone deformation needs shutter samples even when the layer matrix does not move")
+        func alphaMass(_ pixels: [UInt8]) -> Double { stride(from: 3,to: pixels.count,by: 4).reduce(0.0) { $0+Double(pixels[$1])/255 } }
+        XCTAssertEqual(alphaMass(soft.rgba)/alphaMass(sharp.rgba),1,accuracy: 0.08,"Shutter averaging must preserve opacity")
+        let folder = URL(fileURLWithPath: "/tmp/awi-authoring",isDirectory: true)
+        try FileManager.default.createDirectory(at: folder,withIntermediateDirectories: true)
+        try JSONEncoder().encode(copy).write(to: folder.appendingPathComponent("weighted-strip.json"))
+        let gif = try XCTUnwrap(CGImageDestinationCreateWithURL(folder.appendingPathComponent("weighted-strip.gif") as CFURL,UTType.gif.identifier as CFString,48,nil))
+        CGImageDestinationSetProperties(gif,[kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+        for frame in 0..<48 {
+            let image = try XCTUnwrap(renderer.renderImage(project: copy,time: Double(frame)/24,maxDimension: 360,mediaURL: { URL(fileURLWithPath: $0) }))
+            CGImageDestinationAddImage(gif,try XCTUnwrap(image.cgImage),[kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 1.0/24]] as CFDictionary)
+            if frame%12 == 0 { try XCTUnwrap(image.pngData()).write(to: folder.appendingPathComponent("mesh-\(frame).png")) }
+        }
+        XCTAssertTrue(CGImageDestinationFinalize(gif))
+    }
+
     func testEditableLetterPoseMotionArtifact() throws {
         var project = Project.new(name: "Letters — editable fan pose", width: 600, height: 600, fps: 30, duration: 2)
         var layer = project.makeLayer(name: "HELLO", content: .text, size: Vec2(500, 200))

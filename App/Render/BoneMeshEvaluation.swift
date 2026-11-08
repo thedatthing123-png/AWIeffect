@@ -15,6 +15,18 @@ enum BoneMeshEvaluation {
         }
     }
 
+    /// Reconstruct the editable hierarchy for a shutter sample, rather than reposing a baked frame snapshot.
+    static func sampleProject(_ binding: BoneMeshBinding, artworkID: UUID) -> Project? {
+        guard let captured = binding.frameSource,
+              let i = captured.project.layers.firstIndex(where: { $0.id == artworkID }) else { return nil }
+        var source = captured.project
+        var mesh = binding
+        mesh.frameMatrices = nil; mesh.frameTime = nil; mesh.previewWeightIndex = nil
+        // Keep the shared original frame source so nested sample renders can evaluate their own time.
+        source.layers[i].boneMesh = mesh
+        return source
+    }
+
     static func prepare(_ project: inout Project, source: Project, time: Double) {
         let bound = project.layers.indices.filter { project.layers[$0].boneMesh != nil }
         guard !bound.isEmpty else { return }
