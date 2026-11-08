@@ -61,6 +61,13 @@ final class AnimationTimingUITests: XCTestCase {
         easing.tap()
         XCTAssertTrue(app.staticTexts["Graph"].firstMatch.waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Time Remap"].firstMatch.exists)
+        let graph = app.descendants(matching: .any)["bezier-editor"].firstMatch
+        XCTAssertTrue(graph.waitForExistence(timeout: 5))
+        for label in ["Outgoing easing handle", "Incoming easing handle"] {
+            let handle = app.descendants(matching: .any)[label].firstMatch
+            XCTAssertTrue(handle.exists)
+            XCTAssertTrue(graph.frame.contains(CGPoint(x: handle.frame.midX,y: handle.frame.midY)), "Steep easing handles must stay inside the new graph")
+        }
         save("remap-easing")
     }
 

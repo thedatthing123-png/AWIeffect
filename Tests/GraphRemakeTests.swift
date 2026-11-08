@@ -86,6 +86,20 @@ final class GraphRemakeTests: XCTestCase {
         state.redo(); XCTAssertEqual(state.project.layers[0].transform.position.keyframes[0].curve, changed)
     }
 
+    @MainActor func testBezierViewportFitsSteepRemapHandlesWithoutChangingThem() {
+        let out = EaseHandle(x: 0.33, y: 7.94), into = EaseHandle(x: 0.67, y: -3)
+        let range = CurveEditor.verticalRange(out: out, into: into)
+        let box = CGRect(x: 24, y: 24, width: 300, height: 140)
+        for h in [out, into, EaseHandle(x: 0, y: 0), EaseHandle(x: 1, y: 1)] {
+            XCTAssertTrue(box.contains(CurveEditor.pt(h, box, range: range)))
+            XCTAssertEqual(CurveEditor.translated(h, by: .zero, box: box, range: range), h)
+        }
+        for i in 0...200 {
+            let x = Double(i)/200, y = BezierTiming.progress(x: x, p1: out, p2: into)
+            XCTAssertTrue(box.contains(CurveEditor.pt(EaseHandle(x: x,y: y), box, range: range)))
+        }
+    }
+
     @MainActor func testPropertyLoopCannotBePastedIntoSourceTimeRemap() {
         var p = Project.new(name: "Remap isolation", width: 64, height: 64, fps: 30, duration: 3)
         let nested = Project.new(name: "Source", width: 64, height: 64, fps: 30, duration: 3)

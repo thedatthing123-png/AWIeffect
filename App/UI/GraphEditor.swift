@@ -212,6 +212,8 @@ struct CurveEditor: View {
     @State private var dragIn: EaseHandle?
     @State private var startOut: EaseHandle?
     @State private var startIn: EaseHandle?
+    @State private var dragRange: ClosedRange<Double>?
+    @GestureState private var dragging = false
 
     var body: some View {
         GeometryReader { geo in
@@ -219,6 +221,7 @@ struct CurveEditor: View {
             let box = CGRect(x: inset, y: geo.size.height * 0.2, width: geo.size.width - inset * 2, height: geo.size.height * 0.6)
             let out = dragOut ?? (segment.interpolation == .bezier ? segment.out : .linearOut)
             let into = dragIn ?? (segment.interpolation == .bezier ? segment.into : .linearIn)
+            let range = dragRange ?? Self.verticalRange(out: out, into: into)
             ZStack {
                 RoundedRectangle(cornerRadius: 14).fill(Theme.surface)
                 Path { p in
@@ -229,50 +232,65 @@ struct CurveEditor: View {
                 }
                 .stroke(Theme.stroke, lineWidth: 1)
                 Path { p in
-                    p.move(to: CGPoint(x: box.minX, y: box.maxY))
+                    p.move(to: Self.pt(EaseHandle(x: 0, y: 0), box, range: range))
                     for i in 1...80 {
                         let x = Double(i) / 80
                         let y = BezierTiming.progress(x: x, p1: out, p2: into)
-                        p.addLine(to: CGPoint(x: box.minX + CGFloat(x) * box.width, y: box.maxY - CGFloat(y) * box.height))
+                        p.addLine(to: Self.pt(EaseHandle(x: x, y: y), box, range: range))
                     }
                 }
                 .stroke(Theme.accentGlow, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                 .shadow(color: Theme.accent.opacity(0.6), radius: 6)
                 Path { p in
-                    p.move(to: CGPoint(x: box.minX, y: box.maxY)); p.addLine(to: Self.pt(out, box))
-                    p.move(to: CGPoint(x: box.maxX, y: box.minY)); p.addLine(to: Self.pt(into, box))
+                    p.move(to: Self.pt(EaseHandle(x: 0, y: 0), box, range: range)); p.addLine(to: Self.pt(out, box, range: range))
+                    p.move(to: Self.pt(EaseHandle(x: 1, y: 1), box, range: range)); p.addLine(to: Self.pt(into, box, range: range))
                 }
                 .stroke(Theme.textDim, lineWidth: 1)
-                knob(Self.pt(out, box)).gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("easeGraph")).onChanged { v in
+                knob(Self.pt(out, box, range: range)).accessibilityLabel("Outgoing easing handle").gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("easeGraph")).updating($dragging) { _, active, _ in active = true }.onChanged { v in
                     if startOut == nil { startOut = out }
-                    let h = Self.translated(startOut ?? out, by: v.translation, box: box)
+                    if dragRange == nil { dragRange = range }
+                    let h = Self.translated(startOut ?? out, by: v.translation, box: box, range: dragRange ?? range)
                     dragOut = h; onChange(h, into, false)
                 }.onEnded { v in
-                    let h = Self.translated(startOut ?? out, by: v.translation, box: box)
-                    onChange(h, into, true); dragOut = nil; startOut = nil
+                    let h = Self.translated(startOut ?? out, by: v.translation, box: box, range: dragRange ?? range)
+                    onChange(h, into, true); dragOut = nil; startOut = nil; dragRange = nil
                 })
-                knob(Self.pt(into, box)).gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("easeGraph")).onChanged { v in
+                knob(Self.pt(into, box, range: range)).accessibilityLabel("Incoming easing handle").gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("easeGraph")).updating($dragging) { _, active, _ in active = true }.onChanged { v in
                     if startIn == nil { startIn = into }
-                    let h = Self.translated(startIn ?? into, by: v.translation, box: box)
+                    if dragRange == nil { dragRange = range }
+                    let h = Self.translated(startIn ?? into, by: v.translation, box: box, range: dragRange ?? range)
                     dragIn = h; onChange(out, h, false)
                 }.onEnded { v in
-                    let h = Self.translated(startIn ?? into, by: v.translation, box: box)
-                    onChange(out, h, true); dragIn = nil; startIn = nil
+                    let h = Self.translated(startIn ?? into, by: v.translation, box: box, range: dragRange ?? range)
+                    onChange(out, h, true); dragIn = nil; startIn = nil; dragRange = nil
                 })
                 Text(String(format: "out %.2f, %.2f   in %.2f, %.2f", out.x, out.y, into.x, into.y))
                     .font(.system(size: 10, design: .monospaced)).foregroundStyle(Theme.textDim)
                     .position(x: geo.size.width / 2, y: geo.size.height - 12)
-            }.coordinateSpace(name: "easeGraph")
+            }.coordinateSpace(name: "easeGraph").clipShape(RoundedRectangle(cornerRadius: 14))
+        }
+        .accessibilityIdentifier("bezier-editor")
+        .onChange(of: dragging) { _, active in
+            if !active, startOut != nil || startIn != nil {
+                onChange(dragOut ?? segment.out, dragIn ?? segment.into, true)
+                dragOut = nil; dragIn = nil; startOut = nil; startIn = nil; dragRange = nil
+            }
         }
     }
 
-    static func translated(_ original: EaseHandle, by delta: CGSize, box: CGRect) -> EaseHandle {
+    static func translated(_ original: EaseHandle, by delta: CGSize, box: CGRect, range: ClosedRange<Double> = 0...1) -> EaseHandle {
         EaseHandle(x: min(1, max(0, original.x + Double(delta.width / max(1, box.width)))),
-                   y: min(1.8, max(-0.8, original.y - Double(delta.height / max(1, box.height)))))
+                   y: min(max(1.8, range.upperBound), max(min(-0.8, range.lowerBound), original.y - Double(delta.height / max(1, box.height)) * (range.upperBound - range.lowerBound))))
     }
 
-    static func pt(_ h: EaseHandle, _ box: CGRect) -> CGPoint {
-        CGPoint(x: box.minX + CGFloat(h.x) * box.width, y: box.maxY - CGFloat(h.y) * box.height)
+    static func verticalRange(out: EaseHandle, into: EaseHandle) -> ClosedRange<Double> {
+        let lo = min(0, out.y, into.y), hi = max(1, out.y, into.y)
+        let padding = (hi - lo) * 0.12
+        return (lo - padding)...(hi + padding)
+    }
+
+    static func pt(_ h: EaseHandle, _ box: CGRect, range: ClosedRange<Double> = 0...1) -> CGPoint {
+        CGPoint(x: box.minX + CGFloat(h.x) * box.width, y: box.maxY - CGFloat((h.y - range.lowerBound) / (range.upperBound - range.lowerBound)) * box.height)
     }
 
     static func handle(from p: CGPoint, _ box: CGRect) -> EaseHandle {
@@ -284,6 +302,7 @@ struct CurveEditor: View {
         Circle().fill(.white).frame(width: 18, height: 18)
             .overlay(Circle().stroke(Theme.accent, lineWidth: 3))
             .frame(width: 44, height: 44).contentShape(Circle())
+            .accessibilityElement(children: .ignore)
             .position(p)
     }
 }

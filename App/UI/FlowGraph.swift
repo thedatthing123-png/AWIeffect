@@ -269,7 +269,8 @@ struct FlowGraphPanel: View {
             NumberField(value: h.y, label: outgoing ? "Out Y" : "In Y", step: 0.01, precision: 2, controlHeight: 44,
                         onDragBegin: { scrubbingHandle = true; state.beginEdit("Edit Easing") }, onDragEnd: { state.endEdit(); scrubbingHandle = false }) { v in
                 var n = e
-                if outgoing { n.out.y = min(1.8, max(-0.8, v)) } else { n.into.y = min(1.8, max(-0.8, v)) }
+                guard v.isFinite else { return }
+                if outgoing { n.out.y = v } else { n.into.y = v }
                 apply(n, continuous: scrubbingHandle)
             }
         }.frame(minHeight: 44)
