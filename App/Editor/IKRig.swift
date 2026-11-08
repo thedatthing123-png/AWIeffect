@@ -71,13 +71,14 @@ enum IKSolver {
         for li in q.layers.indices {
             guard let rig = q.layers[li].ik,
                   let ui = q.layers.firstIndex(where: { $0.id == rig.upperID }),
-                  let ctrl = q.layers.first(where: { $0.id == rig.controllerID }) else { continue }
+                  let ctrl = q.layers.first(where: { $0.id == rig.controllerID }),
+                  rig.l1.isFinite, rig.l2.isFinite, rig.l1 > 0, rig.l2 > 0 else { continue }
             let upper = q.layers[ui]
             let s = world(upper, in: q, time: time).pos
             let parentRot = upper.parentID.flatMap { Renderer.parentAffine($0, in: q, time: time)?.rot } ?? 0
             let target = collide(world(ctrl, in: q, time: time).pos, in: q, time: time)
             let dv = target - s
-            let d = min(max(hypot(dv.x, dv.y), abs(rig.l1 - rig.l2) + 0.01), rig.l1 + rig.l2 - 0.01)
+            let d = min(max(hypot(dv.x, dv.y), max(1e-6, abs(rig.l1 - rig.l2))), rig.l1 + rig.l2)
             let base = atan2(dv.y, dv.x)
             let cosA = min(1, max(-1, (rig.l1 * rig.l1 + d * d - rig.l2 * rig.l2) / (2 * rig.l1 * max(d, 1e-6))))
             let a1 = base + (rig.flip ? -acos(cosA) : acos(cosA))
