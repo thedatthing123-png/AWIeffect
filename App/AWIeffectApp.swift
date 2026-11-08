@@ -99,6 +99,15 @@ struct RootView: View {
             p.layers = [group, child, outside]
             _openProject = State(initialValue: p)
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-letterAuthoring") {
+            var p = Project.new(name: "Letter Authoring Test", width: 600, height: 600, fps: 30, duration: 4)
+            var layer = p.makeLayer(name: "HELLO", content: .text, size: Vec2(500, 160))
+            var text = TextData(string: "HELLO")
+            text.fontSize = 110; text.ensureCharIDs()
+            layer.text = text
+            p.layers = [layer]
+            _openProject = State(initialValue: p)
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-rigAuthoring") {
             var p = Project.new(name: "Rig Authoring Test", width: 600, height: 600, fps: 30, duration: 4)
             var lower = p.makeLayer(name: "Forearm", content: .solid, size: Vec2(140, 38))

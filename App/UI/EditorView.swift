@@ -48,6 +48,11 @@ struct EditorView: View {
             state.select(state.project.layers.first?.id); state.currentTime = 1; state.panel = .clip
         }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-graph") { state.panel = .graph }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-letterAuthoring") {
+            state.select(state.project.layers.first?.id); state.panel = .text
+            TextStudioSession.shared.follow(state.selectedLayerID)
+            if let text = state.selectedLayer?.text { TextStudioSession.shared.selectedIDs = TextStudioLogic.ids(text, range: 0..<2) }
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-rigAuthoring") {
             state.select(state.project.layers.first?.id)
             state.ikDraftUpper = state.project.layers.last?.id
@@ -479,7 +484,9 @@ struct EditorView: View {
                     .allowsHitTesting(false)
                 }
                 if pen == nil, state.canvasMode == .comp, state.panel == .text || state.textTyping, state.selectedLayer?.text != nil {
-                    TextCanvasOverlay(state: state, fit: fit)
+                    ClockReader(clock: state.clock) { _ in
+                        LiveReader(live: state.live) { _ in TextCanvasOverlay(state: state, fit: fit) }
+                    }
                 }
                 if state.linkPicking {
                     LinkPickOverlay(state: state, fit: fit)

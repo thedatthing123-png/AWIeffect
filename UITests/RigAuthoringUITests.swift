@@ -1,6 +1,25 @@
 import XCTest
 
 final class RigAuthoringUITests: XCTestCase {
+    func testLettersRotateDirectlyWithoutOpeningAnotherPanel() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-letterAuthoring"]
+        app.launch()
+        let handle = app.descendants(matching: .any)["Rotate selected letters"].firstMatch
+        XCTAssertTrue(handle.waitForExistence(timeout: 15))
+        XCTAssertGreaterThanOrEqual(handle.frame.width, 44)
+        let before = handle.value as? String
+        let start = handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 45, dy: 15)))
+        XCTAssertNotEqual(handle.value as? String, before)
+        let image = XCUIScreen.main.screenshot()
+        let attachment = XCTAttachment(screenshot: image)
+        attachment.name = "letter-authoring-direct-rotation"; attachment.lifetime = .keepAlways; add(attachment)
+        try? FileManager.default.createDirectory(atPath: "/tmp/awi-ui", withIntermediateDirectories: true)
+        try? image.pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/awi-ui/letter-authoring-direct-rotation.png"))
+    }
+
     func testEndpointBindingAndDirectTargetAreOnCanvas() {
         continueAfterFailure = false
         let app = XCUIApplication()

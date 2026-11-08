@@ -145,6 +145,7 @@ struct TextCanvasOverlay: View {
     @ObservedObject private var session = TextStudioSession.shared
     let fit: CGRect
     @State private var mode: Mode?
+    @GestureState private var draggingLetters = false
 
     enum Mode {
         case select(anchor: Int)
@@ -174,6 +175,9 @@ struct TextCanvasOverlay: View {
                 }
             }
             .onAppear { session.follow(id) }
+            .onChange(of: id) { _, newID in finishDrag(); session.follow(newID) }
+            .onChange(of: draggingLetters) { _, active in if !active { finishDrag() } }
+            .onDisappear { finishDrag() }
         }
     }
 
@@ -186,6 +190,7 @@ struct TextCanvasOverlay: View {
 
     private func drag(_ geo: TextCanvasGeometry, layerText: TextData, time: Double) -> some Gesture {
         DragGesture(minimumDistance: 8)
+            .updating($draggingLetters) { _, active, _ in active = true }
             .onChanged { v in
                 if mode == nil {
                     guard let g = geo.nearest(v.startLocation) else { return }
@@ -220,10 +225,12 @@ struct TextCanvasOverlay: View {
                     break
                 }
             }
-            .onEnded { _ in
-                if case .move? = mode { state.endPanelGesture() }
-                mode = nil
-            }
+            .onEnded { _ in finishDrag() }
+    }
+
+    private func finishDrag() {
+        if case .move? = mode { state.endPanelGesture() }
+        mode = nil
     }
 }
 
@@ -281,7 +288,11 @@ private struct LetterRotationHandle: View {
                     .onEnded { _ in finish() })
                 .onChange(of: dragging) { _, active in if !active { finish() } }
                 .onDisappear { finish() }
+                .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Rotate selected letters")
+                .accessibilityValue(String(format: "%.1f degrees", state.selectedLayer?.text.map {
+                    TextStudioLogic.selectionRotation($0, ids: ids, at: state.currentTime)
+                } ?? 0))
                 .accessibilityHint("Drag around the selection; edits its existing rotation animator")
         }
     }
