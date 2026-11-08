@@ -99,6 +99,8 @@ final class EditorState: ObservableObject {
     var layerPickReturnPanel: ToolPanel = .transform
     var layerPickPrompt = "Tap a layer"
     /// Make-IK picks (kept here: the Rig panel closes while you tap a layer on the canvas).
+    @Published var boneDrawingArtworkID: UUID?
+    @Published var boneDrawingParentID: UUID?
     @Published var ikDraftUpper: UUID?
     @Published var ikDraftController: UUID?
     /// Rest endpoint in artwork coordinates, owned by one layer; changing selection cannot reuse another limb's tip.
@@ -489,6 +491,7 @@ final class EditorState: ObservableObject {
             second.id = remap[layer.id]!
             if let g = layer.groupID, let mapped = remap[g] { second.groupID = mapped }
             if let parent = layer.parentID, let mapped = remap[parent] { second.parentID = mapped }
+            second.remapRigReferences(remap)
             if layer.isGroup { second.tag = p.nextContainerTag() }
             if layer.inPoint < t {
                 if second.timeRemap == nil { second.sourceStart += (t - layer.inPoint) * layer.speed }

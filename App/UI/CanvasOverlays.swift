@@ -127,20 +127,24 @@ struct BoneOverlay: View {
         // Read the editor on the main actor; the Canvas drawing closure isn't main-actor isolated.
         let t = state.currentTime
         let view = state.canvasViewProject(state.live.project ?? state.project)
+        let posed = IKSolver.apply(view, time: t)
         let selectedID = state.selectedLayerID
         let fit = self.fit
         Canvas { ctx, _ in
             let resolved = Renderer.resolveParenting(view, time: t)
             let camera = Renderer.activeCamera(view, time: t)
             let layers = Dictionary(resolved.layers.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-            func joint(_ id: UUID) -> CGPoint? {
-                guard let l = layers[id],
-                      let p = LayerPlacement.projected(l.transform.anchor.value(at: t),
-                          by: Renderer.placementMatrix(l, camera: camera, time: t, renderScale: 1)) else { return nil }
+            func joint(_ id: UUID, spaceID: UUID?) -> CGPoint? {
+                guard let l = layers[id] else { return nil }
+                let matrix: simd_double3x3
+                if let spaceID, let art = layers[spaceID],
+                   let projected = EditorState.bonePlacement(l, artwork: art, project: posed, time: t, camera: camera) { matrix = projected }
+                else { matrix = Renderer.placementMatrix(l, camera: camera, time: t, renderScale: 1) }
+                guard let p = LayerPlacement.projected(l.transform.anchor.value(at: t), by: matrix) else { return nil }
                 return CGPoint(x: fit.minX + CGFloat(p.x) * s, y: fit.minY + CGFloat(p.y) * s)
             }
             for l in view.layers {
-                guard let rig = l.ik, let a = joint(rig.upperID), let b = joint(l.id), let c = joint(rig.controllerID) else { continue }
+                guard let rig = l.ik, let a = joint(rig.upperID, spaceID: rig.spaceID), let b = joint(l.id, spaceID: rig.spaceID), let c = joint(rig.controllerID, spaceID: rig.spaceID) else { continue }
                 let on = l.id == selectedID
                 var bone = Path(); bone.move(to: a); bone.addLine(to: b); bone.addLine(to: c)
                 ctx.stroke(bone, with: .color(.black.opacity(0.6)), style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round))
@@ -221,15 +225,25 @@ struct RigControllersOverlay: View {
         let source = state.live.project ?? state.project
         let view = state.canvasViewProject(source)
         let time = state.currentTime
+        let posed = IKSolver.apply(view, time: time)
         let resolved = Renderer.resolveParenting(view, time: time)
         let camera = Renderer.activeCamera(view, time: time)
         let world = Dictionary(resolved.layers.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let ids = Set(source.layers.compactMap { $0.ik?.controllerID })
+        let spaces = Dictionary(source.layers.compactMap { layer -> (UUID, UUID)? in
+            guard let ik = layer.ik, let space = ik.spaceID else { return nil }
+            return (ik.controllerID, space)
+        }, uniquingKeysWith: { first, _ in first })
+        func placement(_ layer: Layer) -> simd_double3x3 {
+            if let id = spaces[layer.id], let art = world[id],
+               let matrix = EditorState.bonePlacement(layer, artwork: art, project: posed, time: time, camera: camera) { return matrix }
+            return Renderer.placementMatrix(layer, camera: camera, time: time, renderScale: 1)
+        }
         // Resolve the hierarchy once for the overlay, not once for every hand/foot handle.
         ForEach(source.layers.filter { ids.contains($0.id) }) { controller in
             if let layer = world[controller.id],
                let point = LayerPlacement.projected(layer.transform.anchor.value(at: time),
-                   by: Renderer.placementMatrix(layer, camera: camera, time: time, renderScale: 1)) {
+                   by: placement(layer)) {
                 RigControllerHandle(state: state, controllerID: controller.id, name: controller.name,
                                     point: point, fit: fit)
                     .allowsHitTesting(!controller.isLocked)

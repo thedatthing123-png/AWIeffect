@@ -23,6 +23,7 @@ extension EditorState {
             member.inPoint = start; member.outPoint = end
             member.parentID = original.parentID.flatMap { remap[$0] }
             member.groupID = original.groupID.flatMap { remap[$0] } ?? layer.id
+            member.remapRigReferences(remap, keepExternal: false)
             for index in member.effects.indices {
                 member.effects[index].id = UUID()
                 if let old = member.effects[index].text?["layer"].flatMap(UUID.init(uuidString:)), let new = remap[old] {

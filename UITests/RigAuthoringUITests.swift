@@ -1,6 +1,34 @@
 import XCTest
 
 final class RigAuthoringUITests: XCTestCase {
+    func testDrawConnectedBoneChainAndPoseItOnCanvas() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-rigAuthoring"]
+        app.launch()
+        let draw = app.buttons["Draw Bones"].firstMatch
+        XCTAssertTrue(draw.waitForExistence(timeout: 15)); draw.tap()
+        let canvas = app.descendants(matching: .any)["Draw connected bones"].firstMatch
+        XCTAssertTrue(canvas.waitForExistence(timeout: 5))
+        let a = canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.45))
+        let b = canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.6, dy: 0.45))
+        let c = canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.6, dy: 0.7))
+        a.press(forDuration: 0.1, thenDragTo: b)
+        b.press(forDuration: 0.1, thenDragTo: c)
+        app.buttons["Done"].firstMatch.tap()
+        let tip = app.descendants(matching: .any)["Pose Bone 2"].firstMatch
+        XCTAssertTrue(tip.waitForExistence(timeout: 5))
+        let before = tip.value as? String
+        let handle = tip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        handle.press(forDuration: 0.1, thenDragTo: handle.withOffset(CGVector(dx: 35, dy: -15)))
+        XCTAssertNotEqual(tip.value as? String, before)
+        let image = XCUIScreen.main.screenshot()
+        let attachment = XCTAttachment(screenshot: image)
+        attachment.name = "bone-chain-authoring"; attachment.lifetime = .keepAlways; add(attachment)
+        try? FileManager.default.createDirectory(atPath: "/tmp/awi-ui", withIntermediateDirectories: true)
+        try? image.pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/awi-ui/bone-chain-authoring.png"))
+    }
+
     func testLettersRotateDirectlyWithoutOpeningAnotherPanel() {
         continueAfterFailure = false
         let app = XCUIApplication()

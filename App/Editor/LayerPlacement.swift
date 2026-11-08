@@ -24,6 +24,13 @@ enum LayerPlacement {
         let world = resolved.layers.first(where: { $0.id == layer.id }) ?? layer
         let camera = Renderer.activeCamera(resolved, time: time)
         let parent = layer.parentID.flatMap { Renderer.parentAffine($0, in: project, time: time)?.m } ?? matrix_identity_double3x3
+        let artworkID = layer.bone?.artworkID ?? project.layers.first(where: { $0.ik?.controllerID == layer.id })?.ik?.spaceID
+        if let artworkID, let art = resolved.layers.first(where: { $0.id == artworkID }) {
+            let posed = IKSolver.apply(project, time: time)
+            if let local = EditorState.rigParentToArtwork(layer, artworkID: artworkID, project: posed, time: time) {
+                return Renderer.placementMatrix(art, camera: camera, time: time, renderScale: 1) * local
+            }
+        }
         if !layer.is3D {
             let depth = world.transform.positionZ.value(at: time) - camera.world.columns.3.z
             let factor = camera.projects2DDepth ? max(1e-4, camera.zoom / max(max(1, abs(camera.zoom) * 0.01), depth)) : 1

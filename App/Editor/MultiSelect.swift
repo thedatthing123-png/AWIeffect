@@ -68,6 +68,7 @@ extension EditorState {
                     // Copies of a parent+child pair stay linked to each other, not to the originals.
                     if let pid = c.parentID, let np = remap[pid] { c.parentID = np }
                     if let gid = c.groupID, let ng = remap[gid] { c.groupID = ng }
+                    c.remapRigReferences(remap)
                     if c.isContainer {
                         var colorProject = p; colorProject.layers += out
                         c.tag = colorProject.nextContainerTag()

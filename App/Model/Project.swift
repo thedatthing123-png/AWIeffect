@@ -334,6 +334,8 @@ struct Layer: Codable, Equatable, Identifiable {
     var shapeOps: ShapeOps? = nil
     /// Two-bone IK rig (this layer is the lower limb).
     var ik: IKRig? = nil
+    /// Authoring bone: its transform is an ordinary layer track; artwork pixels bind separately.
+    var bone: BoneSettings? = nil
     /// IK tips and physics bodies can't pass through this layer.
     var isCollider = false
     /// 3D shadows (AE defaults: layers don't cast, do accept).
@@ -404,6 +406,7 @@ struct Layer: Codable, Equatable, Identifiable {
         groupID = try c.decodeIfPresent(UUID.self, forKey: .groupID)
         shapeOps = try c.decodeIfPresent(ShapeOps.self, forKey: .shapeOps)
         ik = try c.decodeIfPresent(IKRig.self, forKey: .ik)
+        bone = try c.decodeIfPresent(BoneSettings.self, forKey: .bone)
         isCollider = try c.decodeIfPresent(Bool.self, forKey: .isCollider) ?? false
         castsShadows = try c.decodeIfPresent(Bool.self, forKey: .castsShadows) ?? false
         acceptsShadows = try c.decodeIfPresent(Bool.self, forKey: .acceptsShadows) ?? true

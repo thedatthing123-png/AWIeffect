@@ -469,6 +469,7 @@ struct EditorView: View {
                                 BoneOverlay(state: state, fit: fit)
                                 RigEndpointOverlay(state: state, fit: fit)
                                 RigControllersOverlay(state: state, fit: fit)
+                                SkeletonCanvasOverlay(state: state, fit: fit)
                             }
                         }
                     }

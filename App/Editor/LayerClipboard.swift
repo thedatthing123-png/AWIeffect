@@ -93,11 +93,7 @@ enum LayerClipboardFiles {
                     }
                 }
                 for i in l.masks.indices { l.masks[i].id = UUID() }
-                if var ik = l.ik {
-                    if let upper = layerIDs[ik.upperID], let controller = layerIDs[ik.controllerID] {
-                        ik.upperID = upper; ik.controllerID = controller; l.ik = ik
-                    } else { l.ik = nil }
-                }
+                l.remapRigReferences(layerIDs, keepExternal: false)
                 return l
             }
             let comps = payload.precomps.map { original -> Project in

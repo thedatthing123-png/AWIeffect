@@ -17,6 +17,8 @@ struct IKRig: Codable, Equatable {
     var blend: Double? = nil
     /// Animated replacement; old projects retain their legacy constant blend until it is edited.
     var mix: Animated<Double>? = nil
+    /// Authored skeletons solve in their artwork's plane; nil preserves legacy composition-space rigs.
+    var spaceID: UUID? = nil
     func mixValue(at time: Double) -> Double { mix?.value(at: time) ?? blend ?? 1 }
 }
 
@@ -77,9 +79,13 @@ enum IKSolver {
                   let ctrl = q.layers.first(where: { $0.id == rig.controllerID }),
                   rig.l1.isFinite, rig.l2.isFinite, rig.l1 > 0, rig.l2 > 0 else { continue }
             let upper = q.layers[ui]
-            let s = world(upper, in: q, time: time).pos
-            let parentRot = upper.parentID.flatMap { Renderer.parentAffine($0, in: q, time: time)?.rot } ?? 0
-            let target = collide(world(ctrl, in: q, time: time).pos, in: q, time: time)
+            let space = rig.spaceID.flatMap { Renderer.parentAffine($0, in: q, time: time) }
+            if rig.spaceID != nil && space == nil { continue }
+            let spaceMatrix = space?.m ?? matrix_identity_double3x3
+            guard abs(spaceMatrix.determinant) > 1e-10,
+                  let s = LayerPlacement.projected(world(upper, in: q, time: time).pos, by: spaceMatrix.inverse),
+                  let target = LayerPlacement.projected(collide(world(ctrl, in: q, time: time).pos, in: q, time: time), by: spaceMatrix.inverse) else { continue }
+            let parentRot = (upper.parentID.flatMap { Renderer.parentAffine($0, in: q, time: time)?.rot } ?? 0) - (space?.rot ?? 0)
             let dv = target - s
             let d = min(max(hypot(dv.x, dv.y), max(1e-6, abs(rig.l1 - rig.l2))), rig.l1 + rig.l2)
             let base = atan2(dv.y, dv.x)
@@ -105,7 +111,7 @@ extension EditorState {
     /// Endpoint lives in artwork space so moving the camera does not change the bind pose.
     func ikRestTip(for layer: Layer) -> Vec2 {
         if let draft = ikDraftTip, draft.layerID == layer.id { return draft.point }
-        return Vec2(0, Renderer.layerHalfSize(layer, time: currentTime).y)
+        return layer.bone?.tip ?? Vec2(0, Renderer.layerHalfSize(layer, time: currentTime).y)
     }
 
     /// Rigs the selected layer as the lower limb: `upper` must be its parent; the controller sits at the limb's tip.
@@ -123,20 +129,36 @@ extension EditorState {
         let disp = displayProject
         guard let up = disp.layers.first(where: { $0.id == upper }), let lo = disp.layers.first(where: { $0.id == lower.id }) else { return }
         // Bind endpoint in comp space; its rest handle is authored in artwork coordinates.
-        let M = Renderer.layerMatrix(lo, time: t, renderScale: 1)
+        let capture = IKSolver.apply(project, time: t)
+        var M = Renderer.layerMatrix(lo, time: t, renderScale: 1)
+        if lower.bone != nil, let frame = Renderer.parentAffine(lower.id, in: capture, time: t) {
+            let anchor = lower.transform.anchor.value(at: t)
+            let fromPivot = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(-anchor.x, -anchor.y, 1)))
+            M = frame.m * fromPivot
+        }
         let localTip = ikRestTip(for: lower)
         let tipW = M * SIMD3(localTip.x, localTip.y, 1)
         // A picked controller defines the end joint at bind time, rather than silently using the image edge.
         let tip = controller.flatMap { id in disp.layers.first(where: { $0.id == id }) }
             .map { $0.transform.position.value(at: t) } ?? Vec2(tipW.x, tipW.y)
         guard tip.x.isFinite, tip.y.isFinite else { return }
-        let s = up.transform.position.value(at: t), e = lo.transform.position.value(at: t)
-        let l1 = hypot(e.x - s.x, e.y - s.y), l2 = hypot(tip.x - e.x, tip.y - e.y)
+        let spaceID = lower.bone?.artworkID
+        if let spaceID, project.layers.first(where: { $0.id == upper })?.bone?.artworkID != spaceID { return }
+        let space = spaceID.flatMap { Renderer.parentAffine($0, in: capture, time: t) }
+        let matrix = space?.m ?? matrix_identity_double3x3
+        guard abs(matrix.determinant) > 1e-10,
+              let s = LayerPlacement.projected(up.transform.position.value(at: t), by: matrix.inverse),
+              let e = LayerPlacement.projected(lo.transform.position.value(at: t), by: matrix.inverse),
+              let end = LayerPlacement.projected(tip, by: matrix.inverse) else { return }
+        let l1 = hypot(e.x - s.x, e.y - s.y), l2 = hypot(end.x - e.x, end.y - e.y)
         guard l1 > 1, l2 > 1 else { return }
         // Preserve the authored elbow side. Always choosing the positive branch can flip a limb on bind.
-        let bend = (tip.x - s.x) * (e.y - s.y) - (tip.y - s.y) * (e.x - s.x) < 0
-        let rest1 = atan2(e.y - s.y, e.x - s.x) * 180 / .pi - up.transform.rotation.value(at: t)
-        let rest2 = atan2(tip.y - e.y, tip.x - e.x) * 180 / .pi - lo.transform.rotation.value(at: t)
+        let bend = (end.x - s.x) * (e.y - s.y) - (end.y - s.y) * (e.x - s.x) < 0
+        let rest1 = atan2(e.y - s.y, e.x - s.x) * 180 / .pi - (up.transform.rotation.value(at: t) - (space?.rot ?? 0))
+        let rest2 = atan2(end.y - e.y, end.x - e.x) * 180 / .pi - (lo.transform.rotation.value(at: t) - (space?.rot ?? 0))
+        if let spaceID, let controller {
+            guard controller != spaceID, !IKSolver.descendants(of: controller, in: project).contains(spaceID) else { return }
+        }
         var ctrlID = controller ?? UUID()
         // One undo step: the link and the rig.
         let ownsEdit = !editGroupOpen
@@ -147,17 +169,25 @@ extension EditorState {
             setParent(upper)
             guard project.layers.first(where: { $0.id == lower.id })?.parentID == upper else { return }
         }
+        if let spaceID, let controller, project.layers.first(where: { $0.id == controller })?.parentID != spaceID {
+            selectedLayerID = controller
+            setParent(spaceID)
+            selectedLayerID = lower.id
+            guard project.layers.first(where: { $0.id == controller })?.parentID == spaceID else { return }
+        }
         mutate("Make IK") { p in
             if controller == nil {
                 var n = p.makeLayer(name: "\(lower.name) Controller", content: .solid, size: Vec2(40, 40))
                 n.isNull = true
                 n.tag = .amber
-                n.transform.position = Animated(tip)
+                n.parentID = spaceID
+                n.groupID = lower.groupID
+                n.transform.position = Animated(spaceID == nil ? tip : end)
                 ctrlID = n.id
                 p.layers.insert(n, at: 0)
             }
             if let li2 = p.layers.firstIndex(where: { $0.id == lower.id }) {
-                p.layers[li2].ik = IKRig(upperID: upper, controllerID: ctrlID, flip: bend, l1: l1, l2: l2, rest1: rest1, rest2: rest2)
+                p.layers[li2].ik = IKRig(upperID: upper, controllerID: ctrlID, flip: bend, l1: l1, l2: l2, rest1: rest1, rest2: rest2, spaceID: spaceID)
             }
         }
         ikDraftTip = nil
@@ -169,10 +199,15 @@ extension EditorState {
     func poseIKController(_ id: UUID, atCanvas target: Vec2) {
         let source = live.project ?? project
         guard source.layers.contains(where: { $0.ik?.controllerID == id }),
-              let controller = source.layers.first(where: { $0.id == id }), !controller.isLocked,
-              let local = MotionPathMath.value(controller, at: target,
-                                               project: canvasViewProject(source), time: currentTime),
-              local.x.isFinite, local.y.isFinite else { return }
+              let controller = source.layers.first(where: { $0.id == id }), !controller.isLocked else { return }
+        let rig = source.layers.first { $0.ik?.controllerID == id }?.ik
+        let local: Vec2?
+        if let artworkID = rig?.spaceID {
+            local = rigPointInParent(controller, artworkID: artworkID, atCanvas: target, project: source)
+        } else {
+            local = MotionPathMath.value(controller, at: target, project: canvasViewProject(source), time: currentTime)
+        }
+        guard let local, local.x.isFinite, local.y.isFinite else { return }
         let time = currentTime
         mutate("Pose IK") { p in
             guard let i = p.layers.firstIndex(where: { $0.id == id }) else { return }
@@ -205,6 +240,7 @@ struct RigPanel: View {
             if let l = state.selectedLayer {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
+                        BoneAuthoringControls(state: state)
                         Toggle("Collider (IK tips and physics bodies can't go through this layer)", isOn: Binding(get: { l.isCollider }, set: { b in
                             state.mutate("Collider") { p in if let i = state.selectedIndex { p.layers[i].isCollider = b } }
                         }))

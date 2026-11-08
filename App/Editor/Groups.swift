@@ -148,6 +148,7 @@ extension EditorState {
                 if layer.id == gid { copy.name += " copy"; copy.tag = p.nextContainerTag() }
                 if let parent = layer.parentID, let mapped = remap[parent] { copy.parentID = mapped }
                 if let group = layer.groupID, let mapped = remap[group] { copy.groupID = mapped }
+                copy.remapRigReferences(remap)
                 return copy
             }
             p.layers.insert(contentsOf: copies, at: gi)
