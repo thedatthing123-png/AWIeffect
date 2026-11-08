@@ -35,6 +35,8 @@ const TOOLS = [
     inputSchema: { type: "object", properties: {} }, call: () => ["GET", "/info"] },
   { name: "get_catalog", description: "Every effect with its settings and ranges, blend modes, layer presets, title styles and text animations. Read this before adding effects.",
     inputSchema: { type: "object", properties: {} }, call: () => ["GET", "/catalog"] },
+  { name: "get_timeline", description: "Compact read-only timeline summary: layer IDs, order, in/out points, effects, visibility, 3D flags, selection and playhead. Does not change the project.",
+    inputSchema: { type: "object", properties: {} }, call: () => ["GET", "/timeline"] },
   { name: "get_project", description: "The open project as JSON (layers, keyframes, effects, text, cameras…).",
     inputSchema: { type: "object", properties: {} }, call: () => ["GET", "/project"] },
   { name: "set_project", description: "Replace the open project with edited JSON (one undo step in the app). Always start from get_project and keep ids.",
