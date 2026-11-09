@@ -1,5 +1,7 @@
 # AWIeffect — handoff (Claude → Codex), 2026-11-07
 
+Latest priority update (2026-11-08): read [JOINT_RIG_RECOVERY_HANDOFF.md](JOINT_RIG_RECOVERY_HANDOFF.md) before more rig work. Build 25 is published and passed CI, but the owner reports a floating image piece and confusing setup. Joint/Puppet precision movement and coherent attachment/conflict handling are the immediate repair; weighted mesh work is deferred on its separate branch.
+
 Read this, AGENTS.md, ROADMAP.md, docs/RENEWAL_PLAN.md and docs/TEXT_STUDIO_SPEC.md before touching code. Then docs/EXPANSION_PLAN.md for everything after the renewal.
 
 ## The owner and how to work
