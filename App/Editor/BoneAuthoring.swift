@@ -290,5 +290,14 @@ extension Layer {
             }
             else { ik = nil }
         }
+        if var skin = boneSkin {
+            skin.bindings = skin.bindings.compactMap { binding in
+                guard let id = ids[binding.jointID] ?? (keepExternal ? binding.jointID : nil) else { return nil }
+                var updated = binding
+                updated.jointID = id
+                return updated
+            }
+            boneSkin = skin.bindings.count >= 2 ? skin : nil
+        }
     }
 }
