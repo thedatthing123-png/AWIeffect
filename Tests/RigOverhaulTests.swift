@@ -215,4 +215,13 @@ import simd
         for vertex in mesh.vertices { XCTAssertEqual(mesh.deformed(vertex,matrices: palette).x,vertex.rest.x,accuracy: 1e-6) }
     }
 
+    func testOpeningAndClosingRestModeWithoutEditingDoesNotChangeProject() throws {
+        let (s,art) = editor()
+        let root = try XCTUnwrap(s.addBone(artworkID: art,parentID: nil,start: .zero,end: Vec2(100,0)))
+        s.selectAuthoringBone(root); s.bindBoneMesh()
+        let before = s.project
+        s.boneRestEditing = true; s.panel = .effects
+        XCTAssertEqual(s.project,before)
+    }
+
 }

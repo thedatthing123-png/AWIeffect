@@ -31,7 +31,8 @@ extension EditorState {
 
     /// Rebind setup matrices once when leaving Rest; brush weights and pose key tracks are retained.
     func finishBoneRestEditing() {
-        guard let artworkID = rigArtworkID else { return }
+        guard boneRestDirty,let artworkID = rigArtworkID else { return }
+        boneRestDirty = false
         var setup = project
         for i in setup.layers.indices { setup.layers[i].ik = nil }
         let frames = Renderer.parentAffineMap(setup,time: currentTime)
@@ -117,6 +118,7 @@ extension EditorState {
               let oldFrame = Renderer.parentAffine(id,in: source,time: currentTime),abs(oldFrame.m.determinant)>1e-10 else { return }
         let delta = point-bone.transform.position.value(at: currentTime)
         guard hypot(delta.x,delta.y)>1e-10 else { return }
+        boneRestDirty = true
         let time = currentTime
         mutate("Move Rest Joint") { p in
             guard let index = p.layers.firstIndex(where: { $0.id == id }) else { return }
