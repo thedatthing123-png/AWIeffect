@@ -318,4 +318,29 @@ import simd
         XCTAssertGreaterThan(abs(a[1].y),1)
     }
 
+    func testRigPositionPadTravelsInScreenDirectionThroughRotationMirroringAndAutoOrient() throws {
+        for rotation in [0.0,90,180] { for mirrored in [false,true] {
+            let (s,art) = editor()
+            let root = try XCTUnwrap(s.addBone(artworkID: art,parentID: nil,start: .zero,end: Vec2(100,0)))
+            s.selectAuthoringBone(root)
+            let ai = try XCTUnwrap(s.project.layers.firstIndex { $0.id == art })
+            s.project.layers[ai].transform.rotation = Animated(rotation)
+            s.project.layers[ai].transform.scale = Animated(Vec2(mirrored ? -1.5 : 1.5,0.75))
+            s.project.layers[ai].transform.position.insertKeyframe(Keyframe(time: 0,value: Vec2(300,300),interpolation: .linear))
+            s.project.layers[ai].transform.position.insertKeyframe(Keyframe(time: 1,value: Vec2(200,300),interpolation: .linear))
+            s.project.layers[ai].transform.autoOrient = true; s.currentTime = 0.5
+            XCTAssertEqual(s.rigPositionSelection,.poseJoint(root),"Position pad translates an FK joint instead of implicitly rotating its tip")
+            let before = try XCTUnwrap(s.displayPlacement(of: root)).columns.2
+            var drag = try XCTUnwrap(s.rigPointGesture(.poseJoint(root)))
+            s.moveRigPosition(.poseJoint(root),to: try XCTUnwrap(drag.move(by: Vec2(20,-15))))
+            let after = try XCTUnwrap(s.displayPlacement(of: root)).columns.2
+            XCTAssertEqual(after.x/after.z-before.x/before.z,20,accuracy: 1e-6)
+            XCTAssertEqual(after.y/after.z-before.y/before.z,-15,accuracy: 1e-6)
+            let rendered = Renderer.resolveParenting(s.project,time: s.currentTime)
+            let actualArt = try XCTUnwrap(rendered.layers.first { $0.id == art })
+            let cachedArt = try XCTUnwrap(s.rigGeometry.world.layers.first { $0.id == art })
+            XCTAssertEqual(cachedArt.transform.rotation.value(at: s.currentTime),actualArt.transform.rotation.value(at: s.currentTime),accuracy: 1e-7)
+        } }
+    }
+
 }

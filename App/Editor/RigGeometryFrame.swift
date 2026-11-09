@@ -27,7 +27,7 @@ import simd
         view = source
         posed = AutoOrient.apply(IKSolver.apply(source,time: time),time: time)
         var snapshot = posed
-        for i in snapshot.layers.indices { snapshot.layers[i].ik = nil }
+        for i in snapshot.layers.indices { snapshot.layers[i].ik = nil; snapshot.layers[i].transform.autoOrient = false }
         world = Renderer.resolveParenting(snapshot,time: time)
         let frames = Renderer.parentAffineMap(posed,time: time)
         parentFrames = frames

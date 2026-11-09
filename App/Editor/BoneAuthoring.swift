@@ -419,7 +419,7 @@ private struct BoneSegmentHandle: View {
                         }
                         guard let input = restDrag,
                               let point = LayerPlacement.projected(input.origin+Vec2(Double(value.translation.width/scale),Double(value.translation.height/scale)),by: input.inverse) else { return }
-                        state.moveRigPosition(input.selection,to: point)
+                        state.moveRigPosition(input.selection,to: point-input.offset)
                     }.onEnded { _ in finishRest() },including: state.selectedLayerID == id && (state.boneRestEditing || state.canTranslatePoseJoint(id)) ? .all : .none)
                 .onChange(of: touching) { _,active in if !active { finishRest() } }
                 .onDisappear { finishRest() }

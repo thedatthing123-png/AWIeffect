@@ -771,7 +771,7 @@ extension EditorState {
         if let owner = selectedIKLayer, let ik = owner.ik {
             if let selected = selectedLayer, selected.bone != nil,
                ik.mixValue(at: currentTime) <= 0.001 {
-                return .fkBoneTip(selected.id)
+                return .poseJoint(selected.id)
             }
             return .ikController(ik.controllerID)
         }
@@ -781,7 +781,7 @@ extension EditorState {
                 guard let rig = $0.ik, rig.mixValue(at: currentTime) > 0.001 else { return false }
                 return rig.upperID == selected.id || $0.id == selected.id
             }
-            return constrained ? nil : .fkBoneTip(selected.id)
+            return constrained ? nil : .poseJoint(selected.id)
         }
         if let lower = selectedLayer, ikDraftUpper != nil, ikDraftController == nil {
             return .restEndpoint(lower.id)
@@ -889,10 +889,11 @@ struct RigPointGesture {
     let selection: RigPositionSelection
     let origin: Vec2
     let inverse: simd_double3x3
+    let offset: Vec2
     var delta = Vec2.zero
     mutating func move(by change: Vec2) -> Vec2? {
         delta = delta + change
-        return LayerPlacement.projected(origin+delta,by: inverse)
+        return LayerPlacement.projected(origin+delta,by: inverse).map { $0-offset }
     }
 }
 
@@ -900,18 +901,23 @@ extension EditorState {
     func rigPointGesture(_ selection: RigPositionSelection) -> RigPointGesture? {
         guard let value = rigPositionValue(selection) else { return nil }
         let matrix: simd_double3x3
+        var offset = Vec2.zero
         switch selection {
         case .fkBoneTip: matrix = matrix_identity_double3x3
         case .restEndpoint(let id):
             guard let placement = displayPlacement(of: id) else { return nil }; matrix = placement
         case .restJoint(let id), .poseJoint(let id), .ikController(let id):
-            var source = canvasViewProject(live.project ?? project)
-            if case .restJoint = selection { for i in source.layers.indices { source.layers[i].ik = nil } }
-            guard let controller = source.layers.first(where: { $0.id == id }) else { return nil }
-            matrix = LayerPlacement.positionMatrix(controller,project: source,time: currentTime)
+            let geometry = rigGeometry
+            guard let node = geometry.posed.layers.first(where: { $0.id == id }),let display = geometry.matrices[id] else { return nil }
+            let local = Renderer.layerMatrix(node,time: currentTime,renderScale: 1)
+            guard abs(local.determinant)>1e-10 else { return nil }
+            // Remove the evaluated own transform from the exact displayed frame, once.
+            matrix = display*local.inverse
+            let effects = Renderer.transformOffsets(node,time: currentTime)
+            offset = Vec2(effects.dx,effects.dy)
         }
-        guard abs(matrix.determinant)>1e-10, let origin = LayerPlacement.projected(value,by: matrix) else { return nil }
-        return RigPointGesture(selection: selection,origin: origin,inverse: matrix.inverse)
+        guard abs(matrix.determinant)>1e-10, let origin = LayerPlacement.projected(value+offset,by: matrix) else { return nil }
+        return RigPointGesture(selection: selection,origin: origin,inverse: matrix.inverse,offset: offset)
     }
 }
 
