@@ -26,6 +26,16 @@ final class BoneAuthoringTests: XCTestCase {
         XCTAssertFalse(binding.boneIDs.contains(bone))
     }
 
+    func testDeletingArtworkRemovesItsOwnedSkeletonAndUndoRestoresIt() throws {
+        let (s,art) = state()
+        let bone = try XCTUnwrap(s.addBone(artworkID: art,parentID: nil,start: .zero,end: Vec2(100,0)))
+        s.select(bone); s.bindBoneMesh()
+        let before = s.project.layers
+        s.select(art); s.deleteSelected()
+        XCTAssertFalse(s.project.layers.contains { $0.id == art || $0.id == bone })
+        s.undo(); XCTAssertEqual(s.project.layers,before)
+    }
+
     func testWeightStrokePreviewCommitCancelAndUndo() throws {
         let (s, art) = state()
         let bone = try XCTUnwrap(s.addBone(artworkID: art, parentID: nil, start: .zero, end: Vec2(100,0)))

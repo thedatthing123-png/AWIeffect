@@ -444,6 +444,9 @@ final class EditorState: ObservableObject {
         guard let i = selectedIndex else { return }
         let id = project.layers[i].id
         if project.layers[i].isGroup { deleteGroup(id); return }
+        if expandedLayerIDs([id]).count > 1 {
+            finishBoneWeights(); multiSelection = [id]; deleteMulti(); return
+        }
         mutate("Delete Layer") { p in
             Self.unparentKeepingWorld(&p) { $0.parentID == id }
             p.layers.remove(at: i)
