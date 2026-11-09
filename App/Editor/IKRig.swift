@@ -244,6 +244,75 @@ extension EditorState {
         panel = .rig
     }
 
+    /// Evaluated wrist in composition space, including for pre-Build-26 rigs that did not
+    /// serialize their authored tip point. Uses the solved chain length, not the orange
+    /// target location, so an unreachable target cannot detach a hand.
+    func reachedIKWrist(owner: Layer, in source: Project, at time: Double) -> Vec2? {
+        guard let rig = owner.ik else { return nil }
+        let posed = IKSolver.apply(source, time: time)
+        guard let lowerFrame = Renderer.parentAffine(owner.id, in: posed, time: time),
+              let targetFrame = Renderer.parentAffine(rig.controllerID, in: posed, time: time) else { return nil }
+        let space = rig.spaceID.flatMap { Renderer.parentAffine($0, in: posed, time: time)?.m }
+            ?? matrix_identity_double3x3
+        guard abs(space.determinant) > 1e-10 else { return nil }
+        let eWorld = lowerFrame.m * SIMD3(0.0, 0.0, 1.0)
+        let tWorld = targetFrame.m * SIMD3(0.0, 0.0, 1.0)
+        guard let elbow = LayerPlacement.projected(Vec2(eWorld.x, eWorld.y), by: space.inverse),
+              let target = LayerPlacement.projected(Vec2(tWorld.x, tWorld.y), by: space.inverse) else { return nil }
+        let delta = target - elbow
+        let length = hypot(delta.x, delta.y)
+        guard length > 1e-8, rig.l2 > 0 else { return nil }
+        let end = elbow + delta * (rig.l2 / length)
+        return LayerPlacement.projected(end, by: space)
+    }
+
+    /// Explicit non-destructive repair for an existing two-bone IK. This never creates a
+    /// new controller or changes the solver: it re-links the chosen end artwork and
+    /// places its anchor at the reached wrist in one undo step.
+    func repairIKEndAttachment(_ endArtworkID: UUID) {
+        guard let owner = selectedIKLayer, let rig = owner.ik,
+              let piece = project.layers.first(where: { $0.id == endArtworkID }),
+              !piece.isLocked, endArtworkID != owner.id,
+              endArtworkID != rig.upperID, endArtworkID != rig.controllerID,
+              !IKSolver.descendants(of: endArtworkID, in: project).contains(owner.id),
+              !IKSolver.descendants(of: endArtworkID, in: project).contains(rig.upperID) else {
+            recoveryNotice = "Choose an unlocked end piece outside this rig's parent chain."
+            return
+        }
+        let t = currentTime
+        guard let wristWorld = reachedIKWrist(owner: owner, in: project, at: t) else {
+            recoveryNotice = "Could not evaluate the wrist. Check the rig's controller and bone lengths."
+            return
+        }
+        let previousSelection = selectedLayerID
+        let ownsEdit = !editGroupOpen
+        if ownsEdit { beginEdit("Repair IK Attachment") }
+        defer { if ownsEdit { endEdit() }; selectedLayerID = previousSelection }
+
+        if piece.parentID != owner.id {
+            selectedLayerID = endArtworkID
+            setParent(owner.id)
+        }
+        guard project.layers.first(where: { $0.id == endArtworkID })?.parentID == owner.id,
+              let frame = Renderer.parentAffine(owner.id, in: IKSolver.apply(project, time: t), time: t),
+              abs(frame.m.determinant) > 1e-10,
+              let wristLocal = LayerPlacement.projected(wristWorld, by: frame.m.inverse) else {
+            recoveryNotice = "The hand could not be linked to its forearm. Undo and check the layer parents."
+            return
+        }
+        mutate("Align End Artwork") { p in
+            guard let i = p.layers.firstIndex(where: { $0.id == endArtworkID }) else { return }
+            var position = p.layers[i].transform.position
+            let offset = wristLocal - position.value(at: t)
+            position.staticValue = position.staticValue + offset
+            position.keyframes = position.keyframes.map { k in
+                var moved = k; moved.value = moved.value + offset; return moved
+            }
+            p.layers[i].transform.position = position
+        }
+        ikDraftHand = nil
+    }
+
     /// Direct controller posing shares the normal position tracks and paired depth keys.
     func poseIKController(_ id: UUID, atCanvas target: Vec2) {
         let source = live.project ?? project
@@ -528,6 +597,24 @@ struct RigPanel: View {
                                 Button("Select Controller") { state.select(rig.controllerID); state.panel = .transform }
                                 Spacer()
                                 Button("Remove IK", role: .destructive) { state.removeIK() }
+                            }
+                            Divider().overlay(Theme.stroke)
+                            Text("End artwork attachment").font(.system(size: 12, weight: .semibold))
+                            picker("Hand / Foot", selection: state.ikDraftHand, exclude: owner.id) {
+                                state.beginLayerPick(returnTo: .rig, prompt: "Tap the artwork to attach to this wrist") { id in
+                                    if let id { state.ikDraftHand = id }
+                                }
+                            } clear: { state.ikDraftHand = nil }
+                            if state.ikDraftHand != nil {
+                                Text("The dashed canvas outline previews where the end piece will be aligned.")
+                                    .font(.caption2).foregroundStyle(Theme.textDim)
+                                Button {
+                                    if let id = state.ikDraftHand { state.repairIKEndAttachment(id) }
+                                } label: {
+                                    Label("Repair / Attach End Piece", systemImage: "link")
+                                        .frame(maxWidth: .infinity, minHeight: 44)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
                             }
                         } else {
                             Text("Select the LOWER part (forearm / shin), pick its upper part (upper arm / thigh), then place the end joint on the canvas at the wrist or ankle. Make IK binds this pose; moving its controller poses the limb.")
