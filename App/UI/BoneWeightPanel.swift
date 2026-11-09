@@ -109,7 +109,7 @@ struct BoneWeightPanel: View {
                         BoneSkinControls(state: state,workflow: .boneWeight)
                     }
                 }.padding(.horizontal,12).padding(.bottom,12)
-            }
+            }.accessibilityIdentifier("bone-weight-panel-scroll")
         }
     }
 }

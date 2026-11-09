@@ -27,7 +27,7 @@ final class RigAuthoringUITests: XCTestCase {
         let app = XCUIApplication(); app.launchArguments = ["-uiTesting","-uiTesting-rigAuthoring","-uiTesting-pieceWeight"]; app.launch()
         let bind = app.buttons["Bind Mesh"].firstMatch
         XCTAssertTrue(bind.waitForExistence(timeout: 15))
-        for _ in 0..<6 where !bind.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        for _ in 0..<6 where !bind.isHittable { app.scrollViews["bone-weight-panel-scroll"].swipeUp() }
         XCTAssertTrue(bind.isHittable); bind.tap()
         XCTAssertTrue(app.buttons["Weights"].firstMatch.waitForExistence(timeout: 5))
         let image = XCUIScreen.main.screenshot(); let attachment = XCTAttachment(screenshot: image)
