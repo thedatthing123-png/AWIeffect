@@ -100,7 +100,7 @@ enum IKSolver {
                 guard let index = solved.layers.firstIndex(where: { $0.id == id }),
                       let frame = Renderer.parentAffine(id, in: solved, time: time),
                       let pivot = LayerPlacement.projected(.zero, by: bindSpace.inverse * frame.m),
-                      let latestWorld = tipWorld(owner, rig: rig, in: solved, time: time),
+                      let latestWorld = Self.tipWorld(owner, rig: rig, in: solved, time: time),
                       let effector = LayerPlacement.projected(latestWorld, by: bindSpace.inverse) else { continue }
                 let a = effector - pivot, b = target - pivot
                 let normA = hypot(a.x, a.y), normB = hypot(b.x, b.y)
