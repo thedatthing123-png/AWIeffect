@@ -142,8 +142,9 @@ extension EditorState {
         let tip = controller.flatMap { id in disp.layers.first(where: { $0.id == id }) }
             .map { $0.transform.position.value(at: t) } ?? Vec2(tipW.x, tipW.y)
         guard tip.x.isFinite, tip.y.isFinite else { return }
-        let spaceID = lower.bone?.artworkID
-        if let spaceID, project.layers.first(where: { $0.id == upper })?.bone?.artworkID != spaceID { return }
+        let rawUpper = project.layers.first(where: { $0.id == upper })
+        let spaceID = lower.bone?.artworkID ?? rawUpper?.parentID
+        if let artworkID = lower.bone?.artworkID, rawUpper?.bone?.artworkID != artworkID { return }
         let space = spaceID.flatMap { Renderer.parentAffine($0, in: capture, time: t) }
         let matrix = space?.m ?? matrix_identity_double3x3
         guard abs(matrix.determinant) > 1e-10,

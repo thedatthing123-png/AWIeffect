@@ -11,6 +11,45 @@ final class BoneAuthoringTests: XCTestCase {
         return (EditorState(project: p, store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))), art.id)
     }
 
+    func testThreeImagePiecesFollowShoulderAndIKWithoutMesh() throws {
+        var p = Project.new(name: "Three-piece arm",width: 600,height: 600,fps: 30,duration: 4)
+        var root = p.makeLayer(name: "Character",content: .solid,size: Vec2(20,20)); root.isNull = true
+        var upper = p.makeLayer(name: "Upper arm",content: .solid,size: Vec2(120,36))
+        upper.parentID = root.id; upper.transform.position = Animated(Vec2(-120,0)); upper.transform.anchor = Animated(Vec2(-60,0))
+        var lower = p.makeLayer(name: "Forearm",content: .solid,size: Vec2(100,32))
+        lower.parentID = upper.id; lower.transform.position = Animated(Vec2(120,0)); lower.transform.anchor = Animated(Vec2(-50,0))
+        var hand = p.makeLayer(name: "Hand",content: .solid,size: Vec2(36,26))
+        hand.parentID = lower.id; hand.transform.position = Animated(Vec2(100,0)); hand.transform.anchor = Animated(Vec2(-18,0))
+        p.layers = [hand,lower,upper,root]
+        let s = EditorState(project: p,store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        s.select(lower.id); s.ikDraftTip = (lower.id,Vec2(50,0)); s.makeIK(upper: upper.id,controller: nil)
+        let rig = try XCTUnwrap(s.project.layers.first { $0.id == lower.id }?.ik)
+        XCTAssertEqual(rig.spaceID,root.id)
+        let ri = try XCTUnwrap(s.project.layers.firstIndex { $0.id == root.id })
+        let ci = try XCTUnwrap(s.project.layers.firstIndex { $0.id == rig.controllerID })
+        // Move the whole character, including its depth, without needing skinning or a 3D model.
+        s.project.layers[ri].transform.rotation = Animated(25)
+        s.project.layers[ri].transform.scale = Animated(Vec2(150,75))
+        s.project.layers[ri].transform.positionZ = Animated(200)
+        s.project.layers[ci].transform.position = Animated(Vec2(30,100))
+        let resolved = Renderer.resolveParenting(s.project,time: 0)
+        let drawnLower = try XCTUnwrap(resolved.layers.first { $0.id == lower.id })
+        let drawnHand = try XCTUnwrap(resolved.layers.first { $0.id == hand.id })
+        // Evaluate full affine hierarchy, retaining the scaled parent's shear instead of decomposing it.
+        let posed = IKSolver.apply(s.project,time: 0)
+        let parent = try XCTUnwrap(Renderer.parentAffine(lower.id,in: posed,time: 0))
+        let wrist = parent.m*SIMD3(100.0,0,1)
+        let target = try XCTUnwrap(Renderer.parentAffine(rig.controllerID,in: posed,time: 0)).m*SIMD3(0.0,0,1)
+        XCTAssertEqual(wrist.x,target.x,accuracy: 1e-6); XCTAssertEqual(wrist.y,target.y,accuracy: 1e-6)
+        XCTAssertEqual(drawnHand.transform.position.value(at: 0).x,target.x,accuracy: 1e-6)
+        XCTAssertEqual(drawnHand.transform.position.value(at: 0).y,target.y,accuracy: 1e-6)
+        XCTAssertEqual(drawnLower.transform.positionZ.value(at: 0),200,accuracy: 1e-6)
+        XCTAssertEqual(drawnHand.transform.positionZ.value(at: 0),200,accuracy: 1e-6)
+        XCTAssertNil(drawnHand.bone); XCTAssertNil(drawnLower.bone)
+        let saved = try JSONDecoder().decode(Project.self,from: JSONEncoder().encode(s.project))
+        XCTAssertEqual(saved.layers.first { $0.id == hand.id }?.parentID,lower.id)
+    }
+
     func testConnectedBonesUseExistingTransformsAndPoseHierarchy() throws {
         let (s, art) = state()
         s.select(art); s.beginBoneDrawing()
