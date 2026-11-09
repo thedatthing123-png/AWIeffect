@@ -965,6 +965,8 @@ struct RigPanel: View {
                             .buttonStyle(PrimaryButtonStyle())
                             .disabled(state.ikDraftHand == nil)
                         }
+                        Divider().overlay(Theme.stroke)
+                        BoneSkinControls(state: state, workflow: .rigPieces)
                     }
                     .padding(.horizontal, 12).padding(.bottom, 14)
                 }
