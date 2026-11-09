@@ -70,3 +70,10 @@ Initial code changes: authored endpoint handle, controller-based endpoint captur
 ### Mesh-phase work in progress
 
 Connected bone authoring now uses null layers with optional BoneSettings. Bone transforms therefore reuse existing keys, graphs and timing. The rest chain is drawn on the artwork plane; selected bone tips pose FK directly, and camera projection is inverted into that plane. This is the skeleton authoring step; mesh skinning and weight painting are not implemented yet. Copy/group/split/unpack paths remap the bone artwork reference and IK joint/target references. Cross-project clipboard imports without their artwork detach bone metadata rather than retaining an absent source reference. New authoring UI and model tests require macOS validation before delivery.
+
+
+## Priority delivery: image-piece joints (Build 25)
+
+The user clarified that the immediate priority is separated 2D/2.5D artwork with shoulder/elbow/wrist links and a draggable IK hand target. Weighted hair/clothing deformation is optional and deferred. Delivery is isolated on `feat/image-piece-rig` from the validated connected-joint checkpoint `3b7f44e`; unfinished weighted mesh work remains on `feat/advanced-authoring` (`d2be924`). Do not merge that unfinished mesh UI into this release: its weight-painting interaction test failed.
+
+Product commit `a85a8f1` adds shared character-parent framing for newly bound image-piece IK and a three-piece regression checking the rendered forearm endpoint, attached hand, character null motion/scale/depth, and serialization. Full run 42539101097 passed 639 tests, zero failures, one skip. Rig/related UI screenshots and all 60 frames of the editable sideways-arm render were reviewed. Archive completion is still required before publishing. The whole advanced-authoring plan remains unfinished; this checkpoint delivers its requested joint workflow only. See IMAGE_PIECE_RIG.md for the exact existing-control workflow.
