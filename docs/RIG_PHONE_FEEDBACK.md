@@ -12,6 +12,7 @@ Unconfirmed for the exact red-arm screenshot: whether it uses legacy MLS skinnin
 
 - Continuous artwork can bind either Whole artwork or Near bones. Whole artwork assigns every mesh vertex to actual deform bones; Near bones retains the fixed base region outside Reach. Saved bindings keep their weights until the owner explicitly resets them.
 - Piece-based IK targets resolve to their controlled artwork. Bone / Weight offers its pieces, and the shared vertex renderer can optionally weight a piece to neighboring joints. Rig also exposes available artwork deformation controls.
+- The position pad translates an FK joint rather than implicitly rotating its tip. Its frame comes from the exact displayed projection, including rotated/mirrored parents. The editor cache clears already-evaluated Auto Orient before parenting is baked, preventing an orientation from being applied twice.
 - Selecting a bone origin in Pose selects translation for the existing X/Y pad; origin dragging translates the bone. Its tip rotates it. Rest editing remains a separate setup operation and updates bindings. With IK active, middle joint translation stays constrained; move the target or edit Rest instead.
 - IK targets and driven pieces cannot act as obstacles to their own solve. New rigs start with solid avoidance off; real external obstacles are an explicit option. Existing old collision preference remains readable.
 - Choosing the skeleton's own image as a rigid attachment opens its weight workflow rather than attempting a cyclic parent link.

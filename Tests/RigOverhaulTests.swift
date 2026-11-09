@@ -340,6 +340,16 @@ import simd
             let actualArt = try XCTUnwrap(rendered.layers.first { $0.id == art })
             let cachedArt = try XCTUnwrap(s.rigGeometry.world.layers.first { $0.id == art })
             XCTAssertEqual(cachedArt.transform.rotation.value(at: s.currentTime),actualArt.transform.rotation.value(at: s.currentTime),accuracy: 1e-7)
+            let child = try XCTUnwrap(s.addBone(artworkID: art,parentID: root,start: .zero,end: Vec2(170,30)))
+            s.selectAuthoringBone(child); s.makeIK(upper: root,controller: nil)
+            let owner = try XCTUnwrap(s.project.layers.first { $0.id == child })
+            let controller = try XCTUnwrap(owner.ik?.controllerID)
+            let controllerBefore = try XCTUnwrap(s.displayPlacement(of: controller)).columns.2
+            var targetDrag = try XCTUnwrap(s.rigPointGesture(.ikController(controller)))
+            s.moveRigPosition(.ikController(controller),to: try XCTUnwrap(targetDrag.move(by: Vec2(20,-15))))
+            let controllerAfter = try XCTUnwrap(s.displayPlacement(of: controller)).columns.2
+            XCTAssertEqual(controllerAfter.x/controllerAfter.z-controllerBefore.x/controllerBefore.z,20,accuracy: 1e-6)
+            XCTAssertEqual(controllerAfter.y/controllerAfter.z-controllerBefore.y/controllerBefore.z,-15,accuracy: 1e-6)
         } }
     }
 
