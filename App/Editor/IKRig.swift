@@ -608,7 +608,13 @@ extension EditorState {
 
     var selectedIKLayer: Layer? {
         guard let selected = selectedLayer else { return nil }
-        return selected.ik != nil ? selected : project.layers.first { $0.ik?.controllerID == selected.id }
+        if selected.ik != nil { return selected }
+        // Selecting any segment of a chain offers its common IK target.
+        return project.layers.first { owner in
+            guard let rig = owner.ik else { return false }
+            return rig.controllerID == selected.id ||
+                IKSolver.drivenIDs(owner: owner).contains(selected.id)
+        }
     }
 
     func removeIK() {
@@ -828,13 +834,20 @@ struct RigPanel: View {
                         }))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
                         Divider().overlay(Theme.stroke)
-                        Text("IK (TWO-BONE LIMB)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
+                        Text("IK (CONNECTED JOINT CHAINS)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
                         if let owner = state.selectedIKLayer, let rig = owner.ik {
-                            Text("Move the controller to pose the limb. Its position keys use the normal timeline and graph.").font(.caption).foregroundStyle(Theme.textDim)
-                            Toggle("Bend the other way", isOn: Binding(get: { rig.flip }, set: { b in
-                                state.mutate("IK Bend") { p in if let i = p.layers.firstIndex(where: { $0.id == owner.id }) { p.layers[i].ik?.flip = b } }
-                            }))
-                            .tint(Theme.accent).foregroundStyle(Theme.text)
+                            Text("Move the controller with the X/Y pad to pose connected joints. Position keys use the normal timeline and graph.")
+                                .font(.caption).foregroundStyle(Theme.textDim)
+                            if let chain = rig.chainIDs, chain.count >= 3 {
+                                Text("\(chain.count) connected joints · one IK controller")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(Theme.accentGlow)
+                            } else {
+                                Toggle("Bend the other way", isOn: Binding(get: { rig.flip }, set: { b in
+                                    state.mutate("IK Bend") { p in if let i = p.layers.firstIndex(where: { $0.id == owner.id }) { p.layers[i].ik?.flip = b } }
+                                }))
+                                .tint(Theme.accent).foregroundStyle(Theme.text)
+                            }
                             HStack {
                                 Text("IK / FK").font(.system(size: 13)).foregroundStyle(Theme.text)
                                 Button {
@@ -888,9 +901,16 @@ struct RigPanel: View {
                                 .buttonStyle(PrimaryButtonStyle())
                             }
                         } else {
-                            Text("Select the LOWER part (forearm / shin), pick its upper part (upper arm / thigh), then place the end joint on the canvas at the wrist or ankle. Make IK binds this pose; moving its controller poses the limb.")
+                            Text("Select the END joint, then choose its ROOT / upper joint. If the layers already form a longer parent-linked chain, Make IK automatically includes every joint between them. Draw or link joints first; it won't flatten the chain.")
                                 .font(.caption).foregroundStyle(Theme.textDim)
-                            picker("Upper Limb", selection: state.ikDraftUpper, exclude: l.id) { state.pickIKUpper() } clear: { state.ikDraftUpper = nil }
+                            if let root = state.ikDraftUpper,
+                               let chain = IKSolver.connectedPath(root: root, end: l.id, in: state.project),
+                               chain.count >= 3 {
+                                Text("Ready: \(chain.count) connected joints")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(Theme.accentGlow)
+                            }
+                            picker("Root / Upper", selection: state.ikDraftUpper, exclude: l.id) { state.pickIKUpper() } clear: { state.ikDraftUpper = nil }
                             picker("Controller (optional)", selection: state.ikDraftController, exclude: l.id) { state.pickIKController() } clear: { state.ikDraftController = nil }
                             picker("Hand / Foot", selection: state.ikDraftHand, exclude: l.id) {
                                 state.beginLayerPick(returnTo: .rig, prompt: "Tap optional wrist/ankle artwork") { id in
@@ -913,6 +933,29 @@ struct RigPanel: View {
                             }
                             .buttonStyle(PrimaryButtonStyle())
                             .disabled(state.ikDraftUpper == nil)
+                        }
+                        if l.bone != nil && state.selectedIKLayer == nil {
+                            Divider().overlay(Theme.stroke)
+                            Text("ARTWORK ATTACHMENTS").font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(Theme.textDim)
+                            Text("Attach multiple artwork layers to this bone's endpoint. Repeat for as many pieces as your character needs.")
+                                .font(.caption).foregroundStyle(Theme.textDim)
+                            picker("Artwork", selection: state.ikDraftHand, exclude: l.id) {
+                                state.beginLayerPick(returnTo: .rig, prompt: "Tap artwork to bind to this bone") { id in
+                                    if let id { state.ikDraftHand = id }
+                                }
+                            } clear: { state.ikDraftHand = nil }
+                            Button {
+                                if let piece = state.ikDraftHand {
+                                    state.attachArtwork(piece, toJoint: l.id)
+                                    state.ikDraftHand = nil
+                                }
+                            } label: {
+                                Label("Attach Artwork to Joint", systemImage: "link")
+                                    .frame(maxWidth: .infinity, minHeight: 44)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(state.ikDraftHand == nil)
                         }
                     }
                     .padding(.horizontal, 12).padding(.bottom, 14)
