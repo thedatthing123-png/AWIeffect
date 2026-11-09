@@ -216,10 +216,127 @@ extension EditorState {
         return layer.bone?.tip ?? Vec2(0, Renderer.layerHalfSize(layer, time: currentTime).y)
     }
 
+    /// Bind every joint along the existing hierarchy, from chosen root to selected tip.
+    /// Drawing/parenting already creates these links; we do NOT collapse them to two bones.
+    func makeChainIK(_ joints: [UUID], controller: UUID?, endArtwork: UUID?) {
+        guard joints.count >= 3, let endID = joints.last, let rootID = joints.first,
+              selectedLayerID == endID,
+              IKSolver.connectedPath(root: rootID, end: endID, in: project) == joints else { return }
+        let driven = Set(joints)
+        if let conflict = project.layers.first(where: {
+            !$0.ik.map { _ in IKSolver.drivenIDs(owner: $0).isDisjoint(with: driven) }! 
+        }) {
+            recoveryNotice = "Joint chain overlaps IK on \(conflict.name). Remove that constraint or select a different root."
+            return
+        }
+        if let controller {
+            guard let target = project.layers.first(where: { $0.id == controller }),
+                  !target.isLocked, !driven.contains(controller),
+                  !IKSolver.descendants(of: rootID, in: project).contains(controller) else {
+                recoveryNotice = "The IK target must be outside its moving bone chain."
+                return
+            }
+        }
+        if let endArtwork {
+            guard let art = project.layers.first(where: { $0.id == endArtwork }),
+                  !art.isLocked, !driven.contains(endArtwork),
+                  !IKSolver.descendants(of: endArtwork, in: project).contains(rootID) else {
+                recoveryNotice = "The attachment must be a separate unlocked artwork layer."
+                return
+            }
+        }
+        let t = currentTime
+        let posed = IKSolver.apply(project, time: t)
+        guard let root = posed.layers.first(where: { $0.id == rootID }),
+              let lower = posed.layers.first(where: { $0.id == endID }),
+              let rootFrame = Renderer.parentAffine(rootID, in: posed, time: t),
+              let lowerFrame = Renderer.parentAffine(endID, in: posed, time: t) else { return }
+        let localTip = ikRestTip(for: lower)
+        let lowerAnchor = lower.transform.anchor.value(at: t)
+        guard let tipWorld = LayerPlacement.projected(localTip - lowerAnchor, by: lowerFrame.m) else { return }
+        // All drawn bones in one artwork stay in that 2D plane even when camera tilts.
+        let artID = lower.bone?.artworkID
+        if let artID, joints.contains(where: {
+            project.layers.first(where: { $0.id == $0 }) == nil
+        }) { return }
+        // The common coordinate space is the root bone's artwork or its parent.
+        let spaceID = artID ?? root.parentID
+        if let artID, joints.contains(where: {
+            project.layers.first(where: { $0.id == $0 })?.bone?.artworkID != artID
+        }) { return }
+        let space = spaceID.flatMap { Renderer.parentAffine($0, in: posed, time: t)?.m }
+            ?? matrix_identity_double3x3
+        guard abs(space.determinant) > 1e-10 else { return }
+        let chosenTarget: Vec2
+        if let controller, let ctrl = posed.layers.first(where: { $0.id == controller }),
+           let frame = Renderer.parentAffine(ctrl.id, in: posed, time: t),
+           let point = LayerPlacement.projected(.zero, by: frame.m) {
+            chosenTarget = point
+        } else {
+            chosenTarget = tipWorld
+        }
+        guard let targetInSpace = LayerPlacement.projected(chosenTarget, by: space.inverse),
+              let start = LayerPlacement.projected(.zero, by: space.inverse * rootFrame.m),
+              let nextID = joints.dropFirst().first,
+              let nextFrame = Renderer.parentAffine(nextID, in: posed, time: t),
+              let next = LayerPlacement.projected(.zero, by: space.inverse * nextFrame.m),
+              let endPivot = LayerPlacement.projected(.zero, by: space.inverse * lowerFrame.m),
+              let tip = LayerPlacement.projected(tipWorld, by: space.inverse) else { return }
+        let l1 = hypot(next.x - start.x, next.y - start.y)
+        let l2 = hypot(tip.x - endPivot.x, tip.y - endPivot.y)
+        guard l1 > 0.0001, l2 > 0.0001, targetInSpace.x.isFinite,
+              targetInSpace.y.isFinite else {
+            recoveryNotice = "Give the bone chain nonzero segment lengths before binding IK."
+            return
+        }
+        let ownsEdit = !editGroupOpen
+        if ownsEdit { beginEdit("Bind Chain IK") }
+        defer { if ownsEdit { endEdit() } }
+        var targetID = controller ?? UUID()
+        if let spaceID, let controller,
+           project.layers.first(where: { $0.id == controller })?.parentID != spaceID {
+            selectedLayerID = controller
+            setParent(spaceID)
+            selectedLayerID = endID
+            guard project.layers.first(where: { $0.id == controller })?.parentID == spaceID else { return }
+        }
+        mutate("Bind Chain IK") { p in
+            if controller == nil {
+                var target = p.makeLayer(name: "Chain IK Controller", content: .solid, size: Vec2(40, 40))
+                target.isNull = true
+                target.tag = .amber
+                target.parentID = spaceID
+                target.groupID = lower.groupID
+                target.transform.position = Animated(targetInSpace)
+                targetID = target.id
+                p.layers.insert(target, at: 0)
+            }
+            guard let index = p.layers.firstIndex(where: { $0.id == endID }) else { return }
+            p.layers[index].ik = IKRig(
+                upperID: rootID, controllerID: targetID, l1: l1, l2: l2,
+                rest1: 0, rest2: 0, spaceID: spaceID,
+                restTip: localTip, chainIDs: joints
+            )
+        }
+        if let endArtwork {
+            attachArtwork(endArtwork, toJoint: endID)
+        }
+        ikDraftTip = nil
+        ikDraftUpper = nil
+        ikDraftHand = nil
+        selectedLayerID = targetID
+        panel = .rig
+    }
+
     /// Rigs the selected layer as the lower limb: `upper` must be its parent; the controller sits at the limb's tip.
     /// Makes a controller null at the tip when none is given.
     func makeIK(upper: UUID, controller: UUID?, hand: UUID? = nil) {
         guard let lower = selectedLayer, upper != lower.id else { return }
+        if let path = IKSolver.connectedPath(root: upper, end: lower.id, in: project),
+           path.count >= 3 {
+            makeChainIK(path, controller: controller, endArtwork: hand)
+            return
+        }
         // A bone cannot be solved twice in the same frame. Show the existing rig instead of
         // quietly accumulating a second controller that overwrites the same rotations.
         if let conflict = project.layers.first(where: { layer in
