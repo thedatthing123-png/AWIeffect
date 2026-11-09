@@ -39,7 +39,7 @@ final class BoneMeshFrameSource {
     }
 }
 
-enum BoneMeshCoverage: String, Codable, CaseIterable {
+enum BoneMeshCoverage: String, Codable, CaseIterable, Hashable {
     case localized = "Near bones"
     case wholeArtwork = "Whole artwork"
 }

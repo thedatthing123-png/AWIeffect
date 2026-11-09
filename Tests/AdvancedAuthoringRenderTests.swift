@@ -152,12 +152,12 @@ final class AdvancedAuthoringRenderTests: XCTestCase {
         let artImage = UIGraphicsImageRenderer(size: CGSize(width: 400,height: 200),format: format).image { context in
             UIBezierPath(roundedRect: CGRect(x: 10,y: 10,width: 380,height: 180),cornerRadius: 75).addClip()
             for row in 0..<40 {
-                UIColor(red: 0.5+Double(row)*0.01,green: 0.24+Double(row)*0.006,blue: 0.14,alpha: 1).setFill()
-                context.fill(CGRect(x: 0,y: row*5,width: 400,height: 5))
+                UIColor(red: CGFloat(0.5+Double(row)*0.01),green: CGFloat(0.24+Double(row)*0.006),blue: 0.14,alpha: 1).setFill()
+                context.fill(CGRect(x: 0,y: CGFloat(row*5),width: 400,height: 5))
             }
             UIColor(white: 1,alpha: 0.25).setStroke()
             for x in stride(from: 20,through: 380,by: 20) {
-                let line = UIBezierPath(); line.move(to: CGPoint(x: x,y: 0)); line.addLine(to: CGPoint(x: x,y: 200)); line.lineWidth = 2; line.stroke()
+                let line = UIBezierPath(); line.move(to: CGPoint(x: CGFloat(x),y: 0)); line.addLine(to: CGPoint(x: CGFloat(x),y: 200)); line.lineWidth = 2; line.stroke()
             }
         }
         let url = folder.appendingPathComponent("wide-arm-source.png")
