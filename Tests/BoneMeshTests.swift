@@ -70,6 +70,14 @@ final class BoneMeshTests: XCTestCase {
         for vertex in mesh.vertices { XCTAssertEqual(vertex.weights.reduce(0) { $0+$1.amount },1,accuracy: 1e-12) }
     }
 
+    func testUnusedBonesDoNotInflateRenderBuffers() throws {
+        let sources = (0..<2).map { _ in BoneMeshSource(id: UUID(),matrix: matrix_identity_double3x3,tip: Vec2(80,0)) }
+        var mesh = try XCTUnwrap(BoneMeshBinding.bind(halfSize: Vec2(100,100),detail: 8,bones: sources))
+        for i in mesh.vertices.indices { mesh.vertices[i].weights = [BoneMeshWeight(bone: 0,amount: 1)] }
+        XCTAssertEqual(mesh.reach(matrices: [.identity,RigAffine(translation(10000,0))]),Vec2(100,100))
+        XCTAssertEqual(mesh.reach(matrices: [RigAffine(translation(50,0)),.identity]),Vec2(150,100))
+    }
+
     func testMetalSkinningMovesPixelsAndRefreshesImportedWeights() throws {
         let device = try XCTUnwrap(MTLCreateSystemDefaultDevice())
         let queue = try XCTUnwrap(device.makeCommandQueue())

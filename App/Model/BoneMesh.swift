@@ -72,7 +72,8 @@ struct BoneMeshBinding: Codable, Equatable {
         return vertices.allSatisfy { v in
             v.rest.x.isFinite && v.rest.y.isFinite && !v.weights.isEmpty && v.weights.count <= 4
                 && v.weights.allSatisfy { boneIDs.indices.contains($0.bone) && $0.amount.isFinite && $0.amount >= 0 && $0.amount <= 1 }
-                && v.weights.reduce(0, { $0 + $1.amount }) > 0
+                && Set(v.weights.map(\.bone)).count == v.weights.count
+                && abs(v.weights.reduce(0, { $0 + $1.amount })-1) < 1e-5
         }
     }
 
@@ -136,13 +137,12 @@ struct BoneMeshBinding: Codable, Equatable {
 extension BoneMeshBinding {
     /// Conservative bounds of a convex weighted blend: every skinned vertex lies inside this union.
     func reach(matrices: [RigAffine]) -> Vec2 {
+        // Only influenced vertices contribute. An unused controller far off-screen must not allocate a giant
+        // texture and downsample the visible artwork. Linear triangles attain their bounds at their vertices.
         var result = halfSize
-        let corners = [Vec2(-halfSize.x,-halfSize.y),Vec2(halfSize.x,-halfSize.y),Vec2(halfSize.x,halfSize.y),Vec2(-halfSize.x,halfSize.y)]
-        for matrix in matrices where matrix.isFinite {
-            for corner in corners {
-                let p = matrix.apply(corner)
-                if p.x.isFinite && p.y.isFinite { result.x = max(result.x,abs(p.x)); result.y = max(result.y,abs(p.y)) }
-            }
+        for vertex in vertices {
+            let point = deformed(vertex,matrices: matrices)
+            if point.x.isFinite && point.y.isFinite { result.x = max(result.x,abs(point.x)); result.y = max(result.y,abs(point.y)) }
         }
         return result
     }
