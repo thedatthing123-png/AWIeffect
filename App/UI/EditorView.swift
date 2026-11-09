@@ -462,7 +462,7 @@ struct EditorView: View {
                 if state.canvasMode == .comp, pen == nil, state.panel == .transform || state.panel == .threeD || state.panel == .layerHome {
                     ClockReader(clock: state.clock) { _ in AimGizmoOverlay(state: state, fit: fit) }
                 }
-                if state.panel == .rig, state.canvasMode == .comp {
+                if state.panel == .rig || state.panel == .boneWeight, state.canvasMode == .comp {
                     ClockReader(clock: state.clock) { _ in
                         LiveReader(live: state.live) { _ in
                             ZStack {
@@ -550,7 +550,7 @@ struct EditorView: View {
             }
             .clipped()
             .contentShape(Rectangle())
-            .gesture(canvasDrag(fit: fit), including: pen == nil && !canvasToolActive && state.canvasMode == .comp && state.panel != .rig ? .all : .subviews)
+            .gesture(canvasDrag(fit: fit), including: pen == nil && !canvasToolActive && state.canvasMode == .comp && state.panel != .rig && state.panel != .boneWeight ? .all : .subviews)
             // Two fingers, like Alight Motion: with a layer selected, pinch scales it and twisting rotates it (both at
             // once); with nothing selected the pinch zooms the canvas view.
             .simultaneousGesture(MagnificationGesture()
@@ -582,7 +582,7 @@ struct EditorView: View {
                 // Link mode: the tapped layer becomes the parent.
                 if state.linkPicking { state.endLinkPick(parent: layerAt(v.location, fit: fit)); return }
                 // Rig handles own the canvas: a target/rest-joint gesture must not deselect the limb.
-                if state.panel == .rig { return }
+                if state.panel == .rig || state.panel == .boneWeight { return }
                 // Puppet panel open: taps drop pins instead of selecting layers.
                 if state.panel == .puppet, state.selectedLayerID != nil {
                     // Place on: a tap drops a pin (unless it lands on one). Place off: taps never add pins.
