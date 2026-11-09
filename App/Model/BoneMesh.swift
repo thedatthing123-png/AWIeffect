@@ -218,7 +218,8 @@ extension BoneMeshBinding {
 
 extension BoneMeshBinding {
     static func localized(halfSize: Vec2,detail: Int,artworkID: UUID,bones: [BoneMeshSource],radius: Double) -> Self? {
-        guard radius.isFinite,radius>0,!bones.isEmpty,
+        guard radius.isFinite,radius>0,!bones.isEmpty,bones.count < 512,
+              !bones.contains(where: { $0.id == artworkID }),
               var mesh = bind(halfSize: halfSize,detail: detail,bones: bones) else { return nil }
         let segments = bones.map { (RigAffine($0.matrix).apply(.zero),RigAffine($0.matrix).apply($0.tip)) }
         mesh.boneIDs.insert(artworkID,at: 0); mesh.inverseBinds.insert(.identity,at: 0)

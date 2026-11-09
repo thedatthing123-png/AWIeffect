@@ -429,7 +429,7 @@ struct EditorView: View {
                 if state.showGrid { CompGrid(fit: fit, divisions: state.gridDivisions) }
                 if state.canvasMode == .comp { GuidesOverlay(state: state, fit: fit) }
                 // 3D camera: two fingers dragged together slide the camera.
-                if state.canvasMode == .comp, state.cameraView, let cam = state.activeCameraLayer, EditorState.cameraIs3D(cam) {
+                if state.canvasMode == .comp, state.panel != .rig, state.panel != .boneWeight, state.cameraView, let cam = state.activeCameraLayer, EditorState.cameraIs3D(cam) {
                     TwoFingerPan(onBegan: { panCamera = state.beginCameraGesture() }, onChanged: { d in
                         guard let c = panCamera else { return }
                         let k = Double(state.project.width) / Double(max(fit.width, 1))
@@ -479,6 +479,11 @@ struct EditorView: View {
                             }
                         }
                     }
+                }
+                if state.panel == .rig || state.panel == .boneWeight,state.canvasMode == .comp {
+                    TwoFingerPan(onBegan: { state.boneViewportGesture = true; state.finishBoneWeightStroke(commit: false); panBase = viewPan },onChanged: { d in
+                        if let base = panBase { viewPan = CGSize(width: base.width+d.width,height: base.height+d.height) }
+                    },onEnded: { panBase = nil; state.boneViewportGesture = false })
                 }
                 if let r = marqueeRect { MarqueeOverlay(rect: r) }
                 if state.panel == .puppet, state.canvasMode == .comp {
@@ -560,6 +565,10 @@ struct EditorView: View {
             .simultaneousGesture(MagnificationGesture()
                 .onChanged { m in
                     guard state.canvasMode == .comp else { return }
+                    if state.panel == .rig || state.panel == .boneWeight {
+                        state.boneViewportGesture = true; state.finishBoneWeightStroke(commit: false)
+                        viewZoom = min(8,max(0.25,zoomBase*m)); return
+                    }
                     // Text Studio open: pinch sizes the selected letters (or the whole text).
                     if state.panel == .text, state.selectedLayer?.text != nil, !magActive {
                         TextStudioSession.shared.pinch(state, scale: Double(m)); return
@@ -568,12 +577,14 @@ struct EditorView: View {
                     updatePinch()
                 }
                 .onEnded { _ in
+                    if state.panel == .rig || state.panel == .boneWeight { zoomBase = viewZoom; state.boneViewportGesture = false; return }
                     if TextStudioSession.shared.isPinching { TextStudioSession.shared.endPinch(state); return }
                     magActive = false; finishPinch()
                 }, including: pen == nil && !canvasToolActive ? .all : .subviews)
             .simultaneousGesture(RotationGesture()
                 .onChanged { a in
                     guard state.canvasMode == .comp else { return }
+                    guard state.panel != .rig && state.panel != .boneWeight else { return }
                     pinchAngle = a.degrees; rotActive = true
                     updatePinch()
                 }

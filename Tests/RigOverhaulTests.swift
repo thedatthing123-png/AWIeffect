@@ -97,4 +97,54 @@ import simd
             XCTAssertEqual(a.m[2].x,b.m[2].x,accuracy: 1e-7); XCTAssertEqual(a.m[2].y,b.m[2].y,accuracy: 1e-7)
         }
     }
+    func testGeometryCacheReusesFrameUntilDocumentOrLiveGestureChanges() throws {
+        let (s,art) = editor()
+        _ = try XCTUnwrap(s.addBone(artworkID: art,parentID: nil,start: .zero,end: Vec2(100,0)))
+        let first = s.rigGeometry
+        XCTAssertTrue(first === s.rigGeometry)
+        s.beginPanelGesture("Move")
+        s.mutate("Move") { p in p.layers[0].transform.position.set(Vec2(320,300),at: 0) }
+        XCTAssertFalse(first === s.rigGeometry)
+        s.endPanelGesture()
+        let committed = s.rigGeometry
+        XCTAssertTrue(committed === s.rigGeometry)
+        s.currentTime = 1
+        XCTAssertFalse(committed === s.rigGeometry)
+    }
+
+    func testRestRebindPreservesPaintedWeightsAndProducesIdentityPalette() throws {
+        let (s,art) = editor()
+        let root = try XCTUnwrap(s.addBone(artworkID: art,parentID: nil,start: .zero,end: Vec2(100,0)))
+        s.selectAuthoringBone(root); s.bindBoneMesh()
+        let before = try XCTUnwrap(s.project.layers.first { $0.id == art }?.boneMesh)
+        s.boneRestEditing = true
+        s.moveBoneRestJoint(root,to: Vec2(15,20))
+        s.finishBoneRestEditing(); s.boneRestEditing = false
+        let after = try XCTUnwrap(s.project.layers.first { $0.id == art }?.boneMesh)
+        XCTAssertEqual(before.vertices,after.vertices)
+        let palette = try XCTUnwrap(BoneMeshEvaluation.palette(after,artworkID: art,posed: s.project,time: 0))
+        for vertex in after.vertices {
+            let point = after.deformed(vertex,matrices: palette)
+            XCTAssertEqual(point.x,vertex.rest.x,accuracy: 1e-6)
+            XCTAssertEqual(point.y,vertex.rest.y,accuracy: 1e-6)
+        }
+    }
+
+    func testWeightStrokeCancelDoesNotWriteAndCommitIsUndoable() throws {
+        let (s,art) = editor()
+        let root = try XCTUnwrap(s.addBone(artworkID: art,parentID: nil,start: .zero,end: Vec2(100,0)))
+        s.selectAuthoringBone(root); s.bindBoneMesh(); s.beginBoneWeights()
+        let before = try XCTUnwrap(s.project.layers.first { $0.id == art }?.boneMesh)
+        s.boneWeightRadius = 120; s.boneWeightBrush = .erase
+        XCTAssertTrue(s.paintBoneWeights([BoneWeightDab(center: Vec2(50,0),amount: 0.8)],beginStroke: true))
+        XCTAssertEqual(before,s.project.layers.first { $0.id == art }?.boneMesh)
+        s.finishBoneWeightStroke(commit: false)
+        XCTAssertEqual(before,s.project.layers.first { $0.id == art }?.boneMesh)
+        XCTAssertTrue(s.paintBoneWeights([BoneWeightDab(center: Vec2(50,0),amount: 0.8)],beginStroke: true))
+        s.finishBoneWeightStroke(commit: true)
+        XCTAssertNotEqual(before.vertices,s.project.layers.first { $0.id == art }?.boneMesh?.vertices)
+        s.undo()
+        XCTAssertEqual(before,s.project.layers.first { $0.id == art }?.boneMesh)
+    }
+
 }

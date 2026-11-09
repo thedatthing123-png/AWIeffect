@@ -16,7 +16,7 @@ extension EditorState {
         return layer.id
     }
 
-    /// Keep the authoring surface open when selecting an earlier joint. Generic select() opens Layer Home.
+    /// End creation mode and retain the authoring surface when selecting an earlier joint.
     func selectAuthoringBone(_ id: UUID) {
         guard project.layers.contains(where: { $0.id == id && $0.bone != nil }) else { return }
         if let child = boneParentPicking { boneParentPicking = nil; reparentAuthoringBone(child,to: id); return }
@@ -25,6 +25,48 @@ extension EditorState {
         select(id)
         panel = previousPanel == .boneWeight ? .boneWeight : .rig
         if boneWeightArtworkID != nil { finishBoneWeightStroke(commit: false); boneWeightBoneID = id }
+    }
+
+    /// Rebind setup matrices once when leaving Rest; brush weights and pose key tracks are retained.
+    func finishBoneRestEditing() {
+        guard let artworkID = rigArtworkID else { return }
+        var setup = project
+        for i in setup.layers.indices { setup.layers[i].ik = nil }
+        let frames = Renderer.parentAffineMap(setup,time: currentTime)
+        guard let art = setup.layers.first(where: { $0.id == artworkID }),let artFrame = frames[artworkID],abs(artFrame.m.determinant)>1e-10 else { return }
+        let anchor = art.transform.anchor.value(at: currentTime)
+        let toImage = simd_double3x3(columns: (SIMD3(1,0,0),SIMD3(0,1,0),SIMD3(anchor.x,anchor.y,1)))
+        let time = currentTime
+        mutate("Update Rest Bindings") { p in
+            if let i = p.layers.firstIndex(where: { $0.id == artworkID }),var mesh = p.layers[i].boneMesh {
+                for j in mesh.boneIDs.indices {
+                    let id = mesh.boneIDs[j]
+                    if id == artworkID { mesh.inverseBinds[j] = .identity; continue }
+                    guard let bone = setup.layers.first(where: { $0.id == id }),let frame = frames[id] else { continue }
+                    let boneAnchor = bone.transform.anchor.value(at: time)
+                    let fromAnchor = simd_double3x3(columns: (SIMD3(1,0,0),SIMD3(0,1,0),SIMD3(-boneAnchor.x,-boneAnchor.y,1)))
+                    let matrix = toImage*artFrame.m.inverse*frame.m*fromAnchor
+                    if abs(matrix.determinant)>1e-10 { mesh.inverseBinds[j] = RigAffine(matrix.inverse) }
+                }
+                mesh.changed(); p.layers[i].boneMesh = mesh
+            }
+            for i in p.layers.indices {
+                guard var rig = p.layers[i].ik,p.layers[i].bone?.artworkID == artworkID,
+                      let upper = setup.layers.first(where: { $0.id == rig.upperID }),let a = frames[upper.id],let b = frames[p.layers[i].id] else { continue }
+                rig.restTip = p.layers[i].bone?.tip ?? rig.restTip
+                if rig.chainIDs == nil,let tip = rig.restTip {
+                    let space = rig.spaceID.flatMap { frames[$0]?.m } ?? matrix_identity_double3x3
+                    guard abs(space.determinant)>1e-10,let start = LayerPlacement.projected(.zero,by: space.inverse*a.m),
+                          let elbow = LayerPlacement.projected(.zero,by: space.inverse*b.m),
+                          let end = LayerPlacement.projected(tip,by: space.inverse*b.m) else { continue }
+                    let angle = atan2(space[0].y,space[0].x)*180/Double.pi
+                    rig.l1 = hypot(elbow.x-start.x,elbow.y-start.y); rig.l2 = hypot(end.x-elbow.x,end.y-elbow.y)
+                    rig.rest1 = atan2(elbow.y-start.y,elbow.x-start.x)*180/Double.pi-(a.rot-angle)
+                    rig.rest2 = atan2(end.y-elbow.y,end.x-elbow.x)*180/Double.pi-(b.rot-angle)
+                }
+                p.layers[i].ik = rig
+            }
+        }
     }
 
     func reparentAuthoringBone(_ id: UUID,to parent: UUID) {
@@ -198,6 +240,7 @@ struct BoneAuthoringControls: View {
                     Picker("Joint editing",selection: $state.boneRestEditing) {
                         Text("Pose").tag(false); Text("Edit Rest").tag(true)
                     }.pickerStyle(.segmented).frame(minHeight: 44)
+                    .onChange(of: state.boneRestEditing) { _,rest in if !rest { state.finishBoneRestEditing() } }
                 }
                 DisclosureGroup("Bone hierarchy",isExpanded: $hierarchyOpen) {
                     let bones = state.project.layers.filter { $0.bone?.artworkID == artworkID }.reversed()
@@ -260,9 +303,10 @@ struct SkeletonCanvasOverlay: View {
 
     var body: some View {
         let project = state.live.project ?? state.project
-        let view = state.canvasViewProject(project)
-        let posed = IKSolver.apply(view, time: state.currentTime)
-        let resolved = Renderer.resolveParenting(view, time: state.currentTime)
+        let geometry = state.rigGeometry
+        let view = geometry.view
+        let posed = geometry.posed
+        let resolved = geometry.world
         let worlds = Dictionary(resolved.layers.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         let scale = fit.width / CGFloat(max(1, project.width))
         let camera = Renderer.activeCamera(resolved, time: state.currentTime)
@@ -273,7 +317,7 @@ struct SkeletonCanvasOverlay: View {
         ZStack {
             ForEach(project.layers.filter { $0.bone != nil }) { bone in
                 if let settings = bone.bone, let world = worlds[bone.id], let art = worlds[settings.artworkID],
-                   let matrix = EditorState.bonePlacement(world, artwork: art, project: posed, time: state.currentTime, camera: camera),
+                   let matrix = geometry.matrices[bone.id],
                    let start = LayerPlacement.projected(world.transform.anchor.value(at: state.currentTime), by: matrix), let end = LayerPlacement.projected(settings.tip, by: matrix) {
                     BoneSegmentHandle(state: state, id: bone.id, name: bone.name, start: screen(start, scale),
                                       end: screen(end, scale), scale: scale, fit: fit,

@@ -126,19 +126,20 @@ struct BoneOverlay: View {
         let s = fit.width / CGFloat(max(state.project.width, 1))
         // Read the editor on the main actor; the Canvas drawing closure isn't main-actor isolated.
         let t = state.currentTime
-        let view = state.canvasViewProject(state.live.project ?? state.project)
-        let posed = IKSolver.apply(view, time: t)
+        let geometry = state.rigGeometry
+        let view = geometry.view
+        let resolved = geometry.world
+        let matrices = geometry.matrices
+        let camera = Renderer.activeCamera(resolved,time: t)
         let selectedID = state.selectedLayerID
         let fit = self.fit
         Canvas { ctx, _ in
-            let resolved = Renderer.resolveParenting(view, time: t)
-            let camera = Renderer.activeCamera(view, time: t)
             let layers = Dictionary(resolved.layers.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             func joint(_ id: UUID, spaceID: UUID?) -> CGPoint? {
                 guard let l = layers[id] else { return nil }
                 let matrix: simd_double3x3
                 if let spaceID, let art = layers[spaceID],
-                   let projected = EditorState.bonePlacement(l, artwork: art, project: posed, time: t, camera: camera) { matrix = projected }
+                   let projected = matrices[l.id] { matrix = projected }
                 else { matrix = Renderer.placementMatrix(l, camera: camera, time: t, renderScale: 1) }
                 guard let p = LayerPlacement.projected(l.transform.anchor.value(at: t), by: matrix) else { return nil }
                 return CGPoint(x: fit.minX + CGFloat(p.x) * s, y: fit.minY + CGFloat(p.y) * s)
@@ -147,7 +148,7 @@ struct BoneOverlay: View {
                 guard let l = layers[id] else { return nil }
                 let matrix: simd_double3x3
                 if let spaceID, let art = layers[spaceID],
-                   let projected = EditorState.bonePlacement(l, artwork: art, project: posed, time: t, camera: camera) {
+                   let projected = matrices[l.id] {
                     matrix = projected
                 } else {
                     matrix = Renderer.placementMatrix(l, camera: camera, time: t, renderScale: 1)
@@ -238,10 +239,11 @@ struct RigJointSelectionOverlay: View {
 
     private func jointPoints() -> [RigTapJoint] {
         let source = state.live.project ?? state.project
-        let view = state.canvasViewProject(source)
+        let geometry = state.rigGeometry
+        let view = geometry.view
         let time = state.currentTime
-        let posed = IKSolver.apply(view, time: time)
-        let resolved = Renderer.resolveParenting(view, time: time)
+        let posed = geometry.posed
+        let resolved = geometry.world
         let world = Dictionary(resolved.layers.map { ($0.id, $0) },
                                uniquingKeysWith: { first, _ in first })
         let camera = Renderer.activeCamera(view, time: time)
@@ -373,10 +375,11 @@ struct RigControllersOverlay: View {
 
     var body: some View {
         let source = state.live.project ?? state.project
-        let view = state.canvasViewProject(source)
+        let geometry = state.rigGeometry
+        let view = geometry.view
         let time = state.currentTime
-        let posed = IKSolver.apply(view, time: time)
-        let resolved = Renderer.resolveParenting(view, time: time)
+        let posed = geometry.posed
+        let resolved = geometry.world
         let camera = Renderer.activeCamera(view, time: time)
         let world = Dictionary(resolved.layers.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let ids = Set(source.layers.compactMap { $0.ik?.controllerID })
@@ -386,7 +389,7 @@ struct RigControllersOverlay: View {
         }, uniquingKeysWith: { first, _ in first })
         func placement(_ layer: Layer) -> simd_double3x3 {
             if let id = spaces[layer.id], let art = world[id],
-               let matrix = EditorState.bonePlacement(layer, artwork: art, project: posed, time: time, camera: camera) { return matrix }
+               let matrix = geometry.matrices[layer.id] { return matrix }
             return Renderer.placementMatrix(layer, camera: camera, time: time, renderScale: 1)
         }
         // Resolve the hierarchy once for the overlay, not once for every hand/foot handle.

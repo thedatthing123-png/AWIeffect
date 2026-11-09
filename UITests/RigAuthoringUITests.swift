@@ -59,6 +59,8 @@ final class RigAuthoringUITests: XCTestCase {
         app.launch()
         let pad = app.descendants(matching: .any)["rig-position-swipe-pad"].firstMatch
         XCTAssertTrue(pad.waitForExistence(timeout: 15), "The native X/Y SwipePad belongs in Rig")
+        for _ in 0..<4 where !pad.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        XCTAssertTrue(pad.isHittable, "Precision pad must be reachable within the tool panel")
         let endpoint = app.descendants(matching: .any)["Limb end joint"].firstMatch
         XCTAssertTrue(endpoint.waitForExistence(timeout: 5))
         let before = endpoint.value as? String

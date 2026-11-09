@@ -62,7 +62,8 @@ enum ToolPanel: Equatable {
 /// selection box watch this; the rest of the editor (timeline, panels) updates once when the finger lifts.
 @MainActor
 final class LiveCanvas: ObservableObject {
-    @Published var project: Project?
+    private(set) var revision: UInt64 = 0
+    @Published var project: Project? { didSet { revision &+= 1 } }
 }
 
 /// Playback time on its own publisher: while playing only the preview and timeline redraw each frame,
@@ -75,8 +76,10 @@ final class PlayClock: ObservableObject {
 @MainActor
 final class EditorState: ObservableObject {
     @Published var project: Project {
-        didSet { propertyLaneCache.invalidate(old: oldValue, new: project); scheduleAutosave() }
+        didSet { geometryRevision &+= 1; propertyLaneCache.invalidate(old: oldValue, new: project); scheduleAutosave() }
     }
+    private(set) var geometryRevision: UInt64 = 0
+    var rigGeometryCache: RigGeometryFrame?
     let propertyLaneCache = PropertyLaneCache()
     let clock = PlayClock()
     let live = LiveCanvas()
@@ -174,7 +177,8 @@ final class EditorState: ObservableObject {
     var canvasProject: Project { boneMeshDisplayProject(live.project ?? project) }
     func boneMeshDisplayProject(_ original: Project) -> Project {
         var shown = original
-        if boneRestEditing {
+        if boneRestEditing || boneWeightArtworkID != nil {
+            for i in shown.layers.indices { shown.layers[i].ik = nil }
             for i in shown.layers.indices { if let count = shown.layers[i].boneMesh?.boneIDs.count {
                 shown.layers[i].boneMesh?.frameMatrices = Array(repeating: .identity,count: count)
                 shown.layers[i].boneMesh?.frameTime = currentTime

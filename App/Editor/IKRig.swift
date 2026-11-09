@@ -676,10 +676,11 @@ extension EditorState {
     }
 
     var selectedIKLayer: Layer? {
-        guard let selected = selectedLayer else { return nil }
+        let source = live.project ?? project
+        guard let selected = source.layers.first(where: { $0.id == selectedLayerID }) else { return nil }
         if selected.ik != nil { return selected }
         // Selecting any segment of a chain offers its common IK target.
-        return project.layers.first { owner in
+        return source.layers.first { owner in
             guard let rig = owner.ik else { return false }
             return rig.controllerID == selected.id ||
                 IKSolver.drivenIDs(owner: owner).contains(selected.id)
@@ -704,10 +705,10 @@ enum RigPositionSelection: Equatable {
 
     var label: String {
         switch self {
-        case .restJoint: return "Rest joint"
+        case .restJoint: return "Rest joint · parent X/Y"
         case .restEndpoint: return "Wrist / ankle (rest)"
-        case .ikController: return "IK target"
-        case .fkBoneTip: return "Bone tip"
+        case .ikController: return "IK target · parent X/Y"
+        case .fkBoneTip: return "Bone tip · canvas X/Y"
         }
     }
     var editsPose: Bool {
@@ -756,15 +757,9 @@ extension EditorState {
         case .ikController(let id):
             return source.layers.first(where: { $0.id == id })?.transform.position.value(at: currentTime)
         case .fkBoneTip(let id):
-            guard let bone = source.layers.first(where: { $0.id == id }), let settings = bone.bone else { return nil }
-            let viewed = canvasViewProject(source)
-            let posed = IKSolver.apply(viewed, time: currentTime)
-            let resolved = Renderer.resolveParenting(viewed, time: currentTime)
-            guard let liveBone = posed.layers.first(where: { $0.id == id }),
-                  let art = resolved.layers.first(where: { $0.id == settings.artworkID }),
-                  let placement = Self.bonePlacement(liveBone, artwork: art, project: posed,
-                      time: currentTime, camera: Renderer.activeCamera(resolved, time: currentTime)) else { return nil }
-            return LayerPlacement.projected(settings.tip, by: placement)
+            guard let bone = source.layers.first(where: { $0.id == id }),let tip = bone.bone?.tip,
+                  let placement = rigGeometry.matrices[id] else { return nil }
+            return LayerPlacement.projected(tip,by: placement)
         }
     }
 
@@ -936,19 +931,24 @@ struct RigPositionControls: View {
 /// Rig panel: IK for limbs and collider switch.
 struct RigPanel: View {
     @ObservedObject var state: EditorState
+    @State private var physicsOpen = false
 
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: "Rig", showKeyNav: false)
             if let l = state.selectedLayer {
+                LiveReader(live: state.live) { _ in
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if l.bone == nil { RigPositionControls(state: state) }
                         BoneAuthoringControls(state: state)
-                        RigPositionControls(state: state)
-                        Toggle("Collider (IK tips and physics bodies can't go through this layer)", isOn: Binding(get: { l.isCollider }, set: { b in
+                        if l.bone != nil { RigPositionControls(state: state) }
+                        DisclosureGroup("Physics",isExpanded: $physicsOpen) {
+                        Toggle("Collider", isOn: Binding(get: { l.isCollider }, set: { b in
                             state.mutate("Collider") { p in if let i = state.selectedIndex { p.layers[i].isCollider = b } }
                         }))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
+                        }
                         Divider().overlay(Theme.stroke)
                         Text("IK (CONNECTED JOINT CHAINS)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
                         if let owner = state.selectedIKLayer, let rig = owner.ik {
@@ -1017,7 +1017,7 @@ struct RigPanel: View {
                                 .buttonStyle(PrimaryButtonStyle())
                             }
                         } else {
-                            Text("Select the END joint, then choose its ROOT / upper joint. If the layers already form a longer parent-linked chain, Make IK automatically includes every joint between them. Draw or link joints first; it won't flatten the chain.")
+                            Text("Select an end bone and its root. The connected chain is included.")
                                 .font(.caption).foregroundStyle(Theme.textDim)
                             if let root = state.ikDraftUpper,
                                let chain = IKSolver.connectedPath(root: root, end: l.id, in: state.project),
@@ -1082,6 +1082,8 @@ struct RigPanel: View {
                 }
             }
         }
+    }
+
     }
 
     /// Label + "tap a layer on the canvas" button + clear (three per row). Layers under the lower limb would make a
