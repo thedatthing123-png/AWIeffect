@@ -1,6 +1,29 @@
 import XCTest
 
 final class RigAuthoringUITests: XCTestCase {
+    func testSelectEarlierBoneAndBranchWithoutLeavingAuthoringPanel() {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launchArguments = ["-uiTesting","-uiTesting-rigAuthoring"]; app.launch()
+        let draw = app.buttons["Draw Bones"].firstMatch; XCTAssertTrue(draw.waitForExistence(timeout: 15)); draw.tap()
+        let canvas = app.descendants(matching: .any)["Draw connected bones"].firstMatch
+        XCTAssertTrue(canvas.waitForExistence(timeout: 5))
+        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.35,dy: 0.5)).press(forDuration: 0.1,thenDragTo: canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.5,dy: 0.5)))
+        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.5,dy: 0.5)).press(forDuration: 0.1,thenDragTo: canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.65,dy: 0.6)))
+        app.buttons["Done"].firstMatch.tap()
+        app.buttons["Bone hierarchy"].firstMatch.tap()
+        let first = app.buttons["Select bone Bone 1"].firstMatch
+        XCTAssertTrue(first.waitForExistence(timeout: 5)); first.tap()
+        let branch = app.buttons["Branch"].firstMatch; XCTAssertTrue(branch.waitForExistence(timeout: 5)); branch.tap()
+        XCTAssertTrue(canvas.waitForExistence(timeout: 5))
+        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.5,dy: 0.5)).press(forDuration: 0.1,thenDragTo: canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.65,dy: 0.35)))
+        app.buttons["Done"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Select bone Bone 3"].firstMatch.waitForExistence(timeout: 5))
+        let image = XCUIScreen.main.screenshot(); let attachment = XCTAttachment(screenshot: image)
+        attachment.name = "branch-earlier-joint"; attachment.lifetime = .keepAlways; add(attachment)
+        try? FileManager.default.createDirectory(atPath: "/tmp/awi-ui",withIntermediateDirectories: true)
+        try? image.pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/awi-ui/branch-earlier-joint.png"))
+    }
+
     func testDrawConnectedBoneChainAndPoseItOnCanvas() {
         continueAfterFailure = false
         let app = XCUIApplication()

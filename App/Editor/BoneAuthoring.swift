@@ -19,11 +19,51 @@ extension EditorState {
     /// Keep the authoring surface open when selecting an earlier joint. Generic select() opens Layer Home.
     func selectAuthoringBone(_ id: UUID) {
         guard project.layers.contains(where: { $0.id == id && $0.bone != nil }) else { return }
+        if let child = boneParentPicking { boneParentPicking = nil; reparentAuthoringBone(child,to: id); return }
         let previousPanel = panel
         finishBoneDrawing()
         select(id)
         panel = previousPanel == .boneWeight ? .boneWeight : .rig
         if boneWeightArtworkID != nil { finishBoneWeightStroke(commit: false); boneWeightBoneID = id }
+    }
+
+    func reparentAuthoringBone(_ id: UUID,to parent: UUID) {
+        guard let child = project.layers.first(where: { $0.id == id }),let owner = child.bone?.artworkID,!child.isLocked,
+              id != parent,!IKSolver.descendants(of: id,in: project).contains(parent),
+              parent == owner || project.layers.first(where: { $0.id == parent })?.bone?.artworkID == owner else {
+            recoveryNotice = "Choose a parent in this skeleton outside the selected branch."; return
+        }
+        let previous = panel
+        select(id); setParent(parent); panel = previous == .boneWeight ? .boneWeight : .rig
+    }
+
+    func deleteAuthoringBone(_ id: UUID) {
+        guard let bone = project.layers.first(where: { $0.id == id }),bone.bone != nil,!bone.isLocked else { return }
+        let previous = panel,parent = bone.parentID
+        beginEdit("Delete Bone")
+        for child in project.layers.filter({ $0.parentID == id }) { selectedLayerID = child.id; setParent(parent) }
+        mutate("Delete Bone") { p in
+            p.layers.removeAll { $0.id == id }
+            for i in p.layers.indices {
+                if p.layers[i].ik.map({ $0.upperID == id || $0.controllerID == id || ($0.chainIDs ?? []).contains(id) }) == true { p.layers[i].ik = nil }
+                if var mesh = p.layers[i].boneMesh,let deleted = mesh.boneIDs.firstIndex(of: id) {
+                    mesh.boneIDs.remove(at: deleted); mesh.inverseBinds.remove(at: deleted)
+                    mesh.lockedBoneIDs?.removeAll { $0 == id }
+                    for vertex in mesh.vertices.indices {
+                        var weights = mesh.vertices[vertex].weights.filter { $0.bone != deleted }
+                        let removed = mesh.vertices[vertex].weights.filter { $0.bone == deleted }.reduce(0.0) { $0+$1.amount }
+                        for j in weights.indices { if weights[j].bone>deleted { weights[j].bone -= 1 } }
+                        if removed>0 {
+                            if let root = weights.firstIndex(where: { $0.bone == 0 }) { weights[root].amount += removed }
+                            else { weights.append(BoneMeshWeight(bone: 0,amount: removed)) }
+                        }
+                        mesh.vertices[vertex].weights = weights
+                    }
+                    mesh.changed(); p.layers[i].boneMesh = mesh
+                }
+            }
+        }
+        endEdit(); selectedLayerID = parent; panel = previous
     }
 
     /// Move a setup joint without adding keys. Child pivots retain their world position at this frame.
@@ -145,18 +185,25 @@ struct BoneAuthoringControls: View {
                                 .frame(maxWidth: .infinity,minHeight: 44)
                         }.buttonStyle(.bordered)
                         if state.selectedLayer?.bone != nil {
-                            Button("Branch") { state.branchFromSelectedBone() }.frame(minWidth: 70,minHeight: 44)
+                            Button("Branch") { state.branchFromSelectedBone() }.frame(minWidth: 65,minHeight: 44)
                                 .accessibilityIdentifier("bone-add-branch")
+                            Button(state.boneParentPicking == nil ? "Parent" : "Cancel") {
+                                state.boneParentPicking = state.boneParentPicking == nil ? state.selectedLayerID : nil
+                            }.frame(minWidth: 65,minHeight: 44)
                         }
                     }
                 }
                 if state.selectedLayer?.bone != nil {
+                    if state.boneParentPicking != nil { Text("Select the new parent on canvas or in the hierarchy.").font(.caption).foregroundStyle(Theme.warning) }
                     Picker("Joint editing",selection: $state.boneRestEditing) {
                         Text("Pose").tag(false); Text("Edit Rest").tag(true)
                     }.pickerStyle(.segmented).frame(minHeight: 44)
                 }
                 DisclosureGroup("Bone hierarchy",isExpanded: $hierarchyOpen) {
                     let bones = state.project.layers.filter { $0.bone?.artworkID == artworkID }.reversed()
+                    if let id = state.selectedLayerID,state.selectedLayer?.bone != nil {
+                        Button("Delete Selected Bone",role: .destructive) { state.deleteAuthoringBone(id) }.frame(minHeight: 44)
+                    }
                     ForEach(Array(bones)) { bone in
                         Button { state.selectAuthoringBone(bone.id) } label: {
                             HStack {

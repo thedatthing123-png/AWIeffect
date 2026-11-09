@@ -141,6 +141,8 @@ extension EditorState {
 struct PuppetPanel: View {
     @ObservedObject var state: EditorState
     @State private var fine = true
+    @State private var pinInput: (origin: Vec2,inverse: simd_double3x3)?
+    @State private var pinDelta = Vec2.zero
 
     var body: some View {
         VStack(spacing: 0) {
@@ -182,14 +184,19 @@ struct PuppetPanel: View {
                                             .accessibilityLabel("Fine pin positioning")
                                         Text("Fine").font(.caption).foregroundStyle(Theme.textDim)
                                     }
-                                    SwipePad(hint: "Swipe to position selected pin", gain: Double(state.project.width) * (fine ? 0.25 : 1)) { delta in
-                                        let current = state.puppetPins
-                                        guard current.indices.contains(selected) else { return }
-                                        guard let canvas = state.compPoint(fromLocal: current[selected].current) else { return }
-                                        state.movePuppetPin(selected, toComp: canvas +
-                                            Vec2(Double(delta.width), Double(delta.height)))
-                                    } begin: { state.beginPanelGesture("Position Pin") }
-                                      end: { state.endPanelGesture() }
+                                    SwipePad(hint: "Swipe to position selected pin",gain: Double(state.project.width)*(fine ? 0.25 : 1),steady: true) { delta in
+                                        guard let input = pinInput else { return }
+                                        pinDelta = pinDelta+Vec2(Double(delta.width),Double(delta.height))
+                                        if let local = LayerPlacement.projected(input.origin+pinDelta,by: input.inverse) { state.setPuppetPin(selected,local: local) }
+                                    } begin: {
+                                        guard let id = state.selectedLayerID,let frame = state.displayPlacement(of: id),abs(frame.determinant)>1e-10,
+                                              state.puppetPins.indices.contains(selected),let origin = LayerPlacement.projected(state.puppetPins[selected].current,by: frame) else { return }
+                                        pinInput = (origin,frame.inverse); pinDelta = .zero
+                                        state.beginPanelGesture("Position Pin")
+                                    } end: {
+                                        if pinInput != nil { state.endPanelGesture() }
+                                        pinInput = nil; pinDelta = .zero
+                                    }
                                     .frame(height: 110)
                                     .accessibilityIdentifier("puppet-position-swipe-pad")
                                 }

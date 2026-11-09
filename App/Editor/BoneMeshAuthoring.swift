@@ -70,6 +70,7 @@ extension EditorState {
 
 struct BoneMeshControls: View {
     @ObservedObject var state: EditorState
+    @State private var influencesOpen = false
     var body: some View {
         if let art = state.rigArtwork {
             if let mesh = art.boneMesh {
@@ -90,6 +91,7 @@ struct BoneMeshControls: View {
                         Text("Strength").font(.caption).frame(width: 60,alignment: .leading)
                         ValueScrubber(value: state.boneWeightStrength,range: 1...100,unit: "%",onChange: { state.boneWeightStrength = $0 }).frame(height: 44).environment(\.scrubSession, ScrubSession())
                     }
+                    DisclosureGroup("Choose influence",isExpanded: $influencesOpen) {
                     ForEach(mesh.boneIDs,id: \.self) { id in
                         HStack(spacing: 8) {
                             Button {
@@ -106,6 +108,7 @@ struct BoneMeshControls: View {
                                     .frame(width: 44,height: 44)
                             }.buttonStyle(.plain).accessibilityLabel("Lock weights for \(id == art.id ? "Artwork" : state.project.layers.first(where: { $0.id == id })?.name ?? "Bone")")
                         }
+                    }
                     }
                 } else {
                     HStack {

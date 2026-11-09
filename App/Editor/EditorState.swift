@@ -102,6 +102,7 @@ final class EditorState: ObservableObject {
     var layerPickReturnPanel: ToolPanel = .transform
     var layerPickPrompt = "Tap a layer"
     /// Make-IK picks (kept here: the Rig panel closes while you tap a layer on the canvas).
+    @Published var boneParentPicking: UUID?
     @Published var boneRestEditing = false
     @Published var boneMeshDetail = 32.0
     @Published var boneWeightArtworkID: UUID? { didSet { redrawToken &+= 1 } }

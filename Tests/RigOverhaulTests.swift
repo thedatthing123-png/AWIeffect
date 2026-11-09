@@ -61,9 +61,26 @@ import simd
         let near = try XCTUnwrap(mesh.vertices.first { $0.rest == Vec2(50,0) })
         XCTAssertEqual(near.weights,[BoneMeshWeight(bone: 1,amount: 1)])
     }
+    func testReparentPreservesWorldPositionRejectsCyclesAndDeleteKeepsChildren() throws {
+        let (s,art) = editor(); s.panel = .boneWeight
+        let root = try XCTUnwrap(s.addBone(artworkID: art,parentID: nil,start: .zero,end: Vec2(100,0)))
+        let child = try XCTUnwrap(s.addBone(artworkID: art,parentID: root,start: .zero,end: Vec2(150,50)))
+        let branch = try XCTUnwrap(s.addBone(artworkID: art,parentID: root,start: .zero,end: Vec2(150,-50)))
+        let before = try XCTUnwrap(Renderer.parentAffine(child,in: s.project,time: 0)).m[2]
+        s.reparentAuthoringBone(child,to: branch)
+        XCTAssertEqual(s.project.layers.first { $0.id == child }?.parentID,branch)
+        let after = try XCTUnwrap(Renderer.parentAffine(child,in: s.project,time: 0)).m[2]
+        XCTAssertEqual(before.x,after.x,accuracy: 1e-7); XCTAssertEqual(before.y,after.y,accuracy: 1e-7)
+        s.reparentAuthoringBone(branch,to: child)
+        XCTAssertEqual(s.project.layers.first { $0.id == branch }?.parentID,root)
+        s.deleteAuthoringBone(branch)
+        XCTAssertEqual(s.project.layers.first { $0.id == child }?.parentID,root)
+        XCTAssertEqual(s.panel,.boneWeight)
+    }
+
     func testFrameMapMatchesIndividualHierarchyAndRejectsCycles() throws {
         let (s,art) = editor(); var parent = art
-        for _ in 0..<40 { parent = try XCTUnwrap(s.addBone(artworkID: art,parentID: parent == art ? nil : parent,start: .zero,end: Vec2(100,100))) }
+        for i in 0..<40 { parent = try XCTUnwrap(s.addBone(artworkID: art,parentID: parent == art ? nil : parent,start: .zero,end: Vec2(Double(i+1)*50,0))) }
         let frames = Renderer.parentAffineMap(s.project,time: 0)
         for node in s.project.layers {
             let a = try XCTUnwrap(frames[node.id]),b = try XCTUnwrap(Renderer.parentAffine(node.id,in: s.project,time: 0))
