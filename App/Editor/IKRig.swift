@@ -223,8 +223,8 @@ extension EditorState {
               selectedLayerID == endID,
               IKSolver.connectedPath(root: rootID, end: endID, in: project) == joints else { return }
         let driven = Set(joints)
-        if let conflict = project.layers.first(where: {
-            !$0.ik.map { _ in IKSolver.drivenIDs(owner: $0).isDisjoint(with: driven) }! 
+        if let conflict = project.layers.first(where: { layer in
+            layer.ik != nil && !IKSolver.drivenIDs(owner: layer).isDisjoint(with: driven)
         }) {
             recoveryNotice = "Joint chain overlaps IK on \(conflict.name). Remove that constraint or select a different root."
             return
@@ -256,14 +256,14 @@ extension EditorState {
         guard let tipWorld = LayerPlacement.projected(localTip - lowerAnchor, by: lowerFrame.m) else { return }
         // All drawn bones in one artwork stay in that 2D plane even when camera tilts.
         let artID = lower.bone?.artworkID
-        if let artID, joints.contains(where: {
-            project.layers.first(where: { $0.id == $0 }) == nil
-        }) { return }
         // The common coordinate space is the root bone's artwork or its parent.
         let spaceID = artID ?? root.parentID
-        if let artID, joints.contains(where: {
-            project.layers.first(where: { $0.id == $0 })?.bone?.artworkID != artID
-        }) { return }
+        if let artID, joints.contains(where: { boneID in
+            project.layers.first(where: { $0.id == boneID })?.bone?.artworkID != artID
+        }) {
+            recoveryNotice = "A bone chain must belong to the same artwork plane."
+            return
+        }
         let space = spaceID.flatMap { Renderer.parentAffine($0, in: posed, time: t)?.m }
             ?? matrix_identity_double3x3
         guard abs(space.determinant) > 1e-10 else { return }
