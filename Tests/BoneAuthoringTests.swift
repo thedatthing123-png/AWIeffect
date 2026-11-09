@@ -11,6 +11,105 @@ final class BoneAuthoringTests: XCTestCase {
         return (EditorState(project: p, store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))), art.id)
     }
 
+    func testBuild26LongChainIKControlsSixJointsAndPreservesFK() throws {
+        var p = Project.new(name: "Long chain", width: 1000, height: 700, fps: 30, duration: 4)
+        var previous: UUID?
+        var ids: [UUID] = []
+        for index in 0..<6 {
+            var bone = p.makeLayer(name: "Joint \(index + 1)", content: .solid, size: Vec2(24, 24))
+            bone.isNull = true
+            bone.transform.anchor = Animated(.zero)
+            bone.transform.position = Animated(index == 0 ? Vec2(170, 170) : Vec2(60, 0))
+            bone.parentID = previous
+            ids.append(bone.id)
+            previous = bone.id
+            p.layers.append(bone)
+        }
+        let state = EditorState(project: p, store: ProjectStore(root:
+            FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        let tipID = try XCTUnwrap(ids.last)
+        state.select(tipID)
+        state.ikDraftTip = (tipID, Vec2(60, 0))
+        XCTAssertEqual(IKSolver.connectedPath(root: ids[0], end: tipID, in: state.project), ids)
+        state.makeIK(upper: ids[0], controller: nil)
+        let rig = try XCTUnwrap(state.project.layers.first(where: { $0.id == tipID })?.ik)
+        XCTAssertEqual(rig.chainIDs, ids)
+        XCTAssertEqual(rig.restTip, Vec2(60, 0))
+        let controllerIndex = try XCTUnwrap(state.project.layers.firstIndex(where: { $0.id == rig.controllerID }))
+        let target = Vec2(355, 330)
+        state.project.layers[controllerIndex].transform.position = Animated(target)
+        let posed = IKSolver.apply(state.project, time: 0)
+        let owner = try XCTUnwrap(posed.layers.first(where: { $0.id == tipID }))
+        let reached = try XCTUnwrap(IKSolver.tipWorld(owner, rig: rig, in: posed, time: 0))
+        XCTAssertLessThan(hypot(reached.x - target.x, reached.y - target.y), 3.0,
+                          "Every connected bone should contribute to reaching one controller")
+        let jointsRotated = ids.filter { id in
+            let bone = posed.layers.first(where: { $0.id == id })!
+            return abs(bone.transform.rotation.value(at: 0)) > 0.1
+        }
+        XCTAssertGreaterThan(jointsRotated.count, 2)
+
+        // FK blend is preserved, not overwritten by the new solver.
+        let ownerIndex = try XCTUnwrap(state.project.layers.firstIndex(where: { $0.id == tipID }))
+        state.project.layers[ownerIndex].ik?.mix = Animated(0)
+        let fk = IKSolver.apply(state.project, time: 0)
+        for id in ids {
+            let raw = try XCTUnwrap(state.project.layers.first(where: { $0.id == id }))
+            let after = try XCTUnwrap(fk.layers.first(where: { $0.id == id }))
+            XCTAssertEqual(after.transform.rotation.value(at: 0),
+                           raw.transform.rotation.value(at: 0), accuracy: 1e-8)
+        }
+        let saved = try JSONDecoder().decode(Project.self, from: JSONEncoder().encode(state.project))
+        XCTAssertEqual(saved.layers.first(where: { $0.id == tipID })?.ik?.chainIDs, ids)
+    }
+
+    func testBuild26VeryLongHierarchyRetainsJointPlacementBeyondSixteenAncestors() throws {
+        var p = Project.new(name: "25 joint skeleton", width: 2000, height: 800, fps: 30, duration: 4)
+        var previous: UUID?
+        for i in 0..<25 {
+            var layer = p.makeLayer(name: "Bone \(i)", content: .solid, size: Vec2(20, 20))
+            layer.isNull = true
+            layer.transform.anchor = Animated(.zero)
+            layer.transform.position = Animated(Vec2(i == 0 ? 100 : 15, i == 0 ? 100 : 0))
+            layer.parentID = previous
+            previous = layer.id
+            p.layers.append(layer)
+        }
+        let last = try XCTUnwrap(previous)
+        let world = try XCTUnwrap(Renderer.parentAffine(last, in: p, time: 0))
+        let origin = try XCTUnwrap(LayerPlacement.projected(.zero, by: world.m))
+        XCTAssertEqual(origin.x, 100 + 24 * 15, accuracy: 1e-7)
+        XCTAssertEqual(origin.y, 100, accuracy: 1e-7)
+    }
+
+    func testBuild26MultipleArtworkPiecesCanAttachToOneJoint() throws {
+        var p = Project.new(name: "Repeated artwork attachment", width: 600, height: 600, fps: 30, duration: 4)
+        var joint = p.makeLayer(name: "Head joint", content: .solid, size: Vec2(24, 24))
+        joint.isNull = true
+        joint.transform.anchor = Animated(.zero)
+        joint.transform.position = Animated(Vec2(230, 180))
+        var accessoryA = p.makeLayer(name: "Hair", content: .solid, size: Vec2(60, 80))
+        accessoryA.transform.position = Animated(Vec2(420, 100))
+        var accessoryB = p.makeLayer(name: "Earring", content: .solid, size: Vec2(24, 24))
+        accessoryB.transform.position = Animated(Vec2(390, 420))
+        p.layers = [joint, accessoryA, accessoryB]
+        let state = EditorState(project: p, store: ProjectStore(root:
+            FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        state.select(joint.id)
+        state.attachArtwork(accessoryA.id, toJoint: joint.id)
+        state.attachArtwork(accessoryB.id, toJoint: joint.id)
+        XCTAssertEqual(state.project.layers.first(where: { $0.id == accessoryA.id })?.parentID, joint.id)
+        XCTAssertEqual(state.project.layers.first(where: { $0.id == accessoryB.id })?.parentID, joint.id)
+        let resolved = Renderer.resolveParenting(state.project, time: 0)
+        for id in [accessoryA.id, accessoryB.id] {
+            let positioned = try XCTUnwrap(resolved.layers.first(where: { $0.id == id }))
+            XCTAssertEqual(positioned.transform.position.value(at: 0).x, 230, accuracy: 1e-6)
+            XCTAssertEqual(positioned.transform.position.value(at: 0).y, 180, accuracy: 1e-6)
+        }
+        // The underlying artwork's parent doesn't change; no extra IK controller is required.
+        XCTAssertEqual(state.project.layers.filter { $0.ik != nil }.count, 0)
+    }
+
     func testThreeImagePiecesFollowShoulderAndIKWithoutMesh() throws {
         var p = Project.new(name: "Three-piece arm",width: 600,height: 600,fps: 30,duration: 4)
         var root = p.makeLayer(name: "Character",content: .solid,size: Vec2(20,20)); root.isNull = true
