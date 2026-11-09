@@ -7,19 +7,32 @@ import simd
 extension Renderer {
     /// Parent's local -> comp affine at `time` (renderScale 1), following the parent's own parents.
     static func parentAffine(_ id: UUID, in p: Project, time: Double, depth: Int = 0) -> (m: simd_double3x3, rot: Double, scale: Vec2)? {
-        guard depth < 16, let parent = (p.layers + (p.parentContext ?? [])).first(where: { $0.id == id }) else { return nil }
-        let own = layerMatrix(parent, time: time, renderScale: 1)
-        let fx = transformOffsets(parent, time: time)
-        let rot = parent.transform.rotation.value(at: time) + fx.dr
-        let sc = parent.transform.scale.value(at: time) * (fx.ds * 0.01)
-        // The parent's anchor is its local origin for children (AE behaviour).
-        let anc = parent.transform.anchor.value(at: time)
-        let toAnchor = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(anc.x, anc.y, 1)))
-        let m = own * toAnchor
-        if let up = parent.parentID, let chain = parentAffine(up, in: p, time: time, depth: depth + 1) {
-            return (chain.m * m, chain.rot + rot, Vec2(chain.scale.x * sc.x, chain.scale.y * sc.y))
+        // Parent chains can be as long as the document permits. The old depth < 16
+        // cutoff silently detached long authored skeletons. Detect cycles instead.
+        let lookup = Dictionary((p.layers + (p.parentContext ?? [])).map { ($0.id, $0) },
+                                uniquingKeysWith: { first, _ in first })
+        guard lookup[id] != nil else { return nil }
+        var chain: UUID? = id
+        var visited = Set<UUID>()
+        var matrix = matrix_identity_double3x3
+        var rotation = 0.0
+        var scale = Vec2(1, 1)
+        while let current = chain, let layer = lookup[current] {
+            guard visited.insert(current).inserted else { return nil }
+            let own = layerMatrix(layer, time: time, renderScale: 1)
+            let offsets = transformOffsets(layer, time: time)
+            let anchor = layer.transform.anchor.value(at: time)
+            let toAnchor = simd_double3x3(columns: (
+                SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(anchor.x, anchor.y, 1)
+            ))
+            // Walk child -> parent, multiplying each parent on the left.
+            matrix = own * toAnchor * matrix
+            rotation += layer.transform.rotation.value(at: time) + offsets.dr
+            let localScale = layer.transform.scale.value(at: time) * (offsets.ds * 0.01)
+            scale = Vec2(scale.x * localScale.x, scale.y * localScale.y)
+            chain = layer.parentID
         }
-        return (m, rot, sc)
+        return (matrix, rotation, scale)
     }
 
     /// Bakes parenting into absolute keyframed transforms (each key evaluated at its own time), so time effects like
