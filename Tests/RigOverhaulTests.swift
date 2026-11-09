@@ -203,4 +203,16 @@ import simd
         for vertex in mesh.vertices { XCTAssertEqual(mesh.deformed(vertex,matrices: palette).x,vertex.rest.x,accuracy: 1e-6) }
     }
 
+    func testLeavingRigPanelFinalizesRestAndCancelsPendingToolState() throws {
+        let (s,art) = editor()
+        let root = try XCTUnwrap(s.addBone(artworkID: art,parentID: nil,start: .zero,end: Vec2(100,0)))
+        s.selectAuthoringBone(root); s.bindBoneMesh(); s.boneRestEditing = true
+        s.moveBoneRestJoint(root,to: Vec2(20,10)); s.boneParentPicking = root
+        s.panel = .effects
+        XCTAssertFalse(s.boneRestEditing); XCTAssertNil(s.boneParentPicking); XCTAssertNil(s.rigRestArtworkID)
+        let mesh = try XCTUnwrap(s.project.layers.first { $0.id == art }?.boneMesh)
+        let palette = try XCTUnwrap(BoneMeshEvaluation.palette(mesh,artworkID: art,posed: s.project,time: 0))
+        for vertex in mesh.vertices { XCTAssertEqual(mesh.deformed(vertex,matrices: palette).x,vertex.rest.x,accuracy: 1e-6) }
+    }
+
 }

@@ -195,8 +195,10 @@ extension EditorState {
         }
         let delta = b - a, length = hypot(delta.x, delta.y)
         guard length.isFinite, length >= 2 else { return nil }
-        let count = project.layers.filter { $0.bone?.artworkID == artworkID }.count
-        var bone = project.makeLayer(name: "Bone \(count + 1)", content: .solid, size: Vec2(24, 24))
+        let existing = Set(project.layers.filter { $0.bone?.artworkID == artworkID }.map(\.name))
+        var number = existing.count+1
+        while existing.contains("Bone \(number)") { number += 1 }
+        var bone = project.makeLayer(name: "Bone \(number)", content: .solid, size: Vec2(24, 24))
         bone.isNull = true; bone.tag = .amber; bone.parentID = parent; bone.groupID = artwork.groupID
         bone.inPoint = artwork.inPoint; bone.outPoint = artwork.outPoint
         bone.transform.position = Animated(a)
@@ -239,10 +241,12 @@ struct BoneAuthoringControls: View {
                 }
                 if state.selectedLayer?.bone != nil {
                     if state.boneParentPicking != nil { Text("Select the new parent on canvas or in the hierarchy.").font(.caption).foregroundStyle(Theme.warning) }
-                    Picker("Joint editing",selection: $state.boneRestEditing) {
+                    Picker("Joint editing",selection: Binding(get: { state.boneRestEditing },set: { rest in
+                        if state.boneRestEditing && !rest { state.finishBoneRestEditing() }
+                        state.boneRestEditing = rest
+                    })) {
                         Text("Pose").tag(false); Text("Edit Rest").tag(true)
                     }.pickerStyle(.segmented).frame(minHeight: 44)
-                    .onChange(of: state.boneRestEditing) { _,rest in if !rest { state.finishBoneRestEditing() } }
                 }
                 DisclosureGroup("Bone hierarchy",isExpanded: $hierarchyOpen) {
                     let bones = state.project.layers.filter { $0.bone?.artworkID == artworkID }.reversed()

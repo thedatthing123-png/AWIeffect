@@ -37,6 +37,7 @@ extension EditorState {
 
     func toggleBoneWeightLock(_ id: UUID) {
         guard let owner = boneWeightArtworkID else { return }
+        finishBoneWeightStroke(commit: false)
         mutate("Lock Bone Weights") { p in
             guard let i = p.layers.firstIndex(where: { $0.id == owner }), var mesh = p.layers[i].boneMesh else { return }
             var locked = Set(mesh.lockedBoneIDs ?? [])

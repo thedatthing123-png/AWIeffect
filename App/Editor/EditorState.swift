@@ -220,6 +220,11 @@ final class EditorState: ObservableObject {
     @Published var panel: ToolPanel = .none {
         didSet {
             if panel != oldValue { CrashReporter.note("Opened \(panel)"); endScrub() }
+            if (oldValue == .rig || oldValue == .boneWeight),panel != .rig,panel != .boneWeight {
+                if liveGesture { endPanelGesture() }
+                if boneRestEditing { finishBoneRestEditing(); boneRestEditing = false }
+                boneParentPicking = nil; finishBoneDrawing(); finishBoneWeights()
+            }
             if panel != .effects && panel != .graph { keyframeFocusEffects = [] }
         }
     }
