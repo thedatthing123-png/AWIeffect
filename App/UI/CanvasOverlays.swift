@@ -143,16 +143,38 @@ struct BoneOverlay: View {
                 guard let p = LayerPlacement.projected(l.transform.anchor.value(at: t), by: matrix) else { return nil }
                 return CGPoint(x: fit.minX + CGFloat(p.x) * s, y: fit.minY + CGFloat(p.y) * s)
             }
+            func reachedWrist(_ id: UUID, localTip: Vec2, spaceID: UUID?) -> CGPoint? {
+                guard let l = layers[id] else { return nil }
+                let matrix: simd_double3x3
+                if let spaceID, let art = layers[spaceID],
+                   let projected = EditorState.bonePlacement(l, artwork: art, project: posed, time: t, camera: camera) {
+                    matrix = projected
+                } else {
+                    matrix = Renderer.placementMatrix(l, camera: camera, time: t, renderScale: 1)
+                }
+                guard let p = LayerPlacement.projected(localTip, by: matrix) else { return nil }
+                return CGPoint(x: fit.minX + CGFloat(p.x) * s, y: fit.minY + CGFloat(p.y) * s)
+            }
             for l in view.layers {
-                guard let rig = l.ik, let a = joint(rig.upperID, spaceID: rig.spaceID), let b = joint(l.id, spaceID: rig.spaceID), let c = joint(rig.controllerID, spaceID: rig.spaceID) else { continue }
+                guard let rig = l.ik,
+                      let a = joint(rig.upperID, spaceID: rig.spaceID),
+                      let b = joint(l.id, spaceID: rig.spaceID),
+                      let target = joint(rig.controllerID, spaceID: rig.spaceID) else { continue }
+                let localTip = rig.restTip ?? l.bone?.tip ?? Vec2(0, Renderer.layerHalfSize(l, time: t).y)
+                let wrist = reachedWrist(l.id, localTip: localTip, spaceID: rig.spaceID) ?? target
                 let on = l.id == selectedID
-                var bone = Path(); bone.move(to: a); bone.addLine(to: b); bone.addLine(to: c)
+                // The white chain follows the *reached* wrist, not an unreachable orange target.
+                var bone = Path(); bone.move(to: a); bone.addLine(to: b); bone.addLine(to: wrist)
                 ctx.stroke(bone, with: .color(.black.opacity(0.6)), style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round))
                 ctx.stroke(bone, with: .color(on ? Theme.accentGlow : .white), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
-                for (k, p) in [a, b, c].enumerated() {
-                    let r: CGFloat = k == 2 ? 8 : 6
+                if hypot(wrist.x - target.x, wrist.y - target.y) > 2 {
+                    var gap = Path(); gap.move(to: wrist); gap.addLine(to: target)
+                    ctx.stroke(gap, with: .color(Theme.warning), style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                }
+                for (k, p) in [a, b, wrist, target].enumerated() {
+                    let r: CGFloat = k == 3 ? 8 : 6
                     let dot = Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2))
-                    ctx.fill(dot, with: .color(k == 2 ? Theme.warning : .white))
+                    ctx.fill(dot, with: .color(k == 3 ? Theme.warning : .white))
                     ctx.stroke(dot, with: .color(.black), lineWidth: 1.5)
                 }
             }
