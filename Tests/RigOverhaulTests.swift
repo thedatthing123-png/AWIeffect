@@ -184,4 +184,11 @@ import simd
         }
     }
 
+    func testLongSkeletonCarriesRootDepthBeyondThirtyTwoParents() throws {
+        let (s,art) = editor(); var parent: UUID? = nil
+        for i in 0..<40 { parent = try XCTUnwrap(s.addBone(artworkID: art,parentID: parent,start: .zero,end: Vec2(Double(i+1)*10,0))) }
+        for i in s.project.layers.indices { s.project.layers[i].transform.positionZ = Animated(s.project.layers[i].id == art ? 10 : 1) }
+        XCTAssertEqual(Renderer.chainZ(parent,in: s.project,time: 0),50,accuracy: 1e-8)
+    }
+
 }

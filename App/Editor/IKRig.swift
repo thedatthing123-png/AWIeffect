@@ -851,7 +851,8 @@ extension EditorState {
         case .restEndpoint(let id):
             guard let placement = displayPlacement(of: id) else { return nil }; matrix = placement
         case .restJoint(let id), .ikController(let id):
-            let source = canvasViewProject(live.project ?? project)
+            var source = canvasViewProject(live.project ?? project)
+            if case .restJoint = selection { for i in source.layers.indices { source.layers[i].ik = nil } }
             guard let controller = source.layers.first(where: { $0.id == id }) else { return nil }
             matrix = LayerPlacement.positionMatrix(controller,project: source,time: currentTime)
         }
@@ -1075,8 +1076,11 @@ struct RigPanel: View {
                             .buttonStyle(PrimaryButtonStyle())
                             .disabled(state.ikDraftHand == nil)
                         }
-                        Divider().overlay(Theme.stroke)
-                        BoneSkinControls(state: state, workflow: .rigPieces)
+                        if state.rigArtwork?.boneSkin != nil {
+                            Divider().overlay(Theme.stroke)
+                            Text("Legacy deformation").font(.caption).foregroundStyle(Theme.textDim)
+                            BoneSkinControls(state: state, workflow: .rigPieces)
+                        }
                     }
                     .padding(.horizontal, 12).padding(.bottom, 14)
                 }

@@ -91,7 +91,7 @@ struct BoneMeshControls: View {
                         Text("Strength").font(.caption).frame(width: 60,alignment: .leading)
                         ValueScrubber(value: state.boneWeightStrength,range: 1...100,unit: "%",onChange: { state.boneWeightStrength = $0 }).frame(height: 44).environment(\.scrubSession, ScrubSession())
                     }
-                    DisclosureGroup("Choose influence",isExpanded: $influencesOpen) {
+                    DisclosureGroup("Influence: \(state.boneWeightBoneID == art.id ? "Artwork" : state.project.layers.first(where: { $0.id == state.boneWeightBoneID })?.name ?? "Choose bone")",isExpanded: $influencesOpen) {
                     ForEach(mesh.boneIDs,id: \.self) { id in
                         HStack(spacing: 8) {
                             Button {

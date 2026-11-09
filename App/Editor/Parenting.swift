@@ -111,10 +111,11 @@ extension Renderer {
 
     /// Sum of Z positions along a parent chain (starting at `id`).
     static func chainZ(_ id: UUID?, in p: Project, time: Double) -> Double {
-        var z = 0.0, walk = id, n = 0
-        while let w = walk, n < 32, let par = (p.layers + (p.parentContext ?? [])).first(where: { $0.id == w }) {
-            z += par.transform.positionZ.value(at: time)
-            walk = par.parentID; n += 1
+        var z = 0.0, walk = id, visited = Set<UUID>()
+        let nodes = Dictionary((p.layers+(p.parentContext ?? [])).map { ($0.id,$0) },uniquingKeysWith: { a,_ in a })
+        while let current = walk,visited.insert(current).inserted,let parent = nodes[current] {
+            z += parent.transform.positionZ.value(at: time)
+            walk = parent.parentID
         }
         return z
     }
