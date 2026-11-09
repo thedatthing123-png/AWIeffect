@@ -934,7 +934,7 @@ struct RigPanel: View {
                             .buttonStyle(PrimaryButtonStyle())
                             .disabled(state.ikDraftUpper == nil)
                         }
-                        if l.bone != nil && state.selectedIKLayer == nil {
+                        if l.bone != nil {
                             Divider().overlay(Theme.stroke)
                             Text("ARTWORK ATTACHMENTS").font(.system(size: 11, weight: .bold))
                                 .foregroundStyle(Theme.textDim)
