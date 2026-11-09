@@ -51,7 +51,7 @@ enum BoneSkinRuntime {
         guard let art = project.layers.first(where: { $0.id == artworkID }) else { return [] }
         let authored = project.layers.filter { $0.bone?.artworkID == artworkID }
         if !authored.isEmpty {
-            return authored.map(\.id).reversed()
+            return Array(authored.map(\.id).reversed())
         }
         guard mode == .rigPieces else { return [] }
         var ids: [UUID] = []
@@ -59,7 +59,8 @@ enum BoneSkinRuntime {
         ids.append(artworkID)
         // Direct children control the flexible edge of each separate image piece.
         ids.append(contentsOf: project.layers.filter { $0.parentID == artworkID }.map(\.id))
-        return Array(NSOrderedSet(array: ids)) as? [UUID] ?? ids
+        var seen = Set<UUID>()
+        return ids.filter { seen.insert($0).inserted }
     }
 
     static func makeBindings(for artworkID: UUID, mode: BoneSkinWorkflow,
@@ -146,8 +147,9 @@ extension EditorState {
     /// Handy for the original Build 26 multi-piece workflow: deform the
     /// selected piece and its linked children without replacing its IK.
     func autoBindRigPieces(from artworkID: UUID) {
+        let descendants = IKSolver.descendants(of: artworkID, in: project)
         let ids = [artworkID] + project.layers.filter {
-            IKSolver.descendants(of: artworkID, in: project).contains($0.id) &&
+            descendants.contains($0.id) &&
                 !$0.isNull && !$0.isGroup && !$0.isAudioOnly
         }.map(\.id)
         let evaluated = IKSolver.apply(project, time: currentTime)
