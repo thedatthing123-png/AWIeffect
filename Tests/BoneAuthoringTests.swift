@@ -63,6 +63,58 @@ final class BoneAuthoringTests: XCTestCase {
         XCTAssertEqual(saved.layers.first(where: { $0.id == tipID })?.ik?.chainIDs, ids)
     }
 
+    func testBuild26IndependentIKChainsCanRunTogether() throws {
+        var project = Project.new(name: "Multiple chains", width: 1200, height: 700, fps: 30, duration: 4)
+        var chains: [[UUID]] = []
+        var destinations: [Vec2] = []
+        for group in 0..<2 {
+            var ids: [UUID] = []
+            var parent: UUID?
+            let root = Vec2(group == 0 ? 180 : 740, 180)
+            for index in 0..<4 {
+                var joint = project.makeLayer(name: "Chain \(group) Joint \(index)",
+                                              content: .solid, size: Vec2(24, 24))
+                joint.isNull = true
+                joint.transform.anchor = Animated(.zero)
+                joint.transform.position = Animated(index == 0 ? root : Vec2(60, 0))
+                joint.parentID = parent
+                parent = joint.id
+                ids.append(joint.id)
+                project.layers.append(joint)
+            }
+            chains.append(ids)
+            destinations.append(root + Vec2(105, 120))
+        }
+        let state = EditorState(project: project, store: ProjectStore(root:
+            FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        for chain in chains {
+            let end = try XCTUnwrap(chain.last)
+            state.select(end)
+            state.ikDraftTip = (end, Vec2(60, 0))
+            state.makeIK(upper: chain[0], controller: nil)
+            XCTAssertEqual(state.project.layers.first(where: { $0.id == end })?.ik?.chainIDs, chain)
+        }
+        XCTAssertEqual(state.project.layers.filter { $0.ik != nil }.count, 2)
+        for (i, chain) in chains.enumerated() {
+            let end = try XCTUnwrap(chain.last)
+            let rig = try XCTUnwrap(state.project.layers.first(where: { $0.id == end })?.ik)
+            guard let targetIndex = state.project.layers.firstIndex(where: { $0.id == rig.controllerID }) else {
+                XCTFail("Every chain needs a distinct controller")
+                return
+            }
+            state.project.layers[targetIndex].transform.position = Animated(destinations[i])
+        }
+        let posed = IKSolver.apply(state.project, time: 0)
+        for (i, chain) in chains.enumerated() {
+            let end = try XCTUnwrap(chain.last)
+            let owner = try XCTUnwrap(posed.layers.first(where: { $0.id == end }))
+            let rig = try XCTUnwrap(owner.ik)
+            let tip = try XCTUnwrap(IKSolver.tipWorld(owner, rig: rig, in: posed, time: 0))
+            XCTAssertLessThan(hypot(tip.x - destinations[i].x, tip.y - destinations[i].y), 3,
+                              "The solver must pose each chain without overwriting the other")
+        }
+    }
+
     func testBuild26VeryLongHierarchyRetainsJointPlacementBeyondSixteenAncestors() throws {
         var p = Project.new(name: "25 joint skeleton", width: 2000, height: 800, fps: 30, duration: 4)
         var previous: UUID?
