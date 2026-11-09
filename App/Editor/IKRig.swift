@@ -231,6 +231,160 @@ extension EditorState {
     }
 }
 
+/// The Rig position pad reuses the standard Move & Transform SwipePad.
+///// The selected point, not the artwork layer, is its editing target.
+enum RigPositionSelection: Equatable {
+    case restEndpoint(UUID)
+    case ikController(UUID)
+    case fkBoneTip(UUID)
+
+    var label: String {
+        switch self {
+        case .restEndpoint: return "Wrist / ankle (rest)"
+        case .ikController: return "IK target"
+        case .fkBoneTip: return "Bone tip"
+        }
+    }
+    var editsPose: Bool {
+        switch self {
+        case .restEndpoint: return false
+        case .ikController, .fkBoneTip: return true
+        }
+    }
+}
+
+extension EditorState {
+    /// Keeping these roles distinct stops a wrist setup edit from turning into a layer move.
+    var rigPositionSelection: RigPositionSelection? {
+        if let owner = selectedIKLayer, let ik = owner.ik {
+            return .ikController(ik.controllerID)
+        }
+        if let selected = selectedLayer, selected.bone != nil {
+            // A bone already driven by another two-bone solve must be posed through its target.
+            let constrained = project.layers.contains {
+                guard let rig = $0.ik, rig.mixValue(at: currentTime) > 0.001 else { return false }
+                return rig.upperID == selected.id || $0.id == selected.id
+            }
+            return constrained ? nil : .fkBoneTip(selected.id)
+        }
+        if let lower = selectedLayer, ikDraftUpper != nil, ikDraftController == nil {
+            return .restEndpoint(lower.id)
+        }
+        return nil
+    }
+
+    /// Values are labelled in their real coordinate space: rig rest artwork-local,
+    /// controllers parent-local, and FK tips projected into the composition.
+    func rigPositionValue(_ selection: RigPositionSelection) -> Vec2? {
+        let source = live.project ?? project
+        switch selection {
+        case .restEndpoint(let id):
+            guard let layer = source.layers.first(where: { $0.id == id }) else { return nil }
+            if let draft = ikDraftTip, draft.layerID == id { return draft.point }
+            return layer.bone?.tip ?? Vec2(0, Renderer.layerHalfSize(layer, time: currentTime).y)
+        case .ikController(let id):
+            return source.layers.first(where: { $0.id == id })?.transform.position.value(at: currentTime)
+        case .fkBoneTip(let id):
+            guard let bone = source.layers.first(where: { $0.id == id }), let settings = bone.bone else { return nil }
+            let viewed = canvasViewProject(source)
+            let posed = IKSolver.apply(viewed, time: currentTime)
+            let resolved = Renderer.resolveParenting(viewed, time: currentTime)
+            guard let liveBone = posed.layers.first(where: { $0.id == id }),
+                  let art = resolved.layers.first(where: { $0.id == settings.artworkID }),
+                  let placement = Self.bonePlacement(liveBone, artwork: art, project: posed,
+                      time: currentTime, camera: Renderer.activeCamera(resolved, time: currentTime)) else { return nil }
+            return LayerPlacement.projected(settings.tip, by: placement)
+        }
+    }
+
+    func moveRigPosition(_ selection: RigPositionSelection, to point: Vec2) {
+        guard point.x.isFinite, point.y.isFinite else { return }
+        switch selection {
+        case .restEndpoint(let id):
+            guard selectedLayerID == id, selectedIKLayer == nil, ikDraftUpper != nil else { return }
+            // Transient bind setup: moving a rest marker must not create a timeline key or undo step.
+            ikDraftTip = (id, point)
+        case .ikController(let id):
+            let source = live.project ?? project
+            guard source.layers.contains(where: { $0.ik?.controllerID == id }),
+                  source.layers.contains(where: { $0.id == id && !$0.isLocked }) else { return }
+            let time = currentTime
+            mutate("Pose IK") { p in
+                guard let index = p.layers.firstIndex(where: { $0.id == id }) else { return }
+                let before = p.layers[index].transform
+                p.layers[index].transform.position.set(point, at: time)
+                p.layers[index].transform.pairPositionKeys(previous: before, at: time)
+            }
+        case .fkBoneTip(let id):
+            guard selectedLayerID == id else { return }
+            poseBone(id, atCanvas: point)
+        }
+    }
+}
+
+/// Only X/Y from Move & Transform belongs here. No layer-move, Z, camera pan, or second gesture engine.
+private struct RigPositionControls: View {
+    @ObservedObject var state: EditorState
+    @State private var fine = true
+
+    var body: some View {
+        if let selected = state.rigPositionSelection {
+            LiveReader(live: state.live) { _ in
+                if let value = state.rigPositionValue(selected) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text(selected.label).font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(Theme.text)
+                            Spacer(minLength: 8)
+                            Toggle("Fine", isOn: $fine)
+                                .labelsHidden()
+                                .accessibilityLabel("Fine joint positioning")
+                            Text("Fine").font(.caption).foregroundStyle(Theme.textDim)
+                        }
+                        HStack(spacing: 8) {
+                            NumberField(value: value.x, label: "X",
+                                onDragBegin: { begin(selected) },
+                                onDragEnd: { finish(selected) },
+                                onCommit: { x in setAxis(selected, x: x) })
+                            NumberField(value: value.y, label: "Y",
+                                onDragBegin: { begin(selected) },
+                                onDragEnd: { finish(selected) },
+                                onCommit: { y in setAxis(selected, y: y) })
+                        }
+                        SwipePad(hint: "Swipe to position selected joint", gain: Double(state.project.width) * (fine ? 0.25 : 1)) { change in
+                            guard let p = state.rigPositionValue(selected) else { return }
+                            state.moveRigPosition(selected, to: p + Vec2(Double(change.width), Double(change.height)))
+                        } begin: { begin(selected) } end: { finish(selected) }
+                        .frame(height: 110)
+                        .accessibilityIdentifier("rig-position-swipe-pad")
+                        Text(selected.editsPose
+                             ? "Moves this joint/controller only. Use the timeline to animate its existing transform."
+                             : "Places the rest wrist/ankle before binding; does not add a keyframe.")
+                            .font(.caption2).foregroundStyle(Theme.textDim)
+                    }
+                    .padding(10)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Theme.surface.opacity(0.5)))
+                }
+            }
+        }
+    }
+
+    private func begin(_ target: RigPositionSelection) {
+        if target.editsPose { state.beginPanelGesture("Move Rig Point") }
+    }
+    private func finish(_ target: RigPositionSelection) {
+        if target.editsPose { state.endPanelGesture() }
+    }
+    private func setAxis(_ target: RigPositionSelection, x: Double? = nil, y: Double? = nil) {
+        guard let old = state.rigPositionValue(target) else { return }
+        let next = Vec2(x ?? old.x, y ?? old.y)
+        guard next != old else { return }
+        if target.editsPose { state.beginEdit("Position Joint") }
+        state.moveRigPosition(target, to: next)
+        if target.editsPose { state.endEdit() }
+    }
+}
+
 /// Rig panel: IK for limbs and collider switch.
 struct RigPanel: View {
     @ObservedObject var state: EditorState
@@ -242,6 +396,7 @@ struct RigPanel: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
                         BoneAuthoringControls(state: state)
+                        RigPositionControls(state: state)
                         Toggle("Collider (IK tips and physics bodies can't go through this layer)", isOn: Binding(get: { l.isCollider }, set: { b in
                             state.mutate("Collider") { p in if let i = state.selectedIndex { p.layers[i].isCollider = b } }
                         }))
