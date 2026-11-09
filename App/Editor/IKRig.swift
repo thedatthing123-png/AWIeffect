@@ -173,7 +173,8 @@ enum IKSolver {
         for li in q.layers.indices {
             if let chain = q.layers[li].ik?.chainIDs, chain.count >= 3,
                let rig = q.layers[li].ik {
-                solveChain(&q, ownerID: q.layers[li].id, rig: rig, time: time)
+                let ownerID = q.layers[li].id
+                solveChain(&q, ownerID: ownerID, rig: rig, time: time)
                 continue
             }
             guard let rig = q.layers[li].ik,
@@ -392,8 +393,9 @@ extension EditorState {
         // quietly accumulating a second controller that overwrites the same rotations.
         if let conflict = project.layers.first(where: { layer in
             guard let rig = layer.ik else { return false }
-            return layer.id == lower.id || rig.upperID == upper ||
-                   layer.id == upper || (controller != nil && rig.controllerID == controller)
+            let driven = IKSolver.drivenIDs(owner: layer)
+            return driven.contains(lower.id) || driven.contains(upper) ||
+                (controller != nil && rig.controllerID == controller)
         }) {
             recoveryNotice = "This joint already belongs to the rig on \(conflict.name). Select its controller or remove that IK before binding again."
             return
@@ -651,6 +653,10 @@ extension EditorState {
     /// Keeping these roles distinct stops a wrist setup edit from turning into a layer move.
     var rigPositionSelection: RigPositionSelection? {
         if let owner = selectedIKLayer, let ik = owner.ik {
+            if let selected = selectedLayer, selected.bone != nil,
+               ik.mixValue(at: currentTime) <= 0.001 {
+                return .fkBoneTip(selected.id)
+            }
             return .ikController(ik.controllerID)
         }
         if let selected = selectedLayer, selected.bone != nil {
