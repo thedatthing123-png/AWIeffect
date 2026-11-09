@@ -89,6 +89,39 @@ final class BoneAuthoringTests: XCTestCase {
         XCTAssertEqual(state.project.layers.filter { $0.ik != nil }.count, 1)
     }
 
+    func testBuild26RepairsDetachedLegacyHandWithoutNewController() throws {
+        var p = Project.new(name: "Repair legacy rig", width: 600, height: 600, fps: 30, duration: 4)
+        var upper = p.makeLayer(name: "Upper", content: .solid, size: Vec2(120, 36))
+        upper.transform.position = Animated(Vec2(200, 200))
+        upper.transform.anchor = Animated(Vec2(-60, 0))
+        var lower = p.makeLayer(name: "Lower", content: .solid, size: Vec2(100, 32))
+        lower.parentID = upper.id
+        lower.transform.position = Animated(Vec2(120, 0))
+        lower.transform.anchor = Animated(Vec2(-50, 0))
+        var hand = p.makeLayer(name: "Hand", content: .solid, size: Vec2(36, 26))
+        hand.transform.position = Animated(Vec2(460, 320))
+        p.layers = [hand, lower, upper]
+        let s = EditorState(project: p, store: ProjectStore(root:
+            FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        s.select(lower.id); s.ikDraftTip = (lower.id, Vec2(50, 0))
+        s.makeIK(upper: upper.id, controller: nil)
+        let rig = try XCTUnwrap(s.project.layers.first(where: { $0.id == lower.id })?.ik)
+        // Simulate old saved rigs that have the lengths but did not store a local tip.
+        let index = try XCTUnwrap(s.project.layers.firstIndex(where: { $0.id == lower.id }))
+        s.project.layers[index].ik?.restTip = nil
+        let existingCount = s.project.layers.count
+        s.select(rig.controllerID)
+        s.repairIKEndAttachment(hand.id)
+        XCTAssertEqual(s.project.layers.count, existingCount)
+        XCTAssertEqual(s.project.layers.first(where: { $0.id == hand.id })?.parentID, lower.id)
+        let owner = try XCTUnwrap(s.project.layers.first(where: { $0.id == lower.id }))
+        let reached = try XCTUnwrap(s.reachedIKWrist(owner: owner, in: s.project, at: 0))
+        let shown = try XCTUnwrap(Renderer.resolveParenting(s.project, time: 0)
+            .layers.first(where: { $0.id == hand.id }))
+        XCTAssertEqual(shown.transform.position.value(at: 0).x, reached.x, accuracy: 1e-6)
+        XCTAssertEqual(shown.transform.position.value(at: 0).y, reached.y, accuracy: 1e-6)
+    }
+
     func testBuild26RigPositionPadChangesOnlySelectedJoint() throws {
         let (s, art) = state()
         var upper = s.project.makeLayer(name: "Upper", content: .solid, size: Vec2(120, 32))
