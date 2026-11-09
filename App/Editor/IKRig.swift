@@ -71,6 +71,72 @@ enum IKSolver {
         return point
     }
 
+    /// Forward/backward distance projection. Bone lengths remain fixed; work per iteration is linear.
+    /// Behavioral algorithm reference: Aristidou & Lasenby, FABRIK (Graphical Models, 2011).
+    static func solvePoints(_ original: [Vec2],target: Vec2,flip: Bool = false) -> [Vec2] {
+        guard original.count>=2,target.x.isFinite,target.y.isFinite else { return original }
+        var points = original
+        let lengths = zip(original,original.dropFirst()).map { pair in hypot(pair.1.x-pair.0.x,pair.1.y-pair.0.y) }
+        guard lengths.allSatisfy({ $0.isFinite && $0>1e-8 }) else { return original }
+        let root = points[0],total = lengths.reduce(0,+),distance = hypot(target.x-root.x,target.y-root.y)
+        func atDistance(_ point: Vec2,from origin: Vec2,length: Double,fallback: Vec2) -> Vec2 {
+            let d = point-origin,n = hypot(d.x,d.y)
+            return origin+(n>1e-10 ? d*(length/n) : fallback*length)
+        }
+        if distance >= total {
+            let direction = (target-root)*(1/max(distance,1e-10))
+            for i in lengths.indices { points[i+1] = points[i]+direction*lengths[i] }
+            return points
+        }
+        let axis = original.last!-root,axisLength = max(1e-10,hypot(axis.x,axis.y))
+        let collinear = original.dropFirst().dropLast().allSatisfy { p in abs((p.x-root.x)*axis.y-(p.y-root.y)*axis.x)<1e-7 }
+        if collinear {
+            let normal = Vec2(-axis.y/axisLength,axis.x/axisLength)*(flip ? -1 : 1)
+            for i in 1..<(points.count-1) { points[i] = points[i]+normal*(total*0.02*sin(Double(i)*Double.pi/Double(points.count-1))) }
+        }
+        for _ in 0..<40 {
+            points[points.count-1] = target
+            for i in lengths.indices.reversed() { points[i] = atDistance(points[i],from: points[i+1],length: lengths[i],fallback: Vec2(-1,0)) }
+            points[0] = root
+            for i in lengths.indices { points[i+1] = atDistance(points[i+1],from: points[i],length: lengths[i],fallback: Vec2(1,0)) }
+            if hypot(points.last!.x-target.x,points.last!.y-target.y)<0.01 { break }
+        }
+        return points
+    }
+
+    private static func solveUniformChain(_ project: inout Project,ids: [UUID],owner: Layer,rig: IKRig,time: Double,target: Vec2,space: simd_double3x3) -> Bool {
+        let frames = Renderer.parentAffineMap(project,time: time)
+        let indices = Dictionary(project.layers.enumerated().map { ($0.element.id,$0.offset) },uniquingKeysWith: { a,_ in a })
+        guard ids.allSatisfy({ id in
+            guard let frame = frames[id] else { return false }
+            let m = space.inverse*frame.m
+            let x = hypot(m[0].x,m[0].y),y = hypot(m[1].x,m[1].y)
+            return m.determinant>0 && abs(x-y)<1e-6 && abs(m[0].x*m[1].x+m[0].y*m[1].y)<1e-6
+        }),let tipWorld = tipWorld(owner,rig: rig,in: project,time: time),let tip = LayerPlacement.projected(tipWorld,by: space.inverse) else { return false }
+        var points: [Vec2] = []
+        for id in ids {
+            guard let frame = frames[id],let point = LayerPlacement.projected(.zero,by: space.inverse*frame.m) else { return false }
+            points.append(point)
+        }
+        points.append(tip)
+        let result = solvePoints(points,target: target,flip: rig.flip)
+        let spaceRotation = atan2(space[0].y,space[0].x)*180/Double.pi
+        var worldRotations: [UUID: Double] = [:]
+        for i in ids.indices {
+            guard let index = indices[ids[i]],let frame = frames[ids[i]] else { return false }
+            let before = points[i+1]-points[i],after = result[i+1]-result[i]
+            let restAngle = atan2(before.y,before.x)*180/Double.pi-(frame.rot-spaceRotation)
+            let desired = atan2(after.y,after.x)*180/Double.pi-restAngle+spaceRotation
+            let pid = project.layers[index].parentID
+            let parentRotation = pid.flatMap { worldRotations[$0] ?? frames[$0]?.rot } ?? 0
+            let fk = project.layers[index].transform.rotation.value(at: time)
+            let local = blendAngle(fk: fk,ik: desired-parentRotation,w: rig.mixValue(at: time))
+            project.layers[index].transform.rotation = Animated(local)
+            worldRotations[ids[i]] = parentRotation+local
+        }
+        return true
+    }
+
     /// Cyclic coordinate descent for arbitrary parent-linked joint chains. This does not
     /// rewrite/restretch the authored bones or require a fixed three-piece template.
     /// Keep legacy two-bone rigs on their exact analytic solver below.
@@ -88,6 +154,7 @@ enum IKSolver {
         guard abs(bindSpace.determinant) > 1e-10,
               let target = LayerPlacement.projected(collide(world(ctrl, in: project, time: time).pos,
                 in: project, time: time), by: bindSpace.inverse) else { return }
+        if solveUniformChain(&project,ids: ids,owner: owner,rig: rig,time: time,target: target,space: bindSpace) { return }
         var solved = project
         // Fewer expensive passes when the target is reached; more passes for long chains.
         // This is an iteration budget, NOT a maximum number of bones.

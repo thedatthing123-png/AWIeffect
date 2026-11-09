@@ -78,6 +78,16 @@ import simd
         XCTAssertEqual(s.panel,.boneWeight)
     }
 
+    func testLongPointChainKeepsSegmentLengthsAndReachesTarget() {
+        let points = (0...20).map { Vec2(Double($0)*10,0) }
+        for target in [Vec2(100,70),Vec2(100,0),Vec2(400,0),Vec2(0,0)] {
+            let result = IKSolver.solvePoints(points,target: target)
+            XCTAssertEqual(result.first,points.first)
+            for i in 0..<20 { XCTAssertEqual(hypot(result[i+1].x-result[i].x,result[i+1].y-result[i].y),10,accuracy: 1e-7) }
+            if hypot(target.x,target.y)<200 { XCTAssertLessThan(hypot(result.last!.x-target.x,result.last!.y-target.y),0.5) }
+        }
+    }
+
     func testFrameMapMatchesIndividualHierarchyAndRejectsCycles() throws {
         let (s,art) = editor(); var parent = art
         for i in 0..<40 { parent = try XCTUnwrap(s.addBone(artworkID: art,parentID: parent == art ? nil : parent,start: .zero,end: Vec2(Double(i+1)*50,0))) }

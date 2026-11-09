@@ -46,6 +46,11 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
+      - name: Prepare verified GLTFKit2 binary
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/prepare_gltf_ci.py
+
       - name: Generate project
         run: xcodegen generate
 
