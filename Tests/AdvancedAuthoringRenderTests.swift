@@ -145,4 +145,53 @@ final class AdvancedAuthoringRenderTests: XCTestCase {
         XCTAssertTrue(CGImageDestinationFinalize(gif)); XCTAssertNotEqual(try XCTUnwrap(first),try XCTUnwrap(posedPNG))
     }
 
+    func testWideTexturedCutoutArmMovesAndBendsAsOneWeightedImage() throws {
+        let folder = URL(fileURLWithPath: "/tmp/awi-authoring",isDirectory: true)
+        try FileManager.default.createDirectory(at: folder,withIntermediateDirectories: true)
+        let format = UIGraphicsImageRendererFormat(); format.scale = 1; format.opaque = false
+        let artImage = UIGraphicsImageRenderer(size: CGSize(width: 400,height: 200),format: format).image { context in
+            UIBezierPath(roundedRect: CGRect(x: 10,y: 10,width: 380,height: 180),cornerRadius: 75).addClip()
+            for row in 0..<40 {
+                UIColor(red: 0.5+Double(row)*0.01,green: 0.24+Double(row)*0.006,blue: 0.14,alpha: 1).setFill()
+                context.fill(CGRect(x: 0,y: row*5,width: 400,height: 5))
+            }
+            UIColor(white: 1,alpha: 0.25).setStroke()
+            for x in stride(from: 20,through: 380,by: 20) {
+                let line = UIBezierPath(); line.move(to: CGPoint(x: x,y: 0)); line.addLine(to: CGPoint(x: x,y: 200)); line.lineWidth = 2; line.stroke()
+            }
+        }
+        let url = folder.appendingPathComponent("wide-arm-source.png")
+        try XCTUnwrap(artImage.pngData()).write(to: url)
+        var p = Project.new(name: "Whole cutout - three bones",width: 640,height: 480,fps: 30,duration: 2)
+        let art = p.makeLayer(name: "One wide arm image",content: .image(fileName: url.lastPathComponent,pixelWidth: 400,pixelHeight: 200),size: Vec2(400,200)); p.layers = [art]
+        let state = EditorState(project: p,store: ProjectStore(root: folder.appendingPathComponent("wide-arm-project")))
+        let root = try XCTUnwrap(state.addBone(artworkID: art.id,parentID: nil,start: Vec2(-170,0),end: Vec2(-50,0)))
+        let middle = try XCTUnwrap(state.addBone(artworkID: art.id,parentID: root,start: .zero,end: Vec2(70,0)))
+        let end = try XCTUnwrap(state.addBone(artworkID: art.id,parentID: middle,start: .zero,end: Vec2(170,0)))
+        state.selectAuthoringBone(root); state.boneMeshCoverage = .wholeArtwork; state.bindBoneMesh()
+        for (id,angle) in [(root,25.0),(middle,-70.0),(end,20.0)] {
+            let i = try XCTUnwrap(state.project.layers.firstIndex { $0.id == id })
+            state.project.layers[i].transform.rotation.insertKeyframe(Keyframe(time: 0,value: 0,interpolation: .linear))
+            state.project.layers[i].transform.rotation.insertKeyframe(Keyframe(time: 1,value: angle,interpolation: .linear))
+            state.project.layers[i].transform.rotation.insertKeyframe(Keyframe(time: 2,value: 0,interpolation: .linear))
+        }
+        let ri = try XCTUnwrap(state.project.layers.firstIndex { $0.id == root })
+        state.project.layers[ri].transform.position.insertKeyframe(Keyframe(time: 0,value: Vec2(-170,0),interpolation: .linear))
+        state.project.layers[ri].transform.position.insertKeyframe(Keyframe(time: 1,value: Vec2(-140,35),interpolation: .linear))
+        state.project.layers[ri].transform.position.insertKeyframe(Keyframe(time: 2,value: Vec2(-170,0),interpolation: .linear))
+        let copy = try JSONDecoder().decode(Project.self,from: JSONEncoder().encode(state.project))
+        try JSONEncoder().encode(copy).write(to: folder.appendingPathComponent("wide-arm.json"))
+        let renderer = try XCTUnwrap(Renderer.shared)
+        let gif = try XCTUnwrap(CGImageDestinationCreateWithURL(folder.appendingPathComponent("wide-arm.gif") as CFURL,UTType.gif.identifier as CFString,60,nil))
+        CGImageDestinationSetProperties(gif,[kCGImagePropertyGIFDictionary:[kCGImagePropertyGIFLoopCount:0]] as CFDictionary)
+        var first: Data?,posed: Data?
+        for frame in 0..<60 {
+            let image = try XCTUnwrap(renderer.renderImage(project: copy,time: Double(frame)/30,maxDimension: 480,mediaURL: { folder.appendingPathComponent($0) }))
+            CGImageDestinationAddImage(gif,try XCTUnwrap(image.cgImage),[kCGImagePropertyGIFDictionary:[kCGImagePropertyGIFDelayTime:1.0/30]] as CFDictionary)
+            if frame == 0 { first = image.pngData() }; if frame == 30 { posed = image.pngData() }
+            if frame % 15 == 0 { try XCTUnwrap(image.pngData()).write(to: folder.appendingPathComponent("wide-arm-\(frame).png")) }
+        }
+        XCTAssertTrue(CGImageDestinationFinalize(gif)); XCTAssertNotEqual(try XCTUnwrap(first),try XCTUnwrap(posed))
+    }
+
 }
