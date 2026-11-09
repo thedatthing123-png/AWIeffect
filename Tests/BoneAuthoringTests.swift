@@ -29,18 +29,20 @@ final class BoneAuthoringTests: XCTestCase {
         let ci = try XCTUnwrap(s.project.layers.firstIndex { $0.id == rig.controllerID })
         // Move the whole character, including its depth, without needing skinning or a 3D model.
         s.project.layers[ri].transform.rotation = Animated(25)
-        s.project.layers[ri].transform.scale = Animated(Vec2(150,75))
+        s.project.layers[ri].transform.scale = Animated(Vec2(150,150))
         s.project.layers[ri].transform.positionZ = Animated(200)
         s.project.layers[ci].transform.position = Animated(Vec2(30,100))
         let resolved = Renderer.resolveParenting(s.project,time: 0)
         let drawnLower = try XCTUnwrap(resolved.layers.first { $0.id == lower.id })
         let drawnHand = try XCTUnwrap(resolved.layers.first { $0.id == hand.id })
-        // Evaluate full affine hierarchy, retaining the scaled parent's shear instead of decomposing it.
+        // The linked hand and the rendered forearm endpoint must both meet the target.
         let posed = IKSolver.apply(s.project,time: 0)
         let parent = try XCTUnwrap(Renderer.parentAffine(lower.id,in: posed,time: 0))
         let wrist = parent.m*SIMD3(100.0,0,1)
         let target = try XCTUnwrap(Renderer.parentAffine(rig.controllerID,in: posed,time: 0)).m*SIMD3(0.0,0,1)
         XCTAssertEqual(wrist.x,target.x,accuracy: 1e-6); XCTAssertEqual(wrist.y,target.y,accuracy: 1e-6)
+        let renderedWrist = Renderer.layerMatrix(drawnLower,time: 0,renderScale: 1)*SIMD3(50.0,0,1)
+        XCTAssertEqual(renderedWrist.x,target.x,accuracy: 1e-6); XCTAssertEqual(renderedWrist.y,target.y,accuracy: 1e-6)
         XCTAssertEqual(drawnHand.transform.position.value(at: 0).x,target.x,accuracy: 1e-6)
         XCTAssertEqual(drawnHand.transform.position.value(at: 0).y,target.y,accuracy: 1e-6)
         XCTAssertEqual(drawnLower.transform.positionZ.value(at: 0),200,accuracy: 1e-6)
