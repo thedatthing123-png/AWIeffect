@@ -90,19 +90,24 @@ struct BoneWeightPanel: View {
             PanelHeader(state: state,title: "Bone / Weight",showKeyNav: false)
             ScrollView {
                 VStack(alignment: .leading,spacing: 8) {
-                    if state.boneWeightArtworkID == nil {
-                        BoneAuthoringControls(state: state)
-                        RigPositionControls(state: state)
-                    }
                     if let owner = state.selectedIKLayer,owner.bone == nil {
-                        Text("Artwork controlled by this rig").font(.caption.bold()).foregroundStyle(Theme.textDim)
-                        ForEach(state.project.layers.filter { IKSolver.drivenIDs(owner: owner).contains($0.id) && !$0.isNull }) { piece in
-                            Button { state.select(piece.id); state.panel = .boneWeight } label: {
-                                HStack { Text(piece.name).lineLimit(1); Spacer(); Image(systemName: state.rigArtworkID == piece.id ? "checkmark.circle.fill" : "circle") }.frame(minHeight: 44)
-                            }.buttonStyle(.plain)
+                        if state.boneWeightArtworkID == nil {
+                            Text("Artwork controlled by this rig").font(.caption.bold()).foregroundStyle(Theme.textDim)
+                            ForEach(state.project.layers.filter { IKSolver.drivenIDs(owner: owner).contains($0.id) && !$0.isNull }) { piece in
+                                Button { state.select(piece.id); state.panel = .boneWeight } label: {
+                                    HStack { Text(piece.name).lineLimit(1); Spacer(); Image(systemName: state.rigArtworkID == piece.id ? "checkmark.circle.fill" : "circle") }.frame(minHeight: 44)
+                                }.buttonStyle(.plain)
+                            }
                         }
+                        BoneSkinControls(state: state,workflow: .rigPieces)
+                        if state.boneWeightArtworkID == nil { RigPositionControls(state: state) }
+                    } else {
+                        if state.boneWeightArtworkID == nil {
+                            BoneAuthoringControls(state: state)
+                            RigPositionControls(state: state)
+                        }
+                        BoneSkinControls(state: state,workflow: .boneWeight)
                     }
-                    BoneSkinControls(state: state,workflow: .boneWeight)
                 }.padding(.horizontal,12).padding(.bottom,12)
             }
         }
