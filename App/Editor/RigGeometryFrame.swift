@@ -13,6 +13,7 @@ import simd
     let posed: Project
     let world: Project
     let matrices: [UUID:simd_double3x3]
+    let parentFrames: [UUID:(m: simd_double3x3,rot: Double,scale: Vec2,z: Double)]
     init(state: EditorState) {
         revision = state.geometryRevision; liveRevision = state.live.revision
         time = state.currentTime; cameraView = state.cameraView; rest = state.boneRestEditing || state.boneWeightArtworkID != nil
@@ -29,6 +30,7 @@ import simd
         for i in snapshot.layers.indices { snapshot.layers[i].ik = nil }
         world = Renderer.resolveParenting(snapshot,time: time)
         let frames = Renderer.parentAffineMap(posed,time: time)
+        parentFrames = frames
         let worldNodes = Dictionary(world.layers.map { ($0.id,$0) },uniquingKeysWith: { a,_ in a })
         let camera = Renderer.activeCamera(world,time: time)
         let spaces = Dictionary(source.layers.compactMap { l -> (UUID,UUID)? in

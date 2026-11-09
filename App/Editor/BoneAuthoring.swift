@@ -272,12 +272,17 @@ struct BoneAuthoringControls: View {
 extension EditorState {
     /// Convert through the image plane before the parent chain, so camera depth/tilt does not alter rig coordinates.
     func rigPointInParent(_ node: Layer, artworkID: UUID, atCanvas point: Vec2, project raw: Project) -> Vec2? {
-        guard let artPlacement = displayPlacement(of: artworkID), abs(artPlacement.determinant) > 1e-10,
-              let point = LayerPlacement.projected(point, by: artPlacement.inverse) else { return nil }
-        let posed = IKSolver.apply(raw, time: currentTime)
-        guard let parentToArt = Self.rigParentToArtwork(node, artworkID: artworkID, project: posed, time: currentTime),
-              abs(parentToArt.determinant) > 1e-10 else { return nil }
-        return LayerPlacement.projected(point, by: parentToArt.inverse)
+        let geometry = rigGeometry
+        guard let artPlacement = geometry.matrices[artworkID],abs(artPlacement.determinant)>1e-10,
+              let imagePoint = LayerPlacement.projected(point,by: artPlacement.inverse),
+              let art = geometry.posed.layers.first(where: { $0.id == artworkID }),
+              let artFrame = geometry.parentFrames[artworkID],abs(artFrame.m.determinant)>1e-10 else { return nil }
+        let anchor = art.transform.anchor.value(at: currentTime)
+        let toImage = simd_double3x3(columns: (SIMD3(1,0,0),SIMD3(0,1,0),SIMD3(anchor.x,anchor.y,1)))
+        let parent = node.parentID.flatMap { geometry.parentFrames[$0]?.m } ?? matrix_identity_double3x3
+        let parentToImage = toImage*artFrame.m.inverse*parent
+        guard abs(parentToImage.determinant)>1e-10 else { return nil }
+        return LayerPlacement.projected(imagePoint,by: parentToImage.inverse)
     }
 
     /// Rotate the bone in its parent's plane. Camera projection is inverted only once; touch motion cannot feed back.
