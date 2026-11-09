@@ -345,6 +345,44 @@ extension EditorState {
         }
     }
 
+    /// The pad travels in *visible composition* X/Y even under a rotated/scaled
+    /// character or a 2.5D camera. Typed X/Y values still use the labelled local space.
+    func nudgeRigPosition(_ target: RigPositionSelection, canvasDelta: Vec2) {
+        guard canvasDelta.x.isFinite, canvasDelta.y.isFinite else { return }
+        switch target {
+        case .restEndpoint(let id):
+            guard let local = rigPositionValue(target),
+                  let frame = displayPlacement(of: id),
+                  abs(frame.determinant) > 1e-10,
+                  let origin = LayerPlacement.projected(local, by: frame),
+                  let moved = LayerPlacement.projected(origin + canvasDelta, by: frame.inverse) else { return }
+            moveRigPosition(target, to: moved)
+        case .ikController(let id):
+            let source = live.project ?? project
+            let view = canvasViewProject(source), time = currentTime
+            let posed = IKSolver.apply(view, time: time)
+            let resolved = Renderer.resolveParenting(view, time: time)
+            guard let controller = resolved.layers.first(where: { $0.id == id }) else { return }
+            let rig = source.layers.first(where: { $0.ik?.controllerID == id })?.ik
+            let camera = Renderer.activeCamera(resolved, time: time)
+            let placement: simd_double3x3
+            if let spaceID = rig?.spaceID,
+               let art = resolved.layers.first(where: { $0.id == spaceID }),
+               let projected = Self.bonePlacement(controller, artwork: art, project: posed,
+                   time: time, camera: camera) {
+                placement = projected
+            } else {
+                placement = Renderer.placementMatrix(controller, camera: camera, time: time, renderScale: 1)
+            }
+            guard let current = LayerPlacement.projected(controller.transform.anchor.value(at: time),
+                                                        by: placement) else { return }
+            poseIKController(id, atCanvas: current + canvasDelta)
+        case .fkBoneTip:
+            guard let current = rigPositionValue(target) else { return }
+            moveRigPosition(target, to: current + canvasDelta)
+        }
+    }
+
     func moveRigPosition(_ selection: RigPositionSelection, to point: Vec2) {
         guard point.x.isFinite, point.y.isFinite else { return }
         switch selection {
@@ -400,8 +438,7 @@ private struct RigPositionControls: View {
                                 onCommit: { y in setAxis(selected, y: y) })
                         }
                         SwipePad(hint: "Swipe to position selected joint", gain: Double(state.project.width) * (fine ? 0.25 : 1)) { change in
-                            guard let p = state.rigPositionValue(selected) else { return }
-                            state.moveRigPosition(selected, to: p + Vec2(Double(change.width), Double(change.height)))
+                            state.nudgeRigPosition(selected, canvasDelta: Vec2(Double(change.width), Double(change.height)))
                         } begin: { begin(selected) } end: { finish(selected) }
                         .frame(height: 110)
                         .accessibilityIdentifier("rig-position-swipe-pad")
@@ -427,9 +464,10 @@ private struct RigPositionControls: View {
         guard let old = state.rigPositionValue(target) else { return }
         let next = Vec2(x ?? old.x, y ?? old.y)
         guard next != old else { return }
-        if target.editsPose { state.beginEdit("Position Joint") }
+        let ownsEdit = target.editsPose && !state.editGroupOpen
+        if ownsEdit { state.beginEdit("Position Joint") }
         state.moveRigPosition(target, to: next)
-        if target.editsPose { state.endEdit() }
+        if ownsEdit { state.endEdit() }
     }
 }
 
