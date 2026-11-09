@@ -216,6 +216,57 @@ extension EditorState {
         return layer.bone?.tip ?? Vec2(0, Renderer.layerHalfSize(layer, time: currentTime).y)
     }
 
+    /// Reusable rigid attachment: bind any number of artwork layers to any authored joint.
+    /// The layer anchor is placed at that joint's endpoint, while its existing
+    /// animation tracks and relative rotations/scales are kept.
+    func attachArtwork(_ artworkID: UUID, toJoint jointID: UUID) {
+        guard let piece = project.layers.first(where: { $0.id == artworkID }),
+              let joint = project.layers.first(where: { $0.id == jointID }),
+              !piece.isLocked, artworkID != jointID,
+              !IKSolver.descendants(of: artworkID, in: project).contains(jointID) else {
+            recoveryNotice = "Choose a separate, unlocked artwork that is not a parent of this joint."
+            return
+        }
+        let t = currentTime
+        let posed = IKSolver.apply(project, time: t)
+        guard let jointPose = posed.layers.first(where: { $0.id == jointID }),
+              let frame = Renderer.parentAffine(jointID, in: posed, time: t) else { return }
+        let marker = jointPose.ik?.restTip ?? jointPose.bone?.tip ??
+            jointPose.transform.anchor.value(at: t)
+        let localMarker = marker - jointPose.transform.anchor.value(at: t)
+        guard let reached = LayerPlacement.projected(localMarker, by: frame.m) else { return }
+        let oldSelection = selectedLayerID
+        let ownsEdit = !editGroupOpen
+        if ownsEdit { beginEdit("Attach Artwork to Joint") }
+        defer {
+            selectedLayerID = oldSelection
+            if ownsEdit { endEdit() }
+        }
+        if piece.parentID != jointID {
+            selectedLayerID = artworkID
+            setParent(jointID)
+        }
+        guard project.layers.first(where: { $0.id == artworkID })?.parentID == jointID,
+              let posedNow = Renderer.parentAffine(jointID, in: IKSolver.apply(project, time: t), time: t),
+              abs(posedNow.m.determinant) > 1e-10,
+              let local = LayerPlacement.projected(reached, by: posedNow.m.inverse) else {
+            recoveryNotice = "Couldn't attach the artwork. Check the parent chain and restore with Undo."
+            return
+        }
+        mutate("Align Artwork to Joint") { p in
+            guard let index = p.layers.firstIndex(where: { $0.id == artworkID }) else { return }
+            var position = p.layers[index].transform.position
+            let shift = local - position.value(at: t)
+            position.staticValue = position.staticValue + shift
+            position.keyframes = position.keyframes.map { key in
+                var moved = key
+                moved.value = moved.value + shift
+                return moved
+            }
+            p.layers[index].transform.position = position
+        }
+    }
+
     /// Bind every joint along the existing hierarchy, from chosen root to selected tip.
     /// Drawing/parenting already creates these links; we do NOT collapse them to two bones.
     func makeChainIK(_ joints: [UUID], controller: UUID?, endArtwork: UUID?) {
@@ -467,6 +518,9 @@ extension EditorState {
     func reachedIKWrist(owner: Layer, in source: Project, at time: Double) -> Vec2? {
         guard let rig = owner.ik else { return nil }
         let posed = IKSolver.apply(source, time: time)
+        if let chain = rig.chainIDs, chain.count >= 3 {
+            return IKSolver.tipWorld(owner, rig: rig, in: posed, time: time)
+        }
         guard let lowerFrame = Renderer.parentAffine(owner.id, in: posed, time: time),
               let targetFrame = Renderer.parentAffine(rig.controllerID, in: posed, time: time) else { return nil }
         let space = rig.spaceID.flatMap { Renderer.parentAffine($0, in: posed, time: time)?.m }
