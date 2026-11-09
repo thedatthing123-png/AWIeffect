@@ -207,6 +207,71 @@ struct MarqueeOverlay: View {
 }
 
 
+/// Joint selection for image-piece rigs as well as drawn skeleton bones. A tap
+/// chooses the joint without grabbing the scene; posing remains on the shared
+/// X/Y pad or its existing controller handle.
+private struct RigTapJoint: Identifiable {
+    var id: UUID
+    var name: String
+    var at: Vec2
+}
+
+struct RigJointSelectionOverlay: View {
+    @ObservedObject var state: EditorState
+    let fit: CGRect
+
+    var body: some View {
+        let scale = fit.width / CGFloat(max(1, state.project.width))
+        let points = jointPoints()
+        return ForEach(points) { joint in
+            Circle()
+                .fill(Color.clear)
+                .contentShape(Circle())
+                .frame(width: 44, height: 44)
+                .position(x: fit.minX + CGFloat(joint.at.x) * scale,
+                          y: fit.minY + CGFloat(joint.at.y) * scale)
+                .onTapGesture { state.select(joint.id) }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Select rig joint \(joint.name)")
+        }
+    }
+
+    private func jointPoints() -> [RigTapJoint] {
+        let source = state.live.project ?? state.project
+        let view = state.canvasViewProject(source)
+        let time = state.currentTime
+        let posed = IKSolver.apply(view, time: time)
+        let resolved = Renderer.resolveParenting(view, time: time)
+        let world = Dictionary(resolved.layers.map { ($0.id, $0) },
+                               uniquingKeysWith: { first, _ in first })
+        let camera = Renderer.activeCamera(view, time: time)
+        var ids: [UUID] = []
+        var spaces: [UUID: UUID] = [:]
+        for layer in view.layers {
+            guard let rig = layer.ik else { continue }
+            for id in (rig.chainIDs ?? [rig.upperID, layer.id]) {
+                if !ids.contains(id) { ids.append(id) }
+                if let spaceID = rig.spaceID { spaces[id] = spaceID }
+            }
+        }
+        return ids.compactMap { id in
+            guard let layer = world[id], !layer.isLocked else { return nil }
+            let matrix: simd_double3x3
+            if let spaceID = spaces[id], let art = world[spaceID],
+               let placed = EditorState.bonePlacement(layer, artwork: art,
+                    project: posed, time: time, camera: camera) {
+                matrix = placed
+            } else {
+                matrix = Renderer.placementMatrix(layer, camera: camera, time: time,
+                                                  renderScale: 1)
+            }
+            guard let position = LayerPlacement.projected(
+                layer.transform.anchor.value(at: time), by: matrix) else { return nil }
+            return RigTapJoint(id: id, name: layer.name, at: position)
+        }
+    }
+}
+
 /// A rest endpoint is a canvas handle, not another tool drawer. Draft changes do not touch the project.
 struct RigEndpointOverlay: View {
     @ObservedObject var state: EditorState
