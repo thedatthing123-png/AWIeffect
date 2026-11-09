@@ -185,7 +185,8 @@ struct PuppetPanel: View {
                                     SwipePad(hint: "Swipe to position selected pin", gain: Double(state.project.width) * (fine ? 0.25 : 1)) { delta in
                                         let current = state.puppetPins
                                         guard current.indices.contains(selected) else { return }
-                                        state.setPuppetPin(selected, local: current[selected].current +
+                                        guard let canvas = state.compPoint(fromLocal: current[selected].current) else { return }
+                                        state.movePuppetPin(selected, toComp: canvas +
                                             Vec2(Double(delta.width), Double(delta.height)))
                                     } begin: { state.beginPanelGesture("Position Pin") }
                                       end: { state.endPanelGesture() }
