@@ -119,4 +119,15 @@ final class BoneMeshTests: XCTestCase {
         XCTAssertFalse(mesh.isValid)
         XCTAssertNil(BoneMeshBinding.bind(halfSize: .zero, detail: 8, bones: []))
     }
+    func testBrushHardnessChangesFalloffWithoutBreakingNormalization() throws {
+        let sources = (0..<2).map { _ in BoneMeshSource(id: UUID(),matrix: matrix_identity_double3x3,tip: Vec2(80,0)) }
+        var soft = try XCTUnwrap(BoneMeshBinding.bind(halfSize: Vec2(100,100),detail: 8,bones: sources))
+        var hard = soft
+        XCTAssertTrue(soft.paint([BoneWeightDab(center: .zero,amount: 1)],selected: 0,radius: 100,mode: .paint,hardness: 0))
+        XCTAssertTrue(hard.paint([BoneWeightDab(center: .zero,amount: 1)],selected: 0,radius: 100,mode: .paint,hardness: 0.8))
+        let a = try XCTUnwrap(soft.vertices.first { $0.rest == Vec2(75,0) }?.weights.first { $0.bone == 0 }?.amount)
+        let b = try XCTUnwrap(hard.vertices.first { $0.rest == Vec2(75,0) }?.weights.first { $0.bone == 0 }?.amount)
+        XCTAssertGreaterThan(b,a); XCTAssertTrue(soft.isValid); XCTAssertTrue(hard.isValid)
+    }
+
 }

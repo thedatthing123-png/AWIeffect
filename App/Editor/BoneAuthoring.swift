@@ -11,6 +11,8 @@ extension EditorState {
     var rigArtworkID: UUID? {
         guard let layer = selectedLayer else { return nil }
         if let bone = layer.bone { return bone.artworkID }
+        if layer.isNull,let owner = project.layers.first(where: { $0.ik?.controllerID == layer.id }),
+           let artwork = owner.bone?.artworkID { return artwork }
         guard !layer.isNull, !layer.isGroup, !layer.isAudioOnly,
               layer.content != .camera, layer.content != .light, layer.content != .adjustment else { return nil }
         return layer.id
@@ -21,6 +23,7 @@ extension EditorState {
         guard project.layers.contains(where: { $0.id == id && $0.bone != nil }) else { return }
         if let child = boneParentPicking { boneParentPicking = nil; reparentAuthoringBone(child,to: id); return }
         let previousPanel = panel
+        if boneRestEditing,rigArtworkID != project.layers.first(where: { $0.id == id })?.bone?.artworkID { finishBoneRestEditing() }
         finishBoneDrawing()
         select(id)
         panel = previousPanel == .boneWeight ? .boneWeight : .rig
@@ -170,7 +173,9 @@ extension EditorState {
     func addBone(artworkID: UUID, parentID: UUID?, start: Vec2, end: Vec2) -> UUID? {
         guard [start.x, start.y, end.x, end.y].allSatisfy(\.isFinite),
               let artwork = project.layers.first(where: { $0.id == artworkID }), !artwork.isLocked else { return nil }
-        let resolved = Renderer.resolveParenting(project, time: currentTime)
+        var authored = project
+        if boneRestEditing { for i in authored.layers.indices where authored.layers[i].bone?.artworkID == artworkID { authored.layers[i].ik = nil } }
+        let resolved = Renderer.resolveParenting(authored, time: currentTime)
         guard let art = resolved.layers.first(where: { $0.id == artworkID }) else { return nil }
         var a = start, b = end
         let parent: UUID
@@ -178,7 +183,7 @@ extension EditorState {
             guard let rawParent = project.layers.first(where: { $0.id == parentID }), !rawParent.isLocked,
                   rawParent.bone?.artworkID == artworkID,
                   resolved.layers.contains(where: { $0.id == parentID }) else { return nil }
-            let evaluated = IKSolver.apply(project, time: currentTime)
+            let evaluated = IKSolver.apply(authored, time: currentTime)
             guard let parentToArt = Self.rigParentToArtwork(rawParent, artworkID: artworkID, project: evaluated, time: currentTime) else { return nil }
             let matrix = parentToArt * Renderer.layerMatrix(evaluated.layers.first(where: { $0.id == parentID }) ?? rawParent, time: currentTime, renderScale: 1)
             guard abs(matrix.determinant) > 1e-10,

@@ -171,6 +171,7 @@ import simd
         s.selectAuthoringBone(c); s.makeIK(upper: a,controller: nil)
         let owner = try XCTUnwrap(s.project.layers.firstIndex { $0.id == c })
         let rig = try XCTUnwrap(s.project.layers[owner].ik)
+        XCTAssertEqual(s.rigArtworkID,art, "A target selection must retain its skeleton authoring context")
         let controller = try XCTUnwrap(s.project.layers.firstIndex { $0.id == rig.controllerID })
         s.project.layers[controller].transform.position = Animated(Vec2(110,75))
         let full = IKSolver.apply(s.project,time: 0)

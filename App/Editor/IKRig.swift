@@ -995,13 +995,13 @@ struct RigPanel: View {
                             }
                             .frame(minHeight: 44)
                             HStack {
-                                Button("Select Controller") { state.select(rig.controllerID); state.panel = .transform }
+                                Button("Select Controller") { state.select(rig.controllerID); state.panel = .rig }
                                 Spacer()
                                 Button("Remove IK", role: .destructive) { state.removeIK() }
                             }
                             Divider().overlay(Theme.stroke)
                             Text("End artwork attachment").font(.system(size: 12, weight: .semibold))
-                            picker("Hand / Foot", selection: state.ikDraftHand, exclude: owner.id) {
+                            picker("End artwork", selection: state.ikDraftHand, exclude: owner.id) {
                                 state.beginLayerPick(returnTo: .rig, prompt: "Tap the artwork to attach to this wrist") { id in
                                     if let id { state.ikDraftHand = id }
                                 }
@@ -1018,7 +1018,7 @@ struct RigPanel: View {
                                 .buttonStyle(PrimaryButtonStyle())
                             }
                         } else {
-                            Text("Select an end bone and its root. The connected chain is included.")
+                            Text("Select the end piece or bone, then choose its root. Connected bones are included.")
                                 .font(.caption).foregroundStyle(Theme.textDim)
                             if let root = state.ikDraftUpper,
                                let chain = IKSolver.connectedPath(root: root, end: l.id, in: state.project),
@@ -1029,7 +1029,7 @@ struct RigPanel: View {
                             }
                             picker("Root / Upper", selection: state.ikDraftUpper, exclude: l.id) { state.pickIKUpper() } clear: { state.ikDraftUpper = nil }
                             picker("Controller (optional)", selection: state.ikDraftController, exclude: l.id) { state.pickIKController() } clear: { state.ikDraftController = nil }
-                            picker("Hand / Foot", selection: state.ikDraftHand, exclude: l.id) {
+                            picker("End artwork", selection: state.ikDraftHand, exclude: l.id) {
                                 state.beginLayerPick(returnTo: .rig, prompt: "Tap optional wrist/ankle artwork") { id in
                                     if let id { state.ikDraftHand = id }
                                 }

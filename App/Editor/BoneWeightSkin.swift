@@ -110,14 +110,7 @@ enum BoneSkinRuntime {
 
 extension EditorState {
     /// Whether the currently selected artwork (or selected bone's artwork) can receive a skin.
-    var skinArtworkID: UUID? {
-        guard let selected = selectedLayer else { return nil }
-        if let bone = selected.bone { return bone.artworkID }
-        if selected.isNull || selected.isGroup || selected.isAudioOnly ||
-           selected.content == .camera || selected.content == .light ||
-           selected.content == .adjustment { return nil }
-        return selected.id
-    }
+    var skinArtworkID: UUID? { rigArtworkID }
 
     func autoBindSkin(artworkID: UUID, workflow: BoneSkinWorkflow) {
         guard let art = project.layers.first(where: { $0.id == artworkID }), !art.isLocked else { return }

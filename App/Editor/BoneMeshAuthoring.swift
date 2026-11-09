@@ -52,7 +52,7 @@ extension EditorState {
         guard let owner = boneWeightArtworkID, let selected = boneWeightBoneID,
               let art = project.layers.first(where: { $0.id == owner }), !art.isLocked,
               var mesh = boneWeightPreview ?? art.boneMesh, let index = mesh.boneIDs.firstIndex(of: selected),
-              mesh.paint(dabs, selected: index, radius: boneWeightRadius, mode: boneWeightBrush) else { return false }
+              mesh.paint(dabs, selected: index, radius: boneWeightRadius, mode: boneWeightBrush, hardness: boneWeightHardness/100) else { return false }
         boneWeightPreview = mesh; redrawToken &+= 1
         return true
     }
@@ -90,6 +90,10 @@ struct BoneMeshControls: View {
                     HStack {
                         Text("Strength").font(.caption).frame(width: 60,alignment: .leading)
                         ValueScrubber(value: state.boneWeightStrength,range: 1...100,unit: "%",onChange: { state.boneWeightStrength = $0 }).frame(height: 44).environment(\.scrubSession, ScrubSession())
+                    }
+                    HStack {
+                        Text("Hardness").font(.caption).frame(width: 60,alignment: .leading)
+                        ValueScrubber(value: state.boneWeightHardness,range: 0...95,unit: "%",onChange: { state.boneWeightHardness = $0 }).frame(height: 44).environment(\.scrubSession,ScrubSession())
                     }
                     DisclosureGroup("Influence: \(state.boneWeightBoneID == art.id ? "Artwork" : state.project.layers.first(where: { $0.id == state.boneWeightBoneID })?.name ?? "Choose bone")",isExpanded: $influencesOpen) {
                     ForEach(mesh.boneIDs,id: \.self) { id in

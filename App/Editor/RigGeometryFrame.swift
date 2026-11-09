@@ -8,6 +8,7 @@ import simd
     let time: Double
     let cameraView: Bool
     let rest: Bool
+    let restArtworkID: UUID?
     let view: Project
     let posed: Project
     let world: Project
@@ -15,11 +16,12 @@ import simd
     init(state: EditorState) {
         revision = state.geometryRevision; liveRevision = state.live.revision
         time = state.currentTime; cameraView = state.cameraView; rest = state.boneRestEditing || state.boneWeightArtworkID != nil
+        restArtworkID = state.rigRestArtworkID
         var source = state.canvasViewProject(state.live.project ?? state.project)
         for i in source.layers.indices {
             source.layers[i].boneMesh = nil; source.layers[i].boneSkin = nil
             source.layers[i].effects.removeAll { !(EffectRegistry.definition($0.typeID)?.isTransformEffect ?? false) }
-            if rest { source.layers[i].ik = nil }
+            if let artwork = restArtworkID,source.layers[i].bone?.artworkID == artwork { source.layers[i].ik = nil }
         }
         view = source
         posed = AutoOrient.apply(IKSolver.apply(source,time: time),time: time)
@@ -52,7 +54,7 @@ import simd
 extension EditorState {
     var rigGeometry: RigGeometryFrame {
         if let saved = rigGeometryCache,saved.revision == geometryRevision,saved.liveRevision == live.revision,
-           saved.time == currentTime,saved.cameraView == cameraView,saved.rest == (boneRestEditing || boneWeightArtworkID != nil) { return saved }
+           saved.time == currentTime,saved.cameraView == cameraView,saved.rest == (boneRestEditing || boneWeightArtworkID != nil),saved.restArtworkID == rigRestArtworkID { return saved }
         let frame = RigGeometryFrame(state: self); rigGeometryCache = frame; return frame
     }
 }

@@ -113,6 +113,7 @@ final class EditorState: ObservableObject {
     @Published var boneWeightPreview: BoneMeshBinding?
     @Published var boneWeightRadius = 40.0
     @Published var boneWeightStrength = 25.0
+    @Published var boneWeightHardness = 0.0
     @Published var boneWeightBrush: BoneWeightBrush = .paint
     @Published var boneViewportGesture = false
     @Published var meshInfluenceRadius = 60.0
@@ -175,11 +176,12 @@ final class EditorState: ObservableObject {
     var multiDragStarts: [UUID: Vec2] = [:]
     /// What the canvas should draw right now (the live gesture copy, else the project).
     var canvasProject: Project { boneMeshDisplayProject(live.project ?? project) }
+    var rigRestArtworkID: UUID? { boneWeightArtworkID ?? (boneRestEditing ? rigArtworkID : nil) }
     func boneMeshDisplayProject(_ original: Project) -> Project {
         var shown = original
-        if boneRestEditing || boneWeightArtworkID != nil {
-            for i in shown.layers.indices { shown.layers[i].ik = nil }
-            for i in shown.layers.indices { if let count = shown.layers[i].boneMesh?.boneIDs.count {
+        if let artwork = rigRestArtworkID {
+            for i in shown.layers.indices where shown.layers[i].bone?.artworkID == artwork { shown.layers[i].ik = nil }
+            for i in shown.layers.indices where shown.layers[i].id == artwork { if let count = shown.layers[i].boneMesh?.boneIDs.count {
                 shown.layers[i].boneMesh?.frameMatrices = Array(repeating: .identity,count: count)
                 shown.layers[i].boneMesh?.frameTime = currentTime
             } }

@@ -6,7 +6,8 @@ import simd
 extension EditorState {
     /// Groups the multi-selection (or the selected layer). Parts move right under the new group, in order.
     func groupSelected() {
-        let ids = multiSelection ?? selectedLayerID.map { Set([$0]) } ?? []
+        let selected = multiSelection ?? selectedLayerID.map { Set([$0]) } ?? []
+        let ids = rigTransferIDs(selected)
         let roots = project.layers.filter { ids.contains($0.id) && $0.content != .camera && $0.content != .light }
         var included = Set(roots.map(\.id))
         for group in roots where group.isGroup { included.formUnion(Self.descendantIDs(of: group.id, in: project)) }

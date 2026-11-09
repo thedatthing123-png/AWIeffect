@@ -51,7 +51,7 @@ struct BoneSkinControls: View {
                             }
                             Text("Influence radius used when binding. Pixels beyond the bones' reach remain rigid. Rebind applies this value.")
                                 .font(.caption2).foregroundStyle(Theme.textDim)
-                            if art.boneMesh != nil { Button("Rebind Mesh") { state.bindBoneMesh() }.frame(minHeight: 44) }
+                            if art.boneMesh != nil { Button("Reset Auto Weights") { state.bindBoneMesh() }.frame(minHeight: 44) }
                         }
                     }
                 }

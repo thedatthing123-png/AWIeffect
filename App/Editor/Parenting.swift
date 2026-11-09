@@ -36,9 +36,9 @@ extension Renderer {
     }
 
     /// One lookup and one evaluation per node for frame-wide consumers such as skinning.
-    static func parentAffineMap(_ p: Project,time: Double) -> [UUID:(m: simd_double3x3,rot: Double,scale: Vec2)] {
+    static func parentAffineMap(_ p: Project,time: Double) -> [UUID:(m: simd_double3x3,rot: Double,scale: Vec2,z: Double)] {
         let nodes = Dictionary((p.layers+(p.parentContext ?? [])).map { ($0.id,$0) },uniquingKeysWith: { a,_ in a })
-        var frames: [UUID:(m: simd_double3x3,rot: Double,scale: Vec2)] = [:]
+        var frames: [UUID:(m: simd_double3x3,rot: Double,scale: Vec2,z: Double)] = [:]
         var invalid = Set<UUID>()
         for id in nodes.keys where frames[id] == nil && !invalid.contains(id) {
             var path: [Layer] = [],seen = Set<UUID>(),cursor: UUID? = id
@@ -47,7 +47,7 @@ extension Renderer {
                 path.append(node); cursor = node.parentID
             }
             guard !invalid.contains(id) else { continue }
-            var parent = cursor.flatMap { frames[$0] } ?? (m: matrix_identity_double3x3,rot: 0.0,scale: Vec2(1,1))
+            var parent = cursor.flatMap { frames[$0] } ?? (m: matrix_identity_double3x3,rot: 0.0,scale: Vec2(1,1),z: 0.0)
             for layer in path.reversed() {
                 let anchor = layer.transform.anchor.value(at: time)
                 let toAnchor = simd_double3x3(columns: (SIMD3(1,0,0),SIMD3(0,1,0),SIMD3(anchor.x,anchor.y,1)))
@@ -55,7 +55,8 @@ extension Renderer {
                 let scale = layer.transform.scale.value(at: time)*(effects.ds*0.01)
                 let result = (m: parent.m*layerMatrix(layer,time: time,renderScale: 1)*toAnchor,
                               rot: parent.rot+layer.transform.rotation.value(at: time)+effects.dr,
-                              scale: Vec2(parent.scale.x*scale.x,parent.scale.y*scale.y))
+                              scale: Vec2(parent.scale.x*scale.x,parent.scale.y*scale.y),
+                              z: parent.z+layer.transform.positionZ.value(at: time))
                 frames[layer.id] = result; parent = result
             }
         }
@@ -102,7 +103,7 @@ extension Renderer {
             let sc = t.scale.value(at: time)
             t.scale = Animated(Vec2(sc.x * a.scale.x, sc.y * a.scale.y))
             // Depth adds up the chain too (a null's Z carries everything linked to it).
-            t.positionZ = Animated(t.positionZ.value(at: time) + chainZ(pid, in: p, time: time))
+            t.positionZ = Animated(t.positionZ.value(at: time) + a.z)
             q.layers[i].transform = t
             q.layers[i].parentID = nil
         }

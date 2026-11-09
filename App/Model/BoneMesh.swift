@@ -161,7 +161,7 @@ struct BoneWeightDab { var center: Vec2; var amount: Double }
 extension BoneMeshBinding {
     /// Brush dabs are placed by distance, rather than event/frame rate. Locked influences retain their exact value.
     @discardableResult
-    mutating func paint(_ dabs: [BoneWeightDab], selected: Int, radius: Double, mode: BoneWeightBrush) -> Bool {
+    mutating func paint(_ dabs: [BoneWeightDab], selected: Int, radius: Double, mode: BoneWeightBrush, hardness: Double = 0) -> Bool {
         guard boneIDs.indices.contains(selected), radius.isFinite, radius > 0, !dabs.isEmpty,
               !(lockedBoneIDs ?? []).contains(boneIDs[selected]), isValid else { return false }
         let locked = Set((lockedBoneIDs ?? []).compactMap { boneIDs.firstIndex(of: $0) })
@@ -173,7 +173,9 @@ extension BoneMeshBinding {
             for dab in dabs where dab.amount.isFinite && dab.amount > 0 {
                 let d = vertex.rest - dab.center, d2 = d.x*d.x + d.y*d.y
                 if d2 < r2 {
-                    let falloff = pow(1 - d2/r2, 2)
+                    let inner = min(0.95,max(0,hardness))
+                    let edge = max(0,(sqrt(d2/r2)-inner)/(1-inner))
+                    let falloff = pow(1-edge*edge,2)
                     flow = 1 - (1-flow)*(1-min(1,dab.amount)*falloff)
                 }
             }
