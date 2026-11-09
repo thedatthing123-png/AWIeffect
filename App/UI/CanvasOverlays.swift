@@ -216,6 +216,48 @@ struct RigEndpointOverlay: View {
 }
 
 
+/// During bind, show where the selected end artwork will move BEFORE its anchor is snapped
+/// to the authored wrist/ankle. This is a noninteractive preview, not a document edit.
+struct RigAttachmentPreviewOverlay: View {
+    @ObservedObject var state: EditorState
+    let fit: CGRect
+
+    var body: some View {
+        let t = state.currentTime
+        let scale = fit.width / CGFloat(max(1, state.project.width))
+        if let handID = state.ikDraftHand, state.ikDraftUpper != nil,
+           let lower = state.selectedLayer, let hand = state.project.layers.first(where: { $0.id == handID }),
+           let lowerMatrix = state.displayPlacement(of: lower.id),
+           let handMatrix = state.displayPlacement(of: handID),
+           let wrist = LayerPlacement.projected(state.ikRestTip(for: lower), by: lowerMatrix),
+           let pivot = LayerPlacement.projected(hand.transform.anchor.value(at: t), by: handMatrix) {
+            let offset = wrist - pivot
+            let half = Renderer.layerHalfSize(hand, time: t)
+            let corners = [Vec2(-half.x, -half.y), Vec2(half.x, -half.y),
+                           Vec2(half.x, half.y), Vec2(-half.x, half.y)]
+                .compactMap { LayerPlacement.projected($0, by: handMatrix) }
+                .map { point in CGPoint(x: fit.minX + CGFloat(point.x + offset.x) * scale,
+                                       y: fit.minY + CGFloat(point.y + offset.y) * scale) }
+            let a = CGPoint(x: fit.minX + CGFloat(pivot.x) * scale, y: fit.minY + CGFloat(pivot.y) * scale)
+            let b = CGPoint(x: fit.minX + CGFloat(wrist.x) * scale, y: fit.minY + CGFloat(wrist.y) * scale)
+            ZStack {
+                Path { p in p.move(to: a); p.addLine(to: b) }
+                    .stroke(Theme.warning, style: StrokeStyle(lineWidth: 2, dash: [5, 4]))
+                if corners.count == 4 {
+                    Path { p in p.addLines(corners); p.closeSubpath() }
+                        .fill(Theme.warning.opacity(0.12))
+                        .overlay {
+                            Path { p in p.addLines(corners); p.closeSubpath() }
+                                .stroke(Theme.warning, style: StrokeStyle(lineWidth: 2, dash: [5, 4]))
+                        }
+                }
+            }
+            .allowsHitTesting(false)
+            .accessibilityLabel("Preview end artwork snapped to wrist")
+        }
+    }
+}
+
 /// Targets stay on the character while the Rig panel is open. Only targets have hit areas; bones remain visual.
 struct RigControllersOverlay: View {
     @ObservedObject var state: EditorState
