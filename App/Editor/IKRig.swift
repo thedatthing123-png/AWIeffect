@@ -19,6 +19,8 @@ struct IKRig: Codable, Equatable {
     var mix: Animated<Double>? = nil
     /// Authored skeletons solve in their artwork's plane; nil preserves legacy composition-space rigs.
     var spaceID: UUID? = nil
+    /// Explicit local wrist/ankle endpoint. Optional so saved Build 25 rigs remain readable.
+    var restTip: Vec2? = nil
     func mixValue(at time: Double) -> Double { mix?.value(at: time) ?? blend ?? 1 }
 }
 
@@ -116,8 +118,27 @@ extension EditorState {
 
     /// Rigs the selected layer as the lower limb: `upper` must be its parent; the controller sits at the limb's tip.
     /// Makes a controller null at the tip when none is given.
-    func makeIK(upper: UUID, controller: UUID?) {
+    func makeIK(upper: UUID, controller: UUID?, hand: UUID? = nil) {
         guard let lower = selectedLayer, upper != lower.id else { return }
+        // A bone cannot be solved twice in the same frame. Show the existing rig instead of
+        // quietly accumulating a second controller that overwrites the same rotations.
+        if let conflict = project.layers.first(where: { layer in
+            guard let rig = layer.ik else { return false }
+            return layer.id == lower.id || rig.upperID == upper ||
+                   layer.id == upper || (controller != nil && rig.controllerID == controller)
+        }) {
+            recoveryNotice = "This joint already belongs to the rig on \(conflict.name). Select its controller or remove that IK before binding again."
+            return
+        }
+        if let hand {
+            guard let art = project.layers.first(where: { $0.id == hand }), !art.isLocked,
+                  hand != lower.id, hand != upper, hand != controller,
+                  !IKSolver.descendants(of: hand, in: project).contains(lower.id),
+                  !IKSolver.descendants(of: hand, in: project).contains(upper) else {
+                recoveryNotice = "Choose a separate, unlocked hand/foot layer that is not a parent of this limb."
+                return
+            }
+        }
         // No link loops: the upper limb (and the controller) can't hang under the lower limb.
         let below = IKSolver.descendants(of: lower.id, in: project)
         guard !below.contains(upper), controller.map({ $0 != lower.id && !below.contains($0) }) ?? true else { return }
@@ -176,6 +197,33 @@ extension EditorState {
             selectedLayerID = lower.id
             guard project.layers.first(where: { $0.id == controller })?.parentID == spaceID else { return }
         }
+        // Optional final artwork is a wrist/ankle attachment, not a second competing IK.
+        // Link first (preserving its existing animation), then offset its anchor to the
+        // authored end joint. The offset applies to every key to retain local motion.
+        if let hand {
+            if project.layers.first(where: { $0.id == hand })?.parentID != lower.id {
+                selectedLayerID = hand
+                setParent(lower.id)
+                selectedLayerID = lower.id
+            }
+            guard project.layers.first(where: { $0.id == hand })?.parentID == lower.id,
+                  let frame = Renderer.parentAffine(lower.id, in: project, time: t),
+                  abs(frame.m.determinant) > 1e-10,
+                  let wrist = LayerPlacement.projected(tip, by: frame.m.inverse) else {
+                recoveryNotice = "Couldn't attach the end piece to the wrist. Check the hierarchy and layer transforms."
+                return
+            }
+            mutate("Attach Hand") { p in
+                guard let i = p.layers.firstIndex(where: { $0.id == hand }) else { return }
+                var position = p.layers[i].transform.position
+                let offset = wrist - position.value(at: t)
+                position.staticValue = position.staticValue + offset
+                position.keyframes = position.keyframes.map { key in
+                    var moved = key; moved.value = moved.value + offset; return moved
+                }
+                p.layers[i].transform.position = position
+            }
+        }
         mutate("Make IK") { p in
             if controller == nil {
                 var n = p.makeLayer(name: "\(lower.name) Controller", content: .solid, size: Vec2(40, 40))
@@ -188,7 +236,7 @@ extension EditorState {
                 p.layers.insert(n, at: 0)
             }
             if let li2 = p.layers.firstIndex(where: { $0.id == lower.id }) {
-                p.layers[li2].ik = IKRig(upperID: upper, controllerID: ctrlID, flip: bend, l1: l1, l2: l2, rest1: rest1, rest2: rest2, spaceID: spaceID)
+                p.layers[li2].ik = IKRig(upperID: upper, controllerID: ctrlID, flip: bend, l1: l1, l2: l2, rest1: rest1, rest2: rest2, spaceID: spaceID, restTip: localTip)
             }
         }
         ikDraftTip = nil
@@ -448,10 +496,21 @@ struct RigPanel: View {
                                 .font(.caption).foregroundStyle(Theme.textDim)
                             picker("Upper Limb", selection: state.ikDraftUpper, exclude: l.id) { state.pickIKUpper() } clear: { state.ikDraftUpper = nil }
                             picker("Controller (optional)", selection: state.ikDraftController, exclude: l.id) { state.pickIKController() } clear: { state.ikDraftController = nil }
+                            picker("Hand / Foot", selection: state.ikDraftHand, exclude: l.id) {
+                                state.beginLayerPick(returnTo: .rig, prompt: "Tap optional wrist/ankle artwork") { id in
+                                    if let id { state.ikDraftHand = id }
+                                }
+                            } clear: { state.ikDraftHand = nil }
+                            if state.ikDraftHand != nil {
+                                Text("The selected hand/foot anchor will align with the end-joint marker when you bind. Position its anchor at the artwork's actual wrist/ankle first.")
+                                    .font(.caption2).foregroundStyle(Theme.textDim)
+                            }
                             Button {
                                 if let u = state.ikDraftUpper, IKSolver.descendants(of: l.id, in: state.project).contains(u) == false, u != l.id {
-                                    state.makeIK(upper: u, controller: state.ikDraftController)
-                                    state.ikDraftUpper = nil; state.ikDraftController = nil
+                                    state.makeIK(upper: u, controller: state.ikDraftController, hand: state.ikDraftHand)
+                                    if state.selectedIKLayer != nil {
+                                        state.ikDraftUpper = nil; state.ikDraftController = nil; state.ikDraftHand = nil
+                                    }
                                 }
                             } label: {
                                 Label("Make IK", systemImage: "figure.arms.open").frame(maxWidth: .infinity)
