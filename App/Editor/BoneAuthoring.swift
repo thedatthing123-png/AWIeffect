@@ -154,7 +154,7 @@ struct SkeletonCanvasOverlay: View {
         let camera = Renderer.activeCamera(resolved, time: state.currentTime)
         let constrained = Set(project.layers.flatMap { layer -> [UUID] in
             guard let ik = layer.ik, ik.mixValue(at: state.currentTime) > 0.001 else { return [] }
-            return [layer.id, ik.upperID]
+            return Array(IKSolver.drivenIDs(owner: layer))
         })
         ZStack {
             ForEach(project.layers.filter { $0.bone != nil }) { bone in
@@ -271,6 +271,16 @@ extension Layer {
                 if let space = rig.spaceID {
                     guard let mapped = ids[space] ?? (keepExternal ? space : nil) else { ik = nil; return }
                     rig.spaceID = mapped
+                }
+                if let chain = rig.chainIDs {
+                    let remapped = chain.compactMap { id -> UUID? in
+                        ids[id] ?? (keepExternal ? id : nil)
+                    }
+                    guard remapped.count == chain.count, Set(remapped).count == remapped.count else {
+                        ik = nil
+                        return
+                    }
+                    rig.chainIDs = remapped
                 }
                 ik = rig
             }

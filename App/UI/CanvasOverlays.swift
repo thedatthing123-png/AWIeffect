@@ -143,16 +143,49 @@ struct BoneOverlay: View {
                 guard let p = LayerPlacement.projected(l.transform.anchor.value(at: t), by: matrix) else { return nil }
                 return CGPoint(x: fit.minX + CGFloat(p.x) * s, y: fit.minY + CGFloat(p.y) * s)
             }
+            func reachedWrist(_ id: UUID, localTip: Vec2, spaceID: UUID?) -> CGPoint? {
+                guard let l = layers[id] else { return nil }
+                let matrix: simd_double3x3
+                if let spaceID, let art = layers[spaceID],
+                   let projected = EditorState.bonePlacement(l, artwork: art, project: posed, time: t, camera: camera) {
+                    matrix = projected
+                } else {
+                    matrix = Renderer.placementMatrix(l, camera: camera, time: t, renderScale: 1)
+                }
+                guard let p = LayerPlacement.projected(localTip, by: matrix) else { return nil }
+                return CGPoint(x: fit.minX + CGFloat(p.x) * s, y: fit.minY + CGFloat(p.y) * s)
+            }
             for l in view.layers {
-                guard let rig = l.ik, let a = joint(rig.upperID, spaceID: rig.spaceID), let b = joint(l.id, spaceID: rig.spaceID), let c = joint(rig.controllerID, spaceID: rig.spaceID) else { continue }
-                let on = l.id == selectedID
-                var bone = Path(); bone.move(to: a); bone.addLine(to: b); bone.addLine(to: c)
-                ctx.stroke(bone, with: .color(.black.opacity(0.6)), style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round))
-                ctx.stroke(bone, with: .color(on ? Theme.accentGlow : .white), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
-                for (k, p) in [a, b, c].enumerated() {
-                    let r: CGFloat = k == 2 ? 8 : 6
-                    let dot = Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2))
-                    ctx.fill(dot, with: .color(k == 2 ? Theme.warning : .white))
+                guard let rig = l.ik, let target = joint(rig.controllerID, spaceID: rig.spaceID) else { continue }
+                let ids = rig.chainIDs ?? [rig.upperID, l.id]
+                let joints = ids.compactMap { joint($0, spaceID: rig.spaceID) }
+                guard joints.count == ids.count, let first = joints.first else { continue }
+                let localTip = rig.restTip ?? l.bone?.tip ?? Vec2(0, Renderer.layerHalfSize(l, time: t).y)
+                let wrist = reachedWrist(l.id, localTip: localTip, spaceID: rig.spaceID) ?? target
+                let on = ids.contains(selectedID ?? UUID()) || rig.controllerID == selectedID
+                // Visualize every joint in the solved hierarchy, never skip the middle bones.
+                var bone = Path()
+                bone.move(to: first)
+                for point in joints.dropFirst() { bone.addLine(to: point) }
+                bone.addLine(to: wrist)
+                ctx.stroke(bone, with: .color(.black.opacity(0.6)),
+                           style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round))
+                ctx.stroke(bone, with: .color(on ? Theme.accentGlow : .white),
+                           style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                if hypot(wrist.x - target.x, wrist.y - target.y) > 2 {
+                    var gap = Path()
+                    gap.move(to: wrist)
+                    gap.addLine(to: target)
+                    ctx.stroke(gap, with: .color(Theme.warning),
+                               style: StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
+                }
+                let markers = joints + [wrist, target]
+                for (k, point) in markers.enumerated() {
+                    let isTarget = k == markers.count - 1
+                    let radius: CGFloat = isTarget ? 8 : 6
+                    let dot = Path(ellipseIn: CGRect(x: point.x - radius, y: point.y - radius,
+                                                       width: radius * 2, height: radius * 2))
+                    ctx.fill(dot, with: .color(isTarget ? Theme.warning : .white))
                     ctx.stroke(dot, with: .color(.black), lineWidth: 1.5)
                 }
             }
@@ -173,6 +206,71 @@ struct MarqueeOverlay: View {
     }
 }
 
+
+/// Joint selection for image-piece rigs as well as drawn skeleton bones. A tap
+/// chooses the joint without grabbing the scene; posing remains on the shared
+/// X/Y pad or its existing controller handle.
+private struct RigTapJoint: Identifiable {
+    var id: UUID
+    var name: String
+    var at: Vec2
+}
+
+struct RigJointSelectionOverlay: View {
+    @ObservedObject var state: EditorState
+    let fit: CGRect
+
+    var body: some View {
+        let scale = fit.width / CGFloat(max(1, state.project.width))
+        let points = jointPoints()
+        return ForEach(points) { joint in
+            Circle()
+                .fill(Color.clear)
+                .contentShape(Circle())
+                .frame(width: 44, height: 44)
+                .position(x: fit.minX + CGFloat(joint.at.x) * scale,
+                          y: fit.minY + CGFloat(joint.at.y) * scale)
+                .onTapGesture { state.select(joint.id) }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Select rig joint \(joint.name)")
+        }
+    }
+
+    private func jointPoints() -> [RigTapJoint] {
+        let source = state.live.project ?? state.project
+        let view = state.canvasViewProject(source)
+        let time = state.currentTime
+        let posed = IKSolver.apply(view, time: time)
+        let resolved = Renderer.resolveParenting(view, time: time)
+        let world = Dictionary(resolved.layers.map { ($0.id, $0) },
+                               uniquingKeysWith: { first, _ in first })
+        let camera = Renderer.activeCamera(view, time: time)
+        var ids: [UUID] = []
+        var spaces: [UUID: UUID] = [:]
+        for layer in view.layers {
+            guard let rig = layer.ik else { continue }
+            for id in (rig.chainIDs ?? [rig.upperID, layer.id]) {
+                if !ids.contains(id) { ids.append(id) }
+                if let spaceID = rig.spaceID { spaces[id] = spaceID }
+            }
+        }
+        return ids.compactMap { id in
+            guard let layer = world[id], !layer.isLocked else { return nil }
+            let matrix: simd_double3x3
+            if let spaceID = spaces[id], let art = world[spaceID],
+               let placed = EditorState.bonePlacement(layer, artwork: art,
+                    project: posed, time: time, camera: camera) {
+                matrix = placed
+            } else {
+                matrix = Renderer.placementMatrix(layer, camera: camera, time: time,
+                                                  renderScale: 1)
+            }
+            guard let position = LayerPlacement.projected(
+                layer.transform.anchor.value(at: time), by: matrix) else { return nil }
+            return RigTapJoint(id: id, name: layer.name, at: position)
+        }
+    }
+}
 
 /// A rest endpoint is a canvas handle, not another tool drawer. Draft changes do not touch the project.
 struct RigEndpointOverlay: View {
@@ -215,6 +313,58 @@ struct RigEndpointOverlay: View {
     }
 }
 
+
+/// During bind, show where the selected end artwork will move BEFORE its anchor is snapped
+/// to the authored wrist/ankle. This is a noninteractive preview, not a document edit.
+struct RigAttachmentPreviewOverlay: View {
+    @ObservedObject var state: EditorState
+    let fit: CGRect
+
+    var body: some View {
+        let t = state.currentTime
+        let scale = fit.width / CGFloat(max(1, state.project.width))
+        let lower = state.selectedIKLayer ?? state.selectedLayer
+        let predictedWrist: Vec2? = lower.flatMap { layer in
+            if layer.ik != nil {
+                if let tip = layer.ik?.restTip, let matrix = state.displayPlacement(of: layer.id),
+                   let projected = LayerPlacement.projected(tip, by: matrix) { return projected }
+                return state.reachedIKWrist(owner: layer, in: state.project, at: t)
+            }
+            guard state.ikDraftUpper != nil,
+                  let matrix = state.displayPlacement(of: layer.id) else { return nil }
+            return LayerPlacement.projected(state.ikRestTip(for: layer), by: matrix)
+        }
+        if let handID = state.ikDraftHand,
+           let hand = state.project.layers.first(where: { $0.id == handID }),
+           let handMatrix = state.displayPlacement(of: handID),
+           let wrist = predictedWrist,
+           let pivot = LayerPlacement.projected(hand.transform.anchor.value(at: t), by: handMatrix) {
+            let offset = wrist - pivot
+            let half = Renderer.layerHalfSize(hand, time: t)
+            let corners = [Vec2(-half.x, -half.y), Vec2(half.x, -half.y),
+                           Vec2(half.x, half.y), Vec2(-half.x, half.y)]
+                .compactMap { LayerPlacement.projected($0, by: handMatrix) }
+                .map { point in CGPoint(x: fit.minX + CGFloat(point.x + offset.x) * scale,
+                                       y: fit.minY + CGFloat(point.y + offset.y) * scale) }
+            let a = CGPoint(x: fit.minX + CGFloat(pivot.x) * scale, y: fit.minY + CGFloat(pivot.y) * scale)
+            let b = CGPoint(x: fit.minX + CGFloat(wrist.x) * scale, y: fit.minY + CGFloat(wrist.y) * scale)
+            ZStack {
+                Path { p in p.move(to: a); p.addLine(to: b) }
+                    .stroke(Theme.warning, style: StrokeStyle(lineWidth: 2, dash: [5, 4]))
+                if corners.count == 4 {
+                    Path { p in p.addLines(corners); p.closeSubpath() }
+                        .fill(Theme.warning.opacity(0.12))
+                        .overlay {
+                            Path { p in p.addLines(corners); p.closeSubpath() }
+                                .stroke(Theme.warning, style: StrokeStyle(lineWidth: 2, dash: [5, 4]))
+                        }
+                }
+            }
+            .allowsHitTesting(false)
+            .accessibilityLabel("Preview end artwork snapped to wrist")
+        }
+    }
+}
 
 /// Targets stay on the character while the Rig panel is open. Only targets have hit areas; bones remain visual.
 struct RigControllersOverlay: View {

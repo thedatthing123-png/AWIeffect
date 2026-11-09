@@ -467,7 +467,9 @@ struct EditorView: View {
                         LiveReader(live: state.live) { _ in
                             ZStack {
                                 BoneOverlay(state: state, fit: fit)
+                                RigJointSelectionOverlay(state: state, fit: fit)
                                 RigEndpointOverlay(state: state, fit: fit)
+                                RigAttachmentPreviewOverlay(state: state, fit: fit)
                                 RigControllersOverlay(state: state, fit: fit)
                                 SkeletonCanvasOverlay(state: state, fit: fit)
                             }
@@ -585,7 +587,9 @@ struct EditorView: View {
                 if state.panel == .puppet, state.selectedLayerID != nil {
                     // Place on: a tap drops a pin (unless it lands on one). Place off: taps never add pins.
                     let reach = 30 * Double(state.project.width) / Double(max(fit.width, 1))
-                    if state.puppetPlace, state.puppetPin(nearComp: toComp(v.location, fit: fit), reach: reach) == nil {
+                    if let selected = state.puppetPin(nearComp: toComp(v.location, fit: fit), reach: reach) {
+                        state.selectedPuppetPin = selected
+                    } else if state.puppetPlace {
                         state.addPuppetPin(atComp: toComp(v.location, fit: fit))
                     }
                     return
@@ -737,7 +741,10 @@ struct EditorView: View {
                     if puppetDragPin == nil {
                         let reach = 30 * Double(state.project.width) / Double(max(fit.width, 1))
                         puppetDragPin = state.puppetPin(nearComp: toComp(v.startLocation, fit: fit), reach: reach) ?? -1
-                        if puppetDragPin! >= 0 { state.beginEdit("Move Pin") }
+                        if puppetDragPin! >= 0 {
+                            state.selectedPuppetPin = puppetDragPin!
+                            state.beginEdit("Move Pin")
+                        }
                     }
                     if let k = puppetDragPin, k >= 0 { state.movePuppetPin(k, toComp: toComp(v.location, fit: fit)); return }
                     // Like AE's Puppet tool: dragging off a pin never moves the layer by accident.

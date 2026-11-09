@@ -29,6 +29,22 @@ final class RigAuthoringUITests: XCTestCase {
         try? image.pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/awi-ui/bone-chain-authoring.png"))
     }
 
+    func testRigPrecisionPadPositionsRestEndpointWithoutMovingArtwork() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-rigAuthoring"]
+        app.launch()
+        let pad = app.descendants(matching: .any)["rig-position-swipe-pad"].firstMatch
+        XCTAssertTrue(pad.waitForExistence(timeout: 15), "The native X/Y SwipePad belongs in Rig")
+        let endpoint = app.descendants(matching: .any)["Limb end joint"].firstMatch
+        XCTAssertTrue(endpoint.waitForExistence(timeout: 5))
+        let before = endpoint.value as? String
+        let origin = pad.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        origin.press(forDuration: 0.1, thenDragTo: origin.withOffset(CGVector(dx: 80, dy: -30)))
+        XCTAssertNotEqual(endpoint.value as? String, before, "Swipe pad must move the selected rest joint")
+        XCTAssertTrue(app.buttons["Make IK"].firstMatch.exists, "Rest editing remains in Rig, not in a separate studio")
+    }
+
     func testLettersRotateDirectlyWithoutOpeningAnotherPanel() {
         continueAfterFailure = false
         let app = XCUIApplication()
