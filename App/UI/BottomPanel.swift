@@ -84,6 +84,7 @@ struct BottomPanel: View {
                 case .puppet: PuppetPanel(state: state)
                 case .ccStudio: CCStudioPanel(state: state)
                 case .rig: RigPanel(state: state)
+                case .boneWeight: BoneWeightPanel(state: state)
                 case .layerHome: LayerHomePanel(state: state)
                 case .graph: FlowGraphPanel(state: state)
                 case .none: EmptyView()
