@@ -23,7 +23,6 @@ extension EditorState {
         guard project.layers.contains(where: { $0.id == id && $0.bone != nil }) else { return }
         if let child = boneParentPicking { boneParentPicking = nil; reparentAuthoringBone(child,to: id); return }
         let previousPanel = panel
-        if boneRestEditing,rigArtworkID != project.layers.first(where: { $0.id == id })?.bone?.artworkID { finishBoneRestEditing() }
         finishBoneDrawing()
         select(id)
         panel = previousPanel == .boneWeight ? .boneWeight : .rig

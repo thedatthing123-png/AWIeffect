@@ -204,7 +204,17 @@ final class EditorState: ObservableObject {
     }
     @Published var loop = true
     @Published var selectedShapeContentID: UUID? = nil
-    @Published var selectedLayerID: UUID? { didSet { if selectedLayerID != oldValue { keyframeFocusEffects = []; maskSelection = nil; selectedShapeContentID = nil } } }
+    @Published var selectedLayerID: UUID? {
+        willSet {
+            if newValue != selectedLayerID,boneRestEditing {
+                let nextArtwork = project.layers.first(where: { $0.id == newValue })?.bone?.artworkID
+                if nextArtwork == nil || nextArtwork != rigArtworkID {
+                    finishBoneRestEditing(); boneRestEditing = false
+                }
+            }
+        }
+        didSet { if selectedLayerID != oldValue { keyframeFocusEffects = []; maskSelection = nil; selectedShapeContentID = nil } }
+    }
     /// Mask point being edited on the canvas (Masks panel). R2.
     @Published var maskSelection: MaskSelection?
     @Published var panel: ToolPanel = .none {

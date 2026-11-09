@@ -192,4 +192,15 @@ import simd
         XCTAssertEqual(Renderer.chainZ(parent,in: s.project,time: 0),50,accuracy: 1e-8)
     }
 
+    func testLeavingBoneSelectionFinishesRestModeInsteadOfHidingItsExit() throws {
+        let (s,art) = editor()
+        let root = try XCTUnwrap(s.addBone(artworkID: art,parentID: nil,start: .zero,end: Vec2(100,0)))
+        s.selectAuthoringBone(root); s.bindBoneMesh(); s.boneRestEditing = true
+        s.moveBoneRestJoint(root,to: Vec2(10,15)); s.select(art)
+        XCTAssertFalse(s.boneRestEditing)
+        let mesh = try XCTUnwrap(s.project.layers.first { $0.id == art }?.boneMesh)
+        let palette = try XCTUnwrap(BoneMeshEvaluation.palette(mesh,artworkID: art,posed: s.project,time: 0))
+        for vertex in mesh.vertices { XCTAssertEqual(mesh.deformed(vertex,matrices: palette).x,vertex.rest.x,accuracy: 1e-6) }
+    }
+
 }
