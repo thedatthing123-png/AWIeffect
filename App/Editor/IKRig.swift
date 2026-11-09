@@ -21,6 +21,9 @@ struct IKRig: Codable, Equatable {
     var spaceID: UUID? = nil
     /// Explicit local wrist/ankle endpoint. Optional so saved Build 25 rigs remain readable.
     var restTip: Vec2? = nil
+    /// Root-to-tip connected bones for chain IK. Nil keeps Build 25's analytic two-bone solve.
+    /// Stable layer IDs survive keyframes, save/load and copy/remap.
+    var chainIDs: [UUID]? = nil
     func mixValue(at time: Double) -> Double { mix?.value(at: time) ?? blend ?? 1 }
 }
 
@@ -34,6 +37,98 @@ enum IKSolver {
             }
         }
         return out
+    }
+
+    /// Discover a complete parent-linked root-to-tip path; no arbitrary joint count.
+    /// A disconnected selection returns nil instead of silently skipping pieces.
+    static func connectedPath(root: UUID, end: UUID, in project: Project) -> [UUID]? {
+        guard root != end else { return nil }
+        let nodes = Dictionary(project.layers.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var reversed: [UUID] = []
+        var seen = Set<UUID>()
+        var cursor: UUID? = end
+        while let id = cursor, let layer = nodes[id] {
+            guard seen.insert(id).inserted else { return nil }
+            reversed.append(id)
+            if id == root { return reversed.reversed() }
+            cursor = layer.parentID
+        }
+        return nil
+    }
+
+    static func drivenIDs(owner: Layer) -> Set<UUID> {
+        guard let rig = owner.ik else { return [] }
+        return Set(rig.chainIDs ?? [rig.upperID, owner.id])
+    }
+
+    /// The evaluated tip is a geometric point on the END artwork, not the controller.
+    /// Both a long chain and a two-bone rig can have targets beyond physical reach.
+    static func tipWorld(_ owner: Layer, rig: IKRig, in project: Project, time: Double) -> Vec2? {
+        let tip = rig.restTip ?? owner.bone?.tip ?? Vec2(0, Renderer.layerHalfSize(owner, time: time).y)
+        let anchor = owner.transform.anchor.value(at: time)
+        guard let frame = Renderer.parentAffine(owner.id, in: project, time: time),
+              let point = LayerPlacement.projected(tip - anchor, by: frame.m) else { return nil }
+        return point
+    }
+
+    /// Cyclic coordinate descent for arbitrary parent-linked joint chains. This does not
+    /// rewrite/restretch the authored bones or require a fixed three-piece template.
+    /// Keep legacy two-bone rigs on their exact analytic solver below.
+    private static func solveChain(_ project: inout Project, ownerID: UUID, rig: IKRig, time: Double) {
+        guard let ids = rig.chainIDs, ids.count >= 3, ids.last == ownerID,
+              Set(ids).count == ids.count, ids.first == rig.upperID,
+              connectedPath(root: ids[0], end: ownerID, in: project) == ids,
+              let ctrl = project.layers.first(where: { $0.id == rig.controllerID }),
+              let owner = project.layers.first(where: { $0.id == ownerID }),
+              !ids.contains(rig.controllerID) else { return }
+        let w = min(1, max(0, rig.mixValue(at: time)))
+        if w <= 1e-8 { return }
+        let bindSpace = rig.spaceID.flatMap { Renderer.parentAffine($0, in: project, time: time)?.m }
+            ?? matrix_identity_double3x3
+        guard abs(bindSpace.determinant) > 1e-10,
+              let target = LayerPlacement.projected(collide(world(ctrl, in: project, time: time).pos,
+                in: project, time: time), by: bindSpace.inverse) else { return }
+        var solved = project
+        // Fewer expensive passes when the target is reached; more passes for long chains.
+        // This is an iteration budget, NOT a maximum number of bones.
+        let iterations = min(36, max(12, ids.count * 2))
+        for _ in 0..<iterations {
+            guard let tipWorld = tipWorld(owner, rig: rig, in: solved, time: time),
+                  let tip = LayerPlacement.projected(tipWorld, by: bindSpace.inverse) else { break }
+            if hypot(tip.x - target.x, tip.y - target.y) < 0.05 { break }
+            for id in ids.reversed() {
+                guard let index = solved.layers.firstIndex(where: { $0.id == id }),
+                      let frame = Renderer.parentAffine(id, in: solved, time: time),
+                      let pivot = LayerPlacement.projected(.zero, by: bindSpace.inverse * frame.m),
+                      let latestWorld = tipWorld(owner, rig: rig, in: solved, time: time),
+                      let effector = LayerPlacement.projected(latestWorld, by: bindSpace.inverse) else { continue }
+                let a = effector - pivot, b = target - pivot
+                let normA = hypot(a.x, a.y), normB = hypot(b.x, b.y)
+                if normA < 1e-8 || normB < 1e-8 { continue }
+                let cross = a.x * b.y - a.y * b.x
+                let dot = a.x * b.x + a.y * b.y
+                let delta = atan2(cross, dot)
+                if abs(delta) < 1e-8 { continue }
+                // A reflected parent reverses the direction of local-angle movement.
+                let mirrored = (bindSpace.inverse * frame.m).determinant < 0
+                let sign = mirrored ? -1.0 : 1.0
+                let old = solved.layers[index].transform.rotation.value(at: time)
+                let next = old + sign * delta * 180 / .pi
+                if next.isFinite {
+                    solved.layers[index].transform.rotation = Animated(next)
+                }
+            }
+        }
+        // Blend from genuine FK keyframes to the calculated IK pose, per joint.
+        for id in ids {
+            guard let i = project.layers.firstIndex(where: { $0.id == id }),
+                  let solvedBone = solved.layers.first(where: { $0.id == id }) else { continue }
+            let fk = project.layers[i].transform.rotation.value(at: time)
+            let ik = solvedBone.transform.rotation.value(at: time)
+            if ik.isFinite {
+                project.layers[i].transform.rotation = Animated(blendAngle(fk: fk, ik: ik, w: w))
+            }
+        }
     }
 
     /// FK rotation mixed toward the IK one (shortest way round), `w` 0 = FK, 1 = IK.
@@ -76,6 +171,11 @@ enum IKSolver {
         guard p.layers.contains(where: { $0.ik != nil }) else { return p }
         var q = p
         for li in q.layers.indices {
+            if let chain = q.layers[li].ik?.chainIDs, chain.count >= 3,
+               let rig = q.layers[li].ik {
+                solveChain(&q, ownerID: q.layers[li].id, rig: rig, time: time)
+                continue
+            }
             guard let rig = q.layers[li].ik,
                   let ui = q.layers.firstIndex(where: { $0.id == rig.upperID }),
                   let ctrl = q.layers.first(where: { $0.id == rig.controllerID }),
