@@ -336,6 +336,8 @@ struct Layer: Codable, Equatable, Identifiable {
     var ik: IKRig? = nil
     /// Authoring bone: its transform is an ordinary layer track; artwork pixels bind separately.
     var bone: BoneSettings? = nil
+    /// Optional GPU-driven deformation; the same engine works on cutout pieces and one continuous image.
+    var boneSkin: BoneSkinSettings? = nil
     /// IK tips and physics bodies can't pass through this layer.
     var isCollider = false
     /// 3D shadows (AE defaults: layers don't cast, do accept).
@@ -407,6 +409,7 @@ struct Layer: Codable, Equatable, Identifiable {
         shapeOps = try c.decodeIfPresent(ShapeOps.self, forKey: .shapeOps)
         ik = try c.decodeIfPresent(IKRig.self, forKey: .ik)
         bone = try c.decodeIfPresent(BoneSettings.self, forKey: .bone)
+        boneSkin = try c.decodeIfPresent(BoneSkinSettings.self, forKey: .boneSkin)
         isCollider = try c.decodeIfPresent(Bool.self, forKey: .isCollider) ?? false
         castsShadows = try c.decodeIfPresent(Bool.self, forKey: .castsShadows) ?? false
         acceptsShadows = try c.decodeIfPresent(Bool.self, forKey: .acceptsShadows) ?? true

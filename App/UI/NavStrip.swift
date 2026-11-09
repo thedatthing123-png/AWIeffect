@@ -69,6 +69,7 @@ struct NavStrip: View {
         if visual, c != .text { out.append(Item(id: "Puppet", icon: "hand.point.up.braille", panel: .puppet)) }
         if visual || c == .adjustment { out.append(Item(id: "CC Studio", icon: "camera.filters", panel: .ccStudio)) }
         if visual { out.append(Item(id: "Rig", icon: "figure.arms.open", panel: .rig)) }
+        if visual, !l.isGroup, !l.isAudioOnly { out.append(Item(id: "Bone / Weight", icon: "point.3.connected.trianglepath.dotted", panel: .boneWeight)) }
         if visual { out.append(Item(id: "Presets", icon: "wand.and.rays", panel: .presets)) }
         switch c {
         case .shape, .solid, .text: out.append(Item(id: "Color & Fill", icon: "paintpalette", panel: .fill))

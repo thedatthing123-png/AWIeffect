@@ -79,7 +79,9 @@ extension EditorState {
         bone.bone = BoneSettings(artworkID: artworkID, tip: Vec2(length, 0))
         let id = bone.id
         mutate("Draw Bone") { $0.layers.insert(bone, at: 0) }
-        select(id); panel = .rig; boneDrawingParentID = id
+        select(id)
+        if panel != .boneWeight { panel = .rig }
+        boneDrawingParentID = id
         return id
     }
 }
@@ -200,7 +202,9 @@ struct SkeletonCanvasOverlay: View {
         }
         .coordinateSpace(name: "skeletonCanvas")
         .onChange(of: drawingTouch) { _, active in if !active { drawing = nil } }
-        .onChange(of: state.panel) { _, panel in if panel != .rig { drawing = nil; state.finishBoneDrawing() } }
+        .onChange(of: state.panel) { _, panel in
+            if panel != .rig && panel != .boneWeight { drawing = nil; state.finishBoneDrawing() }
+        }
         .onDisappear { drawing = nil; state.finishBoneDrawing() }
     }
 
@@ -285,6 +289,15 @@ extension Layer {
                 ik = rig
             }
             else { ik = nil }
+        }
+        if var skin = boneSkin {
+            skin.bindings = skin.bindings.compactMap { binding in
+                guard let id = ids[binding.jointID] ?? (keepExternal ? binding.jointID : nil) else { return nil }
+                var updated = binding
+                updated.jointID = id
+                return updated
+            }
+            boneSkin = skin.bindings.count >= 2 ? skin : nil
         }
     }
 }

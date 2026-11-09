@@ -51,6 +51,7 @@ enum ToolPanel: Equatable {
     case puppet
     case ccStudio
     case rig
+    case boneWeight
     /// Tile grid for the selected layer (opened by tapping its clip).
     case layerHome
     /// Flow-style easing / graph editor for the selected layer's keyframes.
