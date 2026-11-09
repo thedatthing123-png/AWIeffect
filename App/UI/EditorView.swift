@@ -533,7 +533,7 @@ struct EditorView: View {
                     }
                 }
                 if pen == nil, state.canvasMode == .comp,
-                   state.panel != .rig, !(state.panel == .text && textStudio.hasSelection), let id = state.selectedLayerID {
+                   state.panel != .rig, state.panel != .boneWeight, !(state.panel == .text && textStudio.hasSelection), let id = state.selectedLayerID {
                     LiveReader(live: state.live) { lp in
                         ClockReader(clock: state.clock) { t in
                             let raw = lp ?? state.project
