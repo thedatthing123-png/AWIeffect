@@ -11,6 +11,109 @@ final class BoneAuthoringTests: XCTestCase {
         return (EditorState(project: p, store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))), art.id)
     }
 
+    func testBuild27ContinuousArtworkBindsBranchingBonesAndDeformsFromRotation() throws {
+        var p = Project.new(name: "Continuous arm", width: 800, height: 600, fps: 30, duration: 4)
+        var art = p.makeLayer(name: "Whole transparent arm", content: .solid, size: Vec2(400, 300))
+        art.transform.position = Animated(Vec2(400, 300))
+        var shoulder = p.makeLayer(name: "Shoulder", content: .solid, size: Vec2(24, 24))
+        shoulder.isNull = true; shoulder.parentID = art.id
+        shoulder.transform.position = Animated(Vec2(0, 0))
+        shoulder.transform.anchor = Animated(.zero)
+        shoulder.bone = BoneSettings(artworkID: art.id, tip: Vec2(100, 0))
+        var wrist = p.makeLayer(name: "Wrist", content: .solid, size: Vec2(24, 24))
+        wrist.isNull = true; wrist.parentID = shoulder.id
+        wrist.transform.position = Animated(Vec2(100, 0))
+        wrist.transform.anchor = Animated(.zero)
+        wrist.bone = BoneSettings(artworkID: art.id, tip: Vec2(100, 0))
+        var finger = p.makeLayer(name: "Finger", content: .solid, size: Vec2(24, 24))
+        finger.isNull = true; finger.parentID = wrist.id
+        finger.transform.position = Animated(Vec2(100, 0))
+        finger.transform.anchor = Animated(.zero)
+        finger.bone = BoneSettings(artworkID: art.id, tip: Vec2(50, 0))
+        var thumb = p.makeLayer(name: "Thumb branch", content: .solid, size: Vec2(24, 24))
+        thumb.isNull = true; thumb.parentID = wrist.id
+        thumb.transform.position = Animated(Vec2(100, 0))
+        thumb.transform.rotation = Animated(45)
+        thumb.transform.anchor = Animated(.zero)
+        thumb.bone = BoneSettings(artworkID: art.id, tip: Vec2(45, 0))
+        p.layers = [art, shoulder, wrist, finger, thumb]
+        let state = EditorState(project: p, store: ProjectStore(root:
+            FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        state.select(art.id)
+        state.autoBindSkin(artworkID: art.id, workflow: .boneWeight)
+        let skin = try XCTUnwrap(state.project.layers.first(where: { $0.id == art.id })?.boneSkin)
+        XCTAssertEqual(skin.workflow, .boneWeight)
+        XCTAssertEqual(Set(skin.bindings.map(\.jointID)), Set([shoulder.id, wrist.id, finger.id, thumb.id]))
+        XCTAssertEqual(skin.bindings.count, 4)
+
+        var turned = state.project
+        let i = try XCTUnwrap(turned.layers.firstIndex(where: { $0.id == shoulder.id }))
+        turned.layers[i].transform.rotation = Animated(55)
+        let snapshot = Renderer.resolveParenting(turned, time: 0)
+        let resultArt = try XCTUnwrap(snapshot.layers.first(where: { $0.id == art.id }))
+        let effect = try XCTUnwrap(resultArt.effects.first(where: { $0.typeID == EffectRegistry.puppet18.id }))
+        let pins = EffectRegistry.puppetPins(effect, 0)
+        XCTAssertEqual(pins.count, 4)
+        XCTAssertTrue(pins.contains { hypot($0.x - $0.z, $0.y - $0.w) > 1 },
+                      "Bone rotation must actually drive a GPU deformation pin, not only the skeleton overlay")
+        // Raw authoring data must not be rewritten by a renderer evaluation.
+        XCTAssertEqual(turned.layers.first(where: { $0.id == art.id })?.effects.count, 0)
+        let saved = try JSONDecoder().decode(Project.self, from: JSONEncoder().encode(state.project))
+        XCTAssertEqual(saved.layers.first(where: { $0.id == art.id })?.boneSkin, skin)
+    }
+
+    func testBuild27CutoutRigCanSkinMultipleLinkedPiecesWithoutChangingTheirIK() throws {
+        var p = Project.new(name: "Cutout tail", width: 900, height: 600, fps: 30, duration: 4)
+        var ids: [UUID] = []
+        var previous: UUID?
+        for j in 0..<6 {
+            var piece = p.makeLayer(name: "Tail piece \(j)", content: .solid, size: Vec2(140, 40))
+            piece.transform.anchor = Animated(.zero)
+            piece.transform.position = Animated(j == 0 ? Vec2(130, 160) : Vec2(90, 0))
+            piece.parentID = previous
+            previous = piece.id
+            ids.append(piece.id)
+            p.layers.append(piece)
+        }
+        let state = EditorState(project: p, store: ProjectStore(root:
+            FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        state.select(ids[0])
+        state.autoBindRigPieces(from: ids[0])
+        let skinned = state.project.layers.filter { $0.boneSkin != nil }
+        XCTAssertGreaterThan(skinned.count, 2)
+        XCTAssertTrue(skinned.allSatisfy { $0.boneSkin?.workflow == .rigPieces })
+        XCTAssertEqual(state.project.layers.filter { $0.ik != nil }.count, 0)
+        let mid = try XCTUnwrap(state.project.layers.first(where: { $0.id == ids[2] })?.boneSkin)
+        XCTAssertGreaterThanOrEqual(mid.bindings.count, 2)
+        XCTAssertEqual(mid.sensitivity, 1.2)
+    }
+
+    func testBuild27DisableDeformationKeepsOriginalGeometryAndExistingPuppet() throws {
+        var p = Project.new(name: "Skin toggle", width: 400, height: 400, fps: 30, duration: 3)
+        var art = p.makeLayer(name: "Vector", content: .solid, size: Vec2(150, 150))
+        let a = UUID(), b = UUID()
+        art.boneSkin = BoneSkinSettings(workflow: .rigPieces, enabled: false,
+            bindings: [BoneSkinBinding(jointID: a, rest: Vec2(0, 0)),
+                       BoneSkinBinding(jointID: b, rest: Vec2(40, 40))])
+        art.effects = [EffectRegistry.puppet18.makeInstance()]
+        p.layers = [art]
+        let snap = Renderer.resolveParenting(p, time: 0)
+        let actual = try XCTUnwrap(snap.layers.first)
+        XCTAssertEqual(actual.effects.count, 1, "Disabled bone skin must never inject another effect")
+    }
+
+    func testBuild27ClonedArtworkRemapsSkinBoneInfluences() throws {
+        var p = Project.new(name: "Skin cloning", width: 400, height: 400, fps: 30, duration: 3)
+        var art = p.makeLayer(name: "One image", content: .solid, size: Vec2(150, 150))
+        let root = UUID(), child = UUID(), nextRoot = UUID(), nextChild = UUID()
+        art.boneSkin = BoneSkinSettings(workflow: .boneWeight,
+            bindings: [BoneSkinBinding(jointID: root, rest: .zero),
+                       BoneSkinBinding(jointID: child, rest: Vec2(80, 0), influence: 0.35)])
+        art.remapRigReferences([root: nextRoot, child: nextChild], keepExternal: false)
+        XCTAssertEqual(art.boneSkin?.bindings.map(\.jointID), [nextRoot, nextChild])
+        XCTAssertEqual(art.boneSkin?.bindings[1].influence, 0.35)
+    }
+
     func testBuild26LongChainIKControlsSixJointsAndPreservesFK() throws {
         var p = Project.new(name: "Long chain", width: 1000, height: 700, fps: 30, duration: 4)
         var previous: UUID?
