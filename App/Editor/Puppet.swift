@@ -8,7 +8,9 @@ extension EditorState {
 
     /// Pins of the selected layer at the playhead: (rest, dragged) in layer px.
     var puppetPins: [(rest: Vec2, current: Vec2)] {
-        guard let l = selectedLayer, let j = puppetEffectIndex else { return [] }
+        guard let id = selectedLayerID,
+              let l = (live.project ?? project).layers.first(where: { $0.id == id }),
+              let j = l.effects.firstIndex(where: { $0.typeID == EffectRegistry.puppet18.id }) else { return [] }
         return EffectRegistry.puppetPins(l.effects[j], currentTime).map { (Vec2(Double($0.x), Double($0.y)), Vec2(Double($0.z), Double($0.w))) }
     }
 
@@ -51,6 +53,7 @@ extension EditorState {
             p.layers[i].effects[j].params["pinR\(n)"] = .point(Animated(local))
             p.layers[i].effects[j].params["pinD\(n)"] = .point(Animated(local))
         }
+        selectedPuppetPin = n
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
@@ -111,6 +114,8 @@ extension EditorState {
             }
             p.layers[i].effects[j].params = params
         }
+        if selectedPuppetPin == k { selectedPuppetPin = nil }
+        else if let selected = selectedPuppetPin, selected > k { selectedPuppetPin = selected - 1 }
     }
 
     /// Puts every pin back to rest at the playhead (keeps the pins).
@@ -135,6 +140,7 @@ extension EditorState {
 /// Puppet panel: how-to, Animate switch, pins list.
 struct PuppetPanel: View {
     @ObservedObject var state: EditorState
+    @State private var fine = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -163,6 +169,34 @@ struct PuppetPanel: View {
                         }
                     }
                     let pins = state.puppetPins
+                    if let selected = state.selectedPuppetPin, pins.indices.contains(selected) {
+                        LiveReader(live: state.live) { _ in
+                            let actual = state.puppetPins
+                            if actual.indices.contains(selected) {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    HStack {
+                                        Text("Pin \(selected + 1) Position")
+                                            .font(.system(size: 12, weight: .semibold))
+                                        Spacer()
+                                        Toggle("Fine", isOn: $fine).labelsHidden()
+                                            .accessibilityLabel("Fine pin positioning")
+                                        Text("Fine").font(.caption).foregroundStyle(Theme.textDim)
+                                    }
+                                    SwipePad(hint: "Swipe to position selected pin", gain: Double(state.project.width) * (fine ? 0.25 : 1)) { delta in
+                                        let current = state.puppetPins
+                                        guard current.indices.contains(selected) else { return }
+                                        state.setPuppetPin(selected, local: current[selected].current +
+                                            Vec2(Double(delta.width), Double(delta.height)))
+                                    } begin: { state.beginPanelGesture("Position Pin") }
+                                      end: { state.endPanelGesture() }
+                                    .frame(height: 110)
+                                    .accessibilityIdentifier("puppet-position-swipe-pad")
+                                }
+                                .padding(10)
+                                .background(RoundedRectangle(cornerRadius: 12).fill(Theme.surface.opacity(0.5)))
+                            }
+                        }
+                    }
                     HStack {
                         Text("\(pins.count) pin\(pins.count == 1 ? "" : "s")").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.text)
                         Spacer()
@@ -182,8 +216,18 @@ struct PuppetPanel: View {
                                 .disabled((effect.params["pinD\(k)"]?.keyframeTimes.count ?? 0) < 2)
                                 .accessibilityLabel("Pin \(k + 1) easing")
                             }
-                            Image(systemName: "pin.fill").foregroundStyle(Theme.warning)
-                            Text("Pin \(k + 1)").font(.system(size: 13)).foregroundStyle(Theme.text)
+                            Button {
+                                state.selectedPuppetPin = k
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "pin.fill")
+                                    Text("Pin \(k + 1)").font(.system(size: 13))
+                                }
+                                .foregroundStyle(state.selectedPuppetPin == k ? Theme.accentGlow : Theme.text)
+                                .frame(minHeight: 44)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("puppet-pin-select-\(k)")
                             Spacer()
                             Button { state.togglePuppetStarch(k) } label: {
                                 Text(state.isPuppetStarch(k) ? "Starch" : "Bend")
@@ -212,7 +256,10 @@ struct PuppetPanel: View {
             state.ensurePuppet()
             // Open in Move when the layer already has pins, so the first touch never adds one by accident.
             state.puppetPlace = state.puppetPins.isEmpty
+            if state.selectedPuppetPin == nil, !state.puppetPins.isEmpty { state.selectedPuppetPin = 0 }
         }
+        .onChange(of: state.selectedLayerID) { _, _ in state.selectedPuppetPin = nil }
+        .onDisappear { state.selectedPuppetPin = nil }
     }
 }
 
