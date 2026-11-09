@@ -940,7 +940,9 @@ struct RigPanel: View {
                             .buttonStyle(PrimaryButtonStyle())
                             .disabled(state.ikDraftUpper == nil)
                         }
-                        if l.bone != nil {
+                        if l.bone != nil || (l.ik == nil && state.project.layers.contains(where: { owner in
+                            IKSolver.drivenIDs(owner: owner).contains(l.id)
+                        })) {
                             Divider().overlay(Theme.stroke)
                             Text("ARTWORK ATTACHMENTS").font(.system(size: 11, weight: .bold))
                                 .foregroundStyle(Theme.textDim)
