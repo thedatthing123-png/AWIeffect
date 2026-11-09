@@ -467,6 +467,7 @@ struct EditorView: View {
                         LiveReader(live: state.live) { _ in
                             ZStack {
                                 BoneOverlay(state: state, fit: fit)
+                                RigJointSelectionOverlay(state: state, fit: fit)
                                 RigEndpointOverlay(state: state, fit: fit)
                                 RigAttachmentPreviewOverlay(state: state, fit: fit)
                                 RigControllersOverlay(state: state, fit: fit)
