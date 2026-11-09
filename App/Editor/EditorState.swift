@@ -84,6 +84,8 @@ final class EditorState: ObservableObject {
     @Published var puppetAnimate = true
     /// Puppet: taps add pins only while Place is on; off = pins stay put and drags only move them.
     @Published var puppetPlace = true
+    /// Selected pin for the indirect X/Y position pad. UI-only; never serialized.
+    @Published var selectedPuppetPin: Int? = nil
     /// Motion Sketch: moving the layer records position keyframes in real time.
     @Published var motionSketch = false
     /// Show the selected layer's motion path on the canvas.
