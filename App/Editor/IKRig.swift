@@ -715,12 +715,14 @@ extension EditorState {
 ///// The selected point, not the artwork layer, is its editing target.
 enum RigPositionSelection: Equatable {
     case restJoint(UUID)
+    case poseJoint(UUID)
     case restEndpoint(UUID)
     case ikController(UUID)
     case fkBoneTip(UUID)
 
     var label: String {
         switch self {
+        case .poseJoint: return "Joint origin · parent X/Y"
         case .restJoint: return "Rest joint · parent X/Y"
         case .restEndpoint: return "Wrist / ankle (rest)"
         case .ikController: return "IK target · parent X/Y"
@@ -730,14 +732,23 @@ enum RigPositionSelection: Equatable {
     var editsPose: Bool {
         switch self {
         case .restEndpoint: return false
-        case .restJoint, .ikController, .fkBoneTip: return true
+        case .restJoint, .poseJoint, .ikController, .fkBoneTip: return true
         }
     }
 }
 
 extension EditorState {
     /// Keeping these roles distinct stops a wrist setup edit from turning into a layer move.
+    func canTranslatePoseJoint(_ id: UUID) -> Bool {
+        guard let bone = project.layers.first(where: { $0.id == id }),bone.bone != nil,!bone.isLocked else { return false }
+        if let owner = project.layers.first(where: { IKSolver.drivenIDs(owner: $0).contains(id) }),let rig = owner.ik {
+            return rig.mixValue(at: currentTime)<=0.001 || rig.upperID == id
+        }
+        return true
+    }
+
     var rigPositionSelection: RigPositionSelection? {
+        if !boneRestEditing,let id = selectedLayerID,rigOriginJointID == id,canTranslatePoseJoint(id) { return .poseJoint(id) }
         if boneRestEditing,let selected = selectedLayer,selected.bone != nil { return .restJoint(selected.id) }
         if let owner = selectedIKLayer, let ik = owner.ik {
             if let selected = selectedLayer, selected.bone != nil,
@@ -765,7 +776,7 @@ extension EditorState {
     func rigPositionValue(_ selection: RigPositionSelection) -> Vec2? {
         let source = live.project ?? project
         switch selection {
-        case .restJoint(let id): return source.layers.first(where: { $0.id == id })?.transform.position.value(at: currentTime)
+        case .restJoint(let id), .poseJoint(let id): return source.layers.first(where: { $0.id == id })?.transform.position.value(at: currentTime)
         case .restEndpoint(let id):
             guard let layer = source.layers.first(where: { $0.id == id }) else { return nil }
             if let draft = ikDraftTip, draft.layerID == id { return draft.point }
@@ -784,7 +795,7 @@ extension EditorState {
     func nudgeRigPosition(_ target: RigPositionSelection, canvasDelta: Vec2) {
         guard canvasDelta.x.isFinite, canvasDelta.y.isFinite else { return }
         switch target {
-        case .restJoint:
+        case .restJoint, .poseJoint:
             guard var gesture = rigPointGesture(target),let point = gesture.move(by: canvasDelta) else { return }
             moveRigPosition(target,to: point)
         case .restEndpoint(let id):
@@ -824,6 +835,15 @@ extension EditorState {
         guard point.x.isFinite, point.y.isFinite else { return }
         switch selection {
         case .restJoint(let id): moveBoneRestJoint(id,to: point)
+        case .poseJoint(let id):
+            guard selectedLayerID == id,canTranslatePoseJoint(id) else { return }
+            let time = currentTime
+            mutate("Move Joint Origin") { p in
+                guard let i = p.layers.firstIndex(where: { $0.id == id }) else { return }
+                let previous = p.layers[i].transform
+                p.layers[i].transform.position.set(point,at: time)
+                p.layers[i].transform.pairPositionKeys(previous: previous,at: time)
+            }
         case .restEndpoint(let id):
             guard selectedLayerID == id, selectedIKLayer == nil, ikDraftUpper != nil else { return }
             // Transient bind setup: moving a rest marker must not create a timeline key or undo step.
@@ -866,7 +886,7 @@ extension EditorState {
         case .fkBoneTip: matrix = matrix_identity_double3x3
         case .restEndpoint(let id):
             guard let placement = displayPlacement(of: id) else { return nil }; matrix = placement
-        case .restJoint(let id), .ikController(let id):
+        case .restJoint(let id), .poseJoint(let id), .ikController(let id):
             var source = canvasViewProject(live.project ?? project)
             if case .restJoint = selection { for i in source.layers.indices { source.layers[i].ik = nil } }
             guard let controller = source.layers.first(where: { $0.id == id }) else { return nil }

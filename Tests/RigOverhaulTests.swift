@@ -286,4 +286,24 @@ import simd
         XCTAssertNil(s.recoveryNotice); XCTAssertEqual(s.selectedLayerID,root)
     }
 
+    func testPoseOriginTranslationMovesWeightedArmWithoutChangingItsRestBind() throws {
+        let (s,art) = editor()
+        let root = try XCTUnwrap(s.addBone(artworkID: art,parentID: nil,start: .zero,end: Vec2(100,0)))
+        let child = try XCTUnwrap(s.addBone(artworkID: art,parentID: root,start: .zero,end: Vec2(180,0)))
+        s.selectAuthoringBone(root); s.boneMeshCoverage = .wholeArtwork; s.bindBoneMesh()
+        let before = try XCTUnwrap(s.project.layers.first { $0.id == art }?.boneMesh)
+        let childBefore = try XCTUnwrap(Renderer.parentAffine(child,in: s.project,time: 0)).m[2]
+        s.rigOriginJointID = root; XCTAssertEqual(s.rigPositionSelection,.poseJoint(root))
+        s.moveRigPosition(.poseJoint(root),to: Vec2(25,40))
+        let childAfter = try XCTUnwrap(Renderer.parentAffine(child,in: s.project,time: 0)).m[2]
+        XCTAssertEqual(childAfter.x-childBefore.x,25,accuracy: 1e-7); XCTAssertEqual(childAfter.y-childBefore.y,40,accuracy: 1e-7)
+        let after = try XCTUnwrap(s.project.layers.first { $0.id == art }?.boneMesh)
+        XCTAssertEqual(after.inverseBinds,before.inverseBinds); XCTAssertFalse(s.boneRestDirty)
+        let palette = try XCTUnwrap(BoneMeshEvaluation.palette(after,artworkID: art,posed: s.project,time: 0))
+        for vertex in after.vertices {
+            let moved = after.deformed(vertex,matrices: palette)
+            XCTAssertEqual(moved.x,vertex.rest.x+25,accuracy: 1e-6); XCTAssertEqual(moved.y,vertex.rest.y+40,accuracy: 1e-6)
+        }
+    }
+
 }

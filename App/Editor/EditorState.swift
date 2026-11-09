@@ -105,6 +105,7 @@ final class EditorState: ObservableObject {
     var layerPickReturnPanel: ToolPanel = .transform
     var layerPickPrompt = "Tap a layer"
     /// Make-IK picks (kept here: the Rig panel closes while you tap a layer on the canvas).
+    @Published var rigOriginJointID: UUID?
     @Published var boneParentPicking: UUID?
     @Published var boneRestEditing = false { didSet { if boneRestEditing && !oldValue { boneRestDirty = false } } }
     var boneRestDirty = false
@@ -215,7 +216,7 @@ final class EditorState: ObservableObject {
                 }
             }
         }
-        didSet { if selectedLayerID != oldValue { keyframeFocusEffects = []; maskSelection = nil; selectedShapeContentID = nil } }
+        didSet { if selectedLayerID != oldValue { rigOriginJointID = nil; keyframeFocusEffects = []; maskSelection = nil; selectedShapeContentID = nil } }
     }
     /// Mask point being edited on the canvas (Masks panel). R2.
     @Published var maskSelection: MaskSelection?

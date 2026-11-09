@@ -1,6 +1,27 @@
 import XCTest
 
 final class RigAuthoringUITests: XCTestCase {
+    func testPoseOriginDragMovesTheJointWithoutEnteringRestMode() {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launchArguments = ["-uiTesting","-uiTesting-rigAuthoring"]; app.launch()
+        let draw = app.buttons["Draw Bones"].firstMatch; XCTAssertTrue(draw.waitForExistence(timeout: 15)); draw.tap()
+        let canvas = app.descendants(matching: .any)["Draw connected bones"].firstMatch
+        XCTAssertTrue(canvas.waitForExistence(timeout: 5))
+        canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.35,dy: 0.5)).press(forDuration: 0.1,thenDragTo: canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.65,dy: 0.5)))
+        app.buttons["Done"].firstMatch.tap()
+        let head = app.descendants(matching: .any)["Select Bone 1"].firstMatch
+        XCTAssertTrue(head.waitForExistence(timeout: 5))
+        let before = head.frame.midX
+        let point = head.coordinate(withNormalizedOffset: CGVector(dx: 0.5,dy: 0.5))
+        point.press(forDuration: 0.1,thenDragTo: point.withOffset(CGVector(dx: 35,dy: -15)))
+        XCTAssertGreaterThan(head.frame.midX,before+5)
+        XCTAssertTrue(app.staticTexts["Joint origin · parent X/Y"].firstMatch.exists)
+        let image = XCUIScreen.main.screenshot(); let attachment = XCTAttachment(screenshot: image)
+        attachment.name = "joint-origin-pose"; attachment.lifetime = .keepAlways; add(attachment)
+        try? FileManager.default.createDirectory(atPath: "/tmp/awi-ui",withIntermediateDirectories: true)
+        try? image.pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/awi-ui/joint-origin-pose.png"))
+    }
+
     func testPieceControllerShowsArtworkBindingInsteadOfAnEmptyWeightPanel() {
         continueAfterFailure = false
         let app = XCUIApplication(); app.launchArguments = ["-uiTesting","-uiTesting-rigAuthoring","-uiTesting-pieceWeight"]; app.launch()

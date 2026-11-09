@@ -25,6 +25,7 @@ extension EditorState {
         guard project.layers.contains(where: { $0.id == id && $0.bone != nil }) else { return }
         if let child = boneParentPicking { boneParentPicking = nil; reparentAuthoringBone(child,to: id); return }
         let previousPanel = panel
+        rigOriginJointID = nil
         finishBoneDrawing()
         select(id)
         panel = previousPanel == .boneWeight ? .boneWeight : .rig
@@ -404,15 +405,22 @@ private struct BoneSegmentHandle: View {
                 .onTapGesture { state.selectAuthoringBone(id) }
             Circle().fill(Theme.surface).overlay(Circle().stroke(Theme.accentGlow, lineWidth: 2))
                 .frame(width: 12, height: 12).frame(width: 44, height: 44).contentShape(Rectangle()).position(start)
-                .onTapGesture { state.selectAuthoringBone(id) }.accessibilityLabel("Select \(name)")
+                .onTapGesture {
+                    state.selectAuthoringBone(id)
+                    if !state.boneRestEditing,state.canTranslatePoseJoint(id) { state.rigOriginJointID = id }
+                }.accessibilityLabel("Select \(name)")
                 .highPriorityGesture(DragGesture(minimumDistance: 1,coordinateSpace: .global)
                     .updating($touching) { _,active,_ in active = true }
                     .onChanged { value in
-                        if restDrag == nil { restDrag = state.rigPointGesture(.restJoint(id)); state.beginPanelGesture("Move Rest Joint") }
+                        if restDrag == nil {
+                            let role: RigPositionSelection = state.boneRestEditing ? .restJoint(id) : .poseJoint(id)
+                            if !state.boneRestEditing { state.rigOriginJointID = id }
+                            restDrag = state.rigPointGesture(role); state.beginPanelGesture(state.boneRestEditing ? "Move Rest Joint" : "Move Joint Origin")
+                        }
                         guard let input = restDrag,
                               let point = LayerPlacement.projected(input.origin+Vec2(Double(value.translation.width/scale),Double(value.translation.height/scale)),by: input.inverse) else { return }
-                        state.moveBoneRestJoint(id,to: point)
-                    }.onEnded { _ in finishRest() },including: state.boneRestEditing && state.selectedLayerID == id ? .all : .none)
+                        state.moveRigPosition(input.selection,to: point)
+                    }.onEnded { _ in finishRest() },including: state.selectedLayerID == id && (state.boneRestEditing || state.canTranslatePoseJoint(id)) ? .all : .none)
                 .onChange(of: touching) { _,active in if !active { finishRest() } }
                 .onDisappear { finishRest() }
             if canPose && !state.boneRestEditing {
@@ -422,7 +430,7 @@ private struct BoneSegmentHandle: View {
                         .updating($touching) { _, active, _ in active = true }
                         .onChanged { value in
                             if dragStart == nil {
-                                dragStart = end
+                                dragStart = end; state.rigOriginJointID = nil
                                 if state.selectedLayerID != id { state.selectAuthoringBone(id) }
                                 state.beginPanelGesture("Pose Bone")
                             }
