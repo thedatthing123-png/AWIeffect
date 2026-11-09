@@ -387,6 +387,8 @@ struct SwipePad: View {
     /// Comp units per full pad width at normal speed.
     let gain: Double
     var vertical = false
+    /// Precision authoring uses constant gain, independent of input event timing.
+    var steady = false
     let onDelta: (CGSize) -> Void
     var begin: () -> Void = {}
     var end: () -> Void = {}
@@ -414,7 +416,7 @@ struct SwipePad: View {
                     last = g.translation; lastTime = now
                     // Steady: a precise slow zone, and fast swipes go only a little further (max 1.2×, no flinging).
                     let speed = Double(hypot(dx, dy)) / dt
-                    let accel = speed < 80 ? 0.3 : min(1.2, 0.3 + (speed - 80) / 700)
+                    let accel = steady ? 0.6 : (speed < 80 ? 0.3 : min(1.2, 0.3 + (speed - 80) / 700))
                     let k = gain / Double(max(geo.size.width, 1)) * accel
                     onDelta(vertical ? CGSize(width: 0, height: Double(dy) * k) : CGSize(width: Double(dx) * k, height: Double(dy) * k))
                 }

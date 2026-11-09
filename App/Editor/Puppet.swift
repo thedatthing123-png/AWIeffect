@@ -30,7 +30,7 @@ extension EditorState {
     /// Local -> canvas placement of a layer as it is drawn: parenting, 3D and the camera of the current view
     /// (free view has none), so taps and handles line up with the picture.
     func displayPlacement(of id: UUID) -> simd_double3x3? {
-        let view = canvasViewProject(project)
+        let view = canvasViewProject(live.project ?? project)
         guard let l = Renderer.resolveParenting(view, time: currentTime).layers.first(where: { $0.id == id }) else { return nil }
         let M = Renderer.placementMatrix(l, camera: Renderer.activeCamera(view, time: currentTime), time: currentTime, renderScale: 1)
         return abs(M.determinant) > 1e-12 ? M : nil

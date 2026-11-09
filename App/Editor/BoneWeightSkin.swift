@@ -79,7 +79,7 @@ enum BoneSkinRuntime {
         var result = posed
         for index in result.layers.indices {
             guard let skin = result.layers[index].boneSkin, skin.enabled, skin.deformation > 0,
-                  skin.bindings.count > 1 else { continue }
+                  skin.bindings.count > 1, result.layers[index].boneMesh == nil else { continue }
             let artID = result.layers[index].id
             var fx = EffectRegistry.puppet18.makeInstance()
             fx.params["stiffness"] = .number(Animated(min(3, max(0.5, skin.sensitivity))))
@@ -100,6 +100,8 @@ enum BoneSkinRuntime {
                 // This is a real GPU pixel warp using the existing Puppet MLS
                 // kernel. Ordinary Puppet effects and authored FX stay intact.
                 result.layers[index].effects.insert(fx, at: 0)
+                // Nested renders must not generate the same warp a second time.
+                result.layers[index].boneSkin = nil
             }
         }
         return result

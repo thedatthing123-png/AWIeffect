@@ -16,6 +16,45 @@ extension EditorState {
         return layer.id
     }
 
+    /// Keep the authoring surface open when selecting an earlier joint. Generic select() opens Layer Home.
+    func selectAuthoringBone(_ id: UUID) {
+        guard project.layers.contains(where: { $0.id == id && $0.bone != nil }) else { return }
+        let previousPanel = panel
+        finishBoneDrawing()
+        select(id)
+        panel = previousPanel == .boneWeight ? .boneWeight : .rig
+        if boneWeightArtworkID != nil { finishBoneWeightStroke(commit: false); boneWeightBoneID = id }
+    }
+
+    /// Move a setup joint without adding keys. Child pivots retain their world position at this frame.
+    func moveBoneRestJoint(_ id: UUID,to point: Vec2) {
+        let source = live.project ?? project
+        guard boneRestEditing,let bone = source.layers.first(where: { $0.id == id }),bone.bone != nil,!bone.isLocked,
+              let oldFrame = Renderer.parentAffine(id,in: source,time: currentTime),abs(oldFrame.m.determinant)>1e-10 else { return }
+        let delta = point-bone.transform.position.value(at: currentTime)
+        guard hypot(delta.x,delta.y)>1e-10 else { return }
+        let time = currentTime
+        mutate("Move Rest Joint") { p in
+            guard let index = p.layers.firstIndex(where: { $0.id == id }) else { return }
+            p.layers[index].transform.position = p.layers[index].transform.position.mapped { $0+delta }
+            guard let newFrame = Renderer.parentAffine(id,in: p,time: time),abs(newFrame.m.determinant)>1e-10 else { return }
+            let compensation = newFrame.m.inverse*oldFrame.m
+            if let tip = p.layers[index].bone?.tip,let fixed = LayerPlacement.projected(tip,by: compensation) { p.layers[index].bone?.tip = fixed }
+            for child in p.layers.indices where p.layers[child].parentID == id {
+                let original = p.layers[child].transform.position.value(at: time)
+                if let fixed = LayerPlacement.projected(original,by: compensation) {
+                    let correction = fixed-original
+                    p.layers[child].transform.position = p.layers[child].transform.position.mapped { $0+correction }
+                }
+            }
+        }
+    }
+
+    func branchFromSelectedBone() {
+        guard selectedLayer?.bone != nil else { return }
+        beginBoneDrawing()
+    }
+
     func beginBoneDrawing() {
         guard let id = rigArtworkID else { return }
         pause()
@@ -86,25 +125,51 @@ extension EditorState {
     }
 }
 
-/// Authoring actions stay in the Rig panel; only joints and segment previews live on the canvas.
+/// Explicit branching and hierarchy selection are shared by both artwork workflows.
 struct BoneAuthoringControls: View {
     @ObservedObject var state: EditorState
+    @State private var hierarchyOpen = false
     var body: some View {
-        if state.rigArtworkID != nil || state.boneDrawingArtworkID != nil {
-            HStack(spacing: 8) {
+        if let artworkID = state.rigArtworkID ?? state.boneDrawingArtworkID {
+            VStack(alignment: .leading,spacing: 6) {
                 if state.boneDrawingArtworkID != nil {
-                    Text("Drag the next bone from the highlighted tip").font(.caption).foregroundStyle(Theme.textDim)
-                    Spacer(minLength: 0)
-                    Button("Done") { state.finishBoneDrawing() }.frame(minWidth: 60, minHeight: 44)
+                    HStack {
+                        Text("Create · drag from selected tip").font(.caption).foregroundStyle(Theme.accentGlow)
+                        Spacer()
+                        Button("Done") { state.finishBoneDrawing() }.frame(minWidth: 60,minHeight: 44)
+                    }
                 } else {
-                    Button { state.beginBoneDrawing() } label: {
-                        Label(state.selectedLayer?.bone == nil ? "Draw Bones" : "Extend Chain", systemImage: "point.topleft.down.to.point.bottomright.curvepath")
-                            .frame(maxWidth: .infinity, minHeight: 44)
-                    }.buttonStyle(.bordered).tint(Theme.accentGlow)
-                    if state.selectedLayer?.bone != nil {
-                        Button("Transform") { state.panel = .transform }.frame(minWidth: 84, minHeight: 44)
+                    HStack(spacing: 8) {
+                        Button { state.beginBoneDrawing() } label: {
+                            Label(state.selectedLayer?.bone == nil ? "Draw Bones" : "Add Child",systemImage: "point.topleft.down.to.point.bottomright.curvepath")
+                                .frame(maxWidth: .infinity,minHeight: 44)
+                        }.buttonStyle(.bordered)
+                        if state.selectedLayer?.bone != nil {
+                            Button("Branch") { state.branchFromSelectedBone() }.frame(minWidth: 70,minHeight: 44)
+                                .accessibilityIdentifier("bone-add-branch")
+                        }
                     }
                 }
+                if state.selectedLayer?.bone != nil {
+                    Picker("Joint editing",selection: $state.boneRestEditing) {
+                        Text("Pose").tag(false); Text("Edit Rest").tag(true)
+                    }.pickerStyle(.segmented).frame(minHeight: 44)
+                }
+                DisclosureGroup("Bone hierarchy",isExpanded: $hierarchyOpen) {
+                    let bones = state.project.layers.filter { $0.bone?.artworkID == artworkID }.reversed()
+                    ForEach(Array(bones)) { bone in
+                        Button { state.selectAuthoringBone(bone.id) } label: {
+                            HStack {
+                                Image(systemName: state.selectedLayerID == bone.id ? "circle.inset.filled" : "circle")
+                                Text(bone.name).lineLimit(1)
+                                Spacer()
+                                if let parent = state.project.layers.first(where: { $0.id == bone.parentID && $0.bone != nil }) {
+                                    Text(parent.name).font(.caption).foregroundStyle(Theme.textDim).lineLimit(1)
+                                }
+                            }.frame(minHeight: 44)
+                        }.buttonStyle(.plain).accessibilityIdentifier("bone-select-\(bone.id)").accessibilityLabel("Select bone \(bone.name)")
+                    }
+                }.foregroundStyle(Theme.accentGlow)
             }
         }
     }
@@ -221,6 +286,7 @@ private struct BoneSegmentHandle: View {
     let scale: CGFloat
     let fit: CGRect
     let canPose: Bool
+    @State private var restDrag: RigPointGesture?
     @State private var dragStart: CGPoint?
     @GestureState private var touching = false
 
@@ -229,11 +295,21 @@ private struct BoneSegmentHandle: View {
             Path { $0.move(to: start); $0.addLine(to: end) }
                 .stroke(state.selectedLayerID == id ? Theme.warning : Theme.accentGlow, style: StrokeStyle(lineWidth: 3, lineCap: .round))
                 .contentShape(Path { $0.move(to: start); $0.addLine(to: end) }.strokedPath(StrokeStyle(lineWidth: 44)))
-                .onTapGesture { state.select(id) }
+                .onTapGesture { state.selectAuthoringBone(id) }
             Circle().fill(Theme.surface).overlay(Circle().stroke(Theme.accentGlow, lineWidth: 2))
                 .frame(width: 12, height: 12).frame(width: 44, height: 44).contentShape(Rectangle()).position(start)
-                .onTapGesture { state.select(id) }.accessibilityLabel("Select \(name)")
-            if canPose {
+                .onTapGesture { state.selectAuthoringBone(id) }.accessibilityLabel("Select \(name)")
+                .highPriorityGesture(DragGesture(minimumDistance: 1,coordinateSpace: .global)
+                    .updating($touching) { _,active,_ in active = true }
+                    .onChanged { value in
+                        if restDrag == nil { restDrag = state.rigPointGesture(.restJoint(id)); state.beginPanelGesture("Move Rest Joint") }
+                        guard let input = restDrag,
+                              let point = LayerPlacement.projected(input.origin+Vec2(Double(value.translation.width/scale),Double(value.translation.height/scale)),by: input.inverse) else { return }
+                        state.moveBoneRestJoint(id,to: point)
+                    }.onEnded { _ in finishRest() },including: state.boneRestEditing && state.selectedLayerID == id ? .all : .none)
+                .onChange(of: touching) { _,active in if !active { finishRest() } }
+                .onDisappear { finishRest() }
+            if canPose && !state.boneRestEditing {
                 Circle().fill(Theme.warning).frame(width: 14, height: 14)
                     .frame(width: 44, height: 44).contentShape(Rectangle()).position(end)
                     .highPriorityGesture(DragGesture(minimumDistance: 1, coordinateSpace: .global)
@@ -241,7 +317,7 @@ private struct BoneSegmentHandle: View {
                         .onChanged { value in
                             if dragStart == nil {
                                 dragStart = end
-                                if state.selectedLayerID != id { state.select(id) }
+                                if state.selectedLayerID != id { state.selectAuthoringBone(id) }
                                 state.beginPanelGesture("Pose Bone")
                             }
                             guard let initial = dragStart else { return }
@@ -256,6 +332,7 @@ private struct BoneSegmentHandle: View {
             }
         }
     }
+    private func finishRest() { guard restDrag != nil else { return }; restDrag = nil; state.endPanelGesture() }
     private func finish() { guard dragStart != nil else { return }; dragStart = nil; state.endPanelGesture() }
 }
 
@@ -263,6 +340,14 @@ private struct BoneSegmentHandle: View {
 extension Layer {
     /// Cloning a composition must point its rig at the cloned artwork and joints.
     mutating func remapRigReferences(_ ids: [UUID: UUID], keepExternal: Bool = true) {
+        if var mesh = boneMesh {
+            let mapped = mesh.boneIDs.compactMap { ids[$0] ?? (keepExternal ? $0 : nil) }
+            if mapped.count == mesh.boneIDs.count {
+                mesh.id = UUID(); mesh.boneIDs = mapped
+                mesh.lockedBoneIDs = mesh.lockedBoneIDs?.compactMap { ids[$0] ?? (keepExternal ? $0 : nil) }
+                mesh.changed(); boneMesh = mesh
+            } else { boneMesh = nil }
+        }
         if let settings = bone {
             if let replacement = ids[settings.artworkID] { bone?.artworkID = replacement }
             else if !keepExternal { bone = nil }

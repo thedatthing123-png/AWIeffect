@@ -35,6 +35,33 @@ extension Renderer {
         return (matrix, rotation, scale)
     }
 
+    /// One lookup and one evaluation per node for frame-wide consumers such as skinning.
+    static func parentAffineMap(_ p: Project,time: Double) -> [UUID:(m: simd_double3x3,rot: Double,scale: Vec2)] {
+        let nodes = Dictionary((p.layers+(p.parentContext ?? [])).map { ($0.id,$0) },uniquingKeysWith: { a,_ in a })
+        var frames: [UUID:(m: simd_double3x3,rot: Double,scale: Vec2)] = [:]
+        var invalid = Set<UUID>()
+        for id in nodes.keys where frames[id] == nil && !invalid.contains(id) {
+            var path: [Layer] = [],seen = Set<UUID>(),cursor: UUID? = id
+            while let current = cursor,frames[current] == nil,let node = nodes[current] {
+                if invalid.contains(current) || !seen.insert(current).inserted { invalid.formUnion(path.map(\.id)); break }
+                path.append(node); cursor = node.parentID
+            }
+            guard !invalid.contains(id) else { continue }
+            var parent = cursor.flatMap { frames[$0] } ?? (m: matrix_identity_double3x3,rot: 0.0,scale: Vec2(1,1))
+            for layer in path.reversed() {
+                let anchor = layer.transform.anchor.value(at: time)
+                let toAnchor = simd_double3x3(columns: (SIMD3(1,0,0),SIMD3(0,1,0),SIMD3(anchor.x,anchor.y,1)))
+                let effects = transformOffsets(layer,time: time)
+                let scale = layer.transform.scale.value(at: time)*(effects.ds*0.01)
+                let result = (m: parent.m*layerMatrix(layer,time: time,renderScale: 1)*toAnchor,
+                              rot: parent.rot+layer.transform.rotation.value(at: time)+effects.dr,
+                              scale: Vec2(parent.scale.x*scale.x,parent.scale.y*scale.y))
+                frames[layer.id] = result; parent = result
+            }
+        }
+        return frames
+    }
+
     /// Bakes parenting into absolute keyframed transforms (each key evaluated at its own time), so time effects like
     /// echo see the parent's motion too.
     static func resolveParentingAnimated(_ p: Project) -> Project {
@@ -53,18 +80,20 @@ extension Renderer {
     }
 
     /// Bakes parenting into absolute transform values for this frame.
-    static func resolveParenting(_ raw: Project, time: Double) -> Project {
+    static func resolveParenting(_ raw: Project, time: Double, meshSource: Project? = nil) -> Project {
         // IK poses limbs first; parenting then carries the lower limbs along.
         // Pose all bones before generating skin deformation from their evaluated joints.
         // The skin lives only in this render snapshot; original animation keys stay untouched.
         var p = BoneSkinRuntime.apply(to: AutoOrient.apply(IKSolver.apply(raw, time: time), time: time), at: time)
+        BoneMeshEvaluation.prepare(&p,source: meshSource ?? raw,time: time)
         // This is a frame snapshot. Nested groups/mattes encode it again; retaining live IK constraints would
         // solve already-world-space rotations as local FK values a second time. The editable raw project stays intact.
         for i in p.layers.indices where p.layers[i].ik != nil { p.layers[i].ik = nil }
         guard p.layers.contains(where: { $0.parentID != nil }) else { return p }
         var q = p
+        let frames = parentAffineMap(p,time: time)
         for i in q.layers.indices {
-            guard let pid = q.layers[i].parentID, let a = parentAffine(pid, in: p, time: time) else { continue }
+            guard let pid = q.layers[i].parentID, let a = frames[pid] else { continue }
             var t = q.layers[i].transform
             let local = t.position.value(at: time)
             let w = a.m * SIMD3(local.x, local.y, 1)

@@ -102,6 +102,16 @@ final class EditorState: ObservableObject {
     var layerPickReturnPanel: ToolPanel = .transform
     var layerPickPrompt = "Tap a layer"
     /// Make-IK picks (kept here: the Rig panel closes while you tap a layer on the canvas).
+    @Published var boneRestEditing = false
+    @Published var boneMeshDetail = 32.0
+    @Published var boneWeightArtworkID: UUID? { didSet { redrawToken &+= 1 } }
+    @Published var boneWeightBoneID: UUID? { didSet { redrawToken &+= 1 } }
+    @Published var boneWeightPreview: BoneMeshBinding?
+    @Published var boneWeightRadius = 40.0
+    @Published var boneWeightStrength = 25.0
+    @Published var boneWeightBrush: BoneWeightBrush = .paint
+    @Published var boneViewportGesture = false
+    @Published var meshInfluenceRadius = 60.0
     @Published var boneDrawingArtworkID: UUID?
     @Published var boneDrawingParentID: UUID?
     @Published var ikDraftUpper: UUID?
@@ -160,7 +170,24 @@ final class EditorState: ObservableObject {
     /// Start positions of every selected layer while a multi-selection is dragged on the canvas.
     var multiDragStarts: [UUID: Vec2] = [:]
     /// What the canvas should draw right now (the live gesture copy, else the project).
-    var canvasProject: Project { live.project ?? project }
+    var canvasProject: Project { boneMeshDisplayProject(live.project ?? project) }
+    func boneMeshDisplayProject(_ original: Project) -> Project {
+        var shown = original
+        if boneRestEditing {
+            for i in shown.layers.indices { if let count = shown.layers[i].boneMesh?.boneIDs.count {
+                shown.layers[i].boneMesh?.frameMatrices = Array(repeating: .identity,count: count)
+                shown.layers[i].boneMesh?.frameTime = currentTime
+            } }
+        }
+        if let id = boneWeightArtworkID,let i = shown.layers.firstIndex(where: { $0.id == id }),var mesh = boneWeightPreview ?? shown.layers[i].boneMesh {
+            mesh.frameMatrices = Array(repeating: .identity,count: mesh.boneIDs.count); mesh.frameTime = currentTime
+            mesh.previewWeightIndex = boneWeightBoneID.flatMap { mesh.boneIDs.firstIndex(of: $0) }
+            shown.layers[i].boneMesh = mesh
+            shown.layers[i].effects.removeAll { !(EffectRegistry.definition($0.typeID)?.isTransformEffect ?? false) }
+            shown.motionBlurEnabled = false; shown.smoothMotion = false
+        }
+        return shown
+    }
     var currentTime: Double = 0 {
         willSet { if !isPlaying && newValue != currentTime { objectWillChange.send() } }
         didSet { if clock.time != currentTime { clock.time = currentTime } }

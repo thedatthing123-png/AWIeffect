@@ -630,12 +630,14 @@ extension EditorState {
 /// The Rig position pad reuses the standard Move & Transform SwipePad.
 ///// The selected point, not the artwork layer, is its editing target.
 enum RigPositionSelection: Equatable {
+    case restJoint(UUID)
     case restEndpoint(UUID)
     case ikController(UUID)
     case fkBoneTip(UUID)
 
     var label: String {
         switch self {
+        case .restJoint: return "Rest joint"
         case .restEndpoint: return "Wrist / ankle (rest)"
         case .ikController: return "IK target"
         case .fkBoneTip: return "Bone tip"
@@ -644,7 +646,7 @@ enum RigPositionSelection: Equatable {
     var editsPose: Bool {
         switch self {
         case .restEndpoint: return false
-        case .ikController, .fkBoneTip: return true
+        case .restJoint, .ikController, .fkBoneTip: return true
         }
     }
 }
@@ -652,6 +654,7 @@ enum RigPositionSelection: Equatable {
 extension EditorState {
     /// Keeping these roles distinct stops a wrist setup edit from turning into a layer move.
     var rigPositionSelection: RigPositionSelection? {
+        if boneRestEditing,let selected = selectedLayer,selected.bone != nil { return .restJoint(selected.id) }
         if let owner = selectedIKLayer, let ik = owner.ik {
             if let selected = selectedLayer, selected.bone != nil,
                ik.mixValue(at: currentTime) <= 0.001 {
@@ -678,6 +681,7 @@ extension EditorState {
     func rigPositionValue(_ selection: RigPositionSelection) -> Vec2? {
         let source = live.project ?? project
         switch selection {
+        case .restJoint(let id): return source.layers.first(where: { $0.id == id })?.transform.position.value(at: currentTime)
         case .restEndpoint(let id):
             guard let layer = source.layers.first(where: { $0.id == id }) else { return nil }
             if let draft = ikDraftTip, draft.layerID == id { return draft.point }
@@ -702,6 +706,9 @@ extension EditorState {
     func nudgeRigPosition(_ target: RigPositionSelection, canvasDelta: Vec2) {
         guard canvasDelta.x.isFinite, canvasDelta.y.isFinite else { return }
         switch target {
+        case .restJoint:
+            guard var gesture = rigPointGesture(target),let point = gesture.move(by: canvasDelta) else { return }
+            moveRigPosition(target,to: point)
         case .restEndpoint(let id):
             guard let local = rigPositionValue(target),
                   let frame = displayPlacement(of: id),
@@ -738,6 +745,7 @@ extension EditorState {
     func moveRigPosition(_ selection: RigPositionSelection, to point: Vec2) {
         guard point.x.isFinite, point.y.isFinite else { return }
         switch selection {
+        case .restJoint(let id): moveBoneRestJoint(id,to: point)
         case .restEndpoint(let id):
             guard selectedLayerID == id, selectedIKLayer == nil, ikDraftUpper != nil else { return }
             // Transient bind setup: moving a rest marker must not create a timeline key or undo step.
@@ -760,10 +768,41 @@ extension EditorState {
     }
 }
 
+/// Frozen projection and accumulated displacement: the moving output never becomes the next touch origin.
+struct RigPointGesture {
+    let selection: RigPositionSelection
+    let origin: Vec2
+    let inverse: simd_double3x3
+    var delta = Vec2.zero
+    mutating func move(by change: Vec2) -> Vec2? {
+        delta = delta + change
+        return LayerPlacement.projected(origin+delta,by: inverse)
+    }
+}
+
+extension EditorState {
+    func rigPointGesture(_ selection: RigPositionSelection) -> RigPointGesture? {
+        guard let value = rigPositionValue(selection) else { return nil }
+        let matrix: simd_double3x3
+        switch selection {
+        case .fkBoneTip: matrix = matrix_identity_double3x3
+        case .restEndpoint(let id):
+            guard let placement = displayPlacement(of: id) else { return nil }; matrix = placement
+        case .restJoint(let id), .ikController(let id):
+            let source = canvasViewProject(live.project ?? project)
+            guard let controller = source.layers.first(where: { $0.id == id }) else { return nil }
+            matrix = LayerPlacement.positionMatrix(controller,project: source,time: currentTime)
+        }
+        guard abs(matrix.determinant)>1e-10, let origin = LayerPlacement.projected(value,by: matrix) else { return nil }
+        return RigPointGesture(selection: selection,origin: origin,inverse: matrix.inverse)
+    }
+}
+
 /// Only X/Y from Move & Transform belongs here. No layer-move, Z, camera pan, or second gesture engine.
-private struct RigPositionControls: View {
+struct RigPositionControls: View {
     @ObservedObject var state: EditorState
     @State private var fine = true
+    @State private var pointGesture: RigPointGesture?
 
     var body: some View {
         if let selected = state.rigPositionSelection {
@@ -789,8 +828,10 @@ private struct RigPositionControls: View {
                                 onDragEnd: { finish(selected) },
                                 onCommit: { y in setAxis(selected, y: y) })
                         }
-                        SwipePad(hint: "Swipe to position selected joint", gain: Double(state.project.width) * (fine ? 0.25 : 1)) { change in
-                            state.nudgeRigPosition(selected, canvasDelta: Vec2(Double(change.width), Double(change.height)))
+                        SwipePad(hint: "Swipe to position selected joint", gain: Double(state.project.width) * (fine ? 0.25 : 1), steady: true) { change in
+                            guard var gesture = pointGesture, let point = gesture.move(by: Vec2(Double(change.width),Double(change.height))) else { return }
+                            pointGesture = gesture
+                            state.moveRigPosition(selected,to: point)
                         } begin: { begin(selected) } end: { finish(selected) }
                         .frame(height: 110)
                         .accessibilityIdentifier("rig-position-swipe-pad")
@@ -807,9 +848,11 @@ private struct RigPositionControls: View {
     }
 
     private func begin(_ target: RigPositionSelection) {
+        pointGesture = state.rigPointGesture(target)
         if target.editsPose { state.beginPanelGesture("Move Rig Point") }
     }
     private func finish(_ target: RigPositionSelection) {
+        pointGesture = nil
         if target.editsPose { state.endPanelGesture() }
     }
     private func setAxis(_ target: RigPositionSelection, x: Double? = nil, y: Double? = nil) {

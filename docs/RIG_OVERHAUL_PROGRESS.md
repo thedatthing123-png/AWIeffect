@@ -1,0 +1,7 @@
+# Rig authoring overhaul — active work
+
+Base: Build 27 `3fa4695`, branch `feat/rig-authoring-overhaul`. Owner authorized a coordinated rebuild of separate-piece Rig and continuous-artwork Bone / Weight.
+
+Implemented in this working checkpoint, not released: bone selection keeps the current authoring panel; explicit Add Child/Branch and hierarchy selection; rest-joint movement preserves child pivots without adding pose keys; the precision pad accumulates movement from a frozen projection, with steady gain; live placement reads live state. New mesh bindings use normalized vertex weights and forward Metal triangles with localized support and a rigid fallback for distant pixels. Existing Build 27 MLS skins keep their saved behavior until explicitly upgraded. Skin generation is removed from nested render snapshots after applying once. Frame-wide parent affine evaluation avoids building the same lookup separately per bone.
+
+Still required before delivery: compile/runtime validation; mobile branch/precision/weight tests and screenshot review; input cleanup/Puppet frozen pad; reparent/delete/rest rebind; mesh paint and zoom cancellation verification; full shutter/echo/reference handling; compact contextual Rig layout; useful falloff/weight editing with deformation examples; save/reference remapping; full validation and IPA. Physical-phone smoothness is unmeasured. Do not claim the overhaul complete from this checkpoint.

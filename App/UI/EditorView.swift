@@ -396,14 +396,14 @@ struct EditorView: View {
             ZStack(alignment: .topLeading) {
                 LiveReader(live: state.live) { lp in
                 ClockReader(clock: state.clock) { t in
-                    let cutProject = state.cutoutDisplayProject(lp ?? state.project)
+                    let cutProject = state.cutoutDisplayProject(state.boneMeshDisplayProject(lp ?? state.project))
                     MetalPreview(project: state.viewMode == .orbit && !state.looksThroughCamera ? OrbitView.scene(cutProject, orbit: state.orbit, time: t)
                                     : (state.cameraView ? cutProject : state.freeViewProject(cutProject)),
                                  time: t, redrawToken: state.redrawToken, mediaURL: { state.mediaURL($0) },
                                  viewZoom: state.canvasMode == .comp ? viewZoom : 1, viewPan: state.canvasMode == .comp ? viewPan : .zero,
                                  qualityCap: state.previewQuality.rawValue, isPlaying: state.isPlaying,
                                  // No RAM-cache writes mid-gesture: every frame changes, caching only churned memory.
-                                 cacheEnabled: state.canvasMode == .comp && lp == nil && state.cutoutPreview == nil && state.cutoutPeekOriginal == nil)
+                                 cacheEnabled: state.canvasMode == .comp && lp == nil && state.cutoutPreview == nil && state.cutoutPeekOriginal == nil && state.boneWeightArtworkID == nil)
                 }
                 }
                 if state.viewMode == .orbit && !state.looksThroughCamera {
@@ -466,12 +466,16 @@ struct EditorView: View {
                     ClockReader(clock: state.clock) { _ in
                         LiveReader(live: state.live) { _ in
                             ZStack {
+                                if state.boneWeightArtworkID != nil {
+                                    BoneWeightCanvasOverlay(state: state,fit: fit)
+                                } else {
                                 BoneOverlay(state: state, fit: fit)
                                 RigJointSelectionOverlay(state: state, fit: fit)
                                 RigEndpointOverlay(state: state, fit: fit)
                                 RigAttachmentPreviewOverlay(state: state, fit: fit)
                                 RigControllersOverlay(state: state, fit: fit)
                                 SkeletonCanvasOverlay(state: state, fit: fit)
+                                }
                             }
                         }
                     }

@@ -513,7 +513,7 @@ final class Renderer {
         let resolved = ExpressionResolver.resolve(rawProject, time: time)
         // Echo needs parenting baked over time (costly); everything else bakes just this frame.
         let hasEcho = resolved.layers.contains { ($0.timeFX?.echoCount ?? 0) > 0 }
-        let project = hasEcho ? Self.expandEchoes(Self.resolveParentingAnimated(resolved)) : Self.resolveParenting(resolved, time: time)
+        let project = hasEcho ? Self.expandEchoes(Self.resolveParentingAnimated(resolved)) : Self.resolveParenting(resolved, time: time, meshSource: rawProject)
         var shutterProjects: [Double: Project] = [:]
         func samplePlacement(_ layer: Layer, at sampleTime: Double) -> simd_double3x3 {
             let sample: Project
@@ -775,7 +775,7 @@ final class Renderer {
                 }
             }
             let lit = layer.is3D && !lights.isEmpty && layer.content != .model
-            let needsLocal = !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil || dof > 0.5 || extrude > 0.5 || !blurMatrices.isEmpty || lit
+            let needsLocal = layer.boneMesh != nil || !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil || dof > 0.5 || extrude > 0.5 || !blurMatrices.isEmpty || lit
             if !needsLocal, let path = Self.shapePath(layer, time: time) {
                 drawShapePath(cb: cb, target: comp, matrix: M, layer: layer, path: path, time: time,
                               opacity: opacity, blend: layer.blendMode, aa: 1 / pxPerLocal)
@@ -811,10 +811,14 @@ final class Renderer {
                     }
                 }
             }
+            if let mesh = layer.boneMesh, let matrices = mesh.frameMatrices {
+                let bounds = mesh.reach(matrices: matrices)
+                rawMargin += max(0,bounds.x-hs.x,bounds.y-hs.y)
+            }
             // Glow / shadow room beyond what the screen can show is never seen: cap it to the comp size.
             let compReach = Double(max(project.width, project.height)) / max(pxPerLocal, 1e-4)
             // Glow room past half a screen is never visible and only costs memory (big glows crashed phones).
-            let hasExpandedOutput = pixelFX.contains { EffectRegistry.definition($0.typeID)?.expandedMargin != nil }
+            let hasExpandedOutput = layer.boneMesh != nil || pixelFX.contains { EffectRegistry.definition($0.typeID)?.expandedMargin != nil }
             let marginLimit = hasExpandedOutput ? 20000 : compReach * 0.5
             let margin = rawMargin.isFinite ? min(max(0, rawMargin), 20000, marginLimit) : 0
             guard hs.x.isFinite, hs.y.isFinite, pxPerLocal.isFinite else { continue }
@@ -849,6 +853,11 @@ final class Renderer {
                             matrix: toLocal.inverse, halfSize: hs, mediaURL: mediaURL)
             }
             var current = local
+            if let mesh = layer.boneMesh,let matrices = mesh.frameMatrices {
+                let warped = pool.acquire(width: local.width,height: local.height)
+                if BoneMeshGPU.encode(mesh,matrices: matrices,input: local,output: warped,unit: density,commandBuffer: cb,device: device) { current = warped }
+            }
+            let beforeEffects = current
             for e in pixelFX {
                 guard let def = EffectRegistry.definition(e.typeID), case .pixels(let run) = def.stage else { continue }
                 var ctx = EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: time, unit: density, pool: pool)
@@ -870,11 +879,15 @@ final class Renderer {
                 current = run(ctx)
             }
             // Effects-only masks: effects show inside them, the untouched layer everywhere else.
-            if !effectMasks.isEmpty, current !== local,
-               let cov = PathGPU.shared?.coverage(cb: cb, width: current.width, height: current.height, masks: effectMasks, time: time,
+            if !effectMasks.isEmpty, current !== beforeEffects,
+               var cov = PathGPU.shared?.coverage(cb: cb, width: current.width, height: current.height, masks: effectMasks, time: time,
                                                   matrix: toLocal.inverse, aa: 1 / density) {
                 let mixed = pool.acquire(width: current.width, height: current.height)
-                fx.run("maskMix", cb, textures: [local, mixed, current, cov], grid: mixed)
+                if let mesh = layer.boneMesh,let matrices = mesh.frameMatrices {
+                    let warped = pool.acquire(width: cov.width,height: cov.height)
+                    if BoneMeshGPU.encode(mesh,matrices: matrices,input: cov,output: warped,unit: density,commandBuffer: cb,device: device) { cov = warped }
+                }
+                fx.run("maskMix", cb, textures: [beforeEffects, mixed, current, cov], grid: mixed)
                 current = mixed
             }
             // 3D lights shade the layer per pixel (AE: 3D layers accept lights once the comp has any).
