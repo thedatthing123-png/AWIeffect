@@ -39,6 +39,11 @@ final class BoneMeshFrameSource {
     }
 }
 
+enum BoneMeshCoverage: String, Codable, CaseIterable {
+    case localized = "Near bones"
+    case wholeArtwork = "Whole artwork"
+}
+
 /// Bind topology and weights are document data. Evaluated poses are transient and never serialized.
 struct BoneMeshBinding: Codable, Equatable {
     var id = UUID()
@@ -52,16 +57,17 @@ struct BoneMeshBinding: Codable, Equatable {
     var indices: [UInt32]
     var amount: Double? = nil
     var radius: Double? = nil
+    var coverage: BoneMeshCoverage? = nil
     var lockedBoneIDs: [UUID]? = nil
     var previewWeightIndex: Int? = nil
     var frameMatrices: [RigAffine]? = nil
     var frameTime: Double? = nil
     var frameSource: BoneMeshFrameSource? = nil
 
-    private enum CodingKeys: String, CodingKey { case id, revision, halfSize, columns, rows, boneIDs, inverseBinds, vertices, indices, lockedBoneIDs, amount, radius }
+    private enum CodingKeys: String, CodingKey { case id, revision, halfSize, columns, rows, boneIDs, inverseBinds, vertices, indices, lockedBoneIDs, amount, radius, coverage }
     static func == (a: Self, b: Self) -> Bool {
         a.id == b.id && a.revision == b.revision && a.halfSize == b.halfSize && a.columns == b.columns && a.rows == b.rows
-            && a.boneIDs == b.boneIDs && a.inverseBinds == b.inverseBinds && a.vertices == b.vertices && a.indices == b.indices && a.lockedBoneIDs == b.lockedBoneIDs && a.amount == b.amount && a.radius == b.radius
+            && a.boneIDs == b.boneIDs && a.inverseBinds == b.inverseBinds && a.vertices == b.vertices && a.indices == b.indices && a.lockedBoneIDs == b.lockedBoneIDs && a.amount == b.amount && a.radius == b.radius && a.coverage == b.coverage
     }
 
     var isValid: Bool {
@@ -219,13 +225,23 @@ extension BoneMeshBinding {
 
 
 extension BoneMeshBinding {
+    /// A cutout limb has no stationary background: every vertex follows its bound skeleton.
+    static func wholeArtwork(halfSize: Vec2,detail: Int,artworkID: UUID,bones: [BoneMeshSource]) -> Self? {
+        guard bones.count < 512,!bones.contains(where: { $0.id == artworkID }),
+              var mesh = bind(halfSize: halfSize,detail: detail,bones: bones) else { return nil }
+        mesh.boneIDs.insert(artworkID,at: 0); mesh.inverseBinds.insert(.identity,at: 0)
+        for i in mesh.vertices.indices { for j in mesh.vertices[i].weights.indices { mesh.vertices[i].weights[j].bone += 1 } }
+        mesh.coverage = .wholeArtwork
+        return mesh
+    }
+
     static func localized(halfSize: Vec2,detail: Int,artworkID: UUID,bones: [BoneMeshSource],radius: Double) -> Self? {
         guard radius.isFinite,radius>0,!bones.isEmpty,bones.count < 512,
               !bones.contains(where: { $0.id == artworkID }),
               var mesh = bind(halfSize: halfSize,detail: detail,bones: bones) else { return nil }
         let segments = bones.map { (RigAffine($0.matrix).apply(.zero),RigAffine($0.matrix).apply($0.tip)) }
         mesh.boneIDs.insert(artworkID,at: 0); mesh.inverseBinds.insert(.identity,at: 0)
-        mesh.radius = radius
+        mesh.radius = radius; mesh.coverage = .localized
         for i in mesh.vertices.indices {
             let point = mesh.vertices[i].rest
             var values: [BoneMeshWeight] = []

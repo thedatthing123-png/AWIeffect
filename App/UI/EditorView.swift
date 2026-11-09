@@ -65,6 +65,9 @@ struct EditorView: View {
             state.ikDraftUpper = state.project.layers.last?.id
             state.panel = .rig
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-pieceWeight"),let upper = state.project.layers.last?.id {
+            state.makeIK(upper: upper,controller: nil); state.panel = .boneWeight
+        }
         #endif
         _state = StateObject(wrappedValue: state)
         self.close = close

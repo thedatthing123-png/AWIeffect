@@ -22,6 +22,7 @@ struct BoneSkinControls: View {
                             }
                         }
                     } else {
+                        bindingCoverage
                         Button { state.bindBoneMesh() } label: {
                             Label(art.boneSkin == nil ? "Bind Mesh" : "Upgrade to Mesh",systemImage: "square.grid.3x3")
                                 .frame(maxWidth: .infinity,minHeight: 44)
@@ -39,25 +40,47 @@ struct BoneSkinControls: View {
                     }
                     if state.boneWeightArtworkID == nil {
                         DisclosureGroup("Binding options",isExpanded: $advanced) {
+                            if art.boneMesh != nil { bindingCoverage }
                             HStack {
                                 Text("Mesh detail").font(.caption).frame(width: 65,alignment: .leading)
                                 ValueScrubber(value: state.boneMeshDetail,range: 4...128,step: 1,onChange: { state.boneMeshDetail = $0 })
                                     .frame(height: 44).environment(\.scrubSession,ScrubSession())
                             }
+                            if state.boneMeshCoverage == .localized,state.project.layers.contains(where: { $0.bone?.artworkID == id }) {
                             HStack {
                                 Text("Reach").font(.caption).frame(width: 65,alignment: .leading)
                                 ValueScrubber(value: state.meshInfluenceRadius,range: 2...1000,unit: " px",onChange: { state.meshInfluenceRadius = $0 })
                                     .frame(height: 44).environment(\.scrubSession,ScrubSession())
                             }
-                            Text("Influence radius used when binding. Pixels beyond the bones' reach remain rigid. Rebind applies this value.")
+                            Text("Pixels beyond Reach stay fixed to the base artwork. Reset Auto Weights applies this value.")
                                 .font(.caption2).foregroundStyle(Theme.textDim)
+                            }
                             if art.boneMesh != nil { Button("Reset Auto Weights") { state.bindBoneMesh() }.frame(minHeight: 44) }
                         }
                     }
                 }
+                .onChange(of: id,initial: true) { _,_ in state.boneMeshCoverage = art.boneMesh?.coverage ?? .localized }
             }
         }
     }
+    @ViewBuilder private var bindingCoverage: some View {
+        if let id = state.skinArtworkID,state.project.layers.contains(where: { $0.bone?.artworkID == id }) {
+        VStack(alignment: .leading,spacing: 4) {
+            Picker("Auto weight coverage",selection: $state.boneMeshCoverage) {
+                Text("Near bones").tag(BoneMeshCoverage.localized)
+                Text("Whole artwork").tag(BoneMeshCoverage.wholeArtwork)
+            }.pickerStyle(.segmented).frame(minHeight: 44)
+            Text(state.boneMeshCoverage == .wholeArtwork
+                ? "For a cutout limb: all pixels follow the skeleton. Bind or Reset Auto Weights applies this choice."
+                : "For part of a character: areas beyond Reach stay fixed. Bind or Reset Auto Weights applies this choice.")
+                .font(.caption2).foregroundStyle(Theme.textDim)
+        }
+        } else {
+            Text("This piece follows its joints. Optional weights refine how it bends where the pieces meet.")
+                .font(.caption2).foregroundStyle(Theme.textDim)
+        }
+    }
+
 }
 
 struct BoneWeightPanel: View {
@@ -70,6 +93,14 @@ struct BoneWeightPanel: View {
                     if state.boneWeightArtworkID == nil {
                         BoneAuthoringControls(state: state)
                         RigPositionControls(state: state)
+                    }
+                    if let owner = state.selectedIKLayer,owner.bone == nil {
+                        Text("Artwork controlled by this rig").font(.caption.bold()).foregroundStyle(Theme.textDim)
+                        ForEach(state.project.layers.filter { IKSolver.drivenIDs(owner: owner).contains($0.id) && !$0.isNull }) { piece in
+                            Button { state.select(piece.id); state.panel = .boneWeight } label: {
+                                HStack { Text(piece.name).lineLimit(1); Spacer(); Image(systemName: state.rigArtworkID == piece.id ? "checkmark.circle.fill" : "circle") }.frame(minHeight: 44)
+                            }.buttonStyle(.plain)
+                        }
                     }
                     BoneSkinControls(state: state,workflow: .boneWeight)
                 }.padding(.horizontal,12).padding(.bottom,12)

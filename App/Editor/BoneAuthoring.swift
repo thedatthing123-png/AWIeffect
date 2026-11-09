@@ -11,8 +11,10 @@ extension EditorState {
     var rigArtworkID: UUID? {
         guard let layer = selectedLayer else { return nil }
         if let bone = layer.bone { return bone.artworkID }
-        if layer.isNull,let owner = project.layers.first(where: { $0.ik?.controllerID == layer.id }),
-           let artwork = owner.bone?.artworkID { return artwork }
+        if layer.isNull,let owner = project.layers.first(where: { $0.ik?.controllerID == layer.id }) {
+            if let artwork = owner.bone?.artworkID { return artwork }
+            if !owner.isNull { return owner.id }
+        }
         guard !layer.isNull, !layer.isGroup, !layer.isAudioOnly,
               layer.content != .camera, layer.content != .light, layer.content != .adjustment else { return nil }
         return layer.id

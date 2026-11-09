@@ -13,11 +13,37 @@ extension EditorState {
             guard let parent = Self.rigParentToArtwork(bone, artworkID: art.id, project: posed, time: time), let tip = bone.bone?.tip else { continue }
             sources.append(BoneMeshSource(id: bone.id, matrix: parent * Renderer.layerMatrix(bone, time: time, renderScale: 1), tip: tip))
         }
-        guard sources.count > 1 else { recoveryNotice = "Draw a bone chain before binding the mesh."; return }
-        guard let mesh = BoneMeshBinding.localized(halfSize: Renderer.layerHalfSize(art,time: time),detail: Int(boneMeshDetail),
-            artworkID: art.id,bones: Array(sources.dropFirst()),radius: meshInfluenceRadius) else {
-            recoveryNotice = "Check the artwork size and skeleton scale before binding."; return
+        let mesh: BoneMeshBinding?
+        if sources.count > 1 {
+            let bones = Array(sources.dropFirst())
+            mesh = boneMeshCoverage == .wholeArtwork
+                ? BoneMeshBinding.wholeArtwork(halfSize: Renderer.layerHalfSize(art,time: time),detail: Int(boneMeshDetail),artworkID: art.id,bones: bones)
+                : BoneMeshBinding.localized(halfSize: Renderer.layerHalfSize(art,time: time),detail: Int(boneMeshDetail),artworkID: art.id,bones: bones,radius: meshInfluenceRadius)
+        } else {
+            // Piece-based IK uses the same vertex renderer, with its own transform as the rigid influence.
+            sources[0].tip = ikRestTip(for: art)
+            let frames = Renderer.parentAffineMap(posed,time: time)
+            guard let frame = frames[art.id],abs(frame.m.determinant)>1e-10 else { return }
+            let anchor = art.transform.anchor.value(at: time)
+            if let tip = art.ik?.restTip { sources[0].tip = tip }
+            else if let child = posed.layers.first(where: { $0.parentID == art.id && !$0.isNull }),let next = frames[child.id],
+                    let point = LayerPlacement.projected(.zero,by: frame.m.inverse*next.m) { sources[0].tip = point+anchor }
+            let toImage = simd_double3x3(columns: (SIMD3(1,0,0),SIMD3(0,1,0),SIMD3(anchor.x,anchor.y,1)))
+            for id in BoneSkinRuntime.candidateIDs(for: art.id,mode: .rigPieces,in: posed) where id != art.id {
+                guard let node = posed.layers.first(where: { $0.id == id }),!node.isNull,let joint = frames[id] else { continue }
+                let offset = node.transform.anchor.value(at: time)
+                let fromAnchor = simd_double3x3(columns: (SIMD3(1,0,0),SIMD3(0,1,0),SIMD3(-offset.x,-offset.y,1)))
+                let matrix = toImage*frame.m.inverse*joint.m*fromAnchor
+                var tip = node.ik?.restTip ?? ikRestTip(for: node)
+                if let child = posed.layers.first(where: { $0.parentID == id && !$0.isNull }),let next = frames[child.id],
+                   let point = LayerPlacement.projected(.zero,by: joint.m.inverse*next.m) { tip = point+offset }
+                sources.append(BoneMeshSource(id: id,matrix: matrix,tip: tip))
+            }
+            guard sources.count>1 else { recoveryNotice = "Bind artwork to connected joints first, or draw bones on this image."; return }
+            var piece = BoneMeshBinding.bind(halfSize: Renderer.layerHalfSize(art,time: time),detail: Int(boneMeshDetail),bones: sources)
+            piece?.coverage = .wholeArtwork; mesh = piece
         }
+        guard let mesh else { recoveryNotice = "Check the artwork size and skeleton scale before binding."; return }
         mutate("Bind Mesh") { p in if let i = p.layers.firstIndex(where: { $0.id == art.id }) { p.layers[i].boneMesh = mesh; p.layers[i].boneSkin = nil } }
     }
 
@@ -84,12 +110,14 @@ struct BoneMeshControls: View {
                     Picker("Weight brush", selection: $state.boneWeightBrush) {
                         ForEach(BoneWeightBrush.allCases) { Text($0.rawValue).tag($0) }
                     }.pickerStyle(.segmented).frame(minHeight: 44)
+                    Text("Paint makes the selected bone carry more of this area. Erase reduces its influence; it never removes image pixels.")
+                        .font(.caption2).foregroundStyle(Theme.textDim)
                     HStack(spacing: 8) {
                         brushSetting("Size",value: state.boneWeightRadius,range: 2...1000,unit: " px") { state.boneWeightRadius = $0 }
                         brushSetting("Strength",value: state.boneWeightStrength,range: 1...100,unit: "%") { state.boneWeightStrength = $0 }
                         brushSetting("Hardness",value: state.boneWeightHardness,range: 0...95,unit: "%") { state.boneWeightHardness = $0 }
                     }
-                    DisclosureGroup("Influence: \(state.boneWeightBoneID == art.id ? "Artwork" : state.project.layers.first(where: { $0.id == state.boneWeightBoneID })?.name ?? "Choose bone")",isExpanded: $influencesOpen) {
+                    DisclosureGroup("Influence: \(state.boneWeightBoneID == art.id ? "Base artwork (rigid)" : state.project.layers.first(where: { $0.id == state.boneWeightBoneID })?.name ?? "Choose bone")",isExpanded: $influencesOpen) {
                     ForEach(mesh.boneIDs,id: \.self) { id in
                         HStack(spacing: 8) {
                             Button {
@@ -97,14 +125,14 @@ struct BoneMeshControls: View {
                             } label: {
                                 HStack {
                                     Image(systemName: state.boneWeightBoneID == id ? "circle.inset.filled" : "circle")
-                                    Text(id == art.id ? "Artwork" : state.project.layers.first(where: { $0.id == id })?.name ?? "Missing Bone").lineLimit(1)
+                                    Text(id == art.id ? "Base artwork (rigid)" : state.project.layers.first(where: { $0.id == id })?.name ?? "Missing Bone").lineLimit(1)
                                     Spacer(minLength: 0)
                                 }.frame(minHeight: 44)
                             }.buttonStyle(.plain).foregroundStyle(state.boneWeightBoneID == id ? Theme.accentGlow : Theme.text)
                             Button { state.toggleBoneWeightLock(id) } label: {
                                 Image(systemName: (mesh.lockedBoneIDs ?? []).contains(id) ? "lock.fill" : "lock.open")
                                     .frame(width: 44,height: 44)
-                            }.buttonStyle(.plain).accessibilityLabel("Lock weights for \(id == art.id ? "Artwork" : state.project.layers.first(where: { $0.id == id })?.name ?? "Bone")")
+                            }.buttonStyle(.plain).accessibilityLabel("Lock weights for \(id == art.id ? "Base artwork (rigid)" : state.project.layers.first(where: { $0.id == id })?.name ?? "Bone")")
                         }
                     }
                     }

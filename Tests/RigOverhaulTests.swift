@@ -224,4 +224,66 @@ import simd
         XCTAssertEqual(s.project,before)
     }
 
+    func testWholeArtworkBindingDoesNotLeaveDistantVerticesStationary() throws {
+        let art = UUID(),bone = UUID()
+        let source = BoneMeshSource(id: bone,matrix: matrix_identity_double3x3,tip: Vec2(100,0))
+        let mesh = try XCTUnwrap(BoneMeshBinding.wholeArtwork(halfSize: Vec2(200,200),detail: 16,artworkID: art,bones: [source]))
+        XCTAssertTrue(mesh.isValid)
+        let shifted = RigAffine(simd_double3x3(columns: (SIMD3(1,0,0),SIMD3(0,1,0),SIMD3(25,40,1))))
+        for vertex in mesh.vertices {
+            let actual = mesh.deformed(vertex,matrices: [.identity,shifted])
+            XCTAssertEqual(actual.x,vertex.rest.x+25,accuracy: 1e-7)
+            XCTAssertEqual(actual.y,vertex.rest.y+40,accuracy: 1e-7)
+        }
+        let copy = try JSONDecoder().decode(BoneMeshBinding.self,from: JSONEncoder().encode(mesh))
+        XCTAssertEqual(copy.coverage,.wholeArtwork)
+    }
+
+    func testPieceBasedControllerOffersItsArtworkAndCanBindOptionalDeformation() throws {
+        let (s,upperID) = editor()
+        var lower = s.project.makeLayer(name: "Lower piece",content: .solid,size: Vec2(100,30))
+        lower.transform.position = Animated(Vec2(400,300))
+        s.project.layers.insert(lower,at: 0); s.select(lower.id)
+        s.ikDraftTip = (lower.id,Vec2(50,0)); s.makeIK(upper: upperID,controller: nil)
+        XCTAssertEqual(s.rigArtworkID,lower.id)
+        let target = try XCTUnwrap(s.selectedLayerID)
+        XCTAssertTrue(try XCTUnwrap(s.project.layers.first { $0.id == target }).isNull)
+        s.bindBoneMesh()
+        let mesh = try XCTUnwrap(s.project.layers.first { $0.id == lower.id }?.boneMesh)
+        XCTAssertTrue(mesh.isValid); XCTAssertTrue(mesh.boneIDs.contains(upperID)); XCTAssertTrue(mesh.boneIDs.contains(lower.id))
+        let pose = IKSolver.apply(s.project,time: 0)
+        let palette = try XCTUnwrap(BoneMeshEvaluation.palette(mesh,artworkID: lower.id,posed: pose,time: 0))
+        for vertex in mesh.vertices {
+            let point = mesh.deformed(vertex,matrices: palette)
+            XCTAssertEqual(point.x,vertex.rest.x,accuracy: 1e-6); XCTAssertEqual(point.y,vertex.rest.y,accuracy: 1e-6)
+        }
+    }
+
+    func testIKTargetAndOwnPiecesCannotDeflectTheirOwnSolver() throws {
+        let (s,upperID) = editor()
+        var lower = s.project.makeLayer(name: "Lower piece",content: .solid,size: Vec2(100,30))
+        lower.transform.position = Animated(Vec2(400,300)); s.project.layers.insert(lower,at: 0)
+        s.select(lower.id); s.ikDraftTip = (lower.id,Vec2(50,0)); s.makeIK(upper: upperID,controller: nil)
+        let owner = try XCTUnwrap(s.project.layers.first { $0.id == lower.id })
+        var rig = try XCTUnwrap(owner.ik); rig.collisions = true
+        for i in s.project.layers.indices { s.project.layers[i].isCollider = true }
+        let target = Vec2(400,300)
+        XCTAssertEqual(IKSolver.collisionTarget(target,rig: rig,owner: owner,in: s.project,time: 0),target)
+        var obstacle = s.project.makeLayer(name: "Solid",content: .solid,size: Vec2(100,100))
+        obstacle.transform.position = Animated(target); obstacle.isCollider = true
+        s.project.layers.append(obstacle)
+        XCTAssertNotEqual(IKSolver.collisionTarget(target,rig: rig,owner: owner,in: s.project,time: 0),target)
+        rig.collisions = false
+        XCTAssertEqual(IKSolver.collisionTarget(target,rig: rig,owner: owner,in: s.project,time: 0),target)
+    }
+
+    func testAttachingTheSkeletonsOwnArtworkOpensWeightsWithoutMakingACycle() throws {
+        let (s,art) = editor()
+        let root = try XCTUnwrap(s.addBone(artworkID: art,parentID: nil,start: .zero,end: Vec2(100,0)))
+        let before = s.project
+        s.attachArtwork(art,toJoint: root)
+        XCTAssertEqual(s.project,before); XCTAssertEqual(s.panel,.boneWeight)
+        XCTAssertNil(s.recoveryNotice); XCTAssertEqual(s.selectedLayerID,root)
+    }
+
 }

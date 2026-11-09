@@ -1,6 +1,20 @@
 import XCTest
 
 final class RigAuthoringUITests: XCTestCase {
+    func testPieceControllerShowsArtworkBindingInsteadOfAnEmptyWeightPanel() {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launchArguments = ["-uiTesting","-uiTesting-rigAuthoring","-uiTesting-pieceWeight"]; app.launch()
+        let bind = app.buttons["Bind Mesh"].firstMatch
+        XCTAssertTrue(bind.waitForExistence(timeout: 15))
+        for _ in 0..<6 where !bind.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        XCTAssertTrue(bind.isHittable); bind.tap()
+        XCTAssertTrue(app.buttons["Weights"].firstMatch.waitForExistence(timeout: 5))
+        let image = XCUIScreen.main.screenshot(); let attachment = XCTAttachment(screenshot: image)
+        attachment.name = "piece-controller-weights"; attachment.lifetime = .keepAlways; add(attachment)
+        try? FileManager.default.createDirectory(atPath: "/tmp/awi-ui",withIntermediateDirectories: true)
+        try? image.pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/awi-ui/piece-controller-weights.png"))
+    }
+
     func testWeightBrushEditsTheMeshAndKeepsControlsInPanel() {
         continueAfterFailure = false
         let app = XCUIApplication(); app.launchArguments = ["-uiTesting","-uiTesting-boneWeights"]; app.launch()

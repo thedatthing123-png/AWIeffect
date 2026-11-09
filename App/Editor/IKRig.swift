@@ -24,6 +24,8 @@ struct IKRig: Codable, Equatable {
     /// Root-to-tip connected bones for chain IK. Nil keeps Build 25's analytic two-bone solve.
     /// Stable layer IDs survive keyframes, save/load and copy/remap.
     var chainIDs: [UUID]? = nil
+    /// Nil preserves older solid-collision behavior; newly created rigs opt in explicitly.
+    var collisions: Bool? = nil
     func mixValue(at time: Double) -> Double { mix?.value(at: time) ?? blend ?? 1 }
 }
 
@@ -152,7 +154,7 @@ enum IKSolver {
         let bindSpace = rig.spaceID.flatMap { Renderer.parentAffine($0, in: project, time: time)?.m }
             ?? matrix_identity_double3x3
         guard abs(bindSpace.determinant) > 1e-10,
-              let target = LayerPlacement.projected(collide(world(ctrl, in: project, time: time).pos,
+              let target = LayerPlacement.projected(collisionTarget(world(ctrl, in: project, time: time).pos,rig: rig,owner: owner,
                 in: project, time: time), by: bindSpace.inverse) else { return }
         if solveUniformChain(&project,ids: ids,owner: owner,rig: rig,time: time,target: target,space: bindSpace) { return }
         var solved = project
@@ -215,10 +217,12 @@ enum IKSolver {
     }
 
     /// Pushes a point out of every collider layer it is inside (to the nearest edge).
-    static func collide(_ c: Vec2, in p: Project, time: Double) -> Vec2 {
+    static func collide(_ c: Vec2, in p: Project, time: Double, excluding: Set<UUID> = []) -> Vec2 {
         var pt = c
-        for l in p.layers where l.isCollider && l.isActive(at: time) {
-            let M = Renderer.layerMatrix(l, time: time, renderScale: 1)
+        for l in p.layers where l.isCollider && l.isActive(at: time) && !l.isNull && !excluding.contains(l.id) {
+            let parent = l.parentID.flatMap { Renderer.parentAffine($0,in: p,time: time)?.m } ?? matrix_identity_double3x3
+            let M = parent*Renderer.layerMatrix(l, time: time, renderScale: 1)
+            guard M.determinant.isFinite,abs(M.determinant)>1e-10 else { continue }
             let inv = M.inverse
             let q = inv * SIMD3(pt.x, pt.y, 1)
             let hs = Renderer.layerHalfSize(l, time: time)
@@ -231,6 +235,13 @@ enum IKSolver {
             pt = Vec2(w.x, w.y)
         }
         return pt
+    }
+
+    static func collisionTarget(_ point: Vec2,rig: IKRig,owner: Layer,in p: Project,time: Double) -> Vec2 {
+        guard rig.collisions != false else { return point }
+        var ignored = drivenIDs(owner: owner); ignored.formUnion(descendants(of: rig.upperID,in: p)); ignored.insert(rig.controllerID)
+        if let art = owner.bone?.artworkID { ignored.insert(art) }
+        return collide(point,in: p,time: time,excluding: ignored)
     }
 
     /// Sets the rotations of every rigged limb for this frame (before parenting is baked).
@@ -254,7 +265,7 @@ enum IKSolver {
             let spaceMatrix = space?.m ?? matrix_identity_double3x3
             guard abs(spaceMatrix.determinant) > 1e-10,
                   let s = LayerPlacement.projected(world(upper, in: q, time: time).pos, by: spaceMatrix.inverse),
-                  let target = LayerPlacement.projected(collide(world(ctrl, in: q, time: time).pos, in: q, time: time), by: spaceMatrix.inverse) else { continue }
+                  let target = LayerPlacement.projected(collisionTarget(world(ctrl, in: q, time: time).pos,rig: rig,owner: q.layers[li],in: q,time: time), by: spaceMatrix.inverse) else { continue }
             let parentRot = (upper.parentID.flatMap { Renderer.parentAffine($0, in: q, time: time)?.rot } ?? 0) - (space?.rot ?? 0)
             let dv = target - s
             let d = min(max(hypot(dv.x, dv.y), max(1e-6, abs(rig.l1 - rig.l2))), rig.l1 + rig.l2)
@@ -288,6 +299,11 @@ extension EditorState {
     /// The layer anchor is placed at that joint's endpoint, while its existing
     /// animation tracks and relative rotations/scales are kept.
     func attachArtwork(_ artworkID: UUID, toJoint jointID: UUID) {
+        if project.layers.first(where: { $0.id == jointID })?.bone?.artworkID == artworkID {
+            // This is skin binding, not a second parent link back into the skeleton.
+            selectAuthoringBone(jointID); panel = .boneWeight; recoveryNotice = nil
+            return
+        }
         guard let piece = project.layers.first(where: { $0.id == artworkID }),
               let joint = project.layers.first(where: { $0.id == jointID }),
               !piece.isLocked, artworkID != jointID,
@@ -434,7 +450,7 @@ extension EditorState {
             p.layers[index].ik = IKRig(
                 upperID: rootID, controllerID: targetID, l1: l1, l2: l2,
                 rest1: 0, rest2: 0, spaceID: spaceID,
-                restTip: localTip, chainIDs: joints
+                restTip: localTip, chainIDs: joints, collisions: false
             )
         }
         if let endArtwork {
@@ -573,7 +589,7 @@ extension EditorState {
                 p.layers.insert(n, at: 0)
             }
             if let li2 = p.layers.firstIndex(where: { $0.id == lower.id }) {
-                p.layers[li2].ik = IKRig(upperID: upper, controllerID: ctrlID, flip: bend, l1: l1, l2: l2, rest1: rest1, rest2: rest2, spaceID: spaceID, restTip: localTip)
+                p.layers[li2].ik = IKRig(upperID: upper, controllerID: ctrlID, flip: bend, l1: l1, l2: l2, rest1: rest1, rest2: rest2, spaceID: spaceID, restTip: localTip, collisions: false)
             }
         }
         ikDraftTip = nil
@@ -945,10 +961,16 @@ struct RigPanel: View {
                         BoneAuthoringControls(state: state)
                         if l.bone != nil { RigPositionControls(state: state) }
                         DisclosureGroup("Physics",isExpanded: $physicsOpen) {
-                        Toggle("Collider", isOn: Binding(get: { l.isCollider }, set: { b in
-                            state.mutate("Collider") { p in if let i = state.selectedIndex { p.layers[i].isCollider = b } }
-                        }))
-                        .tint(Theme.accent).foregroundStyle(Theme.text)
+                        if !l.isNull {
+                            Toggle("Solid artwork",isOn: Binding(get: { l.isCollider },set: { value in
+                                state.mutate("Solid artwork") { p in if let i = state.selectedIndex { p.layers[i].isCollider = value } }
+                            })).tint(Theme.accent).foregroundStyle(Theme.text)
+                        }
+                        if let owner = state.selectedIKLayer,let rig = owner.ik {
+                            Toggle("Collide with solids",isOn: Binding(get: { rig.collisions ?? true },set: { value in
+                                state.mutate("IK Collisions") { p in if let i = p.layers.firstIndex(where: { $0.id == owner.id }) { p.layers[i].ik?.collisions = value } }
+                            })).tint(Theme.accent).foregroundStyle(Theme.text)
+                        }
                         }
                         Divider().overlay(Theme.stroke)
                         Text("IK (CONNECTED JOINT CHAINS)").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
@@ -1076,9 +1098,10 @@ struct RigPanel: View {
                             .buttonStyle(PrimaryButtonStyle())
                             .disabled(state.ikDraftHand == nil)
                         }
-                        if state.rigArtwork?.boneSkin != nil {
+                        if let art = state.rigArtwork,
+                           art.boneSkin != nil || art.boneMesh != nil || BoneSkinRuntime.candidateIDs(for: art.id,mode: .rigPieces,in: state.project).count>1 {
                             Divider().overlay(Theme.stroke)
-                            Text("Legacy deformation").font(.caption).foregroundStyle(Theme.textDim)
+                            Text("Artwork deformation").font(.caption).foregroundStyle(Theme.textDim)
                             BoneSkinControls(state: state, workflow: .rigPieces)
                         }
                     }

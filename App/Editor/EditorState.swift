@@ -118,6 +118,7 @@ final class EditorState: ObservableObject {
     @Published var boneWeightBrush: BoneWeightBrush = .paint
     @Published var boneViewportGesture = false
     @Published var meshInfluenceRadius = 60.0
+    @Published var boneMeshCoverage: BoneMeshCoverage = .localized
     @Published var boneDrawingArtworkID: UUID?
     @Published var boneDrawingParentID: UUID?
     @Published var ikDraftUpper: UUID?
