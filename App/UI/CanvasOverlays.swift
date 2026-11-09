@@ -247,11 +247,21 @@ struct RigAttachmentPreviewOverlay: View {
     var body: some View {
         let t = state.currentTime
         let scale = fit.width / CGFloat(max(1, state.project.width))
-        if let handID = state.ikDraftHand, state.ikDraftUpper != nil,
-           let lower = state.selectedLayer, let hand = state.project.layers.first(where: { $0.id == handID }),
-           let lowerMatrix = state.displayPlacement(of: lower.id),
+        let lower = state.selectedIKLayer ?? state.selectedLayer
+        let predictedWrist: Vec2? = lower.flatMap { layer in
+            if layer.ik != nil {
+                if let tip = layer.ik?.restTip, let matrix = state.displayPlacement(of: layer.id),
+                   let projected = LayerPlacement.projected(tip, by: matrix) { return projected }
+                return state.reachedIKWrist(owner: layer, in: state.project, at: t)
+            }
+            guard state.ikDraftUpper != nil,
+                  let matrix = state.displayPlacement(of: layer.id) else { return nil }
+            return LayerPlacement.projected(state.ikRestTip(for: layer), by: matrix)
+        }
+        if let handID = state.ikDraftHand,
+           let hand = state.project.layers.first(where: { $0.id == handID }),
            let handMatrix = state.displayPlacement(of: handID),
-           let wrist = LayerPlacement.projected(state.ikRestTip(for: lower), by: lowerMatrix),
+           let wrist = predictedWrist,
            let pivot = LayerPlacement.projected(hand.transform.anchor.value(at: t), by: handMatrix) {
             let offset = wrist - pivot
             let half = Renderer.layerHalfSize(hand, time: t)
