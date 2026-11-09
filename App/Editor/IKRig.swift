@@ -90,8 +90,17 @@ enum IKSolver {
             for i in lengths.indices { points[i+1] = points[i]+direction*lengths[i] }
             return points
         }
-        let axis = original.last!-root,axisLength = max(1e-10,hypot(axis.x,axis.y))
+        var axis = original.last!-root
+        if hypot(axis.x,axis.y)<1e-10 { axis = original[1]-root }
+        let axisLength = max(1e-10,hypot(axis.x,axis.y))
         let collinear = original.dropFirst().dropLast().allSatisfy { p in abs((p.x-root.x)*axis.y-(p.y-root.y)*axis.x)<1e-7 }
+        if flip && !collinear {
+            let direction = axis*(1/axisLength)
+            for i in 1..<(points.count-1) {
+                let v = points[i]-root,along = direction*(v.x*direction.x+v.y*direction.y)
+                points[i] = root+along*2-v
+            }
+        }
         if collinear {
             let normal = Vec2(-axis.y/axisLength,axis.x/axisLength)*(flip ? -1 : 1)
             for i in 1..<(points.count-1) { points[i] = points[i]+normal*(total*0.02*sin(Double(i)*Double.pi/Double(points.count-1))) }
@@ -1001,7 +1010,8 @@ struct RigPanel: View {
                                 Text("\(chain.count) connected joints · one IK controller")
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundStyle(Theme.accentGlow)
-                            } else {
+                            }
+                            Group {
                                 Toggle("Bend the other way", isOn: Binding(get: { rig.flip }, set: { b in
                                     state.mutate("IK Bend") { p in if let i = p.layers.firstIndex(where: { $0.id == owner.id }) { p.layers[i].ik?.flip = b } }
                                 }))

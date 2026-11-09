@@ -306,4 +306,16 @@ import simd
         }
     }
 
+    func testLongChainBendDirectionWorksForAnAlreadyBentSetup() {
+        let rest = [Vec2(0,0),Vec2(50,10),Vec2(100,0),Vec2(150,0)]
+        let target = Vec2(110,0)
+        let a = IKSolver.solvePoints(rest,target: target)
+        let b = IKSolver.solvePoints(rest,target: target,flip: true)
+        for i in rest.indices {
+            XCTAssertEqual(a[i].x,b[i].x,accuracy: 1e-6)
+            XCTAssertEqual(a[i].y,-b[i].y,accuracy: 1e-6)
+        }
+        XCTAssertGreaterThan(abs(a[1].y),1)
+    }
+
 }
