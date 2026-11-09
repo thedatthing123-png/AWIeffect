@@ -52,6 +52,68 @@ final class BoneAuthoringTests: XCTestCase {
         XCTAssertEqual(saved.layers.first { $0.id == hand.id }?.parentID,lower.id)
     }
 
+    func testBuild26HandAttachmentFollowsWristAndRefusesOverlappingRig() throws {
+        var p = Project.new(name: "Bind three parts", width: 600, height: 600, fps: 30, duration: 4)
+        var upper = p.makeLayer(name: "Upper", content: .solid, size: Vec2(120, 36))
+        upper.transform.position = Animated(Vec2(200, 200))
+        upper.transform.anchor = Animated(Vec2(-60, 0))
+        var lower = p.makeLayer(name: "Lower", content: .solid, size: Vec2(100, 32))
+        lower.transform.position = Animated(Vec2(320, 200))
+        lower.transform.anchor = Animated(Vec2(-50, 0))
+        var hand = p.makeLayer(name: "Hand", content: .solid, size: Vec2(36, 26))
+        hand.transform.position = Animated(Vec2(450, 300)) // deliberately detached
+        hand.transform.anchor = Animated(Vec2(-18, 0))
+        p.layers = [hand, lower, upper]
+        let state = EditorState(project: p, store: ProjectStore(root:
+            FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+        state.select(lower.id)
+        state.ikDraftTip = (lower.id, Vec2(50, 0))
+        state.makeIK(upper: upper.id, controller: nil, hand: hand.id)
+
+        let rig = try XCTUnwrap(state.project.layers.first(where: { $0.id == lower.id })?.ik)
+        XCTAssertEqual(rig.restTip, Vec2(50, 0))
+        XCTAssertEqual(state.project.layers.first(where: { $0.id == hand.id })?.parentID, lower.id)
+        let posed = IKSolver.apply(state.project, time: 0)
+        let parent = try XCTUnwrap(Renderer.parentAffine(lower.id, in: posed, time: 0))
+        let wrist = parent.m * SIMD3(100.0, 0, 1)
+        let visibleHand = try XCTUnwrap(Renderer.resolveParenting(state.project, time: 0)
+            .layers.first(where: { $0.id == hand.id }))
+        XCTAssertEqual(visibleHand.transform.position.value(at: 0).x, wrist.x, accuracy: 1e-6)
+        XCTAssertEqual(visibleHand.transform.position.value(at: 0).y, wrist.y, accuracy: 1e-6)
+
+        // A second attempt cannot silently attach another IK controller to these joints.
+        let controllerCount = state.project.layers.filter { $0.isNull && $0.name.contains("Controller") }.count
+        state.select(lower.id)
+        state.makeIK(upper: upper.id, controller: nil, hand: hand.id)
+        XCTAssertEqual(state.project.layers.filter { $0.isNull && $0.name.contains("Controller") }.count, controllerCount)
+        XCTAssertEqual(state.project.layers.filter { $0.ik != nil }.count, 1)
+    }
+
+    func testBuild26RigPositionPadChangesOnlySelectedJoint() throws {
+        let (s, art) = state()
+        var upper = s.project.makeLayer(name: "Upper", content: .solid, size: Vec2(120, 32))
+        upper.transform.position = Animated(Vec2(250, 200))
+        var lower = s.project.makeLayer(name: "Lower", content: .solid, size: Vec2(100, 32))
+        lower.transform.position = Animated(Vec2(350, 200))
+        s.project.layers += [upper, lower]
+
+        s.select(lower.id)
+        s.ikDraftUpper = upper.id
+        let undoBefore = s.undoStack.count
+        s.moveRigPosition(.restEndpoint(lower.id), to: Vec2(50, 0))
+        XCTAssertEqual(s.ikDraftTip?.point, Vec2(50, 0))
+        XCTAssertEqual(s.undoStack.count, undoBefore, "Rest point movement is not a keyframe or undo")
+        s.makeIK(upper: upper.id, controller: nil)
+        let rig = try XCTUnwrap(s.project.layers.first(where: { $0.id == lower.id })?.ik)
+        let unchangedArtPosition = try XCTUnwrap(s.project.layers.first(where: { $0.id == art })?.transform.position)
+        s.select(rig.controllerID)
+        s.beginPanelGesture("Move Rig Point")
+        s.moveRigPosition(.ikController(rig.controllerID), to: Vec2(305, 95))
+        s.endPanelGesture()
+        XCTAssertEqual(s.rigPositionValue(.ikController(rig.controllerID)), Vec2(305, 95))
+        XCTAssertEqual(s.project.layers.first(where: { $0.id == art })?.transform.position, unchangedArtPosition)
+    }
+
     func testConnectedBonesUseExistingTransformsAndPoseHierarchy() throws {
         let (s, art) = state()
         s.select(art); s.beginBoneDrawing()
