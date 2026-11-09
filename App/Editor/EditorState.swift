@@ -470,6 +470,14 @@ final class EditorState: ObservableObject {
     func duplicateSelected() {
         guard let i = selectedIndex else { return }
         if project.layers[i].isGroup { duplicateGroup(project.layers[i].id); return }
+        let selectedID = project.layers[i].id
+        let transferred = rigTransferIDs([selectedID])
+        if transferred.count > 1 {
+            let oldMulti = multiSelection
+            multiSelection = [selectedID]; duplicateMulti()
+            selectedLayerID = multiSelection?.first; multiSelection = oldMulti
+            return
+        }
         mutate("Duplicate Layer") { p in
             var copy = p.layers[i]
             copy.id = UUID()

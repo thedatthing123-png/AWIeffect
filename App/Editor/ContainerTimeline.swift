@@ -50,6 +50,26 @@ extension EditorState {
         return result
     }
 
+    /// Include a bound artwork's owned skeleton/targets when copying or composing it.
+    /// Timeline reordering/deletion intentionally keep their existing selection semantics.
+    func rigTransferIDs(_ selected: Set<UUID>) -> Set<UUID> {
+        var ids = expandedLayerIDs(selected)
+        var changed = true
+        while changed {
+            let before = ids
+            for layer in project.layers {
+                if let art = layer.bone?.artworkID,ids.contains(art) { ids.insert(layer.id) }
+                if ids.contains(layer.id) {
+                    ids.formUnion(layer.boneMesh?.boneIDs ?? [])
+                    if let rig = layer.ik { ids.insert(rig.controllerID) }
+                    if layer.isGroup { ids.formUnion(Self.descendantIDs(of: layer.id,in: project)) }
+                }
+            }
+            changed = before != ids
+        }
+        return ids
+    }
+
     /// Reorder visible rows atomically, carrying a group's entire subtree with it.
     func reorderTimelineLayer(_ id: UUID, to row: Int) {
         let rows = project.timelineLayers

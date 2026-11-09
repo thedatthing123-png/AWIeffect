@@ -1,6 +1,23 @@
 import XCTest
 
 final class RigAuthoringUITests: XCTestCase {
+    func testWeightBrushEditsTheMeshAndKeepsControlsInPanel() {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launchArguments = ["-uiTesting","-uiTesting-boneWeights"]; app.launch()
+        let canvas = app.descendants(matching: .any)["Paint bone weights"].firstMatch
+        XCTAssertTrue(canvas.waitForExistence(timeout: 15))
+        let before = canvas.value as? String
+        let point = canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.5,dy: 0.5))
+        point.press(forDuration: 0.1,thenDragTo: point.withOffset(CGVector(dx: 40,dy: 0)))
+        XCTAssertNotEqual(canvas.value as? String,before,"Erasing a bound influence must change actual mesh weights")
+        XCTAssertTrue(app.buttons["Done"].firstMatch.exists)
+        XCTAssertFalse(app.buttons["Draw Bones"].firstMatch.exists)
+        let screenshot = XCUIScreen.main.screenshot()
+        let attachment = XCTAttachment(screenshot: screenshot); attachment.name = "weight-brush-panel"; attachment.lifetime = .keepAlways; add(attachment)
+        try? FileManager.default.createDirectory(atPath: "/tmp/awi-ui",withIntermediateDirectories: true)
+        try? screenshot.pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/awi-ui/weight-brush-panel.png"))
+    }
+
     func testSelectEarlierBoneAndBranchWithoutLeavingAuthoringPanel() {
         continueAfterFailure = false
         let app = XCUIApplication(); app.launchArguments = ["-uiTesting","-uiTesting-rigAuthoring"]; app.launch()

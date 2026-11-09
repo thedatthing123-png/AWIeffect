@@ -147,4 +147,41 @@ import simd
         XCTAssertEqual(before,s.project.layers.first { $0.id == art }?.boneMesh)
     }
 
+    func testDuplicatingBoundArtworkRemapsItsSkeletonAndController() throws {
+        let (s,art) = editor()
+        let root = try XCTUnwrap(s.addBone(artworkID: art,parentID: nil,start: .zero,end: Vec2(100,0)))
+        _ = try XCTUnwrap(s.addBone(artworkID: art,parentID: root,start: .zero,end: Vec2(150,50)))
+        s.selectAuthoringBone(root); s.bindBoneMesh(); s.select(art)
+        s.duplicateSelected()
+        let copyID = try XCTUnwrap(s.selectedLayerID)
+        XCTAssertNotEqual(copyID,art)
+        let copy = try XCTUnwrap(s.project.layers.first { $0.id == copyID })
+        let mesh = try XCTUnwrap(copy.boneMesh)
+        XCTAssertEqual(mesh.boneIDs.first,copyID)
+        XCTAssertFalse(mesh.boneIDs.contains(art)); XCTAssertFalse(mesh.boneIDs.contains(root))
+        XCTAssertEqual(s.project.layers.filter { $0.bone?.artworkID == copyID }.count,2)
+        XCTAssertTrue(mesh.isValid)
+    }
+
+    func testLongChainMixBlendsEachLocalFKRotationTowardSameFullSolve() throws {
+        let (s,art) = editor()
+        let a = try XCTUnwrap(s.addBone(artworkID: art,parentID: nil,start: .zero,end: Vec2(60,0)))
+        let b = try XCTUnwrap(s.addBone(artworkID: art,parentID: a,start: .zero,end: Vec2(120,0)))
+        let c = try XCTUnwrap(s.addBone(artworkID: art,parentID: b,start: .zero,end: Vec2(180,0)))
+        s.selectAuthoringBone(c); s.makeIK(upper: a,controller: nil)
+        let owner = try XCTUnwrap(s.project.layers.firstIndex { $0.id == c })
+        let rig = try XCTUnwrap(s.project.layers[owner].ik)
+        let controller = try XCTUnwrap(s.project.layers.firstIndex { $0.id == rig.controllerID })
+        s.project.layers[controller].transform.position = Animated(Vec2(110,75))
+        let full = IKSolver.apply(s.project,time: 0)
+        s.project.layers[owner].ik?.mix = Animated(0.5)
+        let half = IKSolver.apply(s.project,time: 0)
+        for id in [a,b,c] {
+            let fk = try XCTUnwrap(s.project.layers.first { $0.id == id }).transform.rotation.value(at: 0)
+            let ik = try XCTUnwrap(full.layers.first { $0.id == id }).transform.rotation.value(at: 0)
+            let actual = try XCTUnwrap(half.layers.first { $0.id == id }).transform.rotation.value(at: 0)
+            XCTAssertEqual(actual,IKSolver.blendAngle(fk: fk,ik: ik,w: 0.5),accuracy: 1e-7)
+        }
+    }
+
 }

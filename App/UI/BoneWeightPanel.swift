@@ -40,6 +40,11 @@ struct BoneSkinControls: View {
                     if state.boneWeightArtworkID == nil {
                         DisclosureGroup("Binding options",isExpanded: $advanced) {
                             HStack {
+                                Text("Mesh detail").font(.caption).frame(width: 65,alignment: .leading)
+                                ValueScrubber(value: state.boneMeshDetail,range: 4...128,step: 1,onChange: { state.boneMeshDetail = $0 })
+                                    .frame(height: 44).environment(\.scrubSession,ScrubSession())
+                            }
+                            HStack {
                                 Text("Reach").font(.caption).frame(width: 65,alignment: .leading)
                                 ValueScrubber(value: state.meshInfluenceRadius,range: 2...1000,unit: " px",onChange: { state.meshInfluenceRadius = $0 })
                                     .frame(height: 44).environment(\.scrubSession,ScrubSession())
@@ -62,8 +67,10 @@ struct BoneWeightPanel: View {
             PanelHeader(state: state,title: "Bone / Weight",showKeyNav: false)
             ScrollView {
                 VStack(alignment: .leading,spacing: 8) {
-                    BoneAuthoringControls(state: state)
-                    if state.boneWeightArtworkID == nil { RigPositionControls(state: state) }
+                    if state.boneWeightArtworkID == nil {
+                        BoneAuthoringControls(state: state)
+                        RigPositionControls(state: state)
+                    }
                     BoneSkinControls(state: state,workflow: .boneWeight)
                 }.padding(.horizontal,12).padding(.bottom,12)
             }

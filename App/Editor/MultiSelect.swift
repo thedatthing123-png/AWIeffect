@@ -56,7 +56,7 @@ extension EditorState {
 
     func duplicateMulti() {
         guard let selected = multiSelection, !selected.isEmpty else { return }
-        let ids = expandedLayerIDs(selected)
+        let ids = rigTransferIDs(selected)
         var newIDs = Set<UUID>()
         mutate("Duplicate \(ids.count) Layers") { p in
             var out: [Layer] = []
@@ -85,7 +85,7 @@ extension EditorState {
     /// Groups the selection into one pre-comp, keeping order and timing.
     func precomposeMulti(name: String? = nil) {
         guard let selected = multiSelection, !selected.isEmpty else { return }
-        let ids = expandedLayerIDs(selected)
+        let ids = rigTransferIDs(selected)
         var clean = project
         Self.unparentKeepingWorld(&clean) { l in
             guard let pid = l.parentID else { return false }

@@ -223,12 +223,10 @@ struct BoneAuthoringControls: View {
                 } else {
                     HStack(spacing: 8) {
                         Button { state.beginBoneDrawing() } label: {
-                            Label(state.selectedLayer?.bone == nil ? "Draw Bones" : "Add Child",systemImage: "point.topleft.down.to.point.bottomright.curvepath")
+                            Label(state.selectedLayer?.bone == nil ? "Draw Bones" : "Branch",systemImage: "point.topleft.down.to.point.bottomright.curvepath")
                                 .frame(maxWidth: .infinity,minHeight: 44)
                         }.buttonStyle(.bordered)
                         if state.selectedLayer?.bone != nil {
-                            Button("Branch") { state.branchFromSelectedBone() }.frame(minWidth: 65,minHeight: 44)
-                                .accessibilityIdentifier("bone-add-branch")
                             Button(state.boneParentPicking == nil ? "Parent" : "Cancel") {
                                 state.boneParentPicking = state.boneParentPicking == nil ? state.selectedLayerID : nil
                             }.frame(minWidth: 65,minHeight: 44)

@@ -109,6 +109,11 @@ struct RootView: View {
             p.layers = [layer]
             _openProject = State(initialValue: p)
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-boneWeights") {
+            var p = Project.new(name: "Weight brush interaction",width: 600,height: 600,fps: 30,duration: 4)
+            p.layers = [p.makeLayer(name: "Artwork",content: .solid,size: Vec2(400,400))]
+            _openProject = State(initialValue: p)
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-rigAuthoring") {
             var p = Project.new(name: "Rig Authoring Test", width: 600, height: 600, fps: 30, duration: 4)
             var lower = p.makeLayer(name: "Forearm", content: .solid, size: Vec2(140, 38))

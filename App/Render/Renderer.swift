@@ -237,20 +237,34 @@ final class Renderer {
     }
 
     /// Echo trails: each echoing layer gets delayed, fading copies stacked underneath it (all keyframes and media delayed).
-    static func expandEchoes(_ p: Project) -> Project {
+    static func expandEchoes(_ p: Project, meshSource: Project? = nil, time: Double = 0) -> Project {
         guard p.layers.contains(where: { ($0.timeFX?.echoCount ?? 0) > 0 }) else { return p }
         var q = p
         var out: [Layer] = []
+        var meshFrames: [Double: Project] = [:]
+        func binding(_ id: UUID, at sampleTime: Double) -> BoneMeshBinding? {
+            guard let source = meshSource else { return nil }
+            if meshFrames[sampleTime] == nil {
+                meshFrames[sampleTime] = resolveParenting(ExpressionResolver.resolve(source,time: sampleTime),time: sampleTime,meshSource: source)
+            }
+            guard var mesh = meshFrames[sampleTime]?.layers.first(where: { $0.id == id })?.boneMesh else { return nil }
+            // Palette already represents the delayed pose; nested encoding must not replace it with the current pose.
+            mesh.frameTime = time
+            return mesh
+        }
         // A layer used as a track matte by the layer below keeps its slot (no echo copies between them).
         let matteSources = Set(p.layers.indices.compactMap { i in i > 0 && p.layers[i].trackMatte != .none ? p.layers[i - 1].id : nil })
         for l in p.layers {
-            out.append(l)
+            var current = l
+            if l.boneMesh != nil,meshSource != nil { current.boneMesh = binding(l.id,at: time) }
+            out.append(current)
             guard let fx = l.timeFX, fx.echoCount > 0, !matteSources.contains(l.id) else { continue }
             for k in 1...min(fx.echoCount, 24) {
                 var c = l
                 c.id = UUID()
                 c.timeFX?.echoCount = 0
                 c.trackMatte = .none
+                if l.boneMesh != nil,meshSource != nil { c.boneMesh = binding(l.id,at: time-Double(k)*fx.echoDelay) }
                 c.shiftTiming(by: Double(k) * fx.echoDelay, duration: p.duration)
                 c.inPoint = l.inPoint
                 c.transform.opacity = c.transform.opacity.mapped { $0 * pow(max(0, min(1, fx.echoDecay)), Double(k)) }
@@ -513,7 +527,7 @@ final class Renderer {
         let resolved = ExpressionResolver.resolve(rawProject, time: time)
         // Echo needs parenting baked over time (costly); everything else bakes just this frame.
         let hasEcho = resolved.layers.contains { ($0.timeFX?.echoCount ?? 0) > 0 }
-        let project = hasEcho ? Self.expandEchoes(Self.resolveParentingAnimated(resolved)) : Self.resolveParenting(resolved, time: time, meshSource: rawProject)
+        let project = hasEcho ? Self.expandEchoes(Self.resolveParentingAnimated(resolved),meshSource: rawProject,time: time) : Self.resolveParenting(resolved, time: time, meshSource: rawProject)
         var shutterProjects: [Double: Project] = [:]
         func samplePlacement(_ layer: Layer, at sampleTime: Double) -> simd_double3x3 {
             let sample: Project

@@ -53,6 +53,13 @@ struct EditorView: View {
             TextStudioSession.shared.follow(state.selectedLayerID)
             if let text = state.selectedLayer?.text { TextStudioSession.shared.selectedIDs = TextStudioLogic.ids(text, range: 0..<2) }
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-boneWeights"),let art = state.project.layers.first?.id {
+            let bone = state.addBone(artworkID: art,parentID: nil,start: Vec2(-100,0),end: Vec2(100,0))
+            if let bone { state.selectAuthoringBone(bone) }
+            state.finishBoneDrawing(); state.panel = .boneWeight; state.meshInfluenceRadius = 100
+            state.bindBoneMesh(); state.beginBoneWeights(); state.boneWeightBrush = .erase
+            state.boneWeightRadius = 100; state.boneWeightStrength = 80
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-rigAuthoring") {
             state.select(state.project.layers.first?.id)
             state.ikDraftUpper = state.project.layers.last?.id

@@ -132,7 +132,7 @@ enum IKSolver {
             let fk = project.layers[index].transform.rotation.value(at: time)
             let local = blendAngle(fk: fk,ik: desired-parentRotation,w: rig.mixValue(at: time))
             project.layers[index].transform.rotation = Animated(local)
-            worldRotations[ids[i]] = parentRotation+local
+            worldRotations[ids[i]] = desired
         }
         return true
     }

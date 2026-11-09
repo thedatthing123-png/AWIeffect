@@ -86,4 +86,63 @@ final class AdvancedAuthoringRenderTests: XCTestCase {
         }
         XCTAssertTrue(CGImageDestinationFinalize(gif))
     }
+    func testContinuousArtworkWithFingerBranchesMeshMotionArtifact() throws {
+        let folder = URL(fileURLWithPath: "/tmp/awi-authoring",isDirectory: true)
+        try FileManager.default.createDirectory(at: folder,withIntermediateDirectories: true)
+        let format = UIGraphicsImageRendererFormat(); format.scale = 1; format.opaque = false
+        let artwork = UIGraphicsImageRenderer(size: CGSize(width: 400,height: 400),format: format).image { context in
+            let c = context.cgContext
+            c.setFillColor(UIColor.systemIndigo.cgColor)
+            c.fill(CGRect(x: 55,y: 95,width: 100,height: 240))
+            c.setStrokeColor(UIColor.systemTeal.cgColor); c.setLineWidth(36); c.setLineCap(.round); c.setLineJoin(.round)
+            c.move(to: CGPoint(x: 150,y: 190)); c.addLine(to: CGPoint(x: 230,y: 190)); c.addLine(to: CGPoint(x: 300,y: 190)); c.strokePath()
+            c.setStrokeColor(UIColor.systemYellow.cgColor); c.setLineWidth(8)
+            for i in 0..<5 {
+                c.move(to: CGPoint(x: 300,y: 190)); c.addLine(to: CGPoint(x: 350,y: CGFloat(160+i*15))); c.strokePath()
+            }
+        }
+        let imageURL = folder.appendingPathComponent("continuous-character.png")
+        try XCTUnwrap(artwork.pngData()).write(to: imageURL)
+        var p = Project.new(name: "One image - arm and five finger branches",width: 600,height: 600,fps: 30,duration: 2)
+        let art = p.makeLayer(name: "Continuous artwork",content: .image(fileName: imageURL.lastPathComponent,pixelWidth: 400,pixelHeight: 400),size: Vec2(400,400))
+        p.layers = [art]
+        let state = EditorState(project: p,store: ProjectStore(root: folder.appendingPathComponent("mesh-project")))
+        let upper = try XCTUnwrap(state.addBone(artworkID: art.id,parentID: nil,start: Vec2(-50,-10),end: Vec2(30,-10)))
+        let lower = try XCTUnwrap(state.addBone(artworkID: art.id,parentID: upper,start: .zero,end: Vec2(100,-10)))
+        var fingers: [UUID] = []
+        for i in 0..<5 {
+            fingers.append(try XCTUnwrap(state.addBone(artworkID: art.id,parentID: lower,start: .zero,end: Vec2(150,Double(-40+i*15)))))
+        }
+        state.selectAuthoringBone(lower); state.meshInfluenceRadius = 42; state.bindBoneMesh()
+        let mesh = try XCTUnwrap(state.project.layers.first { $0.id == art.id }?.boneMesh)
+        XCTAssertEqual(mesh.boneIDs.count,8)
+        for (id,degrees) in [(upper,-25.0),(lower,-65.0)] + fingers.enumerated().map({ ($0.element,Double($0.offset-2)*12) }) {
+            let index = try XCTUnwrap(state.project.layers.firstIndex { $0.id == id })
+            let rest = state.project.layers[index].transform.rotation.value(at: 0)
+            state.project.layers[index].transform.rotation.insertKeyframe(Keyframe(time: 0,value: rest,interpolation: .linear))
+            state.project.layers[index].transform.rotation.insertKeyframe(Keyframe(time: 1,value: rest+degrees,interpolation: .linear))
+            state.project.layers[index].transform.rotation.insertKeyframe(Keyframe(time: 2,value: rest,interpolation: .linear))
+        }
+        let copy = try JSONDecoder().decode(Project.self,from: JSONEncoder().encode(state.project))
+        try JSONEncoder().encode(copy).write(to: folder.appendingPathComponent("continuous-character.json"))
+        let posed = IKSolver.apply(copy,time: 1)
+        let palette = try XCTUnwrap(BoneMeshEvaluation.palette(mesh,artworkID: art.id,posed: posed,time: 1))
+        for vertex in mesh.vertices where vertex.rest.x < -100 {
+            let actual = mesh.deformed(vertex,matrices: palette)
+            XCTAssertEqual(actual.x,vertex.rest.x,accuracy: 1e-7); XCTAssertEqual(actual.y,vertex.rest.y,accuracy: 1e-7)
+        }
+        let renderer = try XCTUnwrap(Renderer.shared)
+        let gif = try XCTUnwrap(CGImageDestinationCreateWithURL(folder.appendingPathComponent("continuous-character.gif") as CFURL,UTType.gif.identifier as CFString,60,nil))
+        CGImageDestinationSetProperties(gif,[kCGImagePropertyGIFDictionary:[kCGImagePropertyGIFLoopCount:0]] as CFDictionary)
+        var first: Data?,posedPNG: Data?
+        for frame in 0..<60 {
+            let image = try XCTUnwrap(renderer.renderImage(project: copy,time: Double(frame)/30,maxDimension: 480,mediaURL: { folder.appendingPathComponent($0) }))
+            CGImageDestinationAddImage(gif,try XCTUnwrap(image.cgImage),[kCGImagePropertyGIFDictionary:[kCGImagePropertyGIFDelayTime:1.0/30]] as CFDictionary)
+            if frame == 0 { first = image.pngData() }
+            if frame == 30 { posedPNG = image.pngData() }
+            if frame % 15 == 0 { try XCTUnwrap(image.pngData()).write(to: folder.appendingPathComponent("continuous-\(frame).png")) }
+        }
+        XCTAssertTrue(CGImageDestinationFinalize(gif)); XCTAssertNotEqual(try XCTUnwrap(first),try XCTUnwrap(posedPNG))
+    }
+
 }
