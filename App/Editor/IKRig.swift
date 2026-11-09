@@ -738,6 +738,15 @@ enum RigPositionSelection: Equatable {
         case .fkBoneTip: return "Bone tip · canvas X/Y"
         }
     }
+    var hint: String {
+        switch self {
+        case .poseJoint: return "Moves this bone and its children. Bound artwork follows its weights; the rest binding stays unchanged."
+        case .fkBoneTip: return "Rotates this bone and carries its children. Weights determine how the artwork bends."
+        case .ikController: return "Moves the end target while the chain root stays fixed. Position keys animate this target."
+        case .restJoint: return "Edits joint setup, preserving its tip and child pivots. This does not pose the artwork."
+        case .restEndpoint: return "Places the end joint before binding; does not add a keyframe."
+        }
+    }
     var editsPose: Bool {
         switch self {
         case .restEndpoint: return false
@@ -943,9 +952,7 @@ struct RigPositionControls: View {
                         } begin: { begin(selected) } end: { finish(selected) }
                         .frame(height: 110)
                         .accessibilityIdentifier("rig-position-swipe-pad")
-                        Text(selected.editsPose
-                             ? "Moves this joint/controller only. Use the timeline to animate its existing transform."
-                             : "Places the rest wrist/ankle before binding; does not add a keyframe.")
+                        Text(selected.hint)
                             .font(.caption2).foregroundStyle(Theme.textDim)
                     }
                     .padding(10)
