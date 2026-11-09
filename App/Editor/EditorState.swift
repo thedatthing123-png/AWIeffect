@@ -105,6 +105,8 @@ final class EditorState: ObservableObject {
     @Published var boneDrawingParentID: UUID?
     @Published var ikDraftUpper: UUID?
     @Published var ikDraftController: UUID?
+    /// Optional artwork that should attach to the solved wrist/ankle joint on bind.
+    @Published var ikDraftHand: UUID?
     /// Rest endpoint in artwork coordinates, owned by one layer; changing selection cannot reuse another limb's tip.
     @Published var ikDraftTip: (layerID: UUID, point: Vec2)?
     var sketchStartTime: Double?
