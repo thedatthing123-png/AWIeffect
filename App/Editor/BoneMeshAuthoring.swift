@@ -83,17 +83,10 @@ struct BoneMeshControls: View {
                     Picker("Weight brush", selection: $state.boneWeightBrush) {
                         ForEach(BoneWeightBrush.allCases) { Text($0.rawValue).tag($0) }
                     }.pickerStyle(.segmented).frame(minHeight: 44)
-                    HStack {
-                        Text("Size").font(.caption).frame(width: 60,alignment: .leading)
-                        ValueScrubber(value: state.boneWeightRadius,range: 2...1000,unit: " px",onChange: { state.boneWeightRadius = $0 }).frame(height: 44).environment(\.scrubSession, ScrubSession())
-                    }
-                    HStack {
-                        Text("Strength").font(.caption).frame(width: 60,alignment: .leading)
-                        ValueScrubber(value: state.boneWeightStrength,range: 1...100,unit: "%",onChange: { state.boneWeightStrength = $0 }).frame(height: 44).environment(\.scrubSession, ScrubSession())
-                    }
-                    HStack {
-                        Text("Hardness").font(.caption).frame(width: 60,alignment: .leading)
-                        ValueScrubber(value: state.boneWeightHardness,range: 0...95,unit: "%",onChange: { state.boneWeightHardness = $0 }).frame(height: 44).environment(\.scrubSession,ScrubSession())
+                    HStack(spacing: 8) {
+                        brushSetting("Size",value: state.boneWeightRadius,range: 2...1000,unit: " px") { state.boneWeightRadius = $0 }
+                        brushSetting("Strength",value: state.boneWeightStrength,range: 1...100,unit: "%") { state.boneWeightStrength = $0 }
+                        brushSetting("Hardness",value: state.boneWeightHardness,range: 0...95,unit: "%") { state.boneWeightHardness = $0 }
                     }
                     DisclosureGroup("Influence: \(state.boneWeightBoneID == art.id ? "Artwork" : state.project.layers.first(where: { $0.id == state.boneWeightBoneID })?.name ?? "Choose bone")",isExpanded: $influencesOpen) {
                     ForEach(mesh.boneIDs,id: \.self) { id in
@@ -130,4 +123,12 @@ struct BoneMeshControls: View {
             }
         }
     }
+    private func brushSetting(_ label: String,value: Double,range: ClosedRange<Double>,unit: String,change: @escaping (Double) -> Void) -> some View {
+        VStack(spacing: 4) {
+            Text(label).font(.caption).foregroundStyle(Theme.textDim)
+            ValueScrubber(value: value,range: range,unit: unit,onChange: change)
+                .frame(height: 44).environment(\.scrubSession,ScrubSession()).accessibilityLabel(label)
+        }.frame(maxWidth: .infinity)
+    }
+
 }
