@@ -333,7 +333,7 @@ kernel void fx19Bend(texture2d<half, access::sample> src [[texture(0)]],
     float Y = dot(c - o, perp);
     if (abs(theta) < 1e-5) { dst.write(half4(S(src, c)), gid); return; }
     // Solve each side about Start. No X<0 shortcut: a large arc can return behind Start.
-    // Tail curvature reverses for Same Side and retains its sign for an S bend.
+    // A negative tail distance mirrors the head at equal curvature; reversing curvature creates an S bend.
     float2 source = float2(0);
     bool found = false;
     for (int side = 0; side < 2; ++side) {
@@ -346,7 +346,7 @@ kernel void fx19Bend(texture2d<half, access::sample> src [[texture(0)]],
             continue;
         }
         float k = theta / max(segmentLength, 1e-4);
-        if (side == 1 && p.i.y == 1) k = -k;
+        if (side == 1 && p.i.y == 2) k = -k;
         // Tune controls limit curvature as one side becomes too short/wide to bend cleanly.
         float tuning = clamp(side == 0 ? p.c.x : p.c.y, 0.0, 1.0);
         float limit = 1.0 / max(halfWidth * (1.01 + tuning), 1.0);

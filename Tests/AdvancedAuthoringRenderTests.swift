@@ -22,9 +22,27 @@ final class AdvancedAuthoringRenderTests: XCTestCase {
             let pixels = try XCTUnwrap(renderer.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) }))
             let visible = stride(from: 3, to: pixels.rgba.count, by: 4).filter { pixels.rgba[$0] > 128 }.count
             XCTAssertGreaterThan(visible, 48 * 220 / 2, "mode \(mode) must not discard half the strip")
+            if mode > 0 {
+                func alphaMass(_ xs: Range<Int>) -> Int {
+                    var result = 0
+                    for y in 250..<295 { for x in xs { result += Int(pixels.rgba[(y * 400 + x) * 4 + 3]) } }
+                    return result
+                }
+                let left = alphaMass(100..<180), right = alphaMass(220..<300)
+                if mode == 1 { XCTAssertGreaterThan(right, left + 10000, "Same Side must bend both ends toward the same side of Start") }
+                else { XCTAssertGreaterThan(left, right + 10000, "Opposite Side must form an S curve") }
+            }
             let image = try XCTUnwrap(renderer.renderImage(project: p, time: 0, maxDimension: 400, mediaURL: { URL(fileURLWithPath: $0) }))
             let data = try XCTUnwrap(image.pngData()); outputs.append(data)
             try data.write(to: folder.appendingPathComponent("bend-mode-\(mode).png"))
+            let gif = try XCTUnwrap(CGImageDestinationCreateWithURL(folder.appendingPathComponent("bend-mode-\(mode).gif") as CFURL, UTType.gif.identifier as CFString, 30, nil))
+            CGImageDestinationSetProperties(gif, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+            for frame in 0..<30 {
+                p.layers[0].effects[0].params["angle"] = .number(Animated(100 * sin(Double(frame) / 29 * 2 * .pi)))
+                let moving = try XCTUnwrap(renderer.renderImage(project: p, time: Double(frame) / 30, maxDimension: 400, mediaURL: { URL(fileURLWithPath: $0) }))
+                CGImageDestinationAddImage(gif, try XCTUnwrap(moving.cgImage), [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 1.0 / 30]] as CFDictionary)
+            }
+            XCTAssertTrue(CGImageDestinationFinalize(gif))
         }
         XCTAssertNotEqual(outputs[0], outputs[1]); XCTAssertNotEqual(outputs[1], outputs[2])
     }
