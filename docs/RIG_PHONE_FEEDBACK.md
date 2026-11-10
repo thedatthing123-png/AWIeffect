@@ -50,3 +50,9 @@ Repeat and Back & Forth accept up to 1,000 cycles, evaluated in constant time. B
 Primary references: [ibisPaint Stabilizer](https://ibispaint.com/lecture/index.jsp?lang=en&no=50), [Alight Motion Bend](https://guide.alightmotion.com/effects/bend). Exact frame-rate claims require phone profiling; a successful simulator test is not proof every effect stack sustains 60 fps. Music/beat detection is the next phase, not included as an already completed change.
 
 Full run 42653473792 at 47fb213 reported 688 passed, 1 failed, 1 skipped. The failure was Time Remap's UI test at the newly added-key assertion after attempting to tap an offscreen control. The revised test requires the Add Key center to lie inside the visible clip panel before tapping, retaining its source-key/value/drag assertions. This cause remains subject to the next run; do not call it flaky without a passing unchanged rerun.
+
+## Validation follow-up
+
+Expanded run 42734826022 at 8b8a1b9: 691 passed, 3 failed, 1 skipped. The downloaded report exposed two model/render failures in addition to the graph UI failure initially reported from the failed-step excerpt. Art selection orientation/coverage, bounded mask render parity, rig tests and Time Remap passed in that run.
+
+Corrections: the two-handle graph now uses logarithmic travel for 1–1,000 loop counts so increasing the upper limit does not make low counts jump by hundreds. Its regression checks both ordinary edits and the larger bound. The graph scroll content explicitly includes its padded edges in the hit surface; the failed UI test drags that edge to avoid grabbing a graph handle or numeric field. Failure diagnostics now save the screen and name the exact unreachable control. Bend tuning is tested in its documented active condition (short/wide ends, with tail bending enabled) instead of asking a curvature limiter to alter a mild default bend. No tests were removed or skipped.

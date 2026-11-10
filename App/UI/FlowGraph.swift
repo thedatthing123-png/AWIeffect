@@ -75,6 +75,7 @@ struct FlowGraphPanel: View {
                         controls
                         presetColumn
                     }.padding(.horizontal, 12).padding(.bottom, 12)
+                        .frame(maxWidth: .infinity).contentShape(Rectangle())
                 }.accessibilityIdentifier("graph-scroll")
                 }
             }

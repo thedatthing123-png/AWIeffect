@@ -28,7 +28,7 @@ struct ParameterCurveEditor: View {
 
     private func handle(_ curve: EaseCurve, first: Bool, spec: (String, ClosedRange<Double>, Double), width: CGFloat, y: CGFloat) -> some View {
         let value = first ? curve.a : curve.b
-        let f = min(1, max(0, (value - spec.1.lowerBound) / (spec.1.upperBound - spec.1.lowerBound)))
+        let f = Self.fraction(value, curve: curve, first: first, range: spec.1)
         return Circle().fill(first ? Theme.keyframe : Color.white)
             .frame(width: 18, height: 18).overlay(Circle().stroke(Theme.accent, lineWidth: 2))
             .frame(width: 44, height: 44).contentShape(Rectangle())
@@ -52,11 +52,26 @@ struct ParameterCurveEditor: View {
                 })
     }
 
+    /// Logarithmic travel keeps small loop counts precise while still reaching long repeats.
+    private static func logarithmic(_ curve: EaseCurve, first: Bool) -> Bool {
+        first && [.cycleRepeat, .cyclePingPong].contains(curve.kind)
+    }
+    private static func fraction(_ value: Double, curve: EaseCurve, first: Bool, range: ClosedRange<Double>) -> Double {
+        let v = min(range.upperBound, max(range.lowerBound, value))
+        if logarithmic(curve, first: first) { return log(v / range.lowerBound) / log(range.upperBound / range.lowerBound) }
+        return (v - range.lowerBound) / (range.upperBound - range.lowerBound)
+    }
+
     static func translated(_ source: EaseCurve, first: Bool, delta: CGFloat, width: CGFloat) -> EaseCurve {
         guard let spec = first ? source.kind.paramA : source.kind.paramB else { return source }
         var c = source
         let base = first ? source.a : source.b
-        var v = base + Double(delta / max(1, width - 48)) * (spec.1.upperBound - spec.1.lowerBound)
+        let travel = Double(delta / max(1, width - 48))
+        var v: Double
+        if logarithmic(source, first: first) {
+            let f = min(1, max(0, fraction(base, curve: source, first: first, range: spec.1) + travel))
+            v = spec.1.lowerBound * pow(spec.1.upperBound / spec.1.lowerBound, f)
+        } else { v = base + travel * (spec.1.upperBound - spec.1.lowerBound) }
         if first && [.cycleRepeat, .cyclePingPong, .bounceIn, .bounceOut].contains(source.kind) { v = v.rounded() }
         v = min(spec.1.upperBound, max(spec.1.lowerBound, v))
         if first { c.a = v } else { c.b = v }

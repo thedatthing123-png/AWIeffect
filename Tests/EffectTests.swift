@@ -226,6 +226,14 @@ final class EffectTests: XCTestCase {
                 if d.id == "awi.deepGlow" && pd.id == "softness" {
                     a.params["threshold"] = .number(Animated(50)); b.params["threshold"] = .number(Animated(50))
                 }
+                if d.id == "awi6.bend" && ["head", "tail"].contains(pd.id) {
+                    // End tuning limits curvature when Start leaves a short, wide segment.
+                    // Tail has no bend at all in Freeze, so explicitly exercise Same Side.
+                    a.params["angle"] = .number(Animated(150)); b.params["angle"] = .number(Animated(150))
+                    let start = pd.id == "head" ? 85.0 : 15.0
+                    a.params["start"] = .number(Animated(start)); b.params["start"] = .number(Animated(start))
+                    a.params["before"] = .choice(1); b.params["before"] = .choice(1)
+                }
                 // Adjustment layer = effect sees the whole varied scene, not just one flat shape.
                 let adj = !d.isTransformEffect && !Self.alphaShaped.contains(d.id)
                 let ra = try render(r, scene(effect: a, onAdjustment: adj)), rb = try render(r, scene(effect: b, onAdjustment: adj))

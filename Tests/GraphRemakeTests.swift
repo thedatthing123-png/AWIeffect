@@ -47,10 +47,10 @@ final class GraphRemakeTests: XCTestCase {
         let c = EaseCurve(.cyclePingPong)
         XCTAssertEqual(ParameterCurveEditor.translated(c, first: true, delta: 0, width: 348), c)
         let more = ParameterCurveEditor.translated(c, first: true, delta: 60, width: 348)
-        XCTAssertEqual(more.a, 5); XCTAssertEqual(more.b, c.b)
+        XCTAssertEqual(more.a, 12); XCTAssertEqual(more.b, c.b)
         let less = ParameterCurveEditor.translated(c, first: false, delta: -150, width: 348)
         XCTAssertEqual(less.b, 0.5, accuracy: 1e-8); XCTAssertEqual(less.a, c.a)
-        XCTAssertEqual(ParameterCurveEditor.translated(c, first: true, delta: 10000, width: 348).a, 12)
+        XCTAssertEqual(ParameterCurveEditor.translated(c, first: true, delta: 10000, width: 348).a, 1000)
         let bounce = EaseCurve(.bounceOut)
         XCTAssertNotEqual(ParameterCurveEditor.translated(bounce, first: false, delta: 80, width: 348).b, bounce.b)
     }

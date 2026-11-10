@@ -56,7 +56,8 @@ final class GraphRemakeUITests: XCTestCase {
             // Hold after the drag so scroll inertia cannot repeatedly overshoot the handle.
             p.press(forDuration: 0.05,thenDragTo: p.withOffset(CGVector(dx: 0,dy: -delta)), withVelocity: .slow, thenHoldForDuration: 0.3)
         }
-        XCTAssertTrue(e.isHittable, "Graph control must remain reachable")
+        save("graph-unreachable-control")
+        XCTAssertTrue(e.isHittable, "Graph control must remain reachable: \(e.label), frame=\(e.frame), scroll=\(scroll.frame)")
     }
     private func save(_ name: String) {
         let s = XCUIScreen.main.screenshot(), a = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
