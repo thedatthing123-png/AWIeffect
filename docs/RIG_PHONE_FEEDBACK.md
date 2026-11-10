@@ -36,3 +36,17 @@ AWI's current auto weights still use distance on a rectangular grid. They are no
 ## Validation gate
 
 Build 28 source 89fd5c9 passed full CI run 42575382756: 679 passed, 0 failed, 1 skipped. That did not prove phone usability. Build 29 changes require fresh targeted interaction/model tests, textured moving-artwork review, full validation and final screenshot inspection before an IPA is sent.
+
+## Additional phone feedback — brush, gallery, mask and rig controls
+
+The next candidate also fixes Smart Edges discarding explicitly painted coverage, including ink outlines, in Art Studio and Remove BG. Slow brush movement cancels hold-to-pick as soon as a stroke moves, while a still hold remains an eyedropper shortcut. Select Brush stamps every event endpoint, and Quick Select preserves its swept brush disk instead of leaving high-contrast line fragments. AI Subject no longer adds a second vertical flip to Vision's pixel-buffer mask. A synthetic asymmetric buffer regression checks row orientation without depending on Vision recognizing a test character.
+
+The existing Smooth brush control is now named Stabilizer and displayed on a 0–10 scale (0 = off). Refine Edge has an explanation of its existing Smooth, Feather and Shift Edge operations. The gallery's hard 3,000-item cap is removed; limited Photos authorization is clearly identified and the picker reloads after returning from Settings.
+
+Rig keeps piece/controller posing and IK. Bone creation, hierarchy and branching live in Bone / Weight; New Root starts another root on the same artwork, Branch continues from the selected bone. Rig and Puppet start at normal pad gain rather than Fine. Fine is still available for small corrections.
+
+Repeat and Back & Forth accept up to 1,000 cycles, evaluated in constant time. Bend now solves both sides of Start independently; Freeze, Same Side and Opposite Side are distinct. Tune Head/Tail limit the curvature at short, wide ends. This follows the documented circular-arc model, not extracted source code. New masks become one editable precomp with bounds based on the masked content in a 2D scene; inverse masks retain the target bounds. Camera/3D scenes retain full composition bounds to avoid applying a 2D crop to projection.
+
+Primary references: [ibisPaint Stabilizer](https://ibispaint.com/lecture/index.jsp?lang=en&no=50), [Alight Motion Bend](https://guide.alightmotion.com/effects/bend). Exact frame-rate claims require phone profiling; a successful simulator test is not proof every effect stack sustains 60 fps. Music/beat detection is the next phase, not included as an already completed change.
+
+Full run 42653473792 at 47fb213 reported 688 passed, 1 failed, 1 skipped. The failure was Time Remap's UI test at the newly added-key assertion after attempting to tap an offscreen control. The revised test requires the Add Key center to lie inside the visible clip panel before tapping, retaining its source-key/value/drag assertions. This cause remains subject to the next run; do not call it flaky without a passing unchanged rerun.

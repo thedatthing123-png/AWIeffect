@@ -8,6 +8,32 @@ import simd
         let art = p.makeLayer(name: "Continuous character",content: .solid,size: Vec2(400,400)); p.layers = [art]
         return (EditorState(project: p,store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString))),art.id)
     }
+    func testMaskActionsCreateBoundedEditableContainersAndKeepRenderedPlacement() throws {
+        let renderer = try XCTUnwrap(Renderer.shared)
+        for inverted in [false, true] {
+            var p = Project.new(name: "Mask", width: 300, height: 300, fps: 30, duration: 2)
+            let matte = p.makeLayer(name: "Small matte", content: .shape(.rectangle), size: Vec2(80, 60))
+            var art = p.makeLayer(name: "Hair", content: .solid, size: Vec2(160, 100))
+            art.fill = Animated(RGBA(1, 0.3, 0.1))
+            p.layers = [matte, art]
+            var expected = p
+            expected.layers[1].trackMatte = inverted ? .alphaInverted : .alpha
+            let before = try XCTUnwrap(renderer.renderPixels(project: expected, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) }))
+            let state = EditorState(project: p, store: ProjectStore(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)))
+            state.multiSelection = Set([matte.id, art.id]); state.maskWithTop(inverted: inverted)
+            XCTAssertEqual(state.project.layers.count, 1)
+            let container = try XCTUnwrap(state.selectedLayer)
+            guard case .precomp(let id) = container.content else { return XCTFail("Mask must be one editable container") }
+            let nested = try XCTUnwrap(state.project.precomps.first { $0.id == id })
+            XCTAssertEqual(nested.width, inverted ? 160 : 80); XCTAssertEqual(nested.height, inverted ? 100 : 60)
+            XCTAssertTrue(nested.layers.contains { $0.id == art.id }); XCTAssertTrue(nested.layers.contains { $0.id == matte.id })
+            let after = try XCTUnwrap(renderer.renderPixels(project: state.project, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) }))
+            XCTAssertEqual(before.width, after.width)
+            let maxDelta = zip(before.rgba, after.rgba).map { abs(Int($0) - Int($1)) }.max() ?? 0
+            XCTAssertLessThanOrEqual(maxDelta, 3, "Wrapping the mask must preserve its visible placement")
+        }
+    }
+
     func testReturnToEarlierWristAndCreateFiveIndependentFingerBranches() throws {
         let (s,art) = editor(); s.panel = .boneWeight
         let shoulder = try XCTUnwrap(s.addBone(artworkID: art,parentID: nil,start: Vec2(-100,0),end: .zero))

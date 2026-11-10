@@ -838,10 +838,12 @@ final class DrawEngine: ObservableObject {
     var quickTolerance = 0.18
 
     private var quickReach = 120
+    private var quickRadius = 10.0
 
     /// `reach` limits how far one touch can spread, so a touch on a part never leaks over the whole picture.
-    func beginQuickSelect(at p: SIMD2<Double>, subtract: Bool, reach: Double = 120) {
+    func beginQuickSelect(at p: SIMD2<Double>, subtract: Bool, reach: Double = 120, radius: Double = 10) {
         quickReach = max(24, Int(reach))
+        quickRadius = max(1, radius)
         quickBefore = hasSelection ? selectionBytes() : nil
         pushSelectionUndo()
         quickPixels = samplePixels()
@@ -856,14 +858,27 @@ final class DrawEngine: ObservableObject {
     /// Each new seed floods its region (bounded by line art and color changes) into the selection.
     func continueQuickSelect(to p: SIMD2<Double>) {
         guard quickPixels.count == width * height * 4 else { return }
-        if let last = quickSeeds.last, simd_length(p - last) < 6 { return }
+        let previous = quickSeeds.last ?? p
         let x = Int(p.x), y = Int(p.y)
         guard x >= 0, y >= 0, x < width, y < height else { return }
         quickSeeds.append(p)
-        // Already covered: nothing new to flood.
-        if !quickSubtract, quickBase[y * width + x] > 200 { return }
-        Self.floodRegion(quickPixels, width, height, seeds: [(x, y)], tolerance: quickTolerance, reach: quickReach) { i in
-            quickBase[i] = quickSubtract ? 0 : 255
+        // Region growing assists the brush. The swept disk remains authoritative over ink edges.
+        if quickSubtract || quickBase[y * width + x] <= 200 {
+            Self.floodRegion(quickPixels, width, height, seeds: [(x, y)], tolerance: quickTolerance, reach: quickReach) { i in
+                quickBase[i] = quickSubtract ? 0 : 255
+            }
+        }
+        let steps = max(1, Int(ceil(simd_length(p - previous) / max(1, quickRadius * 0.4))))
+        for k in 0...steps {
+            let q = previous + (p - previous) * (Double(k) / Double(steps))
+            let x0 = max(0, Int(q.x - quickRadius)), x1 = min(width - 1, Int(q.x + quickRadius))
+            let y0 = max(0, Int(q.y - quickRadius)), y1 = min(height - 1, Int(q.y + quickRadius))
+            guard x0 <= x1, y0 <= y1 else { continue }
+            for yy in y0...y1 { for xx in x0...x1 {
+                if hypot(Double(xx) + 0.5 - q.x, Double(yy) + 0.5 - q.y) <= quickRadius {
+                    quickBase[yy * width + xx] = quickSubtract ? 0 : 255
+                }
+            } }
         }
         selection.replace(region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: quickBase, bytesPerRow: width)
         hasSelection = true
@@ -1498,15 +1513,21 @@ final class DrawEngine: ObservableObject {
             instances = picked
         } else { instances = observation.allInstances }
         guard !instances.isEmpty, let pixelBuffer = try? observation.generateScaledMaskForImage(forInstances: instances, from: handler), !Task.isCancelled else { return nil }
+        let mask = rasterSelectionMask(pixelBuffer, width: width, height: height)
+        return mask.contains(where: { $0 > 128 }) ? mask : nil
+    }
+
+    /// Vision's pixel-buffer rows and the selection texture share top-down storage.
+    static func rasterSelectionMask(_ pixelBuffer: CVPixelBuffer, width: Int, height: Int) -> [UInt8] {
         let input = CIImage(cvPixelBuffer: pixelBuffer)
-        let sx = CGFloat(width) / input.extent.width, sy = CGFloat(height) / input.extent.height
-        let image = input.transformed(by: CGAffineTransform(scaleX: sx, y: -sy).translatedBy(x: 0, y: -input.extent.height))
+        let image = input.transformed(by: CGAffineTransform(scaleX: CGFloat(width) / input.extent.width,
+                                                           y: CGFloat(height) / input.extent.height))
         var mask = [UInt8](repeating: 0, count: width * height)
         mask.withUnsafeMutableBytes { buffer in
             guard let base = buffer.baseAddress else { return }
             CIContext().render(image, toBitmap: base, rowBytes: width, bounds: CGRect(x: 0, y: 0, width: width, height: height), format: .L8, colorSpace: CGColorSpaceCreateDeviceGray())
         }
-        return mask.contains(where: { $0 > 128 }) ? mask : nil
+        return mask
     }
 
     // MARK: Select Brush
@@ -1535,6 +1556,8 @@ final class DrawEngine: ObservableObject {
         let d = simd_length(p - last), step = max(1, selRadius * 0.35)
         var t = step
         while t <= d { paintSelection(at: last + (p - last) * (t / d)); t += step }
+        // Each event's endpoint matters, including slow sub-spacing movement.
+        paintSelection(at: p)
         selStroke.append(p); selLast = p
         uploadSelection()
     }
@@ -1568,6 +1591,8 @@ final class DrawEngine: ObservableObject {
             out[i] = selSubtract ? 0 : 255
         }
         Self.soften(&out, width, height)
+        // Edge assistance may expand a stroke, but must never undo the user's painted coverage.
+        for i in out.indices { out[i] = selSubtract ? min(out[i], selBuf[i]) : max(out[i], selBuf[i]) }
         selBuf = out
     }
 

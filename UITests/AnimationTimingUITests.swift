@@ -22,8 +22,14 @@ final class AnimationTimingUITests: XCTestCase {
         let sourceGraph = app.buttons["Source Time"].firstMatch
         XCTAssertTrue(sourceGraph.waitForExistence(timeout: 5)); sourceGraph.tap()
         let key = app.buttons["Add source time keyframe"].firstMatch
-        for _ in 0..<8 { if key.isHittable { break }; scrollPanel(scroll, up: true) }
-        XCTAssertTrue(key.waitForExistence(timeout: 8)); key.tap()
+        for _ in 0..<20 {
+            let viewport = scroll.frame.insetBy(dx: 0, dy: 28)
+            if key.exists && key.isHittable && viewport.contains(CGPoint(x: key.frame.midX, y: key.frame.midY)) { break }
+            scrollPanel(scroll, up: true)
+        }
+        XCTAssertTrue(key.waitForExistence(timeout: 8))
+        XCTAssertTrue(scroll.frame.insetBy(dx: 0, dy: 20).contains(CGPoint(x: key.frame.midX, y: key.frame.midY)), "Add Key must be inside the visible panel before tapping")
+        key.tap()
         XCTAssertTrue(app.buttons["1.000s → 1.000s"].waitForExistence(timeout: 3))
         let source = app.descendants(matching: .any)["number-Source seconds"].firstMatch
         XCTAssertTrue(source.waitForExistence(timeout: 3))

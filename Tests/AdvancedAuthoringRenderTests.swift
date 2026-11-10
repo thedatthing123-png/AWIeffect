@@ -7,6 +7,28 @@ import UniformTypeIdentifiers
 
 @MainActor
 final class AdvancedAuthoringRenderTests: XCTestCase {
+    func testBendModesKeepTheImageContinuousAndProduceModeArtifacts() throws {
+        let renderer = try XCTUnwrap(Renderer.shared)
+        let folder = URL(fileURLWithPath: "/tmp/awi-authoring", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        var outputs: [Data] = []
+        for mode in 0...2 {
+            var p = Project.new(name: "Bend", width: 400, height: 400, fps: 30, duration: 2, background: RGBA(0,0,0,0))
+            var l = p.makeLayer(name: "Flexible strip", content: .solid, size: Vec2(48, 220))
+            l.fill = Animated(RGBA(0.6, 0.2, 1))
+            var fx = EffectRegistry.bend6.makeInstance()
+            fx.params["angle"] = .number(Animated(100.0)); fx.params["start"] = .number(Animated(45.0)); fx.params["before"] = .choice(mode)
+            l.effects = [fx]; p.layers = [l]
+            let pixels = try XCTUnwrap(renderer.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) }))
+            let visible = stride(from: 3, to: pixels.rgba.count, by: 4).filter { pixels.rgba[$0] > 128 }.count
+            XCTAssertGreaterThan(visible, 48 * 220 / 2, "mode \(mode) must not discard half the strip")
+            let image = try XCTUnwrap(renderer.renderImage(project: p, time: 0, maxDimension: 400, mediaURL: { URL(fileURLWithPath: $0) }))
+            let data = try XCTUnwrap(image.pngData()); outputs.append(data)
+            try data.write(to: folder.appendingPathComponent("bend-mode-\(mode).png"))
+        }
+        XCTAssertNotEqual(outputs[0], outputs[1]); XCTAssertNotEqual(outputs[1], outputs[2])
+    }
+
     func testEditableLetterPoseMotionArtifact() throws {
         var project = Project.new(name: "Letters — editable fan pose", width: 600, height: 600, fps: 30, duration: 2)
         var layer = project.makeLayer(name: "HELLO", content: .text, size: Vec2(500, 200))

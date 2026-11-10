@@ -24,11 +24,10 @@ extension EditorState {
     func selectAuthoringBone(_ id: UUID) {
         guard project.layers.contains(where: { $0.id == id && $0.bone != nil }) else { return }
         if let child = boneParentPicking { boneParentPicking = nil; reparentAuthoringBone(child,to: id); return }
-        let previousPanel = panel
         rigOriginJointID = nil
         finishBoneDrawing()
         select(id)
-        panel = previousPanel == .boneWeight ? .boneWeight : .rig
+        panel = .boneWeight
         if boneWeightArtworkID != nil { finishBoneWeightStroke(commit: false); boneWeightBoneID = id }
     }
 
@@ -212,7 +211,7 @@ extension EditorState {
         let id = bone.id
         mutate("Draw Bone") { $0.layers.insert(bone, at: 0) }
         select(id)
-        if panel != .boneWeight { panel = .rig }
+        panel = .boneWeight
         boneDrawingParentID = id
         return id
     }
@@ -227,7 +226,7 @@ struct BoneAuthoringControls: View {
             VStack(alignment: .leading,spacing: 6) {
                 if state.boneDrawingArtworkID != nil {
                     HStack {
-                        Text("Create · drag from selected tip").font(.caption).foregroundStyle(Theme.accentGlow)
+                        Text(state.boneDrawingParentID == nil ? "New root · drag on the artwork" : "Branch · drag from selected tip").font(.caption).foregroundStyle(Theme.accentGlow)
                         Spacer()
                         Button("Done") { state.finishBoneDrawing() }.frame(minWidth: 60,minHeight: 44)
                     }
@@ -238,6 +237,9 @@ struct BoneAuthoringControls: View {
                                 .frame(maxWidth: .infinity,minHeight: 44)
                         }.buttonStyle(.bordered)
                         if state.selectedLayer?.bone != nil {
+                            Button("New Root") {
+                                state.beginBoneDrawing(); state.boneDrawingParentID = nil
+                            }.frame(minWidth: 65, minHeight: 44)
                             Button(state.boneParentPicking == nil ? "Parent" : "Cancel") {
                                 state.boneParentPicking = state.boneParentPicking == nil ? state.selectedLayerID : nil
                             }.frame(minWidth: 65,minHeight: 44)

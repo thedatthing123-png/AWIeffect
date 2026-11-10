@@ -141,7 +141,7 @@ extension EditorState {
 /// Puppet panel: how-to, Animate switch, pins list.
 struct PuppetPanel: View {
     @ObservedObject var state: EditorState
-    @State private var fine = true
+    @State private var fine = false
     @State private var pinInput: (origin: Vec2,inverse: simd_double3x3)?
     @State private var pinDelta = Vec2.zero
 

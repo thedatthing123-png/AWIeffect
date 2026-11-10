@@ -83,7 +83,7 @@ extension EditorState {
     }
 
     /// Groups the selection into one pre-comp, keeping order and timing.
-    func precomposeMulti(name: String? = nil) {
+    func precomposeMulti(name: String? = nil, cropBounds: CGRect? = nil) {
         guard let selected = multiSelection, !selected.isEmpty else { return }
         let ids = rigTransferIDs(selected)
         var clean = project
@@ -97,10 +97,19 @@ extension EditorState {
         var comp = Project.new(name: name ?? "Precomp \(project.precomps.count + 1)", width: project.width, height: project.height,
                                fps: project.fps, duration: project.duration, background: RGBA(0, 0, 0, 0))
         comp.layers = picked
+        if let cropBounds {
+            comp.width = max(1, Int(ceil(cropBounds.width))); comp.height = max(1, Int(ceil(cropBounds.height)))
+            var offset = comp.makeLayer(name: "Mask origin", content: .solid, size: Vec2(1, 1))
+            offset.isNull = true
+            offset.transform.position = Animated(Vec2(-cropBounds.minX, -cropBounds.minY))
+            for i in comp.layers.indices where comp.layers[i].parentID == nil { comp.layers[i].parentID = offset.id }
+            comp.layers.append(offset)
+        }
         var newID = UUID()
         mutate("Pre-compose \(picked.count) Layers") { p in
             var all = p.precomps; all.append(comp); p.precomps = all
-            var pl = p.makeLayer(name: comp.name, content: .precomp(id: comp.id), size: Vec2(Double(p.width), Double(p.height)))
+            var pl = p.makeLayer(name: comp.name, content: .precomp(id: comp.id), size: Vec2(Double(comp.width), Double(comp.height)))
+            if let cropBounds { pl.transform.position = Animated(Vec2(cropBounds.minX + Double(comp.width) / 2, cropBounds.minY + Double(comp.height) / 2)) }
             pl.inPoint = picked.map(\.inPoint).min() ?? 0
             pl.outPoint = picked.map(\.outPoint).max() ?? p.duration
             pl.sourceStart = pl.inPoint
@@ -120,6 +129,8 @@ extension EditorState {
     func maskWithTop(inverted: Bool) {
         guard let ids = multiSelection, ids.count >= 2,
               let matteIndex = project.layers.firstIndex(where: { ids.contains($0.id) }) else { return }
+        beginEdit(inverted ? "Mask with Top (Inverted)" : "Mask with Top")
+        defer { endEdit() }
         let matteID = project.layers[matteIndex].id
         let rest = Set(ids.subtracting([matteID]))
         var targetID: UUID
@@ -139,9 +150,24 @@ extension EditorState {
             p.layers[ti + 1].trackMatte = inverted ? .alphaInverted : .alpha
             p.layers[ti + 1].clipToBelow = false
         }
-        selectedLayerID = targetID
-        multiSelection = nil; multiAnchor = nil
-        panel = .blending
+        // Keep the matte and its artwork editable together. Their container uses their
+        // content bounds, rather than turning a small masked piece into a full-canvas object.
+        let members = project.layers.filter { $0.id == matteID || $0.id == targetID }
+        var crop: CGRect?
+        if !project.layers.contains(where: { $0.content == .camera || $0.is3D }) {
+            let times = Set([currentTime] + members.flatMap { $0.transform.position.keyframeTimes + $0.transform.rotation.keyframeTimes + $0.transform.scale.keyframeTimes })
+            for time in times {
+                guard let matte = members.first(where: { $0.id == matteID }), let target = members.first(where: { $0.id == targetID }),
+                      let mb = LayerPlacement.bounds(matte, project: project, time: time),
+                      let tb = LayerPlacement.bounds(target, project: project, time: time) else { continue }
+                let visible = inverted ? tb : mb.intersection(tb)
+                if !visible.isNull && !visible.isEmpty { crop = crop.map { $0.union(visible) } ?? visible }
+            }
+        }
+        multiSelection = Set([matteID, targetID])
+        precomposeMulti(name: inverted ? "Inverted Mask" : "Mask", cropBounds: crop?.integral)
+        multiAnchor = nil
+        panel = .transform
     }
 
     func setVisibilityMulti(_ visible: Bool) {

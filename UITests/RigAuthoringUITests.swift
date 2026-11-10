@@ -3,7 +3,7 @@ import XCTest
 final class RigAuthoringUITests: XCTestCase {
     func testPoseOriginDragMovesTheJointWithoutEnteringRestMode() {
         continueAfterFailure = false
-        let app = XCUIApplication(); app.launchArguments = ["-uiTesting","-uiTesting-rigAuthoring"]; app.launch()
+        let app = XCUIApplication(); app.launchArguments = ["-uiTesting","-uiTesting-rigAuthoring","-uiTesting-boneAuthoring"]; app.launch()
         let draw = app.buttons["Draw Bones"].firstMatch; XCTAssertTrue(draw.waitForExistence(timeout: 15)); draw.tap()
         let canvas = app.descendants(matching: .any)["Draw connected bones"].firstMatch
         XCTAssertTrue(canvas.waitForExistence(timeout: 5))
@@ -55,7 +55,7 @@ final class RigAuthoringUITests: XCTestCase {
 
     func testSelectEarlierBoneAndBranchWithoutLeavingAuthoringPanel() {
         continueAfterFailure = false
-        let app = XCUIApplication(); app.launchArguments = ["-uiTesting","-uiTesting-rigAuthoring"]; app.launch()
+        let app = XCUIApplication(); app.launchArguments = ["-uiTesting","-uiTesting-rigAuthoring","-uiTesting-boneAuthoring"]; app.launch()
         let draw = app.buttons["Draw Bones"].firstMatch; XCTAssertTrue(draw.waitForExistence(timeout: 15)); draw.tap()
         let canvas = app.descendants(matching: .any)["Draw connected bones"].firstMatch
         XCTAssertTrue(canvas.waitForExistence(timeout: 5))
@@ -79,7 +79,7 @@ final class RigAuthoringUITests: XCTestCase {
     func testDrawConnectedBoneChainAndPoseItOnCanvas() {
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments = ["-uiTesting", "-uiTesting-rigAuthoring"]
+        app.launchArguments = ["-uiTesting", "-uiTesting-rigAuthoring", "-uiTesting-boneAuthoring"]
         app.launch()
         let draw = app.buttons["Draw Bones"].firstMatch
         XCTAssertTrue(draw.waitForExistence(timeout: 15)); draw.tap()

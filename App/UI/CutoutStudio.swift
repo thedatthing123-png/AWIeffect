@@ -210,10 +210,12 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
             }
             DrawEngine.floodRegion(CutoutBake.pixels(of: cg, width: w, height: h), w, h, seeds: seeds, tolerance: 0.1, reach: Int(r * 2.5)) { region[$0] = 255 }
             DrawEngine.soften(&region, w, h)
-        } else {
-            let stroke = CutoutStroke(points: points.map { Vec2(Double($0.x), Double($0.y)) }, radius: Double(radius), subtract: false)
-            CutoutEngine.paint([stroke], into: &region, w: w, h: h)
         }
+        // Explicit brush coverage is authoritative even over high-contrast ink outlines.
+        let stroke = CutoutStroke(points: points.map { Vec2(Double($0.x), Double($0.y)) }, radius: Double(radius), subtract: false)
+        var painted = [UInt8](repeating: 0, count: w * h)
+        CutoutEngine.paint([stroke], into: &painted, w: w, h: h)
+        for i in region.indices { region[i] = max(region[i], painted[i]) }
         for i in sel.indices { sel[i] = subtractStroke ? min(sel[i], 255 - region[i]) : max(sel[i], region[i]) }
         selection = sel.contains { $0 > 0 } ? sel : nil
         selectionImage = selection.map { MatteFrame(width: w, height: h, bytes: $0) }?.image(color: (155, 92, 255))

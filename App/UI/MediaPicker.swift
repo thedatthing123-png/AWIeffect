@@ -15,6 +15,7 @@ final class PhotoLibraryModel: ObservableObject {
     let images = PHCachingImageManager()
 
     func start() {
+        status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         if status == .notDetermined {
             PHPhotoLibrary.requestAuthorization(for: .readWrite) { s in
                 Task { @MainActor in self.status = s; self.reload() }
@@ -54,13 +55,14 @@ final class PhotoLibraryModel: ObservableObject {
             result = PHAsset.fetchAssets(in: c, options: opts)
         }
         var out: [PHAsset] = []
-        out.reserveCapacity(min(result.count, 3000))
-        result.enumerateObjects { a, i, stop in out.append(a); if i >= 2999 { stop.pointee = true } }
+        out.reserveCapacity(result.count)
+        result.enumerateObjects { a, _, _ in out.append(a) }
         assets = out
     }
 }
 
 struct MediaPickerView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @ObservedObject var state: EditorState
     @Binding var isPresented: Bool
     @StateObject private var lib = PhotoLibraryModel()
@@ -81,6 +83,11 @@ struct MediaPickerView: View {
             }
             .padding(.horizontal, 16).padding(.bottom, 8)
             if lib.allowed {
+                if lib.status == .limited {
+                    Button("Only selected photos are allowed · Manage access in Settings") {
+                        if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                    }.font(.caption).frame(minHeight: 44)
+                }
                 tabs
                 if failed > 0 { Text("\(failed) items could not be imported. Check that they are downloaded from iCloud and try again.").font(.caption).foregroundStyle(Theme.danger) }
                 grid
@@ -99,6 +106,7 @@ struct MediaPickerView: View {
             }
         }
         .onAppear { lib.start() }
+        .onChange(of: scenePhase) { _, phase in if phase == .active { lib.start() } }
     }
 
     private var tabs: some View {

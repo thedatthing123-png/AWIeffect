@@ -115,9 +115,11 @@ extension EffectRegistry {
         id: "awi6.bend", name: "Bend", category: .distort, aeMatchNames: [],
         summary: "Curl the layer like Alight Motion: it stays straight from the Origin edge up to Start, then bends by Angle (Start 50% = only the far half bends).",
         params: [.choice("origin", "Origin", ["Left", "Right", "Top", "Bottom"], 3),
-                 .number("angle", "Angle", 45, -360, 360, unit: "°"),
-                 .number("start", "Start", 0, 0, 99, unit: "%"),
-                 .choice("before", "Before Start", ["Freeze", "Bend"], 0)],
+                 .number("angle", "Angle", 45, -180, 180, unit: "°"),
+                 .number("start", "Start", 0, 0, 100, unit: "%"),
+                 .choice("before", "Before Start", ["Freeze", "Same Side", "Opposite Side"], 0),
+                 .number("head", "Tune Head", 75, 0, 100, unit: "%"),
+                 .number("tail", "Tune Tail", 25, 0, 100, unit: "%")],
         margin: { _, _ in 400 },
         stage: .pixels { ctx in
             let out = ctx.temp()
@@ -126,6 +128,7 @@ extension EffectRegistry {
             let r = layerRect(ctx)
             p.a = SIMD4(Float(ctx.num("angle") * .pi / 180), Float(ctx.num("start") / 100), 0, 0)
             p.b = r
+            p.c = SIMD4(Float((ctx.effect.params["head"]?.number(at: ctx.time) ?? 75) / 100), Float((ctx.effect.params["tail"]?.number(at: ctx.time) ?? 25) / 100), 0, 0)
             p.i = SIMD4(UInt32(max(0, ctx.effect.choice("origin"))), UInt32(max(0, ctx.effect.choice("before"))), 0, 0)
             ctx.gpu.run("fx19Bend", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
             return out

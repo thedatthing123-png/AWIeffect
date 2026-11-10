@@ -14,6 +14,13 @@ final class GraphRemakeTests: XCTestCase {
         a.keyframes[0].curve = c
         return a
     }
+    func testLongRepeatRetainsHundredsOfCyclesWithoutClampingToTwelve() {
+        let a = animation(.cycleRepeat, cycles: 500, smoothness: 0)
+        XCTAssertEqual(a.value(at: 3 * 100.25 / 500), 7.5, accuracy: 1e-7)
+        XCTAssertEqual(a.value(at: 3 * 499.75 / 500), 2.5, accuracy: 1e-7)
+        XCTAssertEqual(a.value(at: 3), 0)
+    }
+
     func testRepeatResetsAndBackForthReturnsWithoutJumping() {
         let repeatA = animation(.cycleRepeat)
         XCTAssertEqual(repeatA.value(at: 0), 10)

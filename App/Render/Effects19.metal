@@ -325,35 +325,39 @@ kernel void fx19Bend(texture2d<half, access::sample> src [[texture(0)]],
         default: o = float2((lo.x + hi.x) * 0.5, hi.y); along = float2(0, -1); perp = float2(1, 0); break;
     }
     float L = max(abs(dot(hi - lo, along)), 1.0);
-    float theta = p.a.x;
-    float s = p.i.y == 1 ? 0.0 : clamp(p.a.y, 0.0, 0.999);
-    float x0 = s * L, bendLen = L - x0;
+    float halfWidth = max(abs(dot(hi - lo, perp)) * 0.5, 0.5);
+    float theta = clamp(p.a.x, -M_PI_F, M_PI_F);
+    float split = clamp(p.a.y, 0.0, 1.0) * L;
     float2 c = float2(gid) + 0.5;
-    float X = dot(c - o, along) - x0;   // along the layer, from the bend start
-    float Y = dot(c - o, perp);         // across the layer
-    float2 srcXY;
-    if (abs(theta) < 1e-4 || X < 0.0) {
-        srcXY = float2(X, Y);           // straight part (frozen)
-    } else {
-        float sg = theta < 0.0 ? -1.0 : 1.0;
-        float th = abs(theta);
-        float R = bendLen / th;
-        float y = Y * sg;
-        // Inverse of: (x, y) -> (r sin a, R - r cos a), a = x / R, r = R - y.
-        float a = atan2(X, R - y);
-        float r = length(float2(X, y - R));
-        if (a >= 0.0 && a <= th) {
-            srcXY = float2(a * R, (R - r) * sg);
-        } else if (a > th) {
-            // Past the arc: the rest continues straight in the bent direction.
-            float2 end = float2(R * sin(th), R - R * cos(th));
-            float2 t = float2(cos(th), sin(th)), n = float2(-sin(th), cos(th));
-            float2 d = float2(X, y) - end;
-            srcXY = float2(bendLen + dot(d, t), dot(d, n) * sg);
-        } else {
-            srcXY = float2(X, Y);
+    float X = dot(c - o, along) - split;
+    float Y = dot(c - o, perp);
+    if (abs(theta) < 1e-5) { dst.write(half4(S(src, c)), gid); return; }
+    // Solve each side about Start. No X<0 shortcut: a large arc can return behind Start.
+    // Tail curvature reverses for Same Side and retains its sign for an S bend.
+    float2 source = float2(0);
+    bool found = false;
+    for (int side = 0; side < 2; ++side) {
+        float segmentLength = side == 0 ? L - split : split;
+        if (segmentLength < 1e-4) continue;
+        if (side == 1 && p.i.y == 0) {
+            if (X <= 0.0 && X >= -split && abs(Y) <= halfWidth) {
+                source = float2(X, Y); found = true;
+            }
+            continue;
         }
+        float k = theta / max(segmentLength, 1e-4);
+        if (side == 1 && p.i.y == 1) k = -k;
+        // Tune controls limit curvature as one side becomes too short/wide to bend cleanly.
+        float tuning = clamp(side == 0 ? p.c.x : p.c.y, 0.0, 1.0);
+        float limit = 1.0 / max(halfWidth * (1.01 + tuning), 1.0);
+        k = clamp(k, -limit, limit);
+        float angle = atan2(k * X, 1.0 - k * Y);
+        float t = angle / k;
+        float cross = (1.0 - length(float2(k * X, 1.0 - k * Y))) / k;
+        bool within = side == 0 ? (t >= 0.0 && t <= segmentLength) : (t <= 0.0 && t >= -segmentLength);
+        if (within && abs(cross) <= halfWidth) { source = float2(t, cross); found = true; }
     }
-    float2 q = o + along * (srcXY.x + x0) + perp * srcXY.y;
+    if (!found) { dst.write(half4(0), gid); return; }
+    float2 q = o + along * (source.x + split) + perp * source.y;
     dst.write(half4(S(src, q)), gid);
 }

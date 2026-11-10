@@ -1,5 +1,6 @@
 import XCTest
 import simd
+import CoreVideo
 @testable import AWIeffect
 
 final class ArtStudioRenewTests: XCTestCase {
@@ -172,7 +173,7 @@ final class ArtStudioRenewTests: XCTestCase {
         XCTAssertLessThan(m[5 * 96 + 60], 30, "stops at its reach")
     }
 
-    func testAIBrushSnapsToThePartItWasPaintedOn() throws {
+    func testAIBrushGrowsToPartWithoutDiscardingExplicitPaint() throws {
         let e = try engine()
         let l = try XCTUnwrap(e.activeLayer)
         var b = [UInt8](repeating: 255, count: 96 * 96 * 4)
@@ -183,9 +184,41 @@ final class ArtStudioRenewTests: XCTestCase {
         e.endSelectStroke(snapToSubject: false, snapToEdges: true)
         let m = e.selectionBytes()
         XCTAssertGreaterThan(m[35 * 96 + 35], 200, "fills to the edge of the part")
-        XCTAssertLessThan(m[45 * 96 + 62], 60, "the stroke spilled here, but that is not the part")
+        XCTAssertGreaterThan(m[45 * 96 + 62], 200, "explicitly brushed ink/edges must remain selected")
+        XCTAssertEqual(m[10 * 96 + 10], 0, "unpainted background stays unselected")
         e.undo()
         XCTAssertFalse(e.hasSelection)
+    }
+
+    func testVisionSelectionRasterKeepsTopAndBottomInPlace() throws {
+        var optional: CVPixelBuffer?
+        XCTAssertEqual(CVPixelBufferCreate(kCFAllocatorDefault, 32, 32, kCVPixelFormatType_OneComponent8, nil, &optional), kCVReturnSuccess)
+        let buffer = try XCTUnwrap(optional)
+        CVPixelBufferLockBaseAddress(buffer, [])
+        let bytes = try XCTUnwrap(CVPixelBufferGetBaseAddress(buffer)?.assumingMemoryBound(to: UInt8.self))
+        let row = CVPixelBufferGetBytesPerRow(buffer)
+        for y in 0..<32 { for x in 0..<32 { bytes[y * row + x] = y < 8 && x < 12 ? 255 : 0 } }
+        CVPixelBufferUnlockBaseAddress(buffer, [])
+        let mask = DrawEngine.rasterSelectionMask(buffer, width: 32, height: 32)
+        XCTAssertGreaterThan(mask[3 * 32 + 3], 240, "top-left subject stays at the top")
+        XCTAssertLessThan(mask[28 * 32 + 3], 15, "no vertically mirrored selection")
+    }
+
+    func testQuickBrushSweepsAcrossThinInkWithoutLeavingFragments() throws {
+        let e = try engine()
+        var b = [UInt8](repeating: 255, count: 96 * 96 * 4)
+        for y in 20..<80 { for x in 44..<47 {
+            let i = (y * 96 + x) * 4
+            b[i] = 0; b[i + 1] = 0; b[i + 2] = 0
+        } }
+        e.setBytes(b, of: try XCTUnwrap(e.activeLayer))
+        e.beginQuickSelect(at: SIMD2(35, 48), subtract: false, reach: 24, radius: 5)
+        for x in stride(from: 35.5, through: 55, by: 0.5) { e.continueQuickSelect(to: SIMD2(x, 48)) }
+        e.endQuickSelect()
+        XCTAssertGreaterThan(e.selectionBytes()[48 * 96 + 45], 240, "slow strokes cover the black outline")
+        e.beginQuickSelect(at: SIMD2(35, 48), subtract: true, reach: 24, radius: 5)
+        e.continueQuickSelect(to: SIMD2(55, 48)); e.endQuickSelect()
+        XCTAssertLessThan(e.selectionBytes()[48 * 96 + 45], 15, "Cut must clear the same outline")
     }
 
     func testPenPathCurvesAndClosesAndApplies() throws {

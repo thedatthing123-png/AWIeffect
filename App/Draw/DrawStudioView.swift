@@ -317,7 +317,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         case .rectSelect, .ellipseSelect:
             shapeStart = p; shapeEnd = p
         case .selectBrush: e.beginSelectStroke(at: p, radius: session.brush.size / 2, subtract: session.selectSubtract)
-        case .quickSelect: e.beginQuickSelect(at: p, subtract: session.selectSubtract, reach: 60 / Double(zoom) + 40)
+        case .quickSelect: e.beginQuickSelect(at: p, subtract: session.selectSubtract, reach: 60 / Double(zoom) + 40, radius: session.brush.size / 2)
         case .pen: penBegan(at: t.location(in: self))
         case .lasso:
             if session.polygonLasso {
@@ -350,7 +350,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         guard let t = touches.first(where: { $0 === drawingTouch }), (event?.allTouches?.count ?? 1) == 1 else { return }
         cursorPoint = t.location(in: self)
         let moved = t.location(in: self)
-        if hypot(moved.x - holdOrigin.x, moved.y - holdOrigin.y) > 8 { cancelHoldPick() }
+        if hypot(moved.x - holdOrigin.x, moved.y - holdOrigin.y) > 0.5 { cancelHoldPick() }
         switch session.tool {
         case .smudge, .blur:
             for c in event?.coalescedTouches(for: t) ?? [t] { session.engine.continueStroke(to: toCanvas(c.location(in: self)), pressure: 1) }
@@ -869,7 +869,7 @@ struct DrawStudioView: View {
                         .padding(.horizontal, 12).padding(.vertical, 7).background(Capsule().fill(Theme.raised)).foregroundStyle(Theme.text)
                 }
                 .accessibilityLabel("Choose Brush")
-                optionSlider("Smooth", value: $session.brush.stabilizer, range: 0...1)
+                optionSlider("Stabilizer", value: Binding(get: { session.brush.stabilizer * 10 }, set: { session.brush.stabilizer = $0 / 10 }), range: 0...10)
             }
             .padding(.horizontal, 10)
         case .eraser:
@@ -1022,6 +1022,7 @@ struct DrawStudioView: View {
         HStack(spacing: 6) {
             Text(t).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textDim)
             Slider(value: value, in: range).tint(Theme.accent)
+            if t == "Stabilizer" { Text("\(Int(value.wrappedValue.rounded()))").font(.caption.monospacedDigit()).foregroundStyle(Theme.textDim).frame(width: 22) }
         }
     }
 
@@ -1353,6 +1354,8 @@ struct SelectionRefineSheet: View {
                     HStack { Text("Smooth"); Slider(value: $smooth, in: 0...6, step: 1); Text("\(Int(smooth))").monospacedDigit() }
                     HStack { Text("Feather"); Slider(value: $feather, in: 0...12, step: 1); Text("\(Int(feather))").monospacedDigit() }
                     HStack { Text("Shift Edge"); Slider(value: $shift, in: -12...12, step: 1); Text("\(Int(shift))").monospacedDigit() }
+                    Text("Smooth rounds the boundary. Feather softens transparency. Positive Shift Edge includes more of the outline; negative values trim it. Apply commits one undoable change.")
+                        .font(.caption).foregroundStyle(.secondary)
                     Button("Apply to Selection") {
                         session.engine.refineSelection(feather: Int(feather), shift: Int(shift), smooth: Int(smooth))
                         feather = 0; shift = 0; smooth = 0

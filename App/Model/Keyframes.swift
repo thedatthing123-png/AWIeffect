@@ -126,7 +126,7 @@ struct EaseCurve: Codable, Equatable, Hashable {
         /// Settings the curve has (labels for a and b); nil = none.
         var paramA: (String, ClosedRange<Double>, Double)? {
             switch self {
-            case .cycleRepeat, .cyclePingPong: return ("Cycles", 1...12, 3)
+            case .cycleRepeat, .cyclePingPong: return ("Cycles", 1...1000, 3)
             case .bounceOut, .bounceIn: return ("Bounces", 1...8, 3)
             case .elasticOut, .elasticIn: return ("Wobbles", 1...10, 3)
             case .backIn, .backOut, .backInOut, .overshoot: return ("Overshoot", 0...4, 1.7)
@@ -203,7 +203,7 @@ struct EaseCurve: Codable, Equatable, Hashable {
         case .cycleRepeat, .cyclePingPong:
             // Integer counts keep the last keyed value exact. A back/forth cycle adds two legs,
             // so N cycles = N forward passes and N-1 returns, ending at the second key.
-            let count = max(1, min(12, Int((a.isFinite ? a : 3).rounded())))
+            let count = max(1, min(1000, Int(min(1000, max(1, a.isFinite ? a : 3)).rounded())))
             if x >= 1 { return 1 }
             let legs = kind == .cycleRepeat ? count : 2 * count - 1
             let phase = x * Double(legs), leg = Int(phase), fraction = phase - Double(leg)

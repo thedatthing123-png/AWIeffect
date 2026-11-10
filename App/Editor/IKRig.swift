@@ -924,7 +924,7 @@ extension EditorState {
 /// Only X/Y from Move & Transform belongs here. No layer-move, Z, camera pan, or second gesture engine.
 struct RigPositionControls: View {
     @ObservedObject var state: EditorState
-    @State private var fine = true
+    @State private var fine = false
     @State private var pointGesture: RigPointGesture?
 
     var body: some View {
@@ -999,9 +999,7 @@ struct RigPanel: View {
                 LiveReader(live: state.live) { _ in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
-                        if l.bone == nil { RigPositionControls(state: state) }
-                        BoneAuthoringControls(state: state)
-                        if l.bone != nil { RigPositionControls(state: state) }
+                        RigPositionControls(state: state)
                         DisclosureGroup("Physics",isExpanded: $physicsOpen) {
                         if !l.isNull {
                             Toggle("Solid artwork",isOn: Binding(get: { l.isCollider },set: { value in
