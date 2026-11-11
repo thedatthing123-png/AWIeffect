@@ -42,4 +42,18 @@ const skills = await link.handle({jsonrpc:"2.0",id:8,method:"tools/call",params:
 assert.match(skills.result.content[0].text, /effects/);
 const skillRead = await link.handle({jsonrpc:"2.0",id:9,method:"tools/call",params:{name:"editing_skills",arguments:{action:"read",topic:"manga",maxChars:2000}}});
 assert.match(skillRead.result.content[0].text, /SOURCE/);
+// Guard against regressions where the relay advertises a route the iOS app never handles.
+const {readFileSync} = await import("node:fs");
+const nativeSource = ["App/AILink.swift","App/AILinkEditor.swift","App/AILinkAdvanced.swift","App/AILinkArtStudio.swift"]
+  .map(path=>readFileSync(new URL("../"+path, import.meta.url),"utf8")).join("\n");
+const requiredNative = ["/text/animators","/timeline","/layers/graph","/keyframes/velocity",
+  "/layers/expression","/layers/remap","/layers/batch-patch","/masks/path",
+  "/physics/soft-body","/physics/bake","/rig/ik","/rig/remove",
+  "/layers/model","/layers/text3d","/puppet/pin",
+  "/export/start","/export/status","/export/cancel","/draw/strokes","/draw/layer"];
+for (const route of requiredNative) assert.ok(nativeSource.includes('"'+route+'"'), "Missing native AI Link route: "+route);
+const typographyGuide = await link.handle({jsonrpc:"2.0",id:10,method:"tools/call",
+  params:{name:"editing_skills",arguments:{action:"read",topic:"typography",maxChars:1000}}});
+assert.ok(typographyGuide.result.content[0].text.length > 100, "Guide reads must never silently return empty");
+assert.match(typographyGuide.result.content[0].text,/nextOffset|text|type|SOURCE/i);
 console.log("AWIeffect unified MCP smoke tests passed");
