@@ -65,6 +65,27 @@ extension AILink {
             guard e.isInPrecomp else { return .json(["error": "no open precomp"], status: 409) }
             e.closePrecomp()
             return .json(["ok": true])
+        case ("POST", "/masks/path"):
+            guard let e = editor else { return .noProject }
+            return aiAddMaskPath(a, e)
+        case ("POST", "/layers/batch-patch"):
+            guard let e = editor else { return .noProject }
+            return aiBatchPatchLayers(a, e)
+        case ("POST", "/project/patch"):
+            guard let e = editor else { return .noProject }
+            return aiPatchProject(a, e)
+        case ("POST", "/physics/bake"):
+            guard let e = editor else { return .noProject }
+            return aiBakePhysics(a, e)
+        case ("POST", "/physics/soft-body"):
+            guard let e = editor else { return .noProject }
+            return aiBakeSoftBody(a, e)
+        case ("POST", "/rig/ik"):
+            guard let e = editor else { return .noProject }
+            return aiLegacyIK(a, e, remove: false)
+        case ("POST", "/rig/remove"):
+            guard let e = editor else { return .noProject }
+            return aiLegacyIK(a, e, remove: true)
         case ("POST", "/text/animators"):
             guard let e = editor else { return .noProject }
             return aiTextAnimators(a, e)
@@ -83,6 +104,161 @@ extension AILink {
     }
 
 
+
+
+    /// Legacy relay route: add a closed native bezier mask, not an AI-generated matte.
+    private func aiAddMaskPath(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        guard let id = Self.uuid(a["layer"]),
+              let old = e.project.layers.first(where: { $0.id == id }), !old.isLocked else {
+            return .json(["error":"existing unlocked layer required"],status:404)
+        }
+        guard let points = a["points"] as? [[NSNumber]],
+              (3...1000).contains(points.count),
+              points.allSatisfy({ $0.count == 2 && $0[0].doubleValue.isFinite && $0[1].doubleValue.isFinite &&
+                                 abs($0[0].doubleValue) <= 100000 && abs($0[1].doubleValue) <= 100000 }) else {
+            return .json(["error":"points require 3..1000 finite [x,y] vertices"],status:400)
+        }
+        var mask = LayerMask(path: Animated(BezierPath(vertices: points.map {
+            PathVertex(point: Vec2($0[0].doubleValue, $0[1].doubleValue))
+        }, closed: true)))
+        if let name = a["name"] as? String { mask.name = String(name.prefix(120)) }
+        if let raw = a["mode"] as? String {
+            guard let mode = MaskMode(rawValue: raw) else { return .json(["error":"invalid mask mode"],status:400) }
+            mask.mode = mode
+        }
+        mask.inverted = a["inverted"] as? Bool ?? false
+        if let feather = (a["feather"] as? NSNumber)?.doubleValue, feather.isFinite {
+            mask.feather = Animated(max(0,min(5000,feather)))
+        }
+        e.mutate("AI Add Mask") { p in
+            guard let i = p.layers.firstIndex(where: {$0.id == id}) else { return }
+            p.layers[i].masks.append(mask)
+        }
+        return .json(["ok":true,"layer":id.uuidString,"mask":mask.id.uuidString])
+    }
+
+    /// Apply multiple existing-layer edits in one undo step; fail the entire batch on invalid JSON.
+    private func aiBatchPatchLayers(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        guard let patches = a["patches"] as? [[String: Any]], (1...256).contains(patches.count) else {
+            return .json(["error":"patches requires 1..256 entries"],status:400)
+        }
+        let enc = JSONEncoder(), dec = JSONDecoder()
+        var replacements: [UUID: Layer] = [:]
+        do {
+            for patch in patches {
+                guard let id = Self.uuid(patch["layer"]),
+                      replacements[id] == nil,
+                      let set = patch["set"] as? [String: Any], !set.isEmpty,
+                      Set(set.keys).isSubset(of: Self.aiPatchFields),
+                      let original = e.project.layers.first(where: {$0.id == id}), !original.isLocked,
+                      var obj = try JSONSerialization.jsonObject(with: enc.encode(original)) as? [String: Any] else {
+                    return .json(["error":"invalid, locked, duplicate, or protected layer patch"],status:400)
+                }
+                for (key, value) in set { obj[key] = value }
+                let updated = try dec.decode(Layer.self, from: JSONSerialization.data(withJSONObject: obj))
+                guard updated.id == id, updated.content == original.content else {
+                    return .json(["error":"layer identity/content cannot change"],status:400)
+                }
+                replacements[id] = updated
+            }
+        } catch {
+            return .json(["error":"invalid patch JSON: \\(error)"],status:400)
+        }
+        e.mutate("AI Batch Patch Layers") { p in
+            for i in p.layers.indices {
+                if let replacement = replacements[p.layers[i].id] { p.layers[i] = replacement }
+            }
+        }
+        return .json(["ok":true,"updated":replacements.keys.map(\\.uuidString).sorted()])
+    }
+
+    /// Only project composition metadata. Never app Settings or relay credentials.
+    private func aiPatchProject(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        guard let set = a["set"] as? [String: Any], !set.isEmpty else { return Self.need("set") }
+        let allowed: Set<String> = ["name","duration","fps","width","height"]
+        guard Set(set.keys).isSubset(of: allowed) else {
+            return .json(["error":"unsupported or protected project field","allowed":allowed.sorted()],status:400)
+        }
+        let newName = set["name"] as? String
+        let duration = (set["duration"] as? NSNumber)?.doubleValue
+        let fps = (set["fps"] as? NSNumber)?.doubleValue
+        let width = (set["width"] as? NSNumber)?.intValue
+        let height = (set["height"] as? NSNumber)?.intValue
+        if (set["name"] != nil && (newName == nil || newName!.isEmpty || newName!.count > 120)) ||
+           (set["duration"] != nil && (duration == nil || !duration!.isFinite || duration! < 1 || duration! > 36000)) ||
+           (set["fps"] != nil && (fps == nil || !fps!.isFinite || fps! < 1 || fps! > 240)) ||
+           (set["width"] != nil && (width == nil || width! < 16 || width! > 8192)) ||
+           (set["height"] != nil && (height == nil || height! < 16 || height! > 8192)) {
+            return .json(["error":"invalid composition dimensions or timing"],status:400)
+        }
+        e.mutate("AI Project Properties") { p in
+            if let newName { p.name = newName }
+            if let duration { p.duration = duration }
+            if let fps { p.fps = fps }
+            if let width { p.width = width }
+            if let height { p.height = height }
+        }
+        return .json(["ok":true,"fields":set.keys.sorted()])
+    }
+
+    private func aiBakePhysics(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        guard let raw = a["dynamic"] as? [String], !raw.isEmpty, raw.count <= 128,
+              let ids = Optional(raw.compactMap(UUID.init(uuidString:))), ids.count == raw.count,
+              ids.allSatisfy({ id in e.project.layers.contains(where: {$0.id == id && !$0.isLocked}) }) else {
+            return Self.need("dynamic unlocked layer IDs")
+        }
+        let rawStatic = (a["static"] as? [String]) ?? []
+        let statics = rawStatic.compactMap(UUID.init(uuidString:))
+        guard statics.count == rawStatic.count else { return Self.need("valid static layer IDs") }
+        var settings = PhysicsSettings()
+        if let n = (a["gravity"] as? NSNumber)?.doubleValue, n.isFinite { settings.gravity = max(-20000,min(20000,n)) }
+        if let n = (a["bounciness"] as? NSNumber)?.doubleValue, n.isFinite { settings.bounciness = max(0,min(1,n)) }
+        if let n = (a["friction"] as? NSNumber)?.doubleValue, n.isFinite { settings.friction = max(0,min(1,n)) }
+        if let n = (a["duration"] as? NSNumber)?.doubleValue, n.isFinite { settings.duration = max(0.1,min(30,n)) }
+        if let n = a["substeps"] as? Int { settings.substeps = max(1,min(32,n)) }
+        if let p = aiPoint(a["wind"]) { settings.wind = p }
+        if let p = aiPoint(a["launch"]) { settings.launch = p }
+        e.bakePhysics(dynamicIDs:ids,staticIDs:statics,settings:settings)
+        return .json(["ok":true,"dynamicCount":ids.count])
+    }
+
+    private func aiBakeSoftBody(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        guard let id = Self.uuid(a["layer"]),
+              let layer = e.project.layers.first(where: {$0.id == id}), !layer.isLocked,
+              let raw = a["material"] as? String, let material = SoftMaterial(rawValue:raw) else {
+            return Self.need("unlocked layer and material (jelly|rubber|slime|pudding|stiff)")
+        }
+        e.select(id)
+        let drop = max(0,min(5000,(a["drop"] as? NSNumber)?.doubleValue ?? 200))
+        let gravity = max(0,min(20000,(a["gravity"] as? NSNumber)?.doubleValue ?? 1800))
+        let duration = max(0.1,min(30,(a["duration"] as? NSNumber)?.doubleValue ?? 2))
+        e.bakeSoftBody(material,drop:drop,gravity:gravity,duration:duration,
+                       floorAtBottom:a["floorAtBottom"] as? Bool ?? true)
+        return .json(["ok":true,"layer":id.uuidString])
+    }
+
+    private func aiLegacyIK(_ a: [String: Any], _ e: EditorState, remove: Bool) -> HTTPResponse {
+        if remove {
+            guard let id = Self.uuid(a["layer"]), e.project.layers.contains(where: {$0.id == id}) else {
+                return Self.need("layer")
+            }
+            e.select(id)
+            e.removeIK()
+            return .json(["ok":true,"layer":id.uuidString])
+        }
+        guard let upper = Self.uuid(a["upper"]), let lower = Self.uuid(a["lower"]),
+              upper != lower, e.project.layers.contains(where: {$0.id == upper && !$0.isLocked}),
+              e.project.layers.contains(where: {$0.id == lower && !$0.isLocked}) else {
+            return Self.need("upper and lower unlocked layer IDs")
+        }
+        let controller = Self.uuid(a["controller"])
+        e.select(lower)
+        e.makeIK(upper:upper,controller:controller)
+        guard e.project.layers.contains(where: {$0.id == lower && $0.ik != nil}) else {
+            return .json(["error":"native IK authoring rejected the joint relationship"],status:409)
+        }
+        return .json(["ok":true,"lower":lower.uuidString])
+    }
 
     /// Bridges the native TextStudio animator model to the unified connector.
     /// Only acts on an existing unlocked text layer. One undo step per mutation.
