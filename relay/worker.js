@@ -651,7 +651,7 @@ export class Link {
   async runNativeCommand(name, args = {}) {
     if (!name || typeof name !== "string") return { status: 400, response: {error:"command is required"} };
     if (!args || typeof args !== "object" || Array.isArray(args)) return { status: 400, response: {error:"args must be an object"} };
-    if (name === "background.remove") return this.runNativeCommand("run_action",{name:"cutoutSubject",layer:args.layer,mode:args.mode || "object"});
+    if (name === "background.remove") return this.runNativeCommand("run_action",{name:"cutoutSubject",layer:Reflect.get(args,"layer"),mode:Reflect.get(args,"mode") || "object"});
     if (name === "art_studio.strokes") return this.runNativeCommand("draw_strokes",args);
     if (name === "art_studio.layer") return this.runNativeCommand("edit_drawing_layer",args);
     if (name === "art_studio.operations") return this.runNativeCommand("draw_operations",args);
