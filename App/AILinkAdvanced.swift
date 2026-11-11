@@ -5,7 +5,7 @@ import UIKit
 /// Settings UI or storage. All mutations run through EditorState's existing undo machinery.
 extension AILink {
     func handleAdvanced(_ r: HTTPRequest) -> HTTPResponse? {
-        if r.method == "GET" && r.path == "/editor/capabilities" {
+        if r.method == "GET" && (r.path == "/editor/capabilities" || r.path == "/capabilities") {
             return .json([
                 "version": 1,
                 "rigCommands": ["inspect", "add_bone", "select_bone", "reparent_bone",
@@ -23,6 +23,48 @@ extension AILink {
         }
         let a = ((try? JSONSerialization.jsonObject(with: r.body)) as? [String: Any]) ?? [:]
         switch (r.method, r.path) {
+        case ("GET", "/timeline"):
+            guard let e = editor else { return .noProject }
+            let p = e.project
+            return .json(["ok": true, "project": p.name, "width": p.width,
+                          "height": p.height, "fps": p.fps, "duration": p.duration,
+                          "time": e.currentTime,
+                          "layers": p.layers.enumerated().map { i, l in
+                              ["id": l.id.uuidString, "name": l.name, "index": i,
+                               "inPoint": l.inPoint, "outPoint": l.outPoint,
+                               "visible": l.isVisible, "locked": l.isLocked,
+                               "effectCount": l.effects.count, "is3D": l.is3D] as [String: Any]
+                          }])
+        case ("POST", "/groups/create"):
+            guard let e = editor else { return .noProject }
+            var input = a
+            input["command"] = "create"
+            return aiGroupCommand(input, e)
+        case ("POST", "/groups/ungroup"):
+            guard let e = editor else { return .noProject }
+            var input = a
+            input["command"] = "ungroup"
+            input["group"] = a["group"] ?? a["layer"]
+            return aiGroupCommand(input, e)
+        case ("POST", "/layers/patch"):
+            guard let e = editor else { return .noProject }
+            var input = a
+            input["id"] = a["id"] ?? a["layer"]
+            return aiPatchLayer(input, e)
+        case ("POST", "/precomp/open"):
+            guard let e = editor, let id = Self.uuid(a["layer"]),
+                  let layer = e.project.layers.first(where: { $0.id == id }),
+                  case .precomp = layer.content else {
+                return .json(["error": "existing precomp layer required"], status: 400)
+            }
+            e.select(id)
+            e.openPrecomp()
+            return .json(["ok": e.isInPrecomp, "opened": id.uuidString])
+        case ("POST", "/precomp/close"):
+            guard let e = editor else { return .noProject }
+            guard e.isInPrecomp else { return .json(["error": "no open precomp"], status: 409) }
+            e.closePrecomp()
+            return .json(["ok": true])
         case ("POST", "/text/animators"):
             guard let e = editor else { return .noProject }
             return aiTextAnimators(a, e)
