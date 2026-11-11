@@ -13,6 +13,7 @@ extension AILink {
                                 "bind_mesh", "unbind_mesh", "paint_weights",
                                 "make_chain_ik", "remove_ik", "set_deform_amount"],
                 "groupCommands": ["create","ungroup","duplicate"],
+                "artStudioCommands": ["draw_strokes", "edit_drawing_layer", "draw_operations"],
                 "layerPatchFields": Self.aiPatchFields.sorted(),
                 "restrictions": ["App settings and relay keys are unavailable",
                                  "Existing project and media IDs must be preserved",
@@ -31,7 +32,7 @@ extension AILink {
             guard let e = editor else { return .noProject }
             return aiGroupCommand(a, e)
         default:
-            return nil
+            return handleArtStudio(r)
         }
     }
 
