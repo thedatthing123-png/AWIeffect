@@ -496,7 +496,7 @@ function readFullEditingSkill(p={}) {
     const document=sources.map(k=>"# SOURCE "+k+"\n"+FULL_SKILLS[k]).join("\n\n");
     const offset=Math.max(0,Math.floor(Number(p.offset)||0)),
       max=Math.min(32000,Math.max(1000,Number(p.maxChars)||15000));
-    return {topic:p.topic||"core",sources,policy,content:document.slice(offset,offset+max),
+    return {topic:p.topic||"core",sources,policy,guideText:document.slice(offset,offset+max),
       offset,totalCharacters:document.length,nextOffset:offset+max<document.length?offset+max:null};
   }
   return {error:"unknown skill action",valid:["index","read","search"]};
