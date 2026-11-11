@@ -1,3 +1,5 @@
+import { EDITOR_SKILL, findEditorGuide } from "./editor-skill.js";
+
 // AWIeffect AI Link relay (Cloudflare Worker + Durable Object).
 //
 // Phone:  wss://<relay>/phone?key=<secret>       — the app keeps this socket open while a project is open.
@@ -90,6 +92,35 @@ const TOOLS = [
     inputSchema: { type: "object", properties: { name: { type: "string" } }, required: ["name"], additionalProperties: true },
     call: (a) => ["POST", "/action", {}, JSON.stringify(a)] },
 ];
+
+
+/** One semantic tool; older 30+ native commands remain callable through "call".
+ * We deliberately DO NOT support arbitrary paths, private Settings or key management. */
+const UNIFIED_TOOL = {
+  name: "use_awieffect",
+  description: "Full native AWIeffect iPhone editing controller. One tool for layers, effects, masks, shapes, timelines, groups/precomps, rig/bones, weights, cutouts and rendering. FIRST call action='guide', topic='core' and the task-specific topic. Then action='discover' for supported native commands, action='call' with a command + args, or action='batch' for sequential edits. No AI coloring or generative-graphics shortcuts. Settings/keys are private.",
+  inputSchema: { type: "object", properties: {
+    action: { type: "string", enum: ["guide","discover","call","batch","status"],
+              description: "guide=skill instruction, discover=commands, call=one native operation, batch=ordered native operations" },
+    topic: { type: "string", description: "Skill index topic: core, rig, mask_cutout, animation, effects, manga, typography, audio, qa, all; can also search text" },
+    command: { type: "string", description: "A command listed by discover (e.g. rig.add_bone, rig.paint_weights, patch_layer, add_effect, render_frame)" },
+    args: { type: "object", description: "Arguments for the selected command; see discover or the native capability output" },
+    steps: { type: "array", maxItems: 30, items: { type: "object", properties: {
+      command: { type: "string" }, args: { type: "object" }
+    }, required: ["command"] } },
+    stopOnError: { type: "boolean", default: true }
+  }, required: ["action"] }
+};
+const ADVANCED_COMMANDS = {
+  get_editor_capabilities: { method: "GET", path: "/editor/capabilities",
+    description: "Supported native rig commands and layer-patch whitelist; no app Settings" },
+  patch_layer: { method: "POST", path: "/editor/layer/patch",
+    description: "Safely edit masks, cutouts, paths, shape contents, blend mode, group collapse and other validated layer fields; args {id,set} (one undo)" },
+  rig: { method: "POST", path: "/editor/rig",
+    description: "Native rig command; args {command:'inspect|add_bone|select_bone|reparent_bone|delete_bone|move_rest_joint|pose_bone|bind_mesh|unbind_mesh|paint_weights|make_chain_ik|remove_ik|set_deform_amount', ...}" }
+};
+const RIG_COMMANDS = ["inspect","add_bone","select_bone","reparent_bone","delete_bone",
+  "move_rest_joint","pose_bone","bind_mesh","unbind_mesh","paint_weights","make_chain_ik","remove_ik","set_deform_amount"];
 
 export class Link {
   constructor(state) {
@@ -200,6 +231,96 @@ export class Link {
     return Response.json(Array.isArray(msg) ? out : out[0]);
   }
 
+
+  async runNativeCommand(name, args = {}) {
+    if (!name || typeof name !== "string") return { status: 400, response: {error:"command is required"} };
+    if (!args || typeof args !== "object" || Array.isArray(args)) return { status: 400, response: {error:"args must be an object"} };
+    if (name === "get_upload_url") return { status: 403, response: {error:"permanent upload capability links are not exposed by the unified tool; use upload_media or upload_from_url"} };
+    let native = null;
+    let invocation = args;
+    if (name.startsWith("rig.")) {
+      const sub = name.slice(4);
+      if (!RIG_COMMANDS.includes(sub)) return {status:400,response:{error:"unknown rig command",available:RIG_COMMANDS}};
+      native = ADVANCED_COMMANDS.rig;
+      invocation = { ...args, command: sub };
+    } else if (ADVANCED_COMMANDS[name]) {
+      native = ADVANCED_COMMANDS[name];
+    }
+    if (native) {
+      const res = await this.ask(native.method, native.path, {},
+        native.method === "GET" ? null : JSON.stringify(invocation));
+      return this.decodeNativeResponse(res, name, false);
+    }
+    const legacy = TOOLS.find(t => t.name === name);
+    if (!legacy) return {status:404,response:{error:"unknown command; call discover", command:name}};
+    if (legacy.local) {
+      const ret = await this.local(legacy.local, args, this.origin);
+      let response = ret.text;
+      try { response = JSON.parse(ret.text); } catch {}
+      return {status: ret.error ? 400 : 200, response};
+    }
+    let request;
+    try { request = legacy.call(args); }
+    catch (error) { return {status:400,response:{error:"bad arguments",message:String(error)}}; }
+    const res = await this.ask(...request);
+    return this.decodeNativeResponse(res, name, !!legacy.image);
+  }
+
+  decodeNativeResponse(res, name, image) {
+    if (!res) return {status:503, response:{error:"Phone not connected; open AWIeffect and a project"}};
+    if (image && res.status === 200) return {status:200, image:res.body, mimeType:res.type || "image/png"};
+    let text = "";
+    try { text = decodeURIComponent(escape(atob(res.body || ""))); }
+    catch { try { text = atob(res.body || ""); } catch { text = ""; } }
+    let response = text;
+    try { response = JSON.parse(text); } catch {}
+    return {status:res.status, command:name, response};
+  }
+
+  async useAwieffect(id, p) {
+    const action = p.action;
+    if (action === "guide") return toolText(id, JSON.stringify(findEditorGuide(p.topic)), false);
+    if (action === "discover") {
+      const legacy = TOOLS.filter(t => t.name !== "get_upload_url")
+        .map(({name,description,inputSchema}) => ({name,description,inputSchema}));
+      const advanced = Object.entries(ADVANCED_COMMANDS).map(([name,v]) => ({name,description:v.description}));
+      const rig = RIG_COMMANDS.map(name => ({name:"rig."+name,description:"Native Rig / Bone & Weight operation",args:"See guide topic=rig and get_editor_capabilities"}));
+      const data = {oneTool:"use_awieffect", build:"Build 29 native + Build 30 unified connector",
+        commands:[...advanced,...rig,...legacy], guideTopics:Object.keys(EDITOR_SKILL.topics),
+        rules:EDITOR_SKILL.policy, format:{action:"call",command:"add_effect",args:{layer:"UUID",type:"from catalog"}},
+        batching:"Ordered calls, not atomic; inspect each response. Full set_project remains a risky last resort."};
+      return toolText(id, JSON.stringify(data));
+    }
+    if (action === "status") {
+      const res = await this.runNativeCommand("get_info", {});
+      return toolText(id, JSON.stringify(res), res.status >= 400);
+    }
+    if (action === "call") {
+      const res = await this.runNativeCommand(p.command, p.args || {});
+      if (res.image && res.status === 200) {
+        return {jsonrpc:"2.0",id,result:{content:[{type:"image",data:res.image,mimeType:res.mimeType}]}};
+      }
+      return toolText(id, JSON.stringify(res), res.status >= 400);
+    }
+    if (action === "batch") {
+      if (!Array.isArray(p.steps) || !p.steps.length || p.steps.length > 30) {
+        return toolText(id, JSON.stringify({error:"steps must contain 1..30 commands"}), true);
+      }
+      const results = [];
+      let failed = false;
+      for (const [index,step] of p.steps.entries()) {
+        const result = await this.runNativeCommand(step.command, step.args || {});
+        const item = result.image
+          ? {command:step.command,status:result.status,image:"Use action=call to view a rendered image"}
+          : result;
+        results.push({step:index+1,...item});
+        if (result.status >= 400) { failed = true; if (p.stopOnError !== false) break; }
+      }
+      return toolText(id, JSON.stringify({ok:!failed,stepsCompleted:results.length,results}), failed);
+    }
+    return toolText(id, JSON.stringify({error:"Unsupported action",actions:["guide","discover","status","call","batch"]}), true);
+  }
+
   async handle(m) {
     const { id, method, params } = m;
     if (id === undefined) return null; // notification
@@ -209,12 +330,13 @@ export class Link {
           protocolVersion: params?.protocolVersion || "2025-03-26",
           capabilities: { tools: {} },
           serverInfo: { name: "awieffect", version: "1.0" },
-          instructions: "Edits the AWIeffect project open on the user's iPhone. Read get_catalog and get_project first, change the JSON, set_project, then render_frame to check.",
+          instructions: "Use the single use_awieffect tool. Start with action=guide topic=core and the relevant editing topic; inspect get_info, get_catalog and get_project before making changes. Favor native rig/mask/FX operations. Do not auto-generate manga coloring or generic shapes; only edit assets. Settings, relay keys and pairing secrets are private. Render and review the result.",
         } };
       case "ping": return { jsonrpc: "2.0", id, result: {} };
       case "tools/list":
-        return { jsonrpc: "2.0", id, result: { tools: TOOLS.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })) } };
+        return { jsonrpc: "2.0", id, result: { tools: [UNIFIED_TOOL] } };
       case "tools/call": {
+        if (params?.name === "use_awieffect") return this.useAwieffect(id, params.arguments || {});
         const tool = TOOLS.find((t) => t.name === params?.name);
         if (!tool) return { jsonrpc: "2.0", id, error: { code: -32602, message: "unknown tool" } };
         if (tool.local) { const o = await this.local(tool.local, params.arguments || {}, this.origin); return toolText(id, o.text, !!o.error); }
