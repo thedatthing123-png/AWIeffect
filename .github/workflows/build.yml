@@ -28,6 +28,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate Cloudflare unified connector
+        run: |
+          node --experimental-default-type=module relay/test-unified.mjs
+
       - name: Select Xcode
         run: |
           ls /Applications | grep -i xcode || true
