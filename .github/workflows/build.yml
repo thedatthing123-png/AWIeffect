@@ -76,10 +76,23 @@ jobs:
 
       - name: Detect quick IPA request from head commit
         id: quick_ipa
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+          VALIDATION: ${{ inputs.validation }}
         run: |
-          if git log -1 --format=%B | grep -Fq "[quick]"; then
+          set -e
+          if [[ "$VALIDATION" == "quick" || "$PUSH_HEAD_MESSAGE" == *"[quick]"* ]]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
             echo "Quick IPA requested: skip simulator tests but still compile and archive."
+          elif [[ -n "$PR_HEAD_SHA" ]]; then
+            # checkout on pull_request normally checks out a synthetic merge
+            # commit, so its message is NOT the actual branch head message.
+            git fetch --no-tags --depth=1 origin "$PR_HEAD_SHA"
+            if git log -1 --format=%B "$PR_HEAD_SHA" | grep -Fq "[quick]"; then
+              echo "enabled=true" >> "$GITHUB_OUTPUT"
+              echo "Quick IPA requested on pull request head commit."
+            fi
           fi
 
       - name: Run tests (simulator)
