@@ -512,7 +512,7 @@ const UNIFIED_TOOL = {
   name: "editor_function",
   description: "Full native AWIeffect iPhone editing controller. Main editing tool for layers, effects, masks, shapes, timelines, groups/precomps, rig/bones, weights, cutouts and rendering. FIRST call action='guide', topic='core' and the task-specific topic. Then action='discover' for supported native commands, action='call' with a command + args, or action='batch' for sequential edits. No AI coloring or generative-graphics shortcuts. Settings/keys are private.",
   inputSchema: { type: "object", properties: {
-    action: { type: "string", enum: ["guide","discover","call","batch","status"],
+    action: { type: "string", enum: ["connect","discover","call","batch","status","guide"],
               description: "guide=skill instruction, discover=commands, call=one native operation, batch=ordered native operations" },
     topic: { type: "string", description: "Skill index topic: core, rig, mask_cutout, animation, effects, manga, typography, audio, qa, all; can also search text" },
     command: { type: "string", description: "A command listed by discover (e.g. rig.add_bone, rig.paint_weights, patch_layer, add_effect, render_frame)" },
@@ -710,6 +710,32 @@ export class Link {
         batching:"Ordered calls, not atomic; inspect each response. Full set_project remains a risky last resort."};
       return toolText(id, JSON.stringify(data));
     }
+    if (action === "connect") {
+      const info = await this.runNativeCommand("get_info", {});
+      if (info.status !== 200) {
+        return toolText(id, JSON.stringify({
+          connected:false,info,tools:["editor_function","editing_skills"],
+          skills:Object.keys(FULL_SKILL_TOPICS),
+          note:"Connect the iPhone to its existing relay and open an AWIeffect project."
+        }), true);
+      }
+      const capabilities = await this.runNativeCommand("get_capabilities", {});
+      const advanced = await this.runNativeCommand("get_editor_capabilities", {});
+      const catalog = await this.runNativeCommand("get_catalog", {});
+      const effects = Array.isArray(catalog.response?.effects)
+        ? catalog.response.effects.map(e=>({id:e.id,name:e.name,category:e.category})) : [];
+      return toolText(id, JSON.stringify({
+        connected:true,info:info.response,tools:["editor_function","editing_skills"],
+        commandCount:TOOLS.length+RIG_COMMANDS.length+Object.keys(ADVANCED_COMMANDS).length+3+4,
+        nativeCapabilityStatus:capabilities.status,
+        nativeCapabilities:capabilities.status===200?capabilities.response:null,
+        advancedCapabilityStatus:advanced.status,
+        advancedCapabilities:advanced.status===200?advanced.response:null,
+        catalogStatus:catalog.status,effects,
+        skillTopics:Object.keys(FULL_SKILL_TOPICS),
+        rule:"A tool name does not prove the current iPhone app implements its endpoint. Check capabilities and test in the app."
+      }));
+    }
     if (action === "status") {
       const res = await this.runNativeCommand("get_info", {});
       return toolText(id, JSON.stringify(res), res.status >= 400);
@@ -749,7 +775,7 @@ export class Link {
           protocolVersion: params?.protocolVersion || "2025-03-26",
           capabilities: { tools: {} },
           serverInfo: { name: "awieffect", version: "1.0" },
-          instructions: "Use editor_function for all native editing and editing_skills for the original full indexed ZIP knowledge. Start editor_function action=status/discover and editing_skills action=index/read.  Start with action=guide topic=core and the relevant editing topic; inspect get_info, get_catalog and get_project before making changes. Favor native rig/mask/FX operations. Do not auto-generate manga coloring or generic shapes; only edit assets. Settings, relay keys and pairing secrets are private. Render and review the result.",
+          instructions: "AWIeffect editor connector with exactly two tools: editor_function and editing_skills. Call editor_function action=connect to inspect the live phone, action=discover to find commands, action=call/batch to edit. Read editing_skills index/guide before complex edits. Use native assets and precise editing, not generic AI coloring or shapes. Settings and keys are private. Do not claim unsupported iPhone endpoints work.",
         } };
       case "ping": return { jsonrpc: "2.0", id, result: {} };
       case "tools/list":
