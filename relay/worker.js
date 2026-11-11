@@ -253,6 +253,8 @@ const UNIFIED_TOOL = {
 const ADVANCED_COMMANDS = {
   get_editor_capabilities: { method: "GET", path: "/editor/capabilities",
     description: "Supported native rig commands and layer-patch whitelist; no app Settings" },
+  group: { method: "POST", path: "/editor/group",
+    description: "Native grouping; args {command: create|ungroup|duplicate, layers?:[UUID], group?:UUID}" },
   patch_layer: { method: "POST", path: "/editor/layer/patch",
     description: "Safely edit masks, cutouts, paths, shape contents, blend mode, group collapse and other validated layer fields; args {id,set} (one undo)" },
   rig: { method: "POST", path: "/editor/rig",
