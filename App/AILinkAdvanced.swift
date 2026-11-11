@@ -283,14 +283,14 @@ extension AILink {
                 replacements[id] = updated
             }
         } catch {
-            return .json(["error":"invalid patch JSON: \\(error)"],status:400)
+            return .json(["error":"invalid patch JSON: \(error)"],status:400)
         }
         e.mutate("AI Batch Patch Layers") { p in
             for i in p.layers.indices {
                 if let replacement = replacements[p.layers[i].id] { p.layers[i] = replacement }
             }
         }
-        return .json(["ok":true,"updated":replacements.keys.map(\\.uuidString).sorted()])
+        return .json(["ok":true,"updated":replacements.keys.map(\.uuidString).sorted()])
     }
 
     /// Only project composition metadata. Never app Settings or relay credentials.
