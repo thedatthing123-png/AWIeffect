@@ -65,6 +65,9 @@ extension AILink {
             guard e.isInPrecomp else { return .json(["error": "no open precomp"], status: 409) }
             e.closePrecomp()
             return .json(["ok": true])
+        case ("POST", "/puppet/pin"):
+            guard let e = editor else { return .noProject }
+            return aiPuppetPin(a,e)
         case ("POST", "/layers/graph"):
             guard let e = editor else { return .noProject }
             return aiGraphHandles(a, e)
@@ -118,6 +121,47 @@ extension AILink {
 
 
 
+
+
+    private func aiPuppetPin(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        guard let id = Self.uuid(a["layer"]),
+              e.project.layers.contains(where: {$0.id == id && !$0.isLocked}),
+              let op = a["operation"] as? String else {
+            return Self.need("unlocked layer and operation")
+        }
+        e.select(id)
+        switch op {
+        case "add":
+            guard let point = aiPoint(a["point"]) else { return Self.need("point [x,y]") }
+            let before = e.puppetPins.count
+            guard before < 32 else { return .json(["error":"maximum 32 puppet pins"],status:409) }
+            e.addPuppetPin(atComp:point)
+            guard e.puppetPins.count == before + 1 else {
+                return .json(["error":"native pin insertion failed"],status:409)
+            }
+            return .json(["ok":true,"index":before])
+        case "move":
+            guard let i = a["index"] as? Int, e.puppetPins.indices.contains(i),
+                  let point = aiPoint(a["point"]) else { return Self.need("pin index and point") }
+            e.beginEdit("AI Move Puppet Pin")
+            e.movePuppetPin(i,toComp:point)
+            e.endEdit()
+            return .json(["ok":true,"index":i])
+        case "remove":
+            guard let i = a["index"] as? Int, e.puppetPins.indices.contains(i) else { return Self.need("pin index") }
+            e.removePuppetPin(i)
+            return .json(["ok":true,"removed":i])
+        case "starch":
+            guard let i = a["index"] as? Int, e.puppetPins.indices.contains(i) else { return Self.need("pin index") }
+            e.togglePuppetStarch(i)
+            return .json(["ok":true,"index":i,"starch":e.isPuppetStarch(i)])
+        case "reset":
+            e.resetPuppetPose()
+            return .json(["ok":true])
+        default:
+            return .json(["error":"operation must be add|move|remove|starch|reset"],status:400)
+        }
+    }
 
     private func aiGraphHandles(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
         guard let id = Self.uuid(a["layer"]),
