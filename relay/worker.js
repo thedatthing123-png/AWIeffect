@@ -462,7 +462,8 @@ const FULL_SKILL_TOPICS = Object.freeze({
   cutout:["main","craft","pro"], background:["main","craft"], masks:["main","craft"],
   rigging:["main","pro"], bones:["main","pro"], effects:["effects","craft"],
   animation:["craft","pro"], velocity:["craft","pro"], audio:["craft","pro"],
-  typography:["main","pro"], color:["craft","pro"], glow:["effects","craft"], style:["style","pro"]
+  typography:["main","pro"], color:["craft","pro"], glow:["effects","craft"], style:["style","pro"],
+  research:["main","pro","style"], app:["main","craft","pro","effects"], how_to_use:["main","craft","pro","effects"]
 });
 function readFullEditingSkill(p={}) {
   const action=p.action||"index";
@@ -470,6 +471,8 @@ function readFullEditingSkill(p={}) {
     "Use real AWIeffect native editor operations and user-supplied artwork. No generic AI image generation, automated manga coloring or random placeholder graphics.",
     "Use native subject/background removal only when requested; it is different from AI artwork generation.",
     "Inspect live app capabilities and effect parameter ranges before editing; preserve unrelated project data.",
+    "When the user requests research or an unfamiliar technique, use the assistant\x27s available web research tools to find reliable references and verify dates/attribution. The Cloudflare Worker itself does not search the web.",
+    "After researching, translate findings into exact AWIeffect operations; verify live effect IDs, settings and angles with get_catalog and preview rather than inventing values.",
     "Private app Settings, accounts and pairing/relay keys are not editable."
   ];
   if(action==="index")return {version:"full-uploaded-editor-skill",policy,topics:Object.keys(FULL_SKILL_TOPICS),
@@ -499,7 +502,7 @@ function readFullEditingSkill(p={}) {
   return {error:"unknown skill action",valid:["index","read","search"]};
 }
 const SKILL_TOOL = {
- name:"editing_skills",description:"Complete indexed original AWIeffect skill with native editing techniques, effects, real Art Studio, manga, velocity, color, mask/cutout and rigging guides. No generic AI coloring. action=index|read|search; topic/search/offset options.",
+ name:"editing_skills",description:"Complete indexed original AWIeffect skill with native editing techniques, effects, Art Studio, manga, velocity, color, mask/cutout, rigging and research instructions. Use your assistant web tools when the user asks to research; verify the live AWIeffect catalog before applying researched settings. No generic AI coloring. action=index|read|search; topic/search/offset options.",
  inputSchema:{type:"object",properties:{
    action:{type:"string",enum:["index","read","search"]},topic:{type:"string"},
    query:{type:"string"},offset:{type:"integer",minimum:0},
