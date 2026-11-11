@@ -74,9 +74,17 @@ jobs:
       - name: Parse Swift sources
         run: find App Tests UITests -name '*.swift' -print0 | xargs -0 xcrun swiftc -frontend -parse
 
+      - name: Detect quick IPA request from head commit
+        id: quick_ipa
+        run: |
+          if git log -1 --format=%B | grep -Fq "[quick]"; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "Quick IPA requested: skip simulator tests but still compile and archive."
+          fi
+
       - name: Run tests (simulator)
         # Quick builds: a commit message containing [quick] skips the test run and goes straight to the IPA.
-        if: ${{ !contains(github.event.head_commit.message, '[quick]') && inputs.validation != 'quick' }}
+        if: ${{ !contains(github.event.head_commit.message, '[quick]') && inputs.validation != 'quick' && steps.quick_ipa.outputs.enabled != 'true' }}
         run: |
           SIM=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];c=[x for r,v in d.items() if 'iOS' in r for x in v if x['name'].startswith('iPhone')];print(c[-1]['udid'] if c else '')")
           echo "Simulator: $SIM"
