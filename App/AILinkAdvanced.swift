@@ -155,8 +155,8 @@ extension AILink {
         var values: [Double] = []
         for name in inputs {
             guard let n = (a[name] as? NSNumber)?.doubleValue, n.isFinite,
-                  n >= 0, n <= 100 else {
-                return .json(["error":"velocity values must be finite and in 0..100","field":name],status:400)
+                  (name.hasSuffix("Influence") ? (n >= 0.1 && n <= 100) : (n >= -1000 && n <= 1000)) else {
+                return .json(["error":"velocity influence must be 0.1..100%; speed -1000..100%","field":name],status:400)
             }
             values.append(n)
         }
