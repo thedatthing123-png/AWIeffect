@@ -12,6 +12,7 @@ extension AILink {
                                 "delete_bone", "move_rest_joint", "pose_bone",
                                 "bind_mesh", "unbind_mesh", "paint_weights",
                                 "make_chain_ik", "remove_ik", "set_deform_amount"],
+                "groupCommands": ["create","ungroup","duplicate"],
                 "layerPatchFields": Self.aiPatchFields.sorted(),
                 "restrictions": ["App settings and relay keys are unavailable",
                                  "Existing project and media IDs must be preserved",
@@ -26,8 +27,46 @@ extension AILink {
         case ("POST", "/editor/layer/patch"):
             guard let e = editor else { return .noProject }
             return aiPatchLayer(a, e)
+        case ("POST", "/editor/group"):
+            guard let e = editor else { return .noProject }
+            return aiGroupCommand(a, e)
         default:
             return nil
+        }
+    }
+
+
+    private func aiGroupCommand(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        guard let command = a["command"] as? String else { return Self.need("command") }
+        switch command {
+        case "create":
+            guard let raw = a["layers"] as? [String], !raw.isEmpty,
+                  raw.count <= 256 else { return Self.need("layers (1..256)") }
+            let ids = raw.compactMap(UUID.init(uuidString:))
+            guard ids.count == raw.count, ids.allSatisfy({ id in e.project.layers.contains { $0.id == id && !$0.isLocked } }) else {
+                return .json(["error":"all selected layers must exist and be unlocked"],status:400)
+            }
+            e.multiSelection = Set(ids)
+            e.groupSelected()
+            guard let id = e.selectedLayerID, e.project.layers.first(where: {$0.id == id})?.isGroup == true else {
+                return .json(["error":"group creation failed"],status:409)
+            }
+            return .json(["ok":true,"group":id.uuidString])
+        case "ungroup":
+            guard let id = Self.uuid(a["group"]), e.project.layers.first(where:{$0.id == id})?.isGroup == true else {
+                return Self.need("valid group")
+            }
+            e.select(id)
+            e.ungroupSelected()
+            return .json(["ok":!e.project.layers.contains(where: {$0.id == id}),"group":id.uuidString])
+        case "duplicate":
+            guard let id = Self.uuid(a["group"]), e.project.layers.first(where: {$0.id == id})?.isGroup == true else {
+                return Self.need("valid group")
+            }
+            e.duplicateGroup(id)
+            return .json(["ok":true])
+        default:
+            return .json(["error":"unsupported group command","commands":["create","ungroup","duplicate"]],status:404)
         }
     }
 
