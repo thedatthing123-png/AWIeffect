@@ -24,7 +24,7 @@ Native bone workflow:
 - {"action":"call","command":"rig.pose_bone","args":{"bone":"REAL_ELBOW_UUID","point":[500,350]}}
 - {"action":"call","command":"render_frame","args":{"t":1.2}}
 
-Add effects using the exact IDs/settings from get_catalog. Edit supported native masks, cutouts, paths and other layer fields:
+Group layers natively using {"action":"call","command":"group","args":{"command":"create","layers":["UUID1","UUID2"]}}; ungroup using {"action":"call","command":"group","args":{"command":"ungroup","group":"GROUP_UUID"}}.\n\nAdd effects using the exact IDs/settings from get_catalog. Edit supported native masks, cutouts, paths and other layer fields:
 - {"action":"call","command":"patch_layer","args":{"id":"REAL_LAYER_UUID","set":{"clipToBelow":true}}}
 
 Never invent object UUIDs. Use prior tool responses or rig.inspect. Child bone start is snapped to the parent tip by the native engine. Batch is sequential, not atomic. After edits, render and inspect.
