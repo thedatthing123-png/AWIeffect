@@ -65,6 +65,13 @@ extension AILink {
             guard e.isInPrecomp else { return .json(["error": "no open precomp"], status: 409) }
             e.closePrecomp()
             return .json(["ok": true])
+        case ("POST", "/export/start"):
+            guard let e = editor else { return .noProject }
+            return aiExportStart(a,e)
+        case ("POST", "/export/status"):
+            return aiExportStatus(a,cancel:false)
+        case ("POST", "/export/cancel"):
+            return aiExportStatus(a,cancel:true)
         case ("POST", "/layers/model"):
             guard let e = editor else { return .noProject }
             return aiAddModel(a,e)
@@ -129,6 +136,51 @@ extension AILink {
 
 
 
+
+
+    private func aiExportStart(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        let formatName = a["format"] as? String ?? "MP4"
+        guard let format = ExportFormat(rawValue:formatName) else {
+            return .json(["error":"invalid export format","supported":ExportFormat.allCases.map(\.rawValue)],status:400)
+        }
+        var settings = ExportSettings()
+        settings.format = format
+        if let codecName = a["codec"] as? String {
+            guard let codec=VideoCodec(rawValue:codecName) else { return .json(["error":"invalid codec"],status:400) }
+            settings.codec=codec
+        }
+        func number(_ key:String) -> Double? { (a[key] as? NSNumber)?.doubleValue }
+        if let scale=number("scale") {
+            guard scale.isFinite && scale >= 0.1 && scale <= 4 else { return Self.need("scale 0.1..4") }
+            settings.scale=scale
+        }
+        if let fps=number("fps") {
+            guard fps.isFinite && fps >= 1 && fps <= 120 else { return Self.need("fps 1..120") }
+            settings.fps=fps
+        }
+        if let rate=number("bitrateMbps") {
+            guard rate.isFinite && rate >= 0.1 && rate <= 500 else { return Self.need("bitrateMbps 0.1..500") }
+            settings.bitrateMbps=rate
+        }
+        let root=e.rootProject
+        let start=number("start") ?? 0, end=number("end") ?? root.duration
+        guard start.isFinite && end.isFinite && start >= 0 && end > start && end <= root.duration else {
+            return Self.need("valid start/end seconds within project duration")
+        }
+        settings.start=start
+        settings.end=end
+        let store=e.store, projectID=root.id
+        let result=AILinkExportJobs.shared.start(project:root,settings:settings,
+                                    mediaURL:{store.mediaURL($0,projectID:projectID)})
+        return .json(result)
+    }
+
+    private func aiExportStatus(_ a: [String: Any], cancel: Bool) -> HTTPResponse {
+        guard let id=a["job"] as? String else { return Self.need("job") }
+        let data=cancel ? AILinkExportJobs.shared.cancel(id) : AILinkExportJobs.shared.status(id)
+        guard let data else { return .json(["error":"unknown export job"],status:404) }
+        return .json(data)
+    }
 
     private func aiAddModel(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
         guard let file = a["file"] as? String,
