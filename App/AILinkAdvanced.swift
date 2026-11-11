@@ -13,6 +13,7 @@ extension AILink {
                                 "bind_mesh", "unbind_mesh", "paint_weights",
                                 "make_chain_ik", "remove_ik", "set_deform_amount"],
                 "groupCommands": ["create","ungroup","duplicate"],
+                "textAnimatorCommands": ["list", "add", "remove"],
                 "artStudioCommands": ["draw_strokes", "edit_drawing_layer", "draw_operations"],
                 "layerPatchFields": Self.aiPatchFields.sorted(),
                 "restrictions": ["App settings and relay keys are unavailable",
@@ -22,6 +23,9 @@ extension AILink {
         }
         let a = ((try? JSONSerialization.jsonObject(with: r.body)) as? [String: Any]) ?? [:]
         switch (r.method, r.path) {
+        case ("POST", "/text/animators"):
+            guard let e = editor else { return .noProject }
+            return aiTextAnimators(a, e)
         case ("POST", "/editor/rig"):
             guard let e = editor else { return .noProject }
             return aiRigCommand(a, e)
@@ -36,6 +40,51 @@ extension AILink {
         }
     }
 
+
+
+    /// Bridges the native TextStudio animator model to the unified connector.
+    /// Only acts on an existing unlocked text layer. One undo step per mutation.
+    private func aiTextAnimators(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        guard let id = Self.uuid(a["layer"]) else { return Self.need("layer") }
+        guard let layer = e.project.layers.first(where: { $0.id == id }),
+              let text = layer.text else {
+            return .json(["error": "text layer not found", "layer": id.uuidString], status: 404)
+        }
+        let op = (a["operation"] as? String) ?? "list"
+        if op == "list" {
+            return .json(["ok": true, "layer": id.uuidString,
+                          "animators": text.animators.map { ["id": $0.id.uuidString, "name": $0.name, "enabled": $0.isEnabled] as [String: Any] }])
+        }
+        guard !layer.isLocked else {
+            return .json(["error": "text layer is locked"], status: 409)
+        }
+        switch op {
+        case "add":
+            let name = (a["name"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let animatorName = (name?.isEmpty == false ? name! : "Text Animator")
+            guard animatorName.count <= 128, text.animators.count < 128 else {
+                return .json(["error": "animator limit or name length exceeded"], status: 400)
+            }
+            let newAnimator = TextAnimator(name: animatorName)
+            e.mutate("AI Add Text Animator") { project in
+                guard let i = project.layers.firstIndex(where: { $0.id == id }) else { return }
+                project.layers[i].text?.animators.append(newAnimator)
+            }
+            return .json(["ok": true, "layer": id.uuidString, "animator": newAnimator.id.uuidString, "name": newAnimator.name])
+        case "remove":
+            guard let animatorID = Self.uuid(a["animator"]),
+                  text.animators.contains(where: { $0.id == animatorID }) else {
+                return .json(["error": "valid animator UUID required"], status: 404)
+            }
+            e.mutate("AI Remove Text Animator") { project in
+                guard let i = project.layers.firstIndex(where: { $0.id == id }) else { return }
+                project.layers[i].text?.animators.removeAll { $0.id == animatorID }
+            }
+            return .json(["ok": true, "layer": id.uuidString, "removed": animatorID.uuidString])
+        default:
+            return .json(["error": "unsupported animator operation", "operations": ["list", "add", "remove"]], status: 400)
+        }
+    }
 
     private func aiGroupCommand(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
         guard let command = a["command"] as? String else { return Self.need("command") }
