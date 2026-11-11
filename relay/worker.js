@@ -469,6 +469,9 @@ function readFullEditingSkill(p={}) {
   const action=p.action||"index";
   const policy=[
     "Use real AWIeffect native editor operations and user-supplied artwork. No generic AI image generation, automated manga coloring or random placeholder graphics.",
+    "Workflow is mandatory: RESEARCH when unfamiliar, DESIGN with a shot-by-shot frame map, ANIMATE using native text selectors/graph/effects/rigs, RENDER at meaningful times, CRITIQUE against professional references, then REFINE and re-render.",
+    "Never describe a basic whole-layer position/scale/opacity pass as advanced typography. For professional kinetic text, explore genuine per-character animators, irregular staggered timing, custom ease handles, purposeful masks and polished transitions.",
+    "A failed or empty skill-guide read means the guide has NOT been studied. Use small sections or search before editing; do not claim you loaded or followed a guide that returned nothing.",
     "Use native subject/background removal only when requested; it is different from AI artwork generation.",
     "Inspect live app capabilities and effect parameter ranges before editing; preserve unrelated project data.",
     "When the user requests research or an unfamiliar technique, use the assistant\x27s available web research tools to find reliable references and verify dates/attribution. The Cloudflare Worker itself does not search the web.",
@@ -502,7 +505,7 @@ function readFullEditingSkill(p={}) {
   return {error:"unknown skill action",valid:["index","read","search"]};
 }
 const SKILL_TOOL = {
- name:"editing_skills",description:"Complete indexed original AWIeffect skill with native editing techniques, effects, Art Studio, manga, velocity, color, mask/cutout, rigging and research instructions. Use your assistant web tools when the user asks to research; verify the live AWIeffect catalog before applying researched settings. No generic AI coloring. action=index|read|search; topic/search/offset options.",
+ name:"editing_skills",description:"Complete AWIeffect editing skill and original references. Use index, then READ short sections (offset/maxChars) and SEARCH specific techniques; if a guide read is empty, treat it as not loaded. Mandatory process: research, design detailed frame map, animate with proper native tools, render, critique, refine. Advanced typography needs real character-level craft, not three basic whole-layer keyframes. Never generic AI art. Private Settings excluded.",
  inputSchema:{type:"object",properties:{
    action:{type:"string",enum:["index","read","search"]},topic:{type:"string"},
    query:{type:"string"},offset:{type:"integer",minimum:0},
@@ -701,7 +704,7 @@ export class Link {
 
   async useAwieffect(id, p) {
     const action = p.action;
-    if (action === "guide") return toolText(id, JSON.stringify(readFullEditingSkill({action:"read",topic:p.topic||"core"})), false);
+    if (action === "guide") { const g=readFullEditingSkill({action:"read",topic:p.topic||"core",offset:p.offset||0,maxChars:Math.min(4000,p.maxChars||2600)}); return toolText(id, "AWIeffect editing skill | topic="+g.topic+" | offset="+g.offset+" | nextOffset="+g.nextOffset+"\n"+g.guideText, false); }
     if (action === "discover") {
       const legacy = TOOLS
         .map(({name,description,inputSchema}) => ({name,description,inputSchema}));
@@ -785,7 +788,7 @@ export class Link {
         return { jsonrpc: "2.0", id, result: { tools: [UNIFIED_TOOL, SKILL_TOOL] } };
       case "tools/call": {
         if (params?.name === "editor_function" || params?.name === "use_awieffect") return this.useAwieffect(id, params.arguments || {});
-        if (params?.name === "editing_skills") return toolText(id, JSON.stringify(readFullEditingSkill(params.arguments || {})));
+        if (params?.name === "editing_skills") { const a=params.arguments||{}; const g=readFullEditingSkill(a); return toolText(id, a.action==="read" ? "AWIeffect editing skill | topic="+g.topic+" | offset="+g.offset+" | nextOffset="+g.nextOffset+"\n"+g.guideText : JSON.stringify(g)); }
         const tool = TOOLS.find((t) => t.name === params?.name);
         if (!tool) return { jsonrpc: "2.0", id, error: { code: -32602, message: "unknown tool" } };
         if (tool.local) { const o = await this.local(tool.local, params.arguments || {}, this.origin); return toolText(id, o.text, !!o.error); }
