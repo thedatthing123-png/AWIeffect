@@ -33,7 +33,7 @@ extension AILink {
 
     /// Codable merge against an existing layer: never replace an incomplete layer
     /// or construct unknown model types by guessing their encoded representation.
-    private static let aiPatchFields: Set<String> = [
+    private static var aiPatchFields: Set<String> { [
         "name", "masks", "cutout", "path", "shapeContents", "shapeOps", "stroke",
         "effects", "text", "camera", "light", "model3D", "timeFX", "timeRemap",
         "trackMatte", "clipToBelow", "blendMode", "isVisible", "isLocked",
@@ -41,7 +41,7 @@ extension AILink {
         "volume", "audioFX", "layerMarkers", "frameBlending", "speed",
         "sourceStart", "drawingID", "isCollider", "castsShadows",
         "acceptsShadows"
-    ]
+    ] }
 
     private func aiPatchLayer(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
         guard let id = Self.uuid(a["id"]), let changes = a["set"] as? [String: Any],
