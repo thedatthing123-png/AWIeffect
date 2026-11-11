@@ -65,6 +65,18 @@ extension AILink {
             guard e.isInPrecomp else { return .json(["error": "no open precomp"], status: 409) }
             e.closePrecomp()
             return .json(["ok": true])
+        case ("POST", "/layers/graph"):
+            guard let e = editor else { return .noProject }
+            return aiGraphHandles(a, e)
+        case ("POST", "/keyframes/velocity"):
+            guard let e = editor else { return .noProject }
+            return aiVelocity(a, e)
+        case ("POST", "/layers/expression"):
+            guard let e = editor else { return .noProject }
+            return aiExpression(a, e)
+        case ("POST", "/layers/remap"):
+            guard let e = editor else { return .noProject }
+            return aiTimeRemap(a, e)
         case ("POST", "/masks/path"):
             guard let e = editor else { return .noProject }
             return aiAddMaskPath(a, e)
@@ -105,6 +117,115 @@ extension AILink {
 
 
 
+
+
+    private func aiGraphHandles(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        guard let id = Self.uuid(a["layer"]),
+              let layer = e.project.layers.first(where: {$0.id == id}), !layer.isLocked,
+              let name = a["property"] as? String, let key = PropertyKey(rawValue:name),
+              let out = aiPoint(a["out"]), let inside = aiPoint(a["in"]),
+              out.x.isFinite, out.y.isFinite, inside.x.isFinite, inside.y.isFinite,
+              out.x > 0, out.x <= 1, inside.x >= 0, inside.x < 1,
+              abs(out.y) <= 100, abs(inside.y) <= 100 else {
+            return Self.need("unlocked layer, property, out/in [x,y] handles")
+        }
+        let rawInterp = a["interpolation"] as? String ?? "bezier"
+        guard let interp = Interpolation(rawValue:rawInterp) else {
+            return .json(["error":"interpolation must be linear, bezier or hold"],status:400)
+        }
+        e.select(id)
+        let segments = e.easeSegments(key)
+        guard !segments.isEmpty else { return .json(["error":"property requires at least 2 keyframes"],status:409) }
+        let seg = a["segment"] as? Int
+        guard seg == nil || (seg! >= 0 && seg! < segments.count) else {
+            return .json(["error":"segment index out of range"],status:400)
+        }
+        e.setEase(key,segment:seg,interpolation:interp,
+                  out:EaseHandle(x:out.x,y:out.y),into:EaseHandle(x:inside.x,y:inside.y))
+        return .json(["ok":true,"layer":id.uuidString,"property":name,
+                      "segments":seg == nil ? segments.count : 1])
+    }
+
+    private func aiVelocity(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        guard let id = Self.uuid(a["layer"]),
+              let layer = e.project.layers.first(where: {$0.id == id}), !layer.isLocked else {
+            return Self.need("unlocked layer")
+        }
+        let inputs = ["inInfluence","inSpeed","outInfluence","outSpeed"]
+        var values: [Double] = []
+        for name in inputs {
+            guard let n = (a[name] as? NSNumber)?.doubleValue, n.isFinite,
+                  n >= 0, n <= 100 else {
+                return .json(["error":"velocity values must be finite and in 0..100","field":name],status:400)
+            }
+            values.append(n)
+        }
+        let time = (a["time"] as? NSNumber)?.doubleValue ?? e.currentTime
+        guard time.isFinite && time >= 0 && time <= e.project.duration else { return Self.need("time") }
+        e.select(id)
+        e.seek(time)
+        guard e.hasKeyframeAtPlayhead else {
+            return .json(["error":"no transform keyframe at requested time"],status:409)
+        }
+        e.applyKeyframeVelocity(inInfluence:values[0] / 100, inSpeed:values[1] / 100,
+                                outInfluence:values[2] / 100, outSpeed:values[3] / 100)
+        return .json(["ok":true,"layer":id.uuidString,"time":time])
+    }
+
+    private func aiExpression(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        guard let id = Self.uuid(a["layer"]),
+              e.project.layers.contains(where: {$0.id == id && !$0.isLocked}),
+              let raw = a["property"] as? String,
+              let key = PropertyKey(rawValue:raw) else {
+            return Self.need("unlocked layer and property")
+        }
+        let expression = a["expression"] as? String
+        guard expression == nil || expression!.count <= 8000 else {
+            return .json(["error":"expression too long"],status:400)
+        }
+        e.select(id)
+        e.setExpression(key,expression)
+        return .json(["ok":true,"layer":id.uuidString,"property":raw])
+    }
+
+    private func aiTimeRemap(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        guard let id = Self.uuid(a["layer"]),
+              e.project.layers.contains(where: {$0.id == id && !$0.isLocked}) else {
+            return Self.need("unlocked layer")
+        }
+        if a["clear"] as? Bool == true {
+            e.mutate("AI Clear Time Remap") { project in
+                if let i = project.layers.firstIndex(where: {$0.id == id}) {
+                    project.layers[i].timeRemap = nil
+                }
+            }
+            return .json(["ok":true,"cleared":true])
+        }
+        guard let raw = a["points"] as? [[String: Any]],
+              (2...256).contains(raw.count) else {
+            return Self.need("points: [{time,source}, ...] (2..256)")
+        }
+        var points: [(Double,Double)] = []
+        for point in raw {
+            guard let t = (point["time"] as? NSNumber)?.doubleValue,
+                  let source = (point["source"] as? NSNumber)?.doubleValue,
+                  t.isFinite, source.isFinite, t >= 0, source >= 0,
+                  (points.last.map({t > $0.0}) ?? true) else {
+                return .json(["error":"time/source must be finite nonnegative and times strictly increasing"],status:400)
+            }
+            points.append((t,source))
+        }
+        var remap = Animated(points[0].1)
+        for (t,source) in points {
+            remap.insertKeyframe(Keyframe(time:t,value:source,interpolation:.linear))
+        }
+        e.mutate("AI Time Remap") { project in
+            if let i = project.layers.firstIndex(where: {$0.id == id}) {
+                project.layers[i].timeRemap = remap
+            }
+        }
+        return .json(["ok":true,"layer":id.uuidString,"keyframes":points.count])
+    }
 
     /// Legacy relay route: add a closed native bezier mask, not an AI-generated matte.
     private func aiAddMaskPath(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
