@@ -65,6 +65,12 @@ extension AILink {
             guard e.isInPrecomp else { return .json(["error": "no open precomp"], status: 409) }
             e.closePrecomp()
             return .json(["ok": true])
+        case ("POST", "/layers/model"):
+            guard let e = editor else { return .noProject }
+            return aiAddModel(a,e)
+        case ("POST", "/layers/text3d"):
+            guard let e = editor else { return .noProject }
+            return aiAddText3D(a,e)
         case ("POST", "/puppet/pin"):
             guard let e = editor else { return .noProject }
             return aiPuppetPin(a,e)
@@ -122,6 +128,49 @@ extension AILink {
 
 
 
+
+
+    private func aiAddModel(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        guard let file = a["file"] as? String,
+              !file.isEmpty, !file.contains("/"), !file.contains("\\\\"),
+              ["usdz","obj","scn","dae"].contains((file as NSString).pathExtension.lowercased()),
+              FileManager.default.fileExists(atPath: e.mediaURL(file).path) else {
+            return .json(["error":"import a supported model into project media first (usdz, obj, scn, dae)"],status:400)
+        }
+        let layerName = "Model " + String(file.prefix(40))
+        var options = Model3DOptions()
+        options.fileName = file
+        var created = UUID()
+        e.mutate("AI Add 3D Model") { project in
+            var layer = project.makeLayer(name:layerName,content:.model,
+                                          size:Vec2(Double(project.width),Double(project.height)))
+            layer.is3D = true
+            layer.model3D = options
+            created = layer.id
+            project.layers.insert(layer,at:0)
+        }
+        e.select(created)
+        return .json(["ok":true,"layer":created.uuidString,"file":file])
+    }
+
+    private func aiAddText3D(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
+        guard let text = a["text"] as? String, !text.isEmpty, text.count <= 1000 else {
+            return Self.need("text (1..1000 characters)")
+        }
+        var options = Model3DOptions()
+        options.text = text
+        var created = UUID()
+        e.mutate("AI Add 3D Text") { project in
+            var layer = project.makeLayer(name:"3D " + String(text.prefix(40)),content:.model,
+                                          size:Vec2(Double(project.width),Double(project.height)))
+            layer.is3D = true
+            layer.model3D = options
+            created = layer.id
+            project.layers.insert(layer,at:0)
+        }
+        e.select(created)
+        return .json(["ok":true,"layer":created.uuidString])
+    }
 
     private func aiPuppetPin(_ a: [String: Any], _ e: EditorState) -> HTTPResponse {
         guard let id = Self.uuid(a["layer"]),
