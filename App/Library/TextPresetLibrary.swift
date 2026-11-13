@@ -182,7 +182,8 @@ enum TextPresetLibrary {
         return b
     }
 
-    /// Adds `preset` to a text layer as its own animator group (re-applying the same preset replaces that group only).
+    /// Adds `preset` to a text layer as its own animator group. Re-applying creates another editable instance;
+    /// presets are building blocks and the user can deliberately stack the same motion more than once.
     /// `duration` nil = `defaultDuration`. With `beats` the start and end snap to the nearest beats.
     @discardableResult
     static func applyPreset(_ preset: TextPreset, to layer: inout Layer, start: Double, duration: Double? = nil,
@@ -197,13 +198,13 @@ enum TextPresetLibrary {
             s = s2
             d = max(0.05, e2 - s2)
         }
-        let group = preset.id
+        let existing = layer.text!.animators.compactMap(\.group).filter { $0 == preset.id || $0.hasPrefix(preset.id + "#") }
+        let group = existing.isEmpty ? preset.id : preset.id + "#" + String(existing.count + 1)
         var made = preset.make(s, d)
         for k in made.indices {
             made[k].id = UUID()
             made[k].group = group
         }
-        layer.text!.animators.removeAll { $0.group == group }
         layer.text!.animators += made
         return true
     }

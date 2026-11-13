@@ -255,6 +255,10 @@ final class EditorPolishRegressionTests: XCTestCase {
         EditorState.applyStyle(source, to: &target, parts: [.transform])
         XCTAssertEqual(target.transform.position, source.transform.position)
         XCTAssertEqual(target.transform.opacity, original.transform.opacity)
+        XCTAssertEqual(target.size, original.size, "transform paste does not silently replace bounds")
+        EditorState.applyStyle(source, to: &target, parts: [.size])
+        XCTAssertEqual(target.size, source.size)
+        XCTAssertEqual(target.transform.position, source.transform.position)
     }
 
     func testClipboardOwnsMediaAndRemapsDrawingAndNestedReferences() throws {

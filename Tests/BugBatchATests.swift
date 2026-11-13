@@ -69,6 +69,38 @@ import XCTest
         XCTAssertEqual(s.undoStack.count, count)
     }
 
+    func testGroupUsesLocalTimelineAndMapsEditsBackToRootTime() throws {
+        var p = project()
+        var a = solid(p, "a", 2, 5)
+        let b = solid(p, "b", 4, 8)
+        a.transform.position.insertKeyframe(Keyframe(time: 3, value: Vec2(20, 20)))
+        p.layers = [a, b]
+        p.markers = [1, 3, 7, 9]
+        let s = EditorState(project: p, store: store())
+        s.multiSelection = Set(p.layers.map(\.id)); s.groupSelected()
+        let gid = try XCTUnwrap(s.selectedLayerID)
+        s.currentTime = 5
+        s.openGroup()
+
+        XCTAssertEqual(s.project.duration, 6, accuracy: 1e-9)
+        XCTAssertEqual(s.currentTime, 3, accuracy: 1e-9)
+        XCTAssertEqual(s.rootTime(s.currentTime), 5, accuracy: 1e-9)
+        XCTAssertEqual(try XCTUnwrap(s.project.layers.first { $0.id == a.id }).inPoint, 0, accuracy: 1e-9)
+        XCTAssertEqual(try XCTUnwrap(s.project.layers.first { $0.id == b.id }).inPoint, 2, accuracy: 1e-9)
+        XCTAssertEqual(try XCTUnwrap(s.project.layers.first { $0.id == a.id }?.transform.position.keyframes.first).time, 1, accuracy: 1e-9)
+        XCTAssertEqual(s.project.markers, [1, 5])
+
+        s.mutate("Move local key") { child in
+            child.layers[0].transform.position.keyframes[0].time = 2
+        }
+        s.closePrecomp()
+        XCTAssertEqual(try XCTUnwrap(s.project.layers.first { $0.id == a.id }).inPoint, 2, accuracy: 1e-9)
+        XCTAssertEqual(try XCTUnwrap(s.project.layers.first { $0.id == b.id }).inPoint, 4, accuracy: 1e-9)
+        XCTAssertEqual(try XCTUnwrap(s.project.layers.first { $0.id == a.id }?.transform.position.keyframes.first).time, 4, accuracy: 1e-9)
+        XCTAssertEqual(s.project.markers, [1, 3, 7, 9])
+        XCTAssertEqual(s.selectedLayerID, gid)
+    }
+
     // MARK: R1 group split / trim
 
     func testSplittingGroupSplitsItsChildren() throws {

@@ -3,7 +3,7 @@ import SwiftUI
 
 enum LayerStylePart: String, CaseIterable, Identifiable {
     case fill = "Color & Fill", border = "Border & Shadow", blending = "Blending & Opacity"
-    case transform = "Move & Transform", text = "Text Style", effects = "Effects"
+    case transform = "Move & Transform", size = "Size & Bounds", text = "Text Style", effects = "Effects"
     var id: String { rawValue }
 }
 
@@ -236,6 +236,12 @@ extension EditorState {
             let opacity = target.transform.opacity; target.transform = source.transform
             if !parts.contains(.blending) { target.transform.opacity = opacity }
             target.is3D = source.is3D; target.extrude = source.extrude
+        }
+        if parts.contains(.size) {
+            target.size = source.size
+            target.cornerRadius = source.cornerRadius
+            target.sides = source.sides
+            target.innerRatio = source.innerRatio
         }
         if parts.contains(.text), let text = source.text, let string = target.text?.string {
             let previous = target.text!

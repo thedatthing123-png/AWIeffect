@@ -191,10 +191,15 @@ struct MotionBlurPanel: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
                         Toggle("Motion Blur", isOn: Binding(get: { p.motionBlurEnabled }, set: { b in
-                            state.mutate("Motion Blur") { $0.motionBlurEnabled = b }
+                            state.mutate("Motion Blur") {
+                                $0.motionBlurEnabled = b
+                                // The scene switch means scene motion blur. Individual opt-in remains available by
+                                // turning Every Layer off afterwards; users should not need to visit every layer.
+                                $0.blurAllLayers = b
+                            }
                         }))
                         .font(.system(size: 15, weight: .bold)).tint(Theme.accent).foregroundStyle(Theme.text)
-                        Text("The master switch for this scene. Off, nothing blurs.").font(.caption).foregroundStyle(Theme.textDim)
+                        Text("The scene switch blurs moving layers, camera motion, parents, nulls and transform effects. Use Every Layer to opt back into per-layer control.").font(.caption).foregroundStyle(Theme.textDim)
                         Toggle("Every layer", isOn: Binding(get: { p.blurAllLayers }, set: { b in
                             state.mutate("Blur Every Layer") { $0.blurAllLayers = b; if b { $0.motionBlurEnabled = true } }
                         }))

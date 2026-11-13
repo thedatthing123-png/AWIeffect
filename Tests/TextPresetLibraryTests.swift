@@ -126,15 +126,16 @@ final class TextPresetLibraryTests: XCTestCase {
         XCTAssertEqual(anims.first?.id, mine.id)
         XCTAssertEqual(anims.filter { $0.group == a.id }.count, a.make(1, 1).count)
         XCTAssertEqual(anims.filter { $0.group == b.id }.count, b.make(2, 1).count)
-        // Re-applying replaces only that group.
+        // Re-applying creates another removable instance instead of silently deleting the first one.
         TextPresetLibrary.applyPreset(a, to: &l, start: 3, duration: 0.5)
         XCTAssertEqual(l.text!.animators.filter { $0.group == a.id }.count, a.make(3, 0.5).count)
-        XCTAssertEqual(l.text!.animators.count, anims.count)
+        XCTAssertEqual(l.text!.animators.filter { $0.group == a.id + "#2" }.count, a.make(3, 0.5).count)
+        XCTAssertEqual(l.text!.animators.count, anims.count + a.make(3, 0.5).count)
         TextPresetLibrary.removePresetGroup(a.id, from: &l)
         XCTAssertEqual(l.text!.animators.map(\.id).first, mine.id)
-        XCTAssertTrue(l.text!.animators.allSatisfy { $0.group == nil || $0.group == b.id })
+        XCTAssertTrue(l.text!.animators.allSatisfy { $0.group == nil || $0.group == b.id || $0.group == a.id + "#2" })
         XCTAssertFalse(l.text!.animators.contains { $0.group == a.id })
-        XCTAssertEqual(TextPresetLibrary.groups(in: l), [b.id])
+        XCTAssertEqual(TextPresetLibrary.groups(in: l), [b.id, a.id + "#2"])
     }
 
     func testDefaultDurationIsOneSecondOrWhatIsLeft() {

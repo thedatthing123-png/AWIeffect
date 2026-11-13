@@ -252,6 +252,9 @@ final class EditorState: ObservableObject {
     @Published var effectClipboard: [EffectInstance] = []
     /// Where the copied effects' layer started, so pasted keyframes keep their place relative to the new layer.
     var effectClipboardStart = 0.0
+    /// Duration of the copied carrier. Pasted effect animation is fitted to the destination clip instead of
+    /// preserving an unrelated absolute duration (AE/AM-style preset timing).
+    var effectClipboardDuration = 0.0
     @Published var snapGuides = SnapGuides()
     @Published var previewQuality: PreviewQuality = .full
     @Published var orbit = OrbitCamera.home
@@ -608,21 +611,26 @@ final class EditorState: ObservableObject {
         guard let l = selectedLayer else { return }
         effectClipboard = ids.map { set in l.effects.filter { set.contains($0.id) } } ?? l.effects
         effectClipboardStart = l.inPoint
+        effectClipboardDuration = max(project.frameDuration, l.outPoint - l.inPoint)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
     }
 
     func pasteEffects() {
         guard let i = selectedIndex, !effectClipboard.isEmpty else { return }
         let items = effectClipboard.map { e -> EffectInstance in var c = e; c.id = UUID(); return c }
-        // Keyframes move with the effect: a key 0.5 s into the copied layer lands 0.5 s into this one.
-        let delta = project.layers[i].inPoint - effectClipboardStart
+        // Keyframes keep their normalized place in the clip. A key halfway through the copied carrier lands
+        // halfway through the destination, even when the destination is shorter or longer.
+        let destinationStart = project.layers[i].inPoint
+        let destinationDuration = max(project.frameDuration, project.layers[i].outPoint - destinationStart)
+        let sourceDuration = max(project.frameDuration, effectClipboardDuration)
+        let factor = destinationDuration / sourceDuration
         mutate(items.count == 1 ? "Paste Effect" : "Paste \(items.count) Effects") { p in
             var carrier = p.layers[i]
             carrier.effects = items
-            if abs(delta) > 1e-9 {
-                var shift = AnimationTraversal(operation: .shift(delta))
-                carrier.traverseAnimations(&shift)
-            }
+            var fit = AnimationTraversal(operation: .scaleTime(effectClipboardStart, factor))
+            carrier.traverseAnimations(&fit)
+            var shift = AnimationTraversal(operation: .shift(destinationStart - effectClipboardStart))
+            carrier.traverseAnimations(&shift)
             p.layers[i].effects.append(contentsOf: carrier.effects)
         }
     }

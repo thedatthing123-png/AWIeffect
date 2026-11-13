@@ -6,6 +6,8 @@ struct CompositionEditContext {
     var time: Double
     var selected: UUID?
     var groupID: UUID? = nil
+    /// Root-comp time represented by local time zero while editing a group.
+    var timelineOffset: Double = 0
     /// The comp as it was opened; closing compares against it to decide whether an undo step is needed.
     var opened: Project? = nil
 }
@@ -15,11 +17,15 @@ struct CompositionEditContext {
 extension EditorState {
     var isInPrecomp: Bool { !compStack.isEmpty }
 
-    /// Maps a time in the open comp to the root comp's time. Groups share the root timeline; a pre-comp maps
-    /// back through its layer's timing (time remap falls back to the time the pre-comp was opened at).
+    /// Maps a time in the open comp to the root comp's time. Group timelines are local to their container;
+    /// a pre-comp maps back through its layer timing (time remap falls back to the time it was opened at).
     func rootTime(_ t: Double) -> Double {
         var time = t
-        for entry in compStack.reversed() where entry.groupID == nil {
+        for entry in compStack.reversed() {
+            if entry.groupID != nil {
+                time += entry.timelineOffset
+                continue
+            }
             guard let id = entry.selected, let l = entry.project.layers.first(where: { $0.id == id }),
                   case .precomp = l.content, l.timeRemap == nil, abs(l.speed) > 1e-6 else { time = entry.time; continue }
             time = l.inPoint + (time - l.sourceStart) / l.speed
@@ -50,11 +56,12 @@ extension EditorState {
     private static func applying(_ child: Project, to entry: CompositionEditContext) -> Project {
         var parent = entry.project
         if let gid = entry.groupID, let index = parent.layers.firstIndex(where: { $0.id == gid }) {
+            let worldChild = offsettingGroupTimeline(child, by: entry.timelineOffset)
             let old = descendantIDs(of: gid, in: parent)
             let oldLayers = parent.layers.filter { old.contains($0.id) }
             parent.layers.removeAll { old.contains($0.id) }
-            let nestedGroups = Set(child.layers.filter(\.isGroup).map(\.id))
-            let members = child.layers.map { layer -> Layer in
+            let nestedGroups = Set(worldChild.layers.filter(\.isGroup).map(\.id))
+            let members = worldChild.layers.map { layer -> Layer in
                 var l = layer
                 if l.groupID == nil || !nestedGroups.contains(l.groupID!) { l.groupID = gid }
                 return l
@@ -62,7 +69,7 @@ extension EditorState {
             let at = (parent.layers.firstIndex(where: { $0.id == gid }) ?? index) + 1
             parent.layers.insert(contentsOf: members, at: at)
             if let i = parent.layers.firstIndex(where: { $0.id == gid }) {
-                parent.layers[i].name = child.name
+                parent.layers[i].name = worldChild.name
                 if let oldEnd = oldLayers.map(\.outPoint).max(), let newEnd = members.map(\.outPoint).max() {
                     parent.layers[i].outPoint += newEnd - oldEnd
                 }
@@ -70,13 +77,47 @@ extension EditorState {
                     parent.layers[i].inPoint += newStart - oldStart
                 }
             }
-            parent.markers = child.markers; parent.detectedBeatTimes = child.detectedBeatTimes
+            let start = entry.timelineOffset
+            let end = start + child.duration
+            parent.markers = parent.markers.filter { $0 < start || $0 > end } + worldChild.markers
+            let keptBeats = (parent.detectedBeatTimes ?? []).filter { $0 < start || $0 > end }
+            let beats = keptBeats + (worldChild.detectedBeatTimes ?? [])
+            parent.detectedBeatTimes = beats.isEmpty ? nil : beats.sorted()
+            let keptCompMarkers = (parent.compMarkers ?? []).filter { $0.time < start || $0.time > end }
+            let named = keptCompMarkers + (worldChild.compMarkers ?? [])
+            parent.compMarkers = named.isEmpty ? nil : named.sorted { $0.time < $1.time }
             parent.fitAutoLength()
-            parent.precomps = child.precomps
+            parent.precomps = worldChild.precomps
         } else {
             parent.precomps = closing(child, into: parent.precomps)
         }
         return parent
+    }
+
+    /// Translates a scoped group between root time and its local zero-based timeline. Source media time and
+    /// layer-relative markers stay unchanged; only composition-time values move.
+    private static func offsettingGroupTimeline(_ input: Project, by delta: Double) -> Project {
+        guard delta.isFinite, abs(delta) > 1e-12 else { return input }
+        var output = input
+        func offset(_ layers: inout [Layer]) {
+            for i in layers.indices {
+                layers[i].inPoint += delta
+                layers[i].outPoint += delta
+                var visit = AnimationTraversal(operation: .shift(delta))
+                layers[i].traverseAnimations(&visit)
+            }
+        }
+        offset(&output.layers)
+        if var context = output.parentContext {
+            offset(&context)
+            output.parentContext = context
+        }
+        output.markers = output.markers.map { $0 + delta }
+        output.detectedBeatTimes = output.detectedBeatTimes.map { $0.map { $0 + delta } }
+        output.compMarkers = output.compMarkers.map { list in
+            list.map { marker in var m = marker; m.time += delta; return m }
+        }
+        return output
     }
 
     nonisolated static func descendantIDs(of group: UUID, in project: Project) -> Set<UUID> {
@@ -101,10 +142,20 @@ extension EditorState {
             return value
         }
         child.parentContext = project.layers.filter { !members.contains($0.id) } + (project.parentContext ?? [])
+        let offset = group.inPoint
+        let length = max(project.frameDuration, group.outPoint - group.inPoint)
+        child.markers = project.markers.filter { $0 >= group.inPoint && $0 <= group.outPoint }
+        child.detectedBeatTimes = project.detectedBeatTimes.map { $0.filter { $0 >= group.inPoint && $0 <= group.outPoint } }
+        child.compMarkers = project.compMarkers.map { $0.filter { $0.time >= group.inPoint && $0.time <= group.outPoint } }
+        child = Self.offsettingGroupTimeline(child, by: -offset)
+        child.duration = length
+        child.autoLength = false
         child.distinguishContainerTags()
-        compStack.append(CompositionEditContext(project: project, time: currentTime, selected: selectedLayerID, groupID: group.id, opened: child))
+        compStack.append(CompositionEditContext(project: project, time: currentTime, selected: selectedLayerID,
+                                                groupID: group.id, timelineOffset: offset, opened: child))
         pushUndoContext()
         project = child
+        currentTime = child.snapToFrame(max(0, min(length, currentTime - offset)))
         select(nil)
     }
 
