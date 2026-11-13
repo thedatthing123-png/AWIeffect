@@ -123,6 +123,8 @@ final class Renderer {
         let out = pool.acquire(width: comp.width, height: comp.height)
         fx.run("fxClear", cb, textures: [out], grid: out)
         guard currentDepth < 8 else { return out }
+        let library = precompLibrary, depth = currentDepth, savedPool = currentPool
+        let savedParts = groupParts, savedCameras = groupCameras
         var sub = project, one = layer
         one.trackMatte = .none; one.clipToBelow = false; one.isSolo = false; one.isVisible = true; one.groupID = nil
         let descendants = layer.isGroup ? EditorState.descendantIDs(of: layer.id, in: project) : []
@@ -130,6 +132,8 @@ final class Renderer {
         sub.parentContext = project.layers + (project.parentContext ?? [])
         sub.background = RGBA(0, 0, 0, 0); sub.precompDepth = currentDepth + 1
         encode(project: sub, time: time, renderScale: renderScale, into: out, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
+        precompLibrary = library; currentDepth = depth; currentPool = savedPool
+        groupParts = savedParts; groupCameras = savedCameras
         return out
     }
 
@@ -211,21 +215,12 @@ final class Renderer {
     /// Track matte: renders the layer and its matte separately at comp size, multiplies, then composites with the layer's blend mode.
     private func encodeMatted(_ layer: Layer, matte: Layer, project: Project, time: Double, renderScale: Double, comp: MTLTexture,
                               cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL) {
-        let library = precompLibrary, depth = currentDepth
-        let cameras = project.layers.filter { $0.content == .camera }
-        func renderOnly(_ l: Layer) -> MTLTexture {
-            var sub = project
-            var one = l; one.trackMatte = .none; one.clipToBelow = false; one.isSolo = false; one.isVisible = true
-            sub.layers = cameras + [one]
-            sub.background.a = 0
-            sub.background = RGBA(0, 0, 0, 0)
-            let tex = pool.acquire(width: comp.width, height: comp.height)
-            encode(project: sub, time: time, renderScale: renderScale, into: tex, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
-            precompLibrary = library; currentPool = pool; currentDepth = depth
-            return tex
-        }
-        let content = renderOnly(layer)
-        let m = renderOnly(matte)
+        // `fullLayer` retains group descendants and precomp alpha. Rendering only the container row turns groups
+        // into their rectangular canvas and makes clouds/noise/procedurals ignore the visible subject silhouette.
+        let content = fullLayer(layer, project: project, time: time, renderScale: renderScale, comp: comp,
+                                cb: cb, pool: pool, mediaURL: mediaURL)
+        let m = fullLayer(matte, project: project, time: time, renderScale: renderScale, comp: comp,
+                          cb: cb, pool: pool, mediaURL: mediaURL)
         let out = pool.acquire(width: comp.width, height: comp.height)
         var p = EffectParams()
         p.i.x = 6
@@ -234,6 +229,26 @@ final class Renderer {
         let I = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(comp.width) / 2, Double(comp.height) / 2, 1)))
         drawQuad(cb: cb, target: comp, matrix: I, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 0.5,
                  opacity: 1, layer: layer, time: time, source: .image(out), premultipliedImage: true)
+    }
+
+    /// Runs an adjustment against the accumulated scene, then reveals that processed scene through the exact alpha
+    /// of the matte below. This is the adjustment-layer equivalent of AE's clipped adjustment workflow.
+    private func encodeMattedAdjustment(_ layer: Layer, matte: Layer, project: Project, time: Double,
+                                        renderScale: Double, opacity: Double, comp: MTLTexture,
+                                        cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL) {
+        let original = pool.acquire(width: comp.width, height: comp.height)
+        fx.run("fxCopy", cb, textures: [comp, original], grid: original)
+        encodeAdjustment(layer, effects: layer.effects.filter(\.isEnabled), time: time, renderScale: renderScale,
+                         opacity: opacity, comp: comp, cb: cb, pool: pool,
+                         shutter: project.blurs(layer) ? project.shutterAngle / 360 / max(project.fps, 1) : 0,
+                         sampleCount: min(project.blurSamples, Renderer.blurSampleCap ?? project.blurSamples))
+        let processed = pool.acquire(width: comp.width, height: comp.height)
+        fx.run("fxCopy", cb, textures: [comp, processed], grid: processed)
+        fx.run("fxCopy", cb, textures: [original, comp], grid: comp)
+        let coverage = fullLayer(matte, project: project, time: time, renderScale: renderScale, comp: comp,
+                                 cb: cb, pool: pool, mediaURL: mediaURL)
+        var params = EffectParams(); params.a.x = 1
+        fx.run("fxBackdropMix", cb, textures: [comp, processed, coverage], params: params, grid: comp)
     }
 
     /// Echo trails: each echoing layer gets delayed, fading copies stacked underneath it (all keyframes and media delayed).
@@ -577,15 +592,18 @@ final class Renderer {
         let anySolo = project.layers.contains { $0.isSolo }
         // Layers used as a track matte by the layer below them don't draw themselves.
         var matteSources: [UUID: Layer] = [:], hiddenMattes = Set<UUID>()
-        for (i, l) in project.layers.enumerated() where l.trackMatte != .none && i > 0 {
-            let m = project.layers[i - 1]
+        // Containers are one editing/render row. Their hidden descendants must not break adjacency between a
+        // group/precomp and the layer above or below it.
+        let matteRows = project.timelineLayers
+        for (i, l) in matteRows.enumerated() where l.trackMatte != .none && i > 0 {
+            let m = matteRows[i - 1]
             // Only layers that draw pixels can be mattes (a camera / light / audio above means "no matte").
             if m.content == .camera || m.content == .light || m.isAudioOnly { continue }
             matteSources[l.id] = m; hiddenMattes.insert(m.id)
         }
         // Clipping masks: the layer below cuts this one out and keeps drawing itself.
-        for (i, l) in project.layers.enumerated() where l.clipToBelow && l.trackMatte == .none && i + 1 < project.layers.count {
-            let m = project.layers[i + 1]
+        for (i, l) in matteRows.enumerated() where l.clipToBelow && l.trackMatte == .none && i + 1 < matteRows.count {
+            let m = matteRows[i + 1]
             if m.content == .camera || m.content == .light || m.isAudioOnly { continue }
             matteSources[l.id] = m
         }
@@ -617,6 +635,12 @@ final class Renderer {
             if layer.effects.contains(where: { $0.isEnabled && $0.typeID == "awi18.displacementMap" && $0.choice("target") == 1 }) {
                 encodeBackdropDisplacement(layer, matte: matteSources[layer.id], project: project, time: time, renderScale: renderScale,
                                            opacity: opacity, comp: comp, cb: cb, pool: pool, mediaURL: mediaURL)
+                continue
+            }
+            if let matte = matteSources[layer.id], layer.content == .adjustment {
+                guard layer.effects.contains(where: { $0.isEnabled }) else { continue }
+                encodeMattedAdjustment(layer, matte: matte, project: project, time: time, renderScale: renderScale,
+                                       opacity: opacity, comp: comp, cb: cb, pool: pool, mediaURL: mediaURL)
                 continue
             }
             if let matte = matteSources[layer.id] {

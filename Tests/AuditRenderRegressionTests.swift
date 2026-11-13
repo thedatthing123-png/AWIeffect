@@ -102,6 +102,36 @@ final class AuditRenderRegressionTests: XCTestCase {
         let empty = try XCTUnwrap(r.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) })).rgba
         XCTAssertTrue(empty.enumerated().filter { $0.offset % 4 == 3 }.allSatisfy { $0.element == 0 })
     }
+    func testGroupMatteUsesComposedChildAlphaInsteadOfContainerRectangle() throws {
+        let r = try renderer()
+        var p = Project.new(name: "group matte", width: 64, height: 64, fps: 30, duration: 1,
+                            background: RGBA(0, 0, 0, 0))
+        var group = p.makeLayer(name: "Group", content: .solid, size: Vec2(64, 64))
+        group.isGroup = true; group.fill = Animated(RGBA(0, 0, 0, 0))
+        var child = p.makeLayer(name: "Child", content: .solid, size: Vec2(16, 16))
+        child.fill = Animated(.white); child.groupID = group.id
+        var subject = p.makeLayer(name: "Subject", content: .solid, size: Vec2(64, 64))
+        subject.fill = Animated(RGBA(1, 0, 0, 1)); subject.trackMatte = .alpha
+        p.layers = [group, child, subject]
+        let px = try XCTUnwrap(r.renderPixels(project: p, time: 0, preserveAlpha: true,
+                                              mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        XCTAssertGreaterThan(px[(32 * 64 + 32) * 4 + 3], 240)
+        XCTAssertLessThan(px[(4 * 64 + 4) * 4 + 3], 8, "group canvas must not become the matte")
+    }
+    func testClippedAdjustmentUsesArtworkAlphaWithoutBlackRectangle() throws {
+        let r = try renderer()
+        var p = Project.new(name: "clipped adjustment", width: 64, height: 64, fps: 30, duration: 1,
+                            background: RGBA(0, 0, 0, 0))
+        var adjustment = p.makeLayer(name: "Adjustment", content: .adjustment, size: Vec2(64, 64))
+        adjustment.effects = [EffectRegistry.gaussianBlur.makeInstance()]; adjustment.clipToBelow = true
+        var subject = p.makeLayer(name: "Subject", content: .solid, size: Vec2(16, 16))
+        subject.fill = Animated(.white)
+        p.layers = [adjustment, subject]
+        let px = try XCTUnwrap(r.renderPixels(project: p, time: 0, preserveAlpha: true,
+                                              mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        XCTAssertGreaterThan(px[(32 * 64 + 32) * 4 + 3], 240)
+        XCTAssertLessThan(px[(4 * 64 + 4) * 4 + 3], 8)
+    }
     func testMotionTileRepeatsWholeImageBeyondOriginalLayerBounds() throws {
         let r = try renderer()
         let format = UIGraphicsImageRendererFormat(); format.scale = 1
