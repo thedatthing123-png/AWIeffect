@@ -88,6 +88,12 @@ extension EditorState {
             parent.compMarkers = named.isEmpty ? nil : named.sorted { $0.time < $1.time }
             parent.fitAutoLength()
             parent.precomps = worldChild.precomps
+            // A group shares its composition's shutter settings. Closing its local editing timeline
+            // must not discard the master gate opened by an individual member's blur switch.
+            parent.motionBlurOn = child.motionBlurOn
+            parent.blurAllLayersStore = child.blurAllLayersStore; parent.sharpLayerIDs = child.sharpLayerIDs
+            parent.shutterAngleStore = child.shutterAngleStore; parent.shutterPhaseStore = child.shutterPhaseStore
+            parent.blurSamplesStore = child.blurSamplesStore; parent.smoothMotionStore = child.smoothMotionStore
         } else {
             parent.precomps = closing(child, into: parent.precomps)
         }

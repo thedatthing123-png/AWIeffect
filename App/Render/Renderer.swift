@@ -63,6 +63,7 @@ final class Renderer {
     /// Parts of each group in the comp being encoded (group id -> parts, in stacking order).
     private var groupParts: [UUID: [Layer]] = [:]
     private var groupCameras: [Layer] = []
+    private var groupSource: Project?
 
     /// Renders a nested comp at `time` (layer time -> comp time via the layer's timing), transparent background.
     private func renderPrecomp(_ id: UUID, layer: Layer, time: Double, density: Double, cb: MTLCommandBuffer,
@@ -203,6 +204,20 @@ final class Renderer {
         let tex = pool.acquire(width: max(1, Int((Double(w0) * s).rounded())), height: max(1, Int((Double(h0) * s).rounded())))
         var sub = Project.new(name: "group", width: w0, height: h0, fps: 30, duration: 1, background: RGBA(0, 0, 0, 0))
         sub.layers = groupCameras + members
+        if let source = groupSource {
+            let ids = EditorState.descendantIDs(of: group.id, in: source)
+            sub.layers = source.layers.filter { $0.content == .camera } + source.layers.filter { ids.contains($0.id) }.map { member in
+                var child = member
+                if child.groupID == group.id { child.groupID = nil }
+                return child
+            }
+            sub.parentContext = source.layers + (source.parentContext ?? [])
+            sub.fps = source.fps; sub.duration = source.duration
+            sub.motionBlurEnabled = source.motionBlurEnabled
+            sub.blurAllLayers = source.blurAllLayers; sub.sharpLayerIDs = source.sharpLayerIDs
+            sub.shutterAngle = source.shutterAngle; sub.shutterPhase = source.shutterPhase
+            sub.blurSamples = source.blurSamples; sub.smoothMotion = source.smoothMotion
+        }
         sub.precomps = precompLibrary
         sub.precompList = precompLibrary
         sub.precompDepth = currentDepth + 1
@@ -533,11 +548,14 @@ final class Renderer {
         encodeLock.lock()
         let savedLibrary = precompLibrary, savedPool = currentPool, savedDepth = currentDepth, savedBeats = textBeats
         let savedCasters = shadowCasters, savedParts = groupParts, savedCameras = groupCameras
+        let savedGroupSource = groupSource
         defer {
             precompLibrary = savedLibrary; currentPool = savedPool; currentDepth = savedDepth; textBeats = savedBeats
             shadowCasters = savedCasters; groupParts = savedParts; groupCameras = savedCameras
+            groupSource = savedGroupSource
             encodeLock.unlock()
         }
+        groupSource = rawProject
         // Expressions are baked into plain values for this frame first.
         let resolved = ExpressionResolver.resolve(rawProject, time: time)
         // Echo needs parenting baked over time (costly); everything else bakes just this frame.

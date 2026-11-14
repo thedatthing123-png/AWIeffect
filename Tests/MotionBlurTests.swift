@@ -53,6 +53,35 @@ final class MotionBlurTests: XCTestCase {
         XCTAssertFalse(p.blurAllLayers)
     }
 
+    func testIndividualGroupMemberRetainsItsAnimatedShutterSampling() throws {
+        var p = panScene()
+        p.layers.removeFirst()
+        var group = p.makeLayer(name: "Group", content: .solid, size: Vec2(160,80))
+        group.isGroup = true
+        p.layers[0].groupID = group.id
+        p.layers[0].transform.position.insertKeyframe(Keyframe(time: 0, value: Vec2(40,40)))
+        p.layers[0].transform.position.insertKeyframe(Keyframe(time: 1, value: Vec2(120,40)))
+        p.layers.insert(group, at: 0)
+        let sharp = try coverage(p).count
+        p.layers[1].motionBlur = true; p.motionBlurEnabled = true
+        XCTAssertGreaterThan(try coverage(p).count, sharp * 2, "group buffers must retain the member's animation and blur settings")
+        XCTAssertFalse(p.blurAllLayers)
+    }
+
+    @MainActor func testClosingGroupKeepsMemberBlurAndMasterGate() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        var p = panScene(); p.layers.removeFirst()
+        let memberID = p.layers[0].id
+        var group = p.makeLayer(name: "Group", content: .solid, size: Vec2(160,80)); group.isGroup = true
+        p.layers[0].groupID = group.id; p.layers.insert(group, at: 0)
+        let state = EditorState(project: p, store: ProjectStore(root: root))
+        state.select(group.id); state.openGroup(); state.select(memberID); state.setSelectedMotionBlur(true)
+        XCTAssertTrue(state.rootProject.motionBlurEnabled)
+        XCTAssertTrue(try XCTUnwrap(state.rootProject.layers.first { $0.id == memberID }).motionBlur)
+        XCTAssertFalse(state.rootProject.blurAllLayers)
+    }
+
     func testCameraBlurUsesTheActiveCameraAtTheRenderedTime() {
         var p = panScene()
         p.motionBlurEnabled = true

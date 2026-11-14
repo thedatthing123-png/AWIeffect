@@ -8,6 +8,7 @@ Scope: the November 12 pasted editing notes, plus the correction that enabling o
 - The camera's switch opts its affected shot into shutter sampling. A 3D-only camera leaves 2D overlays sharp. Camera eligibility is evaluated at the rendered time, including camera cuts.
 - Turning a layer off explicitly keeps it sharp even when camera blur or Every Layer is active.
 - Individual layer shutter samples continue evaluating camera, parent/null and transform-effect movement together. Existing camera and parenting GPU tests are retained; new tests cover switch isolation and camera opt-in.
+- Group buffers retain authored animation and composition shutter settings. Editing a member's switch inside a group retains the master gate when its local timeline is closed.
 - Shutter accumulation uses three reusable textures instead of allocating another full composition texture for every sample.
 - Pixel Motion Blur in Quick Tools opens the actual footage-motion controls rather than silently enabling transform blur.
 
