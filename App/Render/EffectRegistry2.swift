@@ -359,7 +359,7 @@ extension EffectRegistry {
         id: "awi.glitch", name: "AWI Glitch", category: .stylize, aeMatchNames: ["S_DigitalDamage", "RG Universe Glitch"],
         summary: "Digital damage: slice offsets, RGB splits and inverted blocks that change every frame.",
         params: [.number("amount", "Amount", 50, 0, 100, unit: "%"), .number("block", "Block Height", 16, 2, 200, unit: "px"),
-                 .number("rgb", "RGB Shift", 10, 0, 100, unit: "px"), .number("rate", "Changes / Second", 12, 1, 60)],
+                 .number("rgb", "RGB Shift", 10, 0, 100, unit: "px"), .number("rate", "Changes / Second", 12, 1, 60)] + glitchMotionControls,
         stage: .pixels { ctx in gx(ctx, 0, rate: ctx.num("rate")) { p in
             p.a = SIMD4(f(ctx.num("amount") / 100), f(ctx.num("block") * ctx.unit), f(ctx.num("rgb") * ctx.unit), 0) } })
 

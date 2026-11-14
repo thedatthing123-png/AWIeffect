@@ -905,18 +905,26 @@ final class DrawEngine: ObservableObject {
         let limit = Int(tolerance * 765) + min(150, spread)
         let x0 = max(0, valid.map(\.0).min()! - reach), x1 = min(w - 1, valid.map(\.0).max()! + reach)
         let y0 = max(0, valid.map(\.1).min()! - reach), y1 = min(h - 1, valid.map(\.1).max()! + reach)
-        var seen = [Bool](repeating: false, count: w * h)
-        var stack = valid.map { $0.1 * w + $0.0 }
+        // A brush flood is local. Allocating an entire 4K-image bitmap on every touch sample
+        // made quick selection stall even when the brush only touched a tiny finger or eye.
+        let regionWidth = x1 - x0 + 1
+        var seen = [Bool](repeating: false, count: regionWidth * (y1 - y0 + 1))
+        var stack: [Int] = []
+        func enqueue(_ x: Int, _ y: Int) {
+            let local = (y - y0) * regionWidth + x - x0
+            guard !seen[local] else { return }
+            seen[local] = true
+            stack.append(y * w + x)
+        }
+        for (x, y) in valid { enqueue(x, y) }
         while let i = stack.popLast() {
-            if seen[i] { continue }
-            seen[i] = true
             if distance(i * 4) > limit { continue }
             visit(i)
             let x = i % w, y = i / w
-            if x > x0 { stack.append(i - 1) }
-            if x < x1 { stack.append(i + 1) }
-            if y > y0 { stack.append(i - w) }
-            if y < y1 { stack.append(i + w) }
+            if x > x0 { enqueue(x - 1, y) }
+            if x < x1 { enqueue(x + 1, y) }
+            if y > y0 { enqueue(x, y - 1) }
+            if y < y1 { enqueue(x, y + 1) }
         }
     }
 
@@ -1481,7 +1489,9 @@ final class DrawEngine: ObservableObject {
                     return
                 }
                 if brush {
-                    for i in mask.indices { mask[i] = max(before[i], mask[i]) }
+                    // Subject inference assists the stroke; it must never erase explicit paint on
+                    // thin ink outlines, fingertips or details the model did not recognise.
+                    mask = Self.assistedSelection(mask, previous: before, painted: painted)
                     self.selBuf = mask
                 } else { self.pushSelectionUndo() }
                 self.restoreSelection(mask); self.revision += 1
@@ -1515,6 +1525,13 @@ final class DrawEngine: ObservableObject {
         guard !instances.isEmpty, let pixelBuffer = try? observation.generateScaledMaskForImage(forInstances: instances, from: handler), !Task.isCancelled else { return nil }
         let mask = rasterSelectionMask(pixelBuffer, width: width, height: height)
         return mask.contains(where: { $0 > 128 }) ? mask : nil
+    }
+
+    static func assistedSelection(_ inferred: [UInt8], previous: [UInt8], painted: [UInt8]?) -> [UInt8] {
+        var result = inferred
+        guard previous.count == inferred.count, painted == nil || painted?.count == inferred.count else { return result }
+        for i in result.indices { result[i] = max(previous[i], max(result[i], painted?[i] ?? 0)) }
+        return result
     }
 
     /// Vision's pixel-buffer rows and the selection texture share top-down storage.

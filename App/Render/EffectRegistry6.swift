@@ -175,7 +175,7 @@ extension EffectRegistry {
         summary: "Random rectangular blocks jump sideways with RGB separation.",
         params: [.number("amount", "Displacement", 20, 0, 100, unit: "px"), .number("block", "Block Size", 14, 3, 120, unit: "px"),
                  .number("probability", "Amount of Blocks", 40, 0, 100, unit: "%"), .number("rate", "Rate", 8, 0, 30, step: 0.5, unit: "fps"),
-                 .number("split", "RGB Split", 4, 0, 30, unit: "px"), .number("seed", "Random Seed", 1, 0, 100, step: 1)],
+                 .number("split", "RGB Split", 4, 0, 30, unit: "px"), .number("seed", "Random Seed", 1, 0, 100, step: 1)] + glitchMotionControls,
         stage: .pixels { ctx in gx(ctx, 1, rate: ctx.num("rate"), seed: ctx.num("seed")) { p in
             p.a = SIMD4(px6(ctx, "amount"), px6(ctx, "block"), n6(ctx, "probability", 0.01), px6(ctx, "split")) } })
 
@@ -184,7 +184,7 @@ extension EffectRegistry {
         summary: "Horizontal line tearing that flickers every frame.",
         params: [.number("amount", "Tear", 25, 0, 120, unit: "px"), .number("height", "Line Height", 3, 1, 40, unit: "px"),
                  .number("density", "Density", 50, 0, 100, unit: "%"), .number("rate", "Rate", 10, 0, 30, step: 0.5, unit: "fps"),
-                 .number("chroma", "Color Shift", 3, 0, 20, unit: "px"), .number("seed", "Random Seed", 1, 0, 100, step: 1)],
+                 .number("chroma", "Color Shift", 3, 0, 20, unit: "px"), .number("seed", "Random Seed", 1, 0, 100, step: 1)] + glitchMotionControls,
         stage: .pixels { ctx in gx(ctx, 2, rate: ctx.num("rate"), seed: ctx.num("seed")) { p in
             p.a = SIMD4(px6(ctx, "amount"), px6(ctx, "height"), n6(ctx, "density", 0.01), px6(ctx, "chroma")) } })
 

@@ -68,7 +68,7 @@ kernel void fx18(texture2d<half, access::sample> src [[texture(0)]],
         o = float4(src.sample(sm18, c + float2(sh, 0.0)));
     } else if (p.i.x == 4) {
         // Wave Glitch: a = (amount px, waves, speed, steps/s)
-        float tq = floor(t * max(p.a.w, 0.5)) / max(p.a.w, 0.5);
+        float tq = p.i.y == 1 ? floor(t * max(p.a.w, 0.5)) / max(p.a.w, 0.5) : t;
         float sh = p.a.x * sin(c.y / size.y * p.a.y * 6.2831853 + tq * p.a.z * 6.2831853);
         o = float4(src.sample(sm18, c + float2(sh, 0.0)));
     } else if (p.i.x == 5) {
@@ -250,6 +250,24 @@ kernel void fxLayerRef(texture2d<half, access::sample> src [[texture(0)]],
         if (p.a.y > 0.5) k = 1.0 - k;
         dst.write(half4(s * k), gid);
     }
+}
+
+// A tiled adjustment retains its repeat domain when a later transform samples beyond the comp.
+kernel void fxBackdropTransform(texture2d<half, access::sample> source [[texture(0)]],
+                               texture2d<half, access::write> output [[texture(1)]],
+                               constant EffectParams& p [[buffer(0)]], uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= output.get_width() || gid.y >= output.get_height()) return;
+    float2 size = float2(source.get_width(), source.get_height());
+    float2 c = float2(gid) + 0.5;
+    float2 q = float2(dot(p.a.xy, c) + p.a.z, dot(p.b.xy, c) + p.b.z) + size * 0.5;
+    float2 uv = q / size;
+    if (p.i.x == 2) {
+        float2 phase = fract(uv * 0.5) * 2.0;
+        uv = 1.0 - abs(phase - 1.0);
+    } else { uv = fract(uv); }
+    constexpr sampler repeatSampler(address::repeat, filter::linear, coord::normalized);
+    constexpr sampler mirrorSampler(address::clamp_to_edge, filter::linear, coord::normalized);
+    output.write(p.i.x == 2 ? source.sample(mirrorSampler, uv) : source.sample(repeatSampler, uv), gid);
 }
 
 // A backdrop effect replaces covered pixels. Alpha-over would duplicate a translucent backdrop.

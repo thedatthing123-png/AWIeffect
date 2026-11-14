@@ -537,6 +537,12 @@ static inline float4 split27(texture2d<half, access::sample> t, float2 q, float2
     return float4(min(float3(r.r, g.g, b.b), float3(a)), a);
 }
 
+static inline float motion27(float2 cell, float clock, float seed) {
+    float slot = floor(clock), f = fract(clock);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(h27(cell, seed + slot * 3.17), h27(cell, seed + (slot + 1.0) * 3.17), f);
+}
+
 /// textures: 0 src, 1 dst. b = timing (always on, bursts/s, length, seed), c.x = extra, d = (time, unit, -, -)
 /// i.x = mode: 0 slice, 1 interlace, 2 displacement, 3 VHS tracking.
 kernel void fxGlitch27(texture2d<half, access::sample> src [[texture(0)]],
@@ -549,20 +555,23 @@ kernel void fxGlitch27(texture2d<half, access::sample> src [[texture(0)]],
     float t = p.d.x, u = max(p.d.y, 0.25);
     float k = k27(t, p.b);
     float fr = floor(t * 12.0) + p.b.w * 7.0;
+    bool flowing = p.i.w == 1;
+    float layout = flowing ? p.b.w * 7.0 : fr;
     float4 o;
     switch (p.i.x) {
     case 0: {
         // Slice: a = (offset px, slices, rgb px). Bands of mixed heights jump sideways; some freeze on one row.
         float bh = size.y / max(p.a.y, 1.0);
         float band = floor(c.y / bh);
-        float sub = 1.0 + floor(h27b(band, fr + 3.0) * 3.99);
+        float sub = 1.0 + floor(h27b(band, layout + 3.0) * 3.99);
         float sh = bh / sub;
         float sb = floor((c.y - band * bh) / sh);
         float2 id = float2(band, sb);
-        float on = step(h27(id, fr), 0.3 + 0.4 * saturate(k)) * step(0.02, k);
-        float off = (h27(id, fr + 1.0) - 0.5) * 2.0 * p.a.x * k * on;
+        float on = step(h27(id, layout), 0.7) * step(0.02, k);
+        float travel = flowing ? motion27(id, t * 12.0, p.b.w + 1.0) : h27(id, fr + 1.0);
+        float off = (travel - 0.5) * 2.0 * p.a.x * k * on;
         float2 q = c + float2(off, 0.0);
-        if (on > 0.5 && h27(id, fr + 2.0) < 0.15) q.y = band * bh + sb * sh + 0.5;
+        if (on > 0.5 && h27(id, layout + 2.0) < 0.15) q.y = band * bh + sb * sh + 0.5;
         o = split27(src, q, float2(p.a.z * k * (0.2 + 0.8 * on), 0.0));
         break; }
     case 1: {
@@ -573,7 +582,8 @@ kernel void fxGlitch27(texture2d<half, access::sample> src [[texture(0)]],
         float sgn = field > 0.5 ? 1.0 : -1.0;
         float wob = sin(c.y / size.y * 12.0 + t * 6.0) * p.a.y * min(k, 1.5);
         float grp = floor(c.y / (fh * 24.0));
-        float tear = step(h27b(grp, fr), 0.25 * saturate(k)) * (h27b(grp, fr + 1.0) - 0.5) * 6.0 * p.a.x * k;
+        float noise = flowing ? motion27(float2(grp, 0.0), t * 12.0, p.b.w + 1.0) : h27b(grp, fr + 1.0);
+        float tear = step(h27b(grp, layout), 0.25) * (noise - 0.5) * 6.0 * p.a.x * k;
         float2 q = c + float2(sgn * p.a.x * 0.5 * k + wob + tear, 0.0);
         o = S27(src, q);
         float4 prev = S27(src, c + float2(-sgn * p.a.x * 0.5 * k + wob * 0.6, 0.0));
@@ -584,11 +594,14 @@ kernel void fxGlitch27(texture2d<half, access::sample> src [[texture(0)]],
         // Displacement: a = (amount px, block px, steps/s, vertical 0-1). Mixed-size blocks jump in quantized steps.
         float bs = max(p.a.y, 2.0);
         float st = floor(t * max(p.a.z, 1.0)) + p.b.w * 3.0;
-        float4 blk = block27(c, float2(bs * 4.0, bs * 2.0), bs * 0.5, st, 0.55);
+        float4 blk = block27(c, float2(bs * 4.0, bs * 2.0), bs * 0.5, flowing ? p.b.w * 3.0 : st, 0.55);
         float2 id = blk.xy / max(blk.zw, float2(1.0));
-        float on = step(h27(id, st + 1.0), 0.1 + 0.45 * saturate(k)) * step(0.01, k);
-        float nx = h27(id, st + 2.0) - 0.5, ny = h27(id, st + 3.0) - 0.5;
-        float2 dv = float2(round(nx * 4.0) / 4.0, round(ny * 4.0) / 4.0 * p.a.w) * 2.0 * p.a.x * k * on;
+        float on = step(h27(id, (flowing ? p.b.w * 3.0 : st) + 1.0), 0.55) * step(0.01, k);
+        float clock = t * max(p.a.z, 1.0);
+        float nx = (flowing ? motion27(id, clock, p.b.w + 2.0) : h27(id, st + 2.0)) - 0.5;
+        float ny = (flowing ? motion27(id, clock, p.b.w + 3.0) : h27(id, st + 3.0)) - 0.5;
+        float2 delta = flowing ? float2(nx, ny * p.a.w) : float2(round(nx * 4.0) / 4.0, round(ny * 4.0) / 4.0 * p.a.w);
+        float2 dv = delta * 2.0 * p.a.x * k * on;
         o = split27(src, c + dv, float2(on * bs * 0.15 * saturate(k), 0.0));
         break; }
     default: {
@@ -599,7 +612,7 @@ kernel void fxGlitch27(texture2d<half, access::sample> src [[texture(0)]],
         float dyb = (c.y - bandY) / bh;
         float inBand = exp(-dyb * dyb);
         float line = floor(c.y / u);
-        float jit = h27b(line, fr) - 0.5;
+        float jit = (flowing ? motion27(float2(line, 0.0), t * 12.0, p.b.w) : h27b(line, fr)) - 0.5;
         float wav = sin(c.y / size.y * 40.0 + t * 9.0) * 0.3;
         float kk = min(k, 1.5);
         float off = (inBand * (1.2 * jit + wav) + 0.08 * jit) * p.a.x * kk;

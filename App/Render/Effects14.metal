@@ -376,15 +376,18 @@ kernel void fxWarp14(texture2d<half, access::sample> src [[texture(0)]],
         }
         case 23: { // earthquake chunks: a = (intensity frac, block frac, frequency /s, seed), b.x = cracks 0-1
             float bs = max(p.a.y * hmin14, 3.0);
-            float fr = floor(t * p.a.z);
-            float2 shift = (hash2_14(float2(fr, 3.0), p.a.w) - 0.5) * 0.4;
+            float clock = t * p.a.z, fr = floor(clock), phase = fract(clock);
+            float ease = phase * phase * (3.0 - 2.0 * phase);
+            // Keep chunk boundaries stable. Interpolate displacement vectors rather than swapping
+            // random chunk layouts, so every displayed frame follows the same continuous motion.
+            float2 shift = (hash2_14(float2(0.0, 3.0), p.a.w) - 0.5) * 0.4;
             float2 g = c / bs + shift;
             float row = floor(g.y);
             g.x += hash14(float2(row, p.a.w + 11.0)) * 0.9;
             float2 cell = floor(g);
             float2 lq = fract(g);
-            float2 v = (hash2_14(cell, p.a.w + fr * 3.17) - 0.5) * 2.0 * p.a.x * hmin14;
-            float2 glob = (hash2_14(float2(fr, 1.0), p.a.w * 2.0) - 0.5) * p.a.x * hmin14 * 0.5;
+            float2 v = (mix(hash2_14(cell, p.a.w + fr * 3.17), hash2_14(cell, p.a.w + (fr + 1.0) * 3.17), ease) - 0.5) * 2.0 * p.a.x * hmin14;
+            float2 glob = (mix(hash2_14(float2(fr, 1.0), p.a.w * 2.0), hash2_14(float2(fr + 1.0, 1.0), p.a.w * 2.0), ease) - 0.5) * p.a.x * hmin14 * 0.5;
             o = tap14(src, c + v + glob);
             float ed = min(min(lq.x, 1.0 - lq.x), min(lq.y, 1.0 - lq.y)) * bs;
             float crack = (1.0 - smoothstep(0.0, 1.5, ed)) * p.b.x;

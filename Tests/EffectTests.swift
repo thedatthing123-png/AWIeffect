@@ -3,6 +3,21 @@ import XCTest
 
 /// Anti-stub tests: every registered effect must visibly change the image, and every control must do something.
 final class EffectTests: XCTestCase {
+    func testSmoothGlitchesMoveBetweenHeldPatternFrames() throws {
+        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        for def in [EffectRegistry.waveGlitch18, EffectRegistry.earthquake14,
+                    EffectRegistry.sliceGlitch19, EffectRegistry.displaceGlitch19,
+                    EffectRegistry.glitchBlocks6, EffectRegistry.glitchLines6] {
+            var effect = def.makeInstance()
+            if effect.params["base"] != nil { effect.params["base"] = .number(Animated(100)) }
+            let p = scene(effect: effect, onAdjustment: true)
+            let a = try XCTUnwrap(r.renderPixels(project: p, time: 0.31, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+            let b = try XCTUnwrap(r.renderPixels(project: p, time: 0.31 + 1.0 / 60, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+            let changed = zip(a, b).filter { abs(Int($0.0) - Int($0.1)) > 1 }.count
+            XCTAssertGreaterThan(changed, 8, "\(def.name) must animate between held pattern updates")
+        }
+    }
+
     /// Effects that work from the layer's alpha shape (no visible change on an opaque adjustment layer, like in AE).
     static let alphaShaped: Set<String> = ["ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow", "awi11.featherEdges", "awi11.matteChoker", "awi11.alphaLevels", "awi11.edgeRefine", "awi10.bevelAlpha", "awi10.smoothBevel", "awi10.glass", "awi10.edgeAO", "awi10.innerShadow", "awi10.fresnel", "awi16.tornEdges", "awi17.extrudeFlat"]
 
@@ -213,6 +228,9 @@ final class EffectTests: XCTestCase {
                       // Hue-vs curves and their qualifiers (softness, sat/luma range) only move pixels of their own hue (checked on a color wheel in the R4 grade tests).
                       !(d.id == "awi18.grade" && (pd.id.hasPrefix("hue") || pd.id.hasPrefix("q"))) else { continue }
                 var a = visible(d), b = visible(d)
+                if d.id == "awi18.waveGlitch", pd.id == "steps" {
+                    a.params["holdFrames"] = .toggle(true); b.params["holdFrames"] = .toggle(true)
+                }
                 a.params[pd.id] = .number(Animated(lo + (hi - lo) * 0.02))
                 b.params[pd.id] = .number(Animated(lo + (hi - lo) * 0.6))
                 if d.id == "awi.textSpacing" && pd.id == "spacing" {

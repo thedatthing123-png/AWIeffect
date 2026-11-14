@@ -35,6 +35,11 @@ struct EditorView: View {
 
     init(state: EditorState, close: @escaping () -> Void) {
         #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-motionBlur") {
+            let camera = ProcessInfo.processInfo.arguments.contains("-uiTesting-motionBlurCamera")
+            state.select(state.project.layers.first(where: { camera ? $0.content == .camera : $0.content != .camera })?.id)
+            state.panel = .motionBlur
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-cutoutInline") {
             state.select(state.project.layers.first?.id); state.panel = .cutout
             let destination = state.mediaURL("cutout-fixture.png")

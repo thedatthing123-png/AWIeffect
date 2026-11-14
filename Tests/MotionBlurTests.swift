@@ -32,6 +32,53 @@ final class MotionBlurTests: XCTestCase {
         XCTAssertGreaterThan(try coverage(p).count, sharp * 2, "the camera's move smears the bar")
     }
 
+    func testCameraSwitchBlursItsShotWithoutEnablingEveryLayer() throws {
+        var p = panScene()
+        let sharp = try coverage(p).count
+        p.layers[0].motionBlur = true; p.motionBlurEnabled = true
+        XCTAssertFalse(p.blurAllLayers)
+        XCTAssertFalse(p.layers[1].motionBlur)
+        XCTAssertGreaterThan(try coverage(p).count, sharp * 2)
+        p.sharpLayerIDs = [p.layers[1].id]
+        XCTAssertEqual(try coverage(p).count, sharp)
+    }
+
+    func testIndividualOptInDoesNotBlurOtherArtwork() {
+        var p = panScene()
+        var other = p.layers[1]; other.id = UUID(); other.name = "Sharp artwork"
+        p.layers.append(other)
+        p.motionBlurEnabled = true; p.layers[1].motionBlur = true
+        XCTAssertTrue(p.blurs(p.layers[1], at: 0.5))
+        XCTAssertFalse(p.blurs(other, at: 0.5))
+        XCTAssertFalse(p.blurAllLayers)
+    }
+
+    func testCameraBlurUsesTheActiveCameraAtTheRenderedTime() {
+        var p = panScene()
+        p.motionBlurEnabled = true
+        p.layers[0].motionBlur = true; p.layers[0].outPoint = 0.7
+        var later = p.layers[0]; later.id = UUID(); later.inPoint = 0.7; later.outPoint = 2; later.motionBlur = false
+        p.layers.insert(later, at: 1)
+        XCTAssertTrue(p.blurs(p.layers[2], at: 0.5))
+        XCTAssertFalse(p.blurs(p.layers[2], at: 1))
+    }
+
+    @MainActor func testLayerPanelSwitchDoesNotRewriteOtherSwitches() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let p = panScene()
+        let state = EditorState(project: p, store: ProjectStore(root: root))
+        state.select(p.layers[1].id)
+        state.setSelectedMotionBlur(true)
+        XCTAssertTrue(state.project.motionBlurEnabled)
+        XCTAssertTrue(state.project.layers[1].motionBlur)
+        XCTAssertFalse(state.project.layers[0].motionBlur)
+        XCTAssertFalse(state.project.blurAllLayers)
+        state.setSelectedMotionBlur(false)
+        XCTAssertFalse(state.project.blurs(state.project.layers[1], at: 0.5))
+        XCTAssertTrue(state.project.motionBlurEnabled, "other opted-in layers must retain the master gate")
+    }
+
     /// The bug behind see-through blur: a layer that barely moves must stay solid where every sample covers it.
     func testBlurredLayerStaysSolidWhereItAlwaysCovers() throws {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }

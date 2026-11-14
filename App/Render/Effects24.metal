@@ -23,6 +23,11 @@ static inline float gxH(float2 cell, float salt) {
     return float(h) * (1.0 / 4294967295.0);
 }
 static inline float gxH1(float x, float salt) { return gxH(float2(x, 0.0), salt); }
+static inline float gxMotion(float2 cell, float clock, float seed) {
+    float slot = floor(clock), f = fract(clock);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(gxH(cell, seed + slot * 3.17), gxH(cell, seed + (slot + 1.0) * 3.17), f);
+}
 static inline float gxLum(float3 c) { return dot(c, float3(0.2126, 0.7152, 0.0722)); }
 static inline float4 gxS(texture2d<half, access::sample> t, float2 p) { return float4(t.sample(gxs, p)); }
 
@@ -65,12 +70,14 @@ struct GXHit { float p; float shift; float vshift; float rgb; float swap; float 
 
 /// Damages one block: it slides, splits its channels, and may freeze on its first row (smear), drop to big
 /// pixels, swap channels or invert. Everything is sampled from the picture itself.
-static inline float4 gxCorrupt(texture2d<half, access::sample> t, float2 c, float4 blk, float salt, GXHit g, float baseRgb) {
+static inline float4 gxCorrupt(texture2d<half, access::sample> t, float2 c, float4 blk, float salt, GXHit g, float baseRgb, float clock = -1.0) {
     float2 id = blk.xy / max(blk.zw, float2(1.0));
     float r0 = gxH(id, salt), r1 = gxH(id, salt + 1.0), r2 = gxH(id, salt + 2.0), r3 = gxH(id, salt + 3.0);
     float r4 = gxH(id, salt + 4.0), r5 = gxH(id, salt + 5.0);
     if (r0 >= g.p) return gxSplit(t, c, float2(baseRgb, 0.0));
-    float2 q = c + float2((r1 - 0.5) * 2.0 * g.shift, (r2 - 0.5) * 2.0 * g.vshift);
+    float mx = clock >= 0.0 ? gxMotion(id, clock, salt + 1.0) : r1;
+    float my = clock >= 0.0 ? gxMotion(id, clock, salt + 2.0) : r2;
+    float2 q = c + float2((mx - 0.5) * 2.0 * g.shift, (my - 0.5) * 2.0 * g.vshift);
     float sel = r4;
     if (sel < g.smear) {
         // Frozen block: one row (or column) repeats across it, the classic stuck-macroblock streak.
@@ -98,6 +105,9 @@ kernel void fxGX(texture2d<half, access::sample> src [[texture(0)]],
     float t = p.d.x, fr = p.d.y, seed = p.d.z;
     float k = p.i.y == 1 ? gxK(t, p.c) : 1.0;
     float salt = fr * 3.0 + seed * 101.0;
+    bool flowing = p.i.w == 1 && (p.i.x <= 2 || p.i.x == 10);
+    if (flowing) salt = seed * 101.0;
+    float motionClock = flowing ? max(0.0, p.d.w) : -1.0;
     float4 o;
     switch (p.i.x) {
     case 0: {
@@ -106,14 +116,14 @@ kernel void fxGX(texture2d<half, access::sample> src [[texture(0)]],
         float bh = max(p.a.y, 2.0);
         float4 blk = gxBlock(c, float2(bh * 8.0, bh * 2.0), bh * 0.5, salt, 0.55);
         GXHit g = { amt * 0.55, amt * size.x * 0.12, 0.0, p.a.z * (0.5 + amt), 0.22, 0.12, 0.18, 0.1 };
-        o = gxCorrupt(src, c, blk, salt, g, p.a.z * amt * 0.25);
+        o = gxCorrupt(src, c, blk, salt, g, p.a.z * amt * 0.25, motionClock);
         break; }
     case 1: {
         // Glitch Blocks: a = (displacement px, block px, amount 0-1, rgb px)
         float bs = max(p.a.y, 3.0);
         float4 blk = gxBlock(c, float2(bs * 4.0, bs * 2.0), bs * 0.5, salt, 0.6);
         GXHit g = { p.a.z * k, p.a.x * k, p.a.x * 0.15 * k, p.a.w * k, 0.15, 0.05, 0.2, 0.1 };
-        o = gxCorrupt(src, c, blk, salt, g, 0.0);
+        o = gxCorrupt(src, c, blk, salt, g, 0.0, motionClock);
         break; }
     case 2: {
         // Glitch Lines: a = (tear px, line height px, density 0-1, color shift px). Thin full-or-partial rows.
@@ -124,7 +134,7 @@ kernel void fxGX(texture2d<half, access::sample> src [[texture(0)]],
         float segW = size.x * (gxH1(band, salt + 3.0) < 0.5 ? 1.0 : 0.5);
         float4 blk = float4(floor(c.x / segW) * segW, band * bandH, segW, bandH);
         GXHit g = { p.a.z * 0.7 * k, p.a.x * k, 0.0, p.a.w * k, 0.08, 0.04, 0.3, 0.0 };
-        o = gxCorrupt(src, c, blk, salt, g, 0.0);
+        o = gxCorrupt(src, c, blk, salt, g, 0.0, motionClock);
         break; }
     case 3: {
         // Digital Noise: a = (intensity 0-1, pixel px). Damaged zones turn into coarse posterized pixels with
@@ -284,9 +294,9 @@ kernel void fxGX(texture2d<half, access::sample> src [[texture(0)]],
     case 10: {
         // Block Corruption: a = (amount 0-1, block px, color shift 0-1)
         float bs = max(p.a.y, 2.0);
-        float4 blk = gxBlock(c, float2(bs * 4.0), bs, floor(fr / 2.0) * 3.0 + seed * 101.0, 0.6);
+        float4 blk = gxBlock(c, float2(bs * 4.0), bs, flowing ? salt : floor(fr / 2.0) * 3.0 + seed * 101.0, 0.6);
         GXHit g = { clamp(p.a.x * k, 0.0, 1.0) * 0.5, bs * 1.5, bs * 0.4, bs * 0.25, p.a.z * 0.6, p.a.z * 0.1, 0.45, 0.15 };
-        o = gxCorrupt(src, c, blk, floor(fr / 2.0) * 3.0 + seed * 101.0, g, 0.0);
+        o = gxCorrupt(src, c, blk, flowing ? salt : floor(fr / 2.0) * 3.0 + seed * 101.0, g, 0.0, motionClock);
         break; }
     case 11: {
         // Pixel Sort: a = (threshold 0-1, length px, angle rad, -). Inside each bright run, pixels are replaced by

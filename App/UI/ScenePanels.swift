@@ -43,7 +43,7 @@ struct ScenePanel: View {
                     AWIColorWell("Background", selection: Binding(get: { Color(state.project.background) }, set: { c in
                         state.coalescedProjectEdit("Background") { $0.background = c.rgba }
                     }), supportsOpacity: true).foregroundStyle(Theme.text)
-                    Toggle("Motion Blur (whole scene)", isOn: Binding(get: { state.project.motionBlurEnabled }, set: { b in
+                    Toggle("Motion Blur master", isOn: Binding(get: { state.project.motionBlurEnabled }, set: { b in
                         state.mutate("Motion Blur") { $0.motionBlurEnabled = b }
                     }))
                     .tint(Theme.accent).foregroundStyle(Theme.text)
@@ -190,21 +190,21 @@ struct MotionBlurPanel: View {
                 let p = state.project
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
-                        Toggle("Motion Blur", isOn: Binding(get: { p.motionBlurEnabled }, set: { b in
-                            state.mutate("Motion Blur") {
-                                $0.motionBlurEnabled = b
-                                // The scene switch means scene motion blur. Individual opt-in remains available by
-                                // turning Every Layer off afterwards; users should not need to visit every layer.
-                                $0.blurAllLayers = b
-                            }
+                        Toggle(l.content == .camera ? "Camera Motion Blur" : "Motion Blur", isOn: Binding(get: {
+                            l.content == .camera ? l.motionBlur : p.blurs(l, at: state.currentTime)
+                        }, set: { b in
+                            state.setSelectedMotionBlur(b)
                         }))
                         .font(.system(size: 15, weight: .bold)).tint(Theme.accent).foregroundStyle(Theme.text)
-                        Text("The scene switch blurs moving layers, camera motion, parents, nulls and transform effects. Use Every Layer to opt back into per-layer control.").font(.caption).foregroundStyle(Theme.textDim)
+                        Text(l.content == .camera
+                             ? "Blur layers seen through this camera. Layers marked Keep Sharp remain sharp."
+                             : "Blur this layer's movement, including camera moves, parents and transform effects.")
+                            .font(.caption).foregroundStyle(Theme.textDim)
                         Toggle("Every layer", isOn: Binding(get: { p.blurAllLayers }, set: { b in
                             state.mutate("Blur Every Layer") { $0.blurAllLayers = b; if b { $0.motionBlurEnabled = true } }
                         }))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
-                        if l.content != .camera { layerRow(l, p) }
+                        if l.content != .camera, p.blurAllLayers { layerRow(l, p) }
                         if !p.motionBlurEnabled {
                             Text("Turn Motion Blur on to see it. Camera moves, parents, nulls and shake effects all count as motion.")
                                 .font(.caption).foregroundStyle(Theme.warning)

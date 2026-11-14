@@ -51,6 +51,15 @@ struct RootView: View {
 
     init() {
         #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-motionBlur") {
+            var p = Project.new(name: "Motion Blur Controls", width: 160, height: 120, fps: 30, duration: 2)
+            var camera = p.makeLayer(name: "Camera", content: .camera, size: Vec2(160,120))
+            camera.camera = CameraOptions(); camera.camera?.affects2D = true
+            var bar = p.makeLayer(name: "Moving bar", content: .solid, size: Vec2(12,60))
+            bar.transform.position.insertKeyframe(Keyframe(time: 0, value: Vec2(20,60)))
+            bar.transform.position.insertKeyframe(Keyframe(time: 2, value: Vec2(140,60)))
+            p.layers = [camera, bar]; _openProject = State(initialValue: p)
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-cutoutInline") {
             var p = Project.new(name: "Inline Cutout Test", width: 256, height: 256, fps: 30, duration: 3)
             p.layers = [p.makeLayer(name: "Picture", content: .image(fileName: "cutout-fixture.png", pixelWidth: 256, pixelHeight: 256), size: Vec2(256,256))]

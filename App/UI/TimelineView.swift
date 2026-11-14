@@ -28,6 +28,8 @@ struct TimelineView: View, Equatable {
     @State private var scrubStart: Double?
     /// Decided on the first movement: true = horizontal (scrub), false = vertical (the list scrolls instead).
     @State private var scrubAxis: Bool?
+    @GestureState private var directDragActive = false
+    @GestureState private var marqueeGestureActive = false
     @State private var multiDragStart: CGPoint?
     /// Layer as it was when a clip / trim / keyframe drag began.
     @State private var dragOriginal: Layer?
@@ -164,10 +166,15 @@ struct TimelineView: View, Equatable {
             )
         }
         .background(Theme.surface)
+        .onChange(of: directDragActive) { _, active in
+            if !active, liftLayer == nil { finishDirectDrag() }
+        }
+        .onChange(of: marqueeGestureActive) { _, active in
+            if !active { marquee = nil }
+        }
         .onDisappear {
-            if dragOriginal != nil || selDragOriginal != nil || slipOriginal != nil {
-                dragOriginal = nil; selDragOriginal = nil; slipOriginal = nil; state.endEdit()
-            }
+            finishDirectDrag()
+            multiDragStart = nil; marquee = nil; liftLayer = nil; liftOffset = 0; multiOriginals = []
         }
         .awiSheet(isPresented: Binding(get: { graphTarget != nil }, set: { if !$0 { graphTarget = nil } })) {
             if let g = graphTarget { TimelineGraphSheet(state: state, target: g) }
@@ -266,6 +273,7 @@ struct TimelineView: View, Equatable {
         }
         .simultaneousGesture(laneRowDrag(layer, lane, origin: offset))
         .gesture(LongPressGesture(minimumDuration: 0.3).sequenced(before: DragGesture(minimumDistance: 0))
+            .updating($marqueeGestureActive) { _, active, _ in active = true }
             .onChanged { value in
                 guard selDragOriginal == nil, case .second(true, let drag?) = value else { return }
                 let liveOffset = offset - CGFloat(clock.time) * zoom
@@ -290,6 +298,7 @@ struct TimelineView: View, Equatable {
     /// One recognizer per lane; diamonds are just drawing commands. Selection moves retain the original snapshot.
     private func laneRowDrag(_ layer: Layer, _ lane: PropertyLane, origin: CGFloat) -> some Gesture {
         DragGesture(minimumDistance: 3)
+            .updating($directDragActive) { _, active, _ in active = true }
             .onChanged { g in
                 if selDragOriginal == nil {
                     guard abs(g.translation.width) > abs(g.translation.height),
@@ -590,6 +599,7 @@ struct TimelineView: View, Equatable {
 
     private func keyDrag(_ layer: Layer, _ t: Double, effect: UUID? = nil) -> some Gesture {
         DragGesture(minimumDistance: 3, coordinateSpace: .named("timeline"))
+            .updating($directDragActive) { _, active, _ in active = true }
             .onChanged { g in
                 if dragOriginal == nil { dragOriginal = layer; keyDragTime = t; state.pause(); state.beginEdit("Move Keyframes") }
                 guard let o = dragOriginal else { return }
@@ -606,6 +616,13 @@ struct TimelineView: View, Equatable {
         return start + (editable ? 22 : 2)
     }
 
+    /// GestureState resets even when a scroll view or system gesture cancels the drag without onEnded.
+    private func finishDirectDrag() {
+        let editing = dragOriginal != nil || selDragOriginal != nil || slipOriginal != nil || !multiOriginals.isEmpty
+        dragOriginal = nil; keyDragTime = nil; selDragOriginal = nil; selDragBase = nil; slipOriginal = nil
+        if editing { state.endEdit() }
+    }
+
     private func canTwirl(_ layer: Layer) -> Bool { !compact && !state.propertyLaneCache.markers(layer).isEmpty }
 
     /// Slip grip in the middle of a selected media clip: drag sideways to change which source frames play under
@@ -618,6 +635,7 @@ struct TimelineView: View, Equatable {
             .frame(width: 44, height: rowHeight - 2)
             .contentShape(Rectangle())
             .highPriorityGesture(DragGesture(minimumDistance: 2, coordinateSpace: .named("timeline"))
+                .updating($directDragActive) { _, active, _ in active = true }
                 .onChanged { g in
                     if slipOriginal == nil { slipOriginal = layer; state.pause(); state.beginEdit("Slip Clip") }
                     guard let o = slipOriginal else { return }
@@ -635,6 +653,7 @@ struct TimelineView: View, Equatable {
             .frame(width: 44, height: rowHeight - 2)
             .contentShape(Rectangle())
             .highPriorityGesture(DragGesture(minimumDistance: 2, coordinateSpace: .named("timeline"))
+                .updating($directDragActive) { _, active, _ in active = true }
                 .onChanged { g in
                     if dragOriginal == nil { dragOriginal = layer; state.pause(); state.beginEdit("Trim Clip") }
                     guard let o = dragOriginal else { return }

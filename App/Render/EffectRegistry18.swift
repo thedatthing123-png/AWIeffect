@@ -147,16 +147,18 @@ extension EffectRegistry {
     static let waveGlitch18 = EffectDefinition(
         id: "awi18.waveGlitch", name: "Wave Glitch", category: .stylize,
         aeMatchNames: [],
-        summary: "Choppy sideways wave distortion that steps instead of flowing (digital wobble).",
+        summary: "Flowing sideways wave distortion. Use Hold Frames for a stepped digital wobble.",
         params: [
             .number("amount", "Wave Amount", 24, 0, 300, unit: "px"),
             .number("waves", "Waves", 4, 0.2, 40, step: 0.1),
             .number("speed", "Speed", 1.5, 0, 10, step: 0.05),
-            .number("steps", "Steps Per Second", 12, 1, 30, step: 1),
+            .toggle("holdFrames", "Hold Frames", false),
+            .number("steps", "Steps Per Second", 12, 1, 120, step: 1),
         ],
         margin: { e, t in e.number("amount", t) },
         stage: .pixels { ctx in run18(ctx, 4) { p in
             p.a = SIMD4(Float(ctx.num("amount") * ctx.unit), Float(ctx.num("waves")), Float(ctx.num("speed")), Float(ctx.num("steps")))
+            p.i.y = ctx.effect.bool("holdFrames") ? 1 : 0
         } })
 
     static let blockShuffle18 = EffectDefinition(

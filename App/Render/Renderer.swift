@@ -240,7 +240,7 @@ final class Renderer {
         fx.run("fxCopy", cb, textures: [comp, original], grid: original)
         encodeAdjustment(layer, effects: layer.effects.filter(\.isEnabled), time: time, renderScale: renderScale,
                          opacity: opacity, comp: comp, cb: cb, pool: pool,
-                         shutter: project.blurs(layer) ? project.shutterAngle / 360 / max(project.fps, 1) : 0,
+                         shutter: project.blurs(layer, at: time) ? project.shutterAngle / 360 / max(project.fps, 1) : 0,
                          sampleCount: min(project.blurSamples, Renderer.blurSampleCap ?? project.blurSamples))
         let processed = pool.acquire(width: comp.width, height: comp.height)
         fx.run("fxCopy", cb, textures: [comp, processed], grid: processed)
@@ -630,7 +630,7 @@ final class Renderer {
             if !layer.is3D && camera.projects2DDepth && layer.transform.positionZ.value(at: time) - camera.world.columns.3.z <= max(1, abs(camera.zoom) * 0.01) { continue }
             let opacity = layer.transform.opacity.value(at: time) / 100
             if opacity <= 0 { continue }
-            if layer.boneMesh != nil,project.blurs(layer),
+            if layer.boneMesh != nil,project.blurs(layer, at: time),
                encodeSkinnedShutter(layer,project: project,time: time,renderScale: renderScale,comp: comp,cb: cb,pool: pool,mediaURL: mediaURL) { continue }
             if layer.effects.contains(where: { $0.isEnabled && $0.typeID == "awi18.displacementMap" && $0.choice("target") == 1 }) {
                 encodeBackdropDisplacement(layer, matte: matteSources[layer.id], project: project, time: time, renderScale: renderScale,
@@ -656,7 +656,7 @@ final class Renderer {
                 guard layer.effects.contains(where: { $0.isEnabled }) else { continue }
                 encodeAdjustment(layer, effects: layer.effects.filter(\.isEnabled), time: time, renderScale: renderScale, opacity: opacity,
                                  comp: comp, cb: cb, pool: pool,
-                                 shutter: project.blurs(layer) ? project.shutterAngle / 360 / max(project.fps, 1) : 0,
+                                 shutter: project.blurs(layer, at: time) ? project.shutterAngle / 360 / max(project.fps, 1) : 0,
                                  sampleCount: min(project.blurSamples, Renderer.blurSampleCap ?? project.blurSamples))
                 continue
             }
@@ -666,7 +666,7 @@ final class Renderer {
                 let placement = Self.modelPlacement(layer, project: project, camera: camera, time: time)
                 let mw = min(2048, comp.width), mh = min(2048, comp.height)
                 var blurred: MTLTexture?
-                if project.blurs(layer) {
+                if project.blurs(layer, at: time) {
                     // Each sample renders the model where it is at that moment of the shutter (camera included).
                     let open = project.shutterOpen
                     let n = max(2, min(Renderer.blurSampleCap.map { min($0, 8) } ?? 8, project.blurSamples))
@@ -722,7 +722,7 @@ final class Renderer {
                 let mw = min(2048, comp.width), mh = min(2048, comp.height)
                 let shotSize = CGSize(width: mw, height: mh)
                 var blurred: MTLTexture?
-                if project.blurs(layer) {
+                if project.blurs(layer, at: time) {
                     let open = project.shutterOpen
                     let n = max(2, min(Renderer.blurSampleCap.map { min($0, 8) } ?? 8, project.blurSamples))
                     let shots: [MTLTexture] = (0..<n).compactMap { k in
@@ -790,10 +790,10 @@ final class Renderer {
             // Motion blur: placements across the shutter interval (empty when the layer doesn't move).
             var blurMatrices: [simd_double3x3] = []
             let autoSmooth = project.smoothMotion && layer.effects.contains { $0.isEnabled && (EffectRegistry.definition($0.typeID)?.isTransformEffect ?? false) }
-            if (project.blurs(layer) || autoSmooth) && extrude <= 0.5 {
+            if (project.blurs(layer, at: time) || autoSmooth) && extrude <= 0.5 {
                 let shutter = project.shutterAngle / 360 / max(project.fps, 1)
                 // Automatic smoothing stays centered; real motion blur follows the shutter phase.
-                let open = project.blurs(layer) ? project.shutterOpen.start : -shutter / 2
+                let open = project.blurs(layer, at: time) ? project.shutterOpen.start : -shutter / 2
                 func corner(_ m: simd_double3x3, _ x: Double, _ y: Double) -> SIMD2<Double> {
                     let p = m * SIMD3(x, y, 1); return SIMD2(p.x, p.y) / max(p.z, 1e-6)
                 }
@@ -1188,6 +1188,7 @@ final class Renderer {
     func shutterAverage(_ count: Int, comp: MTLTexture, pool: TexturePool, cb: MTLCommandBuffer,
                         draw: (Int, MTLTexture) -> Void) -> MTLTexture {
         var acc = pool.acquire(width: comp.width, height: comp.height)
+        var next = pool.acquire(width: comp.width, height: comp.height)
         fx.run("fxClear", cb, textures: [acc], grid: acc)
         let sample = pool.acquire(width: comp.width, height: comp.height)
         var p = EffectParams()
@@ -1195,9 +1196,8 @@ final class Renderer {
         for k in 0..<count {
             fx.run("fxClear", cb, textures: [sample], grid: sample)
             draw(k, sample)
-            let next = pool.acquire(width: comp.width, height: comp.height)
             fx.run("fxAccumulate", cb, textures: [acc, sample, next], params: p, grid: next)
-            acc = next
+            swap(&acc, &next)
         }
         return acc
     }
@@ -1260,11 +1260,15 @@ final class Renderer {
         fx.run("fxCopy", cb, textures: [comp, copy], grid: copy)
         func process(at evaluationTime: Double) -> MTLTexture {
         var current = copy
+        var tiledEdges: UInt32 = 0
         for e in effects {
             guard let def = EffectRegistry.definition(e.typeID) else { continue }
             switch def.stage {
             case .pixels(let run):
                 current = run(EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: evaluationTime, unit: renderScale, pool: pool))
+                if e.typeID == "ae.motionTile", !e.bool("manualOutput") {
+                    tiledEdges = e.bool("mirror") ? 2 : 1
+                }
             case .transform:
                 let transformed = pool.acquire(width: comp.width, height: comp.height)
                 fx.run("fxClear", cb, textures: [transformed], grid: transformed)
@@ -1275,8 +1279,17 @@ final class Renderer {
                 let matrix = simd_double3x3(columns: (SIMD3(cos(angle) * offset.ds, sin(angle) * offset.ds, 0),
                     SIMD3(-sin(angle) * offset.ds, cos(angle) * offset.ds, 0),
                     SIMD3(Double(comp.width) / 2 + offset.dx * renderScale, Double(comp.height) / 2 + offset.dy * renderScale, 1)))
-                drawQuad(cb: cb, target: transformed, matrix: matrix, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 1,
-                         opacity: 1, layer: carrier, time: evaluationTime, source: .image(current), premultipliedImage: true, blendOverride: .normal)
+                if tiledEdges != 0 {
+                    let inv = matrix.inverse
+                    var params = EffectParams()
+                    params.a = SIMD4(Float(inv[0][0]), Float(inv[1][0]), Float(inv[2][0]), 0)
+                    params.b = SIMD4(Float(inv[0][1]), Float(inv[1][1]), Float(inv[2][1]), 0)
+                    params.i.x = tiledEdges
+                    fx.run("fxBackdropTransform", cb, textures: [current, transformed], params: params, grid: transformed)
+                } else {
+                    drawQuad(cb: cb, target: transformed, matrix: matrix, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 1,
+                             opacity: 1, layer: carrier, time: evaluationTime, source: .image(current), premultipliedImage: true, blendOverride: .normal)
+                }
                 current = transformed
             }
 

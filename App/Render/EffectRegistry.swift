@@ -168,7 +168,7 @@ final class EffectGPU {
     init(device: MTLDevice, library: MTLLibrary) throws {
         self.device = device
         for name in ["fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
-                     "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix", "fxBackdropMix", "fxBackdropMask",
+                     "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix", "fxBackdropMix", "fxBackdropMask", "fxBackdropTransform",
                      "fxWarp", "fxStylize", "fxGlitch", "fxColor2", "fxSaberCore", "fxShine", "fxParticles", "fxPixelSort",
                      "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet", "fxGrade", "maskMix", "fxLayerRef", "flowEstimate", "flowBlur", "fxAccumulate", "fx19", "fx19GlowKeep", "fx19KeyInvert", "fx19AlphaOf", "fx19ColorSelect", "fx19Bend", "fx20Flip", "fx20AMWave", "fx20AMFractal", "fx21", "fx22", "fx23", "fxGX", "fxInnerGlow24", "fxArt24", "fxLightPrep25", "fxLightSum25", "fxLightComp25", "fxStreak25", "fxLightGen25", "fxBlur26", "fxPrint27", "fxInk27", "fxFilm27", "fxGlitch27", "fxTurbulent28", "fxWaveWarp28", "fxPolar28", "fxRipple28", "fxMagnify28", "fxTrans28", "fxWarp14AA28", "fxDistort6AA28", "fxFractalNoise29", "fxGen29", "fxKey29", "fxColor29", "fxDeepSource", "fxDeepAccumulate", "fxDeepComposite", "fxProxyPremultiply", "fxGradeR4", "fxMixR4", "fxGradientR4"] {
             guard let f = library.makeFunction(name: name) else { throw RenderError.pipeline(name) }

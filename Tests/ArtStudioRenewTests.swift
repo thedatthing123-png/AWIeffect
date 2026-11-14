@@ -156,6 +156,11 @@ final class ArtStudioRenewTests: XCTestCase {
         XCTAssertGreaterThan(px(e, 45, 45)[3], 200)
     }
 
+    func testAIAssistanceRetainsExplicitPaintAndExistingSelection() {
+        let mask = DrawEngine.assistedSelection([0, 255, 12, 0], previous: [255, 0, 0, 0], painted: [0, 0, 255, 180])
+        XCTAssertEqual(mask, [255, 255, 255, 180], "AI must retain ink and fingertips painted outside its subject estimate")
+    }
+
     func testQuickSelectStaysInsideItsPartAndReach() throws {
         let e = try engine()
         let l = try XCTUnwrap(e.activeLayer)

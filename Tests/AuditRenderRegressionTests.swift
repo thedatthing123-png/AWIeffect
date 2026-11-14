@@ -157,6 +157,25 @@ final class AuditRenderRegressionTests: XCTestCase {
         }
     }
 
+    func testAdjustmentMotionTileContinuesBeyondLaterTransformEdges() throws {
+        let r = try renderer()
+        var p = Project.new(name: "tiled adjustment", width: 64, height: 64, fps: 30, duration: 1,
+                            background: RGBA(0, 0, 0, 0))
+        var fill = p.makeLayer(name: "Backdrop", content: .solid, size: Vec2(64, 64))
+        fill.fill = Animated(.white)
+        var adjustment = p.makeLayer(name: "Adjustment", content: .adjustment, size: Vec2(64, 64))
+        var transform = EffectRegistry.transformFX18.makeInstance()
+        transform.params["x"] = .number(Animated(20))
+        adjustment.effects = [EffectRegistry.motionTile.makeInstance(), transform]
+        p.layers = [adjustment, fill]
+        let px = try XCTUnwrap(r.renderPixels(project: p, time: 0, preserveAlpha: true,
+                                              mediaURL: { URL(fileURLWithPath: $0) })).rgba
+        for x in [1, 10, 32, 62] {
+            XCTAssertGreaterThan(px[(32 * 64 + x) * 4 + 3], 245, "tiled backdrop must fill transformed edge at \(x)")
+            XCTAssertGreaterThan(px[(32 * 64 + x) * 4], 245)
+        }
+    }
+
     func testPackageRenamesConflictingLUTAndRelinksNestedComp() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }

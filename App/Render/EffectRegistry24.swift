@@ -5,6 +5,9 @@ import simd
 /// The shared glitch engine (fxGX in Effects24.metal) that the remade glitch, pixel and block effects run on.
 /// Each effect keeps its own id and settings, so saved projects open with the new look.
 extension EffectRegistry {
+    static let glitchMotionControls: [ParamDef] = [
+        .choice("motion", "Motion", ["Smooth Slide", "Snap / Hold"], 0)
+    ]
     /// - rate: how many times per second the damage pattern changes (pieces hold, then snap).
     /// - burst: (base, bursts/s, length, seed) for effects with designed burst timing; nil = always on.
     static func gx(_ ctx: EffectContext, _ mode: UInt32, rate: Double = 12, seed: Double = 0,
@@ -15,7 +18,9 @@ extension EffectRegistry {
         p.i.x = mode
         p.i.z = option
         if let burst { p.c = burst; p.i.y = 1 }
-        p.d = SIMD4(Float(ctx.time), Float((ctx.time * max(rate, 0.01)).rounded(.down)), Float(seed), 0)
+        let clock = ctx.time * max(rate, 0)
+        p.i.w = ctx.effect.choice("motion") == 0 ? 1 : 0
+        p.d = SIMD4(Float(ctx.time), Float(clock.rounded(.down)), Float(seed), Float(clock))
         ctx.gpu.run("fxGX", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
         return out
     }

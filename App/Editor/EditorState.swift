@@ -1286,6 +1286,23 @@ extension EditorState {
         }
     }
 
+    /// Individual opt-in also opens the master gate, without changing any other layer's switch.
+    func setSelectedMotionBlur(_ enabled: Bool) {
+        guard let id = selectedLayerID else { return }
+        mutate("Layer Motion Blur") { p in
+            guard let i = p.layers.firstIndex(where: { $0.id == id }) else { return }
+            p.layers[i].motionBlur = enabled
+            if enabled {
+                p.motionBlurEnabled = true
+                p.sharpLayerIDs?.removeAll { $0 == id }
+            } else {
+                var sharp = p.sharpLayerIDs ?? []
+                if !sharp.contains(id) { sharp.append(id) }
+                p.sharpLayerIDs = sharp
+            }
+        }
+    }
+
     /// Nearest marker to `t` within `tolerance` seconds (timeline snapping).
     func snapToMarker(_ t: Double, tolerance: Double) -> Double {
         guard let m = project.markers.min(by: { abs($0 - t) < abs($1 - t) }), abs(m - t) <= tolerance else { return t }

@@ -1,6 +1,28 @@
 import XCTest
 
 final class EditorPolishUITests: XCTestCase {
+    func testIndividualAndCameraBlurDoNotEnableEveryLayer() {
+        continueAfterFailure = false
+        for camera in [false, true] {
+            let app = XCUIApplication()
+            app.launchArguments = ["-uiTesting", "-uiTesting-motionBlur"] + (camera ? ["-uiTesting-motionBlurCamera"] : [])
+            app.launch()
+            let toggle = app.switches[camera ? "Camera Motion Blur" : "Motion Blur"].firstMatch
+            XCTAssertTrue(toggle.waitForExistence(timeout: 15))
+            let every = app.switches["Every layer"].firstMatch
+            XCTAssertEqual(every.value as? String, "0")
+            toggle.tap()
+            XCTAssertEqual(toggle.value as? String, "1")
+            XCTAssertEqual(every.value as? String, "0", "individual opt-in must not turn on Every Layer")
+            let shot = XCUIScreen.main.screenshot()
+            let name = camera ? "polish-camera-motion-blur" : "polish-layer-motion-blur"
+            let attachment = XCTAttachment(screenshot: shot); attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
+            try? FileManager.default.createDirectory(atPath: "/tmp/awi-ui", withIntermediateDirectories: true)
+            try? shot.pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/awi-ui/\(name).png"))
+            app.terminate()
+        }
+    }
+
     func testManyLayersScrollVerticallyWithoutScrubbingTime() {
         continueAfterFailure = false
         let app = XCUIApplication()

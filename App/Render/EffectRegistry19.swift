@@ -58,7 +58,7 @@ extension EffectRegistry {
     /// Same as `g`, but the effect runs on the shared glitch engine (Effects24.metal).
     private static func gEngine(_ id: String, _ name: String, _ summary: String, _ params: [ParamDef], margin: @escaping (EffectInstance, Double) -> Double = { _, _ in 0 },
                                 _ mode: UInt32, option: UInt32 = 0, _ fill: @escaping (EffectContext, inout EffectParams) -> Void) -> EffectDefinition {
-        EffectDefinition(id: "awi19." + id, name: name, category: .glitch, aeMatchNames: [], summary: summary, params: params + timing,
+        EffectDefinition(id: "awi19." + id, name: name, category: .glitch, aeMatchNames: [], summary: summary, params: params + timing + (mode == 10 ? glitchMotionControls : []),
                          margin: margin, stage: .pixels { ctx in
                              gx(ctx, mode, rate: 12, seed: ctx.num("seed"), burst: gxBurst(ctx), option: option) { fill(ctx, &$0) } })
     }

@@ -7,6 +7,42 @@ import UniformTypeIdentifiers
 
 @MainActor
 final class AdvancedAuthoringRenderTests: XCTestCase {
+    func testContinuousGlitchMotionArtifacts() throws {
+        let renderer = try XCTUnwrap(Renderer.shared)
+        let folder = URL(fileURLWithPath: "/tmp/awi-authoring", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let effects = [EffectRegistry.waveGlitch18, EffectRegistry.earthquake14, EffectRegistry.glitch,
+                       EffectRegistry.glitchBlocks6, EffectRegistry.glitchLines6, EffectRegistry.sliceGlitch19,
+                       EffectRegistry.displaceGlitch19, EffectRegistry.interlace19, EffectRegistry.vhsTracking19]
+        for effect in effects {
+            var p = Project.new(name: effect.name, width: 192, height: 128, fps: 60, duration: 1, background: .black)
+            var adjustment = p.makeLayer(name: "Glitch", content: .adjustment, size: Vec2(192, 128))
+            var instance = effect.makeInstance()
+            if instance.params["base"] != nil { instance.params["base"] = .number(Animated(100)) }
+            adjustment.effects = [instance]; p.layers = [adjustment]
+            for index in 0..<8 {
+                var bar = p.makeLayer(name: "Band \(index)", content: .solid, size: Vec2(24, 128))
+                bar.transform.position = Animated(Vec2(Double(index * 24 + 12), 64))
+                bar.fill = Animated(RGBA(Double(index % 3) / 2, Double((index + 1) % 3) / 2, Double((index + 2) % 3) / 2))
+                p.layers.append(bar)
+            }
+            let gif = try XCTUnwrap(CGImageDestinationCreateWithURL(folder.appendingPathComponent("polish-\(effect.id).gif") as CFURL,
+                                                                   UTType.gif.identifier as CFString, 60, nil))
+            CGImageDestinationSetProperties(gif, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+            for frame in 0..<60 {
+                let image = try XCTUnwrap(renderer.renderImage(project: p, time: Double(frame) / 60, maxDimension: 192,
+                                                               mediaURL: { URL(fileURLWithPath: $0) }))
+                CGImageDestinationAddImage(gif, try XCTUnwrap(image.cgImage),
+                                          [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 1.0 / 60,
+                                                                          kCGImagePropertyGIFUnclampedDelayTime: 1.0 / 60]] as CFDictionary)
+                if frame % 10 == 0 {
+                    try XCTUnwrap(image.pngData()).write(to: folder.appendingPathComponent("polish-\(effect.id)-\(frame).png"))
+                }
+            }
+            XCTAssertTrue(CGImageDestinationFinalize(gif))
+        }
+    }
+
     func testBendModesKeepTheImageContinuousAndProduceModeArtifacts() throws {
         let renderer = try XCTUnwrap(Renderer.shared)
         let folder = URL(fileURLWithPath: "/tmp/awi-authoring", isDirectory: true)

@@ -498,10 +498,17 @@ struct Project: Codable, Equatable, Identifiable {
     var shutterPhase: Double { get { shutterPhaseStore ?? -shutterAngle / 2 } set { shutterPhaseStore = newValue } }
 
     /// Whether a layer gets motion blur: the scene switch, plus its own switch or "every layer".
-    func blurs(_ layer: Layer) -> Bool {
+    func blurs(_ layer: Layer, at time: Double = 0) -> Bool {
         guard motionBlurEnabled, layer.content != .camera, layer.content != .light, !layer.isAudioOnly else { return false }
+        guard !(sharpLayerIDs ?? []).contains(layer.id) else { return false }
         if layer.motionBlur { return true }
-        return blurAllLayers && !(sharpLayerIDs ?? []).contains(layer.id)
+        if blurAllLayers { return true }
+        // A camera is a motion source, not drawable artwork. Its switch opts the affected shot into
+        // shutter sampling without rewriting any artwork's individual switch.
+        if let camera = layers.first(where: { $0.content == .camera && $0.isActive(at: time) }), camera.motionBlur {
+            return layer.is3D || (camera.camera?.affects2D ?? CameraOptions().affects2D)
+        }
+        return false
     }
     /// Shutter in seconds: when it opens (relative to the frame) and how long it stays open.
     var shutterOpen: (start: Double, length: Double) {

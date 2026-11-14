@@ -75,6 +75,7 @@ extension EffectRegistry {
         p.b = SIMD4(Float(v27(ctx, "base", 25) / 100), Float(v27(ctx, "rate", 3)), Float(v27(ctx, "length", 50) / 100), Float(v27(ctx, "seed", 1)))
         p.i.x = mode
         p.d = SIMD4(Float(ctx.time), Float(ctx.unit), 0, 0)
+        p.i.w = ctx.effect.choice("motion") == 0 ? 1 : 0
         ctx.gpu.run("fxGlitch27", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
         return out
     }
@@ -83,7 +84,7 @@ extension EffectRegistry {
     static func g27(_ id: String, _ name: String, _ summary: String, _ params: [ParamDef],
                     margin: @escaping (EffectInstance, Double) -> Double = { _, _ in 0 },
                     _ mode: UInt32, _ fill: @escaping (EffectContext, inout EffectParams) -> Void) -> EffectDefinition {
-        EffectDefinition(id: "awi19." + id, name: name, category: .glitch, aeMatchNames: [], summary: summary, params: params + timing27,
+        EffectDefinition(id: "awi19." + id, name: name, category: .glitch, aeMatchNames: [], summary: summary, params: params + timing27 + glitchMotionControls,
                          margin: margin, stage: .pixels { ctx in glitch27(ctx, mode: mode) { fill(ctx, &$0) } })
     }
 }

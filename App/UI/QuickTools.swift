@@ -171,10 +171,7 @@ struct QuickMenu: View {
                     Button { state.applyPlugin(EffectRegistry.glitch) } label: { Label("Universe Glitch", systemImage: "bolt.horizontal.fill") }
                     Button { state.applyPlugin(EffectRegistry.chromaticAberration) } label: { Label("Chromatic Aberration", systemImage: "circle.hexagongrid") }
                     Button {
-                        state.mutate("Pixel Motion Blur") { p in
-                            p.motionBlurEnabled = true
-                            if let i = state.selectedIndex { p.layers[i].motionBlur = true }
-                        }
+                        state.panel = .motionBlur
                     } label: { Label("Pixel Motion Blur", systemImage: "wind") }
                     Button {
                         state.mutate("Twixtor Slow-mo") { p in

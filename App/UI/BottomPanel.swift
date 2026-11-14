@@ -9,6 +9,7 @@ struct BottomPanel: View {
     /// Panel height is the user's: drag the grabber to give the panel or the canvas more room.
     @AppStorage("awi.panelHeight") private var panelHeight: Double = 250
     @State private var dragBase: Double?
+    @GestureState private var resizing = false
     /// Height while the grabber is held (saved to panelHeight on release, so dragging never writes settings).
     @State private var liveHeight: Double?
 
@@ -38,6 +39,7 @@ struct BottomPanel: View {
             .contentShape(Rectangle())
             // Screen coordinates: the grabber moves with the panel, so local coordinates fed back into the drag (twitch).
             .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .global)
+                .updating($resizing) { _, active, _ in active = true }
                 .onChanged { g in
                     if dragBase == nil { dragBase = panelHeight }
                     let cap = min(520, Double(UIScreen.main.bounds.height) * 0.42)
@@ -45,10 +47,16 @@ struct BottomPanel: View {
                     withTransaction(t) { liveHeight = min(cap, max(150, (dragBase ?? 250) - Double(g.translation.height))) }
                 }
                 .onEnded { _ in
-                    if let h = liveHeight { panelHeight = h }
-                    liveHeight = nil; dragBase = nil
+                    finishResize()
                 })
+            .onChange(of: resizing) { _, active in if !active { finishResize() } }
+            .onDisappear { finishResize() }
             .accessibilityLabel("Resize panel")
+    }
+
+    private func finishResize() {
+        if let h = liveHeight { panelHeight = h }
+        liveHeight = nil; dragBase = nil
     }
 
     @ViewBuilder private var panelContent: some View {
