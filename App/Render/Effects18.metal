@@ -259,7 +259,13 @@ kernel void fxBackdropMix(texture2d<half, access::read_write> backdrop [[texture
                           constant EffectParams& p [[buffer(0)]], uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= backdrop.get_width() || gid.y >= backdrop.get_height()) return;
     float amount = clamp(float(coverage.read(gid).a) * p.a.x, 0.0, 1.0);
-    backdrop.write(half4(mix(float4(backdrop.read(gid)), float4(processed.read(gid)), amount)), gid);
+    float4 base = float4(backdrop.read(gid));
+    float4 result = mix(base, float4(processed.read(gid)), amount);
+    // Adjustment effects replace the covered scene's colour, not its coverage. Blur and other
+    // neighbourhood effects may soften the processed texture's alpha; retaining that alpha here
+    // would make an opaque clipped subject unexpectedly translucent.
+    if (p.a.y > 0.5) result.a = base.a;
+    backdrop.write(half4(result), gid);
 }
 
 kernel void fxBackdropMask(texture2d<half, access::read> processed [[texture(0)]],

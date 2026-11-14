@@ -247,7 +247,7 @@ final class Renderer {
         fx.run("fxCopy", cb, textures: [original, comp], grid: comp)
         let coverage = fullLayer(matte, project: project, time: time, renderScale: renderScale, comp: comp,
                                  cb: cb, pool: pool, mediaURL: mediaURL)
-        var params = EffectParams(); params.a.x = 1
+        var params = EffectParams(); params.a.x = 1; params.a.y = 1
         fx.run("fxBackdropMix", cb, textures: [comp, processed, coverage], params: params, grid: comp)
     }
 
