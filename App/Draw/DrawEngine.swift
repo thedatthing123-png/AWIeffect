@@ -953,7 +953,7 @@ final class DrawEngine: ObservableObject {
         let points = quickSeeds.map { CGPoint(x: $0.x / Double(width), y: $0.y / Double(height)) }
         var painted = [UInt8](repeating: 0, count: width * height)
         CutoutEngine.paint([CutoutStroke(points: points.map { Vec2(Double($0.x), Double($0.y)) }, radius: quickRadius / Double(max(width, height)), subtract: false)], into: &painted, w: width, h: height)
-        beginGuidedSelection(points: points, painted: painted, previous: quickBefore ?? [UInt8](repeating: 0, count: width * height), subtract: quickSubtract)
+        beginGuidedSelection(points: points, painted: painted, previous: quickBefore ?? [UInt8](repeating: 0, count: width * height), subtract: quickSubtract, edgeTolerance: quickTolerance)
     }
 
     // MARK: Selection refine (Select and Mask)
@@ -1478,7 +1478,7 @@ final class DrawEngine: ObservableObject {
         selectionGeneration = UUID(); isSelectingSubject = false
     }
 
-    private func beginGuidedSelection(points: [CGPoint], painted: [UInt8], previous: [UInt8], subtract: Bool) {
+    private func beginGuidedSelection(points: [CGPoint], painted: [UInt8], previous: [UInt8], subtract: Bool, edgeTolerance: Double = 0.18) {
         guard let layer = activeLayer, let image = cgImage(samplePixels()), !points.isEmpty else { return }
         cancelSubjectSelection(); selectionMessage = nil
         let generation = selectionGeneration, expectedRevision = revision, layerID = layer.id
@@ -1486,7 +1486,7 @@ final class DrawEngine: ObservableObject {
         isSelectingSubject = true
         selectionTask = Task { @MainActor [weak self] in
             do {
-                let mask = try await inference.selection(image: image, points: points, width: width, height: height, painted: painted, previous: previous, subtract: subtract)
+                let mask = try await inference.selection(image: image, points: points, width: width, height: height, painted: painted, previous: previous, subtract: subtract, edgeTolerance: edgeTolerance)
                 guard !Task.isCancelled, let self, self.selectionGeneration == generation else { return }
                 self.isSelectingSubject = false
                 guard self.revision == expectedRevision, self.activeLayer?.id == layerID else { return }

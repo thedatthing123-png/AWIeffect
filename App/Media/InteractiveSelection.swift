@@ -9,7 +9,7 @@ actor InteractiveSelection {
     private var session: SamSession?
     private var imageKey: Data?
 
-    func region(image: CGImage, points: [CGPoint], width: Int, height: Int, negative: [CGPoint] = []) throws -> [UInt8] {
+    func region(image: CGImage, points: [CGPoint], width: Int, height: Int, negative: [CGPoint] = [], edgeTolerance: Double = 0.18) throws -> [UInt8] {
         try Task.checkCancellation()
         guard !points.isEmpty, width > 0, height > 0,
               let data = image.dataProvider?.data else { throw SelectionError.invalidImage }
@@ -37,21 +37,32 @@ actor InteractiveSelection {
         guard let chosen = Self.choose(candidates, points: samples, width: first.width, height: first.height, negative: negativeSamples) else {
             throw SelectionError.noRegion
         }
-        return Self.resample(chosen, fromWidth: first.width, fromHeight: first.height, width: width, height: height)
+        let fitted = Self.fitEdge(chosen, tolerance: edgeTolerance)
+        return Self.resample(fitted, fromWidth: first.width, fromHeight: first.height, width: width, height: height)
     }
 
     func selection(image: CGImage, points: [CGPoint], width: Int, height: Int,
-                   painted: [UInt8], previous: [UInt8], subtract: Bool) throws -> [UInt8] {
+                   painted: [UInt8], previous: [UInt8], subtract: Bool, edgeTolerance: Double = 0.18) throws -> [UInt8] {
         // Remove strokes are negative prompts on the existing selection, with positive anchors
         // in its retained interior. This lets a correction exclude one limb without erasing
         // the enclosing character simply because SAM also offered a whole-character mask.
         let anchors = subtract ? Self.anchors(previous, width: width, height: height, avoiding: points) : []
         if subtract, !anchors.isEmpty {
-            let refined = try region(image: image, points: anchors, width: width, height: height, negative: points)
+            let refined = try region(image: image, points: anchors, width: width, height: height, negative: points, edgeTolerance: edgeTolerance)
             return previous.indices.map { min(previous[$0], min(refined[$0], 255 - painted[$0])) }
         }
-        let inferred = try region(image: image, points: points, width: width, height: height)
+        let inferred = try region(image: image, points: points, width: width, height: height, edgeTolerance: edgeTolerance)
         return Self.combine(region: inferred, painted: painted, previous: previous, subtract: subtract)
+    }
+
+    /// Narrow the model's probability band to a real matte: solid interiors and transparent
+    /// exteriors, retaining a small antialiased boundary. The existing Edge tolerance remains wired.
+    static func fitEdge(_ bytes: [UInt8], tolerance: Double) -> [UInt8] {
+        let threshold = min(0.75, max(0.25, 0.5 + (0.18 - tolerance) * 0.6))
+        return bytes.map { value in
+            let t = min(1, max(0, (Double(value) / 255 - threshold + 0.06) / 0.12))
+            return UInt8((t * t * (3 - 2 * t) * 255).rounded())
+        }
     }
 
     static func anchors(_ mask: [UInt8], width: Int, height: Int, avoiding points: [CGPoint]) -> [CGPoint] {

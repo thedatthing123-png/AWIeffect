@@ -38,6 +38,12 @@ final class InteractiveSelectionTests: XCTestCase {
         XCTAssertEqual(mask[23], 255)
     }
 
+    func testEdgeFitMakesInteriorsOpaqueAndBackgroundTransparent() {
+        XCTAssertEqual(Array(InteractiveSelection.fitEdge([0, 40, 90, 128, 180, 230, 255], tolerance: 0.18).prefix(3)), [0, 0, 0])
+        XCTAssertEqual(InteractiveSelection.fitEdge([180, 230, 255], tolerance: 0.18), [255, 255, 255])
+        XCTAssertNotEqual(InteractiveSelection.fitEdge([128], tolerance: 0.02), InteractiveSelection.fitEdge([128], tolerance: 0.5))
+    }
+
     func testPartCandidateMustCoverTheWholeStroke() {
         let chosen = InteractiveSelection.choose([([255, 0, 0, 0], 0.99), ([255, 255, 0, 0], 0.9)], points: [CGPoint(x: 0.1, y: 0.1), CGPoint(x: 0.9, y: 0.1)], width: 2, height: 2)
         XCTAssertEqual(chosen, [255, 255, 0, 0])
