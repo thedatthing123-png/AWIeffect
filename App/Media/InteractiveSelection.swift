@@ -30,13 +30,14 @@ actor InteractiveSelection {
             + negativeSamples.map { SamPoint(x: $0.x * CGFloat(image.width), y: $0.y * CGFloat(image.height), label: .negative) }
         let result = try session.predict(points: prompts, options: SamOptions(multimaskOutput: true, maxMasks: 3))
         try Task.checkCancellation()
-        let candidates = result.masks.map { mask in
-            (Self.resample(Array(mask.alpha), fromWidth: mask.width, fromHeight: mask.height, width: width, height: height), mask.score)
-        }
-        guard let chosen = Self.choose(candidates, points: samples, width: width, height: height, negative: negativeSamples) else {
+        guard let first = result.masks.first else { throw SelectionError.noRegion }
+        // Rank at the model's resolution. Expanding all three masks to a 4K painting would
+        // triple temporary mask memory and make every candidate scan needlessly expensive.
+        let candidates = result.masks.filter { $0.width == first.width && $0.height == first.height }.map { (Array($0.alpha), $0.score) }
+        guard let chosen = Self.choose(candidates, points: samples, width: first.width, height: first.height, negative: negativeSamples) else {
             throw SelectionError.noRegion
         }
-        return chosen
+        return Self.resample(chosen, fromWidth: first.width, fromHeight: first.height, width: width, height: height)
     }
 
     func selection(image: CGImage, points: [CGPoint], width: Int, height: Int,

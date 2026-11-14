@@ -391,6 +391,7 @@ final class DrawEngine: ObservableObject {
         return UndoState(layer: nil, selection: currentMask)
     }
     func undo() {
+        cancelSubjectSelection()
         if isFloating { cancelFloating(); return }
         while let state = undoStack.popLast() {
             if let inverse = exchange(state) { redoStack.append(inverse); break }
@@ -399,6 +400,7 @@ final class DrawEngine: ObservableObject {
     }
     func dropLastUndo() { _ = undoStack.popLast(); canUndo = !undoStack.isEmpty }
     func redo() {
+        cancelSubjectSelection()
         while let state = redoStack.popLast() {
             if let inverse = exchange(state) { undoStack.append(inverse); break }
         }
@@ -750,6 +752,7 @@ final class DrawEngine: ObservableObject {
     }
 
     func clearSelection(recordUndo: Bool = false) {
+        if recordUndo { cancelSubjectSelection() }
         if recordUndo && hasSelection { pushSelectionUndo() }
         // Strokes still on the GPU read the selection, so they must finish before it changes.
         finishQueuedPainting()
@@ -1481,7 +1484,7 @@ final class DrawEngine: ObservableObject {
         let generation = selectionGeneration, expectedRevision = revision, layerID = layer.id
         let width = width, height = height, inference = interactiveSelection
         isSelectingSubject = true
-        selectionTask = Task { [weak self] in
+        selectionTask = Task { @MainActor [weak self] in
             do {
                 let mask = try await inference.selection(image: image, points: points, width: width, height: height, painted: painted, previous: previous, subtract: subtract)
                 guard !Task.isCancelled, let self, self.selectionGeneration == generation else { return }

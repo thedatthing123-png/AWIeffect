@@ -3,6 +3,19 @@ import UIKit
 @testable import AWIeffect
 
 final class InteractiveSelectionTests: XCTestCase {
+    @MainActor func testUndoCancelsPendingSmartSelectionWithoutAddingAnUndoStep() async throws {
+        let engine = try XCTUnwrap(DrawEngine(width: 96, height: 96))
+        engine.beginSelectStroke(at: SIMD2(20, 20), radius: 8, subtract: false)
+        engine.continueSelectStroke(to: SIMD2(50, 50))
+        engine.endSelectStroke(snapToSubject: true)
+        XCTAssertTrue(engine.isSelectingSubject)
+        engine.undo()
+        XCTAssertFalse(engine.isSelectingSubject)
+        XCTAssertFalse(engine.hasSelection)
+        await Task.yield()
+        XCTAssertFalse(engine.hasSelection)
+        XCTAssertFalse(engine.canUndo)
+    }
     func testStrokeSamplingIncludesBothEndsWithinDecoderBudget() {
         let stroke = (0...100).map { CGPoint(x: Double($0) / 100, y: 0.25) }
         let samples = InteractiveSelection.samples(stroke, limit: 9)
@@ -36,7 +49,8 @@ final class InteractiveSelectionTests: XCTestCase {
     /// brushed region; it must remain inside the inferred shape rather than becoming a hole.
     func testBundledModelSelectsShadedObjectAcrossInternalInk() async throws {
         let size = CGSize(width: 512, height: 384)
-        let image = UIGraphicsImageRenderer(size: size).image { c in
+        let format = UIGraphicsImageRendererFormat(); format.scale = 1
+        let image = UIGraphicsImageRenderer(size: size, format: format).image { c in
             UIColor(white: 0.9, alpha: 1).setFill(); c.fill(CGRect(origin: .zero, size: size))
             let body = UIBezierPath(roundedRect: CGRect(x: 115, y: 75, width: 235, height: 235), cornerRadius: 40)
             UIColor(red: 0.6, green: 0.25, blue: 0.12, alpha: 1).setFill(); body.fill()
@@ -52,10 +66,36 @@ final class InteractiveSelectionTests: XCTestCase {
         XCTAssertEqual(mask.count, 512 * 384)
         XCTAssertGreaterThan(mask[190 * 512 + 230], 128, "internal ink must stay selected")
         XCTAssertLessThan(mask[20 * 512 + 20], 128, "background must stay outside")
+        var intersection = 0, union = 0, interior = 0, coveredInterior = 0
+        for y in 0..<384 { for x in 0..<512 {
+            let expected = (120..<345).contains(x) && (80..<305).contains(y)
+            let selected = mask[y * 512 + x] >= 128
+            if expected && selected { intersection += 1 }
+            if expected || selected { union += 1 }
+            if (140..<325).contains(x) && (110..<270).contains(y) {
+                interior += 1; if selected { coveredInterior += 1 }
+            }
+        } }
+        XCTAssertGreaterThan(Double(intersection) / Double(max(1, union)), 0.8, "mask must cover the object, not just return a nonempty region")
+        XCTAssertGreaterThan(Double(coveredInterior) / Double(interior), 0.95, "shading and muscle/ink lines must remain filled")
         try save(image, mask: mask, name: "shaded-ink-object")
         // A second request exercises the cached embedding and part prompts without re-encoding.
         let again = try await session.region(image: cg, points: [CGPoint(x: 0.5, y: 0.5)], width: 512, height: 384)
         XCTAssertEqual(again.count, mask.count)
+    }
+
+    func testPortraitInferenceSelectsThePromptedTopObjectNotItsMirror() async throws {
+        let format = UIGraphicsImageRendererFormat(); format.scale = 1
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 256, height: 512), format: format).image { c in
+            UIColor.white.setFill(); c.fill(CGRect(x: 0, y: 0, width: 256, height: 512))
+            UIColor.blue.setFill(); UIBezierPath(ovalIn: CGRect(x: 25, y: 40, width: 110, height: 130)).fill()
+            UIColor.red.setFill(); UIBezierPath(roundedRect: CGRect(x: 120, y: 350, width: 110, height: 130), cornerRadius: 18).fill()
+        }
+        let cg = try XCTUnwrap(image.cgImage)
+        let mask = try await InteractiveSelection().region(image: cg, points: [CGPoint(x: 80.0 / 256, y: 100.0 / 512)], width: 256, height: 512)
+        XCTAssertGreaterThan(mask[100 * 256 + 80], 128)
+        XCTAssertLessThan(mask[410 * 256 + 180], 128)
+        try save(image, mask: mask, name: "portrait-orientation")
     }
 
     func testDetailedMangaInferenceProducesReviewableMasks() async throws {
@@ -92,7 +132,8 @@ final class InteractiveSelectionTests: XCTestCase {
     private func save(_ image: UIImage, mask: [UInt8], name: String) throws {
         let cg = try XCTUnwrap(image.cgImage)
         let maskImage = try XCTUnwrap(MatteFrame(width: cg.width, height: cg.height, bytes: mask).image())
-        let sheet = UIGraphicsImageRenderer(size: CGSize(width: image.size.width * 2, height: image.size.height)).image { _ in
+        let format = UIGraphicsImageRendererFormat(); format.scale = 1
+        let sheet = UIGraphicsImageRenderer(size: CGSize(width: image.size.width * 2, height: image.size.height), format: format).image { _ in
             image.draw(at: .zero); maskImage.draw(in: CGRect(x: image.size.width, y: 0, width: image.size.width, height: image.size.height))
         }
         let folder = URL(fileURLWithPath: "/tmp/awi-selection")

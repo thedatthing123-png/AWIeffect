@@ -118,12 +118,14 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     /// The original live automatic matte path: one action, no box or brush required.
     func automatic() {
         guard active, autoProgress == nil else { return }
+        cancelRegion()
         state.pause(); tool = .none
         settings.manualOnly = false
         publish("Automatic Background Removal")
     }
     func restoreOriginal() {
         guard active, autoProgress == nil else { return }
+        cancelRegion()
         tool = .none; state.cutoutPreview = nil; state.cutoutPeekOriginal = nil
         state.setCutout(nil)
     }
@@ -165,6 +167,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     }
 
     private func load() {
+        cancelRegion()
         loadID += 1; frameLoading = true; matte = nil; pictureCG = nil
         let id = loadID, f = frame, url = url, video = isVideo, rate = rate
         let saved = path(f), existing = state.project.layers.first(where: { $0.id == layer.id }), renderer = Renderer.shared
@@ -337,6 +340,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
 
     func runAuto(box: CGRect) {
         guard active, autoTask == nil else { return }
+        cancelRegion()
         autoGeneration += 1
         let generation = autoGeneration, namespace = UUID().uuidString
         autoProgress = 0; tool = .brush
