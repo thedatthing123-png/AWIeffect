@@ -295,7 +295,9 @@ kernel void fxGX(texture2d<half, access::sample> src [[texture(0)]],
         // Block Corruption: a = (amount 0-1, block px, color shift 0-1)
         float bs = max(p.a.y, 2.0);
         float4 blk = gxBlock(c, float2(bs * 4.0), bs, flowing ? salt : floor(fr / 2.0) * 3.0 + seed * 101.0, 0.6);
-        GXHit g = { clamp(p.a.x * k, 0.0, 1.0) * 0.5, bs * 1.5, bs * 0.4, bs * 0.25, p.a.z * 0.6, p.a.z * 0.1, 0.45, 0.15 };
+        // Timing controls both how many blocks fire and the damage strength within each block.
+        // Probability alone left Always On unresponsive whenever neither value crossed a block's hash.
+        GXHit g = { clamp(p.a.x * k, 0.0, 1.0) * 0.5, bs * 1.5 * k, bs * 0.4 * k, bs * 0.25 * k, p.a.z * 0.6, p.a.z * 0.1, 0.45, 0.15 };
         o = gxCorrupt(src, c, blk, flowing ? salt : floor(fr / 2.0) * 3.0 + seed * 101.0, g, 0.0, motionClock);
         break; }
     case 11: {
