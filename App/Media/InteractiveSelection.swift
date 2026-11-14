@@ -127,7 +127,7 @@ actor InteractiveSelection {
                 let y = min(height - 1, max(0, Int(p.y * CGFloat(height))))
                 return mask[y * width + x] >= 128
             }.count
-            return (mask, Double(covered) / Double(points.count) * 4 - Double(leaks) / Double(max(1, negative.count)) * 4 + Double(confidence) - area * 0.2)
+            return (mask, Double(covered) / Double(points.count) * 4 - Double(leaks) / Double(max(1, negative.count)) * 4 + Double(confidence) - area * 0.65)
         }
         return scored.max { $0.1 < $1.1 }?.0
     }
