@@ -401,7 +401,7 @@ final class DrawCanvasView: MTKView, MTKViewDelegate {
         case .brush, .eraser:
             if session.selectionLayer { session.engine.endSelectStroke(snapToSubject: false) }
             else { session.engine.endStroke() }
-        case .selectBrush: session.engine.endSelectStroke(snapToSubject: session.selectSnap == .subject && !session.selectSubtract, snapToEdges: session.selectSnap == .edges)
+        case .selectBrush: session.engine.endSelectStroke(snapToSubject: session.selectSnap == .subject, snapToEdges: session.selectSnap == .edges)
         case .lasso where session.polygonLasso:
             let v = t.location(in: self)
             // Tap near the first point (or with 2+ points, a quick second tap there) closes the shape.

@@ -47,6 +47,17 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     private var previewTime: TimeInterval = 0
     private let projectID: UUID
     private var committedSettings: CutoutSettings?
+    private let interactiveSelection = InteractiveSelection()
+    private var selectionTask: Task<Void, Never>?
+    private var strokeGeneration = UUID()
+    @Published private(set) var selectingRegion = false
+    @Published private(set) var selectionMessage: String?
+
+    func cancelRegion() {
+        selectionTask?.cancel(); selectionTask = nil
+        strokeGeneration = UUID(); selectingRegion = false
+        state.cutoutPreview = nil
+    }
 
     var hasSelection: Bool { selection != nil }
     var manualFrames: Set<Int> { Set(settings.manualFrames) }
@@ -145,6 +156,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     }
 
     func go(to f: Int) {
+        cancelRegion()
         let target = min(max(0, f), lastFrame)
         guard target != frame else { return }
         frame = target
@@ -239,8 +251,36 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
         state.cutoutPreview = (layer.id, s)
     }
     func endStroke(_ points: [CGPoint], radius: CGFloat) {
-        addStroke(points, radius: radius); commit(keep: keepBrush)
-        state.cutoutPreview = nil
+        guard active, !points.isEmpty, let image = pictureCG, let matte else { return }
+        guard snapEdges else {
+            addStroke(points, radius: radius); commit(keep: keepBrush)
+            state.cutoutPreview = nil; return
+        }
+        cancelRegion(); selectionMessage = nil
+        previewTime = 0; previewStroke(points, radius: radius)
+        let generation = strokeGeneration, expectedLoad = loadID, expectedFrame = frame
+        let expectedSettings = state.selectedLayer?.cutout
+        let keep = keepBrush, subtract = subtractStroke, inference = interactiveSelection
+        let w = matte.width, h = matte.height
+        let previousSelection = selection ?? [UInt8](repeating: 0, count: w * h)
+        var painted = [UInt8](repeating: 0, count: w * h)
+        CutoutEngine.paint([CutoutStroke(points: points.map { Vec2(Double($0.x), Double($0.y)) }, radius: Double(radius), subtract: false)], into: &painted, w: w, h: h)
+        selectingRegion = true
+        selectionTask = Task { [weak self] in
+            var region = painted
+            var failed = false
+            do { region = try await inference.region(image: image, points: points, width: w, height: h) }
+            catch { failed = true }
+            guard !Task.isCancelled, let self, self.active, self.strokeGeneration == generation else { return }
+            self.selectingRegion = false
+            guard self.loadID == expectedLoad, self.frame == expectedFrame, self.state.selectedLayer?.cutout == expectedSettings else {
+                self.state.cutoutPreview = nil; return
+            }
+            if failed { self.selectionMessage = "Could not infer the region. Applied your exact brush stroke." }
+            self.selection = InteractiveSelection.combine(region: region, painted: painted, previous: previousSelection, subtract: subtract)
+            self.commit(keep: keep)
+            self.state.cutoutPreview = nil
+        }
     }
 
     func clearSelection() { selection = nil; selectionImage = nil }
@@ -365,6 +405,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
 
     /// Leaving the tool never applies draft settings, nor commits a late-running automatic operation.
     func finish() {
+        cancelRegion()
         closed = true; loadID += 1; autoTask?.cancel()
         if state.cutoutPreview?.layer == layer.id { state.cutoutPreview = nil }
         if state.cutoutPeekOriginal == layer.id { state.cutoutPeekOriginal = nil }

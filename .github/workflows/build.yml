@@ -14,7 +14,7 @@ on:
       validation:
         description: Test scope (audit runs do not publish an IPA)
         type: choice
-        options: [all, audit, timing, stability, authoring, quick]
+        options: [all, audit, timing, stability, authoring, segmentation, quick]
         default: all
 
 concurrency:
@@ -79,6 +79,9 @@ jobs:
           set -o pipefail
           set +e
           FILTER=()
+          if [[ "${{ inputs.validation }}" == "segmentation" ]]; then
+            FILTER=(-only-testing:AWIeffectTests/InteractiveSelectionTests -only-testing:AWIeffectTests/CutoutStudioTests -only-testing:AWIeffectTests/ArtStudioRenewTests)
+          fi
           if [[ "${{ inputs.validation }}" == "audit" ]]; then
             FILTER=(-only-testing:AWIeffectTests/AuditRegressionTests -only-testing:AWIeffectTests/AuditRenderRegressionTests -only-testing:AWIeffectTests/PrecompMaskImportTests -only-testing:AWIeffectTests/EssentialRegressionTests -only-testing:AWIeffectTests/DrawStudioTests -only-testing:AWIeffectTests/VisionTests -only-testing:AWIeffectTests/VideoDecodeTests -only-testing:AWIeffectTests/EditorPolishRegressionTests -only-testing:AWIeffectUITests/EditorPolishUITests)
           fi
@@ -154,6 +157,14 @@ jobs:
           name: ui-screenshots
           path: /tmp/awi-ui
           if-no-files-found: warn
+
+      - name: Upload selection evaluation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selection-evaluation
+          path: /tmp/awi-selection
+          if-no-files-found: ignore
 
       - name: Upload contact sheet
         if: always()

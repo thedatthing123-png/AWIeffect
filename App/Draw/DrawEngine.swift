@@ -144,6 +144,7 @@ final class DrawEngine: ObservableObject {
     @Published private(set) var selectionMessage: String?
     private var selectionTask: Task<Void, Never>?
     private var selectionGeneration = UUID()
+    private let interactiveSelection = InteractiveSelection()
     var brush = Brush()
     /// The eraser paints transparency with any brush shape (works on every layer, imported photos included).
     var erasing = false
@@ -842,6 +843,7 @@ final class DrawEngine: ObservableObject {
 
     /// `reach` limits how far one touch can spread, so a touch on a part never leaks over the whole picture.
     func beginQuickSelect(at p: SIMD2<Double>, subtract: Bool, reach: Double = 120, radius: Double = 10) {
+        cancelSubjectSelection()
         quickReach = max(24, Int(reach))
         quickRadius = max(1, radius)
         quickBefore = hasSelection ? selectionBytes() : nil
@@ -929,6 +931,7 @@ final class DrawEngine: ObservableObject {
     }
 
     func cancelQuickSelect() {
+        cancelSubjectSelection()
         guard !quickPixels.isEmpty else { return }
         restoreSelection(quickBefore); quickPixels = []
         if undoStack.last?.layer == nil { _ = undoStack.popLast() }
@@ -944,6 +947,10 @@ final class DrawEngine: ObservableObject {
         } else { clearSelection() }
         quickPixels = []
         revision += 1
+        let points = quickSeeds.map { CGPoint(x: $0.x / Double(width), y: $0.y / Double(height)) }
+        var painted = [UInt8](repeating: 0, count: width * height)
+        CutoutEngine.paint([CutoutStroke(points: points.map { Vec2(Double($0.x), Double($0.y)) }, radius: quickRadius / Double(max(width, height)), subtract: false)], into: &painted, w: width, h: height)
+        beginGuidedSelection(points: points, painted: painted, previous: quickBefore ?? [UInt8](repeating: 0, count: width * height), subtract: quickSubtract)
     }
 
     // MARK: Selection refine (Select and Mask)
@@ -1468,6 +1475,29 @@ final class DrawEngine: ObservableObject {
         selectionGeneration = UUID(); isSelectingSubject = false
     }
 
+    private func beginGuidedSelection(points: [CGPoint], painted: [UInt8], previous: [UInt8], subtract: Bool) {
+        guard let layer = activeLayer, let image = cgImage(samplePixels()), !points.isEmpty else { return }
+        cancelSubjectSelection(); selectionMessage = nil
+        let generation = selectionGeneration, expectedRevision = revision, layerID = layer.id
+        let width = width, height = height, inference = interactiveSelection
+        isSelectingSubject = true
+        selectionTask = Task { [weak self] in
+            do {
+                let region = try await inference.region(image: image, points: points, width: width, height: height)
+                guard !Task.isCancelled, let self, self.selectionGeneration == generation else { return }
+                self.isSelectingSubject = false
+                guard self.revision == expectedRevision, self.activeLayer?.id == layerID else { return }
+                let mask = InteractiveSelection.combine(region: region, painted: painted, previous: previous, subtract: subtract)
+                self.restoreSelection(mask); self.revision += 1
+            } catch {
+                guard !Task.isCancelled, let self, self.selectionGeneration == generation else { return }
+                self.isSelectingSubject = false
+                guard self.revision == expectedRevision, self.activeLayer?.id == layerID else { return }
+                self.selectionMessage = "Region selection unavailable. Your painted selection is kept."
+            }
+        }
+    }
+
     private func beginSubjectSelection(brush: Bool) {
         // Reads the picture you see (or just this layer, with This Layer on).
         guard let layer = activeLayer, let image = cgImage(samplePixels()) else { return }
@@ -1582,13 +1612,18 @@ final class DrawEngine: ObservableObject {
     func endSelectStroke(snapToSubject: Bool, snapToEdges: Bool = false) {
         guard selLast != nil else { return }
         record(UndoState(layer: nil, selection: selBeforeHadSelection ? selBefore : nil))
-        if snapToEdges { snapStrokeToEdges() }
+        // Smart selection works from the image, rather than flooding similar colors inside line art.
         uploadSelection()
         hasSelection = selBuf.contains { $0 > 0 }
         if !hasSelection { clearSelection() }
         selLast = nil
         revision += 1
-        if snapToSubject { beginSubjectSelection(brush: true) }
+        if snapToSubject || snapToEdges {
+            let points = selStroke.map { CGPoint(x: $0.x / Double(width), y: $0.y / Double(height)) }
+            var painted = [UInt8](repeating: 0, count: width * height)
+            CutoutEngine.paint([CutoutStroke(points: points.map { Vec2(Double($0.x), Double($0.y)) }, radius: selRadius / Double(max(width, height)), subtract: false)], into: &painted, w: width, h: height)
+            beginGuidedSelection(points: points, painted: painted, previous: selBefore, subtract: selSubtract)
+        }
     }
 
     /// The stroke becomes the part it was painted on: spreads to that part's edges and drops what spilled over them.

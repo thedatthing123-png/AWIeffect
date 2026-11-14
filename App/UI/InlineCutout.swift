@@ -46,6 +46,14 @@ struct InlineCutoutControls: View {
                 }
             }
             if model.frameLoading && model.tool != .none { ProgressView("Loading frame").frame(minHeight: 44) }
+            if model.selectingRegion {
+                HStack {
+                    ProgressView("Selecting region")
+                    Spacer()
+                    Button("Cancel") { model.cancelRegion() }.frame(minWidth: 60, minHeight: 44)
+                }
+            }
+            if let message = model.selectionMessage { Text(message).font(.caption).foregroundStyle(Theme.textDim) }
             if model.tool == .brush {
             HStack {
                 Text("Brush Size").font(.caption).frame(width: 88, alignment: .leading)
@@ -130,14 +138,14 @@ struct InlineCutoutOverlay: View {
                 }.allowsHitTesting(false)
             }.contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0).onChanged { g in
-                guard model.autoProgress == nil, !model.frameLoading else { return }
+                guard model.autoProgress == nil, !model.frameLoading, !model.selectingRegion else { return }
                 if points.isEmpty && boxStart == nil { model.state.pause(); model.followPlayhead() }
                 if model.tool == .brush {
                     points.append(g.location)
                     model.previewStroke(points.map { uv($0, matrix: m, half: hs, scale: scale) }, radius: model.brushSize / 2 / max(1, max(hs.x, hs.y) * 2 * scale))
                 } else { boxStart = g.startLocation; end = g.location }
             }.onEnded { g in
-                guard model.autoProgress == nil else { points = []; boxStart = nil; end = nil; return }
+                guard model.autoProgress == nil, !model.selectingRegion else { points = []; boxStart = nil; end = nil; return }
                 if model.frameLoading { points = []; boxStart = nil; end = nil; return }
                 if model.tool == .brush {
                     model.endStroke(points.map { uv($0, matrix: m, half: hs, scale: scale) }, radius: model.brushSize / 2 / max(1, max(hs.x,hs.y) * 2 * scale))
