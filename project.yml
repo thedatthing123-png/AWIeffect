@@ -72,6 +72,7 @@ targets:
         buildPhase: resources
       - path: Tests/Fixtures/segmentation
         buildPhase: resources
+        excludes: [README.md]
     dependencies:
       - target: AWIeffect
     settings:

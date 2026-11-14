@@ -1483,11 +1483,10 @@ final class DrawEngine: ObservableObject {
         isSelectingSubject = true
         selectionTask = Task { [weak self] in
             do {
-                let region = try await inference.region(image: image, points: points, width: width, height: height)
+                let mask = try await inference.selection(image: image, points: points, width: width, height: height, painted: painted, previous: previous, subtract: subtract)
                 guard !Task.isCancelled, let self, self.selectionGeneration == generation else { return }
                 self.isSelectingSubject = false
                 guard self.revision == expectedRevision, self.activeLayer?.id == layerID else { return }
-                let mask = InteractiveSelection.combine(region: region, painted: painted, previous: previous, subtract: subtract)
                 self.restoreSelection(mask); self.revision += 1
             } catch {
                 guard !Task.isCancelled, let self, self.selectionGeneration == generation else { return }

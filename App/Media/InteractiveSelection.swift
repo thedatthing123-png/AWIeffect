@@ -9,7 +9,7 @@ actor InteractiveSelection {
     private var session: SamSession?
     private var imageKey: Data?
 
-    func region(image: CGImage, points: [CGPoint], width: Int, height: Int) throws -> [UInt8] {
+    func region(image: CGImage, points: [CGPoint], width: Int, height: Int, negative: [CGPoint] = []) throws -> [UInt8] {
         try Task.checkCancellation()
         guard !points.isEmpty, width > 0, height > 0,
               let data = image.dataProvider?.data else { throw SelectionError.invalidImage }
@@ -24,15 +24,53 @@ actor InteractiveSelection {
             imageKey = key
         }
         try Task.checkCancellation()
-        let samples = Self.samples(points, limit: PromptEncoder.maxPoints)
+        let negativeSamples = Self.samples(negative, limit: 5)
+        let samples = Self.samples(points, limit: PromptEncoder.maxPoints - negativeSamples.count)
         let prompts = samples.map { SamPoint(x: $0.x * CGFloat(image.width), y: $0.y * CGFloat(image.height), label: .positive) }
+            + negativeSamples.map { SamPoint(x: $0.x * CGFloat(image.width), y: $0.y * CGFloat(image.height), label: .negative) }
         let result = try session.predict(points: prompts, options: SamOptions(multimaskOutput: true, maxMasks: 3))
         try Task.checkCancellation()
         let candidates = result.masks.map { mask in
             (Self.resample(Array(mask.alpha), fromWidth: mask.width, fromHeight: mask.height, width: width, height: height), mask.score)
         }
-        guard let chosen = Self.choose(candidates, points: samples, width: width, height: height) else {
+        guard let chosen = Self.choose(candidates, points: samples, width: width, height: height, negative: negativeSamples) else {
             throw SelectionError.noRegion
+        }
+        return chosen
+    }
+
+    func selection(image: CGImage, points: [CGPoint], width: Int, height: Int,
+                   painted: [UInt8], previous: [UInt8], subtract: Bool) throws -> [UInt8] {
+        // Remove strokes are negative prompts on the existing selection, with positive anchors
+        // in its retained interior. This lets a correction exclude one limb without erasing
+        // the enclosing character simply because SAM also offered a whole-character mask.
+        let anchors = subtract ? Self.anchors(previous, width: width, height: height, avoiding: points) : []
+        if subtract, !anchors.isEmpty {
+            let refined = try region(image: image, points: anchors, width: width, height: height, negative: points)
+            return previous.indices.map { min(previous[$0], min(refined[$0], 255 - painted[$0])) }
+        }
+        let inferred = try region(image: image, points: points, width: width, height: height)
+        return Self.combine(region: inferred, painted: painted, previous: previous, subtract: subtract)
+    }
+
+    static func anchors(_ mask: [UInt8], width: Int, height: Int, avoiding points: [CGPoint]) -> [CGPoint] {
+        guard mask.count == width * height, width > 0, height > 0, !points.isEmpty else { return [] }
+        var candidates: [(CGPoint, CGFloat)] = []
+        let step = max(1, min(width, height) / 24)
+        for y in stride(from: step, to: height - step, by: step) {
+            for x in stride(from: step, to: width - step, by: step) {
+                guard mask[y * width + x] > 240,
+                      mask[(y - step) * width + x] > 240, mask[(y + step) * width + x] > 240,
+                      mask[y * width + x - step] > 240, mask[y * width + x + step] > 240 else { continue }
+                let p = CGPoint(x: CGFloat(x) / CGFloat(width), y: CGFloat(y) / CGFloat(height))
+                let distance = points.map { hypot(p.x - $0.x, p.y - $0.y) }.min() ?? 0
+                if distance > 0.06 { candidates.append((p, distance)) }
+            }
+        }
+        var chosen: [CGPoint] = []
+        for candidate in candidates.sorted(by: { $0.1 > $1.1 }) {
+            if chosen.allSatisfy({ hypot($0.x - candidate.0.x, $0.y - candidate.0.y) > 0.12 }) { chosen.append(candidate.0) }
+            if chosen.count == 4 { break }
         }
         return chosen
     }
@@ -62,7 +100,7 @@ actor InteractiveSelection {
 
     /// Prefer a confident part mask over the enclosing whole character when both satisfy the stroke.
     /// Internal ink lines remain foreground; no color flood or unconditional hole filling is used.
-    static func choose(_ candidates: [([UInt8], Float)], points: [CGPoint], width: Int, height: Int) -> [UInt8]? {
+    static func choose(_ candidates: [([UInt8], Float)], points: [CGPoint], width: Int, height: Int, negative: [CGPoint] = []) -> [UInt8]? {
         let valid = candidates.filter { $0.0.count == width * height && $0.0.contains { $0 >= 128 } }
         guard !valid.isEmpty, !points.isEmpty else { return nil }
         let scored = valid.map { mask, confidence -> ([UInt8], Double) in
@@ -72,7 +110,12 @@ actor InteractiveSelection {
                 return mask[y * width + x] >= 128
             }.count
             let area = Double(mask.filter { $0 >= 128 }.count) / Double(mask.count)
-            return (mask, Double(covered) / Double(points.count) * 4 + Double(confidence) - area * 0.2)
+            let leaks = negative.filter { p in
+                let x = min(width - 1, max(0, Int(p.x * CGFloat(width))))
+                let y = min(height - 1, max(0, Int(p.y * CGFloat(height))))
+                return mask[y * width + x] >= 128
+            }.count
+            return (mask, Double(covered) / Double(points.count) * 4 - Double(leaks) / Double(max(1, negative.count)) * 4 + Double(confidence) - area * 0.2)
         }
         return scored.max { $0.1 < $1.1 }?.0
     }

@@ -28,6 +28,8 @@ final class InteractiveSelectionTests: XCTestCase {
     func testPartCandidateMustCoverTheWholeStroke() {
         let chosen = InteractiveSelection.choose([([255, 0, 0, 0], 0.99), ([255, 255, 0, 0], 0.9)], points: [CGPoint(x: 0.1, y: 0.1), CGPoint(x: 0.9, y: 0.1)], width: 2, height: 2)
         XCTAssertEqual(chosen, [255, 255, 0, 0])
+        let corrected = InteractiveSelection.choose([([255, 255, 0, 0], 0.99), ([255, 0, 0, 0], 0.9)], points: [CGPoint(x: 0.1, y: 0.1)], width: 2, height: 2, negative: [CGPoint(x: 0.9, y: 0.1)])
+        XCTAssertEqual(corrected, [255, 0, 0, 0])
     }
 
     /// Runs the actual bundled neural encoder/decoder, not a fake mask. The ink crosses the
