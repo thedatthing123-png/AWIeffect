@@ -17,7 +17,7 @@ Scope: the November 12 pasted editing notes, plus the correction that enabling o
 - Wave Glitch flows continuously by default. Hold Frames retains intentional stepped animation.
 - Earthquake Displace keeps its chunk layout stable while smoothly interpolating displacement vectors.
 - AWI Glitch, Glitch Blocks, Glitch Lines, Block Corruption, Slice Glitch, Interlace, Displacement Glitch and VHS Tracking expose Smooth Slide / Snap-Hold where they move pieces. Smooth movement interpolates coordinates; it does not crossfade snapshots. Static noise and intentionally frozen codec blocks retain their character.
-- Motion Tile on an adjustment retains repeat/mirror sampling when a later transform moves beyond the frame. Manual Output Size still uses the explicit bounded output.
+- Motion Tile on an adjustment retains repeat/mirror sampling when a later transform moves beyond the frame. Pixel distortions receive padded tile data before processing, with the result cropped back to the composition afterwards. Padding follows the following effects' margins with a bounded texture budget. Manual Output Size still uses the explicit bounded output.
 - Existing group/precomp and clip-below alpha fixes remain in place.
 
 ## Selection and interaction

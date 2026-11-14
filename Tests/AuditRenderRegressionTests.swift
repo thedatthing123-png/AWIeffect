@@ -176,6 +176,26 @@ final class AuditRenderRegressionTests: XCTestCase {
         }
     }
 
+    func testAdjustmentMotionTileFeedsPixelDistortionsBeyondTheFrame() throws {
+        let r = try renderer()
+        var p = Project.new(name: "tiled distortion", width: 64, height: 64, fps: 30, duration: 1,
+                            background: RGBA(0, 0, 0, 0))
+        var fill = p.makeLayer(name: "Backdrop", content: .solid, size: Vec2(64,64)); fill.fill = Animated(.white)
+        var adjustment = p.makeLayer(name: "Adjustment", content: .adjustment, size: Vec2(64,64))
+        var wave = EffectRegistry.waveGlitch18.makeInstance(); wave.params["amount"] = .number(Animated(24))
+        var transform = EffectRegistry.transformFX18.makeInstance(); transform.params["x"] = .number(Animated(20))
+        for tail in [[wave], [wave, transform]] {
+            adjustment.effects = [EffectRegistry.motionTile.makeInstance()] + tail
+            p.layers = [adjustment, fill]
+            let px = try XCTUnwrap(r.renderPixels(project: p, time: 0.31, preserveAlpha: true,
+                                                  mediaURL: { URL(fileURLWithPath: $0) })).rgba
+            for y in [1, 16, 32, 62] { for x in [1, 16, 32, 62] {
+                XCTAssertGreaterThan(px[(y*64+x)*4+3], 245, "distortion must read tiled pixels beyond the original frame")
+                XCTAssertGreaterThan(px[(y*64+x)*4], 245)
+            } }
+        }
+    }
+
     func testPackageRenamesConflictingLUTAndRelinksNestedComp() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }

@@ -1279,16 +1279,37 @@ final class Renderer {
         func process(at evaluationTime: Double) -> MTLTexture {
         var current = copy
         var tiledEdges: UInt32 = 0
-        for e in effects {
+        for (effectIndex, e) in effects.enumerated() {
             guard let def = EffectRegistry.definition(e.typeID) else { continue }
             switch def.stage {
             case .pixels(let run):
-                current = run(EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: evaluationTime, unit: renderScale, pool: pool))
+                if e.typeID == "ae.motionTile", !e.bool("manualOutput"), current.width == comp.width, current.height == comp.height,
+                   effects.dropFirst(effectIndex + 1).contains(where: { EffectRegistry.definition($0.typeID)?.isTransformEffect == false }) {
+                    let size = Vec2(Double(comp.width) / max(renderScale, 1e-6), Double(comp.height) / max(renderScale, 1e-6))
+                    let margin = effects.dropFirst(effectIndex + 1).reduce(0.0) { total, effect in
+                        guard let definition = EffectRegistry.definition(effect.typeID) else { return total }
+                        return total + max(0, definition.expandedMargin?(effect, evaluationTime, size) ?? definition.margin(effect, evaluationTime))
+                    }
+                    let available = max(0, (TexturePool.maxSide - max(comp.width, comp.height)) / 2)
+                    let padding = min(available, Int(ceil(min(1024, max(64, margin)) * renderScale)))
+                    if padding > 0 {
+                        let padded = pool.acquire(width: comp.width + padding * 2, height: comp.height + padding * 2)
+                        fx.run("fxClear", cb, textures: [padded], grid: padded)
+                        let placement = simd_double3x3(columns: (SIMD3(1,0,0), SIMD3(0,1,0), SIMD3(Double(padded.width)/2,Double(padded.height)/2,1)))
+                        drawQuad(cb: cb, target: padded, matrix: placement, halfSize: Vec2(Double(comp.width)/2,Double(comp.height)/2), aa: 1,
+                                 opacity: 1, layer: layer, time: evaluationTime, source: .image(current), premultipliedImage: true, blendOverride: .normal)
+                        current = padded
+                    }
+                }
+                var context = EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: evaluationTime, unit: renderScale, pool: pool)
+                context.layerPixels = SIMD2(Double(comp.width), Double(comp.height))
+                context.compositionPixels = context.layerPixels
+                current = run(context)
                 if e.typeID == "ae.motionTile", !e.bool("manualOutput") {
                     tiledEdges = e.bool("mirror") ? 2 : 1
                 }
             case .transform:
-                let transformed = pool.acquire(width: comp.width, height: comp.height)
+                let transformed = pool.acquire(width: current.width, height: current.height)
                 fx.run("fxClear", cb, textures: [transformed], grid: transformed)
                 var control = layer; control.effects = [e]
                 let offset = Self.transformOffsets(control, time: evaluationTime)
@@ -1296,7 +1317,7 @@ final class Renderer {
                 let angle = offset.dr * .pi / 180
                 let matrix = simd_double3x3(columns: (SIMD3(cos(angle) * offset.ds, sin(angle) * offset.ds, 0),
                     SIMD3(-sin(angle) * offset.ds, cos(angle) * offset.ds, 0),
-                    SIMD3(Double(comp.width) / 2 + offset.dx * renderScale, Double(comp.height) / 2 + offset.dy * renderScale, 1)))
+                    SIMD3(Double(current.width) / 2 + offset.dx * renderScale, Double(current.height) / 2 + offset.dy * renderScale, 1)))
                 if tiledEdges != 0 {
                     let inv = matrix.inverse
                     var params = EffectParams()
@@ -1305,12 +1326,20 @@ final class Renderer {
                     params.i.x = tiledEdges
                     fx.run("fxBackdropTransform", cb, textures: [current, transformed], params: params, grid: transformed)
                 } else {
-                    drawQuad(cb: cb, target: transformed, matrix: matrix, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 1,
+                    drawQuad(cb: cb, target: transformed, matrix: matrix, halfSize: Vec2(Double(current.width) / 2, Double(current.height) / 2), aa: 1,
                              opacity: 1, layer: carrier, time: evaluationTime, source: .image(current), premultipliedImage: true, blendOverride: .normal)
                 }
                 current = transformed
             }
 
+        }
+        if current.width != comp.width || current.height != comp.height {
+            let cropped = pool.acquire(width: comp.width, height: comp.height)
+            var crop = EffectParams()
+            crop.a = SIMD4(1,0,-Float(comp.width)/2,0); crop.b = SIMD4(0,1,-Float(comp.height)/2,0)
+            crop.i.x = 1
+            fx.run("fxBackdropTransform", cb, textures: [current, cropped], params: crop, grid: cropped)
+            return cropped
         }
         return current
         }
