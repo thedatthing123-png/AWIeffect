@@ -1,12 +1,11 @@
 import Foundation
 import CoreGraphics
 import CryptoKit
-import SAMKit
 
 /// One image embedding per open tool, reused as selection strokes change. All Core ML work
 /// stays on this actor, never in the drawing gesture or the main-actor view model.
 actor InteractiveSelection {
-    private var session: SamSession?
+    private var session: PromptSegmentationModel?
     private var imageKey: Data?
 
     func region(image: CGImage, points: [CGPoint], width: Int, height: Int, negative: [CGPoint] = [], edgeTolerance: Double = 0.18) throws -> [UInt8] {
@@ -17,7 +16,7 @@ actor InteractiveSelection {
         hasher.update(data: data as Data)
         hasher.update(data: Data("\(image.width)x\(image.height):\(image.bytesPerRow)".utf8))
         let key = Data(hasher.finalize())
-        if session == nil { session = try SamSession(model: .bundled(.mobileSam)) }
+        if session == nil { session = try PromptSegmentationModel() }
         guard let session else { throw SelectionError.invalidImage }
         if key != imageKey {
             try session.setImage(image)
@@ -25,20 +24,20 @@ actor InteractiveSelection {
         }
         try Task.checkCancellation()
         let negativeSamples = Self.samples(negative, limit: 5)
-        let samples = Self.samples(points, limit: PromptEncoder.maxPoints - negativeSamples.count)
-        let prompts = samples.map { SamPoint(x: $0.x * CGFloat(image.width), y: $0.y * CGFloat(image.height), label: .positive) }
-            + negativeSamples.map { SamPoint(x: $0.x * CGFloat(image.width), y: $0.y * CGFloat(image.height), label: .negative) }
-        let result = try session.predict(points: prompts, options: SamOptions(multimaskOutput: true, maxMasks: 3))
+        let samples = Self.samples(points, limit: 14 - negativeSamples.count)
+        let prompts = samples.map { SegmentationPrompt(point: $0, positive: true) }
+            + negativeSamples.map { SegmentationPrompt(point: $0, positive: false) }
+        let masks = try session.predict(prompts)
         try Task.checkCancellation()
-        guard let first = result.masks.first else { throw SelectionError.noRegion }
+        guard let first = masks.first else { throw SelectionError.noRegion }
         // Rank at the model's resolution. Expanding all three masks to a 4K painting would
         // triple temporary mask memory and make every candidate scan needlessly expensive.
-        let candidates = result.masks.filter { $0.width == first.width && $0.height == first.height }.map { (Array($0.alpha), $0.score) }
+        let candidates = masks.filter { $0.width == first.width && $0.height == first.height }.map { ($0.bytes, $0.score) }
         guard let chosen = Self.choose(candidates, points: samples, width: first.width, height: first.height, negative: negativeSamples) else {
             throw SelectionError.noRegion
         }
-        let fitted = Self.fitEdge(chosen, tolerance: edgeTolerance)
-        return Self.resample(fitted, fromWidth: first.width, fromHeight: first.height, width: width, height: height)
+        let expanded = Self.resample(chosen, fromWidth: first.width, fromHeight: first.height, width: width, height: height)
+        return Self.fitEdge(expanded, tolerance: edgeTolerance)
     }
 
     func selection(image: CGImage, points: [CGPoint], width: Int, height: Int,
@@ -137,9 +136,13 @@ actor InteractiveSelection {
         if fromWidth == width && fromHeight == height { return bytes }
         var result = [UInt8](repeating: 0, count: width * height)
         for y in 0..<height { for x in 0..<width {
-            // SAMKit removes padding and returns top-down alpha at resized image resolution.
-            let sx = min(fromWidth - 1, x * fromWidth / width), sy = min(fromHeight - 1, y * fromHeight / height)
-            result[y * width + x] = bytes[sy * fromWidth + sx]
+            let sx = max(0, min(Double(fromWidth - 1), (Double(x) + 0.5) * Double(fromWidth) / Double(width) - 0.5))
+            let sy = max(0, min(Double(fromHeight - 1), (Double(y) + 0.5) * Double(fromHeight) / Double(height) - 0.5))
+            let x0 = Int(sx), y0 = Int(sy), x1 = min(fromWidth - 1, x0 + 1), y1 = min(fromHeight - 1, y0 + 1)
+            let fx = sx - Double(x0), fy = sy - Double(y0)
+            let top = Double(bytes[y0 * fromWidth + x0]) * (1 - fx) + Double(bytes[y0 * fromWidth + x1]) * fx
+            let bottom = Double(bytes[y1 * fromWidth + x0]) * (1 - fx) + Double(bytes[y1 * fromWidth + x1]) * fx
+            result[y * width + x] = UInt8((top * (1 - fy) + bottom * fy).rounded())
         } }
         return result
     }

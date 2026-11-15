@@ -15,9 +15,6 @@ settings:
     ENABLE_USER_SCRIPT_SANDBOXING: NO
     MTL_FAST_MATH: YES
 packages:
-  SAMKit:
-    url: https://github.com/john-rocky/SamKit.git
-    revision: a4f7866c0b009628ece6c0c3e72a86ece0405463
   GLTFKit2:
     url: https://github.com/warrenm/GLTFKit2.git
     exactVersion: 0.5.15
@@ -27,10 +24,10 @@ targets:
     platform: iOS
     sources:
       - path: App
+        excludes: ["SegmentationModels/mobile_sam*"]
       - path: Resources
         buildPhase: resources
     dependencies:
-      - package: SAMKit
       - package: GLTFKit2
     info:
       path: App/Info.plist
