@@ -1,6 +1,9 @@
 import Foundation
 import CoreGraphics
 import CryptoKit
+import Vision
+import CoreImage
+import CoreVideo
 
 /// One image embedding per open tool, reused as selection strokes change. All Core ML work
 /// stays on this actor, never in the drawing gesture or the main-actor view model.
@@ -8,6 +11,11 @@ actor InteractiveSelection {
     private var session: PromptSegmentationModel?
     private var imageKey: Data?
     private let modelDirectory: URL?
+    private var foregroundAttempted = false
+    private var foregroundHandler: VNImageRequestHandler?
+    private var foregroundObservation: VNInstanceMaskObservation?
+    private var foregroundMasks: [String: [UInt8]] = [:]
+    private let maskContext = CIContext(options: [.cacheIntermediates: false])
 
     init(modelDirectory: URL? = nil) { self.modelDirectory = modelDirectory }
 
@@ -24,6 +32,7 @@ actor InteractiveSelection {
         if key != imageKey {
             try session.setImage(image)
             imageKey = key
+            foregroundAttempted = false; foregroundHandler = nil; foregroundObservation = nil; foregroundMasks = [:]
         }
         try Task.checkCancellation()
         // A stroke is a region hint, not a dense set of independent classification points.
@@ -42,14 +51,50 @@ actor InteractiveSelection {
             throw SelectionError.noRegion
         }
         let selectedCount = chosen.filter { $0 >= 128 }.count
-        let supports = candidates.filter { mask, score in
+        var supports = candidates.filter { mask, score in
             guard score >= 0.15, mask.filter({ $0 >= 128 }).count > selectedCount + selectedCount / 10 else { return false }
             let overlap = chosen.indices.filter { chosen[$0] >= 128 && mask[$0] >= 128 }.count
             return Double(overlap) / Double(max(1, selectedCount)) >= 0.95
         }.map(\.0)
+        // Keep the automatic whole-subject model as an independent source of object coverage.
+        // It validates internal ink in the prompted part; it never expands that part's outline.
+        if let whole = foregroundSupport(image: image, points: samples, width: first.width, height: first.height) { supports.append(whole) }
         let completed = Self.completeInterior(chosen, supports: supports, width: first.width, height: first.height, protected: negativeSamples)
         let expanded = Self.resample(completed, fromWidth: first.width, fromHeight: first.height, width: width, height: height)
         return Self.fitEdge(expanded, tolerance: edgeTolerance)
+    }
+
+    private func foregroundSupport(image: CGImage, points: [CGPoint], width: Int, height: Int) -> [UInt8]? {
+        if !foregroundAttempted {
+            foregroundAttempted = true
+            let handler = VNImageRequestHandler(cgImage: image, options: [:])
+            let request = VNGenerateForegroundInstanceMaskRequest()
+            if (try? handler.perform([request])) != nil {
+                foregroundHandler = handler; foregroundObservation = request.results?.first
+            }
+        }
+        guard let handler = foregroundHandler, let observation = foregroundObservation else { return nil }
+        let labels = observation.instanceMask
+        CVPixelBufferLockBaseAddress(labels, .readOnly)
+        let lw = CVPixelBufferGetWidth(labels), lh = CVPixelBufferGetHeight(labels), row = CVPixelBufferGetBytesPerRow(labels)
+        var instances = IndexSet()
+        if let base = CVPixelBufferGetBaseAddress(labels)?.assumingMemoryBound(to: UInt8.self) {
+            for p in points {
+                let x = min(lw - 1, max(0, Int(p.x * CGFloat(lw)))), y = min(lh - 1, max(0, Int(p.y * CGFloat(lh))))
+                let label = Int(base[y * row + x]); if label > 0 { instances.insert(label) }
+            }
+        }
+        CVPixelBufferUnlockBaseAddress(labels, .readOnly)
+        guard !instances.isEmpty else { return nil }
+        let key = instances.map(String.init).joined(separator: ",") + ":\(width)x\(height)"
+        if let cached = foregroundMasks[key] { return cached }
+        guard let buffer = try? observation.generateScaledMaskForImage(forInstances: instances, from: handler) else { return nil }
+        let input = CIImage(cvPixelBuffer: buffer)
+        let scaled = input.transformed(by: CGAffineTransform(scaleX: CGFloat(width) / input.extent.width, y: CGFloat(height) / input.extent.height))
+        var mask = [UInt8](repeating: 0, count: width * height)
+        maskContext.render(scaled, toBitmap: &mask, rowBytes: width, bounds: CGRect(x: 0, y: 0, width: width, height: height), format: .L8, colorSpace: CGColorSpaceCreateDeviceGray())
+        foregroundMasks[key] = mask
+        return mask
     }
 
     func selection(image: CGImage, points: [CGPoint], width: Int, height: Int,
