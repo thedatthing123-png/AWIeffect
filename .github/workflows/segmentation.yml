@@ -1,5 +1,13 @@
 name: Segmentation model probe
 on:
+  push:
+    branches: [feat/rig-authoring-overhaul]
+    paths:
+      - App/Media/InteractiveSelection.swift
+      - App/Media/PromptSegmentationModel.swift
+      - App/SegmentationModels/**
+      - scripts/segmentation_probe.swift
+      - .github/workflows/segmentation.yml
   workflow_dispatch:
 jobs:
   probe:
