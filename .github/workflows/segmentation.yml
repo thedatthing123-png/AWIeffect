@@ -9,6 +9,9 @@ on:
       - scripts/segmentation_probe.swift
       - .github/workflows/segmentation.yml
   workflow_dispatch:
+concurrency:
+  group: segmentation-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   probe:
     runs-on: macos-26
@@ -25,7 +28,7 @@ jobs:
           done
       - name: Build native model probe
         run: |
-          xcrun swiftc -O -parse-as-library -target arm64-apple-macosx15.0 \
+          xcrun swiftc -O -DDEBUG -parse-as-library -target arm64-apple-macosx15.0 \
             App/Media/PromptSegmentationModel.swift App/Media/InteractiveSelection.swift \
             scripts/segmentation_probe.swift -o /tmp/segmentation-probe
       - name: Evaluate masks
