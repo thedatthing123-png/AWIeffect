@@ -149,9 +149,36 @@ actor InteractiveSelection {
                 let y = min(height - 1, max(0, Int(p.y * CGFloat(height))))
                 return mask[y * width + x] >= 128
             }.count
-            return (mask, Double(covered) / Double(points.count) * 4 - Double(leaks) / Double(max(1, negative.count)) * 4 + Double(confidence) - area * 0.65)
+            let fragments = Self.inkHolePenalty(mask, width: width, height: height, protected: negative)
+            return (mask, Double(covered) / Double(points.count) * 4 - Double(leaks) / Double(max(1, negative.count)) * 4 + Double(confidence) - area * 0.35 - fragments)
         }
         return scored.max { $0.1 < $1.1 }?.0
+    }
+
+    /// Rank a complete part above a skin/color-only proposal riddled with tiny ink holes.
+    /// This does not fill or alter any holes. Large gaps, one or two real holes, and holes
+    /// explicitly marked as background receive no fragmentation penalty.
+    static func inkHolePenalty(_ mask: [UInt8], width: Int, height: Int, protected: [CGPoint]) -> Double {
+        let foreground = mask.filter { $0 >= 128 }.count
+        guard foreground > 0 else { return 0 }
+        let protectedPixels = Set(protected.map { p in
+            min(height - 1, max(0, Int(p.y * CGFloat(height)))) * width + min(width - 1, max(0, Int(p.x * CGFloat(width))))
+        })
+        var seen = [Bool](repeating: false, count: mask.count), holes = 0
+        for start in mask.indices where mask[start] < 128 && !seen[start] {
+            var stack = [start], count = 0, exterior = false, marked = false
+            seen[start] = true
+            while let i = stack.popLast() {
+                count += 1; marked = marked || protectedPixels.contains(i)
+                let x = i % width, y = i / width
+                if x == 0 || y == 0 || x == width - 1 || y == height - 1 { exterior = true }
+                for next in [x > 0 ? i - 1 : -1, x + 1 < width ? i + 1 : -1, y > 0 ? i - width : -1, y + 1 < height ? i + width : -1] {
+                    if next >= 0, !seen[next], mask[next] < 128 { seen[next] = true; stack.append(next) }
+                }
+            }
+            if !exterior && !marked && count <= max(4, foreground / 20) { holes += 1 }
+        }
+        return min(1, Double(max(0, holes - 2)) * 2.5 / sqrt(Double(foreground)))
     }
 
     static func resample(_ bytes: [UInt8], fromWidth: Int, fromHeight: Int, width: Int, height: Int) -> [UInt8] {

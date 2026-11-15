@@ -52,6 +52,16 @@ final class InteractiveSelectionTests: XCTestCase {
         XCTAssertEqual(corrected, [255, 0, 0, 0])
     }
 
+    func testMaskChoiceRejectsInkFragmentsWithoutFillingRealHoles() {
+        var punched = [UInt8](repeating: 255, count: 81)
+        for i in [20, 24, 38, 42, 56, 60] { punched[i] = 0 }
+        let solid = [UInt8](repeating: 255, count: 81)
+        XCTAssertEqual(InteractiveSelection.choose([(punched, 0.95), (solid, 0.9)], points: [CGPoint(x: 0.5, y: 0.5)], width: 9, height: 9), solid)
+        var ring = solid; ring[40] = 0
+        XCTAssertEqual(InteractiveSelection.inkHolePenalty(ring, width: 9, height: 9, protected: []), 0)
+        XCTAssertEqual(ring[40], 0, "ranking must never paint over a real gap")
+    }
+
     /// Runs the actual bundled neural encoder/decoder, not a fake mask. The ink crosses the
     /// brushed region; it must remain inside the inferred shape rather than becoming a hole.
     func testBundledModelSelectsShadedObjectAcrossInternalInk() async throws {
