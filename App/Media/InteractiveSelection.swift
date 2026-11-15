@@ -58,8 +58,10 @@ actor InteractiveSelection {
         }.map(\.0)
         // Keep the automatic whole-subject model as an independent source of object coverage.
         // It validates internal ink in the prompted part; it never expands that part's outline.
-        if let whole = foregroundSupport(image: image, points: samples, width: first.width, height: first.height) { supports.append(whole) }
-        let completed = Self.completeInterior(chosen, supports: supports, width: first.width, height: first.height, protected: negativeSamples)
+        let whole = foregroundSupport(image: image, points: samples, width: first.width, height: first.height)
+        if let whole { supports.append(whole) }
+        let closed = Self.closeInkGaps(chosen, supports: supports, width: first.width, height: first.height, protected: negativeSamples, strongPrior: whole)
+        let completed = Self.completeInterior(closed, supports: supports, width: first.width, height: first.height, protected: negativeSamples)
         let expanded = Self.resample(completed, fromWidth: first.width, fromHeight: first.height, width: width, height: height)
         return Self.fitEdge(expanded, tolerance: edgeTolerance)
     }
@@ -261,10 +263,31 @@ actor InteractiveSelection {
             // Hysteresis inside a closed part: a broader object proposal may be uncertain
             // on dark ink. Majority weak foreground evidence resolves that enclosed detail;
             // it cannot grow the outside contour or close an exterior-connected gap.
-            if supports.contains(where: { support in Double(region.filter { support[$0] >= 64 }.count) / Double(region.count) >= 0.6 }) {
+            if supports.contains(where: { support in Double(region.filter { support[$0] >= 16 }.count) / Double(region.count) >= 0.6 }) {
                 for i in region { result[i] = 255 }
             }
         }
+        return result
+    }
+
+    /// Repair one-model-pixel ink cracks, including cracks connected to the exterior.
+    /// Additions require object evidence; confident background and negative edits stay cut.
+    static func closeInkGaps(_ mask: [UInt8], supports: [[UInt8]], width: Int, height: Int, protected: [CGPoint], strongPrior: [UInt8]? = nil) -> [UInt8] {
+        guard protected.isEmpty, !supports.isEmpty, supports.allSatisfy({ $0.count == mask.count }) else { return mask }
+        var dilated = [Bool](repeating: false, count: mask.count)
+        for y in 0..<height { for x in 0..<width where mask[y * width + x] >= 128 {
+            for yy in max(0, y - 1)...min(height - 1, y + 1) { for xx in max(0, x - 1)...min(width - 1, x + 1) { dilated[yy * width + xx] = true } }
+        } }
+        var result = mask
+        guard width > 2, height > 2 else { return result }
+        for y in 1..<(height - 1) { for x in 1..<(width - 1) where mask[y * width + x] < 128 {
+            let i = y * width + x
+            let witnessed = strongPrior.map { $0.count == mask.count && $0[i] >= 128 } ?? supports.contains { $0[i] >= 16 }
+            guard witnessed else { continue }
+            var enclosed = true
+            for yy in (y - 1)...(y + 1) { for xx in (x - 1)...(x + 1) { if !dilated[yy * width + xx] { enclosed = false } } }
+            if enclosed { result[i] = 255 }
+        } }
         return result
     }
 

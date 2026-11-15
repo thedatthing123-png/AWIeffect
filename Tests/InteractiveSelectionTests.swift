@@ -73,6 +73,9 @@ final class InteractiveSelectionTests: XCTestCase {
         XCTAssertEqual(InteractiveSelection.completeInterior(part, supports: [realGapSupport], width: 9, height: 9, protected: [])[40], 0)
         part[31] = 0; part[22] = 0; part[13] = 0
         XCTAssertEqual(InteractiveSelection.completeInterior(part, supports: [support], width: 9, height: 9, protected: [])[40], 0)
+        XCTAssertEqual(InteractiveSelection.closeInkGaps(part, supports: [support], width: 9, height: 9, protected: [])[40], 255)
+        XCTAssertEqual(InteractiveSelection.closeInkGaps(part, supports: [realGapSupport], width: 9, height: 9, protected: [])[40], 0)
+        XCTAssertEqual(InteractiveSelection.closeInkGaps(part, supports: [support], width: 9, height: 9, protected: [CGPoint(x: 0.5, y: 0.5)])[40], 0)
     }
 
     /// Runs the actual bundled neural encoder/decoder, not a fake mask. The ink crosses the
