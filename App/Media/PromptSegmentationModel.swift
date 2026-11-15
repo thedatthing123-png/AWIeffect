@@ -78,8 +78,8 @@ final class PromptSegmentationModel {
               let dense = promptFeatures.featureValue(for: "dense_embeddings")?.multiArrayValue else { throw InteractiveSelection.SelectionError.invalidImage }
         input["sparse_embedding"] = sparse; input["dense_embedding"] = dense
         let output = try decoder.prediction(from: MLDictionaryFeatureProvider(dictionary: input))
-        guard let masks = output.featureValue(for: "low_res_masks")?.multiArrayValue,
-              let scores = output.featureValue(for: "scores")?.multiArrayValue else {
+        guard let masks = (output.featureValue(for: "low_res_masks_to_fp32") ?? output.featureValue(for: "low_res_masks"))?.multiArrayValue,
+              let scores = (output.featureValue(for: "scores_to_fp32") ?? output.featureValue(for: "scores"))?.multiArrayValue else {
             throw InteractiveSelection.SelectionError.modelOutput("Decoder output keys: \(output.featureNames)")
         }
         guard masks.shape.count == 4 else { throw InteractiveSelection.SelectionError.modelOutput("Mask shape: \(masks.shape)") }

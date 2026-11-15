@@ -258,7 +258,10 @@ actor InteractiveSelection {
                 } }
             }
             guard !exterior, !marked, region.count <= limit else { continue }
-            if supports.contains(where: { support in Double(region.filter { support[$0] >= 128 }.count) / Double(region.count) >= 0.98 }) {
+            // Hysteresis inside a closed part: a broader object proposal may be uncertain
+            // on dark ink. Majority weak foreground evidence resolves that enclosed detail;
+            // it cannot grow the outside contour or close an exterior-connected gap.
+            if supports.contains(where: { support in Double(region.filter { support[$0] >= 64 }.count) / Double(region.count) >= 0.6 }) {
                 for i in region { result[i] = 255 }
             }
         }

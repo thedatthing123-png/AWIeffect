@@ -7,6 +7,7 @@ on:
       - App/Media/PromptSegmentationModel.swift
       - App/SegmentationModels/**
       - scripts/segmentation_probe.swift
+      - scripts/prepare_segmentation_model.py
       - .github/workflows/segmentation.yml
   workflow_dispatch:
 concurrency:
@@ -20,10 +21,21 @@ jobs:
       - uses: actions/checkout@v4
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_26.6.app
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare portable decoder outputs
+        run: |
+          python -m pip install coremltools==9.0
+          mkdir -p /tmp/awi-converted
+          python scripts/prepare_segmentation_model.py \
+            App/SegmentationModels/SAM2_1TinyMaskDecoderFLOAT16.mlpackage \
+            /tmp/awi-converted/SAM2_1TinyMaskDecoderFLOAT16.mlpackage
       - name: Compile Core ML models
         run: |
           mkdir -p /tmp/awi-models
           for model in App/SegmentationModels/SAM2_1Tiny*.mlpackage; do
+            if [[ "$model" == *MaskDecoder* ]]; then model=/tmp/awi-converted/SAM2_1TinyMaskDecoderFLOAT16.mlpackage; fi
             xcrun coremlcompiler compile "$model" /tmp/awi-models
           done
       - name: Build native model probe
@@ -43,3 +55,4 @@ jobs:
           path: |
             /tmp/awi-native-selection
             /tmp/awi-model-probe.log
+            /tmp/awi-converted
