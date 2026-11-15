@@ -24,11 +24,11 @@ final class PromptSegmentationModel {
     private let decoder: MLModel
     private var features: [String: Any] = [:]
 
-    init() throws {
+    init(modelDirectory: URL? = nil) throws {
         // Match the reference Core ML demo's supported CPU/GPU execution path.
         let configuration = MLModelConfiguration(); configuration.computeUnits = .cpuAndGPU
         func load(_ name: String) throws -> MLModel {
-            guard let url = Bundle.main.url(forResource: name, withExtension: "mlmodelc") else {
+            guard let url = modelDirectory?.appendingPathComponent(name + ".mlmodelc") ?? Bundle.main.url(forResource: name, withExtension: "mlmodelc") else {
                 throw InteractiveSelection.SelectionError.invalidImage
             }
             return try MLModel(contentsOf: url, configuration: configuration)
@@ -82,8 +82,7 @@ final class PromptSegmentationModel {
         }
         guard masks.shape.count == 4 else { throw InteractiveSelection.SelectionError.modelOutput("Mask shape: \(masks.shape)") }
         let count = masks.shape[1].intValue, height = masks.shape[2].intValue, width = masks.shape[3].intValue
-        // Materialize Core ML's shaped array before reading. Raw dataPointer access can
-        // expose an unmaterialized FP16 output buffer on the simulator's GPU backend.
+        // Use Core ML's typed tensor bridge for a contiguous view of GPU-backed FP16 output.
         let logits: [Float]
         if masks.dataType == .float16 { logits = MLShapedArray<Float16>(converting: masks).scalars.map { Float($0) } }
         else { logits = MLShapedArray<Float>(converting: masks).scalars }

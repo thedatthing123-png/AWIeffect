@@ -7,6 +7,9 @@ import CryptoKit
 actor InteractiveSelection {
     private var session: PromptSegmentationModel?
     private var imageKey: Data?
+    private let modelDirectory: URL?
+
+    init(modelDirectory: URL? = nil) { self.modelDirectory = modelDirectory }
 
     func region(image: CGImage, points: [CGPoint], width: Int, height: Int, negative: [CGPoint] = [], edgeTolerance: Double = 0.18) throws -> [UInt8] {
         try Task.checkCancellation()
@@ -16,7 +19,7 @@ actor InteractiveSelection {
         hasher.update(data: data as Data)
         hasher.update(data: Data("\(image.width)x\(image.height):\(image.bytesPerRow)".utf8))
         let key = Data(hasher.finalize())
-        if session == nil { session = try PromptSegmentationModel() }
+        if session == nil { session = try PromptSegmentationModel(modelDirectory: modelDirectory) }
         guard let session else { throw SelectionError.invalidImage }
         if key != imageKey {
             try session.setImage(image)
