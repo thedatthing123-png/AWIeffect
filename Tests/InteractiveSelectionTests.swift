@@ -28,6 +28,7 @@ final class InteractiveSelectionTests: XCTestCase {
     func testInkIsNotRemovedAndNegativePaintCannotGrowTheSelection() {
         XCTAssertEqual(InteractiveSelection.combine(region: [255, 0, 255, 0], painted: [0, 255, 0, 0], previous: [0, 0, 0, 255], subtract: false), [255, 255, 255, 255])
         XCTAssertEqual(InteractiveSelection.combine(region: [255, 0, 255, 0], painted: [0, 255, 0, 0], previous: [255, 255, 0, 255], subtract: true), [0, 0, 0, 255])
+        XCTAssertEqual(InteractiveSelection.touchedComponents([255, 255, 0, 255, 255], painted: [255, 0, 0, 0, 0], width: 5, height: 1), [true, true, false, false, false])
     }
 
     func testPortraitMaskResamplingKeepsTopAndBottomOrientation() {
@@ -132,11 +133,24 @@ final class InteractiveSelectionTests: XCTestCase {
             let mask = try await session.region(image: cg, points: points, width: cg.width, height: cg.height)
             XCTAssertEqual(mask.count, cg.width * cg.height)
             try save(image, mask: mask, name: name)
+            if name == "anime-face" {
+                let pixels = CutoutBake.pixels(of: cg, width: cg.width, height: cg.height)
+                var dark = 0, kept = 0
+                for y in 780..<920 { for x in 480..<700 {
+                    let i = y * cg.width + x, p = i * 4
+                    if max(pixels[p], max(pixels[p + 1], pixels[p + 2])) < 95 {
+                        dark += 1; if mask[i] >= 128 { kept += 1 }
+                    }
+                } }
+                XCTAssertGreaterThan(dark, 100)
+                XCTAssertGreaterThan(Double(kept) / Double(max(1, dark)), 0.95, "mouth and internal ink are foreground, not transparent holes")
+            }
         }
     }
 
     private func save(_ image: UIImage, mask: [UInt8], name: String) throws {
         let cg = try XCTUnwrap(image.cgImage)
+        XCTAssertEqual(mask.count, cg.width * cg.height)
         let maskImage = try XCTUnwrap(MatteFrame(width: cg.width, height: cg.height, bytes: mask).image())
         let format = UIGraphicsImageRendererFormat(); format.scale = 1
         let sheet = UIGraphicsImageRenderer(size: CGSize(width: image.size.width * 2, height: image.size.height), format: format).image { _ in

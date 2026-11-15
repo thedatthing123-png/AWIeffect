@@ -42,16 +42,34 @@ actor InteractiveSelection {
 
     func selection(image: CGImage, points: [CGPoint], width: Int, height: Int,
                    painted: [UInt8], previous: [UInt8], subtract: Bool, edgeTolerance: Double = 0.18) throws -> [UInt8] {
+        guard previous.count == width * height, painted.count == previous.count else { throw SelectionError.invalidImage }
         // Remove strokes are negative prompts on the existing selection, with positive anchors
         // in its retained interior. This lets a correction exclude one limb without erasing
         // the enclosing character simply because SAM also offered a whole-character mask.
-        let anchors = subtract ? Self.anchors(previous, width: width, height: height, avoiding: points) : []
+        let affected = subtract ? Self.touchedComponents(previous, painted: painted, width: width, height: height) : []
+        if subtract, !affected.contains(true) { return previous }
+        let component = subtract ? previous.indices.map { affected[$0] ? previous[$0] : 0 } : previous
+        let anchors = subtract ? Self.anchors(component, width: width, height: height, avoiding: points) : []
         if subtract, !anchors.isEmpty {
             let refined = try region(image: image, points: anchors, width: width, height: height, negative: points, edgeTolerance: edgeTolerance)
-            return previous.indices.map { min(previous[$0], min(refined[$0], 255 - painted[$0])) }
+            return previous.indices.map { min(previous[$0], min(affected[$0] ? refined[$0] : previous[$0], 255 - painted[$0])) }
         }
         let inferred = try region(image: image, points: points, width: width, height: height, edgeTolerance: edgeTolerance)
         return Self.combine(region: inferred, painted: painted, previous: previous, subtract: subtract)
+    }
+
+    /// A correction to one cutout piece must not erase other disconnected selected pieces.
+    static func touchedComponents(_ mask: [UInt8], painted: [UInt8], width: Int, height: Int) -> [Bool] {
+        guard mask.count == width * height, painted.count == mask.count else { return [] }
+        var seen = [Bool](repeating: false, count: mask.count), stack: [Int] = []
+        for i in mask.indices where mask[i] > 0 && painted[i] > 0 { seen[i] = true; stack.append(i) }
+        while let i = stack.popLast() {
+            let x = i % width, y = i / width
+            for next in [x > 0 ? i - 1 : -1, x + 1 < width ? i + 1 : -1, y > 0 ? i - width : -1, y + 1 < height ? i + width : -1] {
+                if next >= 0, !seen[next], mask[next] > 0 { seen[next] = true; stack.append(next) }
+            }
+        }
+        return seen
     }
 
     /// Narrow the model's probability band to a real matte: solid interiors and transparent
@@ -87,7 +105,7 @@ actor InteractiveSelection {
     }
 
     enum SelectionError: LocalizedError {
-        case invalidImage, noRegion
+        case invalidImage, noRegion, modelOutput(String)
         var errorDescription: String? { "Could not infer this region. Your brush stroke is kept; add another stroke or turn off Smart Edges for exact painting." }
     }
 

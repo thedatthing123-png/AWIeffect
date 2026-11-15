@@ -255,7 +255,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     }
     func endStroke(_ points: [CGPoint], radius: CGFloat) {
         guard active, !points.isEmpty, let image = pictureCG, let matte else { return }
-        guard snapEdges else {
+        guard snapEdges && !subtractStroke else {
             addStroke(points, radius: radius); commit(keep: keepBrush)
             state.cutoutPreview = nil; return
         }
@@ -263,16 +263,25 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
         previewTime = 0; previewStroke(points, radius: radius)
         let generation = strokeGeneration, expectedLoad = loadID, expectedFrame = frame
         let expectedSettings = state.selectedLayer?.cutout
-        let keep = keepBrush, subtract = subtractStroke, inference = interactiveSelection
+        let keep = keepBrush, inference = interactiveSelection
         let w = matte.width, h = matte.height
-        let previousSelection = selection ?? [UInt8](repeating: 0, count: w * h)
+        let firstKeep = keep && !bakedFrames.contains(frame) && state.selectedLayer?.cutout == nil
+        let previousMatte = firstKeep ? [UInt8](repeating: 0, count: w * h) : matte.bytes
+        let refineExisting = !keep && previousMatte.contains(0) && previousMatte.contains(255)
         var painted = [UInt8](repeating: 0, count: w * h)
         CutoutEngine.paint([CutoutStroke(points: points.map { Vec2(Double($0.x), Double($0.y)) }, radius: Double(radius), subtract: false)], into: &painted, w: w, h: h)
         selectingRegion = true
         selectionTask = Task { [weak self] in
-            var region = painted
+            var result = InteractiveSelection.combine(region: painted, painted: painted, previous: previousMatte, subtract: !keep)
             var failed = false
-            do { region = try await inference.region(image: image, points: points, width: w, height: h) }
+            do {
+                if keep || refineExisting {
+                    result = try await inference.selection(image: image, points: points, width: w, height: h, painted: painted, previous: previousMatte, subtract: !keep)
+                } else {
+                    let region = try await inference.region(image: image, points: points, width: w, height: h)
+                    result = InteractiveSelection.combine(region: region, painted: painted, previous: previousMatte, subtract: !keep)
+                }
+            }
             catch { failed = true }
             guard !Task.isCancelled, let self, self.active, self.strokeGeneration == generation else { return }
             self.selectingRegion = false
@@ -280,8 +289,8 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
                 self.state.cutoutPreview = nil; return
             }
             if failed { self.selectionMessage = "Could not infer the region. Applied your exact brush stroke." }
-            self.selection = InteractiveSelection.combine(region: region, painted: painted, previous: previousSelection, subtract: subtract)
-            self.commit(keep: keep)
+            self.store(MatteFrame(width: w, height: h, bytes: result), label: keep ? "Keep Brush" : "Cut Brush")
+            self.clearSelection()
             self.state.cutoutPreview = nil
         }
     }

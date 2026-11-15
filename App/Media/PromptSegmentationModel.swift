@@ -76,8 +76,10 @@ final class PromptSegmentationModel {
         input["sparse_embedding"] = sparse; input["dense_embedding"] = dense
         let output = try decoder.prediction(from: MLDictionaryFeatureProvider(dictionary: input))
         guard let masks = output.featureValue(for: "low_res_masks")?.multiArrayValue,
-              let scores = output.featureValue(for: "scores")?.multiArrayValue,
-              masks.shape.count == 4 else { throw InteractiveSelection.SelectionError.noRegion }
+              let scores = output.featureValue(for: "scores")?.multiArrayValue else {
+            throw InteractiveSelection.SelectionError.modelOutput("Decoder output keys: \(output.featureNames)")
+        }
+        guard masks.shape.count == 4 else { throw InteractiveSelection.SelectionError.modelOutput("Mask shape: \(masks.shape)") }
         let count = masks.shape[1].intValue, height = masks.shape[2].intValue, width = masks.shape[3].intValue
         let strides = masks.strides.map(\.intValue)
         // Respect Core ML's actual tensor strides, including FP16 alignment padding.
@@ -85,7 +87,7 @@ final class PromptSegmentationModel {
             if masks.dataType == .float16 { return Float(Float16(bitPattern: masks.dataPointer.assumingMemoryBound(to: UInt16.self)[offset])) }
             return masks.dataPointer.assumingMemoryBound(to: Float.self)[offset]
         }
-        return (0..<min(count, scores.count)).map { index in
+        let candidates = (0..<min(count, scores.count)).map { index in
             var bytes = [UInt8](repeating: 0, count: width * height)
             for y in 0..<height { for x in 0..<width {
                 let logit = value(index * strides[1] + y * strides[2] + x * strides[3])
@@ -94,5 +96,9 @@ final class PromptSegmentationModel {
             } }
             return SegmentationCandidate(bytes: bytes, width: width, height: height, score: scores[index].floatValue)
         }
+        #if DEBUG
+        print("SAM2 masks \(masks.shape), strides \(strides), type \(masks.dataType); candidates \(candidates.map { (score: $0.score, min: $0.bytes.min() ?? 0, max: $0.bytes.max() ?? 0, area: $0.bytes.filter { $0 >= 128 }.count) })")
+        #endif
+        return candidates
     }
 }
