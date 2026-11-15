@@ -5,8 +5,8 @@ promptable on-device segmentation session. Auto Subject / Auto Remove Background
 use the existing automatic path. Plain painting remains available without inference.
 
 The model sees the source image and stroke positions, rather than stopping at each
-color change. Inferred masks are combined with explicit brush coverage. Internal ink
-is not treated as a transparent hole. A second Add/Cut gesture can correct the result.
+color change. Inferred masks are combined with explicit brush coverage. The model
+uses image context across ink and shading. A second Add/Cut gesture can correct the result.
 Inference runs away from the UI thread, reuses one embedding for an unchanged source,
 and applies results only if the selection/frame/layer has not changed. A completed
 cutout stroke is one undo step. Closing or cancelling does not apply a late result.
@@ -22,8 +22,6 @@ The decoder has lossless FP32 output-interface casts produced by coremltools 9.0
 `scripts/prepare_segmentation_model.py` reproduces this interface conversion.
 The simulator uses CPU execution because its virtual GPU returned zero mask tensors;
 physical devices and the native GPU quality probe retain GPU execution.
-The initial MobileSAM candidate was rejected after visual evaluation showed
-whole-head leakage and missing internal ink despite passing the original smoke tests.
 Packages are compiled by Xcode and bundled for offline use; no user images leave the device.
 Apache 2.0 license notices ship in Resources.
 
@@ -40,10 +38,9 @@ Unit checks cover stroke sampling, hard painted coverage, subtraction and orient
 These fixtures are evaluation data, not training data or proof of perfect generalization.
 Core ML inference must be checked on Apple's runtime; Windows cannot execute it.
 The native probe additionally checks at least 95% retention of annotated internal
-mouth/ink pixels. Candidate ranking rejects fragmented color-only proposals; broader
-object proposals and the existing automatic foreground-instance model validate
-interior ink. A one-model-pixel closing repairs supported narrow cracks. Explicit
-negative marks and background evidence protect real gaps; no image colors are generated.
+mouth/ink pixels in a region annotated entirely inside the face. Candidate ranking
+uses stroke coverage, confidence and part size. No automatic hole filling or contour
+closing is applied; negative prompts refine unwanted regions. No image colors are generated.
 
 For future fine-tuning, collect image + desired alpha + positive/negative stroke pairs,
 split by original artwork to avoid train/test leakage, and compare boundary error,

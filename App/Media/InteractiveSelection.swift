@@ -1,9 +1,6 @@
 import Foundation
 import CoreGraphics
 import CryptoKit
-import Vision
-import CoreImage
-import CoreVideo
 
 /// One image embedding per open tool, reused as selection strokes change. All Core ML work
 /// stays on this actor, never in the drawing gesture or the main-actor view model.
@@ -11,11 +8,7 @@ actor InteractiveSelection {
     private var session: PromptSegmentationModel?
     private var imageKey: Data?
     private let modelDirectory: URL?
-    private var foregroundAttempted = false
-    private var foregroundHandler: VNImageRequestHandler?
-    private var foregroundObservation: VNInstanceMaskObservation?
-    private var foregroundMasks: [String: [UInt8]] = [:]
-    private let maskContext = CIContext(options: [.cacheIntermediates: false])
+
 
     init(modelDirectory: URL? = nil) { self.modelDirectory = modelDirectory }
 
@@ -50,56 +43,8 @@ actor InteractiveSelection {
         guard let chosen = Self.choose(candidates, points: samples, width: first.width, height: first.height, negative: negativeSamples) else {
             throw SelectionError.noRegion
         }
-        let selectedCount = chosen.filter { $0 >= 128 }.count
-        var supports = candidates.filter { mask, score in
-            guard score >= 0.15, mask.filter({ $0 >= 128 }).count > selectedCount + selectedCount / 10 else { return false }
-            let overlap = chosen.indices.filter { chosen[$0] >= 128 && mask[$0] >= 128 }.count
-            return Double(overlap) / Double(max(1, selectedCount)) >= 0.95
-        }.map(\.0)
-        // Keep the automatic whole-subject model as an independent source of object coverage.
-        // It validates internal ink in the prompted part; it never expands that part's outline.
-        let whole = foregroundSupport(image: image, points: samples, width: first.width, height: first.height)
-        #if DEBUG
-        print("Selection proposal supports: \(supports.count), prior range \(whole?.min() ?? 0)...\(whole?.max() ?? 0)")
-        #endif
-        if let whole { supports.append(whole) }
-        let closed = Self.closeInkGaps(chosen, supports: supports, width: first.width, height: first.height, protected: negativeSamples, strongPrior: whole)
-        let completed = Self.completeInterior(closed, supports: supports, width: first.width, height: first.height, protected: negativeSamples)
-        let expanded = Self.resample(completed, fromWidth: first.width, fromHeight: first.height, width: width, height: height)
+        let expanded = Self.resample(chosen, fromWidth: first.width, fromHeight: first.height, width: width, height: height)
         return Self.fitEdge(expanded, tolerance: edgeTolerance)
-    }
-
-    private func foregroundSupport(image: CGImage, points: [CGPoint], width: Int, height: Int) -> [UInt8]? {
-        if !foregroundAttempted {
-            foregroundAttempted = true
-            let handler = VNImageRequestHandler(cgImage: image, options: [:])
-            let request = VNGenerateForegroundInstanceMaskRequest()
-            if (try? handler.perform([request])) != nil {
-                foregroundHandler = handler; foregroundObservation = request.results?.first
-            }
-        }
-        guard let handler = foregroundHandler, let observation = foregroundObservation else { return nil }
-        let labels = observation.instanceMask
-        CVPixelBufferLockBaseAddress(labels, .readOnly)
-        let lw = CVPixelBufferGetWidth(labels), lh = CVPixelBufferGetHeight(labels), row = CVPixelBufferGetBytesPerRow(labels)
-        var instances = IndexSet()
-        if let base = CVPixelBufferGetBaseAddress(labels)?.assumingMemoryBound(to: UInt8.self) {
-            for p in points {
-                let x = min(lw - 1, max(0, Int(p.x * CGFloat(lw)))), y = min(lh - 1, max(0, Int(p.y * CGFloat(lh))))
-                let label = Int(base[y * row + x]); if label > 0 { instances.insert(label) }
-            }
-        }
-        CVPixelBufferUnlockBaseAddress(labels, .readOnly)
-        guard !instances.isEmpty else { return nil }
-        let key = instances.map(String.init).joined(separator: ",") + ":\(width)x\(height)"
-        if let cached = foregroundMasks[key] { return cached }
-        guard let buffer = try? observation.generateScaledMaskForImage(forInstances: instances, from: handler) else { return nil }
-        let input = CIImage(cvPixelBuffer: buffer)
-        let scaled = input.transformed(by: CGAffineTransform(scaleX: CGFloat(width) / input.extent.width, y: CGFloat(height) / input.extent.height))
-        var mask = [UInt8](repeating: 0, count: width * height)
-        maskContext.render(scaled, toBitmap: &mask, rowBytes: width, bounds: CGRect(x: 0, y: 0, width: width, height: height), format: .L8, colorSpace: CGColorSpaceCreateDeviceGray())
-        foregroundMasks[key] = mask
-        return mask
     }
 
     func selection(image: CGImage, points: [CGPoint], width: Int, height: Int,
@@ -206,92 +151,9 @@ actor InteractiveSelection {
                 let y = min(height - 1, max(0, Int(p.y * CGFloat(height))))
                 return mask[y * width + x] >= 128
             }.count
-            let fragments = Self.inkHolePenalty(mask, width: width, height: height, protected: negative)
-            return (mask, Double(covered) / Double(points.count) * 4 - Double(leaks) / Double(max(1, negative.count)) * 4 + Double(confidence) - area * 0.35 - fragments)
+            return (mask, Double(covered) / Double(points.count) * 4 - Double(leaks) / Double(max(1, negative.count)) * 4 + Double(confidence) - area * 0.35)
         }
         return scored.max { $0.1 < $1.1 }?.0
-    }
-
-    /// Rank a complete part above a skin/color-only proposal riddled with tiny ink holes.
-    /// This does not fill or alter any holes. Large gaps, one or two real holes, and holes
-    /// explicitly marked as background receive no fragmentation penalty.
-    static func inkHolePenalty(_ mask: [UInt8], width: Int, height: Int, protected: [CGPoint]) -> Double {
-        let foreground = mask.filter { $0 >= 128 }.count
-        guard foreground > 0 else { return 0 }
-        let protectedPixels = Set(protected.map { p in
-            min(height - 1, max(0, Int(p.y * CGFloat(height)))) * width + min(width - 1, max(0, Int(p.x * CGFloat(width))))
-        })
-        var seen = [Bool](repeating: false, count: mask.count), holes = 0
-        for start in mask.indices where mask[start] < 128 && !seen[start] {
-            var stack = [start], count = 0, exterior = false, marked = false
-            seen[start] = true
-            while let i = stack.popLast() {
-                count += 1; marked = marked || protectedPixels.contains(i)
-                let x = i % width, y = i / width
-                if x == 0 || y == 0 || x == width - 1 || y == height - 1 { exterior = true }
-                for next in [x > 0 ? i - 1 : -1, x + 1 < width ? i + 1 : -1, y > 0 ? i - width : -1, y + 1 < height ? i + width : -1] {
-                    if next >= 0, !seen[next], mask[next] < 128 { seen[next] = true; stack.append(next) }
-                }
-            }
-            if !exterior && !marked && count <= max(4, foreground / 20) { holes += 1 }
-        }
-        return min(0.35, Double(max(0, holes - 2)) * 2.5 / sqrt(Double(foreground)))
-    }
-
-    /// A fine proposal may isolate skin while a containing object proposal correctly includes
-    /// the ink/mouth/shading. Restore only enclosed small regions confirmed by that containing
-    /// proposal. Exterior-connected gaps and explicit background marks are never filled.
-    static func completeInterior(_ mask: [UInt8], supports: [[UInt8]], width: Int, height: Int, protected: [CGPoint]) -> [UInt8] {
-        guard !supports.isEmpty, supports.allSatisfy({ $0.count == mask.count }) else { return mask }
-        let protectedPixels = Set(protected.map { p in
-            min(height - 1, max(0, Int(p.y * CGFloat(height)))) * width + min(width - 1, max(0, Int(p.x * CGFloat(width))))
-        })
-        let limit = max(4, mask.filter { $0 >= 128 }.count / 5)
-        var result = mask, seen = [Bool](repeating: false, count: mask.count)
-        for start in mask.indices where mask[start] < 128 && !seen[start] {
-            var stack = [start], region: [Int] = [], exterior = false, marked = false
-            seen[start] = true
-            while let i = stack.popLast() {
-                region.append(i); marked = marked || protectedPixels.contains(i)
-                let x = i % width, y = i / width
-                if x == 0 || y == 0 || x == width - 1 || y == height - 1 { exterior = true }
-                for dy in -1...1 { for dx in -1...1 where dx != 0 || dy != 0 {
-                    let nx = x + dx, ny = y + dy
-                    guard nx >= 0, nx < width, ny >= 0, ny < height else { continue }
-                    let next = ny * width + nx
-                    if !seen[next], mask[next] < 128 { seen[next] = true; stack.append(next) }
-                } }
-            }
-            guard !exterior, !marked, region.count <= limit else { continue }
-            // Hysteresis inside a closed part: a broader object proposal may be uncertain
-            // on dark ink. Majority weak foreground evidence resolves that enclosed detail;
-            // it cannot grow the outside contour or close an exterior-connected gap.
-            if supports.contains(where: { support in Double(region.filter { support[$0] >= 16 }.count) / Double(region.count) >= 0.6 }) {
-                for i in region { result[i] = 255 }
-            }
-        }
-        return result
-    }
-
-    /// Repair one-model-pixel ink cracks, including cracks connected to the exterior.
-    /// Additions require object evidence; confident background and negative edits stay cut.
-    static func closeInkGaps(_ mask: [UInt8], supports: [[UInt8]], width: Int, height: Int, protected: [CGPoint], strongPrior: [UInt8]? = nil) -> [UInt8] {
-        guard protected.isEmpty, !supports.isEmpty, supports.allSatisfy({ $0.count == mask.count }) else { return mask }
-        var dilated = [Bool](repeating: false, count: mask.count)
-        for y in 0..<height { for x in 0..<width where mask[y * width + x] >= 128 {
-            for yy in max(0, y - 1)...min(height - 1, y + 1) { for xx in max(0, x - 1)...min(width - 1, x + 1) { dilated[yy * width + xx] = true } }
-        } }
-        var result = mask
-        guard width > 2, height > 2 else { return result }
-        for y in 1..<(height - 1) { for x in 1..<(width - 1) where mask[y * width + x] < 128 {
-            let i = y * width + x
-            let witnessed = strongPrior.map { $0.count == mask.count && $0[i] >= 128 } ?? supports.contains { $0[i] >= 16 }
-            guard witnessed else { continue }
-            var enclosed = true
-            for yy in (y - 1)...(y + 1) { for xx in (x - 1)...(x + 1) { if !dilated[yy * width + xx] { enclosed = false } } }
-            if enclosed { result[i] = 255 }
-        } }
-        return result
     }
 
     static func resample(_ bytes: [UInt8], fromWidth: Int, fromHeight: Int, width: Int, height: Int) -> [UInt8] {

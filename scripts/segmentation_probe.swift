@@ -37,7 +37,7 @@ import UniformTypeIdentifiers
                                         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
                 context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
                 var ink = 0, retained = 0
-                for y in 780..<920 { for x in 480..<700 {
+                for y in 780..<920 { for x in 540..<740 {
                     let i = y * image.width + x, p = i * 4
                     if max(rgba[p], max(rgba[p + 1], rgba[p + 2])) < 95 {
                         ink += 1; if mask[i] >= 128 { retained += 1 }
