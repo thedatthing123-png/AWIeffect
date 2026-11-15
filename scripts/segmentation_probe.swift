@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 
 @main struct SegmentationProbe {
     static func main() async throws {
+        defer { fflush(stdout) }
         let models = URL(fileURLWithPath: CommandLine.arguments[1])
         let output = URL(fileURLWithPath: CommandLine.arguments[2])
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)

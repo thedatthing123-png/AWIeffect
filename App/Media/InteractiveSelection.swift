@@ -59,6 +59,9 @@ actor InteractiveSelection {
         // Keep the automatic whole-subject model as an independent source of object coverage.
         // It validates internal ink in the prompted part; it never expands that part's outline.
         let whole = foregroundSupport(image: image, points: samples, width: first.width, height: first.height)
+        #if DEBUG
+        print("Selection proposal supports: \(supports.count), prior range \(whole?.min() ?? 0)...\(whole?.max() ?? 0)")
+        #endif
         if let whole { supports.append(whole) }
         let closed = Self.closeInkGaps(chosen, supports: supports, width: first.width, height: first.height, protected: negativeSamples, strongPrior: whole)
         let completed = Self.completeInterior(closed, supports: supports, width: first.width, height: first.height, protected: negativeSamples)
