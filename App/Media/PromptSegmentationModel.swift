@@ -25,7 +25,8 @@ final class PromptSegmentationModel {
     private var features: [String: Any] = [:]
 
     init() throws {
-        let configuration = MLModelConfiguration(); configuration.computeUnits = .all
+        // Match the reference Core ML demo's supported CPU/GPU execution path.
+        let configuration = MLModelConfiguration(); configuration.computeUnits = .cpuAndGPU
         func load(_ name: String) throws -> MLModel {
             guard let url = Bundle.main.url(forResource: name, withExtension: "mlmodelc") else {
                 throw InteractiveSelection.SelectionError.invalidImage
@@ -81,23 +82,26 @@ final class PromptSegmentationModel {
         }
         guard masks.shape.count == 4 else { throw InteractiveSelection.SelectionError.modelOutput("Mask shape: \(masks.shape)") }
         let count = masks.shape[1].intValue, height = masks.shape[2].intValue, width = masks.shape[3].intValue
-        let strides = masks.strides.map(\.intValue)
-        // Respect Core ML's actual tensor strides, including FP16 alignment padding.
-        func value(_ offset: Int) -> Float {
-            if masks.dataType == .float16 { return Float(Float16(bitPattern: masks.dataPointer.assumingMemoryBound(to: UInt16.self)[offset])) }
-            return masks.dataPointer.assumingMemoryBound(to: Float.self)[offset]
+        // Materialize Core ML's shaped array before reading. Raw dataPointer access can
+        // expose an unmaterialized FP16 output buffer on the simulator's GPU backend.
+        let logits: [Float]
+        if masks.dataType == .float16 { logits = MLShapedArray<Float16>(converting: masks).scalars.map { Float($0) } }
+        else { logits = MLShapedArray<Float>(converting: masks).scalars }
+        guard logits.count == count * width * height, logits.allSatisfy(\.isFinite) else {
+            throw InteractiveSelection.SelectionError.modelOutput("Invalid mask tensor values")
         }
         let candidates = (0..<min(count, scores.count)).map { index in
             var bytes = [UInt8](repeating: 0, count: width * height)
             for y in 0..<height { for x in 0..<width {
-                let logit = value(index * strides[1] + y * strides[2] + x * strides[3])
+                let logit = logits[index * width * height + y * width + x]
                 let probability = 1 / (1 + exp(-min(30, max(-30, logit))))
                 bytes[y * width + x] = UInt8(min(255, max(0, probability * 255)))
             } }
             return SegmentationCandidate(bytes: bytes, width: width, height: height, score: scores[index].floatValue)
         }
         #if DEBUG
-        print("SAM2 masks \(masks.shape), strides \(strides), type \(masks.dataType); candidates \(candidates.map { (score: $0.score, min: $0.bytes.min() ?? 0, max: $0.bytes.max() ?? 0, area: $0.bytes.filter { $0 >= 128 }.count) })")
+        let ranges = candidates.map { candidate in "score=\(candidate.score) alpha=\(candidate.bytes.min() ?? 0)...\(candidate.bytes.max() ?? 0)" }
+        print("SAM2 mask shape \(masks.shape), logit range \(logits.min() ?? 0)...\(logits.max() ?? 0), \(ranges)")
         #endif
         return candidates
     }
