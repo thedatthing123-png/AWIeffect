@@ -62,6 +62,19 @@ final class InteractiveSelectionTests: XCTestCase {
         XCTAssertEqual(ring[40], 0, "ranking must never paint over a real gap")
     }
 
+    func testInteriorConsensusKeepsInkWithoutClosingBackgroundGaps() {
+        var part = [UInt8](repeating: 0, count: 81), support = part
+        for y in 2...6 { for x in 2...6 { part[y * 9 + x] = 255 } }
+        for y in 1...7 { for x in 1...7 { support[y * 9 + x] = 255 } }
+        part[40] = 0
+        XCTAssertEqual(InteractiveSelection.completeInterior(part, supports: [support], width: 9, height: 9, protected: [])[40], 255)
+        XCTAssertEqual(InteractiveSelection.completeInterior(part, supports: [support], width: 9, height: 9, protected: [CGPoint(x: 0.5, y: 0.5)])[40], 0)
+        var realGapSupport = support; realGapSupport[40] = 0
+        XCTAssertEqual(InteractiveSelection.completeInterior(part, supports: [realGapSupport], width: 9, height: 9, protected: [])[40], 0)
+        part[31] = 0; part[22] = 0; part[13] = 0
+        XCTAssertEqual(InteractiveSelection.completeInterior(part, supports: [support], width: 9, height: 9, protected: [])[40], 0)
+    }
+
     /// Runs the actual bundled neural encoder/decoder, not a fake mask. The ink crosses the
     /// brushed region; it must remain inside the inferred shape rather than becoming a hole.
     func testBundledModelSelectsShadedObjectAcrossInternalInk() async throws {

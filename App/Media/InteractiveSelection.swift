@@ -41,7 +41,14 @@ actor InteractiveSelection {
         guard let chosen = Self.choose(candidates, points: samples, width: first.width, height: first.height, negative: negativeSamples) else {
             throw SelectionError.noRegion
         }
-        let expanded = Self.resample(chosen, fromWidth: first.width, fromHeight: first.height, width: width, height: height)
+        let selectedCount = chosen.filter { $0 >= 128 }.count
+        let supports = candidates.filter { mask, score in
+            guard score >= 0.15, mask.filter({ $0 >= 128 }).count > selectedCount + selectedCount / 10 else { return false }
+            let overlap = chosen.indices.filter { chosen[$0] >= 128 && mask[$0] >= 128 }.count
+            return Double(overlap) / Double(max(1, selectedCount)) >= 0.95
+        }.map(\.0)
+        let completed = Self.completeInterior(chosen, supports: supports, width: first.width, height: first.height, protected: negativeSamples)
+        let expanded = Self.resample(completed, fromWidth: first.width, fromHeight: first.height, width: width, height: height)
         return Self.fitEdge(expanded, tolerance: edgeTolerance)
     }
 
@@ -178,7 +185,39 @@ actor InteractiveSelection {
             }
             if !exterior && !marked && count <= max(4, foreground / 20) { holes += 1 }
         }
-        return min(1, Double(max(0, holes - 2)) * 2.5 / sqrt(Double(foreground)))
+        return min(0.35, Double(max(0, holes - 2)) * 2.5 / sqrt(Double(foreground)))
+    }
+
+    /// A fine proposal may isolate skin while a containing object proposal correctly includes
+    /// the ink/mouth/shading. Restore only enclosed small regions confirmed by that containing
+    /// proposal. Exterior-connected gaps and explicit background marks are never filled.
+    static func completeInterior(_ mask: [UInt8], supports: [[UInt8]], width: Int, height: Int, protected: [CGPoint]) -> [UInt8] {
+        guard !supports.isEmpty, supports.allSatisfy({ $0.count == mask.count }) else { return mask }
+        let protectedPixels = Set(protected.map { p in
+            min(height - 1, max(0, Int(p.y * CGFloat(height)))) * width + min(width - 1, max(0, Int(p.x * CGFloat(width))))
+        })
+        let limit = max(4, mask.filter { $0 >= 128 }.count / 5)
+        var result = mask, seen = [Bool](repeating: false, count: mask.count)
+        for start in mask.indices where mask[start] < 128 && !seen[start] {
+            var stack = [start], region: [Int] = [], exterior = false, marked = false
+            seen[start] = true
+            while let i = stack.popLast() {
+                region.append(i); marked = marked || protectedPixels.contains(i)
+                let x = i % width, y = i / width
+                if x == 0 || y == 0 || x == width - 1 || y == height - 1 { exterior = true }
+                for dy in -1...1 { for dx in -1...1 where dx != 0 || dy != 0 {
+                    let nx = x + dx, ny = y + dy
+                    guard nx >= 0, nx < width, ny >= 0, ny < height else { continue }
+                    let next = ny * width + nx
+                    if !seen[next], mask[next] < 128 { seen[next] = true; stack.append(next) }
+                } }
+            }
+            guard !exterior, !marked, region.count <= limit else { continue }
+            if supports.contains(where: { support in Double(region.filter { support[$0] >= 128 }.count) / Double(region.count) >= 0.98 }) {
+                for i in region { result[i] = 255 }
+            }
+        }
+        return result
     }
 
     static func resample(_ bytes: [UInt8], fromWidth: Int, fromHeight: Int, width: Int, height: Int) -> [UInt8] {
