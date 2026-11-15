@@ -26,8 +26,10 @@ actor InteractiveSelection {
             imageKey = key
         }
         try Task.checkCancellation()
-        let negativeSamples = Self.samples(negative, limit: 5)
-        let samples = Self.samples(points, limit: 14 - negativeSamples.count)
+        // A stroke is a region hint, not a dense set of independent classification points.
+        // Dense positive sampling over-fitted skin/color regions and punched out internal ink.
+        let negativeSamples = Self.samples(negative, limit: 3)
+        let samples = Self.samples(points, limit: 2)
         let prompts = samples.map { SegmentationPrompt(point: $0, positive: true) }
             + negativeSamples.map { SegmentationPrompt(point: $0, positive: false) }
         let masks = try session.predict(prompts)

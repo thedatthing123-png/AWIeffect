@@ -85,9 +85,7 @@ final class PromptSegmentationModel {
         guard masks.shape.count == 4 else { throw InteractiveSelection.SelectionError.modelOutput("Mask shape: \(masks.shape)") }
         let count = masks.shape[1].intValue, height = masks.shape[2].intValue, width = masks.shape[3].intValue
         // Use Core ML's typed tensor bridge for a contiguous view of GPU-backed FP16 output.
-        let logits: [Float]
-        if masks.dataType == .float16 { logits = MLShapedArray<Float16>(converting: masks).scalars.map { Float($0) } }
-        else { logits = MLShapedArray<Float>(converting: masks).scalars }
+        let logits = MLShapedArray<Float>(converting: masks).scalars
         guard logits.count == count * width * height, logits.allSatisfy(\.isFinite) else {
             throw InteractiveSelection.SelectionError.modelOutput("Invalid mask tensor values")
         }

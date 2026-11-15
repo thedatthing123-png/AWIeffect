@@ -29,6 +29,23 @@ import UniformTypeIdentifiers
             let mask = try await session.region(image: image, points: points, width: image.width, height: image.height)
             try save(mask, width: image.width, height: image.height, to: output.appendingPathComponent(name + ".png"))
             print("PROBE \(name): \(mask.filter { $0 >= 128 }.count) foreground pixels")
+            if name == "anime-face" {
+                var rgba = [UInt8](repeating: 0, count: image.width * image.height * 4)
+                let context = CGContext(data: &rgba, width: image.width, height: image.height, bitsPerComponent: 8,
+                                        bytesPerRow: image.width * 4, space: CGColorSpaceCreateDeviceRGB(),
+                                        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+                context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+                var ink = 0, retained = 0
+                for y in 780..<920 { for x in 480..<700 {
+                    let i = y * image.width + x, p = i * 4
+                    if max(rgba[p], max(rgba[p + 1], rgba[p + 2])) < 95 {
+                        ink += 1; if mask[i] >= 128 { retained += 1 }
+                    }
+                } }
+                let coverage = Double(retained) / Double(max(1, ink))
+                print("PROBE internal ink coverage: \(coverage)")
+                guard ink > 100, coverage > 0.95 else { throw InteractiveSelection.SelectionError.modelOutput("Internal ink coverage \(coverage)") }
+            }
         }
     }
     static func save(_ mask: [UInt8], width: Int, height: Int, to url: URL) throws {
