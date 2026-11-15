@@ -33,9 +33,9 @@ final class PromptSegmentationModel {
             }
             return try MLModel(contentsOf: url, configuration: configuration)
         }
-        encoder = try load("SAM2TinyImageEncoderFLOAT16")
-        promptEncoder = try load("SAM2TinyPromptEncoderFLOAT16")
-        decoder = try load("SAM2TinyMaskDecoderFLOAT16")
+        encoder = try load("SAM2_1TinyImageEncoderFLOAT16")
+        promptEncoder = try load("SAM2_1TinyPromptEncoderFLOAT16")
+        decoder = try load("SAM2_1TinyMaskDecoderFLOAT16")
     }
 
     func setImage(_ image: CGImage) throws {
@@ -63,8 +63,10 @@ final class PromptSegmentationModel {
 
     func predict(_ prompts: [SegmentationPrompt]) throws -> [SegmentationCandidate] {
         guard !features.isEmpty, !prompts.isEmpty, prompts.count <= 14 else { throw InteractiveSelection.SelectionError.invalidImage }
-        let coordinates = try MLMultiArray(shape: [1, NSNumber(value: prompts.count), 2], dataType: .float16)
-        let labels = try MLMultiArray(shape: [1, NSNumber(value: prompts.count)], dataType: .float16)
+        let coordinateType = promptEncoder.modelDescription.inputDescriptionsByName["points"]?.multiArrayConstraint?.dataType ?? .float32
+        let labelType = promptEncoder.modelDescription.inputDescriptionsByName["labels"]?.multiArrayConstraint?.dataType ?? .int32
+        let coordinates = try MLMultiArray(shape: [1, NSNumber(value: prompts.count), 2], dataType: coordinateType)
+        let labels = try MLMultiArray(shape: [1, NSNumber(value: prompts.count)], dataType: labelType)
         for (index, prompt) in prompts.enumerated() {
             coordinates[index * 2] = NSNumber(value: Double(prompt.point.x) * 1024)
             coordinates[index * 2 + 1] = NSNumber(value: Double(prompt.point.y) * 1024)

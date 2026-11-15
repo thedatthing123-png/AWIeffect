@@ -24,7 +24,7 @@ targets:
     platform: iOS
     sources:
       - path: App
-        excludes: ["SegmentationModels/mobile_sam*"]
+        excludes: ["SegmentationModels/mobile_sam*", "SegmentationModels/SAM2Tiny*"]
       - path: Resources
         buildPhase: resources
     dependencies:

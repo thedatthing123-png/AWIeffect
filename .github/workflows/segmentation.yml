@@ -23,7 +23,7 @@ jobs:
       - name: Compile Core ML models
         run: |
           mkdir -p /tmp/awi-models
-          for model in App/SegmentationModels/SAM2Tiny*.mlpackage; do
+          for model in App/SegmentationModels/SAM2_1Tiny*.mlpackage; do
             xcrun coremlcompiler compile "$model" /tmp/awi-models
           done
       - name: Build native model probe

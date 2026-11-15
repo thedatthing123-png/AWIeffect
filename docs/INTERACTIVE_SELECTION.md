@@ -13,8 +13,8 @@ cutout stroke is one undo step. Closing or cancelling does not apply a late resu
 
 ## Model and attribution
 
-Pretrained SAM 2 Tiny; no new model training is claimed. Apple's official Core ML
-packages are pinned to `apple/coreml-sam2-tiny@6d04587b4937500c26afbdeeb9777a336efaeef6`.
+Pretrained SAM 2.1 Tiny; no new model training is claimed. Apple's official Core ML
+packages are pinned to `apple/coreml-sam2.1-tiny@39ae0a8a83e5e6cd196e804bf7cccc5f8171f306`.
 The runtime uses Core ML directly, caches the image features, stretches the image
 to a square with matching prompt coordinates, and respects FP16 tensor strides.
 The initial MobileSAM candidate was rejected after visual evaluation showed
@@ -23,7 +23,7 @@ Packages are compiled by Xcode and bundled for offline use; no user images leave
 Apache 2.0 license notices ship in Resources.
 
 - https://github.com/facebookresearch/sam2
-- https://huggingface.co/apple/coreml-sam2-tiny
+- https://huggingface.co/apple/coreml-sam2.1-tiny
 - Adobe interaction reference: https://helpx.adobe.com/after-effects/desktop/roto-brush-and-refine-matte/roto-brush/roto-brush-refine-matte.html
 
 ## Verification
