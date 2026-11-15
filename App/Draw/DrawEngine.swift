@@ -131,6 +131,7 @@ struct DrawingDoc: Codable, Equatable {
 
 /// Raster painting engine on Metal (ibisPaint-style): brushes, layers, selections, fill, undo.
 final class DrawEngine: ObservableObject {
+    deinit { selectionTask?.cancel() }
     let device: MTLDevice
     let queue: MTLCommandQueue
     let width: Int, height: Int
@@ -1485,6 +1486,7 @@ final class DrawEngine: ObservableObject {
         let width = width, height = height, inference = interactiveSelection
         isSelectingSubject = true
         selectionTask = Task { @MainActor [weak self] in
+            guard self != nil, !Task.isCancelled else { return }
             do {
                 let mask = try await inference.selection(image: image, points: points, width: width, height: height, painted: painted, previous: previous, subtract: subtract, edgeTolerance: edgeTolerance)
                 guard !Task.isCancelled, let self, self.selectionGeneration == generation else { return }

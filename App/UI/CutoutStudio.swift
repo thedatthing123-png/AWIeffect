@@ -8,6 +8,7 @@ import CoreVideo
 /// Auto: draw a box and it follows the subject through the clip. A bad frame gets fixed alone; no other frame changes.
 @MainActor
 final class CutoutStudioModel: ObservableObject, Identifiable {
+    deinit { selectionTask?.cancel(); autoTask?.cancel() }
     enum Tool { case none, brush, box }
     enum Show: String, CaseIterable { case cut = "Cutout", overlay = "Overlay", original = "Original" }
 
