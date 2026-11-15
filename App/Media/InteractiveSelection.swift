@@ -25,7 +25,6 @@ actor InteractiveSelection {
         if key != imageKey {
             try session.setImage(image)
             imageKey = key
-            foregroundAttempted = false; foregroundHandler = nil; foregroundObservation = nil; foregroundMasks = [:]
         }
         try Task.checkCancellation()
         // A stroke is a region hint, not a dense set of independent classification points.
