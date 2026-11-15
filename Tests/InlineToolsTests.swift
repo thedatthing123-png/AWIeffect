@@ -4,6 +4,32 @@ import Combine
 @testable import AWIeffect
 
 @MainActor final class InlineToolsTests: XCTestCase {
+    func testUndoCancelsPendingCutoutBeforeChangingExistingHistory() {
+        let s = editor(), original = s.project
+        s.setCutout(CutoutSettings(mode: .drawn))
+        let edited = s.project
+        var cancelled = false
+        s.beginPendingCutout(id: UUID()) { cancelled = true }
+        s.undo()
+        XCTAssertTrue(cancelled)
+        XCTAssertEqual(s.project, edited)
+        XCTAssertNil(s.pendingCutoutEditID)
+        s.undo()
+        XCTAssertEqual(s.project, original)
+    }
+
+    func testPendingCutoutEnablesUndoAndOldCompletionCannotClearNewStroke() {
+        let s = editor(), old = UUID(), next = UUID()
+        XCTAssertFalse(s.canUndo)
+        s.beginPendingCutout(id: old) {}
+        s.beginPendingCutout(id: next) {}
+        s.endPendingCutout(id: old)
+        XCTAssertEqual(s.pendingCutoutEditID, next)
+        XCTAssertTrue(s.canUndo)
+        s.undo()
+        XCTAssertFalse(s.canUndo)
+    }
+
     private func editor() -> EditorState {
         var p = Project.new(name: "inline", width: 100, height: 100, fps: 30, duration: 10)
         p.layers = [p.makeLayer(name: "Picture", content: .image(fileName: "missing.png", pixelWidth: 100, pixelHeight: 100), size: Vec2(100,100))]

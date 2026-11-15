@@ -55,6 +55,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
     @Published private(set) var selectionMessage: String?
 
     func cancelRegion() {
+        state.endPendingCutout(id: strokeGeneration)
         selectionTask?.cancel(); selectionTask = nil
         strokeGeneration = UUID(); selectingRegion = false
         state.cutoutPreview = nil
@@ -272,6 +273,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
         var painted = [UInt8](repeating: 0, count: w * h)
         CutoutEngine.paint([CutoutStroke(points: points.map { Vec2(Double($0.x), Double($0.y)) }, radius: Double(radius), subtract: false)], into: &painted, w: w, h: h)
         selectingRegion = true
+        state.beginPendingCutout(id: generation) { [weak self] in self?.cancelRegion() }
         selectionTask = Task { [weak self] in
             var result = InteractiveSelection.combine(region: painted, painted: painted, previous: previousMatte, subtract: !keep)
             var failed = false
@@ -285,6 +287,7 @@ final class CutoutStudioModel: ObservableObject, Identifiable {
             }
             catch { failed = true }
             guard !Task.isCancelled, let self, self.active, self.strokeGeneration == generation else { return }
+            self.state.endPendingCutout(id: generation)
             self.selectingRegion = false
             guard self.loadID == expectedLoad, self.frame == expectedFrame, self.state.selectedLayer?.cutout == expectedSettings else {
                 self.state.cutoutPreview = nil; return

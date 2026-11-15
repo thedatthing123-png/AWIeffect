@@ -363,7 +363,31 @@ final class EditorState: ObservableObject {
     /// The project as it was when the open edit group (drag) began; nil outside a drag.
     var editStartProject: Project? { editGroupOpen ? undoStack.last?.project : nil }
 
-    var canUndo: Bool { !undoStack.isEmpty }
+    @Published private(set) var pendingCutoutEditID: UUID?
+    private var cancelPendingCutout: (() -> Void)?
+
+    func beginPendingCutout(id: UUID, cancel: @escaping () -> Void) {
+        cancelPendingCutout?()
+        pendingCutoutEditID = id
+        cancelPendingCutout = cancel
+    }
+
+    func endPendingCutout(id: UUID) {
+        guard pendingCutoutEditID == id else { return }
+        pendingCutoutEditID = nil
+        cancelPendingCutout = nil
+    }
+
+    private func cancelCutoutEdit() -> Bool {
+        guard pendingCutoutEditID != nil else { return false }
+        let cancel = cancelPendingCutout
+        pendingCutoutEditID = nil
+        cancelPendingCutout = nil
+        cancel?()
+        return true
+    }
+
+    var canUndo: Bool { pendingCutoutEditID != nil || !undoStack.isEmpty }
     var canRedo: Bool { !redoStack.isEmpty }
 
     /// Panel controls (swipe pad, dial, rulers): one undo step, live edits until the finger lifts.
@@ -411,6 +435,7 @@ final class EditorState: ObservableObject {
     }
 
     func undo() {
+        if cancelCutoutEdit() { return }
         endLiveGesture()
         guard let last = undoStack.popLast() else { return }
         redoStack.append((last.label, project))
@@ -419,6 +444,7 @@ final class EditorState: ObservableObject {
     }
 
     func redo() {
+        _ = cancelCutoutEdit()
         guard let next = redoStack.popLast() else { return }
         undoStack.append((next.label, project))
         project = next.project
@@ -426,6 +452,7 @@ final class EditorState: ObservableObject {
     }
 
     func jumpToHistory(index: Int) {
+        _ = cancelCutoutEdit()
         while undoStack.count > index { undo() }
     }
 
