@@ -27,6 +27,11 @@ final class PromptSegmentationModel {
     init(modelDirectory: URL? = nil) throws {
         // Match the reference Core ML demo's supported CPU/GPU execution path.
         let configuration = MLModelConfiguration(); configuration.computeUnits = .cpuAndGPU
+        #if targetEnvironment(simulator)
+        // The simulator's virtual GPU returned constant-zero mask tensors for these
+        // models. Exercise the same network on CPU there; devices keep GPU execution.
+        configuration.computeUnits = .cpuOnly
+        #endif
         func load(_ name: String) throws -> MLModel {
             guard let url = modelDirectory?.appendingPathComponent(name + ".mlmodelc") ?? Bundle.main.url(forResource: name, withExtension: "mlmodelc") else {
                 throw InteractiveSelection.SelectionError.invalidImage

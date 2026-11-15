@@ -11,7 +11,7 @@ on:
       - .github/workflows/segmentation.yml
   workflow_dispatch:
 concurrency:
-  group: segmentation-${{ github.ref }}
+  group: native-mask-interface-v2-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   probe:

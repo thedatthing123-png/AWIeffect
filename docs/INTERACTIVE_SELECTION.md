@@ -16,7 +16,12 @@ cutout stroke is one undo step. Closing or cancelling does not apply a late resu
 Pretrained SAM 2.1 Tiny; no new model training is claimed. Apple's official Core ML
 packages are pinned to `apple/coreml-sam2.1-tiny@39ae0a8a83e5e6cd196e804bf7cccc5f8171f306`.
 The runtime uses Core ML directly, caches the image features, stretches the image
-to a square with matching prompt coordinates, and respects FP16 tensor strides.
+to a square with matching prompt coordinates, and reads typed Float32 tensors.
+The decoder has lossless FP32 output-interface casts produced by coremltools 9.0's
+`change_input_output_tensor_type`; internal weights and computation remain FP16.
+`scripts/prepare_segmentation_model.py` reproduces this interface conversion.
+The simulator uses CPU execution because its virtual GPU returned zero mask tensors;
+physical devices and the native GPU quality probe retain GPU execution.
 The initial MobileSAM candidate was rejected after visual evaluation showed
 whole-head leakage and missing internal ink despite passing the original smoke tests.
 Packages are compiled by Xcode and bundled for offline use; no user images leave the device.
@@ -34,6 +39,11 @@ It saves source/mask pairs in the selection-evaluation CI artifact for visual re
 Unit checks cover stroke sampling, hard painted coverage, subtraction and orientation.
 These fixtures are evaluation data, not training data or proof of perfect generalization.
 Core ML inference must be checked on Apple's runtime; Windows cannot execute it.
+The native probe additionally checks at least 95% retention of annotated internal
+mouth/ink pixels. Candidate ranking rejects fragmented color-only proposals; broader
+object proposals and the existing automatic foreground-instance model validate
+interior ink. A one-model-pixel closing repairs supported narrow cracks. Explicit
+negative marks and background evidence protect real gaps; no image colors are generated.
 
 For future fine-tuning, collect image + desired alpha + positive/negative stroke pairs,
 split by original artwork to avoid train/test leakage, and compare boundary error,
