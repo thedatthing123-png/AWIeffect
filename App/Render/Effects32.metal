@@ -26,6 +26,72 @@ static float4 sample32(texture2d<half,access::sample> source,float2 uv,uint edge
     return mix(mix(tap32(source,b,edge),tap32(source,b+int2(1,0),edge),f.x),
                mix(tap32(source,b+int2(0,1),edge),tap32(source,b+int2(1,1),edge),f.x),f.y);
 }
+
+static float2 multiplyComplex32(float2 a, float2 b) {
+    return float2(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x);
+}
+static float2 divideComplex32(float2 a, float2 b) {
+    // The kernel rejects true poles; this floor only protects arithmetic.
+    return multiplyComplex32(a,float2(b.x,-b.y))/max(dot(b,b),1.e-12);
+}
+static float2 conformalMap32(float2 uv, constant EffectParams& p) {
+    float2 z=rotate32((uv-p.b.xy)/p.a.y,-p.b.z), w=z;
+    float k=p.a.z;
+    switch(p.i.x) {
+        case 0: {
+            float2 denominator=float2(1.0+k*z.x,k*z.y);
+            if(dot(denominator,denominator)<1.e-8) return float2(INFINITY);
+            w=divideComplex32(z,denominator); break;
+        }
+        case 1: {
+            float2 q=k*z;
+            // Beyond this bound the source lies well outside the field. Avoid
+            // overflow instead of allowing NaNs to reach integer addressing.
+            q.y=clamp(q.y,-10.0,10.0);
+            w=float2(sin(q.x)*cosh(q.y),cos(q.x)*sinh(q.y))/k; break;
+        }
+        case 2: {
+            float r=length(z);
+            float theta=atan2(z.y,z.x)*k;
+            w=pow(r,k)*float2(cos(theta),sin(theta)); break;
+        }
+        case 3:
+            if(dot(z,z)<1.e-8) return float2(INFINITY);
+            w=z+divideComplex32(float2(k*k,0),z); break;
+        case 4: {
+            float2 q=k*z;
+            float radial=exp(clamp(q.x,-10.0,10.0));
+            w=(radial*float2(cos(q.y),sin(q.y))-float2(1,0))/k; break;
+        }
+        case 5: {
+            float2 q=k*z;
+            q.y=clamp(q.y,-10.0,10.0);
+            float denominator=cos(2.0*q.x)+cosh(2.0*q.y);
+            if(abs(denominator)<1.e-8) return float2(INFINITY);
+            w=float2(sin(2.0*q.x),sinh(2.0*q.y))/(k*denominator); break;
+        }
+    }
+    return p.b.xy+rotate32(mix(z,w,p.a.x),p.b.z)*p.a.y;
+}
+
+kernel void fxConformal32(texture2d<half,access::sample> source [[texture(0)]],
+                         texture2d<half,access::write> output [[texture(1)]],
+                         constant EffectParams& p [[buffer(0)]], uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float2 uv=float2(gid)+.5;
+    half4 original=source.sample(zero32,uv);
+    if(p.a.x<=0.0 || p.b.w<=0.0) { output.write(original,gid); return; }
+    int count=int(clamp(p.i.z,1u,2u));
+    float4 color=0;
+    for(int y=0;y<count;y++) for(int x=0;x<count;x++) {
+        float2 offset=(float2(x,y)+.5)/float(count)-.5;
+        float2 mapped=conformalMap32(uv+offset,p);
+        // Undefined poles are transparent for every address mode. Very large
+        // finite coordinates also cannot be converted safely to integer texels.
+        if(all(isfinite(mapped)) && all(abs(mapped)<1.e7)) color+=sample32(source,mapped,p.i.y);
+    }
+    output.write(half4(mix(float4(original),color/float(count*count),p.b.w)),gid);
+}
 static float2 displacement32(float2 uv,constant EffectParams& p) {
     float scale=max(p.a.y,1.0),shape=p.a.z,t=p.a.w;
     float2 q=rotate32(uv-p.b.xy,-p.b.z)/scale, d=float2(0);

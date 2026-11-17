@@ -1,6 +1,53 @@
 #include <metal_stdlib>
 using namespace metal;
 struct EffectParams { float4 a; float4 b; float4 c; float4 d; uint4 i; };
+
+// Separable rectangular morphology. Scratch textures contain scalar fields;
+// only the first pass reads unpremultiplied image luminance. Boundary replication
+// prevents dark padding from eroding a flat image at its buffer boundary.
+kernel void fxExtrema37(texture2d<half,access::read> source [[texture(0)]],
+                       texture2d<half,access::write> output [[texture(1)]],
+                       constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float result=p.i.z!=0 ? -INFINITY:INFINITY;
+    int2 size=int2(source.get_width(),source.get_height());
+    int radius=int(clamp(p.i.x,1u,48u));
+    for(int offset=-radius;offset<=radius;offset++) {
+        int2 point=int2(gid)+(p.i.y==0 ? int2(offset,0):int2(0,offset));
+        half4 value=source.read(uint2(clamp(point,int2(0),size-1)));
+        float scalar=float(value.r);
+        if(p.i.w!=0) scalar=value.a>half(.00001) ? dot(float3(value.rgb)/float(value.a),float3(.2126,.7152,.0722)):0.0;
+        result=p.i.z!=0 ? max(result,scalar):min(result,scalar);
+    }
+    output.write(half4(half3(result),half(1)),gid);
+}
+
+kernel void fxMorphology37(texture2d<half,access::read> source [[texture(0)]],
+                          texture2d<half,access::write> output [[texture(1)]],
+                          texture2d<half,access::read> envelope [[texture(2)]],
+                          texture2d<half,access::read> other [[texture(3)]],
+                          constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    half4 original=source.read(gid);
+    if(original.a<=half(0) || p.a.y<=0) { output.write(original,gid); return; }
+    float3 rgb=float3(original.rgb)/float(original.a);
+    float light=dot(rgb,float3(.2126,.7152,.0722));
+    float a=float(envelope.read(gid).r),b=float(other.read(gid).r),target=a;
+    if(p.i.x==2) target=max(0.0,light-a)*p.a.x;
+    if(p.i.x==3) target=max(0.0,a-light)*p.a.x;
+    if(p.i.x==4) target=max(0.0,b-a)*p.a.x;
+    if(p.i.x==5) target=(a+b)*.5;
+    float3 color=float3(target);
+    if(p.i.x<2 || p.i.x==5) {
+        // Preserve source chroma where possible, shrinking only enough to avoid
+        // negative channels when the envelope reduces luminance.
+        float3 chroma=rgb-light;
+        float minimum=min(chroma.r,min(chroma.g,chroma.b));
+        float chromaScale=minimum<0 ? min(1.0,target/max(-minimum,1.e-6)):1.0;
+        color=max(float3(0),target+chroma*chromaScale);
+    }
+    output.write(half4(mix(float3(original.rgb),color*float(original.a),p.a.y),original.a),gid);
+}
 constexpr sampler finish37(address::clamp_to_zero,filter::linear,coord::pixel);
 constexpr sampler clean37(address::clamp_to_edge,filter::linear,coord::pixel);
 static float3 straight37(float4 color) { return color.a>.00001 ? color.rgb/color.a:float3(0); }

@@ -172,3 +172,29 @@ hollow rings. The current image is retained separately from the emission. No
 emission means exact source passthrough; this is enforced without altering the
 older photographic glow compositor or saved glow rendering. These composites
 still need rendered tuning, timing/stack tests and device profiling.
+# Coordinate maps (batch 32)
+
+- Harvard Math 113, linear fractional transformations and the Joukowski map:
+  https://people.math.harvard.edu/~siu/math113/13_linear_fractional_transformation.pdf
+- NIST DLMF elementary complex and hyperbolic identities:
+  https://dlmf.nist.gov/4.28 and https://dlmf.nist.gov/4.35
+
+Independent coordinate implementations: fractional linear, complex sine/power,
+reciprocal Joukowski, exponential and complex tangent. Field size is in layer
+pixels; direction rotates the map's frame, not just its output. These are inverse
+texture-coordinate maps, not simulations of physical glass. Principal-angle power
+has an intentional branch seam. Undefined poles become transparent under all edge
+modes. Finite extreme coordinates are bounded before integer addressing; hyperbolic
+arguments are limited to prevent overflow. No reference implementation was copied.
+
+## Morphology (batch 37)
+
+MathWorks documents opening as erosion then dilation, closing in reverse, and
+white/black top hats as differences from those envelopes:
+https://www.mathworks.com/help/images/morphological-dilation-and-erosion.html
+The implementation independently applies separable rectangular scalar min/max
+passes to straight luminance, then restores source coverage. This is luminance
+cleanup and matte extraction, not an alpha choke or replacement for Remove BG.
+Neighborhoods are sampled in image pixels, with replicated buffer boundaries;
+source transparency contributes zero light. Fine antialiased edges retain their
+original coverage. Half-float intermediate scalar textures avoid 8-bit clipping.

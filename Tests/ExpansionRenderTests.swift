@@ -16,7 +16,7 @@ final class ExpansionRenderTests: XCTestCase {
             EffectRegistry.batch33,EffectRegistry.time33,EffectRegistry.batch34,EffectRegistry.cameraTransitions34,
             EffectRegistry.batch35,EffectRegistry.batch36,EffectRegistry.lights36,EffectRegistry.batch37,
             EffectRegistry.cleanup37,EffectRegistry.frequency37,EffectRegistry.drawing37,EffectRegistry.retro37,
-            EffectRegistry.textGeometry37,EffectRegistry.batch38]
+            EffectRegistry.textGeometry37,EffectRegistry.batch38,EffectRegistry.conformal32,EffectRegistry.morphology37,EffectRegistry.sampling33]
         let newDefinitions=families.flatMap{$0}
         XCTAssertEqual(Set(newDefinitions.map(\.name)).count,newDefinitions.count,"New effects need distinct names and behaviors")
     }
@@ -225,6 +225,69 @@ final class ExpansionRenderTests: XCTestCase {
             XCTAssertGreaterThan(difference(result,try pixels(effect)),0.01,definition.name)
         }
     }
+    func testCoordinateMapsFallbacksAndBypass() throws {
+        let original = try pixels(nil)
+        for definition in EffectRegistry.conformal32 {
+            var effect = definition.makeInstance()
+            let result = try pixels(effect)
+            XCTAssertGreaterThan(difference(original, result), 0.05, definition.name)
+            XCTAssertEqual(result, try pixels(EffectInstance(typeID: definition.id, params: [:])), definition.name)
+            effect.params["amount"] = .number(Animated(0))
+            XCTAssertEqual(original, try pixels(effect), definition.name)
+            effect = definition.makeInstance()
+            effect.params["blend"] = .number(Animated(0))
+            XCTAssertEqual(original, try pixels(effect), definition.name)
+        }
+    }
+    func testMorphologyFallbacksAndBlendBypass() throws {
+        let original = try pixels(nil)
+        for definition in EffectRegistry.morphology37 {
+            var effect = definition.makeInstance()
+            let result = try pixels(effect)
+            XCTAssertGreaterThan(difference(original, result), 0.01, definition.name)
+            XCTAssertEqual(result, try pixels(EffectInstance(typeID: definition.id, params: [:])), definition.name)
+            effect.params["blend"] = .number(Animated(0))
+            XCTAssertEqual(original, try pixels(effect), definition.name)
+        }
+    }
+    func testMorphologyRemovesAnIsolatedSpeckAndFillsAnIsolatedHole() throws {
+        guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        for opening in [true,false] {
+            var project=Project.new(name:"Morphology",width:33,height:33,fps:30,duration:1,background:RGBA(0,0,0,0))
+            var back=project.makeLayer(name:"Gray",content:.solid,size:Vec2(33,33))
+            back.fill=Animated(RGBA(0.25,0.25,0.25))
+            var mark=project.makeLayer(name:"Mark",content:.solid,size:Vec2(1,1))
+            mark.fill=Animated(opening ? RGBA(1,1,1):RGBA(0,0,0))
+            var adjustment=project.makeLayer(name:"Morphology",content:.adjustment,size:Vec2(33,33))
+            let id=opening ? "awi37.morph.opening":"awi37.morph.closing"
+            adjustment.effects=[try XCTUnwrap(EffectRegistry.definition(id)).makeInstance()]
+            project.layers=[adjustment,mark,back]
+            let result=try XCTUnwrap(renderer.renderPixels(project:project,time:0,
+                preserveAlpha:true,mediaURL:{URL(fileURLWithPath:$0)})).rgba
+            for index in stride(from:0,to:result.count,by:4) {
+                XCTAssertLessThanOrEqual(abs(Int(result[index])-64),2,id)
+                XCTAssertEqual(result[index+3],255,id)
+            }
+        }
+    }
+    func testCoordinateMapPolesAndEmptyCoverage() throws {
+        guard let renderer = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        for definition in EffectRegistry.conformal32 {
+            for edge in 0...3 {
+                var effect = definition.makeInstance()
+                effect.params["edge"] = .choice(edge)
+                var project = scene(effect)
+                // Place a reciprocal pole on an actual pixel center.
+                project.layers[0].effects[0].params["center"] = .point(Animated(Vec2(96.5/192, 72.5/144)))
+                for index in project.layers.indices where project.layers[index].content != .adjustment {
+                    project.layers[index].fill = Animated(RGBA(0,0,0,0))
+                }
+                let result = try XCTUnwrap(renderer.renderPixels(project: project, time: 0.4,
+                    preserveAlpha: true, mediaURL: { URL(fileURLWithPath: $0) })).rgba
+                XCTAssertTrue(result.allSatisfy { $0 == 0 }, "\(definition.name), edges \(edge)")
+            }
+        }
+    }
     func testFlowEdgeModesAndTransparentInput() throws {
         guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
         let definition=try XCTUnwrap(EffectRegistry.definition("awi32.liquidCurl"))
@@ -299,14 +362,15 @@ final class ExpansionRenderTests: XCTestCase {
         try FileManager.default.createDirectory(at:folder,withIntermediateDirectories:true)
         let families:[(String,[EffectDefinition])]=[
             ("matte",EffectRegistry.batch33),
-            ("time",EffectRegistry.time33),
+            ("time",EffectRegistry.time33+EffectRegistry.sampling33),
             ("transition",EffectRegistry.batch34+EffectRegistry.cameraTransitions34),
             ("shape-particle",EffectRegistry.batch35),
             ("procedural",EffectRegistry.batch36),
             ("finish",EffectRegistry.batch37+EffectRegistry.cleanup37+EffectRegistry.frequency37),
             ("drawing",EffectRegistry.drawing37),("sort",EffectRegistry.sorting31),
             ("retro",EffectRegistry.retro37),("text-geometry",EffectRegistry.textGeometry37),
-            ("motion-light",EffectRegistry.batch38)
+            ("motion-light",EffectRegistry.batch38),("coordinate-map",EffectRegistry.conformal32),
+            ("morphology",EffectRegistry.morphology37)
         ]
         for (name,definitions) in families {
             let height=CGFloat((definitions.count+3)/4)*180

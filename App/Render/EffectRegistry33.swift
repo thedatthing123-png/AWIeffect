@@ -3,8 +3,81 @@ import Metal
 import simd
 
 extension EffectRegistry {
-    static let temporalIDs33:Set<String>=["awi33.time.slice","awi33.time.difference","awi33.time.median","awi37.retro.phosphor",
+    static let temporalIDs33:Set<String>=["awi33.time.slice","awi33.time.difference","awi33.time.median",
+        "awi33.time.echo","awi33.time.hold","awi33.time.rgb","awi33.time.exposure","awi33.time.extrema","awi37.retro.phosphor",
         "awi38.motionGlow","awi38.motionStreaks","awi38.motionRays","awi38.motionRings"]
+    static let sampling33:[EffectDefinition] = [
+        EffectDefinition(id:"awi33.time.hold",name:"Frame Hold",category:.stylize,aeMatchNames:[],
+            summary:"Hold actual upstream frames on an editable sampling clock, independently of the composition frame rate.",
+            params:[.number("rate","Sample Rate",6,0.5,60,unit:"fps"),
+                .number("phase","Clock Phase",0,-1,1,unit:"s"),.number("blend","Blend",100,0,100,unit:"%")],
+            stage:.pixels { ctx in
+                guard v29(ctx,"blend")>0,let sample=ctx.temporalSample else { return ctx.input }
+                let rate=max(0.5,v29(ctx,"rate")),phase=v29(ctx,"phase")
+                let heldTime=floor((ctx.time-phase)*rate)/rate+phase
+                guard let held=sample(heldTime) else { return ctx.input }
+                return timeComposite33(ctx,held)
+            }),
+        EffectDefinition(id:"awi33.time.rgb",name:"RGB Time Split",category:.stylize,aeMatchNames:[],
+            summary:"Take red, green and blue from independently delayed real frames, with combined coverage.",
+            params:[.number("red","Red Delay",0.15,-2,2,unit:"s"),
+                .number("green","Green Delay",0,-2,2,unit:"s"),.number("blue","Blue Delay",-0.1,-2,2,unit:"s"),
+                .number("blend","Blend",100,0,100,unit:"%")],stage:.pixels { ctx in
+                guard v29(ctx,"blend")>0,let sample=ctx.temporalSample,
+                      let red=sample(ctx.time-v29(ctx,"red")),let green=sample(ctx.time-v29(ctx,"green")),
+                      let blue=sample(ctx.time-v29(ctx,"blue")) else { return ctx.input }
+                let output=ctx.temp()
+                ctx.gpu.run("fxRGBTime33",ctx.cb,textures:[red,output,green,blue],grid:output)
+                return timeComposite33(ctx,output)
+            }),
+        temporalEnvelope33("echo","Frame Echo",0,"Composite actual past frames with controlled decay and ordering.",
+            [.number("decay","Echo Decay",65,0,100,unit:"%"),.choice("combine","Composite",["Add","Over","Lighten","Darken"],0)]),
+        temporalEnvelope33("exposure","Time Exposure",1,"Integrate actual image changes over a time window, including animated effects and content.",
+            [.choice("weight","Exposure Profile",["Uniform","Triangle","Front Weighted"],0)]),
+        temporalEnvelope33("extrema","Temporal Range",2,"Select light or dark temporal envelopes, or isolate their range across a sampled interval.",
+            [.choice("combine","Envelope",["Lightest","Darkest","Range"],2)])
+    ]
+    private static func temporalEnvelope33(_ id:String,_ name:String,_ mode:UInt32,_ summary:String,_ controls:[ParamDef]) -> EffectDefinition {
+        EffectDefinition(id:"awi33.time."+id,name:name,category:.stylize,aeMatchNames:[],summary:summary,
+            params:[.number("span","Time Window",0.3,0.01,3,unit:"s"),
+                .number("offset","Time Offset",0,-3,3,unit:"s"),
+                .number("samples","Frame Samples",5,2,8,step:1)]+controls+[
+                .number("blend","Blend",100,0,100,unit:"%")],stage:.pixels { ctx in
+                guard v29(ctx,"blend")>0,let sample=ctx.temporalSample else { return ctx.input }
+                let count=min(8,max(2,Int(v29(ctx,"samples"))))
+                var accumulated=ctx.temp(),minimum=ctx.temp()
+                ctx.gpu.run("fxClear",ctx.cb,textures:[accumulated],grid:accumulated)
+                ctx.gpu.run("fxClear",ctx.cb,textures:[minimum],grid:minimum)
+                var weightSum:Double=0
+                for index in 0..<count {
+                    let fraction=Double(index)/Double(count-1)
+                    guard let frame=sample(ctx.time+v29(ctx,"offset")-fraction*v29(ctx,"span")) else { return ctx.input }
+                    var weight:Double=1
+                    if mode==0 { weight=pow(v29(ctx,"decay")/100,Double(index)) }
+                    if mode==1 {
+                        if ch29(ctx,"weight")==1 { weight=1-abs(2*(Double(index)+0.5)/Double(count)-1) }
+                        if ch29(ctx,"weight")==2 { weight=1-fraction*0.9 }
+                    }
+                    weightSum+=weight
+                    var p=EffectParams();p.a.x=Float(weight)
+                    p.i=SIMD4(mode,UInt32(index),UInt32(mode==1 ? ch29(ctx,"weight"):ch29(ctx,"combine")),0)
+                    let next=ctx.temp()
+                    ctx.gpu.run("fxTemporalAccumulate33",ctx.cb,textures:[accumulated,next,frame],params:p,grid:next)
+                    accumulated=next
+                    if mode==2 {
+                        p.i.w=1
+                        let nextMinimum=ctx.temp()
+                        ctx.gpu.run("fxTemporalAccumulate33",ctx.cb,textures:[minimum,nextMinimum,frame],params:p,grid:nextMinimum)
+                        minimum=nextMinimum
+                    }
+                }
+                var p=EffectParams();p.i.x=mode;p.i.y=UInt32(ch29(ctx,"combine"))
+                p.a.x=Float(weightSum)
+                let output=ctx.temp()
+                ctx.gpu.run("fxTemporalFinish33",ctx.cb,textures:[accumulated,output,minimum],params:p,grid:output)
+                return timeComposite33(ctx,output)
+            })
+    }
     static let time33:[EffectDefinition]=[
         EffectDefinition(id:"awi33.time.slice",name:"Time Slice",category:.stylize,aeMatchNames:[],
             summary:"Different image regions show actual upstream frames from a time interval. Linear or radial slices can blend between sampled frames.",

@@ -25,7 +25,7 @@ requires over 1,000 working, distinct definitions. ExpansionRenderTests enforces
 count gate; the current catalog is still below it. Passing the count gate alone
 does not prove distinctness, visual quality or performance.
 
-Current source enumeration is 715 definitions, including the legacy catalog.
+Current source enumeration is 732 definitions, including the legacy catalog.
 This is a source inventory, not a verified runtime count or a quality result. The
 remaining distance to 1,001 must be real, distinct tools; do not fill it with aliases
 or renamed settings. The all-effects test remains the runtime count authority.
@@ -50,3 +50,25 @@ run. The premature snapshot run 44117862297 was cancelled. Do not run a knowingl
 incomplete catalog merely to reach a waiting state. Keep the count gate enabled;
 implement the missing effects first, then validate all of them together. Stop
 watching once that completed-expansion run has started, as the owner requested.
+
+Coordinate-map additions: Mobius Lens, Sine Fold, Power Spiral, Joukowski Lens,
+Exponential Wrap and Tangent Fold. These map complex coordinates rather than
+reusing noise displacement. Reciprocal poles are transparent, integer addressing
+rejects nonfinite/unsafe coordinates, and zero strength/blend is exact passthrough.
+They are registered for the combined sheets and coverage/fallback checks; GPU and
+visual validation is still pending, and this is not the completed expansion.
+
+Six morphology tools now use separable min/max envelopes: bright-speck removal,
+dark-gap filling, bright/dark detail mattes, local-range matte and extrema smoothing.
+They preserve source coverage, offer box/horizontal/vertical neighborhoods, and
+bound each 1D pass to 97 samples. No quadratic neighborhood scan is used. The
+combined sheets and fallback/bypass checks include these tools; runtime remains
+unverified until the completed-catalog run.
+
+Five real temporal samplers: Frame Hold, RGB Time Split, Frame Echo, Time Exposure
+and Temporal Range. They request upstream frames through the existing temporal
+provider, cap multi-frame sampling at eight, and keep blend bypass/fallback behavior.
+Echo composites and extrema modes remain controls within their tool, not additional
+catalog entries. Tests now include held-clock stability and zero-delay channel
+reconstruction. Artifact generation includes the new temporal tools. No combined
+run has been dispatched for this incomplete checkpoint.

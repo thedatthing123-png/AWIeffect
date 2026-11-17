@@ -40,7 +40,7 @@ final class TemporalEffectTests:XCTestCase {
     func testTemporalDefaultsFallbacksAndBypassOnBothLayerTypes() throws {
         for adjustment in [false,true] {
             let original=try render(Self.scene(nil,onAdjustment:adjustment))
-            for definition in EffectRegistry.time33+EffectRegistry.retro37.filter({EffectRegistry.temporalIDs33.contains($0.id)})+EffectRegistry.batch38 {
+            for definition in EffectRegistry.time33+EffectRegistry.sampling33+EffectRegistry.retro37.filter({EffectRegistry.temporalIDs33.contains($0.id)})+EffectRegistry.batch38 {
                 var effect=definition.makeInstance()
                 let result=try render(Self.scene(effect,onAdjustment:adjustment))
                 XCTAssertGreaterThan(difference(original,result),0.05,definition.name)
@@ -56,6 +56,21 @@ final class TemporalEffectTests:XCTestCase {
         effect.params["span"] = .number(Animated(0));effect.params["offset"] = .number(Animated(0))
         for adjustment in [false,true] {
             XCTAssertEqual(try render(Self.scene(nil)),try render(Self.scene(effect,onAdjustment:adjustment)))
+        }
+    }
+    func testFrameHoldUsesOneStableSourceFrameBetweenClockTicks() throws {
+        let definition=try XCTUnwrap(EffectRegistry.definition("awi33.time.hold"))
+        let project=Self.scene(definition.makeInstance(),onAdjustment:true)
+        XCTAssertEqual(try render(project,time:0.35),try render(project,time:0.4))
+        XCTAssertGreaterThan(difference(try render(project,time:0.4),try render(project,time:0.51)),0.05)
+    }
+    func testRGBTimeSplitWithZeroDelaysPreservesTheCurrentFrame() throws {
+        let definition=try XCTUnwrap(EffectRegistry.definition("awi33.time.rgb"))
+        var effect=definition.makeInstance()
+        for key in ["red","green","blue"] { effect.params[key] = .number(Animated(0)) }
+        for adjustment in [false,true] {
+            XCTAssertLessThan(difference(try render(Self.scene(nil,onAdjustment:adjustment)),
+                try render(Self.scene(effect,onAdjustment:adjustment))),0.01)
         }
     }
     func testMotionLightsIgnoreColorChangesWhenAlphaSourceIsSelected() throws {

@@ -3,6 +3,58 @@ import Metal
 import simd
 
 extension EffectRegistry {
+    static let morphology37:[EffectDefinition] = [
+        morphology37("opening", "Remove Bright Specks", 0, "Opening removes bright marks smaller than the neighborhood while retaining broad lighting."),
+        morphology37("closing", "Fill Dark Gaps", 1, "Closing fills narrow dark gaps without blurring broad boundaries."),
+        morphology37("whiteHat", "Bright Detail Matte", 2, "Subtract an opening to isolate small bright features under uneven lighting."),
+        morphology37("blackHat", "Dark Detail Matte", 3, "Subtract the image from a closing to isolate fine dark lines and crevices."),
+        morphology37("gradient", "Local Range Matte", 4, "The local maximum minus minimum extracts both sides of contrast boundaries."),
+        morphology37("midrange", "Extrema Smooth", 5, "Average local dark and light envelopes to remove texture with a different character from blur.")
+    ]
+
+    private static func morphology37(_ id:String, _ name:String, _ mode:UInt32, _ summary:String) -> EffectDefinition {
+        var controls:[ParamDef] = [.number("radius", "Neighborhood", 3, 1, 24, unit:"px"),
+            .choice("axis", "Structure", ["Box", "Horizontal", "Vertical"], 0)]
+        if (2...4).contains(mode) { controls.append(.number("gain", "Detail Gain", 2, 0, 12)) }
+        controls.append(.number("blend", "Blend", 100, 0, 100, unit:"%"))
+        return EffectDefinition(id:"awi37.morph."+id,name:name,category:.stylize,aeMatchNames:[],summary:summary,
+            params:controls,stage:.pixels { ctx in
+                if v29(ctx,"blend")<=0 { return ctx.input }
+                let radius = min(48,max(1,Int(px29(ctx,"radius").rounded())))
+                let structure = ch29(ctx,"axis")
+                func envelope(_ input:MTLTexture, _ maximum:Bool, _ raw:Bool) -> MTLTexture {
+                    var current=input
+                    let axes:[UInt32] = structure == 0 ? [0,1] : [structure == 1 ? 0:1]
+                    for (index,axis) in axes.enumerated() {
+                        var p=EffectParams()
+                        p.i=SIMD4(UInt32(radius),axis,maximum ? 1:0,raw && index == 0 ? 1:0)
+                        let output=ctx.temp()
+                        ctx.gpu.run("fxExtrema37",ctx.cb,textures:[current,output],params:p,grid:output)
+                        current=output
+                    }
+                    return current
+                }
+                let a:MTLTexture, b:MTLTexture
+                // The first envelope reads straight source luminance. Subsequent
+                // passes read scalar scratch fields, never premultiplied color.
+                // Reuse the envelope's raw path rather than guessing from alpha.
+                if mode <= 3 {
+                    let maximum = mode == 1 || mode == 3
+                    a=envelope(envelope(ctx.input,maximum,true),!maximum,false)
+                    b=a
+                } else {
+                    a=envelope(ctx.input,false,true)
+                    b=envelope(ctx.input,true,true)
+                }
+                var p=EffectParams()
+                p.a=SIMD4((2...4).contains(mode) ? f29(ctx,"gain"):1,pc29(ctx,"blend"),0,0)
+                p.i.x=mode
+                let output=ctx.temp()
+                ctx.gpu.run("fxMorphology37",ctx.cb,textures:[ctx.input,output,a,b],params:p,grid:output)
+                return output
+            })
+    }
+
     static let textGeometryIDs37:Set<String>=["awi37.text.arc","awi37.text.cylinder","awi37.text.sphere", "awi37.text.accordion","awi37.text.helix","awi37.text.attractor"]
     static let textGeometry37:[EffectDefinition]=[
         textGeometry37("arc","Text Arc","Bend the actual glyph baseline into an arc, optionally turning each letter along its tangent.",

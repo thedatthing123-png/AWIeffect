@@ -5,6 +5,49 @@ constexpr sampler matte33(address::clamp_to_zero,filter::linear,coord::pixel);
 static float3 straight33(float4 value) { return value.a>.00001 ? value.rgb/value.a : float3(0); }
 static float luma33(float3 value) { return dot(value,float3(.2126,.7152,.0722)); }
 
+kernel void fxRGBTime33(texture2d<half,access::read> red [[texture(0)]],
+                       texture2d<half,access::write> output [[texture(1)]],
+                       texture2d<half,access::read> green [[texture(2)]],
+                       texture2d<half,access::read> blue [[texture(3)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    half4 r=red.read(gid),g=green.read(gid),b=blue.read(gid);
+    output.write(half4(r.r,g.g,b.b,max(r.a,max(g.a,b.a))),gid);
+}
+kernel void fxTemporalAccumulate33(texture2d<half,access::read> accumulated [[texture(0)]],
+                                 texture2d<half,access::write> output [[texture(1)]],
+                                 texture2d<half,access::read> frame [[texture(2)]],
+                                 constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float4 a=float4(accumulated.read(gid)),b=float4(frame.read(gid));
+    float4 result=a;
+    if(p.i.x==0) {
+        b*=p.a.x;
+        if(p.i.y==0) result=b;
+        else if(p.i.z==0) result=float4(a.rgb+b.rgb,a.a+b.a-a.a*b.a);
+        else if(p.i.z==1) result=a+b*(1-a.a);
+        else if(p.i.z==2) result=max(a,b);
+        else result=min(a,b);
+    } else if(p.i.x==1) result=a+b*p.a.x;
+    else if(p.i.y==0) result=b;
+    else result=p.i.w==0 ? max(a,b):min(a,b);
+    output.write(half4(clamp(result,float4(-65504),float4(65504))),gid);
+}
+kernel void fxTemporalFinish33(texture2d<half,access::read> accumulated [[texture(0)]],
+                             texture2d<half,access::write> output [[texture(1)]],
+                             texture2d<half,access::read> minimum [[texture(2)]],
+                             constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float4 result=float4(accumulated.read(gid));
+    if(p.i.x==1) result/=max(p.a.x,1.e-6);
+    if(p.i.x==2) {
+        float4 lower=float4(minimum.read(gid));
+        if(p.i.y==1) result=lower;
+        if(p.i.y==2) result=float4(max(float3(0),result.rgb-lower.rgb),result.a);
+    }
+    result.a=clamp(result.a,0.0,1.0);
+    output.write(half4(result),gid);
+}
+
 kernel void fxTimeSlice33(texture2d<half,access::sample> accumulated [[texture(0)]],
                           texture2d<half,access::write> output [[texture(1)]],
                           texture2d<half,access::sample> frame [[texture(2)]],

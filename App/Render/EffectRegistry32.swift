@@ -3,6 +3,42 @@ import Metal
 import simd
 
 extension EffectRegistry {
+    // Coordinate maps, rather than variants of the noise displacement family.
+    static let conformal32: [EffectDefinition] = [
+        conformal32("mobius", "Mobius Lens", 0, "A fractional linear lens bends the image around an editable pole.", "Curvature", 0.55, -1.5, 1.5),
+        conformal32("complexSine", "Sine Fold", 1, "A complex sine map folds one axis while expanding the other smoothly.", "Fold Frequency", 1.4, 0.1, 4),
+        conformal32("complexPower", "Power Spiral", 2, "A complex power changes angular spread and radial scale together.", "Power", 1.4, 0.2, 4),
+        conformal32("joukowski", "Joukowski Lens", 3, "A reciprocal coordinate map stretches rings into pointed, elliptical forms.", "Pole Radius", 0.45, 0.05, 1.5),
+        conformal32("exponential", "Exponential Wrap", 4, "An exponential map wraps a flat image into repeated radial bands.", "Wrap Rate", 1.3, 0.1, 4),
+        conformal32("complexTangent", "Tangent Fold", 5, "A complex tangent creates periodic pinched folds around protected poles.", "Fold Frequency", 1.1, 0.1, 4)
+    ]
+
+    private static func conformal32(_ id: String, _ name: String, _ mode: UInt32,
+                                    _ summary: String, _ shapeName: String,
+                                    _ shape: Double, _ minimum: Double, _ maximum: Double) -> EffectDefinition {
+        EffectDefinition(id: "awi32.map." + id, name: name, category: .distort,
+            aeMatchNames: [], summary: summary,
+            params: [.number("amount", "Strength", 65, 0, 100, unit: "%"),
+                .number("scale", "Field Size", 250, 20, 1500, unit: "px"),
+                .number("shape", shapeName, shape, minimum, maximum),
+                .point("center", "Center", Vec2(0.5, 0.5)),
+                .angle("angle", "Direction", 20),
+                .choice("edge", "Edges", ["Transparent", "Repeat", "Tile", "Mirror"], 3),
+                .choice("quality", "Sampling", ["Draft", "Fine"], 1),
+                .number("blend", "Blend", 100, 0, 100, unit: "%")],
+            stage: .pixels { ctx in
+                let center = ctx.effect.params["center"]?.point(at: ctx.time) ?? Vec2(0.5, 0.5)
+                var p = EffectParams()
+                p.a = SIMD4(pc29(ctx, "amount"), max(1, px29(ctx, "scale")), f29(ctx, "shape"), 0)
+                p.b = SIMD4(Float(center.x * Double(ctx.width)), Float(center.y * Double(ctx.height)),
+                    f29(ctx, "angle") * .pi / 180, pc29(ctx, "blend"))
+                p.i = SIMD4(mode, UInt32(ch29(ctx, "edge")), UInt32(ch29(ctx, "quality")) + 1, 0)
+                let output = ctx.temp()
+                ctx.gpu.run("fxConformal32", ctx.cb, textures: [ctx.input, output], params: p, grid: output)
+                return output
+            })
+    }
+
     static let batch32: [EffectDefinition] = [
         warp32("liquidCurl", "Curl Flow", 0, "Coupled swirling flow follows the curl of an animated scalar field.", "Flow Complexity", 1.2),
         warp32("liquidGel", "Gel Warp", 1, "Soft gel pockets compress and stretch the image with smoothly changing cell boundaries.", "Pocket Shape", 0.8),
