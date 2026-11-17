@@ -184,6 +184,14 @@ jobs:
           path: /tmp/awi-shapes
           if-no-files-found: ignore
 
+      - name: Upload background expansion renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: background-renders
+          path: /tmp/awi-backgrounds
+          if-no-files-found: ignore
+
       - name: Upload graph motion renders
         if: always()
         uses: actions/upload-artifact@v4

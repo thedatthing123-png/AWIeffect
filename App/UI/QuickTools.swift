@@ -9,7 +9,8 @@ import AVFoundation
 enum EffectSection: String, CaseIterable, Identifiable {
     case text = "Text", shake = "Shake & Motion", glow = "Glow & Light", blur = "Blur", glitch = "Glitch", distort = "Distort & Warp",
          transition = "Transitions", particles = "Particles", backgrounds = "Backgrounds", threeD = "3D",
-         stylize = "Stylize & Draw", retro = "Retro & Film", color = "Color & Grade", keying = "Key & Matte", other = "More"
+         stylize = "Stylize & Draw", retro = "Retro & Film", color = "Color & Grade", keying = "Key & Matte",
+         liquid = "Liquid", shapes = "Shapes", procedural = "Procedural & Noise", time = "Time", other = "More"
     var id: String { rawValue }
 
     var symbol: String {
@@ -28,6 +29,10 @@ enum EffectSection: String, CaseIterable, Identifiable {
         case .retro: return "film"
         case .color: return "paintpalette.fill"
         case .keying: return "person.crop.rectangle"
+        case .liquid: return "drop.fill"
+        case .shapes: return "square.on.circle"
+        case .procedural: return "circle.hexagongrid"
+        case .time: return "clock"
         case .other: return "ellipsis.circle"
         }
     }
@@ -54,12 +59,24 @@ enum EffectSection: String, CaseIterable, Identifiable {
                              "mixer", "invert", "sepia", "bleach", "cross process", "infrared", "thermal", "night", "duotone", "gradient map", "looks", "vibrance",
                              "black & white", "photo filter", "flicker", "fill", "cyberpunk", "day for night", "split toning", "selective"]
         case .keying: return ["key", "matte", "alpha", "choke", "spill", "unmult", "feather", "luma", "opacity", "blink", "vignette"]
+        case .liquid: return ["liquid", "melt", "drip", "goo", "fluid"]
+        case .shapes: return []
+        case .procedural: return []
+        case .time: return []
         case .other: return []
         }
     }
 
     /// Section an effect is filed under.
     static func of(_ d: EffectDefinition) -> EffectSection {
+        // Explicit placement wins over incidental words in a description ("soft", "light", "star").
+        if d.id.hasPrefix("awi30.") { return .backgrounds }
+        if ["awi7.speedLines", "awi7.mangaFocusLines", "awi7.shockwave", "awi17.sphere", "awi17.cube", "awi17.torus", "awi17.cylinder", "awi17.pyramid", "awi17.octahedron", "awi17.starPrism", "awi17.heart", "awi17.hollowBox", "awi17.ring"].contains(d.id) { return .shapes }
+        if ["ae.fractalNoise", "ae.cellPattern"].contains(d.id) { return .procedural }
+        if ["awi6.liquid", "awi21.liquidGlass", "awi12.liquidGradient"].contains(d.id) { return .liquid }
+        if d.category == .keying { return .keying }
+        if d.category == .glitch { return .glitch }
+        if d.category == .blur { return .blur }
         if d.category == .transition { return .transition }
         if d.category == .text { return .text }
         if d.id == "awi23.drawProgress" { return .stylize }

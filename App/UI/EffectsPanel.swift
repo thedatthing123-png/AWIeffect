@@ -696,7 +696,7 @@ struct EffectBrowser: View {
                     }
                     if tab == .all && query.isEmpty {
                         // Featured: what's new and what you used last, playing their previews.
-                        featuredRow("New", EffectRegistry.batch19 + [EffectRegistry.deepGlow])
+                        featuredRow("New", EffectRegistry.batch30 + [EffectRegistry.deepGlow])
                         let rec = recents.compactMap { EffectRegistry.definition($0) }
                         if !rec.isEmpty { featuredRow("Recent", Array(rec.prefix(12))) }
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {

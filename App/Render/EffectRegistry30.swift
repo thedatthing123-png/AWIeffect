@@ -1,0 +1,85 @@
+import Foundation
+import Metal
+import simd
+
+/// Background generators, expansion batch 30. Each mode is a separate visual primitive,
+/// with its own controls rather than a preset of another effect.
+extension EffectRegistry {
+    static let batch30: [EffectDefinition] = [
+        background30("solidSunburst", "Solid Sunburst", 0,
+            "Solid candy starburst wedges, not light rays. Editable duty, twist and radial fade.",
+            [.number("scale", "Wedges", 14, 2, 96, step: 1), .number("width", "Wedge Width", 50, 2, 98, unit: "%"),
+             .number("shape", "Twist", 0.15, -4, 4), .number("softness", "Edge Softness", 1, 0, 30, unit: "%"),
+             .number("fade", "Radial Fade", 18, 0, 100, unit: "%")], RGBA(hex: 0xFF627D), RGBA(hex: 0xFFE6B5)),
+        background30("spiralBands", "Spiral Bands", 1,
+            "Flat two-color spiral ribbons with adjustable arms, pitch and band width.",
+            [.number("scale", "Arms", 5, 1, 32, step: 1), .number("width", "Band Width", 50, 2, 98, unit: "%"),
+             .number("shape", "Pitch", 3, 0.2, 12)], RGBA(hex: 0x2A174A), RGBA(hex: 0xB3A1FF)),
+        background30("chevronStripes", "Chevron Stripes", 2,
+            "Continuous zigzag stripes. Change the slope and repeat spacing without a bitmap overlay.",
+            [.number("scale", "Repeats", 7, 1, 40), .number("width", "Stripe Width", 42, 2, 98, unit: "%"),
+             .number("shape", "Chevron Depth", 0.65, 0, 2)], RGBA(hex: 0x173A48), RGBA(hex: 0x7BEBCA)),
+        background30("wovenPattern", "Woven Pattern", 3,
+            "Interlaced horizontal and vertical ribbons with alternating over-under crossings.",
+            [.number("scale", "Weave Count", 9, 2, 50), .number("width", "Ribbon Width", 65, 10, 95, unit: "%"),
+             .number("shape", "Crossing Shade", 35, 0, 90, unit: "%")], RGBA(hex: 0xDCB883), RGBA(hex: 0x503A48)),
+        background30("arcTiles", "Arc Tiles", 4,
+            "Truchet quarter-circle connections form a seamless maze. Seed changes the tile connections.",
+            [.number("scale", "Tile Count", 8, 2, 40), .number("width", "Line Width", 18, 2, 70, unit: "%"),
+             .number("shape", "Seed", 7, 0, 1000, step: 1)], RGBA(hex: 0xE8D5A9), RGBA(hex: 0x1A3540)),
+        background30("contourMap", "Contour Map", 5,
+            "Animated topographic contour lines from a continuous noise field, independent of the image.",
+            [.number("scale", "Terrain Scale", 3, 0.5, 12), .number("width", "Line Width", 15, 2, 70, unit: "%"),
+             .number("shape", "Contour Count", 9, 2, 28)], RGBA(hex: 0x8EE8CC), RGBA(hex: 0x112E34)),
+        background30("scallopPattern", "Scallop Pattern", 6,
+            "Overlapping fish-scale arcs, with a controllable fan spread and border thickness.",
+            [.number("scale", "Scale Count", 7, 2, 35), .number("width", "Border Width", 12, 2, 45, unit: "%"),
+             .number("shape", "Fan Spread", 0.75, 0.3, 1.5)], RGBA(hex: 0xF6C680), RGBA(hex: 0x344C72)),
+        background30("diamondLattice", "Diamond Lattice", 7,
+            "Crossed diagonal lattice with independent horizontal stretch and clean antialiased lines.",
+            [.number("scale", "Diamond Count", 9, 2, 45), .number("width", "Line Width", 10, 1, 70, unit: "%"),
+             .number("shape", "Stretch", 1.4, 0.3, 3)], RGBA(hex: 0xAFA7F6), RGBA(hex: 0x28203F)),
+        background30("dotWaves", "Dot Waves", 8,
+            "A regular dot field breathes along traveling wave fronts. Not a halftone filter of the image.",
+            [.number("scale", "Dot Count", 13, 3, 55), .number("width", "Dot Size", 58, 5, 95, unit: "%"),
+             .number("shape", "Wave Depth", 65, 0, 100, unit: "%")], RGBA(hex: 0xF1A7FF), RGBA(hex: 0x231839)),
+        background30("crossGrid", "Cross Grid", 9,
+            "An offset field of plus-sign registration marks. Arm length and stroke width are independent.",
+            [.number("scale", "Mark Count", 8, 2, 40), .number("width", "Stroke Width", 10, 1, 45, unit: "%"),
+             .number("shape", "Arm Length", 35, 10, 90, unit: "%")], RGBA(hex: 0x6BCEEB), RGBA(hex: 0x142F43)),
+        background30("ribbonGradient", "Ribbon Gradient", 10,
+            "Soft diagonal color ribbons drift and bend continuously, with adjustable wave amplitude.",
+            [.number("scale", "Ribbon Count", 2.5, 0.3, 10), .number("width", "Color Balance", 50, 5, 95, unit: "%"),
+             .number("shape", "Wave Amount", 0.35, 0, 1.5)], RGBA(hex: 0xF2959F), RGBA(hex: 0x635FE5)),
+        background30("horizonGradient", "Horizon Gradient", 11,
+            "Layered atmospheric color bands with a gently moving horizon. Control banding and haze.",
+            [.number("scale", "Bands", 6, 1, 24), .number("width", "Haze", 55, 2, 100, unit: "%"),
+             .number("shape", "Horizon Curve", 0.25, 0, 1)], RGBA(hex: 0xF5AE79), RGBA(hex: 0x34376C))
+    ]
+
+    private static func background30(_ id: String, _ name: String, _ mode: UInt32, _ summary: String,
+                                     _ controls: [ParamDef], _ first: RGBA, _ second: RGBA) -> EffectDefinition {
+        EffectDefinition(id: "awi30." + id, name: name, category: .generate, aeMatchNames: [], summary: summary,
+            params: controls + [.point("center", "Center", Vec2(0.5, 0.5)), .angle("rotation", "Rotation", 0),
+                .number("speed", "Speed", 0.18, -2, 2), .color("color", "Color 1", first), .color("color2", "Color 2", second),
+                .number("blend", "Blend", 100, 0, 100, unit: "%"), .toggle("only", "Effect Only", false)],
+            stage: .pixels { ctx in
+                func definition(_ key: String) -> ParamDef? { EffectRegistry.definition(ctx.effect.typeID)?.params.first { $0.id == key } }
+                func value(_ key: String) -> Float {
+                    Float(ctx.effect.params[key] != nil ? ctx.num(key) : definition(key)?.defaultValue.number(at: ctx.time) ?? 0)
+                }
+                func color(_ key: String) -> SIMD4<Float> {
+                    (ctx.effect.params[key]?.color(at: ctx.time) ?? definition(key)?.defaultValue.color(at: ctx.time) ?? .white).simd
+                }
+                let center = ctx.effect.params["center"]?.point(at: ctx.time) ?? Vec2(0.5, 0.5)
+                var p = EffectParams()
+                p.a = SIMD4(value("scale"), value("width") / 100, value("shape"), Float(ctx.time) * value("speed"))
+                p.b = color("color"); p.c = color("color2")
+                p.d = SIMD4(Float(center.x), Float(center.y), value("rotation") * .pi / 180, value("blend") / 100)
+                p.i = SIMD4(mode, ctx.effect.bool("only") ? 1 : 0, (value("softness") / 100).bitPattern, (value("fade") / 100).bitPattern)
+                let out = ctx.temp()
+                ctx.gpu.run("fxBackground30", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
+                return out
+            })
+    }
+}
