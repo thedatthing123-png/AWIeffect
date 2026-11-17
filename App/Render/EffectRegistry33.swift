@@ -3,6 +3,58 @@ import Metal
 import simd
 
 extension EffectRegistry {
+    static let temporalIDs33:Set<String>=["awi33.time.slice","awi33.time.difference","awi33.time.median"]
+    static let time33:[EffectDefinition]=[
+        EffectDefinition(id:"awi33.time.slice",name:"Time Slice",category:.stylize,aeMatchNames:[],
+            summary:"Different image regions show actual upstream frames from a time interval. Linear or radial slices can blend between sampled frames.",
+            params:[.number("span","Time Span",0.3,-3,3,unit:"s"),.number("offset","Time Offset",-0.15,-10,10,unit:"s"),
+                .number("samples","Frame Samples",6,2,8,step:1),.angle("angle","Direction",0),
+                .point("center","Center",Vec2(0.5,0.5)),.choice("pattern","Time Map",["Linear","Radial"],0),
+                .choice("sampling","Between Frames",["Hold","Blend"],1),.number("blend","Blend",100,0,100,unit:"%")],
+            stage:.pixels { ctx in
+                guard let sample=ctx.temporalSample,v29(ctx,"blend")>0 else { return ctx.input }
+                if abs(v29(ctx,"span"))+abs(v29(ctx,"offset"))<0.00001 { return ctx.input }
+                let count=min(8,max(2,Int(v29(ctx,"samples"))))
+                let center=ctx.effect.params["center"]?.point(at:ctx.time) ?? Vec2(0.5,0.5)
+                var accumulated=ctx.temp();ctx.gpu.run("fxClear",ctx.cb,textures:[accumulated],grid:accumulated)
+                for index in 0..<count {
+                    let t=ctx.time+v29(ctx,"offset")+v29(ctx,"span")*Double(index)/Double(count-1)
+                    guard let frame=sample(t) else { return ctx.input }
+                    var p=EffectParams();p.a=SIMD4(Float(index),Float(count),0,0)
+                    p.b=SIMD4(Float(center.x),Float(center.y),f29(ctx,"angle")*Float.pi/180,0)
+                    p.i=SIMD4(UInt32(ch29(ctx,"pattern")),UInt32(ch29(ctx,"sampling")),0,0)
+                    let next=ctx.temp()
+                    ctx.gpu.run("fxTimeSlice33",ctx.cb,textures:[accumulated,next,frame],params:p,grid:next)
+                    accumulated=next
+                }
+                return timeComposite33(ctx,accumulated)
+            }),
+        EffectDefinition(id:"awi33.time.difference",name:"Frame Difference",category:.stylize,aeMatchNames:[],
+            summary:"Compare the current upstream image with an actual earlier or later frame to isolate motion and changing detail.",
+            params:[.number("delay","Frame Delay",0.1,-2,2,unit:"s"),.number("gain","Difference Gain",3,0,16),
+                .choice("channels","Compare",["Color","Luminance","Alpha"],0),.number("blend","Blend",100,0,100,unit:"%")],
+            stage:.pixels { ctx in
+                guard let sample=ctx.temporalSample,v29(ctx,"blend")>0,let frame=sample(ctx.time-v29(ctx,"delay")) else { return ctx.input }
+                var p=EffectParams();p.a=SIMD4(f29(ctx,"gain"),pc29(ctx,"blend"),0,0);p.i.y=UInt32(ch29(ctx,"channels"))
+                let out=ctx.temp();ctx.gpu.run("fxTimeDifference33",ctx.cb,textures:[ctx.input,out,frame],params:p,grid:out)
+                return out
+            }),
+        EffectDefinition(id:"awi33.time.median",name:"Temporal Median",category:.blur,aeMatchNames:[],
+            summary:"A three-frame median rejects isolated temporal changes. Larger spacing can deliberately remove moving detail.",
+            params:[.number("spacing","Frame Spacing",0.05,0.01,1,unit:"s"),.number("blend","Blend",100,0,100,unit:"%")],
+            stage:.pixels { ctx in
+                guard let sample=ctx.temporalSample,v29(ctx,"blend")>0,
+                      let previous=sample(ctx.time-v29(ctx,"spacing")),let next=sample(ctx.time+v29(ctx,"spacing")) else { return ctx.input }
+                var p=EffectParams();p.a.x=pc29(ctx,"blend")
+                let out=ctx.temp();ctx.gpu.run("fxTimeMedian33",ctx.cb,textures:[ctx.input,out,previous,next],params:p,grid:out)
+                return out
+            })
+    ]
+    private static func timeComposite33(_ ctx:EffectContext,_ processed:MTLTexture) -> MTLTexture {
+        let out=ctx.temp();var p=EffectParams();p.a.x=pc29(ctx,"blend")
+        ctx.gpu.run("fxTimeComposite33",ctx.cb,textures:[ctx.input,out,processed],params:p,grid:out)
+        return out
+    }
     static let batch33: [EffectDefinition] = [
         matte33("channelMatte","Channel Matte",0,"Build a soft matte from a selected source color channel.",
             [.choice("channel","Channel",["Red","Green","Blue","Alpha"],0),.number("threshold","Threshold",45,0,100,unit:"%"),.number("softness","Softness",20,1,100,unit:"%")]),

@@ -103,7 +103,8 @@ enum EffectStackR4 {
                 var c = ctx
                 if let r = resolved(ctx.effect, at: ctx.time) {
                     c = EffectContext(gpu: ctx.gpu, cb: ctx.cb, input: ctx.input, effect: r, time: ctx.time, unit: ctx.unit, pool: ctx.pool,
-                                      reference: ctx.reference, layerPixels: ctx.layerPixels, compositionPixels: ctx.compositionPixels)
+                                      reference: ctx.reference, layerPixels: ctx.layerPixels, compositionPixels: ctx.compositionPixels,
+                                      temporalSample: ctx.temporalSample)
                 }
                 let out = run(c)
                 let m = mix(ctx.effect, ctx.time)

@@ -44,6 +44,9 @@ final class EffectTests: XCTestCase {
 
     /// Colorful test scene with hard edges, brights, darks and a green "screen" area.
     private func scene(effect: EffectInstance?, onAdjustment: Bool = false) -> Project {
+        if let effect,EffectRegistry.temporalIDs33.contains(effect.typeID) {
+            return TemporalEffectTests.scene(effect,onAdjustment:onAdjustment)
+        }
         if effect?.typeID == "awi23.drawProgress" { return drawingScene(effect: effect) }
         if let effect, EffectRegistry.definition(effect.typeID)?.category == .text { return textScene(effect: effect) }
         var p = Project.new(name: "fx", width: 160, height: 160, fps: 30, duration: 2, background: RGBA(0.08, 0.06, 0.12))
@@ -188,6 +191,7 @@ final class EffectTests: XCTestCase {
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
             let out = try render(r, scene(effect: visible(d), onAdjustment: !d.isTransformEffect && !Self.alphaShaped.contains(d.id)))
             var comparison = d.id == "awi23.drawProgress" ? try render(r, drawingScene(effect: nil)) : (d.category == .text ? try render(r, textScene(effect: nil)) : base)
+            if EffectRegistry.temporalIDs33.contains(d.id) { comparison=try render(r,TemporalEffectTests.scene(nil)) }
             if ["awi33.alphaDither","awi33.alphaSteps"].contains(d.id) {
                 var disabled=visible(d); disabled.isEnabled=false
                 comparison=try render(r,scene(effect:disabled))
@@ -207,6 +211,7 @@ final class EffectTests: XCTestCase {
         for d in EffectRegistry.all where !d.isTransformEffect && !Self.alphaShaped.contains(d.id) && !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
             let out = try render(r, scene(effect: visible(d), onAdjustment: true))
             var comparison=base
+            if EffectRegistry.temporalIDs33.contains(d.id) { comparison=try render(r,TemporalEffectTests.scene(nil)) }
             if EffectRegistry.cleanup37.contains(where:{$0.id==d.id}) {
                 var disabled=visible(d);disabled.isEnabled=false
                 comparison=try render(r,scene(effect:disabled,onAdjustment:true))
@@ -222,6 +227,7 @@ final class EffectTests: XCTestCase {
             var e = visible(d)
             e.isEnabled = false
             var comparison = d.id == "awi23.drawProgress" ? try render(r, drawingScene(effect: nil)) : (d.category == .text ? try render(r, textScene(effect: nil)) : base)
+            if EffectRegistry.temporalIDs33.contains(d.id) { comparison=try render(r,TemporalEffectTests.scene(nil)) }
             if ["awi33.alphaDither","awi33.alphaSteps"].contains(d.id) {
                 var reference=scene(effect:e)
                 for index in reference.layers.indices { reference.layers[index].effects=[] }

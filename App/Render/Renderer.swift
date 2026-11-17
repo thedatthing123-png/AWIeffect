@@ -50,6 +50,12 @@ final class Renderer {
     /// Beat / marker times of the project being encoded (text beat selectors).
     var textBeats: [Double] = []
     private var currentDepth = 0
+    /// Root-frame-only temporal cache. These textures are owned independently of
+    /// TexturePool scopes, whose scratch storage can be reused after nested encoding.
+    private var temporalFrames: [String: MTLTexture] = [:]
+    private var temporalFrameOrder: [String] = []
+    private var temporalFrameBytes = 0
+    private var temporalBackdropCapture: (layer:UUID,effect:UUID,texture:MTLTexture?)?
     /// 3D layers casting shadows this frame (only filled when a light casts shadows).
     private var shadowCasters: [(id: UUID, gpu: ShadowCasterGPU, tex: MTLTexture)] = []
     /// 1x1 opaque white: stands in for solid / shape casters and unused caster slots.
@@ -161,6 +167,15 @@ final class Renderer {
         fx.run("fxCopy", cb, textures: [comp, copy], grid: copy)
         var current = copy
         for effect in effects.dropFirst(index) {
+            if let capture=temporalBackdropCapture,capture.layer==layer.id,capture.effect==effect.id {
+                let descriptor=MTLTextureDescriptor.texture2DDescriptor(pixelFormat:current.pixelFormat,width:current.width,height:current.height,mipmapped:false)
+                descriptor.usage=[.shaderRead,.shaderWrite];descriptor.storageMode = .private
+                if let image=device.makeTexture(descriptor:descriptor) {
+                    fx.run("fxCopy",cb,textures:[current,image],grid:image)
+                    temporalBackdropCapture=(capture.layer,capture.effect,image)
+                }
+                return
+            }
             guard let definition = EffectRegistry.definition(effect.typeID), case .pixels(let run) = definition.stage else { continue }
             var context = EffectContext(gpu: fx, cb: cb, input: current, effect: effect, time: time, unit: renderScale, pool: pool)
             context.layerPixels = SIMD2(Double(comp.width), Double(comp.height))
@@ -168,7 +183,8 @@ final class Renderer {
                let reference = project.layers.first(where: { $0.id == id }) {
                 context.reference = fullLayer(reference, project: project, time: time, renderScale: renderScale, comp: comp, cb: cb, pool: pool, mediaURL: mediaURL)
             } else if effect.typeID == "awi18.displacementMap" { context.reference = coverage }
-            current = run(context)
+            current=runViewportEffect(context,run:run,layer:layer,project:groupSource ?? project,
+                renderScale:renderScale,comp:comp,cb:cb,pool:pool,mediaURL:mediaURL)
         }
         var params = EffectParams(); params.a.x = Float(opacity)
         if layer.blendMode == .normal {
@@ -254,7 +270,7 @@ final class Renderer {
         let original = pool.acquire(width: comp.width, height: comp.height)
         fx.run("fxCopy", cb, textures: [comp, original], grid: original)
         encodeAdjustment(layer, effects: layer.effects.filter(\.isEnabled), time: time, renderScale: renderScale,
-                         opacity: opacity, comp: comp, cb: cb, pool: pool,
+                         opacity: opacity, comp: comp, cb: cb, pool: pool, mediaURL: mediaURL,
                          shutter: project.blurs(layer, at: time) ? project.shutterAngle / 360 / max(project.fps, 1) : 0,
                          sampleCount: min(project.blurSamples, Renderer.blurSampleCap ?? project.blurSamples))
         let processed = pool.acquire(width: comp.width, height: comp.height)
@@ -536,6 +552,132 @@ final class Renderer {
         return Vec2(abs(s.x) / 2, abs(s.y) / 2)
     }
 
+    /// Providers are synchronous: no media resolver escapes the encoding call.
+    private func withTemporalContext(_ context: EffectContext,run: (EffectContext) -> MTLTexture,
+                                     sample: (Double) -> MTLTexture?) -> MTLTexture {
+        withoutActuallyEscaping(sample) { provider in
+            var ctx=context;ctx.temporalSample=provider
+            return run(ctx)
+        }
+    }
+
+    /// Re-evaluate raw animation and parenting before the current effect, not an
+    /// already-resolved current-frame layer. Cache independently of pool scopes.
+    private func temporalFrame(layer: Layer,effect: EffectInstance,project: Project,time: Double,
+                               renderScale: Double,comp: MTLTexture,cb: MTLCommandBuffer,pool: TexturePool,
+                               mediaURL: (String) -> URL) -> MTLTexture? {
+        guard currentDepth<7,time.isFinite,
+              var source=project.layers.first(where:{$0.id==layer.id}),
+              let index=source.effects.firstIndex(where:{$0.id==effect.id}) else { return nil }
+        let fps=max(project.fps,1)
+        let frame=(min(max(time,0),max(0,project.duration-1/fps))*fps).rounded()
+        let sampleTime=frame/fps
+        let key="\(project.id)-\(layer.id)-\(effect.id)-\(frame)-\(comp.width)x\(comp.height)-\(renderScale)"
+        if let cached=temporalFrames[key] { return cached }
+        let backdropIndex=source.effects.firstIndex { $0.isEnabled && $0.typeID=="awi18.displacementMap" && $0.choice("target")==1 }
+        let isBackdrop=source.content != .camera && (backdropIndex.map{$0<index} ?? false)
+        // A backdrop pass captures its exact unmasked input at the effect boundary.
+        // Keep that boundary as a sentinel; it will not execute recursively.
+        source.effects=Array(source.effects.prefix(index+(isBackdrop ? 1:0)))+source.effects.dropFirst(index+1).filter {
+            EffectRegistry.definition($0.typeID)?.isTransformEffect == true
+        }
+        source.transform.opacity=Animated(100)
+        source.blendMode = .normal;source.trackMatte = .none;source.clipToBelow=false
+        let rendered:MTLTexture
+        if source.content == .camera {
+            var sub=project
+            if let camera=sub.layers.firstIndex(where:{$0.id==source.id}) { sub.layers[camera]=source }
+            sub.precompDepth=currentDepth+1
+            rendered=pool.acquire(width:comp.width,height:comp.height)
+            encode(project:sub,time:sampleTime,renderScale:renderScale,into:rendered,commandBuffer:cb,pool:pool,mediaURL:mediaURL)
+        } else if source.content == .adjustment || isBackdrop {
+            let rows=project.timelineLayers
+            guard let row=rows.firstIndex(where:{$0.id==source.id}) else { return nil }
+            var included=Set(rows.dropFirst(row+1).map(\.id))
+            for item in rows.dropFirst(row+1) where item.isGroup {
+                included.formUnion(EditorState.descendantIDs(of:item.id,in:project))
+            }
+            var sub=project
+            sub.layers=project.layers.filter { included.contains($0.id) || $0.content == .camera || $0.content == .light }
+            sub.parentContext=project.layers+(project.parentContext ?? [])
+            if !source.effects.isEmpty { sub.layers.insert(source,at:0) }
+            sub.precompDepth=currentDepth+1
+            let buffer=pool.acquire(width:comp.width,height:comp.height)
+            if isBackdrop {
+                let savedCapture=temporalBackdropCapture
+                temporalBackdropCapture=(source.id,effect.id,nil)
+                encode(project:sub,time:sampleTime,renderScale:renderScale,into:buffer,commandBuffer:cb,pool:pool,mediaURL:mediaURL)
+                let captured=temporalBackdropCapture?.texture
+                temporalBackdropCapture=savedCapture
+                guard let captured else { return nil }
+                rendered=captured
+            } else {
+                encode(project:sub,time:sampleTime,renderScale:renderScale,into:buffer,commandBuffer:cb,pool:pool,mediaURL:mediaURL)
+                rendered=buffer
+            }
+        } else {
+            var sub=project
+            // Defocus is applied after the effect by the outer pass.
+            for camera in sub.layers.indices where sub.layers[camera].content == .camera {
+                sub.layers[camera].camera?.depthOfField=false
+            }
+            rendered=fullLayer(source,project:sub,time:sampleTime,renderScale:renderScale,comp:comp,cb:cb,pool:pool,mediaURL:mediaURL)
+        }
+        let descriptor=MTLTextureDescriptor.texture2DDescriptor(pixelFormat:rendered.pixelFormat,
+            width:rendered.width,height:rendered.height,mipmapped:false)
+        descriptor.usage=[.shaderRead,.shaderWrite];descriptor.storageMode = .private
+        guard let owned=device.makeTexture(descriptor:descriptor) else { return rendered }
+        fx.run("fxCopy",cb,textures:[rendered,owned],grid:owned)
+        let bytes=max(owned.allocatedSize,owned.width*owned.height*8)
+        // GPU command buffers retain evicted images until their encoded reads finish.
+        while temporalFrameBytes+bytes>64*1024*1024,!temporalFrameOrder.isEmpty {
+            let oldest=temporalFrameOrder.removeFirst()
+            if let removed=temporalFrames.removeValue(forKey:oldest) {
+                temporalFrameBytes-=max(removed.allocatedSize,removed.width*removed.height*8)
+            }
+        }
+        if bytes<=64*1024*1024 {
+            temporalFrames[key]=owned;temporalFrameOrder.append(key);temporalFrameBytes+=bytes
+        }
+        return owned
+    }
+
+    private func temporalInBuffer(_ frame:MTLTexture,size:(Int,Int),placement:simd_double3x3,
+                                  toLocal:simd_double3x3,time:Double,cb:MTLCommandBuffer,pool:TexturePool) -> MTLTexture {
+        let out=pool.acquire(width:size.0,height:size.1)
+        fx.run("fxClear",cb,textures:[out],grid:out)
+        let center=simd_double3x3(columns:(SIMD3(1,0,0),SIMD3(0,1,0),SIMD3(Double(frame.width)/2,Double(frame.height)/2,1)))
+        let carrier=Layer(name:"time sample",content:.solid,outPoint:1,
+            transform:LayerTransform(position:Animated(.zero)),size:Animated(Vec2(1,1)))
+        drawQuad(cb:cb,target:out,matrix:toLocal.inverse*placement.inverse*center,
+            halfSize:Vec2(Double(frame.width)/2,Double(frame.height)/2),aa:0.5,opacity:1,
+            layer:carrier,time:time,source:.image(frame),premultipliedImage:true,blendOverride:.normal)
+        return out
+    }
+
+    /// Full-viewport sources (3D objects/text and the camera) may use a reduced
+    /// buffer. Rescale the sampled viewport instead of treating it as layer space.
+    private func runViewportEffect(_ context:EffectContext,run:(EffectContext)->MTLTexture,
+                                   layer:Layer,project:Project,renderScale:Double,comp:MTLTexture,
+                                   cb:MTLCommandBuffer,pool:TexturePool,mediaURL:(String)->URL) -> MTLTexture {
+        guard EffectRegistry.temporalIDs33.contains(context.effect.typeID) else { return run(context) }
+        return withTemporalContext(context,run:run) { t in
+            guard let frame=self.temporalFrame(layer:layer,effect:context.effect,project:project,time:t,
+                renderScale:renderScale,comp:comp,cb:cb,pool:pool,mediaURL:mediaURL) else { return nil }
+            let out=pool.acquire(width:context.width,height:context.height)
+            self.fx.run("fxClear",cb,textures:[out],grid:out)
+            let matrix=simd_double3x3(columns:(
+                SIMD3(Double(context.width)/Double(frame.width),0,0),
+                SIMD3(0,Double(context.height)/Double(frame.height),0),
+                SIMD3(Double(context.width)/2,Double(context.height)/2,1)))
+            let carrier=Layer(name:"time viewport",content:.solid,outPoint:1,
+                transform:LayerTransform(position:Animated(.zero)),size:Animated(Vec2(1,1)))
+            self.drawQuad(cb:cb,target:out,matrix:matrix,halfSize:Vec2(Double(frame.width)/2,Double(frame.height)/2),
+                aa:0.5,opacity:1,layer:carrier,time:t,source:.image(frame),premultipliedImage:true,blendOverride:.normal)
+            return out
+        }
+    }
+
     // MARK: Compositing
 
     /// Encodes the full composition at `time` into `comp` (size = project size * renderScale).
@@ -546,10 +688,13 @@ final class Renderer {
         // Preview, preset thumbnails, and export share this renderer. Protect per-frame state and
         // restore it after recursive group/precomp renders as well as after top-level renders.
         encodeLock.lock()
+        let temporalRoot = groupSource == nil
+        if temporalRoot { temporalFrames.removeAll(); temporalFrameOrder.removeAll(); temporalFrameBytes=0 }
         let savedLibrary = precompLibrary, savedPool = currentPool, savedDepth = currentDepth, savedBeats = textBeats
         let savedCasters = shadowCasters, savedParts = groupParts, savedCameras = groupCameras
         let savedGroupSource = groupSource
         defer {
+            if temporalRoot { temporalFrames.removeAll(); temporalFrameOrder.removeAll(); temporalFrameBytes=0 }
             precompLibrary = savedLibrary; currentPool = savedPool; currentDepth = savedDepth; textBeats = savedBeats
             shadowCasters = savedCasters; groupParts = savedParts; groupCameras = savedCameras
             groupSource = savedGroupSource
@@ -673,7 +818,7 @@ final class Renderer {
             if case .adjustment = layer.content {
                 guard layer.effects.contains(where: { $0.isEnabled }) else { continue }
                 encodeAdjustment(layer, effects: layer.effects.filter(\.isEnabled), time: time, renderScale: renderScale, opacity: opacity,
-                                 comp: comp, cb: cb, pool: pool,
+                                 comp: comp, cb: cb, pool: pool, mediaURL: mediaURL,
                                  shutter: project.blurs(layer, at: time) ? project.shutterAngle / 360 / max(project.fps, 1) : 0,
                                  sampleCount: min(project.blurSamples, Renderer.blurSampleCap ?? project.blurSamples))
                 continue
@@ -707,7 +852,9 @@ final class Renderer {
                                                               pool: pool, placement: placement, mediaURL: mediaURL) {
                     for e in layer.effects where e.isEnabled {
                         guard let d = EffectRegistry.definition(e.typeID), !d.isTransformEffect, case .pixels(let run) = d.stage else { continue }
-                        picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: renderScale, pool: pool))
+                        let context=EffectContext(gpu:fx,cb:cb,input:picture,effect:e,time:time,unit:renderScale,pool:pool)
+                        picture=runViewportEffect(context,run:run,layer:layer,project:rawProject,
+                            renderScale:renderScale,comp:comp,cb:cb,pool:pool,mediaURL:mediaURL)
                     }
                     // Masks cut the model like any layer: they live in the layer's own plane.
                     let modelMasks = layer.masks.filter { $0.mode != .none && !$0.effectsOnly }
@@ -764,7 +911,9 @@ final class Renderer {
                                                          time: time, placement: placement, size: shotSize, pool: pool) {
                     for e in layer.effects where e.isEnabled {
                         guard let d = EffectRegistry.definition(e.typeID), !d.isTransformEffect, case .pixels(let run) = d.stage else { continue }
-                        picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: renderScale, pool: pool))
+                        let context=EffectContext(gpu:fx,cb:cb,input:picture,effect:e,time:time,unit:renderScale,pool:pool)
+                        picture=runViewportEffect(context,run:run,layer:layer,project:rawProject,
+                            renderScale:renderScale,comp:comp,cb:cb,pool:pool,mediaURL:mediaURL)
                     }
                     let dof3D = Self.dofSigma(layer, camera: camera, time: time) * renderScale
                     if dof3D > 0.5, let blur = EffectRegistry.definition("ae.gaussianBlur"), case .pixels(let run) = blur.stage {
@@ -934,7 +1083,15 @@ final class Renderer {
                     default: ctx.reference = whiteTexture
                     }
                 }
-                current = run(ctx)
+                if EffectRegistry.temporalIDs33.contains(e.typeID) {
+                    let sourceProject=rawProject,size=(current.width,current.height)
+                    current=withTemporalContext(ctx,run:run) { sampleTime in
+                        guard let frame=self.temporalFrame(layer:layer,effect:e,project:sourceProject,time:sampleTime,
+                            renderScale:renderScale,comp:comp,cb:cb,pool:pool,mediaURL:mediaURL) else { return nil }
+                        return self.temporalInBuffer(frame,size:size,placement:M,toLocal:toLocal,
+                            time:time,cb:cb,pool:pool)
+                    }
+                } else { current = run(ctx) }
             }
             // Effects-only masks: effects show inside them, the untouched layer everywhere else.
             if !effectMasks.isEmpty, current !== beforeEffects,
@@ -1025,7 +1182,9 @@ final class Renderer {
                 var current = copy
                 for e in camFX {
                     guard let def = EffectRegistry.definition(e.typeID), case .pixels(let run) = def.stage else { continue }
-                    current = run(EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: globalTime, unit: renderScale, pool: pool))
+                    let context=EffectContext(gpu:fx,cb:cb,input:current,effect:e,time:globalTime,unit:renderScale,pool:pool)
+                    current=runViewportEffect(context,run:run,layer:cam,project:rawProject,
+                        renderScale:renderScale,comp:comp,cb:cb,pool:pool,mediaURL:mediaURL)
                 }
                 fx.run("fxCopy", cb, textures: [current, comp], grid: comp)
             }
@@ -1273,7 +1432,8 @@ final class Renderer {
     }
 
     private func encodeAdjustment(_ layer: Layer, effects: [EffectInstance], time: Double, renderScale: Double, opacity: Double,
-                                  comp: MTLTexture, cb: MTLCommandBuffer, pool: TexturePool, shutter: Double = 0, sampleCount: Int = 1) {
+                                  comp: MTLTexture, cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL,
+                                  shutter: Double = 0, sampleCount: Int = 1) {
         let copy = pool.acquire(width: comp.width, height: comp.height)
         fx.run("fxCopy", cb, textures: [comp, copy], grid: copy)
         func process(at evaluationTime: Double) -> MTLTexture {
@@ -1304,7 +1464,17 @@ final class Renderer {
                 var context = EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: evaluationTime, unit: renderScale, pool: pool)
                 context.layerPixels = SIMD2(Double(comp.width), Double(comp.height))
                 context.compositionPixels = context.layerPixels
-                current = run(context)
+                if EffectRegistry.temporalIDs33.contains(e.typeID),let sourceProject=groupSource {
+                    let size=(current.width,current.height)
+                    current=withTemporalContext(context,run:run) { sampleTime in
+                        guard let frame=self.temporalFrame(layer:layer,effect:e,project:sourceProject,time:sampleTime,
+                            renderScale:renderScale,comp:comp,cb:cb,pool:pool,mediaURL:mediaURL) else { return nil }
+                        let center=simd_double3x3(columns:(SIMD3(1,0,0),SIMD3(0,1,0),SIMD3(Double(comp.width)/2,Double(comp.height)/2,1)))
+                        let local=simd_double3x3(columns:(SIMD3(1,0,0),SIMD3(0,1,0),SIMD3(-Double(size.0)/2,-Double(size.1)/2,1)))
+                        return self.temporalInBuffer(frame,size:size,placement:center,toLocal:local,
+                            time:evaluationTime,cb:cb,pool:pool)
+                    }
+                } else { current = run(context) }
                 if e.typeID == "ae.motionTile", !e.bool("manualOutput") {
                     tiledEdges = e.bool("mirror") ? 2 : 1
                 }

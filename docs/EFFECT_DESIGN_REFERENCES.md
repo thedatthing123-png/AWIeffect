@@ -98,3 +98,27 @@ local-detail adaptation, not a claim to implement the paper's complete MSRCR or
 MSRCP pipeline. No external implementation code was copied.
 
 https://www.ipol.im/pub/art/2014/107/
+
+## Actual time sampling
+
+Adobe's time-effects reference distinguishes image differences across frames from
+spatial displacement of a single image. The new Time Slice reads upstream frames
+at an editable interval and maps them linearly or radially across the image.
+Hold and Blend describe sample interpolation; no optical-flow reconstruction is
+claimed. Frame Difference compares actual temporal samples, and Temporal Median
+uses previous/current/next frames. The earlier Time Slice Mask keeps its existing
+ID and remains explicitly a spatial matte.
+
+https://helpx.adobe.com/after-effects/desktop/apply-effects-and-animation-presets/list-of-effects/time-effects.html
+
+Sampling re-evaluates raw animation/parenting at project-frame times, excludes the
+current/downstream pixel stack, and preserves upstream processing. Layers,
+adjustments, camera/3D viewports and backdrop-displacement stacks have explicit
+sampling paths. Backdrop samples are captured before the current coverage mask.
+The cache lives only for a root render and owns its images independently of nested
+scratch-pool scopes. Its retained entries are capped at 64 MiB; that is a cache
+bound, not a claim about total in-flight GPU memory or device frame rate.
+
+Tests include a generated red/blue video cut, animated parent motion, upstream vs
+downstream fill ordering, moved backdrop coverage and cache invalidation after an
+edit. Runtime validation, deep-stack stress and visual judgment remain pending.

@@ -71,6 +71,7 @@ enum EffectSection: String, CaseIterable, Identifiable {
     static func of(_ d: EffectDefinition) -> EffectSection {
         // Explicit placement wins over incidental words in a description ("soft", "light", "star").
         if d.id.hasPrefix("awi30.") { return .backgrounds }
+        if d.id.hasPrefix("awi33.time.") { return .time }
         if d.id.hasPrefix("awi32.liquid") { return .liquid }
         if d.id.hasPrefix("awi32.") { return .distort }
         if d.id.hasPrefix("awi35.particle") { return .particles }

@@ -11,7 +11,7 @@ the expansion, in that order. Training remains paused.
 | 30 | Backgrounds + browser | 12 shipped in Build 31; 24 additional designs implemented, awaiting CI and visual review |
 | 31 | 30+ distinct glitches + motion styles | 30 implemented; axis-only variants combined into controls; unvalidated |
 | 32 | Liquid + distortion | 32 implemented; unvalidated |
-| 33 | Key/matte + actual time effects | 16 matte tools implemented; temporal rendering and review pending |
+| 33 | Key/matte + actual time effects | 16 matte tools plus Time Slice, Frame Difference and Temporal Median implemented with actual upstream frame sampling; runtime/visual review pending |
 | 34 | Transitions | 24 mask/warp transitions and 4 keyed-shutter camera-path transitions implemented; runtime/visual review pending |
 | 35 | Shapes + particles | 24 generated shapes + 16 particle profiles implemented; unvalidated |
 | 36 | Procedural, Fractal Ridges reference match, glow/light | 36 procedural definitions and 6 source-derived optical light structures implemented; reference comparison and visual review pending |
@@ -39,3 +39,10 @@ Metal identifier, now corrected locally. After every family is implemented, run 
 combined full validation, review all sheets/moving renders/UI, fix and retune, then
 package the fully green release. No intermediate IPA is sent as the combined release.
 Simulator validation does not establish 60 fps on the owner's phone.
+
+Latest owner request: start the big all-effects validation and stop once it is
+running. This audit covers the current source snapshot with `validation=all` and
+`package_ipa=false`. It is not the completed 1,000+ release. The catalog-size gate
+remains enabled and is expected to fail until the missing expansion is finished;
+do not suppress that failure or present this run as release-ready. The other
+render, parameter, compatibility and UI checks still provide useful evidence.

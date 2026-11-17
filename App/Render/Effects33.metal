@@ -4,6 +4,54 @@ struct EffectParams { float4 a; float4 b; float4 c; float4 d; uint4 i; };
 constexpr sampler matte33(address::clamp_to_zero,filter::linear,coord::pixel);
 static float3 straight33(float4 value) { return value.a>.00001 ? value.rgb/value.a : float3(0); }
 static float luma33(float3 value) { return dot(value,float3(.2126,.7152,.0722)); }
+
+kernel void fxTimeSlice33(texture2d<half,access::sample> accumulated [[texture(0)]],
+                          texture2d<half,access::write> output [[texture(1)]],
+                          texture2d<half,access::sample> frame [[texture(2)]],
+                          constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float2 size=float2(output.get_width(),output.get_height()),uv=float2(gid)+.5;
+    float2 delta=uv-p.b.xy*size,axis=float2(cos(p.b.z),sin(p.b.z));
+    float field=p.i.x==0 ? .5+dot(delta,axis)/max(dot(abs(axis),size),1.0)
+                         : length(delta)/max(length(size)*.5,1.0);
+    float position=clamp(field,0.0,1.0)*(p.a.y-1.0);
+    float weight=p.i.y==0 ? (floor(position+.5)==p.a.x ? 1.0:0.0):max(0.0,1.0-abs(position-p.a.x));
+    float4 result=float4(accumulated.sample(matte33,uv))+float4(frame.sample(matte33,uv))*weight;
+    output.write(half4(result),gid);
+}
+kernel void fxTimeComposite33(texture2d<half,access::sample> original [[texture(0)]],
+                              texture2d<half,access::write> output [[texture(1)]],
+                              texture2d<half,access::sample> processed [[texture(2)]],
+                              constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float2 uv=float2(gid)+.5;
+    output.write(half4(mix(float4(original.sample(matte33,uv)),float4(processed.sample(matte33,uv)),p.a.x)),gid);
+}
+kernel void fxTimeDifference33(texture2d<half,access::sample> source [[texture(0)]],
+                               texture2d<half,access::write> output [[texture(1)]],
+                               texture2d<half,access::sample> previous [[texture(2)]],
+                               constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float2 uv=float2(gid)+.5;
+    float4 current=float4(source.sample(matte33,uv)),old=float4(previous.sample(matte33,uv));
+    float alpha=max(current.a,old.a);
+    float3 delta=abs(current.rgb-old.rgb);
+    if(p.i.y==1) delta=float3(abs(luma33(current.rgb)-luma33(old.rgb)));
+    if(p.i.y==2) delta=float3(abs(current.a-old.a));
+    float4 result=float4(min(delta*p.a.x,float3(65504.0)),alpha);
+    output.write(half4(mix(current,result,p.a.y)),gid);
+}
+kernel void fxTimeMedian33(texture2d<half,access::sample> source [[texture(0)]],
+                           texture2d<half,access::write> output [[texture(1)]],
+                           texture2d<half,access::sample> previous [[texture(2)]],
+                           texture2d<half,access::sample> next [[texture(3)]],
+                           constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float2 uv=float2(gid)+.5;
+    float4 current=float4(source.sample(matte33,uv)),a=float4(previous.sample(matte33,uv)),b=float4(next.sample(matte33,uv));
+    float4 median=max(min(current,a),min(max(current,a),b));
+    output.write(half4(mix(current,median,p.a.x)),gid);
+}
 static float threshold33(float value,float threshold,float softness) {
     float spread=max(.0001,softness*.5);
     return smoothstep(threshold-spread,threshold+spread,value);

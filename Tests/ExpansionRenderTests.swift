@@ -12,7 +12,7 @@ final class ExpansionRenderTests: XCTestCase {
         let definitions=EffectRegistry.all
         XCTAssertGreaterThan(definitions.count,1000,"Build 32's full expansion is not implemented yet")
         XCTAssertEqual(Set(definitions.map(\.id)).count,definitions.count)
-        let newDefinitions=EffectRegistry.batch31+EffectRegistry.batch32+EffectRegistry.batch33
+        let newDefinitions=EffectRegistry.batch31+EffectRegistry.batch32+EffectRegistry.batch33+EffectRegistry.time33
             + EffectRegistry.batch34+EffectRegistry.cameraTransitions34+EffectRegistry.batch35+EffectRegistry.batch36
             + EffectRegistry.lights36+EffectRegistry.batch37+EffectRegistry.cleanup37+EffectRegistry.frequency37
         XCTAssertEqual(Set(newDefinitions.map(\.name)).count,newDefinitions.count,"New effects need distinct names and behaviors")
@@ -271,6 +271,7 @@ final class ExpansionRenderTests: XCTestCase {
         try FileManager.default.createDirectory(at:folder,withIntermediateDirectories:true)
         let families:[(String,[EffectDefinition])]=[
             ("matte",EffectRegistry.batch33),
+            ("time",EffectRegistry.time33),
             ("transition",EffectRegistry.batch34+EffectRegistry.cameraTransitions34),
             ("shape-particle",EffectRegistry.batch35),
             ("procedural",EffectRegistry.batch36),
@@ -295,6 +296,8 @@ final class ExpansionRenderTests: XCTestCase {
             ("awi33.localContrast","threshold",5,35),("awi33.fringeMatte","radius",1,20),
             ("awi33.lumaBand","threshold",15,85),("awi33.lightWrap","radius",2,30),
             ("awi33.alphaSteps","band",2,12),
+            ("awi33.time.slice","span",0,0.7),("awi33.time.difference","delay",0.01,0.4),
+            ("awi33.time.median","spacing",0.01,0.3),
             ("awi34.spiralPeel","completion",0,100),("awi34.paperRip","completion",0,100),
             ("awi34.brushStrokeWipe","completion",0,100),("awi34.camera.cornerTumble","completion",0,100),
             ("awi34.camera.splitFold","completion",0,100),
@@ -326,6 +329,7 @@ final class ExpansionRenderTests: XCTestCase {
         }
     }
     private func reviewScene(_ effect:EffectInstance) -> Project {
+        if EffectRegistry.temporalIDs33.contains(effect.typeID) { return TemporalEffectTests.scene(effect) }
         var project=scene(effect)
         // Matte tools need an isolated partial-alpha shape; reference mattes also
         // receive a real, differently colored background layer rather than nil.
