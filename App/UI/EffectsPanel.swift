@@ -556,7 +556,7 @@ struct ParamRow: View {
         case .number(let lo, let hi, let step, let unit):
             ValueScrubber(value: effect.number(def.id, t), range: lo...hi, step: step, unit: unit,
                           onBegin: { state.beginEdit("Edit \(def.name)") },
-                          onChange: { setNumber($0) }, onEnd: { state.endEdit() })
+                          onChange: { setNumber($0) }, onEnd: { state.endEdit() }, height: 44)
                 .accessibilityIdentifier("effect-param-\(effect.typeID)-\(def.id)")
         case .angle:
             // AE angle: whole turns + degrees (value = turns x 360 + degrees), both scrubbable and typeable.
@@ -564,12 +564,12 @@ struct ParamRow: View {
             let turns = (v / 360).rounded(.towardZero), deg = v - turns * 360
             ValueScrubber(value: turns, range: -50...50, step: 1, unit: "x",
                           onBegin: { state.beginEdit("Edit \(def.name)") },
-                          onChange: { setNumber($0.rounded() * 360 + deg) }, onEnd: { state.endEdit() })
+                          onChange: { setNumber($0.rounded() * 360 + deg) }, onEnd: { state.endEdit() }, height: 44)
                 .frame(width: 64)
                 .accessibilityLabel("\(def.name) revolutions")
             ValueScrubber(value: deg, range: -359...359, step: 1, unit: "°",
                           onBegin: { state.beginEdit("Edit \(def.name)") },
-                          onChange: { setNumber(turns * 360 + $0) }, onEnd: { state.endEdit() })
+                          onChange: { setNumber(turns * 360 + $0) }, onEnd: { state.endEdit() }, height: 44)
                 .accessibilityIdentifier("effect-param-\(effect.typeID)-\(def.id)")
         case .point:
             // Scrub or type X / Y (%); the crosshair on the canvas drags the same point.
@@ -577,12 +577,12 @@ struct ParamRow: View {
             ValueScrubber(value: v.x * 100, range: -100...200, step: 0.1, unit: "%",
                           onBegin: { state.beginEdit("Edit \(def.name)") },
                           onChange: { nv in setPointLive(Vec2(nv / 100, effect.point(def.id, state.currentTime).y), axis: 0, nv / 100) },
-                          onEnd: { state.endEdit() })
+                          onEnd: { state.endEdit() }, height: 44)
                 .accessibilityLabel("\(def.name) X")
             ValueScrubber(value: v.y * 100, range: -100...200, step: 0.1, unit: "%",
                           onBegin: { state.beginEdit("Edit \(def.name)") },
                           onChange: { nv in setPointLive(Vec2(effect.point(def.id, state.currentTime).x, nv / 100), axis: 1, nv / 100) },
-                          onEnd: { state.endEdit() })
+                          onEnd: { state.endEdit() }, height: 44)
                 .accessibilityLabel("\(def.name) Y")
         case .color:
             let c = effect.color(def.id, t)

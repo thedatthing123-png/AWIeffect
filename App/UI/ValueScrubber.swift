@@ -28,6 +28,8 @@ struct ValueScrubber: View {
     /// Typed numbers may go past the bar's ends (positions, rotations). Effect settings stay inside their range,
     /// since some effects loop by their values and far-out numbers could stall the GPU.
     var allowBeyond = false
+    /// Panels can request a full phone touch target without changing compact layouts elsewhere.
+    var height: CGFloat = 32
 
     @State private var dragBase: Double?
     @State private var lastX: CGFloat = 0
@@ -114,7 +116,7 @@ struct ValueScrubber: View {
             .onChange(of: touching) { _, down in if !down { finishDrag() } }
             .onDisappear { finishDrag() }
         }
-        .frame(height: 32)
+        .frame(height: height)
         .accessibilityElement()
         .accessibilityValue(Self.format(value, step: step, span: span) + unit)
         .accessibilityAdjustableAction { dir in
