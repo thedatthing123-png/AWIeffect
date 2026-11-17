@@ -71,8 +71,9 @@ final class BackgroundExpansionTests: XCTestCase {
         guard let renderer = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
         let directory = URL(fileURLWithPath: "/tmp/awi-backgrounds", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let sheet = UIGraphicsImageRenderer(size: CGSize(width: 960,height: 660)).image { context in
-            UIColor(white: 0.06,alpha: 1).setFill(); context.fill(CGRect(x: 0,y: 0,width: 960,height: 660))
+        let sheetHeight = CGFloat((EffectRegistry.batch30.count+3)/4)*220
+        let sheet = UIGraphicsImageRenderer(size: CGSize(width: 960,height: sheetHeight)).image { context in
+            UIColor(white: 0.06,alpha: 1).setFill(); context.fill(CGRect(x: 0,y: 0,width: 960,height: sheetHeight))
             for (index, definition) in EffectRegistry.batch30.enumerated() {
                 let x = CGFloat(index%4)*240, y = CGFloat(index/4)*220
                 let image = renderer.renderImage(project: scene(definition.makeInstance()), time: 0.4, maxDimension: 240, mediaURL: { URL(fileURLWithPath: $0) })
@@ -82,7 +83,8 @@ final class BackgroundExpansionTests: XCTestCase {
         }
         try XCTUnwrap(sheet.pngData()).write(to: directory.appendingPathComponent("background-contact-sheet.png"))
         // Moving previews for the five core designs, also saved as PNG frames for frame-by-frame inspection.
-        for definition in EffectRegistry.batch30.prefix(5) {
+        let moving = Array(EffectRegistry.batch30.prefix(5)) + EffectRegistry.batch30.filter { ["awi30.herringbone", "awi30.hexMesh", "awi30.circuitBoard", "awi30.rippleInterference", "awi30.guilloche"].contains($0.id) }
+        for definition in moving {
             let destination = try XCTUnwrap(CGImageDestinationCreateWithURL(directory.appendingPathComponent("\(definition.id).gif") as CFURL,UTType.gif.identifier as CFString,30,nil))
             CGImageDestinationSetProperties(destination,[kCGImagePropertyGIFDictionary:[kCGImagePropertyGIFLoopCount:0]] as CFDictionary)
             for frame in 0..<30 {

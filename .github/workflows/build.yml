@@ -16,6 +16,10 @@ on:
         type: choice
         options: [all, audit, timing, stability, authoring, segmentation, quick]
         default: all
+      package_ipa:
+        description: Package an IPA after validation (disable for expansion checkpoints)
+        type: boolean
+        default: true
 
 concurrency:
   group: build-${{ github.ref }}
@@ -209,7 +213,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Archive (unsigned)
-        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' && inputs.validation != 'stability' && inputs.validation != 'authoring' }}
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.package_ipa) && inputs.validation != 'audit' && inputs.validation != 'timing' && inputs.validation != 'stability' && inputs.validation != 'authoring' }}
         run: |
           set -o pipefail
           set +e
@@ -236,7 +240,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Package IPA
-        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' && inputs.validation != 'stability' && inputs.validation != 'authoring' }}
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.package_ipa) && inputs.validation != 'audit' && inputs.validation != 'timing' && inputs.validation != 'stability' && inputs.validation != 'authoring' }}
         run: |
           mkdir -p Payload
           cp -R build/AWIeffect.xcarchive/Products/Applications/AWIeffect.app Payload/
@@ -249,7 +253,7 @@ jobs:
           ls -lh AWIeffect.ipa
 
       - name: Upload IPA
-        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' && inputs.validation != 'stability' && inputs.validation != 'authoring' }}
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.package_ipa) && inputs.validation != 'audit' && inputs.validation != 'timing' && inputs.validation != 'stability' && inputs.validation != 'authoring' }}
         uses: actions/upload-artifact@v4
         with:
           name: AWIeffect-ipa

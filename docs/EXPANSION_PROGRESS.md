@@ -36,5 +36,11 @@ saved-parameter fallbacks, transparent colors, Blend bypass and zero-speed hold.
 Retune weak defaults from the renders before calling the set ready. Device preview
 frame rate has not been measured by these simulator checks.
 
+Build 31 passed full CI and its contact sheet, moving frames and UI were reviewed.
+The owner then chose a combined Build 32 release; see BUILD32_RELEASE.md for the ledger.
+Batch 30 now contains 36 backgrounds (24 new after Build 31), pending another full
+CI and visual review. The contact sheet grows with the catalog; motion previews
+also cover representative new designs. No Build 32 IPA is packaged at this checkpoint.
+
 Next: complete/judge batch 30, then batch 31's distinct glitches with motion styles.
 Presets follow the effect batches; final device profiling follows presets.
