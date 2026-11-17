@@ -465,7 +465,7 @@ struct EffectsPanel: View {
             } label: {
                 Text(others.first { $0.id.uuidString == current }?.name ?? (e.typeID == "awi18.displacementMap" && e.choice("target") == 1 ? "This layer is the map" : "Choose a layer…"))
                     .font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.accentGlow)
-                    .frame(maxWidth: .infinity, minHeight: 32).background(RoundedRectangle(cornerRadius: 9).fill(Theme.surface))
+                    .frame(maxWidth: .infinity, minHeight: 44).background(RoundedRectangle(cornerRadius: 9).fill(Theme.surface))
             }
         }
     }

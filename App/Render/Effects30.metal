@@ -239,8 +239,8 @@ kernel void fxBackground30(texture2d<float, access::read> input [[texture(0)]],
         case 31: {
             float2 tile = floor(u), f = fract(u)-.5;
             float diagonal = fmod(abs(tile.x+tile.y),2.0)<.5 ? f.x+f.y : f.x-f.y;
-            float thread = line30(abs(diagonal)*.7071,width*.5,aa);
-            field = thread*(1.0-smoothstep(shape*.005-aa,shape*.005+aa,max(abs(f.x),abs(f.y)))); break;
+            float stitch = line30(abs(diagonal)*.7071,width*.5,aa);
+            field = stitch*(1.0-smoothstep(shape*.005-aa,shape*.005+aa,max(abs(f.x),abs(f.y)))); break;
         }
         case 32: {
             float2 pixel = floor(u*4.0), f = floor(fract(pixel/4.0)*4.0);

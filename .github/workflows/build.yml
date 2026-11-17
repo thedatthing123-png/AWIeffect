@@ -196,6 +196,14 @@ jobs:
           path: /tmp/awi-backgrounds
           if-no-files-found: ignore
 
+      - name: Upload full expansion review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: expansion-renders
+          path: /tmp/awi-expansion
+          if-no-files-found: ignore
+
       - name: Upload graph motion renders
         if: always()
         uses: actions/upload-artifact@v4

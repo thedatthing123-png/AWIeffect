@@ -19,7 +19,7 @@ final class EffectTests: XCTestCase {
     }
 
     /// Effects that work from the layer's alpha shape (no visible change on an opaque adjustment layer, like in AE).
-    static let alphaShaped: Set<String> = ["ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow", "awi11.featherEdges", "awi11.matteChoker", "awi11.alphaLevels", "awi11.edgeRefine", "awi10.bevelAlpha", "awi10.smoothBevel", "awi10.glass", "awi10.edgeAO", "awi10.innerShadow", "awi10.fresnel", "awi16.tornEdges", "awi17.extrudeFlat"]
+    static let alphaShaped: Set<String> = ["ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow", "awi11.featherEdges", "awi11.matteChoker", "awi11.alphaLevels", "awi11.edgeRefine", "awi10.bevelAlpha", "awi10.smoothBevel", "awi10.glass", "awi10.edgeAO", "awi10.innerShadow", "awi10.fresnel", "awi16.tornEdges", "awi17.extrudeFlat", "awi33.fringeMatte", "awi33.coreMatte", "awi33.alphaDither", "awi33.alphaSteps"]
 
     private func renderer() throws -> Renderer {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU: no Metal device available; effect tests not run") }
@@ -53,6 +53,10 @@ final class EffectTests: XCTestCase {
         var star = p.makeLayer(name: "star", content: .shape(.star), size: Vec2(90, 90))
         star.fill = Animated(RGBA(1, 0.95, 0.8))
         star.sides = Animated(5)
+        if ["awi33.alphaDither","awi33.alphaSteps"].contains(effect?.typeID ?? "") {
+            // Coverage processors need partial alpha, not a fully opaque adjustment layer.
+            star.fill = Animated(RGBA(1,0.95,0.8,0.58))
+        }
         var rect = p.makeLayer(name: "rect", content: .shape(.rectangle), size: Vec2(50, 30))
         rect.fill = Animated(RGBA(0.6, 0.2, 0.9))
         rect.transform.position = Animated(Vec2(40, 40))
@@ -176,7 +180,11 @@ final class EffectTests: XCTestCase {
         let base = try render(r, scene(effect: nil))
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
             let out = try render(r, scene(effect: visible(d), onAdjustment: !d.isTransformEffect && !Self.alphaShaped.contains(d.id)))
-            let comparison = d.id == "awi23.drawProgress" ? try render(r, drawingScene(effect: nil)) : (d.category == .text ? try render(r, textScene(effect: nil)) : base)
+            var comparison = d.id == "awi23.drawProgress" ? try render(r, drawingScene(effect: nil)) : (d.category == .text ? try render(r, textScene(effect: nil)) : base)
+            if ["awi33.alphaDither","awi33.alphaSteps"].contains(d.id) {
+                var disabled=visible(d); disabled.isEnabled=false
+                comparison=try render(r,scene(effect:disabled))
+            }
             XCTAssertGreaterThan(diff(comparison, out), 0.5, "\(d.name) did not visibly change the image")
             XCTAssertTrue(out.contains { $0 > 10 }, "\(d.name) rendered black")
         }
@@ -233,6 +241,19 @@ final class EffectTests: XCTestCase {
                 }
                 a.params[pd.id] = .number(Animated(lo + (hi - lo) * 0.02))
                 b.params[pd.id] = .number(Animated(lo + (hi - lo) * 0.6))
+                if d.id.hasPrefix("awi31.") {
+                    // Exercise timing controls in their actual modes, rather than exempting them.
+                    if ["frequency", "duration"].contains(pd.id) {
+                        a.params["motion"] = .choice(2); b.params["motion"] = .choice(2)
+                    }
+                    if pd.id == "trigger" {
+                        a.params["motion"] = .choice(3); b.params["motion"] = .choice(3)
+                        var low = Animated(lo + (hi-lo)*0.02), high = Animated(lo + (hi-lo)*0.6)
+                        low.insertKeyframe(Keyframe(time: 0.3,value: lo + (hi-lo)*0.02))
+                        high.insertKeyframe(Keyframe(time: 0.3,value: lo + (hi-lo)*0.6))
+                        a.params[pd.id] = .number(low); b.params[pd.id] = .number(high)
+                    }
+                }
                 if d.id == "awi.textSpacing" && pd.id == "spacing" {
                     // Use visible spacing within this finite text fixture; extreme spacing is covered by stress tests.
                     a.params[pd.id] = .number(Animated(-5)); b.params[pd.id] = .number(Animated(18))
