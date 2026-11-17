@@ -42,6 +42,13 @@ automatic timing. New transitions keep manual, keyframeable Completion, explicit
 visible/hidden endpoints, reverse direction and edge softness. They do not silently
 replace the clip's timing or become black-box presets.
 
+Four additional camera-path transitions integrate eight samples of the keyed
+Completion animation during an editable millisecond shutter interval. Held curves
+use one spatial sample and stay sharp. Curved Whip, Corner Tumble, Spiral Pull and
+Split Fold have different inverse mappings, including perspective division for the
+folding paths. These blur their transition movement, not the source video's own
+motion. Existing transition IDs and their saved rendering remain unchanged.
+
 https://borisfx.com/documentation/sapphire/ae/dissolve/
 
 ## Glow/light
@@ -53,6 +60,13 @@ and visual review; re-tinting one bloom is not another effect.
 
 https://docs.blender.org/manual/en/4.5/compositing/types/filter/glare.html
 
+The new optical pass gathers source-derived emission through six different
+structures: circular annulus, scaled inverted reflections, contracting spiral,
+opposed tinted streaks, polygon perimeter, and channel-separated annuli. These are
+independent implementations, not Blender shader copies. Source prefiltering and
+bounded tap counts avoid loops that grow with radius. All six still require
+rendered comparison, edge checks and performance review before release.
+
 ## Fractal Ridges and Hot Color
 
 The supplied AE Motion IPA's parameter metadata and arithmetic were inspected.
@@ -62,8 +76,8 @@ have different stretch/scale behavior; do not silently conflate them. Exact-matc
 acceptance still requires reference numerical/visual comparison.
 
 Hot Color is a luminance-conditioned chroma/tint operation with a bright shoulder,
-not merely a red gradient map. Its controls and behavior still need implementation
-and comparison. These must not be marked complete just because named entries exist.
+not merely a red gradient map. Both treatments are implemented; comparison and
+default tuning remain. These must not be marked complete just because named entries exist.
 
 The underlying published simplex formulation has an MIT-licensed upstream reference:
 https://github.com/ashima/webgl-noise

@@ -60,6 +60,13 @@ final class EffectTests: XCTestCase {
         var rect = p.makeLayer(name: "rect", content: .shape(.rectangle), size: Vec2(50, 30))
         rect.fill = Animated(RGBA(0.6, 0.2, 0.9))
         rect.transform.position = Animated(Vec2(40, 40))
+        if EffectRegistry.cleanup37.contains(where:{$0.id==effect?.typeID}) {
+            // Cleanup filters must see noisy detail, not only noise-free flat fills.
+            // Keep this source texture identical when the tested filter is disabled.
+            let grain=EffectInstance(typeID:"ae.noise",params:["amount":.number(Animated(70)),
+                "size":.number(Animated(0.5)),"color":.toggle(true)])
+            star.effects=[grain];rect.effects=[grain];bg.effects=[grain]
+        }
         if let effect {
             if onAdjustment {
                 var adj = p.makeLayer(name: "adj", content: .adjustment, size: Vec2(160, 160))
@@ -67,7 +74,7 @@ final class EffectTests: XCTestCase {
                 p.layers = [adj, rect, star, bg]
                 return p
             }
-            star.effects = [effect]
+            star.effects.append(effect)
         }
         p.layers = [rect, star, bg]
         return p
@@ -185,6 +192,10 @@ final class EffectTests: XCTestCase {
                 var disabled=visible(d); disabled.isEnabled=false
                 comparison=try render(r,scene(effect:disabled))
             }
+            if EffectRegistry.cleanup37.contains(where:{$0.id==d.id}) {
+                var disabled=visible(d);disabled.isEnabled=false
+                comparison=try render(r,scene(effect:disabled,onAdjustment:true))
+            }
             XCTAssertGreaterThan(diff(comparison, out), 0.5, "\(d.name) did not visibly change the image")
             XCTAssertTrue(out.contains { $0 > 10 }, "\(d.name) rendered black")
         }
@@ -195,7 +206,12 @@ final class EffectTests: XCTestCase {
         let base = try render(r, scene(effect: nil))
         for d in EffectRegistry.all where !d.isTransformEffect && !Self.alphaShaped.contains(d.id) && !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
             let out = try render(r, scene(effect: visible(d), onAdjustment: true))
-            XCTAssertGreaterThan(diff(base, out), 0.5, "\(d.name) did nothing on an adjustment layer")
+            var comparison=base
+            if EffectRegistry.cleanup37.contains(where:{$0.id==d.id}) {
+                var disabled=visible(d);disabled.isEnabled=false
+                comparison=try render(r,scene(effect:disabled,onAdjustment:true))
+            }
+            XCTAssertGreaterThan(diff(comparison, out), 0.5, "\(d.name) did nothing on an adjustment layer")
         }
     }
 
@@ -205,7 +221,17 @@ final class EffectTests: XCTestCase {
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" {
             var e = visible(d)
             e.isEnabled = false
-            let comparison = d.id == "awi23.drawProgress" ? try render(r, drawingScene(effect: nil)) : (d.category == .text ? try render(r, textScene(effect: nil)) : base)
+            var comparison = d.id == "awi23.drawProgress" ? try render(r, drawingScene(effect: nil)) : (d.category == .text ? try render(r, textScene(effect: nil)) : base)
+            if ["awi33.alphaDither","awi33.alphaSteps"].contains(d.id) {
+                var reference=scene(effect:e)
+                for index in reference.layers.indices { reference.layers[index].effects=[] }
+                comparison=try render(r,reference)
+            }
+            if EffectRegistry.cleanup37.contains(where:{$0.id==d.id}) {
+                var reference=scene(effect:e)
+                for index in reference.layers.indices { reference.layers[index].effects.removeAll{$0.id==e.id} }
+                comparison=try render(r,reference)
+            }
             XCTAssertLessThan(diff(comparison, try render(r, scene(effect: e))), 0.01, "disabled \(d.name) still changes output")
         }
     }
@@ -241,6 +267,13 @@ final class EffectTests: XCTestCase {
                 }
                 a.params[pd.id] = .number(Animated(lo + (hi - lo) * 0.02))
                 b.params[pd.id] = .number(Animated(lo + (hi - lo) * 0.6))
+                if d.id.hasPrefix("awi34.camera.") && pd.id=="shutter" {
+                    // A stationary path has no shutter blur. Exercise actual motion.
+                    var progress=Animated(0.0)
+                    progress.insertKeyframe(Keyframe(time:0,value:0))
+                    progress.insertKeyframe(Keyframe(time:1,value:100))
+                    a.params["completion"] = .number(progress);b.params["completion"] = .number(progress)
+                }
                 if d.id.hasPrefix("awi31.") {
                     // Exercise timing controls in their actual modes, rather than exempting them.
                     if ["frequency", "duration"].contains(pd.id) {

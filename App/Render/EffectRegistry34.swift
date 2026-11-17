@@ -3,6 +3,48 @@ import Metal
 import simd
 
 extension EffectRegistry {
+    static let cameraTransitions34: [EffectDefinition] = [
+        cameraTransition34("curvedWhip","Curved Whip",0,
+            "The image follows a curved exit while rotating along the arc. Shutter samples follow the keyed Completion curve.",
+            .angle("detail","Arc Bend",65)),
+        cameraTransition34("cornerTumble","Corner Tumble",1,
+            "A falling card tilts through perspective around the selected pivot, with shutter integration along its keyed movement.",
+            .angle("detail","Card Tilt",70)),
+        cameraTransition34("spiralPull","Spiral Pull",2,
+            "The picture contracts and winds around an editable pivot. Blur follows the actual keyed winding movement.",
+            .number("detail","Turns",1.25,-4,4)),
+        cameraTransition34("splitFold","Split Fold",3,
+            "Two image halves hinge apart in perspective and leave in opposite directions, with motion following the completion keys.",
+            .angle("detail","Fold Angle",65))
+    ]
+    private static func cameraTransition34(_ id:String,_ name:String,_ mode:UInt32,_ summary:String,_ detail:ParamDef) -> EffectDefinition {
+        EffectDefinition(id:"awi34.camera."+id,name:name,category:.transition,aeMatchNames:[],summary:summary,
+            params:[.number("completion","Completion",50,0,100,unit:"%"),detail,
+                .angle("angle","Direction",0),.point("center","Pivot",Vec2(0.5,0.5)),
+                .number("shutter","Shutter Time",16.7,0,100,unit:"ms"),
+                .choice("ease","Progress Curve",easeOptions28,0),.number("blend","Blend",100,0,100,unit:"%")],
+            stage:.pixels { ctx in
+                let progress=v29(ctx,"completion")/100
+                if progress<=0 || v29(ctx,"blend")<=0 { return ctx.input }
+                let center=ctx.effect.params["center"]?.point(at:ctx.time) ?? Vec2(0.5,0.5)
+                var p=EffectParams();p.i.x=mode
+                p.a=SIMD4(Float(progress),f29(ctx,"detail"),f29(ctx,"angle")*Float.pi/180,pc29(ctx,"blend"))
+                p.b=SIMD4(Float(center.x),Float(center.y),0,0)
+                // Eight composition-time samples of the real animation curve. A held
+                // completion value stays sharp, even when the shutter is nonzero.
+                let animated=ctx.effect.params["completion"]
+                for index in 0..<8 {
+                    let t=ctx.time+(Double(index)/7-0.5)*v29(ctx,"shutter")/1000
+                    let value=min(max((animated?.number(at:t) ?? 50)/100,0),1)
+                    let sample=Float(ease28(value,ch29(ctx,"ease")))
+                    if index<4 { p.c[index]=sample } else { p.d[index-4]=sample }
+                }
+                p.i.y=(p.c==SIMD4<Float>(repeating:p.c.x) && p.d==p.c) ? 1:8
+                let output=ctx.temp()
+                ctx.gpu.run("fxCameraTransition34",ctx.cb,textures:[ctx.input,output],params:p,grid:output)
+                return output
+            })
+    }
     static let batch34: [EffectDefinition] = [
         reveal34("bayerDissolve","Bayer Dissolve",0,"Ordered dither coverage removes pixels in a structured threshold progression.","Threshold Bias"),
         reveal34("voronoiBreakup","Voronoi Breakup",1,"Irregular cell centers open at different times, then join into a continuous reveal.","Cell Irregularity"),

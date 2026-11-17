@@ -33,10 +33,8 @@ extension EffectRegistry {
                  .number("scale", "Row Height", 8, 1, 60, unit: "px"), .number("detail", "Channel Slip", 20, 1, 100, unit: "px")),
         glitch31("analogBars", "Analog Noise Bars", 13, "Wide analog interference bars alter luminance and slowly bend horizontal detail.",
                  .number("scale", "Bar Height", 26, 3, 140, unit: "px"), .number("detail", "Bar Contrast", 65, 1, 100, unit: "%")),
-        glitch31("horizontalBleed", "Horizontal Bleed", 14, "A directional multi-tap pixel bleed spreads source colors across selected rows.",
-                 .number("scale", "Row Height", 12, 2, 100, unit: "px"), .number("detail", "Bleed Distance", 50, 1, 180, unit: "px")),
-        glitch31("verticalBleed", "Vertical Bleed", 15, "Selected columns bleed their own colors downward with independently varying lengths.",
-                 .number("scale", "Column Width", 12, 2, 100, unit: "px"), .number("detail", "Bleed Distance", 50, 1, 180, unit: "px")),
+        glitch31("directionalBleed", "Directional Bleed", 14, "A multi-tap source-color bleed works across rows or columns with independent strip lengths.",
+                 .number("scale", "Strip Size", 12, 2, 100, unit: "px"), .number("detail", "Bleed Distance", 50, 1, 180, unit: "px")),
         glitch31("blockInvert", "Block Invert", 16, "A moving field of cells inverts image values while undamaged cells keep their original colors.",
                  .number("scale", "Block Size", 28, 3, 140, unit: "px"), .number("detail", "Coverage", 50, 5, 95, unit: "%")),
         glitch31("posterizeBands", "Posterize Bands", 17, "Adjacent scan bands crush the source to different tonal resolutions.",
@@ -53,10 +51,8 @@ extension EffectRegistry {
                  .number("scale", "Wave Height", 12, 2, 80, unit: "px"), .number("detail", "Warp Distance", 24, 1, 120, unit: "px")),
         glitch31("chromaPulse", "Chroma Pulse", 23, "Separate channels expand and contract around the image center like a misaligned color tube.",
                  .number("scale", "Pulse Size", 25, 2, 100, unit: "px"), .number("detail", "Pulse Spread", 65, 5, 100, unit: "%")),
-        glitch31("pixelColumns", "Pixel Columns", 24, "Vertical strips quantize to different pixel heights, like mismatched digital column buffers.",
-                 .number("scale", "Column Width", 16, 2, 100, unit: "px"), .number("detail", "Pixel Height", 25, 2, 100, unit: "px")),
-        glitch31("pixelRows", "Pixel Rows", 25, "Horizontal strips quantize to different pixel widths without applying a uniform mosaic.",
-                 .number("scale", "Row Height", 16, 2, 100, unit: "px"), .number("detail", "Pixel Width", 25, 2, 100, unit: "px")),
+        glitch31("stripPixelate", "Strip Pixelate", 24, "Rows or columns quantize to different pixel lengths instead of applying one uniform mosaic.",
+                 .number("scale", "Strip Size", 16, 2, 100, unit: "px"), .number("detail", "Pixel Length", 25, 2, 100, unit: "px")),
         glitch31("edgeTear", "Edge Tear", 26, "Horizontal slices displace only the strongest image contours, leaving flat color fields intact.",
                  .number("scale", "Slice Height", 14, 2, 100, unit: "px"), .number("detail", "Tear Distance", 25, 1, 120, unit: "px")),
         glitch31("rasterSkew", "Raster Skew", 27, "Repeated raster groups tilt sideways with independent slopes, as if line timing lost alignment.",
@@ -74,7 +70,9 @@ extension EffectRegistry {
     private static func glitch31(_ id: String, _ name: String, _ mode: UInt32, _ summary: String,
                                  _ scale: ParamDef, _ detail: ParamDef) -> EffectDefinition {
         EffectDefinition(id: "awi31."+id, name: name, category: .glitch, aeMatchNames: [], summary: summary,
-            params: [.number("amount", "Amount", 65, 0, 100, unit: "%"), scale, detail,
+            params: [.number("amount", "Amount", 65, 0, 100, unit: "%"), scale, detail]
+                + ([14,24].contains(mode) ? [.choice("axis","Direction",["Horizontal","Vertical"],0)] : [])
+                + [
                 .choice("motion", "Motion", ["Smooth", "Choppy", "Burst", "On Keyframe"], 0),
                 .number("speed", "Pattern Speed", 3, 0, 24), .number("seed", "Seed", 3, 0, 1000, step: 1),
                 .number("frequency", "Bursts Per Second", 2, 0.2, 15),
@@ -104,6 +102,7 @@ extension EffectRegistry {
                 if case .number(_,_,_,let unit) = detail.kind, unit == "px" { p.a.z *= Float(ctx.unit) }
                 p.b = SIMD4(f29(ctx,"seed"),pc29(ctx,"blend"),0,0)
                 p.i.x = mode
+                p.i.y = UInt32(ch29(ctx,"axis"))
                 let output = ctx.temp()
                 ctx.gpu.run("fxSignal31",ctx.cb,textures:[ctx.input,output],params:p,grid:output)
                 return output

@@ -9,13 +9,13 @@ the expansion, in that order. Training remains paused.
 | Plan batch | Scope | Status |
 | --- | --- | --- |
 | 30 | Backgrounds + browser | 12 shipped in Build 31; 24 additional designs implemented, awaiting CI and visual review |
-| 31 | 30+ distinct glitches + motion styles | 32 implemented; unvalidated |
+| 31 | 30+ distinct glitches + motion styles | 30 implemented; axis-only variants combined into controls; unvalidated |
 | 32 | Liquid + distortion | 32 implemented; unvalidated |
 | 33 | Key/matte + actual time effects | 16 matte tools implemented; temporal rendering and review pending |
-| 34 | Transitions | 24 mask/warp transitions implemented; motion-blurred camera transitions still pending |
+| 34 | Transitions | 24 mask/warp transitions and 4 keyed-shutter camera-path transitions implemented; runtime/visual review pending |
 | 35 | Shapes + particles | 24 generated shapes + 16 particle profiles implemented; unvalidated |
-| 36 | Procedural, Fractal Ridges reference match, glow/light | Pending |
-| 37 | Stylize, retro, text, blur, Hot Color and remakes | Pending |
+| 36 | Procedural, Fractal Ridges reference match, glow/light | 36 procedural definitions and 6 source-derived optical light structures implemented; reference comparison and visual review pending |
+| 37 | Stylize, retro, text, blur, Hot Color and remakes | Pixel Blur, both Hot Color treatments and 6 detail-cleanup filters implemented; other families and review pending |
 | 38 | Designed composites + licensed on-device upscale bake | Pending |
 
 Do not interpret the build number as a plan batch number. A candidate with only

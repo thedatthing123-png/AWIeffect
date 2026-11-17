@@ -18,7 +18,7 @@ static float luminance31(float3 value) { return dot(value,float3(.2126,.7152,.07
 static float4 split31(texture2d<half,access::sample> source,float2 uv,float2 offset) {
     float4 r=sample31(source,uv+offset), g=sample31(source,uv), b=sample31(source,uv-offset);
     float alpha=max(r.a,max(g.a,b.a));
-    return float4(min(float3(r.r,g.g,b.b),float3(alpha)),alpha);
+    return float4(float3(r.r,g.g,b.b),alpha);
 }
 
 kernel void fxSignal31(texture2d<half,access::sample> source [[texture(0)]],
@@ -82,7 +82,7 @@ kernel void fxSignal31(texture2d<half,access::sample> source [[texture(0)]],
         }
         case 10: {
             float exposure=exp2((n-.5)*detail*2.0);
-            result.rgb=clamp(original.rgb*exposure,0.0,original.a); break;
+            result.rgb=max(original.rgb*exposure,0.0); break;
         }
         case 11: {
             float2 displacement=float2(n-.5,moving31(cell,clock,seed+23.0)-.5)*detail*2.0;
@@ -94,10 +94,10 @@ kernel void fxSignal31(texture2d<half,access::sample> source [[texture(0)]],
         case 13: {
             float carrier=sin(uv.y/scale*6.2831853+phase);
             float brightness=carrier*(detail/100.0)*(.3+.7*row);
-            result.rgb=clamp(original.rgb+brightness*original.a*.5,0.0,original.a); break;
+            result.rgb=max(original.rgb+brightness*original.a*.5,0.0); break;
         }
-        case 14: case 15: {
-            bool vertical=p.i.x==15;
+        case 14: {
+            bool vertical=p.i.y==1;
             float reach=detail*(vertical ? column : row);
             float4 sum=float4(0);
             for(int tap=0;tap<8;tap++) {
@@ -141,15 +141,13 @@ kernel void fxSignal31(texture2d<half,access::sample> source [[texture(0)]],
             float4 r=sample31(source,center+(uv-center)*(1.0+pulse));
             float4 b=sample31(source,center+(uv-center)*(1.0-pulse));
             float alpha=max(original.a,max(r.a,b.a));
-            result=float4(min(float3(r.r,original.g,b.b),float3(alpha)),alpha); break;
+            result=float4(float3(r.r,original.g,b.b),alpha); break;
         }
         case 24: {
-            float height=max(1.0,detail*(.3+.7*column));
-            result=sample31(source,float2(uv.x,(floor(uv.y/height)+.5)*height)); break;
-        }
-        case 25: {
-            float width=max(1.0,detail*(.3+.7*row));
-            result=sample31(source,float2((floor(uv.x/width)+.5)*width,uv.y)); break;
+            float length=max(1.0,detail*(.3+.7*(p.i.y==1 ? column : row)));
+            float2 coordinate=p.i.y==1 ? float2(uv.x,(floor(uv.y/length)+.5)*length)
+                                      : float2((floor(uv.x/length)+.5)*length,uv.y);
+            result=sample31(source,coordinate); break;
         }
         case 26: {
             float4 right=sample31(source,uv+float2(1,0)), down=sample31(source,uv+float2(0,1));
@@ -184,6 +182,6 @@ kernel void fxSignal31(texture2d<half,access::sample> source [[texture(0)]],
             result=sample31(source,float2(uv.x,localY)); break;
         }
     }
-    result=clamp(result,0.0,1.0); result.rgb=min(result.rgb,float3(result.a));
+    result.rgb=max(result.rgb,0.0); result.a=clamp(result.a,0.0,1.0);
     output.write(half4(mix(original,result,clamp(amount*p.b.y,0.0,1.0))),gid);
 }

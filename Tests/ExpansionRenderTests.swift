@@ -12,7 +12,9 @@ final class ExpansionRenderTests: XCTestCase {
         let definitions=EffectRegistry.all
         XCTAssertGreaterThan(definitions.count,1000,"Build 32's full expansion is not implemented yet")
         XCTAssertEqual(Set(definitions.map(\.id)).count,definitions.count)
-        let newDefinitions=EffectRegistry.batch31+EffectRegistry.batch32
+        let newDefinitions=EffectRegistry.batch31+EffectRegistry.batch32+EffectRegistry.batch33
+            + EffectRegistry.batch34+EffectRegistry.cameraTransitions34+EffectRegistry.batch35+EffectRegistry.batch36
+            + EffectRegistry.lights36+EffectRegistry.batch37+EffectRegistry.cleanup37
         XCTAssertEqual(Set(newDefinitions.map(\.name)).count,newDefinitions.count,"New effects need distinct names and behaviors")
     }
     private func scene(_ effect: EffectInstance?) -> Project {
@@ -36,6 +38,78 @@ final class ExpansionRenderTests: XCTestCase {
     }
     private func difference(_ a:[UInt8],_ b:[UInt8]) -> Double {
         zip(a,b).reduce(0.0){$0+Double(abs(Int($1.0)-Int($1.1)))}/Double(a.count)
+    }
+    func testCameraTransitionEndpointsAndShutterFollowsAnimation() throws {
+        let original=try pixels(nil)
+        for definition in EffectRegistry.cameraTransitions34 {
+            var effect=definition.makeInstance()
+            effect.params["completion"] = .number(Animated(0))
+            XCTAssertEqual(original,try pixels(effect),definition.name)
+            effect.params["completion"] = .number(Animated(100))
+            XCTAssertTrue(try pixels(effect).allSatisfy{$0==0},definition.name)
+            effect=definition.makeInstance();effect.params["shutter"] = .number(Animated(0))
+            let sharp=try pixels(effect)
+            effect.params["shutter"] = .number(Animated(100))
+            XCTAssertEqual(sharp,try pixels(effect),"A held completion must stay sharp: \(definition.name)")
+            var progress=Animated(0.0)
+            progress.insertKeyframe(Keyframe(time:0,value:0));progress.insertKeyframe(Keyframe(time:1,value:100))
+            effect.params["completion"] = .number(progress)
+            let moving=try pixels(effect)
+            effect.params["shutter"] = .number(Animated(0))
+            XCTAssertGreaterThan(difference(moving,try pixels(effect)),0.01,definition.name)
+        }
+    }
+    func testOpticalLightsFallbacksAndBypass() throws {
+        let original=try pixels(nil)
+        for definition in EffectRegistry.lights36 {
+            var effect=definition.makeInstance()
+            let result=try pixels(effect)
+            XCTAssertGreaterThan(difference(original,result),0.05,definition.name)
+            XCTAssertLessThan(difference(result,try pixels(EffectInstance(typeID:definition.id,params:[:]))),0.01,definition.name)
+            effect.params["blend"] = .number(Animated(0))
+            XCTAssertEqual(original,try pixels(effect),definition.name)
+            effect=definition.makeInstance();effect.params["intensity"] = .number(Animated(0))
+            XCTAssertEqual(original,try pixels(effect),definition.name)
+        }
+    }
+    func testOpticalLightsDoNotInventLightOnEmptyInput() throws {
+        guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        for definition in EffectRegistry.lights36 {
+            var effect=definition.makeInstance();effect.params["only"] = .toggle(true)
+            var project=scene(effect)
+            for index in project.layers.indices where project.layers[index].content != .adjustment {
+                project.layers[index].fill=Animated(RGBA(0,0,0,0))
+            }
+            let result=try XCTUnwrap(renderer.renderPixels(project:project,time:0.4,preserveAlpha:true,mediaURL:{URL(fileURLWithPath:$0)})).rgba
+            XCTAssertTrue(result.allSatisfy{$0==0},definition.name)
+        }
+    }
+    func testWriteOpticalContactSheetAndAnimatedWinding() throws {
+        guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        let folder=URL(fileURLWithPath:"/tmp/awi-expansion",isDirectory:true)
+        try FileManager.default.createDirectory(at:folder,withIntermediateDirectories:true)
+        let definitions=EffectRegistry.lights36
+        let height=CGFloat((definitions.count+2)/3)*180
+        let sheet=UIGraphicsImageRenderer(size:CGSize(width:576,height:height)).image { context in
+            UIColor(white:0.06,alpha:1).setFill();context.fill(CGRect(x:0,y:0,width:576,height:height))
+            for (index,definition) in definitions.enumerated() {
+                let x=CGFloat(index%3)*192,y=CGFloat(index/3)*180
+                renderer.renderImage(project:scene(definition.makeInstance()),time:0.4,maxDimension:192,mediaURL:{URL(fileURLWithPath:$0)})?.draw(in:CGRect(x:x,y:y,width:192,height:144))
+                (definition.name as NSString).draw(at:CGPoint(x:x+6,y:y+150),withAttributes:[.font:UIFont.systemFont(ofSize:13),.foregroundColor:UIColor.white])
+            }
+        }
+        try XCTUnwrap(sheet.pngData()).write(to:folder.appendingPathComponent("optical-contact-sheet.png"))
+        let definition=try XCTUnwrap(EffectRegistry.definition("awi36.light.spiralLight"))
+        var effect=definition.makeInstance(),angle=Animated(0.0)
+        angle.insertKeyframe(Keyframe(time:0,value:0));angle.insertKeyframe(Keyframe(time:2,value:160))
+        effect.params["angle"] = .number(angle)
+        let destination=try XCTUnwrap(CGImageDestinationCreateWithURL(folder.appendingPathComponent("spiral-light.gif") as CFURL,UTType.gif.identifier as CFString,30,nil))
+        CGImageDestinationSetProperties(destination,[kCGImagePropertyGIFDictionary:[kCGImagePropertyGIFLoopCount:0]] as CFDictionary)
+        for frame in 0..<30 {
+            let image=try XCTUnwrap(renderer.renderImage(project:scene(effect),time:Double(frame)/15,maxDimension:192,mediaURL:{URL(fileURLWithPath:$0)}))
+            CGImageDestinationAddImage(destination,try XCTUnwrap(image.cgImage),[kCGImagePropertyGIFDictionary:[kCGImagePropertyGIFDelayTime:1.0/15]] as CFDictionary)
+        }
+        XCTAssertTrue(CGImageDestinationFinalize(destination))
     }
     func testSignalDefaultsMissingParametersAndZeroAmount() throws {
         let original=try pixels(nil)
@@ -145,5 +219,84 @@ final class ExpansionRenderTests: XCTestCase {
             }
             XCTAssertTrue(CGImageDestinationFinalize(destination))
         }
+    }
+    func testWriteRemainingFamilyReviewArtifacts() throws {
+        guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        let folder=URL(fileURLWithPath:"/tmp/awi-expansion",isDirectory:true)
+        try FileManager.default.createDirectory(at:folder,withIntermediateDirectories:true)
+        let families:[(String,[EffectDefinition])]=[
+            ("matte",EffectRegistry.batch33),
+            ("transition",EffectRegistry.batch34+EffectRegistry.cameraTransitions34),
+            ("shape-particle",EffectRegistry.batch35),
+            ("procedural",EffectRegistry.batch36),
+            ("finish",EffectRegistry.batch37+EffectRegistry.cleanup37)
+        ]
+        for (name,definitions) in families {
+            let height=CGFloat((definitions.count+3)/4)*180
+            let sheet=UIGraphicsImageRenderer(size:CGSize(width:768,height:height)).image { context in
+                UIColor(white:0.06,alpha:1).setFill();context.fill(CGRect(x:0,y:0,width:768,height:height))
+                for (index,definition) in definitions.enumerated() {
+                    let x=CGFloat(index%4)*192,y=CGFloat(index/4)*180
+                    let image=renderer.renderImage(project:reviewScene(definition.makeInstance()),time:0.4,maxDimension:192,mediaURL:{URL(fileURLWithPath:$0)})
+                    XCTAssertNotNil(image,definition.name)
+                    image?.draw(in:CGRect(x:x,y:y,width:192,height:144))
+                    (definition.name as NSString).draw(at:CGPoint(x:x+6,y:y+150),withAttributes:[.font:UIFont.systemFont(ofSize:13),.foregroundColor:UIColor.white])
+                }
+            }
+            try XCTUnwrap(sheet.pngData()).write(to:folder.appendingPathComponent(name+"-contact-sheet.png"))
+        }
+        // Animate actual editable controls, not a pan over a static contact sheet.
+        let previews:[(String,String,Double,Double)]=[
+            ("awi33.localContrast","threshold",5,35),("awi33.fringeMatte","radius",1,20),
+            ("awi33.lumaBand","threshold",15,85),("awi33.lightWrap","radius",2,30),
+            ("awi33.alphaSteps","band",2,12),
+            ("awi34.spiralPeel","completion",0,100),("awi34.paperRip","completion",0,100),
+            ("awi34.brushStrokeWipe","completion",0,100),("awi34.camera.cornerTumble","completion",0,100),
+            ("awi34.camera.splitFold","completion",0,100),
+            ("awi35.particlePetals","speed",0.5,1.5),("awi35.particleFeathers","speed",0.5,1.5),
+            ("awi35.particleMeteor","speed",0.5,1.5),("awi35.particleRibbons","speed",0.5,1.5),
+            ("awi35.particleComets","speed",0.5,1.5),
+            ("awi36.fractalRidges","evolution",0,2),("awi36.domainWarpField","evolution",0,2),
+            ("awi36.causticField","evolution",0,2),("awi36.fireTongues","evolution",0,2),
+            ("awi36.electricFilaments","evolution",0,2),
+            ("awi37.pixelBlur","block",1,32),("awi37.hotColor","lowHue",0,220),
+            ("awi37.hotColor2","hue",0,220),("awi37.trimmedMean","radius",0.5,8),
+            ("awi37.localRange","strength",0,100)
+        ]
+        for (id,key,start,end) in previews {
+            let definition=try XCTUnwrap(EffectRegistry.definition(id))
+            XCTAssertTrue(definition.params.contains{$0.id==key},"Review control missing: \(id).\(key)")
+            var effect=definition.makeInstance(),value=Animated(start)
+            value.insertKeyframe(Keyframe(time:0,value:start));value.insertKeyframe(Keyframe(time:2,value:end))
+            effect.params[key] = .number(value)
+            let destination=try XCTUnwrap(CGImageDestinationCreateWithURL(folder.appendingPathComponent(id+".gif") as CFURL,UTType.gif.identifier as CFString,30,nil))
+            CGImageDestinationSetProperties(destination,[kCGImagePropertyGIFDictionary:[kCGImagePropertyGIFLoopCount:0]] as CFDictionary)
+            for frame in 0..<30 {
+                let image=try XCTUnwrap(renderer.renderImage(project:reviewScene(effect),time:Double(frame)/15,maxDimension:192,mediaURL:{URL(fileURLWithPath:$0)}))
+                CGImageDestinationAddImage(destination,try XCTUnwrap(image.cgImage),[kCGImagePropertyGIFDictionary:[kCGImagePropertyGIFDelayTime:1.0/15]] as CFDictionary)
+            }
+            XCTAssertTrue(CGImageDestinationFinalize(destination),id)
+        }
+    }
+    private func reviewScene(_ effect:EffectInstance) -> Project {
+        var project=scene(effect)
+        // Matte tools need an isolated partial-alpha shape; reference mattes also
+        // receive a real, differently colored background layer rather than nil.
+        if effect.typeID.hasPrefix("awi33.") {
+            project.layers.removeAll{$0.content == .adjustment}
+            if let index=project.layers.firstIndex(where:{$0.name=="Star"}) {
+                var e=effect
+                if EffectRegistry.layerRefIDs.contains(effect.typeID),let back=project.layers.first(where:{$0.name=="Back"}) {
+                    e.text=["layer":back.id.uuidString]
+                }
+                project.layers[index].fill=Animated(RGBA(0.95,0.67,0.28,0.58))
+                project.layers[index].effects=[e]
+            }
+        }
+        if EffectRegistry.cleanup37.contains(where:{$0.id==effect.typeID}) {
+            let grain=EffectInstance(typeID:"ae.noise",params:["amount":.number(Animated(70)),"size":.number(Animated(0.5)),"color":.toggle(true)])
+            for index in project.layers.indices where project.layers[index].content != .adjustment { project.layers[index].effects=[grain] }
+        }
+        return project
     }
 }

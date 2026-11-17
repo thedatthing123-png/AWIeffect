@@ -9,6 +9,63 @@ static float noise34(float2 p) {
 }
 static float2 rotate34(float2 v,float angle) { float c=cos(angle),s=sin(angle); return float2(v.x*c-v.y*s,v.x*s+v.y*c); }
 
+static float4 cameraSample34(texture2d<half,access::sample> source,float2 uv,float2 size,
+                            float progress,constant EffectParams& p) {
+    if(progress>=1.0) return float4(0);
+    float2 pivot=p.b.xy*size,delta=uv-pivot,position=uv;
+    float diagonal=length(size),fade=1.0;
+    float2 direction=float2(cos(p.a.z),sin(p.a.z));
+    if(p.i.x==0) {
+        float bend=p.a.y*.01745329252,angle=bend*progress;
+        float2 departure=direction*(diagonal*1.8*progress*progress);
+        departure+=float2(-direction.y,direction.x)*sin(progress*3.14159265)*diagonal*.3*sin(bend);
+        position=pivot+rotate34(delta-departure,-angle);
+    } else if(p.i.x==1) {
+        float2 q=rotate34(delta,-p.a.z);
+        q.y-=size.y*1.7*progress*progress;
+        float tilt=clamp(p.a.y,-85.0,85.0)*.01745329252*progress;
+        float cameraDistance=diagonal*1.5;
+        // Invert x'=x*cos(a)/(1+x*sin(a)/distance), including y perspective.
+        float denominator=cos(tilt)-q.x*sin(tilt)/cameraDistance;
+        if(denominator<=.02) return float4(0);
+        float x=q.x/denominator,depth=1.0+x*sin(tilt)/cameraDistance;
+        position=pivot+rotate34(float2(x,q.y*depth),p.a.z);
+    } else if(p.i.x==2) {
+        float scale=max((1.0-progress)*(1.0-progress),.001);
+        position=pivot+rotate34(delta,-p.a.y*6.28318530718*progress)/scale;
+    } else {
+        float2 q=rotate34(delta,-p.a.z);
+        float side=q.x<0 ? -1.0:1.0;
+        q.x-=side*size.x*.8*progress*progress;
+        float tilt=clamp(p.a.y,-85.0,85.0)*.01745329252*progress;
+        float cameraDistance=diagonal*1.5;
+        float denominator=cos(tilt)-abs(q.x)*sin(tilt)/cameraDistance;
+        if(denominator<=.02) return float4(0);
+        float x=q.x/denominator;
+        // Do not sample the opposite half after its hinge has moved away.
+        if(x*side<0) return float4(0);
+        position=pivot+rotate34(float2(x,q.y*(1.0+abs(x)*sin(tilt)/cameraDistance)),p.a.z);
+    }
+    // Finish cleanly even for off-center pivots or extreme editable trajectories.
+    fade=1.0-smoothstep(.88,1.0,progress);
+    return float4(source.sample(reveal34,position))*fade;
+}
+kernel void fxCameraTransition34(texture2d<half,access::sample> source [[texture(0)]],
+                                texture2d<half,access::write> output [[texture(1)]],
+                                constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float2 uv=float2(gid)+.5,size=float2(output.get_width(),output.get_height());
+    float4 original=float4(source.sample(reveal34,uv));
+    if(p.a.x>=1.0) { output.write(half4(original*(1.0-p.a.w)),gid);return; }
+    float4 result=0;
+    uint samples=clamp(p.i.y,1u,8u);
+    for(uint tap=0;tap<samples;tap++) {
+        float progress=tap<4 ? p.c[tap]:p.d[tap-4];
+        result+=cameraSample34(source,uv,size,progress,p)/float(samples);
+    }
+    output.write(half4(mix(original,result,p.a.w)),gid);
+}
+
 kernel void fxReveal34(texture2d<half,access::sample> source [[texture(0)]],texture2d<half,access::write> output [[texture(1)]],
                        constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
     if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
@@ -73,7 +130,7 @@ kernel void fxReveal34(texture2d<half,access::sample> source [[texture(0)]],text
         float2 offset=float2(detail*progress*side*.03,0);
         float4 red=float4(source.sample(reveal34,uv+offset)),blue=float4(source.sample(reveal34,uv-offset));
         float alpha=max(original.a,max(red.a,blue.a));
-        picture=float4(min(float3(red.r,original.g,blue.b),float3(alpha)),alpha);
+        picture=float4(float3(red.r,original.g,blue.b),alpha);
     }
     output.write(half4(mix(original,picture*visibility,p.b.w)),gid);
 }
