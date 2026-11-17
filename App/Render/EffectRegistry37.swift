@@ -3,6 +3,40 @@ import Metal
 import simd
 
 extension EffectRegistry {
+    static let frequency37: [EffectDefinition] = [
+        frequency37("detailBands","Detail Bands",0,
+            "Separate fine texture, middle detail and broad structure with independent signed gains.",
+            [.number("fine","Fine Detail",1.5,-2,4),.number("middle","Middle Detail",1.3,-2,4),
+             .number("broad","Broad Structure",0.85,-2,4)]),
+        frequency37("bandPass","Band Pass",1,
+            "Isolate a finite range of image detail between two Gaussian scales, excluding both flat illumination and very fine noise.",
+            [.number("gain","Detail Gain",2,0,8),.number("bias","Gray Level",50,0,100,unit:"%")]),
+        frequency37("retinexDetail","Retinex Detail",2,
+            "Luminance-only log-ratio detail from three surround scales, blended with the original illumination and hue.",
+            [.number("strength","Illumination Recovery",55,0,100,unit:"%"),
+             .number("contrast","Detail Contrast",0.7,0.1,2),
+             .number("floor","Shadow Floor",1,0.1,10,unit:"%")])
+    ]
+    private static func frequency37(_ id:String,_ name:String,_ mode:UInt32,_ summary:String,_ controls:[ParamDef]) -> EffectDefinition {
+        EffectDefinition(id:"awi37."+id,name:name,category:.blur,aeMatchNames:[],summary:summary,
+            params:[.number("radius","Detail Scale",4,0.5,48,unit:"px"),
+                .number("spread","Scale Separation",4,1.5,12)]+controls+[
+                .number("blend","Blend",100,0,100,unit:"%")],stage:.pixels { ctx in
+                if v29(ctx,"blend")<=0 { return ctx.input }
+                let radius=v29(ctx,"radius")*ctx.unit,spread=v29(ctx,"spread")
+                let near=ctx.gpu.gaussian(ctx,input:ctx.input,sigma:radius)
+                let middle=ctx.gpu.gaussian(ctx,input:ctx.input,sigma:radius*spread)
+                // Third scale is only needed by the log-surround operation.
+                let far=mode==2 ? ctx.gpu.gaussian(ctx,input:ctx.input,sigma:radius*spread*2):middle
+                var p=EffectParams();p.i.x=mode
+                p.a=SIMD4(f29(ctx,"fine"),f29(ctx,"middle"),f29(ctx,"broad"),pc29(ctx,"blend"))
+                p.b=SIMD4(f29(ctx,"gain"),pc29(ctx,"bias"),pc29(ctx,"strength"),f29(ctx,"contrast"))
+                p.c.x=pc29(ctx,"floor")
+                let output=ctx.temp()
+                ctx.gpu.run("fxFrequency37",ctx.cb,textures:[ctx.input,output,near,middle,far],params:p,grid:output)
+                return output
+            })
+    }
     static let cleanup37: [EffectDefinition] = [
         cleanup37("medianDetail","Median Detail",0,
             "A luminance-ranked median suppresses isolated specks without averaging across every contour."),

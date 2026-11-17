@@ -14,7 +14,7 @@ final class ExpansionRenderTests: XCTestCase {
         XCTAssertEqual(Set(definitions.map(\.id)).count,definitions.count)
         let newDefinitions=EffectRegistry.batch31+EffectRegistry.batch32+EffectRegistry.batch33
             + EffectRegistry.batch34+EffectRegistry.cameraTransitions34+EffectRegistry.batch35+EffectRegistry.batch36
-            + EffectRegistry.lights36+EffectRegistry.batch37+EffectRegistry.cleanup37
+            + EffectRegistry.lights36+EffectRegistry.batch37+EffectRegistry.cleanup37+EffectRegistry.frequency37
         XCTAssertEqual(Set(newDefinitions.map(\.name)).count,newDefinitions.count,"New effects need distinct names and behaviors")
     }
     private func scene(_ effect: EffectInstance?) -> Project {
@@ -38,6 +38,51 @@ final class ExpansionRenderTests: XCTestCase {
     }
     private func difference(_ a:[UInt8],_ b:[UInt8]) -> Double {
         zip(a,b).reduce(0.0){$0+Double(abs(Int($1.0)-Int($1.1)))}/Double(a.count)
+    }
+    func testFrequencyFallbacksNeutralBandsAndBypass() throws {
+        let original=try pixels(nil)
+        for definition in EffectRegistry.frequency37 {
+            var effect=definition.makeInstance()
+            let result=try pixels(effect)
+            XCTAssertGreaterThan(difference(original,result),0.05,definition.name)
+            XCTAssertLessThan(difference(result,try pixels(EffectInstance(typeID:definition.id,params:[:]))),0.01,definition.name)
+            effect.params["blend"] = .number(Animated(0))
+            XCTAssertEqual(original,try pixels(effect),definition.name)
+        }
+        let definition=try XCTUnwrap(EffectRegistry.definition("awi37.detailBands"))
+        var effect=definition.makeInstance()
+        for key in ["fine","middle","broad"] { effect.params[key] = .number(Animated(1)) }
+        XCTAssertLessThan(difference(original,try pixels(effect)),0.01,"Unit gains must reconstruct the original signal")
+    }
+    func testChromaCleanupPreservesBrightnessAtSaturatedEdges() throws {
+        let definition=try XCTUnwrap(EffectRegistry.definition("awi37.chromaClean"))
+        var effect=definition.makeInstance()
+        effect.params["radius"] = .number(Animated(6))
+        effect.params["strength"] = .number(Animated(100))
+        let original=try pixels(nil),filtered=try pixels(effect)
+        var largestLumaError=0.0
+        for index in stride(from:0,to:original.count,by:4) {
+            let before=Double(original[index])*0.2126+Double(original[index+1])*0.7152+Double(original[index+2])*0.0722
+            let after=Double(filtered[index])*0.2126+Double(filtered[index+1])*0.7152+Double(filtered[index+2])*0.0722
+            largestLumaError=max(largestLumaError,abs(before-after))
+        }
+        XCTAssertLessThan(largestLumaError,2.0,"Chroma filtering must not brighten clipped color channels")
+        XCTAssertGreaterThan(difference(original,filtered),0.01,"The chroma must actually be smoothed")
+    }
+    func testFrequencyFiltersKeepCoverageAndEmptyPixelsClean() throws {
+        guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        var project=Project.new(name:"Detail alpha",width:96,height:96,fps:30,duration:1,background:RGBA(0,0,0,0))
+        var layer=project.makeLayer(name:"Soft subject",content:.shape(.star),size:Vec2(60,60))
+        layer.fill=Animated(RGBA(0.7,0.3,0.9,0.5));project.layers=[layer]
+        let original=try XCTUnwrap(renderer.renderPixels(project:project,time:0.4,preserveAlpha:true,mediaURL:{URL(fileURLWithPath:$0)})).rgba
+        for definition in EffectRegistry.frequency37 {
+            project.layers[0].effects=[definition.makeInstance()]
+            let result=try XCTUnwrap(renderer.renderPixels(project:project,time:0.4,preserveAlpha:true,mediaURL:{URL(fileURLWithPath:$0)})).rgba
+            for index in stride(from:0,to:result.count,by:4) {
+                XCTAssertEqual(result[index+3],original[index+3],"\(definition.name) changed the matte")
+                if result[index+3]==0 { XCTAssertTrue(result[index...index+2].allSatisfy{$0==0},definition.name) }
+            }
+        }
     }
     func testCameraTransitionEndpointsAndShutterFollowsAnimation() throws {
         let original=try pixels(nil)
@@ -229,7 +274,7 @@ final class ExpansionRenderTests: XCTestCase {
             ("transition",EffectRegistry.batch34+EffectRegistry.cameraTransitions34),
             ("shape-particle",EffectRegistry.batch35),
             ("procedural",EffectRegistry.batch36),
-            ("finish",EffectRegistry.batch37+EffectRegistry.cleanup37)
+            ("finish",EffectRegistry.batch37+EffectRegistry.cleanup37+EffectRegistry.frequency37)
         ]
         for (name,definitions) in families {
             let height=CGFloat((definitions.count+3)/4)*180
@@ -261,7 +306,9 @@ final class ExpansionRenderTests: XCTestCase {
             ("awi36.electricFilaments","evolution",0,2),
             ("awi37.pixelBlur","block",1,32),("awi37.hotColor","lowHue",0,220),
             ("awi37.hotColor2","hue",0,220),("awi37.trimmedMean","radius",0.5,8),
-            ("awi37.localRange","strength",0,100)
+            ("awi37.localRange","strength",0,100),
+            ("awi37.detailBands","middle",0,2),("awi37.bandPass","radius",1,12),
+            ("awi37.retinexDetail","strength",0,100)
         ]
         for (id,key,start,end) in previews {
             let definition=try XCTUnwrap(EffectRegistry.definition(id))

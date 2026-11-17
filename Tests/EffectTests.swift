@@ -308,7 +308,18 @@ final class EffectTests: XCTestCase {
                 }
                 // Adjustment layer = effect sees the whole varied scene, not just one flat shape.
                 let adj = !d.isTransformEffect && !Self.alphaShaped.contains(d.id)
-                let ra = try render(r, scene(effect: a, onAdjustment: adj)), rb = try render(r, scene(effect: b, onAdjustment: adj))
+                var sceneA=scene(effect:a,onAdjustment:adj),sceneB=scene(effect:b,onAdjustment:adj)
+                if d.id=="awi37.retinexDetail" && pd.id=="floor" {
+                    // The floor protects near-black source values. A bright flat
+                    // scene cannot exercise it; use the same deep-shadow patch in both.
+                    for index in sceneA.layers.indices where sceneA.layers[index].name=="green" {
+                        sceneA.layers[index].fill=Animated(RGBA(0.004,0.007,0.01))
+                    }
+                    for index in sceneB.layers.indices where sceneB.layers[index].name=="green" {
+                        sceneB.layers[index].fill=Animated(RGBA(0.004,0.007,0.01))
+                    }
+                }
+                let ra = try render(r,sceneA), rb = try render(r,sceneB)
                 XCTAssertGreaterThan(diff(ra, rb), 0.05, "\(d.name) › \(pd.name) does nothing")
             }
         }

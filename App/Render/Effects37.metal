@@ -6,6 +6,42 @@ constexpr sampler clean37(address::clamp_to_edge,filter::linear,coord::pixel);
 static float3 straight37(float4 color) { return color.a>.00001 ? color.rgb/color.a:float3(0); }
 static float luma37(float3 color) { return dot(color,float3(.2126,.7152,.0722)); }
 
+kernel void fxFrequency37(texture2d<half,access::sample> source [[texture(0)]],
+                          texture2d<half,access::write> output [[texture(1)]],
+                          texture2d<half,access::sample> nearScale [[texture(2)]],
+                          texture2d<half,access::sample> middleScale [[texture(3)]],
+                          texture2d<half,access::sample> farScale [[texture(4)]],
+                          constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float2 uv=float2(gid)+.5;
+    float4 original=float4(source.sample(finish37,uv));
+    if(original.a<=.00001) { output.write(half4(original),gid);return; }
+    // Normalize by each surround's own coverage: transparent padding is missing
+    // data, not a black illumination estimate.
+    float3 current=straight37(original),near=straight37(float4(nearScale.sample(finish37,uv)));
+    float3 middle=straight37(float4(middleScale.sample(finish37,uv))),result=current;
+    if(p.i.x==0) {
+        float3 fine=current-near,medium=near-middle;
+        result=middle*p.a.z+medium*p.a.y+fine*p.a.x;
+    } else if(p.i.x==1) {
+        result=float3(p.b.y)+(near-middle)*p.b.x;
+    } else {
+        float3 far=straight37(float4(farScale.sample(finish37,uv)));
+        float luminance=luma37(current),floorValue=max(p.c.x,.001);
+        float surround=(log(max(luma37(near),floorValue))+log(max(luma37(middle),floorValue))
+                        +log(max(luma37(far),floorValue)))/3.0;
+        float reflectance=log(max(luminance,floorValue))-surround;
+        // A bounded analytic tone mapping, not the paper's image-wide percentile
+        // normalization. Label this editable local-detail adaptation accordingly.
+        float target=.5+.5*tanh(clamp(reflectance*p.b.w,-8.0,8.0));
+        float mapped=mix(luminance,target,p.b.z);
+        result=luminance>.00001 ? current*mapped/luminance:current;
+    }
+    result=max(result,0.0);
+    float3 premultiplied=mix(current,result,p.a.w)*original.a;
+    output.write(half4(float4(min(premultiplied,float3(65504.0)),original.a)),gid);
+}
+
 kernel void fxCleanup37(texture2d<half,access::sample> source [[texture(0)]],
                          texture2d<half,access::write> output [[texture(1)]],
                          constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
@@ -45,7 +81,13 @@ kernel void fxCleanup37(texture2d<half,access::sample> source [[texture(0)]],
         } else if(p.i.x==1) result=clamp(current,minimum,maximum);
         else if(p.i.x==2) {
             float3 mean=weighted/max(weight,.00001);
-            result=max(mean+float3(luma37(current)-luma37(mean)),0.0);
+            float luminance=luma37(current);
+            float3 chroma=mean-float3(luma37(mean));
+            float minimumChroma=min(chroma.r,min(chroma.g,chroma.b));
+            // Compress chroma toward neutral if needed instead of clipping
+            // channels, which would accidentally raise the preserved luminance.
+            float saturation=minimumChroma<0 ? min(1.0,luminance/-minimumChroma):1.0;
+            result=float3(luminance)+chroma*saturation;
         } else if(p.i.x==3) result=weighted/max(weight,.00001);
         else {
             float low=luma37(minimum),high=luma37(maximum),luma=luma37(current);

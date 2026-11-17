@@ -81,3 +81,20 @@ default tuning remain. These must not be marked complete just because named entr
 
 The underlying published simplex formulation has an MIT-licensed upstream reference:
 https://github.com/ashima/webgl-noise
+
+## Frequency detail
+
+Detail Bands reconstructs the source from a broad Gaussian base, a middle
+difference band and a fine residual, with separately editable signed gains.
+Band Pass retains only the difference between two independently scaled surrounds.
+Both normalize blurred samples by their own alpha coverage and preserve the source
+matte, rather than treating transparent padding as black image data.
+
+Retinex Detail uses the three-scale log source/surround relationship documented
+in the IPOL paper, implemented independently. It operates on luminance, restores
+the source hue through a luminance ratio, and uses a bounded analytic tone mapping
+instead of the paper's image-wide percentile normalization. It is an editable
+local-detail adaptation, not a claim to implement the paper's complete MSRCR or
+MSRCP pipeline. No external implementation code was copied.
+
+https://www.ipol.im/pub/art/2014/107/

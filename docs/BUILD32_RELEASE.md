@@ -15,7 +15,7 @@ the expansion, in that order. Training remains paused.
 | 34 | Transitions | 24 mask/warp transitions and 4 keyed-shutter camera-path transitions implemented; runtime/visual review pending |
 | 35 | Shapes + particles | 24 generated shapes + 16 particle profiles implemented; unvalidated |
 | 36 | Procedural, Fractal Ridges reference match, glow/light | 36 procedural definitions and 6 source-derived optical light structures implemented; reference comparison and visual review pending |
-| 37 | Stylize, retro, text, blur, Hot Color and remakes | Pixel Blur, both Hot Color treatments and 6 detail-cleanup filters implemented; other families and review pending |
+| 37 | Stylize, retro, text, blur, Hot Color and remakes | Pixel Blur, both Hot Color treatments, 6 cleanup filters and 3 frequency-detail tools implemented; other families and review pending |
 | 38 | Designed composites + licensed on-device upscale bake | Pending |
 
 Do not interpret the build number as a plan batch number. A candidate with only
