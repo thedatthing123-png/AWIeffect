@@ -63,7 +63,7 @@ final class EffectTests: XCTestCase {
         var rect = p.makeLayer(name: "rect", content: .shape(.rectangle), size: Vec2(50, 30))
         rect.fill = Animated(RGBA(0.6, 0.2, 0.9))
         rect.transform.position = Animated(Vec2(40, 40))
-        if EffectRegistry.cleanup37.contains(where:{$0.id==effect?.typeID}) {
+        if EffectRegistry.cleanup37.contains(where:{$0.id==effect?.typeID}) || ["awi37.draw.flowPaint","awi31.segmentSort"].contains(effect?.typeID ?? "") {
             // Cleanup filters must see noisy detail, not only noise-free flat fills.
             // Keep this source texture identical when the tested filter is disabled.
             let grain=EffectInstance(typeID:"ae.noise",params:["amount":.number(Animated(70)),
@@ -196,7 +196,7 @@ final class EffectTests: XCTestCase {
                 var disabled=visible(d); disabled.isEnabled=false
                 comparison=try render(r,scene(effect:disabled))
             }
-            if EffectRegistry.cleanup37.contains(where:{$0.id==d.id}) {
+            if EffectRegistry.cleanup37.contains(where:{$0.id==d.id}) || ["awi37.draw.flowPaint","awi31.segmentSort"].contains(d.id) {
                 var disabled=visible(d);disabled.isEnabled=false
                 comparison=try render(r,scene(effect:disabled,onAdjustment:true))
             }
@@ -212,7 +212,7 @@ final class EffectTests: XCTestCase {
             let out = try render(r, scene(effect: visible(d), onAdjustment: true))
             var comparison=base
             if EffectRegistry.temporalIDs33.contains(d.id) { comparison=try render(r,TemporalEffectTests.scene(nil)) }
-            if EffectRegistry.cleanup37.contains(where:{$0.id==d.id}) {
+            if EffectRegistry.cleanup37.contains(where:{$0.id==d.id}) || ["awi37.draw.flowPaint","awi31.segmentSort"].contains(d.id) {
                 var disabled=visible(d);disabled.isEnabled=false
                 comparison=try render(r,scene(effect:disabled,onAdjustment:true))
             }
@@ -233,7 +233,7 @@ final class EffectTests: XCTestCase {
                 for index in reference.layers.indices { reference.layers[index].effects=[] }
                 comparison=try render(r,reference)
             }
-            if EffectRegistry.cleanup37.contains(where:{$0.id==d.id}) {
+            if EffectRegistry.cleanup37.contains(where:{$0.id==d.id}) || ["awi37.draw.flowPaint","awi31.segmentSort"].contains(d.id) {
                 var reference=scene(effect:e)
                 for index in reference.layers.indices { reference.layers[index].effects.removeAll{$0.id==e.id} }
                 comparison=try render(r,reference)

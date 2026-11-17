@@ -9,8 +9,8 @@ final class TemporalEffectTests:XCTestCase {
         var project=Project.new(name:"Temporal source",width:160,height:160,fps:30,duration:2,background:RGBA(0.04,0.07,0.12))
         var subject=project.makeLayer(name:"Temporal subject",content:.solid,size:Vec2(120,120))
         var fill=Animated(RGBA(0.9,0.1,0.2))
-        for (time,color) in [(0.0,RGBA(0.9,0.1,0.2)),(0.3,RGBA(0.1,0.9,0.2)),
-            (0.4,RGBA(0.1,0.2,0.95)),(0.5,RGBA(0.1,0.9,0.2)),
+        for (time,color) in [(0.0,RGBA(0.9,0.1,0.2)),(0.3,RGBA(0.9,0.9,0.95)),
+            (0.4,RGBA(0.08,0.1,0.15)),(0.5,RGBA(0.9,0.9,0.95)),
             (1.0,RGBA(0.95,0.8,0.1)),(2.0,RGBA(0.7,0.15,0.85))] {
             fill.insertKeyframe(Keyframe(time:time,value:color))
         }
@@ -40,7 +40,7 @@ final class TemporalEffectTests:XCTestCase {
     func testTemporalDefaultsFallbacksAndBypassOnBothLayerTypes() throws {
         for adjustment in [false,true] {
             let original=try render(Self.scene(nil,onAdjustment:adjustment))
-            for definition in EffectRegistry.time33 {
+            for definition in EffectRegistry.time33+EffectRegistry.retro37.filter({EffectRegistry.temporalIDs33.contains($0.id)})+EffectRegistry.batch38 {
                 var effect=definition.makeInstance()
                 let result=try render(Self.scene(effect,onAdjustment:adjustment))
                 XCTAssertGreaterThan(difference(original,result),0.05,definition.name)
@@ -56,6 +56,16 @@ final class TemporalEffectTests:XCTestCase {
         effect.params["span"] = .number(Animated(0));effect.params["offset"] = .number(Animated(0))
         for adjustment in [false,true] {
             XCTAssertEqual(try render(Self.scene(nil)),try render(Self.scene(effect,onAdjustment:adjustment)))
+        }
+    }
+    func testMotionLightsIgnoreColorChangesWhenAlphaSourceIsSelected() throws {
+        let original=try render(Self.scene(nil))
+        for definition in EffectRegistry.batch38 {
+            var effect=definition.makeInstance();effect.params["source"] = .choice(2)
+            // The opaque scene changes color and position but not its full-frame alpha.
+            XCTAssertLessThan(difference(original,try render(Self.scene(effect))),0.01,definition.name)
+            effect=definition.makeInstance();effect.params["delay"] = .number(Animated(0))
+            XCTAssertEqual(original,try render(Self.scene(effect)),definition.name)
         }
     }
     func testSliceSamplesParentedMotionAtRequestedTime() throws {

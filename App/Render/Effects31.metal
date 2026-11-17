@@ -3,6 +3,65 @@ using namespace metal;
 struct EffectParams { float4 a; float4 b; float4 c; float4 d; uint4 i; };
 constexpr sampler signal31(address::clamp_to_edge, filter::linear, coord::pixel);
 
+static bool sortLess31(uint segmentA,float keyA,uint orderA,uint segmentB,float keyB,uint orderB) {
+    return segmentA<segmentB || (segmentA==segmentB && (keyA<keyB || (keyA==keyB && orderA<orderB)));
+}
+// Independent bitonic network on (segment, key, original position). Sorting the
+// segment first keeps unselected pixels and run boundaries fixed in the window.
+kernel void fxSegmentSort31(texture2d<half,access::sample> source [[texture(0)]],
+                            texture2d<half,access::write> output [[texture(1)]],
+                            constant EffectParams& p [[buffer(0)]],
+                            uint lane [[thread_index_in_threadgroup]],uint3 group [[threadgroup_position_in_grid]]) {
+    threadgroup half4 colors[256];threadgroup float keys[256];
+    threadgroup uint segments[256];threadgroup uint orders[256];threadgroup uint selected[256];
+    uint span=p.i.w,lanes=uint(p.b.x),position=group.x*span+lane;
+    uint2 pixel=p.i.x==0 ? uint2(position,group.y):uint2(group.y,position);
+    bool valid=lane<span && pixel.x<output.get_width() && pixel.y<output.get_height();
+    half4 original=valid ? source.sample(signal31,float2(pixel)+.5):half4(0);
+    float4 color=float4(original);float3 straight=color.a>.00001 ? color.rgb/color.a:float3(0);
+    float luminance=dot(straight,float3(.2126,.7152,.0722));
+    float maximum=max(straight.r,max(straight.g,straight.b)),minimum=min(straight.r,min(straight.g,straight.b));
+    float delta=maximum-minimum,key=luminance;
+    if(p.i.y==1) {
+        key=0;
+        if(delta>.00001) {
+            if(maximum==straight.r) key=(straight.g-straight.b)/delta;
+            else if(maximum==straight.g) key=2.0+(straight.b-straight.r)/delta;
+            else key=4.0+(straight.r-straight.g)/delta;
+            key=fract(key/6.0);
+        }
+    } else if(p.i.y==2) key=maximum>.00001 ? delta/maximum:0;
+    colors[lane]=original;keys[lane]=p.i.z!=0 ? -key:key;orders[lane]=lane;
+    selected[lane]=valid && color.a>.00001 && luminance>=p.a.x && luminance<=p.a.y ? 1u:0u;
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    if(lane==0) {
+        uint segment=0;
+        for(uint i=0;i<lanes;i++) {
+            if(i>0 && (selected[i]==0 || selected[i-1]==0)) segment++;
+            segments[i]=segment;
+        }
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    for(uint size=2;size<=lanes;size<<=1) for(uint distance=size>>1;distance>0;distance>>=1) {
+        uint other=lane^distance;
+        half4 ownColor=colors[lane],peerColor=colors[other];
+        float ownKey=keys[lane],peerKey=keys[other];
+        uint ownSegment=segments[lane],peerSegment=segments[other],ownOrder=orders[lane],peerOrder=orders[other];
+        bool lower=((lane&size)==0)==((lane&distance)==0);
+        bool peerFirst=sortLess31(peerSegment,peerKey,peerOrder,ownSegment,ownKey,ownOrder);
+        bool ownFirst=sortLess31(ownSegment,ownKey,ownOrder,peerSegment,peerKey,peerOrder);
+        bool swap=lower ? peerFirst:ownFirst;
+        threadgroup_barrier(mem_flags::mem_threadgroup);
+        colors[lane]=swap ? peerColor:ownColor;keys[lane]=swap ? peerKey:ownKey;
+        segments[lane]=swap ? peerSegment:ownSegment;orders[lane]=swap ? peerOrder:ownOrder;
+        threadgroup_barrier(mem_flags::mem_threadgroup);
+    }
+    if(valid) {
+        half4 result=p.a.z>=1.0 ? colors[lane]:half4(mix(float4(original),float4(colors[lane]),p.a.z));
+        output.write(result,pixel);
+    }
+}
+
 static float hash31(float2 cell, float seed) {
     uint2 q = uint2(int2(floor(cell)));
     uint v = q.x*1664525u + q.y*1013904223u + uint(seed*101.0+7919.0);

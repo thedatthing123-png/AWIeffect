@@ -88,6 +88,9 @@ struct TextData: Codable, Equatable {
     var text3D: Text3DOptions? = nil
     /// Preset group (Look id) that set `text3D`; nil = set by the user.
     var text3DGroup: String? = nil
+    /// Render-snapshot geometry, populated from Layer.effects. Deliberately absent
+    /// from CodingKeys: the editable definitions are saved on the layer, not twice.
+    var geometryEffects: [EffectInstance]? = nil
 
     enum CodingKeys: String, CodingKey {
         case string, fontName, fontSize, fill, tracking, lineSpacing, alignment, colorSpans, animators, onPath, pathOffset

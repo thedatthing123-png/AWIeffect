@@ -122,3 +122,53 @@ bound, not a claim about total in-flight GPU memory or device frame rate.
 Tests include a generated red/blue video cut, animated parent motion, upstream vs
 downstream fill ordering, moved backdrop coverage and cache invalidation after an
 edit. Runtime validation, deep-stack stress and visual judgment remain pending.
+
+## Image-driven drawing
+
+The new drawing pass distinguishes nine image operations: tangent-guided bilateral
+smoothing, gradient-aligned hatch patches, oriented capsule marks, multi-scale
+mezzotint pits, signed gradient displacement, signed Laplacian curvature, Hessian
+line-center detection, source-tone spiral engraving and local-surround solarization.
+It does not rename a Kuwahara filter or a fixed crosshatch to create extra entries.
+Mezzotint has an explicit stable Random Seed control. Ink/paper alpha participate
+in the treatment, source coverage is preserved except for the intentional Edge
+Stretch warp, and every pass uses bounded sample counts. Rendered tuning remains
+required before these are accepted for release.
+
+## Segmented sorting
+
+Segment Pixel Sort implements an independent cooperative bitonic network over
+segment/key/original-position tuples. Threshold-excluded pixels are isolated
+segments, so sorting cannot move a pixel across a threshold boundary. Hue ties
+remain stable. Windows are intentionally bounded (8–128 layer pixels, up to 256
+buffer samples after density scaling), not marketed as a full-image arbitrary-run
+sort. Horizontal/vertical and key choices are settings of one effect, not extra
+catalog entries. Existing sorted-looking streaks keep their original ID/behavior.
+An independent tuple-sort oracle checks randomized networks locally; GPU tests
+check actual pixel ordering, excluded locations, partial windows and both axes.
+
+https://developer.nvidia.com/gpugems/gpugems2/part-vi-simulation-and-numerical-algorithms/chapter-46-improved-gpu-sorting
+
+## Native text geometry and retro
+
+Text Arc, Cylinder, Sphere, Accordion, Helix and Attractor operate on glyph states
+before existing glyph projection. They also work through Text Studio's stable-ID
+letter selectors. The effects do not create/replace animators or animation presets.
+Their render-snapshot data is excluded from TextData's CodingKeys; settings remain
+stored once on Layer.effects or the existing animator letterEffects. Animated
+bounds use the same geometry states as drawing, including vertical type and real
+per-letter depth. Layer and effect Mix/Solo semantics are applied explicitly.
+
+Retro additions use different image mechanisms: one-way thresholded CCD charge
+smear, scanline carrier modulation/demodulation, independently transformed RGB
+plates and actual previous-frame channel-dependent phosphor decay. These are
+stylizations, not calibrated emulations of a named camera or broadcast standard.
+
+## Change-driven light composites
+
+The first batch 38 family compares actual upstream frames, thresholds changing
+RGB/luminance/alpha and then constructs glow, directional streaks, radial rays or
+hollow rings. The current image is retained separately from the emission. No
+emission means exact source passthrough; this is enforced without altering the
+older photographic glow compositor or saved glow rendering. These composites
+still need rendered tuning, timing/stack tests and device profiling.

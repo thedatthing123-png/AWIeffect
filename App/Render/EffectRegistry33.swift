@@ -3,7 +3,8 @@ import Metal
 import simd
 
 extension EffectRegistry {
-    static let temporalIDs33:Set<String>=["awi33.time.slice","awi33.time.difference","awi33.time.median"]
+    static let temporalIDs33:Set<String>=["awi33.time.slice","awi33.time.difference","awi33.time.median","awi37.retro.phosphor",
+        "awi38.motionGlow","awi38.motionStreaks","awi38.motionRays","awi38.motionRings"]
     static let time33:[EffectDefinition]=[
         EffectDefinition(id:"awi33.time.slice",name:"Time Slice",category:.stylize,aeMatchNames:[],
             summary:"Different image regions show actual upstream frames from a time interval. Linear or radial slices can blend between sampled frames.",

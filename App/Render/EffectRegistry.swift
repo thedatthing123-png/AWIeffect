@@ -170,7 +170,13 @@ final class EffectGPU {
 
     init(device: MTLDevice, library: MTLLibrary) throws {
         self.device = device
-        for name in ["fxTimeSlice33", "fxTimeDifference33", "fxTimeMedian33", "fxTimeComposite33", "fxFrequency37", "fxCameraTransition34", "fxCleanup37", "fxOptical36", "fxFinish37", "fxField36", "fxGenerate35", "fxReveal34", "fxMatte33", "fxFlow32", "fxSignal31", "fxBackground30", "fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
+        for name in [
+                     "fxChangeComposite38", "fxChangeSource38", "fxRetro37", "fxPhosphor37",
+                     "fxSegmentSort31", "fxDrawing37", "fxTimeSlice33", "fxTimeDifference33",
+                     "fxTimeMedian33", "fxTimeComposite33", "fxFrequency37", "fxCameraTransition34",
+                     "fxCleanup37", "fxOptical36", "fxFinish37", "fxField36", "fxGenerate35",
+                     "fxReveal34", "fxMatte33", "fxFlow32", "fxSignal31", "fxBackground30",
+                     "fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
                      "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix", "fxBackdropMix", "fxBackdropMask", "fxBackdropTransform",
                      "fxWarp", "fxStylize", "fxGlitch", "fxColor2", "fxSaberCore", "fxShine", "fxParticles", "fxPixelSort",
                      "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet", "fxGrade", "maskMix", "fxLayerRef", "flowEstimate", "flowBlur", "fxAccumulate", "fx19", "fx19GlowKeep", "fx19KeyInvert", "fx19AlphaOf", "fx19ColorSelect", "fx19Bend", "fx20Flip", "fx20AMWave", "fx20AMFractal", "fx21", "fx22", "fx23", "fxGX", "fxInnerGlow24", "fxArt24", "fxLightPrep25", "fxLightSum25", "fxLightComp25", "fxStreak25", "fxLightGen25", "fxBlur26", "fxPrint27", "fxInk27", "fxFilm27", "fxGlitch27", "fxTurbulent28", "fxWaveWarp28", "fxPolar28", "fxRipple28", "fxMagnify28", "fxTrans28", "fxWarp14AA28", "fxDistort6AA28", "fxFractalNoise29", "fxGen29", "fxKey29", "fxColor29", "fxDeepSource", "fxDeepAccumulate", "fxDeepComposite", "fxProxyPremultiply", "fxGradeR4", "fxMixR4", "fxGradientR4"] {
@@ -180,6 +186,26 @@ final class EffectGPU {
     }
 
     /// Runs one kernel: textures bound in order at indices 0..n, params at buffer 0, grid = out size.
+    /// Cooperative sort kernels need one explicit 1D workgroup per row window.
+    func segmentSort31(_ ctx:EffectContext,input:MTLTexture,output:MTLTexture,span:Int,params:EffectParams) {
+        guard let pso=psos["fxSegmentSort31"],let encoder=ctx.cb.makeComputeCommandEncoder() else { return }
+        let length=min(256,max(2,span))
+        var lanes=2
+        while lanes<length { lanes*=2 }
+        guard lanes<=pso.maxTotalThreadsPerThreadgroup else {
+            encoder.endEncoding();run("fxCopy",ctx.cb,textures:[input,output],grid:output);return
+        }
+        var p=params;p.i.w=UInt32(length);p.b.x=Float(lanes)
+        encoder.setComputePipelineState(pso);encoder.setTexture(input,index:0);encoder.setTexture(output,index:1)
+        encoder.setBytes(&p,length:MemoryLayout<EffectParams>.stride,index:0)
+        let along=params.i.x==0 ? output.width:output.height
+        let across=params.i.x==0 ? output.height:output.width
+        encoder.dispatchThreadgroups(MTLSize(width:(along+length-1)/length,height:across,depth:1),
+            threadsPerThreadgroup:MTLSize(width:lanes,height:1,depth:1))
+        encoder.endEncoding()
+    }
+
+    /// Runs one ordinary kernel with no cooperation between workgroup lanes.
     func run(_ name: String, _ cb: MTLCommandBuffer, textures: [MTLTexture], params: EffectParams? = nil, grid: MTLTexture) {
         guard let pso = psos[name], let enc = cb.makeComputeCommandEncoder() else { return }
         enc.setComputePipelineState(pso)
@@ -256,11 +282,23 @@ enum EffectRegistry {
         return out
     }()
 
-    static let all: [EffectDefinition] = [
+    static let all: [EffectDefinition] = {
+        var definitions: [EffectDefinition] = [
         gaussianBlur, directionalBlur, radialBlur,
         exposure, brightnessContrast, hueSaturation, tint, levels, invert, fill, vignette,
         glow, rgbSplit, fractalNoise, chromaKey, shake,
-    ] + [letterSpacing] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22 + batch23 + batchR4 + batch30 + batch31 + batch32 + batch33 + time33 + batch34 + cameraTransitions34 + batch35 + batch36 + lights36 + batch37 + cleanup37 + frequency37
+        ]
+        definitions.append(letterSpacing)
+        let families: [[EffectDefinition]] = [
+            batch2,batch3,batch4,batch5,batch6,batch7,batch8,batch9,batch10,batch11,
+            batch12,batch13,batch14,batch15,batch16,batch17,batch18,batch19,batch20,
+            batch21,batch22,batch23,batchR4,batch30,batch31,sorting31,batch32,batch33,
+            time33,batch34,cameraTransitions34,batch35,batch36,lights36,batch37,
+            cleanup37,frequency37,drawing37,retro37,textGeometry37,batch38
+        ]
+        for family in families { definitions.append(contentsOf:family) }
+        return definitions
+    }()
 
     private static let byID: [String: EffectDefinition] = Dictionary(uniqueKeysWithValues: all.map { ($0.id, EffectStackR4.wrap($0)) })
     private static let byMatchName: [String: EffectDefinition] = {

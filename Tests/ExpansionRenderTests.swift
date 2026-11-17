@@ -12,9 +12,12 @@ final class ExpansionRenderTests: XCTestCase {
         let definitions=EffectRegistry.all
         XCTAssertGreaterThan(definitions.count,1000,"Build 32's full expansion is not implemented yet")
         XCTAssertEqual(Set(definitions.map(\.id)).count,definitions.count)
-        let newDefinitions=EffectRegistry.batch31+EffectRegistry.batch32+EffectRegistry.batch33+EffectRegistry.time33
-            + EffectRegistry.batch34+EffectRegistry.cameraTransitions34+EffectRegistry.batch35+EffectRegistry.batch36
-            + EffectRegistry.lights36+EffectRegistry.batch37+EffectRegistry.cleanup37+EffectRegistry.frequency37
+        let families:[[EffectDefinition]]=[EffectRegistry.batch31,EffectRegistry.sorting31,EffectRegistry.batch32,
+            EffectRegistry.batch33,EffectRegistry.time33,EffectRegistry.batch34,EffectRegistry.cameraTransitions34,
+            EffectRegistry.batch35,EffectRegistry.batch36,EffectRegistry.lights36,EffectRegistry.batch37,
+            EffectRegistry.cleanup37,EffectRegistry.frequency37,EffectRegistry.drawing37,EffectRegistry.retro37,
+            EffectRegistry.textGeometry37,EffectRegistry.batch38]
+        let newDefinitions=families.flatMap{$0}
         XCTAssertEqual(Set(newDefinitions.map(\.name)).count,newDefinitions.count,"New effects need distinct names and behaviors")
     }
     private func scene(_ effect: EffectInstance?) -> Project {
@@ -38,6 +41,31 @@ final class ExpansionRenderTests: XCTestCase {
     }
     private func difference(_ a:[UInt8],_ b:[UInt8]) -> Double {
         zip(a,b).reduce(0.0){$0+Double(abs(Int($1.0)-Int($1.1)))}/Double(a.count)
+    }
+    func testDrawingFallbacksAndBlendBypass() throws {
+        guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        func render(_ effect:EffectInstance) throws -> [UInt8] {
+            try XCTUnwrap(renderer.renderPixels(project:reviewScene(effect),time:0.4,preserveAlpha:true,mediaURL:{URL(fileURLWithPath:$0)})).rgba
+        }
+        for definition in EffectRegistry.drawing37 {
+            var effect=definition.makeInstance(),disabled=effect;disabled.isEnabled=false
+            let original=try render(disabled),processed=try render(effect)
+            XCTAssertGreaterThan(difference(original,processed),0.05,definition.name)
+            XCTAssertLessThan(difference(processed,try render(EffectInstance(typeID:definition.id,params:[:]))),0.01,definition.name)
+            effect.params["blend"] = .number(Animated(0))
+            XCTAssertEqual(original,try render(effect),definition.name)
+        }
+    }
+    func testDrawingDoesNotPaintOutsideEmptyCoverage() throws {
+        guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        for definition in EffectRegistry.drawing37 {
+            var project=scene(definition.makeInstance())
+            for index in project.layers.indices where project.layers[index].content != .adjustment {
+                project.layers[index].fill=Animated(RGBA(0,0,0,0))
+            }
+            let rgba=try XCTUnwrap(renderer.renderPixels(project:project,time:0.4,preserveAlpha:true,mediaURL:{URL(fileURLWithPath:$0)})).rgba
+            XCTAssertTrue(rgba.allSatisfy{$0==0},definition.name)
+        }
     }
     func testFrequencyFallbacksNeutralBandsAndBypass() throws {
         let original=try pixels(nil)
@@ -275,7 +303,10 @@ final class ExpansionRenderTests: XCTestCase {
             ("transition",EffectRegistry.batch34+EffectRegistry.cameraTransitions34),
             ("shape-particle",EffectRegistry.batch35),
             ("procedural",EffectRegistry.batch36),
-            ("finish",EffectRegistry.batch37+EffectRegistry.cleanup37+EffectRegistry.frequency37)
+            ("finish",EffectRegistry.batch37+EffectRegistry.cleanup37+EffectRegistry.frequency37),
+            ("drawing",EffectRegistry.drawing37),("sort",EffectRegistry.sorting31),
+            ("retro",EffectRegistry.retro37),("text-geometry",EffectRegistry.textGeometry37),
+            ("motion-light",EffectRegistry.batch38)
         ]
         for (name,definitions) in families {
             let height=CGFloat((definitions.count+3)/4)*180
@@ -311,7 +342,18 @@ final class ExpansionRenderTests: XCTestCase {
             ("awi37.hotColor2","hue",0,220),("awi37.trimmedMean","radius",0.5,8),
             ("awi37.localRange","strength",0,100),
             ("awi37.detailBands","middle",0,2),("awi37.bandPass","radius",1,12),
-            ("awi37.retinexDetail","strength",0,100)
+            ("awi37.retinexDetail","strength",0,100),
+            ("awi37.draw.flowPaint","detail",2,16),("awi37.draw.adaptiveHatch","detail2",0,100),
+            ("awi37.draw.edgeStretch","detail",-40,40),("awi37.draw.ridgeInk","detail",1,8),
+            ("awi37.draw.spiralEngraving","detail",1,6),
+            ("awi37.retro.compositeCrosstalk","phase",0,180),("awi37.retro.ccdSmear","length",10,200),
+            ("awi37.retro.plateRegistration","redAngle",-5,5),("awi37.retro.phosphor","window",0.01,0.4),
+            ("awi31.segmentSort","length",8,128),
+            ("awi37.text.arc","bend",-90,90),("awi37.text.cylinder","phase",0,160),
+            ("awi37.text.sphere","latitude",-45,45),("awi37.text.accordion","fold",0,80),
+            ("awi37.text.helix","phase",0,180),("awi37.text.attractor","strength",-80,80),
+            ("awi38.motionGlow","radius",10,100),("awi38.motionStreaks","angle",0,120),
+            ("awi38.motionRays","reach",5,90),("awi38.motionRings","radius",2,40)
         ]
         for (id,key,start,end) in previews {
             let definition=try XCTUnwrap(EffectRegistry.definition(id))
@@ -330,6 +372,12 @@ final class ExpansionRenderTests: XCTestCase {
     }
     private func reviewScene(_ effect:EffectInstance) -> Project {
         if EffectRegistry.temporalIDs33.contains(effect.typeID) { return TemporalEffectTests.scene(effect) }
+        if EffectRegistry.textGeometryIDs37.contains(effect.typeID) {
+            var project=Project.new(name:"Native type",width:192,height:144,fps:30,duration:3,background:RGBA(0.05,0.07,0.12))
+            var layer=project.makeLayer(name:"Type",content:.text,size:Vec2(150,100))
+            var text=TextData(string:"AWI\nEFFECT");text.fontSize=28;layer.text=text;layer.effects=[effect];project.layers=[layer]
+            return project
+        }
         var project=scene(effect)
         // Matte tools need an isolated partial-alpha shape; reference mattes also
         // receive a real, differently colored background layer rather than nil.
@@ -344,7 +392,7 @@ final class ExpansionRenderTests: XCTestCase {
                 project.layers[index].effects=[e]
             }
         }
-        if EffectRegistry.cleanup37.contains(where:{$0.id==effect.typeID}) {
+        if EffectRegistry.cleanup37.contains(where:{$0.id==effect.typeID}) || ["awi37.draw.flowPaint","awi31.segmentSort"].contains(effect.typeID) {
             let grain=EffectInstance(typeID:"ae.noise",params:["amount":.number(Animated(70)),"size":.number(Animated(0.5)),"color":.toggle(true)])
             for index in project.layers.indices where project.layers[index].content != .adjustment { project.layers[index].effects=[grain] }
         }

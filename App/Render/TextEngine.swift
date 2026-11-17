@@ -529,6 +529,16 @@ final class TextEngine {
                 if vertical { states[gi].offset.y -= back } else { states[gi].offset.x -= back }
             }
         }
+        for animator in text.animators where animator.isEnabled {
+            let geometry=(animator.letterEffects ?? []).filter { $0.isEnabled && EffectRegistry.textGeometryIDs37.contains($0.typeID) }
+            if !geometry.isEmpty {
+                let weights=layout.glyphs.map { selection(animator,glyph:$0,layout:layout,time:time,beats:beats) }
+                TextGeometry37.apply(geometry,text:text,layout:layout,states:&states,time:time,weights:weights)
+            }
+        }
+        if let geometry=text.geometryEffects,!geometry.isEmpty {
+            TextGeometry37.apply(geometry,text:text,layout:layout,states:&states,time:time)
+        }
         return states
     }
 
@@ -897,7 +907,9 @@ extension Renderer {
             PathTrack($0.path.value(at: time), offsetPercent: text.pathOffset?.value(at: time) ?? 0)
         } : nil
         // Letter effects: per animator, how much each glyph belongs to its effected copy.
-        let fxAnimators = text.animators.filter { a in a.isEnabled && (a.letterEffects ?? []).contains { $0.isEnabled } }
+        let fxAnimators = text.animators.filter { a in a.isEnabled && (a.letterEffects ?? []).contains {
+            $0.isEnabled && !EffectRegistry.textGeometryIDs37.contains($0.typeID)
+        } }
         let fxWeights: [[Double]] = fxAnimators.map { a in
             lay.glyphs.map { g in min(1, max(0, TextEngine.selection(a, glyph: g, layout: lay, time: time, beats: beats))) }
         }
@@ -1077,6 +1089,8 @@ extension Renderer {
     /// The text a layer draws at `time` (counter value, spacing effect applied).
     static func renderTextData(_ layer: Layer, time: Double) -> TextData? {
         guard var text = layer.text?.resolved(at: time) else { return nil }
+        let geometry=layer.effects.filter { $0.isEnabled && EffectRegistry.textGeometryIDs37.contains($0.typeID) }
+        text.geometryEffects=geometry.isEmpty ? nil:geometry
         for effect in layer.effects where effect.isEnabled && effect.typeID == "awi.textSpacing" {
             let spacing = effect.number("spacing", time)
             if spacing.isFinite { text.tracking = Animated(text.tracking.value(at: time) + min(1000, max(-300, spacing))) }

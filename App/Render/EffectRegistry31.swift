@@ -4,6 +4,25 @@ import simd
 
 /// Distinct signal-damage primitives. Modes share timing and safe sampling, not a look preset.
 extension EffectRegistry {
+    static let sorting31:[EffectDefinition]=[
+        EffectDefinition(id:"awi31.segmentSort",name:"Segment Pixel Sort",category:.glitch,aeMatchNames:[],
+            summary:"Actually reorder pixels within threshold-selected runs, bounded by editable windows. Excluded pixels stay in their original positions.",
+            params:[.number("length","Sort Window",64,8,128,unit:"px"),
+                .number("low","Minimum Luma",15,0,100,unit:"%"),.number("high","Maximum Luma",95,0,100,unit:"%"),
+                .choice("axis","Direction",["Horizontal","Vertical"],0),
+                .choice("key","Sort By",["Brightness","Hue","Saturation"],0),
+                .toggle("descending","Reverse Order",false),.number("blend","Blend",100,0,100,unit:"%")],
+            stage:.pixels { ctx in
+                if v29(ctx,"blend")<=0 { return ctx.input }
+                var p=EffectParams()
+                p.a=SIMD4(pc29(ctx,"low"),pc29(ctx,"high"),pc29(ctx,"blend"),0)
+                p.i=SIMD4(UInt32(ch29(ctx,"axis")),UInt32(ch29(ctx,"key")),b29(ctx,"descending") ? 1:0,0)
+                let output=ctx.temp()
+                ctx.gpu.segmentSort31(ctx,input:ctx.input,output:output,
+                    span:min(256,max(2,Int((v29(ctx,"length")*ctx.unit).rounded()))),params:p)
+                return output
+            })
+    ]
     static let batch31: [EffectDefinition] = [
         glitch31("rowDuplicate", "Row Duplicate", 0, "Selected scan rows repeat a neighboring strip while other rows remain intact.",
                  .number("scale", "Strip Height", 14, 2, 100, unit: "px"), .number("detail", "Repeat Distance", 30, 1, 180, unit: "px")),

@@ -23,9 +23,17 @@ extension EffectRegistry {
         return false
     }
     static func ch29(_ ctx: EffectContext, _ k: String) -> Int {
-        if ctx.effect.params[k] != nil { return ctx.effect.choice(k) }
-        if case .choice(let i)? = def29(ctx, k)?.defaultValue { return i }
-        return 0
+        let definition=def29(ctx,k)
+        let value:Int
+        if ctx.effect.params[k] != nil { value=ctx.effect.choice(k) }
+        else if case .choice(let i)? = definition?.defaultValue { value=i }
+        else { value=0 }
+        if case .choice(let options)? = definition?.kind {
+            return min(max(0,value),max(0,options.count-1))
+        }
+        // Internal contexts without catalog metadata must still be safe to pack
+        // into Metal's UInt32 fields after importing malformed settings.
+        return min(max(0,value),Int(UInt32.max))
     }
     static func rgba29(_ ctx: EffectContext, _ k: String) -> RGBA {
         if ctx.effect.params[k] != nil { return ctx.effect.color(k, ctx.time) }
