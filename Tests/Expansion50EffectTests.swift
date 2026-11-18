@@ -70,7 +70,7 @@ final class Expansion50EffectTests:XCTestCase {
     }
     func testDefaultsChangeRichSourceAndBlendZeroIsExact() throws {
         for definition in Self.definitions {
-            let effect=definition.makeInstance();var bypass=effect;bypass.enabled=false
+            let effect=definition.makeInstance();var bypass=effect;bypass.isEnabled=false
             let baseline=try pixels(bypass),processed=try pixels(effect)
             XCTAssertGreaterThan(difference(baseline,processed),0.05,definition.name+" default is invisible on its intended fixture")
             var zero=effect;zero.params["blend"] = .number(Animated(0))
@@ -95,7 +95,7 @@ final class Expansion50EffectTests:XCTestCase {
     }
     func testDissolveAndBurnEndpoints() throws {
         for id in ["awi47.layer.dissolve","awi48.craft.burn"] {
-            let definition=try XCTUnwrap(EffectRegistry.definition(id));var effect=definition.makeInstance(),bypass=effect;bypass.enabled=false
+            let definition=try XCTUnwrap(EffectRegistry.definition(id));var effect=definition.makeInstance(),bypass=effect;bypass.isEnabled=false
             let parameter=id.hasSuffix("burn") ? "first":"amount"
             effect.params[parameter] = .number(Animated(0));XCTAssertEqual(try pixels(effect),try pixels(bypass),id+" starts unchanged")
             effect.params[parameter] = .number(Animated(id.hasSuffix("burn") ? 1000:100))
@@ -140,18 +140,18 @@ final class Expansion50EffectTests:XCTestCase {
         return bits.map{Float(Float16(bitPattern:$0))}
     }
     func testChannelArithmeticAndAlphaPackingAgainstScalarOracle() throws {
-        let source=Array(repeating:[Float(0.3),0.2,0.1,0.5],count:256).flatMap{$0}
-        let reference=Array(repeating:[Float(0.4),0.6,0.8,1],count:256).flatMap{$0}
+        let source=Array(repeating:[Float]([0.3,0.2,0.1,0.5]),count:256).flatMap{$0}
+        let reference=Array(repeating:[Float]([0.4,0.6,0.8,1]),count:256).flatMap{$0}
         let calculate=try XCTUnwrap(EffectRegistry.definition("awi47.layer.calculate")).makeInstance()
         let output=try process(source,reference:reference,effect:calculate)
         for index in stride(from:0,to:output.count,by:4) {
-            for (channel,expected) in [Float(0.12),0.12,0.08,0.5].enumerated() { XCTAssertEqual(output[index+channel],expected,accuracy:0.002) }
+            for (channel,expected) in [Float]([0.12,0.12,0.08,0.5]).enumerated() { XCTAssertEqual(output[index+channel],expected,accuracy:0.002) }
         }
         var pack=try XCTUnwrap(EffectRegistry.definition("awi47.layer.pack")).makeInstance()
         pack.params["option"] = .choice(3);pack.params["channel"] = .choice(0)
         let packed=try process(source,reference:reference,effect:pack)
         for index in stride(from:0,to:packed.count,by:4) {
-            for (channel,expected) in [Float(0.24),0.16,0.08,0.4].enumerated() { XCTAssertEqual(packed[index+channel],expected,accuracy:0.002) }
+            for (channel,expected) in [Float]([0.24,0.16,0.08,0.4]).enumerated() { XCTAssertEqual(packed[index+channel],expected,accuracy:0.002) }
         }
     }
     func testAbsoluteUVIdentityAndConstantVectorTransport() throws {

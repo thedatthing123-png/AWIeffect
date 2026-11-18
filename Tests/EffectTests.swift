@@ -201,7 +201,7 @@ final class EffectTests: XCTestCase {
             if EffectRegistry.temporalIDs33.contains(d.id) { comparison=try render(r,TemporalEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi31.flow") { comparison=try render(r,FlowEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi39.data.") { comparison=try render(r,DataEffectTests.scene(nil)) }
-            if Expansion50EffectTests.contains(d.id) { var bypass=d.makeInstance();bypass.enabled=false;comparison=try render(r,Expansion50EffectTests.scene(bypass)) }
+            if Expansion50EffectTests.contains(d.id) { var bypass=d.makeInstance();bypass.isEnabled=false;comparison=try render(r,Expansion50EffectTests.scene(bypass)) }
             if d.id.hasPrefix("awi45.poisson.") { comparison=try render(r,DataEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi41.contour.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi44.finish.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
@@ -228,7 +228,7 @@ final class EffectTests: XCTestCase {
             if EffectRegistry.temporalIDs33.contains(d.id) { comparison=try render(r,TemporalEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi31.flow") { comparison=try render(r,FlowEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi39.data.") { comparison=try render(r,DataEffectTests.scene(nil)) }
-            if Expansion50EffectTests.contains(d.id) { var bypass=d.makeInstance();bypass.enabled=false;comparison=try render(r,Expansion50EffectTests.scene(bypass)) }
+            if Expansion50EffectTests.contains(d.id) { var bypass=d.makeInstance();bypass.isEnabled=false;comparison=try render(r,Expansion50EffectTests.scene(bypass)) }
             if d.id.hasPrefix("awi45.poisson.") { comparison=try render(r,DataEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi41.contour.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi44.finish.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
@@ -251,7 +251,7 @@ final class EffectTests: XCTestCase {
             if EffectRegistry.temporalIDs33.contains(d.id) { comparison=try render(r,TemporalEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi31.flow") { comparison=try render(r,FlowEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi39.data.") { comparison=try render(r,DataEffectTests.scene(nil)) }
-            if Expansion50EffectTests.contains(d.id) { var bypass=d.makeInstance();bypass.enabled=false;comparison=try render(r,Expansion50EffectTests.scene(bypass)) }
+            if Expansion50EffectTests.contains(d.id) { var bypass=d.makeInstance();bypass.isEnabled=false;comparison=try render(r,Expansion50EffectTests.scene(bypass)) }
             if d.id.hasPrefix("awi45.poisson.") { comparison=try render(r,DataEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi41.contour.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi44.finish.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
