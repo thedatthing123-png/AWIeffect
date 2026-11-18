@@ -226,3 +226,22 @@ before a separate halo pass. This is an artistic image-space relief, not ray-tra
 glass or a physical thickness simulation. Both composite in an approximate gamma
 2.2 linear space and retain HDR headroom rather than clamping each light channel to
 one. Their default appearance still requires the combined GPU/render review.
+
+## Measured motion (batch 31)
+
+Bouguet, *Pyramidal Implementation of the Lucas Kanade Feature Tracker*:
+https://web.stanford.edu/class/cs231m/references/pyr-lucas-kanade-feature-tracker-bouget.pdf
+and OpenCV's explanation of the method:
+https://docs.opencv.org/4.x/d4/dee/tutorial_optical_flow.html
+
+Independent dense GPU implementation with three pyramid levels, regularized local
+normal equations and bounded updates. It estimates backward correspondence:
+previous(x - displacement) approximates current(x). Fields store displacement in
+their own level's pixels and are rescaled between levels and at final sampling.
+Fast/Fine use long-side limits 128/256, windows 3x3/5x5 and 3/5 iterations per
+level. The confidence term penalizes residual mismatch and weak image gradients.
+This is not neural flow; scene cuts, occlusion, repeating patterns and illumination
+changes remain ambiguous. Maximum Motion bounds correspondence search, not just
+the final artistic displacement. The solver performs no synchronous CPU readback
+in the editing/render path. Motion Field exposes direction, RG displacement and
+magnitude as controls in one tool rather than counting those as separate effects.

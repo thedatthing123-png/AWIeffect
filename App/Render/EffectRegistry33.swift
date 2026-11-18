@@ -42,6 +42,7 @@ extension EffectRegistry {
 
     static let temporalIDs33:Set<String>=["awi33.time.slice","awi33.time.difference","awi33.time.median",
         "awi33.time.echo","awi33.time.hold","awi33.time.rgb","awi33.time.exposure","awi33.time.extrema","awi37.retro.phosphor",
+        "awi31.flowWarp","awi31.flowSmear","awi31.flowMap","awi31.flowDatamosh",
         "awi38.motionGlow","awi38.motionStreaks","awi38.motionRays","awi38.motionRings"]
     static let sampling33:[EffectDefinition] = [
         EffectDefinition(id:"awi33.time.hold",name:"Frame Hold",category:.stylize,aeMatchNames:[],

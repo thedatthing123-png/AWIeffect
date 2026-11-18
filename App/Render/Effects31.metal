@@ -2,6 +2,86 @@
 using namespace metal;
 struct EffectParams { float4 a; float4 b; float4 c; float4 d; uint4 i; };
 constexpr sampler signal31(address::clamp_to_edge, filter::linear, coord::pixel);
+constexpr sampler flowZero31(address::clamp_to_zero,filter::linear,coord::pixel);
+static float flowLight31(texture2d<half,access::sample> image,float2 uv) {
+    float4 c=float4(image.sample(signal31,uv));
+    return dot(c.rgb,float3(.2126,.7152,.0722))+.15*c.a;
+}
+kernel void fxSolveFlow31(texture2d<half,access::sample> current [[texture(0)]],
+                         texture2d<half,access::write> output [[texture(1)]],
+                         texture2d<half,access::sample> previous [[texture(2)]],
+                         texture2d<half,access::sample> estimate [[texture(3)]],
+                         constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float2 uv=float2(gid)+.5,size=float2(output.get_width(),output.get_height());
+    float2 priorSize=float2(estimate.get_width(),estimate.get_height());
+    float2 motion=float2(estimate.sample(signal31,uv/size*priorSize).rg)*size/priorSize;
+    float a=0,b=0,c=0,d=0,e=0,error=0;
+    int radius=int(clamp(p.i.x,1u,2u)),count=(2*radius+1)*(2*radius+1);
+    for(int y=-radius;y<=radius;y++) for(int x=-radius;x<=radius;x++) {
+        float2 point=uv+float2(x,y),oldPoint=point-motion;
+        float residual=flowLight31(previous,oldPoint)-flowLight31(current,point);
+        float gx=(flowLight31(previous,oldPoint+float2(1,0))-flowLight31(previous,oldPoint-float2(1,0))+
+                  flowLight31(current,point+float2(1,0))-flowLight31(current,point-float2(1,0)))*.25;
+        float gy=(flowLight31(previous,oldPoint+float2(0,1))-flowLight31(previous,oldPoint-float2(0,1))+
+                  flowLight31(current,point+float2(0,1))-flowLight31(current,point-float2(0,1)))*.25;
+        a+=gx*gx;b+=gx*gy;c+=gy*gy;d+=gx*residual;e+=gy*residual;error+=residual*residual;
+    }
+    float trace=a+c,regularizer=trace*.005+1.e-6;
+    a+=regularizer;c+=regularizer;
+    float determinant=max(a*c-b*b,1.e-12);
+    float2 update=float2(c*d-b*e,a*e-b*d)/determinant;
+    update*=min(1.0,2.0/max(length(update),1.e-6));
+    motion+=update*p.a.z;
+    float normalizedLength=length(motion/max(p.a.xy,float2(.0001)));
+    motion/=max(1.0,normalizedLength);
+    float confidence=trace/(trace+.001)*exp(-40*error/float(count));
+    if(!all(isfinite(motion))) { motion=0;confidence=0; }
+    output.write(half4(float4(motion,confidence,1)),gid);
+}
+static float flowHash31(float2 q) { return fract(sin(dot(q,float2(127.1,311.7)))*43758.5453); }
+static float3 flowHue31(float hue) {
+    return clamp(abs(fract(hue+float3(0,2.0/3.0,1.0/3.0))*6-3)-1,0.0,1.0);
+}
+kernel void fxMeasuredFlow31(texture2d<half,access::sample> source [[texture(0)]],
+                            texture2d<half,access::write> output [[texture(1)]],
+                            texture2d<half,access::sample> flow [[texture(2)]],
+                            texture2d<half,access::sample> previous [[texture(3)]],
+                            constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float2 uv=float2(gid)+.5,size=float2(output.get_width(),output.get_height());
+    float2 flowSize=float2(flow.get_width(),flow.get_height()),fieldUV=uv;
+    float block=max(1.0,p.b.y);
+    if(p.i.x==3) fieldUV=(floor(uv/block)+.5)*block;
+    float4 measured=float4(flow.sample(signal31,fieldUV/size*flowSize));
+    float reliability=smoothstep(p.a.z,min(1.0,p.a.z+.15),measured.b);
+    float2 vector=measured.rg*size/flowSize*reliability;
+    float4 original=float4(source.sample(flowZero31,uv)),result=original;
+    if(p.i.x==0) result=float4(source.sample(flowZero31,uv-vector*p.a.x));
+    if(p.i.x==1) {
+        int samples=int(clamp(p.i.z,2u,16u));result=0;
+        for(int n=0;n<samples;n++) {
+            float fraction=(float(n)+.5)/float(samples)-.5;
+            result+=float4(source.sample(flowZero31,uv-vector*p.a.x*fraction))/float(samples);
+        }
+    }
+    if(p.i.x==2) {
+        float range=max(1.0,p.b.x),magnitude=length(vector)/range;
+        float3 color=flowHue31(atan2(vector.y,vector.x)/6.28318530718+.5)*clamp(magnitude,0.0,1.0);
+        if(p.i.y==1) color=float3(clamp(.5+vector/(2*range),0.0,1.0),clamp(magnitude,0.0,1.0));
+        if(p.i.y==2) color=float3(clamp(magnitude,0.0,1.0));
+        result=float4(color*original.a,original.a);
+    }
+    if(p.i.x==3) {
+        float2 cell=floor(uv/block);
+        float clock=floor(p.a.w),fraction=fract(p.a.w);
+        float randomness=mix(flowHash31(cell+p.c.x+clock),flowHash31(cell+p.c.x+clock+1),fraction*fraction*(3-2*fraction));
+        float carry=p.b.z*(.35+randomness*1.3);
+        float4 dragged=float4(previous.sample(flowZero31,uv-vector*carry));
+        result=mix(original,dragged,p.b.w);
+    }
+    output.write(half4(mix(original,result,p.a.y)),gid);
+}
 
 static bool sortLess31(uint segmentA,float keyA,uint orderA,uint segmentB,float keyB,uint orderB) {
     return segmentA<segmentB || (segmentA==segmentB && (keyA<keyB || (keyA==keyB && orderA<orderB)));

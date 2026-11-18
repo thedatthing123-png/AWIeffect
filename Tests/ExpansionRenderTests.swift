@@ -17,7 +17,7 @@ final class ExpansionRenderTests: XCTestCase {
             EffectRegistry.batch35,EffectRegistry.batch36,EffectRegistry.lights36,EffectRegistry.batch37,
             EffectRegistry.cleanup37,EffectRegistry.frequency37,EffectRegistry.drawing37,EffectRegistry.retro37,
             EffectRegistry.textGeometry37,EffectRegistry.batch38,EffectRegistry.conformal32,EffectRegistry.morphology37,EffectRegistry.sampling33,
-            EffectRegistry.featureMattes33,EffectRegistry.surfaces38]
+            EffectRegistry.featureMattes33,EffectRegistry.surfaces38,EffectRegistry.flow31]
         let newDefinitions=families.flatMap{$0}
         XCTAssertEqual(Set(newDefinitions.map(\.name)).count,newDefinitions.count,"New effects need distinct names and behaviors")
     }
@@ -430,7 +430,8 @@ final class ExpansionRenderTests: XCTestCase {
             ("drawing",EffectRegistry.drawing37),("sort",EffectRegistry.sorting31),
             ("retro",EffectRegistry.retro37),("text-geometry",EffectRegistry.textGeometry37),
             ("motion-light",EffectRegistry.batch38),("coordinate-map",EffectRegistry.conformal32),
-            ("morphology",EffectRegistry.morphology37),("surface-composite",EffectRegistry.surfaces38)
+            ("morphology",EffectRegistry.morphology37),("surface-composite",EffectRegistry.surfaces38),
+            ("measured-motion",EffectRegistry.flow31)
         ]
         for (name,definitions) in families {
             let height=CGFloat((definitions.count+3)/4)*180
@@ -520,6 +521,7 @@ final class ExpansionRenderTests: XCTestCase {
         }
     }
     private func reviewScene(_ effect:EffectInstance) -> Project {
+        if effect.typeID.hasPrefix("awi31.flow") { return FlowEffectTests.scene(effect) }
         if EffectRegistry.temporalIDs33.contains(effect.typeID) { return TemporalEffectTests.scene(effect) }
         if EffectRegistry.textGeometryIDs37.contains(effect.typeID) {
             var project=Project.new(name:"Native type",width:192,height:144,fps:30,duration:3,background:RGBA(0.05,0.07,0.12))

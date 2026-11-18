@@ -4,6 +4,102 @@ import simd
 
 /// Distinct signal-damage primitives. Modes share timing and safe sampling, not a look preset.
 extension EffectRegistry {
+    static let flow31:[EffectDefinition] = [
+        flow31("flowWarp","Motion Warp",0,.distort,"Displace the current image along motion estimated from actual upstream frames.",
+            [.number("strength","Warp",80,-300,300,unit:"%")]),
+        flow31("flowSmear","Motion Path Smear",1,.blur,"Integrate image samples along a dense estimated motion field, including motion inside footage.",
+            [.number("strength","Path Length",120,0,500,unit:"%"),.number("samples","Path Samples",8,2,16,step:1)]),
+        flow31("flowMap","Motion Field",2,.stylize,"Render measured motion as direction color, an RG displacement map, or a moving-region matte.",
+            [.number("range","Display Range",24,1,256,unit:"px"),
+             .choice("output","Field Output",["Direction Color","RG Displacement","Motion Matte"],0)]),
+        flow31("flowDatamosh","Flow Datamosh",3,.glitch,"Carry pixels from a real earlier frame using block-held measured motion and an editable hit envelope.",
+            [.number("amount","Amount",70,0,100,unit:"%"),.number("block","Block Size",18,2,128,unit:"px"),
+             .number("carry","Vector Carry",1.8,0,5),
+             .choice("motion","Motion",["Smooth","Choppy","Burst","On Keyframe"],0),
+             .number("speed","Pattern Speed",3,0,24),.number("seed","Seed",3,0,1000,step:1),
+             .number("frequency","Bursts Per Second",2,0.2,15),.number("duration","Hit Duration",0.18,0.02,1,unit:"s"),
+             .number("trigger","Keyframe Hit",100,0,100,unit:"%")])
+    ]
+    private static func flow31(_ id:String,_ name:String,_ mode:UInt32,_ category:EffectCategory,_ summary:String,_ controls:[ParamDef]) -> EffectDefinition {
+        EffectDefinition(id:"awi31."+id,name:name,category:category,aeMatchNames:[],summary:summary,
+            params:[.number("delay","Frame Interval",0.1,0.01,1,unit:"s"),
+                .number("maximum","Maximum Motion",64,4,256,unit:"px"),
+                .choice("quality","Motion Solver",["Fast","Fine"],0),
+                .number("confidence","Reject Weak Motion",10,0,95,unit:"%")]+controls+[
+                .number("blend","Blend",100,0,100,unit:"%")],stage:.pixels { ctx in
+                guard v29(ctx,"blend")>0,let sample=ctx.temporalSample else { return ctx.input }
+                if mode<=1 && abs(v29(ctx,"strength"))<0.00001 { return ctx.input }
+                let timing=signalClock31(ctx)
+                if mode==3 && v29(ctx,"amount")*timing.1<=0 { return ctx.input }
+                guard let previous=sample(ctx.time-v29(ctx,"delay")) else { return ctx.input }
+                let flow=measuredFlow31(ctx,previous:previous)
+                var p=EffectParams();p.i=SIMD4(mode,UInt32(ch29(ctx,"output")),UInt32(max(2,min(16,Int(v29(ctx,"samples"))))),0)
+                p.a=SIMD4(pc29(ctx,"strength"),pc29(ctx,"blend"),pc29(ctx,"confidence"),Float(timing.0))
+                p.b=SIMD4(px29(ctx,"range"),px29(ctx,"block"),f29(ctx,"carry"),pc29(ctx,"amount")*Float(timing.1))
+                p.c.x=f29(ctx,"seed")
+                let output=ctx.temp()
+                ctx.gpu.run("fxMeasuredFlow31",ctx.cb,textures:[ctx.input,output,flow,previous],params:p,grid:output)
+                return output
+            })
+    }
+
+    /// Dense coarse-to-fine Lucas–Kanade. All images/fields remain on the GPU;
+    /// finest solve is bounded to 128/256 pixels on the long side, independently
+    /// of the output resolution. Half-float RG stores signed pixel displacement.
+    static func measuredFlow31(_ ctx:EffectContext,previous:MTLTexture) -> MTLTexture {
+        let fine=ch29(ctx,"quality")==1,limit=fine ? 256:128
+        let factor=min(1,Double(limit)/Double(max(ctx.width,ctx.height)))
+        let width=max(1,Int((Double(ctx.width)*factor).rounded())),height=max(1,Int((Double(ctx.height)*factor).rounded()))
+        func scaled(_ texture:MTLTexture,_ w:Int,_ h:Int) -> MTLTexture {
+            let output=ctx.pool.acquire(width:w,height:h)
+            ctx.gpu.run("fxResample",ctx.cb,textures:[texture,output],grid:output)
+            return output
+        }
+        let sigma=max(0.6,0.5/max(factor,0.0001))
+        var current=[scaled(ctx.gpu.gaussian(ctx,input:ctx.input,sigma:sigma),width,height)]
+        var history=[scaled(ctx.gpu.gaussian(ctx,input:previous,sigma:sigma),width,height)]
+        for _ in 0..<2 {
+            let w=max(1,current.last!.width/2),h=max(1,current.last!.height/2)
+            current.append(scaled(ctx.gpu.gaussian(ctx,input:current.last!,sigma:0.8),w,h))
+            history.append(scaled(ctx.gpu.gaussian(ctx,input:history.last!,sigma:0.8),w,h))
+        }
+        var estimate=ctx.pool.acquire(width:current.last!.width,height:current.last!.height)
+        ctx.gpu.run("fxClear",ctx.cb,textures:[estimate],grid:estimate)
+        for level in (0..<current.count).reversed() {
+            let image=current[level]
+            for _ in 0..<(fine ? 5:3) {
+                var p=EffectParams()
+                p.a=SIMD4(Float(v29(ctx,"maximum")*ctx.unit*Double(image.width)/Double(ctx.width)),
+                    Float(v29(ctx,"maximum")*ctx.unit*Double(image.height)/Double(ctx.height)),0.8,0)
+                p.i.x=fine ? 2:1
+                let next=ctx.pool.acquire(width:image.width,height:image.height)
+                ctx.gpu.run("fxSolveFlow31",ctx.cb,textures:[image,next,history[level],estimate],params:p,grid:next)
+                estimate=next
+            }
+        }
+        return estimate
+    }
+
+    static func signalClock31(_ ctx:EffectContext) -> (Double,Double) {
+        var clock=ctx.time*v29(ctx,"speed"),envelope=1.0
+        switch ch29(ctx,"motion") {
+        case 1:clock=floor(clock)
+        case 2:
+            let frequency=max(v29(ctx,"frequency"),0.01),phase=ctx.time*frequency
+            let elapsed=(phase-floor(phase))/frequency
+            envelope=max(0,1-elapsed/max(v29(ctx,"duration"),0.001))
+        case 3:
+            envelope=0
+            if case .number(let animated)?=ctx.effect.params["trigger"] {
+                for key in animated.keyframes where key.time<=ctx.time && key.value>0 {
+                    envelope=max(envelope,key.value/100*max(0,1-(ctx.time-key.time)/max(v29(ctx,"duration"),0.001)))
+                }
+            }
+        default:break
+        }
+        return (clock,envelope)
+    }
+
     static let sorting31:[EffectDefinition]=[
         EffectDefinition(id:"awi31.segmentSort",name:"Segment Pixel Sort",category:.glitch,aeMatchNames:[],
             summary:"Actually reorder pixels within threshold-selected runs, bounded by editable windows. Excluded pixels stay in their original positions.",

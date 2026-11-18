@@ -72,6 +72,9 @@ enum EffectSection: String, CaseIterable, Identifiable {
         // Explicit placement wins over incidental words in a description ("soft", "light", "star").
         if d.id.hasPrefix("awi30.") { return .backgrounds }
         if d.id.hasPrefix("awi33.time.") { return .time }
+        if d.id=="awi31.flowWarp" { return .distort }
+        if d.id=="awi31.flowSmear" { return .blur }
+        if d.id=="awi31.flowMap" { return .time }
         if d.id.hasPrefix("awi37.draw.") { return .stylize }
         if d.id.hasPrefix("awi37.morph.") {
             return ["awi37.morph.whiteHat","awi37.morph.blackHat","awi37.morph.gradient"].contains(d.id) ? .keying:.blur

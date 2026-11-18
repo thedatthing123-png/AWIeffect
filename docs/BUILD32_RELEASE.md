@@ -25,7 +25,7 @@ requires over 1,000 working, distinct definitions. ExpansionRenderTests enforces
 count gate; the current catalog is still below it. Passing the count gate alone
 does not prove distinctness, visual quality or performance.
 
-Current source enumeration is 742 definitions, including the legacy catalog.
+Current source enumeration is 746 definitions, including the legacy catalog.
 This is a source inventory, not a verified runtime count or a quality result. The
 remaining distance to 1,001 must be real, distinct tools; do not fill it with aliases
 or renamed settings. The all-effects test remains the runtime count authority.
@@ -85,3 +85,17 @@ lighting and softened reflection halo). Their light is added in an approximate
 linear working space, with source coverage and both color opacities respected.
 Browser placement is explicit. Moving-review generation now covers every effect
 in batches 30–38, with a control/range manifest, instead of only selected examples.
+
+Four measured-motion tools add a bounded dense GPU Lucas–Kanade pyramid: Motion
+Warp, Motion Path Smear, Motion Field and Flow Datamosh. Old simulated datamosh
+looks are retained. The new solver uses actual upstream frames, stays on the GPU,
+and solves at most 128/256 pixels on the long side with bounded neighborhood and
+iteration counts. Datamosh includes the existing smooth/choppy/burst/key-hit
+control convention. Dedicated tests use stable moving texture, not changing
+illumination; a direct half-float fixture checks known displacement, zero motion
+and solve resolution. GPU accuracy, defaults and phone performance remain pending.
+
+A small independent NumPy check of the flow equations and half-float rounding
+recovered shifts (4,-3) and (-4,3) with mean error 0.0612/0.0706 pixels on the
+analytic texture fixture, and zero for a static pair. This checks sign/scale math;
+it does not substitute for running the Metal fixture or reviewing footage.
