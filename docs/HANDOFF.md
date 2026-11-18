@@ -92,3 +92,7 @@ To merge: `git merge --no-edit worktree-agent-<id>` (or `origin/renewal/<id>`) f
 4. Rigging pass, remaining audit items (media bin/relink, folders, work area, denoise), layer folders in Art Studio, Cutout Studio canvas zoom.
 5. Final performance pass (build on the precomp pre-render; never crash).
 6. Train/integrate SAM 2 for cutouts after the app is done. Make the repo private when the app is done.
+
+## November 17: final 50 implementation checkpoint
+
+Batches 46–48 are implemented and registered, bringing the source inventory to 900. Read docs/FINAL_FIFTY_EFFECTS.md and docs/BUILD32_RELEASE.md. Local Swift parsing, registration checks and independent spectral math pass; actual Metal/tests/contact sheets/motion/UI/device review remain pending. No rig/graph/timeline layout changes. Presets remain next after effect acceptance. Paused selection training changes in .gitignore, docs/SELECTION_TRAINING.md and scripts/train_selection.py belong to earlier work and were excluded.

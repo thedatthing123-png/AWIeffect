@@ -23,13 +23,12 @@ batch 30 finished is not the completed Build 32. Do not create aliases, color-on
 variants or hidden presets to inflate the effect count. The latest owner request
 sets 900 working, distinct definitions as the revised stopping point (November 17).
 ExpansionRenderTests enforces the
-count gate; the current catalog is still below it. Passing the count gate alone
+count gate; the source catalog now reaches its target. Passing the count gate alone
 does not prove distinctness, visual quality or performance.
 
-Current source enumeration is 850 definitions, including the legacy catalog.
+Current source enumeration is 900 definitions, including the legacy catalog.
 This is a source inventory, not a verified runtime count or a quality result. The
-remaining distance to 900 must be real, distinct tools; do not fill it with aliases
-or renamed settings. The all-effects test remains the runtime count authority.
+final 50 are documented in [FINAL_FIFTY_EFFECTS.md](FINAL_FIFTY_EFFECTS.md); do not replace this review with aliases or renamed settings. The all-effects test remains the runtime count authority.
 
 Textured surface family 40 adds 21 native depth-tested image meshes: bend, twist,
 dome, saddle, cone, scroll, pleats, ripples, flag, drape, Mobius ribbon, S bend,
@@ -42,7 +41,7 @@ Tests cover defaults, imported parameter fallbacks, bypass and uniform alignment
 Swift syntax checks pass locally; Metal compilation, rendered results and device
 performance remain unverified. Semi-transparent overlapping surfaces use ordinary
 depth-tested blending, not order-independent transparency. This is still a partial
-expansion checkpoint: the remaining 50 definitions and release gates are open.
+expansion checkpoint: the final 50 implementation entries are now present, while release gates remain open.
 
 Contour family 41 adds ten distance-driven tools: signed distance and nearest
 boundary vectors, nearest-color extension, boundary pull, contour bands, medial
@@ -183,3 +182,5 @@ They reuse existing effect cards and reference-layer pickers. Their fixture is a
 analytic RGB unit-normal field with varied directions and grazing slopes, not
 arbitrary artwork whose colors cannot exercise normal-map controls. No render or
 UI approval is claimed; the combined run has not been started.
+
+Final continuation batches 46–48 add 15 spectral operators, 20 layer interactions and 15 graphic craft tools. See [FINAL_FIFTY_EFFECTS.md](FINAL_FIFTY_EFFECTS.md) for the complete manifest, research, controls, local evidence and limitations. This reaches 900 source entries. Metal/runtime count, all-effects quality, moving renders, UI review and device performance are still pending; this is not a verified shipping claim.

@@ -27,13 +27,13 @@ extension EffectRegistry {
 /// Four reused complex scratch planes; no CPU readback, per-pixel iterative solve,
 /// or unbounded transform size. All FFT arithmetic and storage are float32.
 enum SpectralPoisson45 {
-    private struct Work {
+    struct Work {
         var real:MTLTexture;var imaginary:MTLTexture;var spareReal:MTLTexture;var spareImaginary:MTLTexture
         mutating func flip() {
             let r=real,i=imaginary;real=spareReal;imaginary=spareImaginary;spareReal=r;spareImaginary=i
         }
     }
-    private static func transform(_ ctx:EffectContext,_ input:Work,inverse:Bool) -> Work {
+    static func transform(_ ctx:EffectContext,_ input:Work,inverse:Bool) -> Work {
         var work=input
         ctx.gpu.run("fxFFTReorder45",ctx.cb,textures:[work.real,work.spareReal,work.imaginary,work.spareImaginary],grid:work.spareReal)
         work.flip()

@@ -44,6 +44,7 @@ final class EffectTests: XCTestCase {
 
     /// Colorful test scene with hard edges, brights, darks and a green "screen" area.
     private func scene(effect: EffectInstance?, onAdjustment: Bool = false) -> Project {
+        if let effect,Expansion50EffectTests.contains(effect.typeID) { return Expansion50EffectTests.scene(effect,onAdjustment:onAdjustment) }
         if let effect,effect.typeID.hasPrefix("awi45.poisson.") { return DataEffectTests.scene(effect,onAdjustment:onAdjustment) }
         if let effect,effect.typeID.hasPrefix("awi44.finish.") { return DistanceEffectTests.scene(effect,onAdjustment:onAdjustment) }
         if let effect,effect.typeID.hasPrefix("awi42.projection.") { return ProjectionEffectTests.scene(effect,onAdjustment:onAdjustment) }
@@ -200,6 +201,7 @@ final class EffectTests: XCTestCase {
             if EffectRegistry.temporalIDs33.contains(d.id) { comparison=try render(r,TemporalEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi31.flow") { comparison=try render(r,FlowEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi39.data.") { comparison=try render(r,DataEffectTests.scene(nil)) }
+            if Expansion50EffectTests.contains(d.id) { var bypass=d.makeInstance();bypass.enabled=false;comparison=try render(r,Expansion50EffectTests.scene(bypass)) }
             if d.id.hasPrefix("awi45.poisson.") { comparison=try render(r,DataEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi41.contour.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi44.finish.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
@@ -226,6 +228,7 @@ final class EffectTests: XCTestCase {
             if EffectRegistry.temporalIDs33.contains(d.id) { comparison=try render(r,TemporalEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi31.flow") { comparison=try render(r,FlowEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi39.data.") { comparison=try render(r,DataEffectTests.scene(nil)) }
+            if Expansion50EffectTests.contains(d.id) { var bypass=d.makeInstance();bypass.enabled=false;comparison=try render(r,Expansion50EffectTests.scene(bypass)) }
             if d.id.hasPrefix("awi45.poisson.") { comparison=try render(r,DataEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi41.contour.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi44.finish.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
@@ -248,6 +251,7 @@ final class EffectTests: XCTestCase {
             if EffectRegistry.temporalIDs33.contains(d.id) { comparison=try render(r,TemporalEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi31.flow") { comparison=try render(r,FlowEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi39.data.") { comparison=try render(r,DataEffectTests.scene(nil)) }
+            if Expansion50EffectTests.contains(d.id) { var bypass=d.makeInstance();bypass.enabled=false;comparison=try render(r,Expansion50EffectTests.scene(bypass)) }
             if d.id.hasPrefix("awi45.poisson.") { comparison=try render(r,DataEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi41.contour.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi44.finish.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
@@ -316,6 +320,10 @@ final class EffectTests: XCTestCase {
                         high.insertKeyframe(Keyframe(time: 0.3,value: lo + (hi-lo)*0.6))
                         a.params[pd.id] = .number(low); b.params[pd.id] = .number(high)
                     }
+                }
+                if d.id == "awi48.craft.burn" && pd.id == "first" {
+                    // The full 1000px range intentionally clears this small fixture. Exercise its visible band here.
+                    a.params["first"] = .number(Animated(0));b.params["first"] = .number(Animated(18))
                 }
                 if d.id == "awi.textSpacing" && pd.id == "spacing" {
                     // Use visible spacing within this finite text fixture; extreme spacing is covered by stress tests.

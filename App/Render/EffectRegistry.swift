@@ -182,6 +182,8 @@ final class EffectGPU {
         for name in [
                      "fxPoissonPrepare45", "fxPoissonForce45", "fxFFTReorder45", "fxFFTStage45",
                      "fxPoissonDivide45", "fxPoissonMean45", "fxPoissonFinish45",
+                     "fxSpectralPrepare46", "fxSpectralAnchor46", "fxSpectralModify46", "fxSpectralFinish46",
+                     "fxLayerInteraction47", "fxCraftPrepare48", "fxCraft48",
                      "fxSurfaceFinish44",
                      "fxTemporalAnalysis43",
                      "fxProjection42",
@@ -325,7 +327,7 @@ enum EffectRegistry {
             batch12,batch13,batch14,batch15,batch16,batch17,batch18,batch19,batch20,
             batch21,batch22,batch23,batchR4,batch30,batch31,sorting31,batch32,batch33,
             time33,batch34,cameraTransitions34,batch35,batch36,lights36,batch37,
-            cleanup37,frequency37,drawing37,retro37,textGeometry37,batch38,conformal32,morphology37,sampling33,featureMattes33,surfaces38,flow31,transforms37,nonlinear37,math30,advancedClean37,data39,surfaces40,distance41,projection42,temporalAnalysis43,finishes44,poisson45
+            cleanup37,frequency37,drawing37,retro37,textGeometry37,batch38,conformal32,morphology37,sampling33,featureMattes33,surfaces38,flow31,transforms37,nonlinear37,math30,advancedClean37,data39,surfaces40,distance41,projection42,temporalAnalysis43,finishes44,poisson45,spectral46,interactions47,craft48
         ]
         for family in families { definitions.append(contentsOf:family) }
         return definitions

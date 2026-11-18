@@ -71,6 +71,25 @@ enum EffectSection: String, CaseIterable, Identifiable {
 
     /// Section an effect is filed under.
     static func of(_ d: EffectDefinition) -> EffectSection {
+        if d.id.hasPrefix("awi46.spectral.") {
+            let key=d.id.components(separatedBy:".").last ?? ""
+            if ["spectrum","cepstrum","correlate"].contains(key) { return .data }
+            if ["band","deblur","convolve"].contains(key) { return .blur }
+            return ["scramble","dispersion","quadrature"].contains(key) ? .distort:.stylize
+        }
+        if d.id.hasPrefix("awi47.layer.") {
+            let key=d.id.components(separatedBy:".").last ?? ""
+            if ["uv","polar","advect","refract","parallax","register"].contains(key) { return .distort }
+            if ["smear","focus","detail"].contains(key) { return .blur }
+            if ["dissolve","matte"].contains(key) { return .keying }
+            if ["normalLight","occlusion","shadow"].contains(key) { return .glow }
+            return key=="bomb" ? .stylize:.color
+        }
+        if d.id.hasPrefix("awi48.craft.") {
+            let key=d.id.components(separatedBy:".").last ?? ""
+            if ["junctions","flowLight","chromaTrails","caustics","prismInk","plexus"].contains(key) { return .glow }
+            return ["lenticular","burn"].contains(key) ? .transition:.stylize
+        }
         if d.id.hasPrefix("awi39.data.") { return .data }
         if d.id.hasPrefix("awi40.surface.") { return .threeD }
         if d.id.hasPrefix("awi42.projection.") { return .threeD }

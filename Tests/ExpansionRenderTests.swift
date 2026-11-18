@@ -25,7 +25,7 @@ final class ExpansionRenderTests: XCTestCase {
             EffectRegistry.cleanup37,EffectRegistry.frequency37,EffectRegistry.drawing37,EffectRegistry.retro37,
             EffectRegistry.textGeometry37,EffectRegistry.batch38,EffectRegistry.conformal32,EffectRegistry.morphology37,EffectRegistry.sampling33,
             EffectRegistry.featureMattes33,EffectRegistry.surfaces38,EffectRegistry.flow31,EffectRegistry.transforms37,EffectRegistry.nonlinear37,EffectRegistry.math30,
-            EffectRegistry.advancedClean37,EffectRegistry.data39,EffectRegistry.surfaces40,EffectRegistry.distance41,EffectRegistry.projection42,EffectRegistry.temporalAnalysis43,EffectRegistry.finishes44,EffectRegistry.poisson45]
+            EffectRegistry.advancedClean37,EffectRegistry.data39,EffectRegistry.surfaces40,EffectRegistry.distance41,EffectRegistry.projection42,EffectRegistry.temporalAnalysis43,EffectRegistry.finishes44,EffectRegistry.poisson45,EffectRegistry.spectral46,EffectRegistry.interactions47,EffectRegistry.craft48]
         let newDefinitions=families.flatMap{$0}
         XCTAssertEqual(Set(newDefinitions.map(\.name)).count,newDefinitions.count,"New effects need distinct names and behaviors")
     }
@@ -481,6 +481,9 @@ final class ExpansionRenderTests: XCTestCase {
             ("temporal-analysis",EffectRegistry.temporalAnalysis43),
             ("surface-finish",EffectRegistry.finishes44),
             ("gradient-domain",EffectRegistry.poisson45),
+            ("spectral",EffectRegistry.spectral46),
+            ("layer-interaction",EffectRegistry.interactions47),
+            ("graphic-craft",EffectRegistry.craft48),
             ("measured-motion",EffectRegistry.flow31)
         ]
         for (name,definitions) in families {
@@ -530,12 +533,13 @@ final class ExpansionRenderTests: XCTestCase {
             ("awi38.motionGlow","radius",10,100),("awi38.motionStreaks","angle",0,120),
             ("awi38.motionRays","reach",5,90),("awi38.motionRings","radius",2,40)
         ]
+        previews.append(("awi48.craft.burn","first",0,35))
         // Every expansion effect gets motion review, not just the handpicked
         // representatives above. Animate a meaningful authored control around its
         // default; preserve explicit review ranges for effects that need them.
         let explicitIDs=Set(previews.map{$0.0})
         let expansion=EffectRegistry.all.filter { definition in
-            (30...45).contains { definition.id.hasPrefix("awi\($0).") }
+            (30...48).contains { definition.id.hasPrefix("awi\($0).") }
         }
         for definition in expansion where !explicitIDs.contains(definition.id) {
             for parameter in definition.params where !["blend","mix"].contains(parameter.id) {
@@ -571,6 +575,7 @@ final class ExpansionRenderTests: XCTestCase {
         }
     }
     private func reviewScene(_ effect:EffectInstance) -> Project {
+        if Expansion50EffectTests.contains(effect.typeID) { return Expansion50EffectTests.scene(effect) }
         if effect.typeID.hasPrefix("awi45.poisson.") { return DataEffectTests.scene(effect) }
         if effect.typeID.hasPrefix("awi44.finish.") { return DistanceEffectTests.scene(effect) }
         if effect.typeID.hasPrefix("awi42.projection.") { return ProjectionEffectTests.scene(effect) }
