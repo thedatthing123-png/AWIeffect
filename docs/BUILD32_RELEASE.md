@@ -25,7 +25,7 @@ requires over 1,000 working, distinct definitions. ExpansionRenderTests enforces
 count gate; the current catalog is still below it. Passing the count gate alone
 does not prove distinctness, visual quality or performance.
 
-Current source enumeration is 751 definitions, including the legacy catalog.
+Current source enumeration is 758 definitions, including the legacy catalog.
 This is a source inventory, not a verified runtime count or a quality result. The
 remaining distance to 1,001 must be real, distinct tools; do not fill it with aliases
 or renamed settings. The all-effects test remains the runtime count authority.
@@ -113,3 +113,10 @@ Sharpen and Curvature Smooth. Iterative passes alternate two scratch textures, s
 raising the pass count does not allocate a full image for each iteration. Original
 coverage is retained; transparent neighbors use a no-flux boundary. Noisy fixtures
 exercise the cleanup controls. Metal/runtime and visual validation remain pending.
+
+Seven mathematical backgrounds add Chladni Plate, Quasicrystal, Fractal Carpet,
+Newton Basins, Prime Spiral, Hilbert Path and Dipole Lines. They use separate
+analytic/recursive constructions, not noise variants. Newton iteration, prime
+search and curve order have explicit bounds. The prime grid has a known-integer
+GPU fixture; every generator has fallback/bypass checks and full moving review.
+Their appearance and runtime cost remain unverified until the combined run.

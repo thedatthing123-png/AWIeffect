@@ -261,6 +261,20 @@ duplicates. Average-preserving mode skips the DC coefficient; original alpha is
 copied after reconstruction. Edge blocks replicate source coordinates, and all
 64 cooperative lanes reach every barrier.
 
+## Analytic backgrounds (batch 30)
+
+Wolfram's first-party mathematical references describe plate nodal figures and
+the Hilbert space-filling curve:
+https://resources.wolframcloud.com/FunctionRepository/resources/ChladniFigure/
+https://reference.wolfram.com/language/ref/HilbertCurve.html
+Independent implementations also cover plane-wave quasicrystals, recursive square
+carpets, complex Newton iteration for z^n-1, and a prime-marked integer spiral.
+The dipole construction uses a two-dimensional logarithmic potential and its
+angular harmonic conjugate; it does not claim the 3D point-charge 1/r potential.
+Newton points that do not converge within the bounded iteration budget are shown
+as background. Prime-number offsets cycle within a bounded range so trial division
+remains valid even at long timeline times. No reference shader code was copied.
+
 ## Nonlinear detail (batch 37)
 
 - Perona and Malik, *Scale-Space and Edge Detection Using Anisotropic Diffusion*:

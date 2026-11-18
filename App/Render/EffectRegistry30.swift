@@ -5,6 +5,43 @@ import simd
 /// Background generators, expansion batch 30. Each mode is a separate visual primitive,
 /// with its own controls rather than a preset of another effect.
 extension EffectRegistry {
+    static let math30:[EffectDefinition] = [
+        math30("chladni","Chladni Plate",0,"Vibrating-plate nodal curves form crisp branching sand-like patterns.",
+            [.number("first","First Mode",4,1,14,step:1),.number("second","Second Mode",7,1,14,step:1),.number("third","Node Width",0.08,0.01,0.4)],0xE9D3A3,0x233548),
+        math30("quasicrystal","Quasicrystal",1,"Several noncrystallographic wave directions intersect into repeating-looking structures without an ordinary tile grid.",
+            [.number("first","Directions",5,3,11,step:1),.number("second","Frequency",12,2,40),.number("third","Band Width",0.2,0.03,0.7)],0xB9EAE0,0x293654),
+        math30("carpet","Fractal Carpet",2,"Recursive central openings create a scale-dependent square fractal, with editable hole proportions.",
+            [.number("first","Recursion",4,1,6,step:1),.number("second","Hole Width",0.333,0.1,0.65),.number("third","Edge Softness",0.01,0.001,0.08)],0xF4C29A,0x49394F),
+        math30("newton","Newton Basins",3,"Complex polynomial iteration divides the plane by which root attracts each point, with convergence contour shading.",
+            [.number("first","Roots",3,2,6,step:1),.number("second","Iterations",18,4,32,step:1),.number("third","Contour Shading",0.7,0.05,2)],0x8DE3DD,0x8451A3),
+        math30("primeSpiral","Prime Spiral",4,"Prime-number marks follow an integer square spiral; change the number offset to rebuild the pattern.",
+            [.number("first","Grid Size",41,9,81,step:1),.number("second","Mark Size",0.7,0.1,0.95),.number("third","Number Offset",0,0,1000,step:1)],0xF2D38D,0x292C4B),
+        math30("hilbert","Hilbert Path",5,"A connected space-filling curve winds through every cell, with a traveling highlight along its true path order.",
+            [.number("first","Order",4,1,6,step:1),.number("second","Stroke Width",1.5,0.4,8,unit:"px"),.number("third","Highlight Width",0.3,0.04,1)],0xD9B9F8,0x252D48),
+        math30("dipole","Dipole Lines",6,"Curved field lines and equipotential bands flow around two opposite analytic poles.",
+            [.number("first","Pole Separation",0.45,0.1,1.2),.number("second","Line Count",12,2,40),.number("third","Line Width",0.15,0.02,0.6)],0xF0B5C3,0x293B54)
+    ]
+    private static func math30(_ id:String,_ name:String,_ mode:UInt32,_ summary:String,_ controls:[ParamDef],_ first:UInt32,_ second:UInt32) -> EffectDefinition {
+        EffectDefinition(id:"awi30.math."+id,name:name,category:.generate,aeMatchNames:[],summary:summary,
+            params:controls+[.number("zoom","Zoom",1,0.3,4),.point("center","Center",Vec2(0.5,0.5)),
+                .angle("angle","Direction",0),.number("evolution","Evolution",0,-4,4),
+                .number("speed","Evolution Speed",0.15,-2,2),.color("color","First Color",RGBA(hex:first)),
+                .color("color2","Second Color",RGBA(hex:second)),.number("blend","Blend",100,0,100,unit:"%")],
+            stage:.pixels { ctx in
+                if v29(ctx,"blend")<=0 { return ctx.input }
+                let center=ctx.effect.params["center"]?.point(at:ctx.time) ?? Vec2(0.5,0.5)
+                let canvas=ctx.layerPixels ?? SIMD2(Double(ctx.width),Double(ctx.height))
+                var p=EffectParams()
+                p.a=SIMD4(f29(ctx,"zoom"),f29(ctx,"evolution")+Float(ctx.time)*f29(ctx,"speed"),pc29(ctx,"blend"),Float(min(canvas.x,canvas.y)))
+                p.b=col29(ctx,"color");p.c=col29(ctx,"color2")
+                p.d=SIMD4(Float(Double(ctx.width)*0.5+(center.x-0.5)*canvas.x),Float(Double(ctx.height)*0.5+(center.y-0.5)*canvas.y),f29(ctx,"angle") * .pi/180,Float(ctx.unit))
+                p.i=SIMD4(mode,f29(ctx,"first").bitPattern,f29(ctx,"second").bitPattern,f29(ctx,"third").bitPattern)
+                let output=ctx.temp()
+                ctx.gpu.run("fxMathBackground30",ctx.cb,textures:[ctx.input,output],params:p,grid:output)
+                return output
+            })
+    }
+
     static let batch30: [EffectDefinition] = [
         background30("solidSunburst", "Solid Sunburst", 0,
             "Solid candy starburst wedges, not light rays. Editable duty, twist and radial fade.",

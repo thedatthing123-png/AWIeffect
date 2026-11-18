@@ -17,11 +17,12 @@ final class ExpansionRenderTests: XCTestCase {
             EffectRegistry.batch35,EffectRegistry.batch36,EffectRegistry.lights36,EffectRegistry.batch37,
             EffectRegistry.cleanup37,EffectRegistry.frequency37,EffectRegistry.drawing37,EffectRegistry.retro37,
             EffectRegistry.textGeometry37,EffectRegistry.batch38,EffectRegistry.conformal32,EffectRegistry.morphology37,EffectRegistry.sampling33,
-            EffectRegistry.featureMattes33,EffectRegistry.surfaces38,EffectRegistry.flow31,EffectRegistry.transforms37,EffectRegistry.nonlinear37]
+            EffectRegistry.featureMattes33,EffectRegistry.surfaces38,EffectRegistry.flow31,EffectRegistry.transforms37,EffectRegistry.nonlinear37,EffectRegistry.math30]
         let newDefinitions=families.flatMap{$0}
         XCTAssertEqual(Set(newDefinitions.map(\.name)).count,newDefinitions.count,"New effects need distinct names and behaviors")
     }
     func testNewFamiliesHaveIntentionalBrowserSections() {
+        for definition in EffectRegistry.math30 { XCTAssertEqual(EffectSection.of(definition),.backgrounds,definition.name) }
         for definition in EffectRegistry.conformal32 { XCTAssertEqual(EffectSection.of(definition),.distort,definition.name) }
         for definition in EffectRegistry.sampling33 { XCTAssertEqual(EffectSection.of(definition),.time,definition.name) }
         for definition in EffectRegistry.featureMattes33 { XCTAssertEqual(EffectSection.of(definition),.keying,definition.name) }
@@ -273,6 +274,38 @@ final class ExpansionRenderTests: XCTestCase {
             XCTAssertEqual(original,try pixels(effect),definition.name)
         }
     }
+    func testMathBackgroundFallbacksAndBlendBypass() throws {
+        let original=try pixels(nil)
+        for definition in EffectRegistry.math30 {
+            var effect=definition.makeInstance()
+            let result=try pixels(effect)
+            XCTAssertGreaterThan(difference(original,result),0.05,definition.name)
+            XCTAssertEqual(result,try pixels(EffectInstance(typeID:definition.id,params:[:])),definition.name)
+            effect.params["blend"] = .number(Animated(0))
+            XCTAssertEqual(original,try pixels(effect),definition.name)
+        }
+    }
+    func testPrimeSpiralMarksKnownIntegers() throws {
+        guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        var project=Project.new(name:"Prime grid",width:164,height:164,fps:30,duration:1,background:RGBA(0,0,0,0))
+        var layer=project.makeLayer(name:"Pattern",content:.solid,size:Vec2(164,164))
+        var effect=try XCTUnwrap(EffectRegistry.definition("awi30.math.primeSpiral")).makeInstance()
+        effect.params["speed"] = .number(Animated(0));effect.params["evolution"] = .number(Animated(0))
+        effect.params["color"] = .color(Animated(RGBA(1,1,1)));effect.params["color2"] = .color(Animated(RGBA(0,0,0)))
+        layer.effects=[effect];project.layers=[layer]
+        let rgba=try XCTUnwrap(renderer.renderPixels(project:project,time:0,preserveAlpha:true,
+            mediaURL:{URL(fileURLWithPath:$0)})).rgba
+        // Coordinates, integers and primality are supplied independently of the shader.
+        let marks:[(Int,Int,Int,Bool)]=[(0,0,1,false),(1,0,2,true),(1,1,3,true),(0,1,4,false),
+            (-1,1,5,true),(-1,0,6,false),(-1,-1,7,true),(0,-1,8,false),(1,-1,9,false),
+            (2,-1,10,false),(2,0,11,true),(2,1,12,false),(2,2,13,true),(-2,2,17,true)]
+        for (x,y,integer,prime) in marks {
+            let index=((81+y*4)*164+81+x*4)*4
+            if prime { XCTAssertGreaterThan(rgba[index],180,"Prime \(integer)") }
+            else { XCTAssertEqual(rgba[index],0,"Composite or one: \(integer)") }
+            XCTAssertEqual(rgba[index+3],255)
+        }
+    }
     func testSurfaceCompositesFallbackBypassAndEmptyInput() throws {
         guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
         let original=try pixels(nil)
@@ -432,6 +465,7 @@ final class ExpansionRenderTests: XCTestCase {
             ("motion-light",EffectRegistry.batch38),("coordinate-map",EffectRegistry.conformal32),
             ("morphology",EffectRegistry.morphology37),("surface-composite",EffectRegistry.surfaces38),
             ("frequency-stylize",EffectRegistry.transforms37),("nonlinear-detail",EffectRegistry.nonlinear37),
+            ("math-background",EffectRegistry.math30),
             ("measured-motion",EffectRegistry.flow31)
         ]
         for (name,definitions) in families {

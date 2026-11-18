@@ -21,6 +21,128 @@ static float line30(float distance, float width, float aa) {
     return 1.0-smoothstep(width-aa, width+aa, distance);
 }
 
+static bool primeMath30(int value) {
+    if(value<2) return false;
+    if(value%2==0) return value==2;
+    for(int divisor=3;divisor<=101;divisor+=2) {
+        if(divisor*divisor>value) break;
+        if(value%divisor==0) return false;
+    }
+    return true;
+}
+static int hilbertIndex30(int2 point,int size) {
+    int index=0;
+    for(int step=size/2;step>0;step/=2) {
+        int rx=(point.x&step)!=0,ry=(point.y&step)!=0;
+        index+=step*step*((3*rx)^ry);
+        if(ry==0) {
+            if(rx!=0) point=int2(step-1)-point;
+            point=point.yx;
+        }
+    }
+    return index;
+}
+static int2 hilbertPoint30(int index,int size) {
+    int2 point=0;
+    for(int step=1;step<size;step*=2) {
+        int rx=1&(index/2),ry=1&(index^rx);
+        if(ry==0) {
+            if(rx!=0) point=int2(step-1)-point;
+            point=point.yx;
+        }
+        point+=step*int2(rx,ry);index/=4;
+    }
+    return point;
+}
+static float segmentMath30(float2 point,float2 a,float2 b) {
+    float2 delta=b-a;
+    return length(point-a-delta*clamp(dot(point-a,delta)/max(dot(delta,delta),1.e-8),0.0,1.0));
+}
+static float2 complexMath30(float2 a,float2 b) { return float2(a.x*b.x-a.y*b.y,a.x*b.y+a.y*b.x); }
+kernel void fxMathBackground30(texture2d<half,access::read> source [[texture(0)]],
+                              texture2d<half,access::write> output [[texture(1)]],
+                              constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float2 delta=(float2(gid)+.5-p.d.xy)/max(p.a.w,1.0);
+    float cs=cos(p.d.z),sn=sin(p.d.z);
+    float2 q=float2(delta.x*cs+delta.y*sn,-delta.x*sn+delta.y*cs)*p.a.x;
+    float a=as_type<float>(p.i.y),b=as_type<float>(p.i.z),c=as_type<float>(p.i.w);
+    float phase=p.a.y,aa=max(.00001,p.a.x/max(p.a.w,1.0)),field=0;
+    if(p.i.x==0) {
+        float2 u=q+float2(sin(phase),cos(phase))*.04;
+        float wave=cos(a*3.14159265*u.x+phase)*cos(b*3.14159265*u.y)-cos(b*3.14159265*u.x)*cos(a*3.14159265*u.y+phase);
+        field=1-smoothstep(c,c+aa*(a+b),abs(wave));
+    } else if(p.i.x==1) {
+        int directions=clamp(int(round(a)),3,11);float sum=0;
+        for(int n=0;n<directions;n++) {
+            float angle=float(n)*3.14159265/float(directions);
+            sum+=cos(dot(q,float2(cos(angle),sin(angle)))*b*6.2831853+phase*(1+float(n)*.07));
+        }
+        field=exp(-abs(sum/float(directions))/max(c,.001));
+    } else if(p.i.x==2) {
+        float2 uv=q+.5+float2(sin(phase),cos(phase))*.025;
+        field=1-smoothstep(.5-aa,.5+aa,max(abs(uv.x-.5),abs(uv.y-.5)));
+        float scale=1;
+        for(int n=0;n<clamp(int(round(a)),1,6);n++) {
+            scale*=3;float2 cell=fract(uv*scale);
+            float distance=max(abs(cell.x-.5),abs(cell.y-.5));
+            float soft=max(c,min(.25,aa*scale));
+            field*=smoothstep(b*.5-soft,b*.5+soft,distance);
+        }
+    } else if(p.i.x==3) {
+        int roots=clamp(int(round(a)),2,6),iterations=clamp(int(round(b)),4,32),steps=0;bool converged=false;
+        float2 z=clamp(q*3+float2(cos(phase),sin(phase))*.13,float2(-20),float2(20));
+        for(int n=0;n<iterations;n++) {
+            float2 power=float2(1,0);
+            for(int k=0;k<roots-1;k++) power=complexMath30(power,z);
+            float2 residual=complexMath30(power,z)-float2(1,0),derivative=float(roots)*power;
+            float denominator=max(dot(derivative,derivative),1.e-8);
+            z-=complexMath30(residual,float2(derivative.x,-derivative.y))/denominator;
+            z=clamp(z,float2(-20),float2(20));steps=n+1;
+            if(dot(residual,residual)<1.e-6) { converged=true;break; }
+        }
+        float root=round(atan2(z.y,z.x)*float(roots)/6.2831853);
+        root=fmod(root+float(roots),float(roots));
+        field=converged ? (root+.35+.25*cos(float(steps)*c-phase))/float(roots):0;
+    } else if(p.i.x==4) {
+        int count=clamp(int(round(a)),9,81)|1;int2 cell=int2(floor(q*float(count)+.5));
+        int ring=max(abs(cell.x),abs(cell.y));
+        if(ring<=count/2) {
+        int value=(2*ring+1)*(2*ring+1);
+        if(cell.y==-ring) value-=ring-cell.x;
+        else if(cell.x==-ring) value-=2*ring+cell.y+ring;
+        else if(cell.y==ring) value-=4*ring+cell.x+ring;
+        else value-=6*ring+ring-cell.y;
+        float cycle=phase-floor(phase/97)*97;int offset=int(floor(cycle));
+        float marked=mix(primeMath30(value+int(round(c))+offset) ? 1.0:0.0,
+            primeMath30(value+int(round(c))+(offset+1)%97) ? 1.0:0.0,fract(cycle));
+        float2 local=q*float(count)-float2(cell);
+        field=marked*(1-smoothstep(b*.5-aa*count,b*.5+aa*count,length(local)));
+        }
+    } else if(p.i.x==5) {
+        int count=1<<clamp(int(round(a)),1,6);int2 cell=int2(floor((q+.5)*float(count)));
+        if(all(cell>=0) && all(cell<count)) {
+            int index=hilbertIndex30(cell,count);
+            float2 center=(float2(cell)+.5)/float(count)-.5;
+            float distance=length(q-center);
+            if(index>0) distance=min(distance,segmentMath30(q,center,(center+(float2(hilbertPoint30(index-1,count))+.5)/float(count)-.5)*.5));
+            if(index<count*count-1) distance=min(distance,segmentMath30(q,center,(center+(float2(hilbertPoint30(index+1,count))+.5)/float(count)-.5)*.5));
+            float travel=abs(fract(float(index)/float(count*count)-phase+.5)-.5);
+            float light=.35+.65*exp(-travel*travel/max(c*c*.25,.0001));
+            float radius=min(b*p.d.w*p.a.x/max(p.a.w,1.0)*.5,.45/float(count));
+            field=(1-smoothstep(radius-aa,radius+aa,distance))*light;
+        }
+    } else {
+        float2 left=q-float2(a*.5,0),right=q+float2(a*.5,0);
+        float l=max(length(left),.0001),r=max(length(right),.0001);
+        float potential=log(l/r),stream=atan2(left.y,left.x)-atan2(right.y,right.x);
+        float footprint=aa*b/max(min(l,r),.02);
+        field=max(band30(stream*b/6.2831853-phase,c,footprint),.65*band30(potential*b*.2+phase,c,footprint));
+    }
+    float4 color=mix(p.c,p.b,clamp(field,0.0,1.0));color.rgb*=color.a;
+    output.write(half4(mix(float4(source.read(gid)),color,p.a.z)),gid);
+}
+
 kernel void fxBackground30(texture2d<float, access::read> input [[texture(0)]],
                            texture2d<float, access::write> out [[texture(1)]],
                            constant EffectParams& p [[buffer(0)]], uint2 gid [[thread_position_in_grid]]) {
