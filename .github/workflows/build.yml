@@ -47,6 +47,9 @@ jobs:
             xcrun metal --version
           fi
 
+      - name: Compile and link every Metal shader (simulator and device)
+        run: python3 scripts/validate_metal.py
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
@@ -132,6 +135,14 @@ jobs:
             echo "SKIP-CRASH file $f"
             python3 .github/crashdump.py "$f" | sed 's/^/SKIP-CRASH /' | head -120
           done
+
+      - name: Upload all-shader compiler diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: metal-preflight
+          path: build_out/metal-preflight/**/compile.log
+          if-no-files-found: ignore
 
       - name: Upload build service diagnostics
         if: failure()
