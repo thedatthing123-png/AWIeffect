@@ -240,6 +240,6 @@ kernel void fxField36(texture2d<half,access::sample> source [[texture(0)]],textu
     else {
         float alpha=clamp(color.a*p.d.w,0.0,1.0);
         float3 rgb=color.rgb*p.d.w*original.a+original.rgb*(1.0-alpha);
-        output.write(half4(rgb,original.a),gid);
+        output.write(half4(float4(rgb,float(original.a))),gid);
     }
 }
