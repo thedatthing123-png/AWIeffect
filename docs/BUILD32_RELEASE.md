@@ -25,10 +25,23 @@ requires over 1,000 working, distinct definitions. ExpansionRenderTests enforces
 count gate; the current catalog is still below it. Passing the count gate alone
 does not prove distinctness, visual quality or performance.
 
-Current source enumeration is 786 definitions, including the legacy catalog.
+Current source enumeration is 807 definitions, including the legacy catalog.
 This is a source inventory, not a verified runtime count or a quality result. The
 remaining distance to 1,001 must be real, distinct tools; do not fill it with aliases
 or renamed settings. The all-effects test remains the runtime count authority.
+
+Textured surface family 40 adds 21 native depth-tested image meshes: bend, twist,
+dome, saddle, cone, scroll, pleats, ripples, flag, drape, Mobius ribbon, S bend,
+hinged panels, crumple, woven image, Gerstner waves, spiral steps, facets, corner
+drape, bubbles and image relief. These use the actual source image, cached native
+render/depth resources and GPU-generated vertices. They are registered in 3D,
+contact sheets and per-effect moving review. Source and adjustment paths preserve
+known upstream effect extents instead of silently cropping them at layer bounds.
+Tests cover defaults, imported parameter fallbacks, bypass and uniform alignment.
+Swift syntax checks pass locally; Metal compilation, rendered results and device
+performance remain unverified. Semi-transparent overlapping surfaces use ordinary
+depth-tested blending, not order-independent transparency. This is still a partial
+expansion checkpoint: the remaining 194 definitions and release gates are open.
 
 ## Release gates
 

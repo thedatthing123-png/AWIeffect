@@ -1065,10 +1065,15 @@ final class Renderer {
                 if BoneMeshGPU.encode(mesh,matrices: matrices,input: local,output: warped,unit: density,commandBuffer: cb,device: device) { current = warped }
             }
             let beforeEffects = current
+            var upstreamMargin = 0.0
             for e in pixelFX {
                 guard let def = EffectRegistry.definition(e.typeID), case .pixels(let run) = def.stage else { continue }
+                defer { if !EffectStackR4.isMuted(e) { upstreamMargin += max(0,def.expandedMargin?(e,time,hs*2) ?? def.margin(e,time)) } }
                 var ctx = EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: time, unit: density, pool: pool)
                 ctx.layerPixels = SIMD2(hs.x * 2 * density, hs.y * 2 * density)
+                let boneReach = layer.boneMesh.flatMap { mesh in mesh.frameMatrices.map { mesh.reach(matrices:$0) } } ?? hs
+                ctx.inputPixels = SIMD2(min(Double(current.width),2*(max(reach.x,boneReach.x)+upstreamMargin)*density),
+                                       min(Double(current.height),2*(max(reach.y,boneReach.y)+upstreamMargin)*density))
                 ctx.compositionPixels = SIMD2(Double(project.width) * density, Double(project.height) * density)
                 if EffectRegistry.layerRefIDs.contains(e.typeID), let rid = e.text?["layer"].flatMap(UUID.init(uuidString:)),
                    let refLayer = project.layers.first(where: { $0.id == rid }), rid != layer.id {
@@ -1464,6 +1469,12 @@ final class Renderer {
                 var context = EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: evaluationTime, unit: renderScale, pool: pool)
                 context.layerPixels = SIMD2(Double(comp.width), Double(comp.height))
                 context.compositionPixels = context.layerPixels
+                let upstreamMargin = effects.prefix(effectIndex).reduce(0.0) { total,prior in
+                    guard prior.isEnabled, !EffectStackR4.isMuted(prior), let definition=EffectRegistry.definition(prior.typeID) else { return total }
+                    return total + max(0,definition.expandedMargin?(prior,evaluationTime,Vec2(Double(comp.width),Double(comp.height))) ?? definition.margin(prior,evaluationTime))
+                }
+                context.inputPixels = SIMD2(min(Double(current.width),(Double(comp.width)+2*upstreamMargin)*renderScale),
+                                            min(Double(current.height),(Double(comp.height)+2*upstreamMargin)*renderScale))
                 if EffectRegistry.temporalIDs33.contains(e.typeID),let sourceProject=groupSource {
                     let size=(current.width,current.height)
                     current=withTemporalContext(context,run:run) { sampleTime in

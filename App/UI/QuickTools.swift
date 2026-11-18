@@ -72,6 +72,7 @@ enum EffectSection: String, CaseIterable, Identifiable {
     /// Section an effect is filed under.
     static func of(_ d: EffectDefinition) -> EffectSection {
         if d.id.hasPrefix("awi39.data.") { return .data }
+        if d.id.hasPrefix("awi40.surface.") { return .threeD }
         // Explicit placement wins over incidental words in a description ("soft", "light", "star").
         if d.id.hasPrefix("awi30.") { return .backgrounds }
         if d.id.hasPrefix("awi33.time.") { return .time }

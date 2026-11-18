@@ -24,6 +24,8 @@ struct EffectContext {
     var reference: MTLTexture? = nil
     /// The layer's own size in buffer pixels (the buffer can be bigger when effects grow it), centered.
     var layerPixels: SIMD2<Double>? = nil
+    /// Conservative extent of upstream content, excluding padding for later effects.
+    var inputPixels: SIMD2<Double>? = nil
     var compositionPixels: SIMD2<Double>? = nil
     /// Upstream pixels sampled at another composition time, aligned to this buffer.
     /// Installed only for the synchronous duration of the effect's GPU encoding.
@@ -310,7 +312,7 @@ enum EffectRegistry {
             batch12,batch13,batch14,batch15,batch16,batch17,batch18,batch19,batch20,
             batch21,batch22,batch23,batchR4,batch30,batch31,sorting31,batch32,batch33,
             time33,batch34,cameraTransitions34,batch35,batch36,lights36,batch37,
-            cleanup37,frequency37,drawing37,retro37,textGeometry37,batch38,conformal32,morphology37,sampling33,featureMattes33,surfaces38,flow31,transforms37,nonlinear37,math30,advancedClean37,data39
+            cleanup37,frequency37,drawing37,retro37,textGeometry37,batch38,conformal32,morphology37,sampling33,featureMattes33,surfaces38,flow31,transforms37,nonlinear37,math30,advancedClean37,data39,surfaces40
         ]
         for family in families { definitions.append(contentsOf:family) }
         return definitions
