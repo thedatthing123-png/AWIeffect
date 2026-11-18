@@ -252,7 +252,7 @@ kernel void fxMorphology37(texture2d<half,access::read> source [[texture(0)]],
         float chromaScale=minimum<0 ? min(1.0,target/max(-minimum,1.e-6)):1.0;
         color=max(float3(0),target+chroma*chromaScale);
     }
-    output.write(half4(mix(float3(original.rgb),color*float(original.a),p.a.y),original.a),gid);
+    output.write(half4(float4(mix(float3(original.rgb),color*float(original.a),p.a.y),float(original.a))),gid);
 }
 constexpr sampler finish37(address::clamp_to_zero,filter::linear,coord::pixel);
 constexpr sampler clean37(address::clamp_to_edge,filter::linear,coord::pixel);
