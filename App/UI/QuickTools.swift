@@ -10,7 +10,7 @@ enum EffectSection: String, CaseIterable, Identifiable {
     case text = "Text", shake = "Shake & Motion", glow = "Glow & Light", blur = "Blur", glitch = "Glitch", distort = "Distort & Warp",
          transition = "Transitions", particles = "Particles", backgrounds = "Backgrounds", threeD = "3D",
          stylize = "Stylize & Draw", retro = "Retro & Film", color = "Color & Grade", keying = "Key & Matte",
-         liquid = "Liquid", shapes = "Shapes", procedural = "Procedural & Noise", time = "Time", other = "More"
+         liquid = "Liquid", shapes = "Shapes", procedural = "Procedural & Noise", time = "Time", data = "Vectors & Surface", other = "More"
     var id: String { rawValue }
 
     var symbol: String {
@@ -33,6 +33,7 @@ enum EffectSection: String, CaseIterable, Identifiable {
         case .shapes: return "square.on.circle"
         case .procedural: return "circle.hexagongrid"
         case .time: return "clock"
+        case .data: return "arrow.triangle.branch"
         case .other: return "ellipsis.circle"
         }
     }
@@ -63,12 +64,14 @@ enum EffectSection: String, CaseIterable, Identifiable {
         case .shapes: return []
         case .procedural: return []
         case .time: return []
+        case .data: return []
         case .other: return []
         }
     }
 
     /// Section an effect is filed under.
     static func of(_ d: EffectDefinition) -> EffectSection {
+        if d.id.hasPrefix("awi39.data.") { return .data }
         // Explicit placement wins over incidental words in a description ("soft", "light", "star").
         if d.id.hasPrefix("awi30.") { return .backgrounds }
         if d.id.hasPrefix("awi33.time.") { return .time }

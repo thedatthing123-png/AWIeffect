@@ -291,6 +291,25 @@ extreme HDR values above the solver range keep their original luminance plus the
 bounded solved correction. Original chroma and alpha are restored. CPU equation
 checks and eventual Metal fixtures are separate forms of evidence.
 
+## Vector and normal maps (continuation batch 39)
+
+- Cabral and Leedom, *Imaging Vector Fields Using Line Integral Convolution*:
+  https://dl.acm.org/doi/10.1145/166117.166151
+- Barré-Brisebois and Hill, *Blending in Detail*:
+  https://blog.selfshadow.com/publications/blending-in-detail/
+
+Independent operators use centered RG vectors and decoded unit RGB normals.
+Finite differences, local Jacobians and midpoint field integration operate on
+values, not the positions of the entire image. Streamline noise is bidirectionally
+integrated with a bounded sample count. Normal composition includes reorientation,
+whiteout and normalized linear blending in one tool. Reflection uses a chosen
+equirectangular environment; refraction uses a chosen image, an entering-ray index
+ratio and per-channel dispersion. Source alpha is retained or multiplied by sampled
+reference coverage. Facing selection is the explicit exception that modifies alpha.
+This is data-map processing, not automatic character normal estimation or mesh
+rigging. No reference source code was copied. Pipeline/interface and visual checks
+are included in the combined validation, not claimed from source syntax checks.
+
 ## Nonlinear detail (batch 37)
 
 - Perona and Malik, *Scale-Space and Edge Detection Using Anisotropic Diffusion*:

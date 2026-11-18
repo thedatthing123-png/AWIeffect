@@ -44,6 +44,7 @@ final class EffectTests: XCTestCase {
 
     /// Colorful test scene with hard edges, brights, darks and a green "screen" area.
     private func scene(effect: EffectInstance?, onAdjustment: Bool = false) -> Project {
+        if let effect,effect.typeID.hasPrefix("awi39.data.") { return DataEffectTests.scene(effect,onAdjustment:onAdjustment) }
         if let effect,effect.typeID.hasPrefix("awi31.flow") { return FlowEffectTests.scene(effect,onAdjustment:onAdjustment) }
         if let effect,EffectRegistry.temporalIDs33.contains(effect.typeID) {
             return TemporalEffectTests.scene(effect,onAdjustment:onAdjustment)
@@ -194,6 +195,7 @@ final class EffectTests: XCTestCase {
             var comparison = d.id == "awi23.drawProgress" ? try render(r, drawingScene(effect: nil)) : (d.category == .text ? try render(r, textScene(effect: nil)) : base)
             if EffectRegistry.temporalIDs33.contains(d.id) { comparison=try render(r,TemporalEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi31.flow") { comparison=try render(r,FlowEffectTests.scene(nil)) }
+            if d.id.hasPrefix("awi39.data.") { comparison=try render(r,DataEffectTests.scene(nil)) }
             if ["awi33.alphaDither","awi33.alphaSteps"].contains(d.id) {
                 var disabled=visible(d); disabled.isEnabled=false
                 comparison=try render(r,scene(effect:disabled))
@@ -215,6 +217,7 @@ final class EffectTests: XCTestCase {
             var comparison=base
             if EffectRegistry.temporalIDs33.contains(d.id) { comparison=try render(r,TemporalEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi31.flow") { comparison=try render(r,FlowEffectTests.scene(nil)) }
+            if d.id.hasPrefix("awi39.data.") { comparison=try render(r,DataEffectTests.scene(nil)) }
             if EffectFixtureRequirements.detailIDs.contains(d.id) {
                 var disabled=visible(d);disabled.isEnabled=false
                 comparison=try render(r,scene(effect:disabled,onAdjustment:true))
@@ -232,6 +235,7 @@ final class EffectTests: XCTestCase {
             var comparison = d.id == "awi23.drawProgress" ? try render(r, drawingScene(effect: nil)) : (d.category == .text ? try render(r, textScene(effect: nil)) : base)
             if EffectRegistry.temporalIDs33.contains(d.id) { comparison=try render(r,TemporalEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi31.flow") { comparison=try render(r,FlowEffectTests.scene(nil)) }
+            if d.id.hasPrefix("awi39.data.") { comparison=try render(r,DataEffectTests.scene(nil)) }
             if ["awi33.alphaDither","awi33.alphaSteps"].contains(d.id) {
                 var reference=scene(effect:e)
                 for index in reference.layers.indices { reference.layers[index].effects=[] }

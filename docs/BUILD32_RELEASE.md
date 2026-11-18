@@ -25,7 +25,7 @@ requires over 1,000 working, distinct definitions. ExpansionRenderTests enforces
 count gate; the current catalog is still below it. Passing the count gate alone
 does not prove distinctness, visual quality or performance.
 
-Current source enumeration is 760 definitions, including the legacy catalog.
+Current source enumeration is 786 definitions, including the legacy catalog.
 This is a source inventory, not a verified runtime count or a quality result. The
 remaining distance to 1,001 must be real, distinct tools; do not fill it with aliases
 or renamed settings. The all-effects test remains the runtime count authority.
@@ -127,3 +127,12 @@ bounded luminance guide. TV Luma Clean uses a bounded primal-dual solve, alterna
 four state textures instead of allocating per iteration. Both retain source alpha,
 have dedicated constant/empty/bypass checks, and use textured numeric-control
 fixtures. These implementations have not yet been validated on Metal.
+
+Continuation batch 39 adds 26 vector/normal data-map operators and the explicit
+Vectors & Surface browser section. Operators cover derivatives, field transforms,
+midpoint advection, streamline convolution, height normals, normal transforms,
+facing mattes, lighting and reference-driven reflection/refraction/reorientation.
+They reuse existing effect cards and reference-layer pickers. Their fixture is an
+analytic RGB unit-normal field with varied directions and grazing slopes, not
+arbitrary artwork whose colors cannot exercise normal-map controls. No render or
+UI approval is claimed; the combined run has not been started.
