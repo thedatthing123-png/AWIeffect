@@ -26,7 +26,7 @@ ExpansionRenderTests enforces the
 count gate; the current catalog is still below it. Passing the count gate alone
 does not prove distinctness, visual quality or performance.
 
-Current source enumeration is 846 definitions, including the legacy catalog.
+Current source enumeration is 850 definitions, including the legacy catalog.
 This is a source inventory, not a verified runtime count or a quality result. The
 remaining distance to 900 must be real, distinct tools; do not fill it with aliases
 or renamed settings. The all-effects test remains the runtime count authority.
@@ -42,7 +42,7 @@ Tests cover defaults, imported parameter fallbacks, bypass and uniform alignment
 Swift syntax checks pass locally; Metal compilation, rendered results and device
 performance remain unverified. Semi-transparent overlapping surfaces use ordinary
 depth-tested blending, not order-independent transparency. This is still a partial
-expansion checkpoint: the remaining 54 definitions and release gates are open.
+expansion checkpoint: the remaining 50 definitions and release gates are open.
 
 Contour family 41 adds ten distance-driven tools: signed distance and nearest
 boundary vectors, nearest-color extension, boundary pull, contour bands, medial
@@ -68,6 +68,14 @@ woven, cracked glaze, pooled ink, prism grooves, folded foil and iridescent ridg
 See [SURFACE_FINISH_EFFECTS.md](SURFACE_FINISH_EFFECTS.md). CPU design references
 were inspected and weak defaults retuned. Coverage, fallback, bypass and flat-plane
 GPU lighting-oracle tests are added; actual GPU and moving-render review is pending.
+
+Gradient-domain family 45 adds Normal to Height, Gradient Integrate, Gradient
+Reshape and Periodic Texture, backed by a bounded float32 GPU FFT/Poisson solve.
+See [GRADIENT_DOMAIN_EFFECTS.md](GRADIENT_DOMAIN_EFFECTS.md). Independent CPU FFT
+and reconstruction checks pass; diagnostic image defaults were retuned after
+reference-image inspection. GPU tests include known height fields, independent
+direct-DFT comparison, partial/empty coverage, fallbacks and bypass. Actual Metal
+execution and rendered/device review remain pending.
 
 ## Release gates
 
