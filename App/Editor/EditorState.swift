@@ -859,8 +859,27 @@ final class EditorState: ObservableObject {
             self.saveError = failure
             if failure == nil && snapshot { self.lastVersionSnapshot = Date() }
             // Keep the home-screen card current while editing (not only on close), at most every 30 s.
-            if failure == nil, !self.isPlaying, Date().timeIntervalSince(self.lastThumbnailSave) > 30 { self.saveThumbnail(project) }
+            if failure == nil, !self.isPlaying, Date().timeIntervalSince(self.lastThumbnailSave) > 30 { self.scheduleThumbnail(project,generation:generation) }
         }
+    }
+
+    private static let thumbnailQueue=DispatchQueue(label:"awi.project-thumbnail",qos:.utility)
+    private var thumbnailWork:DispatchWorkItem?
+    private func scheduleThumbnail(_ project:Project,generation:Int) {
+        thumbnailWork?.cancel()
+        lastThumbnailSave=Date()
+        let time=Self.thumbnailTime(current:rootTime(currentTime),project:project),store=self.store
+        let work=DispatchWorkItem { [weak self] in
+            guard let image=Renderer.shared?.renderImage(project:project,time:time,maxDimension:360,
+                mediaURL:{store.mediaURL($0,projectID:project.id)}) else { return }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                guard self.saveGeneration==generation else { self.lastThumbnailSave = .distantPast;return }
+                Self.saveQueue.async { store.saveThumbnail(image,for:project.id) }
+            }
+        }
+        thumbnailWork=work
+        Self.thumbnailQueue.async(execute:work)
     }
 
     private var lastThumbnailSave = Date.distantPast

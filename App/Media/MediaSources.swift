@@ -53,6 +53,7 @@ final class VideoSources {
         // Guarded by VideoSources.lock.
         var lastRequest = -10
         var prefetching = false
+        var pendingRequests = 0
         var lastUse: UInt64 = 0
         var owner: Int?
     }
@@ -112,7 +113,13 @@ final class VideoSources {
         let sequential = frame > c.lastRequest && frame - c.lastRequest <= 3
         c.lastRequest = frame
         lock.unlock()
-        let tex = hit ?? decode(s, c, frame: frame, device: device)
+        let tex:MTLTexture?
+        if let hit { tex=hit }
+        else {
+            lock.lock();c.pendingRequests += 1;lock.unlock()
+            tex=decode(s,c,frame:frame,device:device)
+            lock.lock();c.pendingRequests -= 1;lock.unlock()
+        }
         if sequential { prefetch(s, c, after: frame, device: device) }
         return tex
     }
@@ -179,7 +186,8 @@ final class VideoSources {
             var f = frame + 1
             while f <= min(last, frame + Self.prefetchAhead) {
                 // Playback jumped elsewhere: stop guessing.
-                self.lock.lock(); let req = c.lastRequest; self.lock.unlock()
+                self.lock.lock(); let req = c.lastRequest,pending=c.pendingRequests; self.lock.unlock()
+                if pending>0 { break }
                 if req > f || f - req > Self.prefetchAhead + 2 { break }
                 if self.cachedTexture(s, f) == nil { _ = self.decode(s, c, frame: f, device: device) }
                 f += 1
