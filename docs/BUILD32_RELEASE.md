@@ -25,7 +25,7 @@ requires over 1,000 working, distinct definitions. ExpansionRenderTests enforces
 count gate; the current catalog is still below it. Passing the count gate alone
 does not prove distinctness, visual quality or performance.
 
-Current source enumeration is 807 definitions, including the legacy catalog.
+Current source enumeration is 817 definitions, including the legacy catalog.
 This is a source inventory, not a verified runtime count or a quality result. The
 remaining distance to 1,001 must be real, distinct tools; do not fill it with aliases
 or renamed settings. The all-effects test remains the runtime count authority.
@@ -41,7 +41,14 @@ Tests cover defaults, imported parameter fallbacks, bypass and uniform alignment
 Swift syntax checks pass locally; Metal compilation, rendered results and device
 performance remain unverified. Semi-transparent overlapping surfaces use ordinary
 depth-tested blending, not order-independent transparency. This is still a partial
-expansion checkpoint: the remaining 194 definitions and release gates are open.
+expansion checkpoint: the remaining 184 definitions and release gates are open.
+
+Contour family 41 adds ten distance-driven tools: signed distance and nearest
+boundary vectors, nearest-color extension, boundary pull, contour bands, medial
+ridges, contour refraction, tangential contour flow, contour light sweep and
+contour folding. See [DISTANCE_EFFECTS.md](DISTANCE_EFFECTS.md) for controls,
+algorithm references, memory/accuracy limits and tests. The local CPU oracle
+comparison passes; GPU results, visual review and device performance are pending.
 
 ## Release gates
 

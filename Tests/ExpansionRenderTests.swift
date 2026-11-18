@@ -25,7 +25,7 @@ final class ExpansionRenderTests: XCTestCase {
             EffectRegistry.cleanup37,EffectRegistry.frequency37,EffectRegistry.drawing37,EffectRegistry.retro37,
             EffectRegistry.textGeometry37,EffectRegistry.batch38,EffectRegistry.conformal32,EffectRegistry.morphology37,EffectRegistry.sampling33,
             EffectRegistry.featureMattes33,EffectRegistry.surfaces38,EffectRegistry.flow31,EffectRegistry.transforms37,EffectRegistry.nonlinear37,EffectRegistry.math30,
-            EffectRegistry.advancedClean37,EffectRegistry.data39,EffectRegistry.surfaces40]
+            EffectRegistry.advancedClean37,EffectRegistry.data39,EffectRegistry.surfaces40,EffectRegistry.distance41]
         let newDefinitions=families.flatMap{$0}
         XCTAssertEqual(Set(newDefinitions.map(\.name)).count,newDefinitions.count,"New effects need distinct names and behaviors")
     }
@@ -476,6 +476,7 @@ final class ExpansionRenderTests: XCTestCase {
             ("math-background",EffectRegistry.math30),("advanced-clean",EffectRegistry.advancedClean37),
             ("vector-surface",EffectRegistry.data39),
             ("textured-surfaces",EffectRegistry.surfaces40),
+            ("distance-contours",EffectRegistry.distance41),
             ("measured-motion",EffectRegistry.flow31)
         ]
         for (name,definitions) in families {
@@ -530,7 +531,7 @@ final class ExpansionRenderTests: XCTestCase {
         // default; preserve explicit review ranges for effects that need them.
         let explicitIDs=Set(previews.map{$0.0})
         let expansion=EffectRegistry.all.filter { definition in
-            (30...40).contains { definition.id.hasPrefix("awi\($0).") }
+            (30...41).contains { definition.id.hasPrefix("awi\($0).") }
         }
         for definition in expansion where !explicitIDs.contains(definition.id) {
             for parameter in definition.params where !["blend","mix"].contains(parameter.id) {
@@ -566,6 +567,7 @@ final class ExpansionRenderTests: XCTestCase {
         }
     }
     private func reviewScene(_ effect:EffectInstance) -> Project {
+        if effect.typeID.hasPrefix("awi41.contour.") { return DistanceEffectTests.scene(effect) }
         if effect.typeID.hasPrefix("awi39.data.") { return DataEffectTests.scene(effect) }
         if effect.typeID.hasPrefix("awi31.flow") { return FlowEffectTests.scene(effect) }
         if EffectRegistry.temporalIDs33.contains(effect.typeID) { return TemporalEffectTests.scene(effect) }

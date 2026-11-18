@@ -82,7 +82,14 @@ final class TexturePool {
     static var budgetBytes = 96 * 1024 * 1024
     init(device: MTLDevice) { self.device = device }
 
-    private static func bytes(_ t: MTLTexture) -> Int { max(t.allocatedSize, t.width * t.height * (t.pixelFormat == .rgba16Float ? 8 : 4)) }
+    private static func pixelBytes(_ format:MTLPixelFormat) -> Int {
+        switch format {
+        case .rgba32Float:return 16
+        case .rgba16Float,.rg32Float:return 8
+        default:return 4
+        }
+    }
+    private static func bytes(_ t: MTLTexture) -> Int { max(t.allocatedSize, t.width * t.height * pixelBytes(t.pixelFormat)) }
 
     /// Largest side the pool hands out (Metal's limit is 16384; real layers are capped far below this).
     static let maxSide = 8192
@@ -109,7 +116,7 @@ final class TexturePool {
                 let fd = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: format, width: 1, height: 1, mipmapped: false)
                 fd.usage = [.shaderRead, .shaderWrite, .renderTarget]; fd.storageMode = .shared
                 if let blank = device.makeTexture(descriptor: fd) {
-                    let zeros = [UInt8](repeating: 0, count: format == .rgba16Float ? 8 : 4)
+                    let zeros = [UInt8](repeating: 0, count: Self.pixelBytes(format))
                     blank.replace(region: MTLRegionMake2D(0, 0, 1, 1), mipmapLevel: 0, withBytes: zeros, bytesPerRow: zeros.count)
                     fallbacks[format] = blank
                 }
@@ -173,6 +180,7 @@ final class EffectGPU {
     init(device: MTLDevice, library: MTLLibrary) throws {
         self.device = device
         for name in [
+                     "fxContourSeed41", "fxContourFlood41", "fxContourFinish41",
                      "fxData39", "fxGuidedMoments37", "fxGuidedCoefficients37", "fxGuidedFinish37",
                      "fxTVPrepare37", "fxTVDual37", "fxTVPrimal37", "fxTVFinish37",
                      "fxMathBackground30", "fxNonlinear37", "fxDCTBlocks37", "fxDoGInk37", "fxSolveFlow31", "fxMeasuredFlow31", "fxContourSource38", "fxGlassSurface38", "fxSurfaceComposite38",
@@ -312,7 +320,7 @@ enum EffectRegistry {
             batch12,batch13,batch14,batch15,batch16,batch17,batch18,batch19,batch20,
             batch21,batch22,batch23,batchR4,batch30,batch31,sorting31,batch32,batch33,
             time33,batch34,cameraTransitions34,batch35,batch36,lights36,batch37,
-            cleanup37,frequency37,drawing37,retro37,textGeometry37,batch38,conformal32,morphology37,sampling33,featureMattes33,surfaces38,flow31,transforms37,nonlinear37,math30,advancedClean37,data39,surfaces40
+            cleanup37,frequency37,drawing37,retro37,textGeometry37,batch38,conformal32,morphology37,sampling33,featureMattes33,surfaces38,flow31,transforms37,nonlinear37,math30,advancedClean37,data39,surfaces40,distance41
         ]
         for family in families { definitions.append(contentsOf:family) }
         return definitions

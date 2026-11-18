@@ -73,6 +73,12 @@ enum EffectSection: String, CaseIterable, Identifiable {
     static func of(_ d: EffectDefinition) -> EffectSection {
         if d.id.hasPrefix("awi39.data.") { return .data }
         if d.id.hasPrefix("awi40.surface.") { return .threeD }
+        if d.id.hasPrefix("awi41.contour.") {
+            if ["awi41.contour.map","awi41.contour.vectors"].contains(d.id) { return .data }
+            if d.id=="awi41.contour.light" { return .glow }
+            if ["awi41.contour.extend","awi41.contour.ridges"].contains(d.id) { return .keying }
+            return d.category == .distort ? .distort:.stylize
+        }
         // Explicit placement wins over incidental words in a description ("soft", "light", "star").
         if d.id.hasPrefix("awi30.") { return .backgrounds }
         if d.id.hasPrefix("awi33.time.") { return .time }
