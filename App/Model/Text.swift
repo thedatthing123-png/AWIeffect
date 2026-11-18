@@ -439,6 +439,9 @@ struct TextPreset: Identifiable {
     let id: String
     let name: String
     var category: String = "In"
+    /// Optional editable layer components (effects / real text geometry), assembled
+    /// alongside the animators and tagged with the same removable preset group.
+    var configureLayer: ((inout Layer,Double,Double) -> Void)? = nil
     let make: (_ start: Double, _ duration: Double) -> [TextAnimator]
 
     /// Category shown in the library (TextPresetLibrary.categories). Older built-ins are refiled by what they do.

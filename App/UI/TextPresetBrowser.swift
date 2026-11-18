@@ -98,23 +98,24 @@ struct TextPresetBrowser: View {
     }
 
     private var grid: some View {
-        LazyVGrid(columns: columns, spacing: 10) {
+        let source=previewSource
+        return LazyVGrid(columns: columns, spacing: 10) {
             if kind == .animation {
                 ForEach(TextPresetLibrary.presets(in: category)) { p in
-                    tile(id: p.id, name: p.name, preview: .animation(p))
+                    tile(id: p.id, name: p.name, preview: .animation(p), source:source)
                 }
             } else {
                 ForEach(TextPresetLibrary.looks(in: lookCategory)) { l in
-                    tile(id: l.id, name: l.name, preview: .look(l))
+                    tile(id: l.id, name: l.name, preview: .look(l), source:source)
                 }
             }
         }
     }
 
-    private func tile(id: String, name: String, preview: TextPresetPreviewItem) -> some View {
+    private func tile(id: String, name: String, preview: TextPresetPreviewItem,source:TextPresetPreviewSource) -> some View {
         let applied = layer.map { TextPresetLibrary.hasGroup(id, in: $0) } ?? false
         return Button { selectedID = selectedID == id ? nil : id } label: {
-            TextPresetBrowserTile(item: preview, name: name, source: previewSource,
+            TextPresetBrowserTile(item: preview, name: name, source: source,
                                   selected: selectedID == id, applied: applied)
         }
         .buttonStyle(.plain)
@@ -177,6 +178,7 @@ struct TextPresetPreviewSource: Equatable {
     var string: String
     var fontName: String
     var style: TextStyleStack?
+    private var styleFingerprint:String
 
     init(layer: Layer?) {
         let raw = layer?.text?.string ?? ""
@@ -185,9 +187,10 @@ struct TextPresetPreviewSource: Equatable {
         string = trimmed.isEmpty ? "Text" : String(trimmed.prefix(14))
         fontName = layer?.text?.fontName ?? "Helvetica-Bold"
         style = layer?.text?.style
+        styleFingerprint=(try? JSONEncoder().encode(style)).map{String($0.hashValue)} ?? "-"
     }
 
-    var key: String { "\(string)|\(fontName)|\(style.map { "\($0.fills.count).\($0.strokes.count).\($0.shadows.count)" } ?? "-")" }
+    var key: String { "\(string)|\(fontName)|\(styleFingerprint)" }
 }
 
 struct TextPresetBrowserTile: View {

@@ -1,59 +1,112 @@
 import XCTest
 import UIKit
+import ImageIO
+import UniformTypeIdentifiers
 @testable import AWIeffect
 
-/// Renders every text preset (5 frames across its animation) and every look into one review sheet, uploaded by CI
-/// with the effect contact sheet, so each preset's design can be judged by eye — not just "it animates".
-final class TextPresetSheetTests: XCTestCase {
-    func testWriteTextPresetSheet() throws {
-        guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU: no Metal device; preset sheet not generated") }
-        let presets = TextPresetLibrary.animations
-        let looks = TextPresetLibrary.looks
-        let fw: CGFloat = 150, fh: CGFloat = 70, frames = 5, label: CGFloat = 18
-        let rowH = fh + label
-        let size = CGSize(width: fw * CGFloat(frames), height: CGFloat(presets.count + looks.count) * rowH)
-
-        func project(_ edit: (inout Layer) -> Void) -> Project {
-            var p = Project.new(name: "sheet", width: 600, height: 280, fps: 30, duration: 2, background: RGBA(0.08, 0.07, 0.12))
-            var l = p.makeLayer(name: "t", content: .text, size: Vec2(600, 280))
-            l.text = TextData(string: "SHONEN")
-            l.text?.fontSize = 120
-            l.transform.position = Animated(Vec2(300, 140))
-            edit(&l)
-            p.layers = [l]
-            return p
-        }
-
-        let sheet = UIGraphicsImageRenderer(size: size).image { ctx in
-            UIColor(red: 0.04, green: 0.035, blue: 0.06, alpha: 1).setFill()
-            ctx.fill(CGRect(origin: .zero, size: size))
-            var row = 0
-            for preset in presets {
-                let p = project { l in _ = TextPresetLibrary.applyPreset(preset, to: &l, start: 0, duration: 1) }
-                for f in 0..<frames {
-                    let t = Double(f) / Double(frames - 1) * 1.2
-                    if let img = r.renderImage(project: p, time: t, maxDimension: fw * 2, mediaURL: { URL(fileURLWithPath: $0) }) {
-                        img.draw(in: CGRect(x: CGFloat(f) * fw, y: CGFloat(row) * rowH + label, width: fw, height: fh))
-                    }
-                }
-                ("\(preset.shownCategory) · \(preset.name)" as NSString).draw(at: CGPoint(x: 4, y: CGFloat(row) * rowH + 2),
-                    withAttributes: [.font: UIFont.systemFont(ofSize: 11, weight: .semibold), .foregroundColor: UIColor.white])
-                row += 1
-            }
-            for look in looks {
-                let p = project { l in TextPresetLibrary.applyLook(look, to: &l) }
-                if let img = r.renderImage(project: p, time: 0.5, maxDimension: fw * 4, mediaURL: { URL(fileURLWithPath: $0) }) {
-                    img.draw(in: CGRect(x: 0, y: CGFloat(row) * rowH + label, width: fw * 2, height: fh))
-                }
-                ("Look · \(look.category) · \(look.name)" as NSString).draw(at: CGPoint(x: 4, y: CGFloat(row) * rowH + 2),
-                    withAttributes: [.font: UIFont.systemFont(ofSize: 11, weight: .semibold), .foregroundColor: UIColor.white])
-                row += 1
+/// Bounded pages avoid an enormous bitmap when reviewing hundreds of presets.
+final class TextPresetSheetTests:XCTestCase {
+    private let folder=URL(fileURLWithPath:"/tmp/awi-premades33")
+    private func scene(_ name:String)->Project {
+        var p=Project.new(name:name,width:640,height:360,fps:30,duration:3,background:RGBA(0.035,0.025,0.06))
+        var l=p.makeLayer(name:"Editable title",content:.text,size:Vec2(640,360))
+        l.text=TextData(string:"MAKE\nSOME NOISE",fontSize:72)
+        l.text?.fontName="AvenirNext-Heavy"
+        l.transform.position=Animated(Vec2(320,180));p.layers=[l]
+        return p
+    }
+    private func sheet(_ rows:[(String,[UIImage])],name:String)throws {
+        let w:CGFloat=180,h:CGFloat=102,label:CGFloat=24,columns=5
+        let format=UIGraphicsImageRendererFormat();format.scale=1
+        let image=UIGraphicsImageRenderer(size:CGSize(width:w*CGFloat(columns),height:(h+label)*CGFloat(rows.count)),format:format).image { ctx in
+            UIColor.black.setFill();ctx.fill(CGRect(x:0,y:0,width:w*CGFloat(columns),height:(h+label)*CGFloat(rows.count)))
+            for (row,entry) in rows.enumerated() {
+                (entry.0 as NSString).draw(at:CGPoint(x:4,y:CGFloat(row)*(h+label)+4),withAttributes:[.font:UIFont.systemFont(ofSize:12),.foregroundColor:UIColor.white])
+                for (index,frame) in entry.1.enumerated() { frame.draw(in:CGRect(x:CGFloat(index)*w,y:CGFloat(row)*(h+label)+label,width:w,height:h)) }
             }
         }
-        let data = try XCTUnwrap(sheet.jpegData(compressionQuality: 0.8))
-        try? FileManager.default.createDirectory(atPath: "/tmp/awi-ui", withIntermediateDirectories: true)
-        try? data.write(to: URL(fileURLWithPath: "/tmp/awi-ui/text-preset-sheet.jpg"))
-        let a = XCTAttachment(data: data, uniformTypeIdentifier: "public.jpeg"); a.name = "text-preset-sheet"; a.lifetime = .keepAlways
-        add(a)
+        try XCTUnwrap(image.jpegData(compressionQuality:0.88)).write(to:folder.appendingPathComponent(name+".jpg"))
+    }
+    private func movie(_ frames:[UIImage],id:String)throws {
+        let url=folder.appendingPathComponent(id+".gif")
+        let destination=try XCTUnwrap(CGImageDestinationCreateWithURL(url as CFURL,UTType.gif.identifier as CFString,frames.count,nil))
+        CGImageDestinationSetProperties(destination,[kCGImagePropertyGIFDictionary:[kCGImagePropertyGIFLoopCount:0]] as CFDictionary)
+        for frame in frames {
+            CGImageDestinationAddImage(destination,try XCTUnwrap(frame.cgImage),[kCGImagePropertyGIFDictionary:[kCGImagePropertyGIFDelayTime:0.1]] as CFDictionary)
+        }
+        XCTAssertTrue(CGImageDestinationFinalize(destination),id)
+    }
+    func testTextIn()throws { try renderText("In") }
+    func testTextOut()throws { try renderText("Out") }
+    func testTextLoop()throws { try renderText("Loop") }
+    func testTextEmphasis()throws { try renderText("Emphasis") }
+    func testTextGlitch()throws { try renderText("Glitch") }
+    func testTextTypewriter()throws { try renderText("Typewriter") }
+    func testTextKinetic()throws { try renderText("Kinetic") }
+    func testTextManga()throws { try renderText("Manga/AMV") }
+    func testTextLyric()throws { try renderText("Lyric") }
+    func testTextImpact()throws { try renderText("Impact") }
+    func testText3DIn()throws { try renderText("3D In") }
+    func testText3DOut()throws { try renderText("3D Out") }
+    func testText3DLoop()throws { try renderText("3D Loop") }
+    func testTextLooks()throws { try renderText("Looks") }
+    private func renderText(_ category:String) throws {
+        guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        try FileManager.default.createDirectory(at:folder,withIntermediateDirectories:true)
+        var rows:[(String,[UIImage])]=[],page=0
+        func append(_ name:String,_ frames:[UIImage])throws {
+            rows.append((name,frames))
+            if rows.count==12 { try sheet(rows,name:"text-\(category.replacingOccurrences(of:"/",with:"-"))-\(page)");page+=1;rows=[] }
+        }
+        for preset in TextPresetLibrary.animations where preset.category == category {
+            try autoreleasepool {
+                var p=scene(preset.name)
+                TextPresetLibrary.applyPreset(preset,to:&p.layers[0],start:0.1,duration:1)
+                let times:[Double]=[0.1,0.3,0.6,0.9,1.3]
+                let frames=try times.map { try XCTUnwrap(renderer.renderImage(project:p,time:$0,maxDimension:360,mediaURL:{URL(fileURLWithPath:$0)}),preset.id) }
+                try append("\(preset.category) · \(preset.name)",frames)
+                if preset.id.hasPrefix("craft33.") {
+                    let moving=try (0..<20).map { try XCTUnwrap(renderer.renderImage(project:p,time:Double($0)*0.1,maxDimension:320,mediaURL:{URL(fileURLWithPath:$0)}),preset.id) }
+                    try movie(moving,id:preset.id)
+                    XCTAssertGreaterThan(Set(moving.compactMap{$0.pngData()}).count,1,preset.id+" rendered no motion")
+                }
+            }
+        }
+        for look in TextPresetLibrary.looks where category == "Looks" {
+            try autoreleasepool {
+                var p=scene(look.name);TextPresetLibrary.applyLook(look,to:&p.layers[0])
+                let image=try XCTUnwrap(renderer.renderImage(project:p,time:0.5,maxDimension:640,mediaURL:{URL(fileURLWithPath:$0)}),look.id)
+                try append("Look · \(look.category) · \(look.name)",[image])
+            }
+        }
+        if !rows.isEmpty { try sheet(rows,name:"text-\(category.replacingOccurrences(of:"/",with:"-"))-\(page)") }
+    }
+    func testGeneralShakes()throws { try renderGeneral(.shake) }
+    func testGeneralIn()throws { try renderGeneral(.transitionIn) }
+    func testGeneralOut()throws { try renderGeneral(.transitionOut) }
+    func testGeneralGlow()throws { try renderGeneral(.glow) }
+    func testGeneralLoops()throws { try renderGeneral(.loop) }
+    func testGeneralManga()throws { try renderGeneral(.manga) }
+    func testGeneralLooks()throws { try renderGeneral(.look) }
+    func testGeneralVelocity()throws { try renderGeneral(.velocity) }
+    private func renderGeneral(_ category:LayerPreset.Kind)throws {
+        guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        try FileManager.default.createDirectory(at:folder,withIntermediateDirectories:true)
+        var rows:[(String,[UIImage])]=[],page=0
+        for preset in CraftPresets33.layerPresets where preset.kind == category {
+            try autoreleasepool {
+                var p=scene(preset.name)
+                var star=p.makeLayer(name:"Artwork",content:.shape(.star),size:Vec2(120,120))
+                star.fill=Animated(RGBA(0.9,0.16,0.35));star.transform.position=TPB.kf([(0,Vec2(100,180)),(2,Vec2(540,180))])
+                p.layers.append(star)
+                let anchor=preset.kind == .transitionOut ? 1.7:0.1
+                p.layers[0]=PresetLibrary.applying(preset,to:p.layers[0],project:p,at:anchor)
+                let frames=try (0..<20).map { try XCTUnwrap(renderer.renderImage(project:p,time:Double($0)*0.1,maxDimension:320,mediaURL:{URL(fileURLWithPath:$0)}),preset.id) }
+                try movie(frames,id:preset.id)
+                rows.append(("\(preset.kind.rawValue) · \(preset.name)",[frames[1],frames[4],frames[8],frames[12],frames[17]]))
+                if rows.count==10 { try sheet(rows,name:"general-\(category.rawValue)-\(page)");page+=1;rows=[] }
+            }
+        }
+        if !rows.isEmpty { try sheet(rows,name:"general-\(category.rawValue)-\(page)") }
     }
 }

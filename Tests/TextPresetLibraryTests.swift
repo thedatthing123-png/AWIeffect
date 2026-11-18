@@ -40,7 +40,24 @@ final class TextPresetLibraryTests: XCTestCase {
     /// A preset's preview: frames over the preview time range.
     private func preview(_ p: TextPreset) -> [[Double]] {
         let t = text(for: p)
-        return Self.times.map { frame(t, at: $0) }
+        var layer=textLayer()
+        TextPresetLibrary.applyPreset(p,to:&layer,start:0.1,duration:1)
+        return Self.times.map { time in
+            var values=frame(t,at:time)
+            // Composite presets include real layer effects and geometry. Compare
+            // those too, without UUID/name/group metadata making duplicates pass.
+            for effect in layer.effects {
+                values += effect.typeID.utf8.map{Double($0)}
+                for key in effect.params.keys.sorted() {
+                    values += key.utf8.map{Double($0)}
+                    values.append(effect.number(key,time))
+                }
+            }
+            if let geometry=layer.text?.text3D {
+                values.append(geometry.extrusion.value(at:time))
+            }
+            return values
+        }
     }
 
     // MARK: Catalog

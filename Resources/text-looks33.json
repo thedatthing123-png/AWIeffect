@@ -1,0 +1,1763 @@
+[
+  {
+    "id": "look.craft33.fine-caption-ink",
+    "name": "Fine Caption Ink",
+    "category": "Minimal",
+    "fill": "solid",
+    "colors": [
+      "F7F6F2"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 2.0,
+    "softness": 2.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": []
+  },
+  {
+    "id": "look.craft33.narrow-outline-label",
+    "name": "Narrow Outline Label",
+    "category": "Minimal",
+    "fill": "solid",
+    "colors": [
+      "EEEEEE"
+    ],
+    "stroke": 1.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": []
+  },
+  {
+    "id": "look.craft33.soft-editorial-type",
+    "name": "Soft Editorial Type",
+    "category": "Minimal",
+    "fill": "linear",
+    "colors": [
+      "FFFFFF",
+      "D3D7DF"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 4.0,
+    "softness": 6.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "ae.gaussianBlur",
+        "values": {
+          "blurriness": 4
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.blind-emboss-print",
+    "name": "Blind Emboss Print",
+    "category": "Minimal",
+    "fill": "solid",
+    "colors": [
+      "B8C1CB"
+    ],
+    "stroke": 1.0,
+    "stroke2": 0.0,
+    "shadow": 2.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi37.draw.curvature",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.night-caption-light",
+    "name": "Night Caption Light",
+    "category": "Minimal",
+    "fill": "solid",
+    "colors": [
+      "F0F5FF"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 3.0,
+    "softness": 4.0,
+    "glow": 5.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.die-cut-lettering",
+    "name": "Die Cut Lettering",
+    "category": "Sticker",
+    "fill": "solid",
+    "colors": [
+      "FFF3CF"
+    ],
+    "stroke": 2.0,
+    "stroke2": 5.0,
+    "shadow": 6.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": []
+  },
+  {
+    "id": "look.craft33.paper-stack-name",
+    "name": "Paper Stack Name",
+    "category": "Sticker",
+    "fill": "linear",
+    "colors": [
+      "FFF8EC",
+      "D8C8AC"
+    ],
+    "stroke": 2.0,
+    "stroke2": 2.0,
+    "shadow": 9.0,
+    "softness": 1.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.stitched-patch-letters",
+    "name": "Stitched Patch Letters",
+    "category": "Sticker",
+    "fill": "solid",
+    "colors": [
+      "E8D4A2"
+    ],
+    "stroke": 2.0,
+    "stroke2": 1.0,
+    "shadow": 3.0,
+    "softness": 2.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.stitch",
+        "values": {
+          "first": 7,
+          "second": 5,
+          "third": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.frayed-cloth-caption",
+    "name": "Frayed Cloth Caption",
+    "category": "Sticker",
+    "fill": "solid",
+    "colors": [
+      "ED9E8C"
+    ],
+    "stroke": 1.0,
+    "stroke2": 3.0,
+    "shadow": 4.0,
+    "softness": 1.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.fringe",
+        "values": {
+          "first": 7,
+          "second": 3,
+          "third": 0.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.stamped-label-type",
+    "name": "Stamped Label Type",
+    "category": "Sticker",
+    "fill": "solid",
+    "colors": [
+      "F5ECDA"
+    ],
+    "stroke": 2.0,
+    "stroke2": 0.0,
+    "shadow": 2.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.stamp",
+        "values": {
+          "first": 7,
+          "second": 1.15,
+          "third": 0.9
+        }
+      },
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.thin-neon-tube",
+    "name": "Thin Neon Tube",
+    "category": "Neon",
+    "fill": "solid",
+    "colors": [
+      "88F8FF"
+    ],
+    "stroke": 1.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 12.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.neon-halation-letters",
+    "name": "Neon Halation Letters",
+    "category": "Neon",
+    "fill": "linear",
+    "colors": [
+      "ED8DFF",
+      "88B8FF"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 20.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.light-traced-type",
+    "name": "Light Traced Type",
+    "category": "Neon",
+    "fill": "solid",
+    "colors": [
+      "C2FFF2"
+    ],
+    "stroke": 1.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 8.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.wet-prism-caption",
+    "name": "Wet Prism Caption",
+    "category": "Neon",
+    "fill": "radial",
+    "colors": [
+      "FFFFFF",
+      "6C9CFF",
+      "ED78C4"
+    ],
+    "stroke": 1.0,
+    "stroke2": 1.0,
+    "shadow": 4.0,
+    "softness": 6.0,
+    "glow": 6.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      },
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.spark-junction-lettering",
+    "name": "Spark Junction Lettering",
+    "category": "Neon",
+    "fill": "solid",
+    "colors": [
+      "FFF9D6"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 1.0,
+    "softness": 2.0,
+    "glow": 7.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.misregistered-ink-title",
+    "name": "Misregistered Ink Title",
+    "category": "Glitch",
+    "fill": "solid",
+    "colors": [
+      "EEEBDD"
+    ],
+    "stroke": 1.0,
+    "stroke2": 0.0,
+    "shadow": 2.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.composite-monitor-text",
+    "name": "Composite Monitor Text",
+    "category": "Glitch",
+    "fill": "solid",
+    "colors": [
+      "9CEAD2"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 1.0,
+    "softness": 0.0,
+    "glow": 3.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi37.retro.compositeCrosstalk",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.chroma-damaged-caption",
+    "name": "Chroma Damaged Caption",
+    "category": "Glitch",
+    "fill": "linear",
+    "colors": [
+      "FBFBFF",
+      "B2BDFF"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi31.chromaShatter",
+        "values": {}
+      },
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.bitplane-print-label",
+    "name": "Bitplane Print Label",
+    "category": "Glitch",
+    "fill": "solid",
+    "colors": [
+      "F2F0DB"
+    ],
+    "stroke": 2.0,
+    "stroke2": 0.0,
+    "shadow": 2.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi31.bitplaneSlip",
+        "values": {}
+      },
+      {
+        "id": "awi48.craft.stamp",
+        "values": {
+          "first": 7,
+          "second": 1.15,
+          "third": 0.9
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.carrier-noise-outline",
+    "name": "Carrier Noise Outline",
+    "category": "Glitch",
+    "fill": "solid",
+    "colors": [
+      "EEF1FF"
+    ],
+    "stroke": 1.0,
+    "stroke2": 1.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 2.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi46.spectral.scramble",
+        "values": {
+          "first": 0.16,
+          "seed": 11,
+          "speed": 0.2
+        }
+      },
+      {
+        "id": "awi46.spectral.quadrature",
+        "values": {
+          "first": 35,
+          "angle": 30
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.heavy-manga-sound",
+    "name": "Heavy Manga Sound",
+    "category": "Manga/AMV",
+    "fill": "solid",
+    "colors": [
+      "FFF9EC"
+    ],
+    "stroke": 5.0,
+    "stroke2": 2.0,
+    "shadow": 8.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi.manga",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.crosshatched-nameplate",
+    "name": "Crosshatched Nameplate",
+    "category": "Manga/AMV",
+    "fill": "linear",
+    "colors": [
+      "E9E5DB",
+      "B0A992"
+    ],
+    "stroke": 2.0,
+    "stroke2": 0.0,
+    "shadow": 5.0,
+    "softness": 1.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi37.draw.adaptiveHatch",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.screentone-cut-letters",
+    "name": "Screentone Cut Letters",
+    "category": "Manga/AMV",
+    "fill": "solid",
+    "colors": [
+      "FAF8F1"
+    ],
+    "stroke": 3.0,
+    "stroke2": 1.0,
+    "shadow": 5.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi.halftone",
+        "values": {
+          "size": 5
+        }
+      },
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.ink-solarized-caption",
+    "name": "Ink Solarized Caption",
+    "category": "Manga/AMV",
+    "fill": "solid",
+    "colors": [
+      "DCD7FF"
+    ],
+    "stroke": 1.0,
+    "stroke2": 3.0,
+    "shadow": 3.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi37.draw.edgeSolarize",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.engraved-chapter-title",
+    "name": "Engraved Chapter Title",
+    "category": "Manga/AMV",
+    "fill": "linear",
+    "colors": [
+      "F0E3C7",
+      "916D4D"
+    ],
+    "stroke": 2.0,
+    "stroke2": 1.0,
+    "shadow": 4.0,
+    "softness": 2.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi37.draw.spiralEngraving",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.foil-impact-face",
+    "name": "Foil Impact Face",
+    "category": "Impact",
+    "fill": "linear",
+    "colors": [
+      "F9FAFF",
+      "909BAA",
+      "FAFCFF"
+    ],
+    "stroke": 2.0,
+    "stroke2": 2.0,
+    "shadow": 6.0,
+    "softness": 1.0,
+    "glow": 2.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.sequin",
+        "values": {
+          "first": 9,
+          "second": 25,
+          "third": 0.1
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.ringed-sfx-outline",
+    "name": "Ringed SFX Outline",
+    "category": "Impact",
+    "fill": "solid",
+    "colors": [
+      "FFF0B5"
+    ],
+    "stroke": 4.0,
+    "stroke2": 1.0,
+    "shadow": 3.0,
+    "softness": 0.0,
+    "glow": 6.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.chroma-impact-label",
+    "name": "Chroma Impact Label",
+    "category": "Impact",
+    "fill": "linear",
+    "colors": [
+      "FFFFFF",
+      "FFC8CD"
+    ],
+    "stroke": 3.0,
+    "stroke2": 1.0,
+    "shadow": 6.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      },
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.raised-panel-typeface",
+    "name": "Raised Panel Typeface",
+    "category": "Impact",
+    "fill": "solid",
+    "colors": [
+      "F4F1E9"
+    ],
+    "stroke": 2.0,
+    "stroke2": 3.0,
+    "shadow": 10.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      },
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.dense-tonal-lettering",
+    "name": "Dense Tonal Lettering",
+    "category": "Impact",
+    "fill": "solid",
+    "colors": [
+      "E4E6DD"
+    ],
+    "stroke": 3.0,
+    "stroke2": 0.0,
+    "shadow": 5.0,
+    "softness": 1.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.stamp",
+        "values": {
+          "first": 7,
+          "second": 1.15,
+          "third": 0.9
+        }
+      },
+      {
+        "id": "awi.halftone",
+        "values": {
+          "size": 5
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.silver-screen-caption",
+    "name": "Silver Screen Caption",
+    "category": "Cinematic",
+    "fill": "linear",
+    "colors": [
+      "FFFFFF",
+      "ACB7C8"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 4.0,
+    "softness": 8.0,
+    "glow": 4.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.charge-bloom-title",
+    "name": "Charge Bloom Title",
+    "category": "Cinematic",
+    "fill": "solid",
+    "colors": [
+      "F6F1E8"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 2.0,
+    "softness": 4.0,
+    "glow": 7.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi37.retro.ccdSmear",
+        "values": {
+          "length": 35,
+          "threshold": 40,
+          "softness": 1,
+          "gain": 0.8
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.prism-edge-credit",
+    "name": "Prism Edge Credit",
+    "category": "Cinematic",
+    "fill": "solid",
+    "colors": [
+      "EDF3FF"
+    ],
+    "stroke": 1.0,
+    "stroke2": 0.0,
+    "shadow": 3.0,
+    "softness": 4.0,
+    "glow": 3.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      },
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.soft-film-print",
+    "name": "Soft Film Print",
+    "category": "Cinematic",
+    "fill": "linear",
+    "colors": [
+      "F5E9D8",
+      "CCB8A1"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 3.0,
+    "softness": 3.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      },
+      {
+        "id": "awi37.retro.compositeCrosstalk",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.spiral-light-heading",
+    "name": "Spiral Light Heading",
+    "category": "Cinematic",
+    "fill": "radial",
+    "colors": [
+      "FFFFFF",
+      "D1D8F2"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 2.0,
+    "softness": 6.0,
+    "glow": 5.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi36.light.spiralLight",
+        "values": {
+          "angle": 35,
+          "pull": 16,
+          "softness": 1,
+          "intensity": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.embossed-lyric-paper",
+    "name": "Embossed Lyric Paper",
+    "category": "Lyric",
+    "fill": "linear",
+    "colors": [
+      "FFFCEF",
+      "E8D4B3"
+    ],
+    "stroke": 1.0,
+    "stroke2": 0.0,
+    "shadow": 2.0,
+    "softness": 1.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.quiet-rainbow-edge",
+    "name": "Quiet Rainbow Edge",
+    "category": "Lyric",
+    "fill": "solid",
+    "colors": [
+      "F7F7FF"
+    ],
+    "stroke": 0.0,
+    "stroke2": 1.0,
+    "shadow": 2.0,
+    "softness": 3.0,
+    "glow": 3.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      },
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.silk-verse-lettering",
+    "name": "Silk Verse Lettering",
+    "category": "Lyric",
+    "fill": "linear",
+    "colors": [
+      "FFEEEE",
+      "DDB9E4"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 3.0,
+    "softness": 5.0,
+    "glow": 4.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.faded-print-subtitle",
+    "name": "Faded Print Subtitle",
+    "category": "Lyric",
+    "fill": "solid",
+    "colors": [
+      "EFE7D8"
+    ],
+    "stroke": 1.0,
+    "stroke2": 0.0,
+    "shadow": 1.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi37.draw.mezzotint",
+        "values": {}
+      },
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.woven-verse-outline",
+    "name": "Woven Verse Outline",
+    "category": "Lyric",
+    "fill": "solid",
+    "colors": [
+      "F5E1B6"
+    ],
+    "stroke": 1.0,
+    "stroke2": 2.0,
+    "shadow": 3.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": null,
+    "depth": 0.0,
+    "bevel": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.stitch",
+        "values": {
+          "first": 7,
+          "second": 5,
+          "third": 1
+        }
+      },
+      {
+        "id": "awi48.craft.fringe",
+        "values": {
+          "first": 7,
+          "second": 3,
+          "third": 0.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.machined-chrome-title",
+    "name": "Machined Chrome Title",
+    "category": "3D",
+    "fill": "linear",
+    "colors": [
+      "F8FAFF",
+      "ACB5C8"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Chrome",
+    "depth": 28.0,
+    "bevel": 2.0,
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.heavy-gold-slab",
+    "name": "Heavy Gold Slab",
+    "category": "3D",
+    "fill": "solid",
+    "colors": [
+      "FFE2A3"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Gold",
+    "depth": 44.0,
+    "bevel": 1.0,
+    "effects": [
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.clear-beveled-glass",
+    "name": "Clear Beveled Glass",
+    "category": "3D",
+    "fill": "radial",
+    "colors": [
+      "F1FBFF",
+      "A4D5F1"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Glass",
+    "depth": 16.0,
+    "bevel": 5.0,
+    "effects": [
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.blue-molded-letters",
+    "name": "Blue Molded Letters",
+    "category": "3D",
+    "fill": "solid",
+    "colors": [
+      "9CBFFF"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Plastic",
+    "depth": 30.0,
+    "bevel": 6.0,
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.carved-stone-title",
+    "name": "Carved Stone Title",
+    "category": "3D",
+    "fill": "linear",
+    "colors": [
+      "C8C2B6",
+      "807D76"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Stone",
+    "depth": 38.0,
+    "bevel": 2.0,
+    "effects": [
+      {
+        "id": "awi37.draw.adaptiveHatch",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.red-toon-block",
+    "name": "Red Toon Block",
+    "category": "3D",
+    "fill": "solid",
+    "colors": [
+      "F7A89E"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Toon",
+    "depth": 22.0,
+    "bevel": 3.0,
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.edge-lit-neon-glass",
+    "name": "Edge Lit Neon Glass",
+    "category": "3D",
+    "fill": "solid",
+    "colors": [
+      "88FFF0"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 6.0,
+    "material": "Neon",
+    "depth": 12.0,
+    "bevel": 2.0,
+    "effects": [
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.foil-ribbon-extrusion",
+    "name": "Foil Ribbon Extrusion",
+    "category": "3D",
+    "fill": "linear",
+    "colors": [
+      "FFF2C8",
+      "BDA985",
+      "F9F5DB"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Gold",
+    "depth": 8.0,
+    "bevel": 1.0,
+    "effects": [
+      {
+        "id": "awi48.craft.sequin",
+        "values": {
+          "first": 9,
+          "second": 25,
+          "third": 0.1
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.deep-chrome-channel",
+    "name": "Deep Chrome Channel",
+    "category": "3D",
+    "fill": "solid",
+    "colors": [
+      "DFE7FA"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Chrome",
+    "depth": 60.0,
+    "bevel": 3.0,
+    "effects": [
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.hollow-glass-caption",
+    "name": "Hollow Glass Caption",
+    "category": "3D",
+    "fill": "solid",
+    "colors": [
+      "DAF5FF"
+    ],
+    "stroke": 1.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Glass",
+    "depth": 25.0,
+    "bevel": 1.0,
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      },
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.pressed-plastic-plate",
+    "name": "Pressed Plastic Plate",
+    "category": "3D",
+    "fill": "linear",
+    "colors": [
+      "FFE7C9",
+      "D6A572"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Plastic",
+    "depth": 10.0,
+    "bevel": 0.7,
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.cut-granite-face",
+    "name": "Cut Granite Face",
+    "category": "3D",
+    "fill": "solid",
+    "colors": [
+      "A3B3BF"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Stone",
+    "depth": 46.0,
+    "bevel": 1.0,
+    "effects": [
+      {
+        "id": "awi37.draw.curvature",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.neon-circuit-blocks",
+    "name": "Neon Circuit Blocks",
+    "category": "3D",
+    "fill": "solid",
+    "colors": [
+      "BDC7FF"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 4.0,
+    "material": "Neon",
+    "depth": 32.0,
+    "bevel": 1.0,
+    "effects": [
+      {
+        "id": "awi48.craft.stitch",
+        "values": {
+          "first": 7,
+          "second": 5,
+          "third": 1
+        }
+      },
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.toon-stamp-extrusion",
+    "name": "Toon Stamp Extrusion",
+    "category": "3D",
+    "fill": "solid",
+    "colors": [
+      "FFE59A"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Toon",
+    "depth": 18.0,
+    "bevel": 0.8,
+    "effects": [
+      {
+        "id": "awi48.craft.stamp",
+        "values": {
+          "first": 7,
+          "second": 1.15,
+          "third": 0.9
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.brushed-silver-face",
+    "name": "Brushed Silver Face",
+    "category": "3D",
+    "fill": "linear",
+    "colors": [
+      "E7F1FF",
+      "7489A4"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Chrome",
+    "depth": 20.0,
+    "bevel": 4.0,
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.smoked-glass-heading",
+    "name": "Smoked Glass Heading",
+    "category": "3D",
+    "fill": "radial",
+    "colors": [
+      "C1D5E3",
+      "7A92AD"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Glass",
+    "depth": 36.0,
+    "bevel": 4.0,
+    "effects": [
+      {
+        "id": "awi37.retro.ccdSmear",
+        "values": {
+          "length": 35,
+          "threshold": 40,
+          "softness": 1,
+          "gain": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.gold-spiral-engraving",
+    "name": "Gold Spiral Engraving",
+    "category": "3D",
+    "fill": "solid",
+    "colors": [
+      "F4CF86"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Gold",
+    "depth": 26.0,
+    "bevel": 2.0,
+    "effects": [
+      {
+        "id": "awi37.draw.spiralEngraving",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.paper-toon-facade",
+    "name": "Paper Toon Facade",
+    "category": "3D",
+    "fill": "linear",
+    "colors": [
+      "FFF3DE",
+      "CAA57B"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Toon",
+    "depth": 14.0,
+    "bevel": 2.0,
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      },
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.phosphor-neon-frame",
+    "name": "Phosphor Neon Frame",
+    "category": "3D",
+    "fill": "solid",
+    "colors": [
+      "C1FFD8"
+    ],
+    "stroke": 1.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 9.0,
+    "material": "Neon",
+    "depth": 6.0,
+    "bevel": 0.5,
+    "effects": [
+      {
+        "id": "awi37.retro.compositeCrosstalk",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "look.craft33.chrome-spark-marquee",
+    "name": "Chrome Spark Marquee",
+    "category": "3D",
+    "fill": "linear",
+    "colors": [
+      "FFFFFF",
+      "B5C2DD"
+    ],
+    "stroke": 0.0,
+    "stroke2": 0.0,
+    "shadow": 0.0,
+    "softness": 0.0,
+    "glow": 0.0,
+    "material": "Chrome",
+    "depth": 34.0,
+    "bevel": 5.0,
+    "effects": [
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      },
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ]
+  }
+]

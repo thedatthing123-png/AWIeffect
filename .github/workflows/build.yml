@@ -233,6 +233,14 @@ jobs:
           path: /tmp/awi-authoring
           if-no-files-found: ignore
 
+      - name: Upload editable premade review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: premade-renders
+          path: /tmp/awi-premades33
+          if-no-files-found: ignore
+
       - name: Archive (unsigned)
         if: ${{ (github.event_name != 'workflow_dispatch' || inputs.package_ipa) && inputs.validation != 'audit' && inputs.validation != 'timing' && inputs.validation != 'stability' && inputs.validation != 'authoring' }}
         run: |

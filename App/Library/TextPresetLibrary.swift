@@ -63,7 +63,7 @@ enum TextPresetLibrary {
     /// Every animation preset: studio set, classic built-ins, the pack and the new library. Names are unique and
     /// every id that older projects / AI Link may reference still resolves.
     static let animations: [TextPreset] = {
-        let sources: [TextPreset] = TextPresetStudio.all + TextPresets.all + TextPresetPack.all
+        let sources: [TextPreset] = CraftPresets33.textAnimations + TextPresetStudio.all + TextPresets.all + TextPresetPack.all
         var seenIDs = Set<String>()
         var seenNames = Set<String>()
         var out: [TextPreset] = []
@@ -78,7 +78,7 @@ enum TextPresetLibrary {
                 while seenNames.contains(name.lowercased()) { name = "\(base) \(n)"; n += 1 }
             }
             seenNames.insert(name.lowercased())
-            out.append(TextPreset(id: p.id, name: name, category: libraryCategory(id: p.id, sourceCategory: p.category), make: p.make))
+            out.append(TextPreset(id: p.id, name: name, category: libraryCategory(id: p.id, sourceCategory: p.category), configureLayer:p.configureLayer, make: p.make))
         }
         return out
     }()
@@ -88,7 +88,7 @@ enum TextPresetLibrary {
         var names = Set<String>()
         var out: [TextLookPreset] = []
         // Looks return with the post-expansion preset pass (designed together with the new effects).
-        let source: [TextLookPreset] = []
+        let source: [TextLookPreset] = CraftPresets33.textLooks
         for l in source where !seen.contains(l.id) {
             seen.insert(l.id)
             var name = l.name
@@ -205,6 +205,12 @@ enum TextPresetLibrary {
             made[k].id = UUID()
             made[k].group = group
         }
+        let effectStart=layer.effects.count,hadGeometry=layer.text!.text3D != nil
+        preset.configureLayer?(&layer,s,d)
+        for index in effectStart..<layer.effects.count {
+            var tags=layer.effects[index].text ?? [:];tags[effectGroupKey]=group;layer.effects[index].text=tags
+        }
+        if !hadGeometry,layer.text!.text3D != nil { layer.text!.text3DGroup=group }
         layer.text!.animators += made
         return true
     }

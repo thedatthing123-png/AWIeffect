@@ -1,0 +1,2142 @@
+[
+  {
+    "id": "craft33.layer.small-handheld-nudge",
+    "name": "Small Handheld Nudge",
+    "category": "Shakes",
+    "motion": "shake",
+    "amplitude": 0.7,
+    "duration": 0.65,
+    "angle": 25.0,
+    "effects": []
+  },
+  {
+    "id": "craft33.layer.soft-shoulder-shake",
+    "name": "Soft Shoulder Shake",
+    "category": "Shakes",
+    "motion": "shake",
+    "amplitude": 1.2,
+    "duration": 0.8,
+    "angle": 70.0,
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.heavy-contact-shake",
+    "name": "Heavy Contact Shake",
+    "category": "Shakes",
+    "motion": "shake",
+    "amplitude": 8.0,
+    "duration": 0.45,
+    "angle": 15.0,
+    "effects": [
+      {
+        "id": "awi14.earthquake",
+        "values": {
+          "intensity": 4,
+          "block": 15,
+          "frequency": 8,
+          "cracks": 20
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.big-screen-recoil",
+    "name": "Big Screen Recoil",
+    "category": "Shakes",
+    "motion": "shake",
+    "amplitude": 13.0,
+    "duration": 0.7,
+    "angle": 40.0,
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.short-rattle-hit",
+    "name": "Short Rattle Hit",
+    "category": "Shakes",
+    "motion": "shake",
+    "amplitude": 4.0,
+    "duration": 0.28,
+    "angle": 105.0,
+    "effects": [
+      {
+        "id": "awi31.rowDuplicate",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.lens-jolt",
+    "name": "Lens Jolt",
+    "category": "Shakes",
+    "motion": "shake",
+    "amplitude": 3.0,
+    "duration": 0.55,
+    "angle": 15.0,
+    "effects": [
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.ink-shake-burst",
+    "name": "Ink Shake Burst",
+    "category": "Shakes",
+    "motion": "shake",
+    "amplitude": 6.0,
+    "duration": 0.6,
+    "angle": 80.0,
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.digital-trip-shake",
+    "name": "Digital Trip Shake",
+    "category": "Shakes",
+    "motion": "shake",
+    "amplitude": 7.0,
+    "duration": 0.4,
+    "angle": 140.0,
+    "effects": [
+      {
+        "id": "awi31.blockDesync",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.sway-then-settle",
+    "name": "Sway Then Settle",
+    "category": "Shakes",
+    "motion": "shake",
+    "amplitude": 2.2,
+    "duration": 1.2,
+    "angle": 10.0,
+    "effects": [
+      {
+        "id": "ae.gaussianBlur",
+        "values": {
+          "blurriness": 4
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.chroma-recoil",
+    "name": "Chroma Recoil",
+    "category": "Shakes",
+    "motion": "shake",
+    "amplitude": 5.0,
+    "duration": 0.5,
+    "angle": 45.0,
+    "effects": [
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.paper-impact-tremor",
+    "name": "Paper Impact Tremor",
+    "category": "Shakes",
+    "motion": "shake",
+    "amplitude": 3.5,
+    "duration": 0.75,
+    "angle": 110.0,
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      },
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.bass-hit-screen",
+    "name": "Bass Hit Screen",
+    "category": "Shakes",
+    "motion": "shake",
+    "amplitude": 10.0,
+    "duration": 0.55,
+    "angle": 90.0,
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.smooth-focus-push",
+    "name": "Smooth Focus Push",
+    "category": "In",
+    "motion": "zoom",
+    "amplitude": 18.0,
+    "duration": 0.65,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "ae.gaussianBlur",
+        "values": {
+          "blurriness": 4
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.long-lens-arrival",
+    "name": "Long Lens Arrival",
+    "category": "In",
+    "motion": "zoom",
+    "amplitude": 40.0,
+    "duration": 0.8,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.side-rail-whip",
+    "name": "Side Rail Whip",
+    "category": "In",
+    "motion": "whip",
+    "amplitude": 90.0,
+    "duration": 0.4,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.diagonal-card-entry",
+    "name": "Diagonal Card Entry",
+    "category": "In",
+    "motion": "slide",
+    "amplitude": 70.0,
+    "duration": 0.65,
+    "angle": 135.0,
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.front-plane-drop",
+    "name": "Front Plane Drop",
+    "category": "In",
+    "motion": "slide",
+    "amplitude": 60.0,
+    "duration": 0.55,
+    "angle": 270.0,
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.tilt-into-frame",
+    "name": "Tilt Into Frame",
+    "category": "In",
+    "motion": "tilt",
+    "amplitude": 55.0,
+    "duration": 0.7,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.soft-fade-print",
+    "name": "Soft Fade Print",
+    "category": "In",
+    "motion": "fadeIn",
+    "amplitude": 0.0,
+    "duration": 0.85,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.camera-rush-entry",
+    "name": "Camera Rush Entry",
+    "category": "In",
+    "motion": "zoom",
+    "amplitude": 120.0,
+    "duration": 0.45,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      },
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.rolled-page-arrival",
+    "name": "Rolled Page Arrival",
+    "category": "In",
+    "motion": "spin",
+    "amplitude": 35.0,
+    "duration": 0.7,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.pulse-and-land",
+    "name": "Pulse and Land",
+    "category": "In",
+    "motion": "squash",
+    "amplitude": 24.0,
+    "duration": 0.55,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.chroma-slide-return",
+    "name": "Chroma Slide Return",
+    "category": "In",
+    "motion": "whip",
+    "amplitude": 55.0,
+    "duration": 0.6,
+    "angle": 180.0,
+    "effects": [
+      {
+        "id": "awi31.chromaShatter",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.ink-focus-entry",
+    "name": "Ink Focus Entry",
+    "category": "In",
+    "motion": "fadeIn",
+    "amplitude": 0.0,
+    "duration": 0.7,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.backlit-image-reveal",
+    "name": "Backlit Image Reveal",
+    "category": "In",
+    "motion": "fadeIn",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.retro.ccdSmear",
+        "values": {
+          "length": 35,
+          "threshold": 40,
+          "softness": 1,
+          "gain": 0.8
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.split-signal-arrival",
+    "name": "Split Signal Arrival",
+    "category": "In",
+    "motion": "slide",
+    "amplitude": 45.0,
+    "duration": 0.45,
+    "angle": 60.0,
+    "effects": [
+      {
+        "id": "awi31.tileSlip",
+        "values": {}
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.defocus-fade-away",
+    "name": "Defocus Fade Away",
+    "category": "Out",
+    "motion": "fadeOut",
+    "amplitude": 0.0,
+    "duration": 0.8,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "ae.gaussianBlur",
+        "values": {
+          "blurriness": 4
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.print-slide-exit",
+    "name": "Print Slide Exit",
+    "category": "Out",
+    "motion": "pull",
+    "amplitude": 35.0,
+    "duration": 0.7,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.fast-side-exit",
+    "name": "Fast Side Exit",
+    "category": "Out",
+    "motion": "whip",
+    "amplitude": 100.0,
+    "duration": 0.4,
+    "angle": 180.0,
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      },
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.tumbling-card-exit",
+    "name": "Tumbling Card Exit",
+    "category": "Out",
+    "motion": "spin",
+    "amplitude": 100.0,
+    "duration": 0.6,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.signal-loss-exit",
+    "name": "Signal Loss Exit",
+    "category": "Out",
+    "motion": "fadeOut",
+    "amplitude": 0.0,
+    "duration": 0.55,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi31.signalDrop",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.pull-through-lens",
+    "name": "Pull Through Lens",
+    "category": "Out",
+    "motion": "pull",
+    "amplitude": 140.0,
+    "duration": 0.7,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.ink-dissolve-fade",
+    "name": "Ink Dissolve Fade",
+    "category": "Out",
+    "motion": "fadeOut",
+    "amplitude": 0.0,
+    "duration": 0.65,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      },
+      {
+        "id": "awi37.draw.mezzotint",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.downward-page-cut",
+    "name": "Downward Page Cut",
+    "category": "Out",
+    "motion": "slide",
+    "amplitude": 70.0,
+    "duration": 0.5,
+    "angle": 90.0,
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      },
+      {
+        "id": "awi37.retro.ccdSmear",
+        "values": {
+          "length": 35,
+          "threshold": 40,
+          "softness": 1,
+          "gain": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.packet-break-exit",
+    "name": "Packet Break Exit",
+    "category": "Out",
+    "motion": "fadeOut",
+    "amplitude": 0.0,
+    "duration": 0.45,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi31.blockDesync",
+        "values": {}
+      },
+      {
+        "id": "awi31.lumaShards",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.dim-halo-exit",
+    "name": "Dim Halo Exit",
+    "category": "Out",
+    "motion": "fadeOut",
+    "amplitude": 0.0,
+    "duration": 0.9,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.soft-highlight-halo",
+    "name": "Soft Highlight Halo",
+    "category": "Glow & Light",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.ring-highlight-pop",
+    "name": "Ring Highlight Pop",
+    "category": "Glow & Light",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 0.65,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.prismatic-light-edge",
+    "name": "Prismatic Light Edge",
+    "category": "Glow & Light",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 0.85,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      },
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.corner-spark-sweep",
+    "name": "Corner Spark Sweep",
+    "category": "Glow & Light",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 0.75,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.ink-light-current",
+    "name": "Ink Light Current",
+    "category": "Glow & Light",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.2,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.chromatic-speed-trail",
+    "name": "Chromatic Speed Trail",
+    "category": "Glow & Light",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 0.65,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.lens-reflection-hit",
+    "name": "Lens Reflection Hit",
+    "category": "Glow & Light",
+    "motion": "zoom",
+    "amplitude": 8.0,
+    "duration": 0.7,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.spiral-light-recall",
+    "name": "Spiral Light Recall",
+    "category": "Glow & Light",
+    "motion": "spin",
+    "amplitude": 6.0,
+    "duration": 1.1,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi36.light.spiralLight",
+        "values": {
+          "angle": 35,
+          "pull": 16,
+          "softness": 1,
+          "intensity": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.spectral-rim-pulse",
+    "name": "Spectral Rim Pulse",
+    "category": "Glow & Light",
+    "motion": "breath",
+    "amplitude": 3.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.sensor-charge-burst",
+    "name": "Sensor Charge Burst",
+    "category": "Glow & Light",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 0.55,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.retro.ccdSmear",
+        "values": {
+          "length": 35,
+          "threshold": 40,
+          "softness": 1,
+          "gain": 0.8
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.wireframe-light-drift",
+    "name": "Wireframe Light Drift",
+    "category": "Glow & Light",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.5,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.stitch",
+        "values": {
+          "first": 7,
+          "second": 5,
+          "third": 1
+        }
+      },
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.glitter-foil-sweep",
+    "name": "Glitter Foil Sweep",
+    "category": "Glow & Light",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.1,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.sequin",
+        "values": {
+          "first": 9,
+          "second": 25,
+          "third": 0.1
+        }
+      },
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.color-separated-halation",
+    "name": "Color Separated Halation",
+    "category": "Glow & Light",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.circular-prism-hit",
+    "name": "Circular Prism Hit",
+    "category": "Glow & Light",
+    "motion": "zoom",
+    "amplitude": 5.0,
+    "duration": 0.6,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      },
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.light-echo-frame",
+    "name": "Light Echo Frame",
+    "category": "Glow & Light",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 0.85,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi33.time.echo",
+        "values": {
+          "span": 0.22,
+          "samples": 3,
+          "decay": 48,
+          "blend": 45
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.double-aperture-contact",
+    "name": "Double Aperture Contact",
+    "category": "Glow & Light",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 0.7,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      },
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.slow-camera-breathe",
+    "name": "Slow Camera Breathe",
+    "category": "Loops",
+    "motion": "breath",
+    "amplitude": 3.0,
+    "duration": 2.4,
+    "angle": 0.0,
+    "effects": []
+  },
+  {
+    "id": "craft33.layer.floating-object-cycle",
+    "name": "Floating Object Cycle",
+    "category": "Loops",
+    "motion": "bounce",
+    "amplitude": 2.0,
+    "duration": 2.0,
+    "angle": 90.0,
+    "effects": []
+  },
+  {
+    "id": "craft33.layer.gentle-paper-sway",
+    "name": "Gentle Paper Sway",
+    "category": "Loops",
+    "motion": "shake",
+    "amplitude": 0.9,
+    "duration": 2.8,
+    "angle": 15.0,
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.rubber-object-pulse",
+    "name": "Rubber Object Pulse",
+    "category": "Loops",
+    "motion": "squash",
+    "amplitude": 12.0,
+    "duration": 1.5,
+    "angle": 0.0,
+    "effects": []
+  },
+  {
+    "id": "craft33.layer.neon-circuit-cycle",
+    "name": "Neon Circuit Cycle",
+    "category": "Loops",
+    "motion": "breath",
+    "amplitude": 2.0,
+    "duration": 1.2,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.color-trail-sway",
+    "name": "Color Trail Sway",
+    "category": "Loops",
+    "motion": "bounce",
+    "amplitude": 3.0,
+    "duration": 1.8,
+    "angle": 30.0,
+    "effects": [
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.noisy-screen-rattle",
+    "name": "Noisy Screen Rattle",
+    "category": "Loops",
+    "motion": "shake",
+    "amplitude": 1.5,
+    "duration": 1.1,
+    "angle": 70.0,
+    "effects": [
+      {
+        "id": "awi37.retro.compositeCrosstalk",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.fringe-cloth-swing",
+    "name": "Fringe Cloth Swing",
+    "category": "Loops",
+    "motion": "bounce",
+    "amplitude": 1.7,
+    "duration": 2.6,
+    "angle": 15.0,
+    "effects": [
+      {
+        "id": "awi48.craft.fringe",
+        "values": {
+          "first": 7,
+          "second": 3,
+          "third": 0.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.foil-surface-flutter",
+    "name": "Foil Surface Flutter",
+    "category": "Loops",
+    "motion": "breath",
+    "amplitude": 2.5,
+    "duration": 2.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.sequin",
+        "values": {
+          "first": 9,
+          "second": 25,
+          "third": 0.1
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.chromatic-film-wobble",
+    "name": "Chromatic Film Wobble",
+    "category": "Loops",
+    "motion": "shake",
+    "amplitude": 1.2,
+    "duration": 2.2,
+    "angle": 110.0,
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.printed-object-bounce",
+    "name": "Printed Object Bounce",
+    "category": "Loops",
+    "motion": "bounce",
+    "amplitude": 2.8,
+    "duration": 1.4,
+    "angle": 90.0,
+    "effects": [
+      {
+        "id": "awi48.craft.stamp",
+        "values": {
+          "first": 7,
+          "second": 1.15,
+          "third": 0.9
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.signal-clock-jitter",
+    "name": "Signal Clock Jitter",
+    "category": "Loops",
+    "motion": "shake",
+    "amplitude": 2.0,
+    "duration": 0.95,
+    "angle": 20.0,
+    "effects": [
+      {
+        "id": "awi31.rowDuplicate",
+        "values": {}
+      },
+      {
+        "id": "awi31.scanlineRipple",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.hatched-panel-smash",
+    "name": "Hatched Panel Smash",
+    "category": "Manga & AMV",
+    "motion": "zoom",
+    "amplitude": 35.0,
+    "duration": 0.45,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.draw.adaptiveHatch",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.manga-contact-frame",
+    "name": "Manga Contact Frame",
+    "category": "Manga & AMV",
+    "motion": "shake",
+    "amplitude": 7.0,
+    "duration": 0.4,
+    "angle": 30.0,
+    "effects": [
+      {
+        "id": "awi.manga",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.paper-layer-pop",
+    "name": "Paper Layer Pop",
+    "category": "Manga & AMV",
+    "motion": "squash",
+    "amplitude": 18.0,
+    "duration": 0.6,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.ink-ridge-flash",
+    "name": "Ink Ridge Flash",
+    "category": "Manga & AMV",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 0.35,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.action-chroma-slash",
+    "name": "Action Chroma Slash",
+    "category": "Manga & AMV",
+    "motion": "whip",
+    "amplitude": 35.0,
+    "duration": 0.55,
+    "angle": 25.0,
+    "effects": [
+      {
+        "id": "awi37.draw.edgeStretch",
+        "values": {}
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.tonal-print-stamp",
+    "name": "Tonal Print Stamp",
+    "category": "Manga & AMV",
+    "motion": "zoom",
+    "amplitude": 15.0,
+    "duration": 0.65,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.stamp",
+        "values": {
+          "first": 7,
+          "second": 1.15,
+          "third": 0.9
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.frame-shard-impact",
+    "name": "Frame Shard Impact",
+    "category": "Manga & AMV",
+    "motion": "shake",
+    "amplitude": 8.0,
+    "duration": 0.5,
+    "angle": 80.0,
+    "effects": [
+      {
+        "id": "awi31.lumaShards",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.crossed-color-panel",
+    "name": "Crossed Color Panel",
+    "category": "Manga & AMV",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 0.75,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      },
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.sewn-object-label",
+    "name": "Sewn Object Label",
+    "category": "Manga & AMV",
+    "motion": "bounce",
+    "amplitude": 2.0,
+    "duration": 0.8,
+    "angle": 90.0,
+    "effects": [
+      {
+        "id": "awi48.craft.stitch",
+        "values": {
+          "first": 7,
+          "second": 5,
+          "third": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.solarized-ink-hit",
+    "name": "Solarized Ink Hit",
+    "category": "Manga & AMV",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 0.45,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.draw.edgeSolarize",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.curved-panel-pull",
+    "name": "Curved Panel Pull",
+    "category": "Manga & AMV",
+    "motion": "pull",
+    "amplitude": 22.0,
+    "duration": 0.75,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.draw.curvature",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.halftone-camera-rush",
+    "name": "Halftone Camera Rush",
+    "category": "Manga & AMV",
+    "motion": "zoom",
+    "amplitude": 55.0,
+    "duration": 0.55,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi.halftone",
+        "values": {
+          "size": 5
+        }
+      },
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.engraved-object-reveal",
+    "name": "Engraved Object Reveal",
+    "category": "Manga & AMV",
+    "motion": "fadeIn",
+    "amplitude": 0.0,
+    "duration": 0.85,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.draw.spiralEngraving",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.prism-panel-break",
+    "name": "Prism Panel Break",
+    "category": "Manga & AMV",
+    "motion": "shake",
+    "amplitude": 6.0,
+    "duration": 0.6,
+    "angle": 40.0,
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      },
+      {
+        "id": "awi31.chromaShatter",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.frayed-paper-shock",
+    "name": "Frayed Paper Shock",
+    "category": "Manga & AMV",
+    "motion": "squash",
+    "amplitude": 28.0,
+    "duration": 0.7,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.fringe",
+        "values": {
+          "first": 7,
+          "second": 3,
+          "third": 0.4
+        }
+      },
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.codec-action-freeze",
+    "name": "Codec Action Freeze",
+    "category": "Manga & AMV",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 0.6,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi33.time.hold",
+        "values": {
+          "rate": 8,
+          "phase": 0
+        }
+      },
+      {
+        "id": "awi31.tileSlip",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.registered-film-print",
+    "name": "Registered Film Print",
+    "category": "Looks & CC",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      },
+      {
+        "id": "awi37.retro.compositeCrosstalk",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.high-contrast-ink-face",
+    "name": "High Contrast Ink Face",
+    "category": "Looks & CC",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      },
+      {
+        "id": "awi.halftone",
+        "values": {
+          "size": 5
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.layered-paper-finish",
+    "name": "Layered Paper Finish",
+    "category": "Looks & CC",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      },
+      {
+        "id": "awi48.craft.stamp",
+        "values": {
+          "first": 7,
+          "second": 1.15,
+          "third": 0.9
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.small-lens-color-fringe",
+    "name": "Small Lens Color Fringe",
+    "category": "Looks & CC",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      },
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.screen-codec-patina",
+    "name": "Screen Codec Patina",
+    "category": "Looks & CC",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi31.chromaShatter",
+        "values": {}
+      },
+      {
+        "id": "awi37.retro.compositeCrosstalk",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.metal-disc-mosaic",
+    "name": "Metal Disc Mosaic",
+    "category": "Looks & CC",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.sequin",
+        "values": {
+          "first": 9,
+          "second": 25,
+          "third": 0.1
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.directional-spectral-image",
+    "name": "Directional Spectral Image",
+    "category": "Looks & CC",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi46.spectral.quadrature",
+        "values": {
+          "first": 35,
+          "angle": 30
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.curved-engraving-finish",
+    "name": "Curved Engraving Finish",
+    "category": "Looks & CC",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.draw.spiralEngraving",
+        "values": {}
+      },
+      {
+        "id": "awi37.draw.curvature",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.torn-fabric-border",
+    "name": "Torn Fabric Border",
+    "category": "Looks & CC",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.fringe",
+        "values": {
+          "first": 7,
+          "second": 3,
+          "third": 0.4
+        }
+      },
+      {
+        "id": "awi48.craft.stitch",
+        "values": {
+          "first": 7,
+          "second": 5,
+          "third": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.luminous-contour-ink",
+    "name": "Luminous Contour Ink",
+    "category": "Looks & CC",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      },
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.chroma-plate-collage",
+    "name": "Chroma Plate Collage",
+    "category": "Looks & CC",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      },
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.dispersed-wave-image",
+    "name": "Dispersed Wave Image",
+    "category": "Looks & CC",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi46.spectral.dispersion",
+        "values": {
+          "first": 5,
+          "angle": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.eight-frame-hold",
+    "name": "Eight Frame Hold",
+    "category": "Velocity",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.0,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi33.time.hold",
+        "values": {
+          "rate": 8,
+          "phase": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.temporal-light-drag",
+    "name": "Temporal Light Drag",
+    "category": "Velocity",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 0.9,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi33.time.exposure",
+        "values": {
+          "span": 0.14,
+          "samples": 3,
+          "blend": 45
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.echo-speed-push",
+    "name": "Echo Speed Push",
+    "category": "Velocity",
+    "motion": "zoom",
+    "amplitude": 30.0,
+    "duration": 0.6,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi33.time.echo",
+        "values": {
+          "span": 0.22,
+          "samples": 3,
+          "decay": 48,
+          "blend": 45
+        }
+      },
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.staccato-camera-pull",
+    "name": "Staccato Camera Pull",
+    "category": "Velocity",
+    "motion": "pull",
+    "amplitude": 45.0,
+    "duration": 0.8,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi33.time.hold",
+        "values": {
+          "rate": 8,
+          "phase": 0
+        }
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.trailing-flash-contact",
+    "name": "Trailing Flash Contact",
+    "category": "Velocity",
+    "motion": "shake",
+    "amplitude": 4.0,
+    "duration": 0.6,
+    "angle": 20.0,
+    "effects": [
+      {
+        "id": "awi33.time.echo",
+        "values": {
+          "span": 0.22,
+          "samples": 3,
+          "decay": 48,
+          "blend": 45
+        }
+      },
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.analog-frame-trails",
+    "name": "Analog Frame Trails",
+    "category": "Velocity",
+    "motion": "none",
+    "amplitude": 0.0,
+    "duration": 1.2,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi33.time.exposure",
+        "values": {
+          "span": 0.14,
+          "samples": 3,
+          "blend": 45
+        }
+      },
+      {
+        "id": "awi37.retro.compositeCrosstalk",
+        "values": {}
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.held-panel-rush",
+    "name": "Held Panel Rush",
+    "category": "Velocity",
+    "motion": "whip",
+    "amplitude": 65.0,
+    "duration": 0.7,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi33.time.hold",
+        "values": {
+          "rate": 8,
+          "phase": 0
+        }
+      },
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ]
+  },
+  {
+    "id": "craft33.layer.ghost-frame-breathing",
+    "name": "Ghost Frame Breathing",
+    "category": "Velocity",
+    "motion": "breath",
+    "amplitude": 7.0,
+    "duration": 1.4,
+    "angle": 0.0,
+    "effects": [
+      {
+        "id": "awi33.time.echo",
+        "values": {
+          "span": 0.22,
+          "samples": 3,
+          "decay": 48,
+          "blend": 45
+        }
+      },
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ]
+  }
+]

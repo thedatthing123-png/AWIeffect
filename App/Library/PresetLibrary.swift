@@ -35,7 +35,7 @@ enum PresetLibrary {
 
     private static func n(_ v: Double) -> ParamValue { .number(Animated(v)) }
 
-    static let all: [LayerPreset] = mangaPack + [
+    static let all: [LayerPreset] = CraftPresets33.layerPresets + mangaPack + [
         // MARK: Transitions in (start at the layer's in point)
         .init(id: "zoomBlurIn", name: "Zoom Blur In", kind: .transitionIn, symbol: "plus.magnifyingglass") { l, _, t in
             let s = l.transform.scale.value(at: t)

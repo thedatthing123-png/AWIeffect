@@ -1,0 +1,5413 @@
+[
+  {
+    "id": "craft33.text.baseline-focus",
+    "name": "Baseline Focus",
+    "category": "In",
+    "motion": "rise",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 42.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "ae.gaussianBlur",
+        "values": {
+          "blurriness": 4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.soft-column-reveal",
+    "name": "Soft Column Reveal",
+    "category": "In",
+    "motion": "rise",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.65,
+    "overlap": 28.0,
+    "accent": "none",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.quiet-tracking",
+    "name": "Quiet Tracking",
+    "category": "In",
+    "motion": "tracking",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.45,
+    "overlap": 55.0,
+    "accent": "none",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.letter-lift-and-land",
+    "name": "Letter Lift and Land",
+    "category": "In",
+    "motion": "elastic",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.75,
+    "overlap": 24.0,
+    "accent": "rebound",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.split-slab-arrival",
+    "name": "Split Slab Arrival",
+    "category": "In",
+    "motion": "shutter",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 1.0,
+    "overlap": 20.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.narrow-door-reveal",
+    "name": "Narrow Door Reveal",
+    "category": "In",
+    "motion": "hinge",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.65,
+    "overlap": 30.0,
+    "accent": "counter",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.reverse-reading",
+    "name": "Reverse Reading",
+    "category": "In",
+    "motion": "slide",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.7,
+    "overlap": 42.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.soft-ink-arrival",
+    "name": "Soft Ink Arrival",
+    "category": "In",
+    "motion": "focus",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.7,
+    "overlap": 45.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.corner-turn-type",
+    "name": "Corner Turn Type",
+    "category": "In",
+    "motion": "arc",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.75,
+    "overlap": 34.0,
+    "accent": "counter",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.track-and-resolve",
+    "name": "Track and Resolve",
+    "category": "In",
+    "motion": "tracking",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 38.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.falling-letter-blocks",
+    "name": "Falling Letter Blocks",
+    "category": "In",
+    "motion": "drop",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.8,
+    "overlap": 22.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.measured-word-step",
+    "name": "Measured Word Step",
+    "category": "In",
+    "motion": "baseline",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.6,
+    "overlap": 16.0,
+    "accent": "none",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.open-caption",
+    "name": "Open Caption",
+    "category": "In",
+    "motion": "shutter",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.85,
+    "overlap": 50.0,
+    "accent": "none",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.subtle-lens-arrival",
+    "name": "Subtle Lens Arrival",
+    "category": "In",
+    "motion": "depth",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.5,
+    "overlap": 48.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.wipe-into-focus",
+    "name": "Wipe Into Focus",
+    "category": "In",
+    "motion": "focus",
+    "unit": "lines",
+    "order": "reverse",
+    "amplitude": 0.6,
+    "overlap": 35.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.rounded-letter-pop",
+    "name": "Rounded Letter Pop",
+    "category": "In",
+    "motion": "scale",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.85,
+    "overlap": 18.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.glass-edge-entry",
+    "name": "Glass Edge Entry",
+    "category": "In",
+    "motion": "perspective",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.5,
+    "overlap": 40.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.compressed-headline",
+    "name": "Compressed Headline",
+    "category": "In",
+    "motion": "stretch",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.7,
+    "overlap": 36.0,
+    "accent": "squeeze",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.rail-slide-caption",
+    "name": "Rail Slide Caption",
+    "category": "In",
+    "motion": "slide",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 22.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.ink-stamp-settle",
+    "name": "Ink Stamp Settle",
+    "category": "In",
+    "motion": "scale",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 0.9,
+    "overlap": 22.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi48.craft.stamp",
+        "values": {
+          "first": 7,
+          "second": 1.15,
+          "third": 0.9
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.word-train",
+    "name": "Word Train",
+    "category": "Kinetic",
+    "motion": "whip",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 18.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.accordion-headline",
+    "name": "Accordion Headline",
+    "category": "Kinetic",
+    "motion": "tracking",
+    "unit": "characters",
+    "order": "reverse",
+    "amplitude": 1.0,
+    "overlap": 20.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.elastic-baseline",
+    "name": "Elastic Baseline",
+    "category": "Kinetic",
+    "motion": "elastic",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 1.1,
+    "overlap": 26.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.orbit-word-assembly",
+    "name": "Orbit Word Assembly",
+    "category": "Kinetic",
+    "motion": "orbit",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 0.65,
+    "overlap": 30.0,
+    "accent": "lift",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.rotating-slabs",
+    "name": "Rotating Slabs",
+    "category": "Kinetic",
+    "motion": "rotate",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 24.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.diagonal-dispatch",
+    "name": "Diagonal Dispatch",
+    "category": "Kinetic",
+    "motion": "arc",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 22.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.print-roller",
+    "name": "Print Roller",
+    "category": "Kinetic",
+    "motion": "roll",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 14.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.fan-deck-reveal",
+    "name": "Fan Deck Reveal",
+    "category": "Kinetic",
+    "motion": "fan",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.7,
+    "overlap": 35.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.stack-snap",
+    "name": "Stack Snap",
+    "category": "Kinetic",
+    "motion": "drop",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 1.15,
+    "overlap": 12.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.crosswind-headline",
+    "name": "Crosswind Headline",
+    "category": "Kinetic",
+    "motion": "skew",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.9,
+    "overlap": 30.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.rubber-letter-train",
+    "name": "Rubber Letter Train",
+    "category": "Kinetic",
+    "motion": "stretch",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.2,
+    "overlap": 18.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.scatter-then-align",
+    "name": "Scatter Then Align",
+    "category": "Kinetic",
+    "motion": "scatter",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.8,
+    "overlap": 35.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.front-row-slam",
+    "name": "Front Row Slam",
+    "category": "Kinetic",
+    "motion": "slam",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.7,
+    "overlap": 14.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.pop-through-ink",
+    "name": "Pop Through Ink",
+    "category": "Kinetic",
+    "motion": "scale",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 1.1,
+    "overlap": 24.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      },
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.word-card-deal",
+    "name": "Word Card Deal",
+    "category": "Kinetic",
+    "motion": "hinge",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 0.9,
+    "overlap": 22.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.rising-zigzag-type",
+    "name": "Rising Zigzag Type",
+    "category": "Kinetic",
+    "motion": "baseline",
+    "unit": "characters",
+    "order": "reverse",
+    "amplitude": 1.1,
+    "overlap": 16.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.zoom-cut-sentence",
+    "name": "Zoom Cut Sentence",
+    "category": "Kinetic",
+    "motion": "depth",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.9,
+    "overlap": 8.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.skew-and-squeeze",
+    "name": "Skew and Squeeze",
+    "category": "Kinetic",
+    "motion": "skew",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.1,
+    "overlap": 26.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi48.craft.stamp",
+        "values": {
+          "first": 7,
+          "second": 1.15,
+          "third": 0.9
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.paper-flip-sentence",
+    "name": "Paper Flip Sentence",
+    "category": "Kinetic",
+    "motion": "fold",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.9,
+    "overlap": 18.0,
+    "accent": "lift",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.focus-relay",
+    "name": "Focus Relay",
+    "category": "Kinetic",
+    "motion": "focus",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 1.0,
+    "overlap": 20.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.letter-conveyor-exit",
+    "name": "Letter Conveyor Exit",
+    "category": "Out",
+    "motion": "slide",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 28.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.ink-evaporation",
+    "name": "Ink Evaporation",
+    "category": "Out",
+    "motion": "focus",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 1.3,
+    "overlap": 36.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.fold-away-caption",
+    "name": "Fold Away Caption",
+    "category": "Out",
+    "motion": "fold",
+    "unit": "lines",
+    "order": "reverse",
+    "amplitude": 0.9,
+    "overlap": 24.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.fall-through-baseline",
+    "name": "Fall Through Baseline",
+    "category": "Out",
+    "motion": "drop",
+    "unit": "characters",
+    "order": "reverse",
+    "amplitude": 1.1,
+    "overlap": 18.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi37.retro.ccdSmear",
+        "values": {
+          "length": 35,
+          "threshold": 40,
+          "softness": 1,
+          "gain": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.track-apart-words",
+    "name": "Track Apart Words",
+    "category": "Out",
+    "motion": "tracking",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 1.4,
+    "overlap": 28.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.shred-the-sentence",
+    "name": "Shred the Sentence",
+    "category": "Out",
+    "motion": "scatter",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 1.2,
+    "overlap": 18.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "awi31.lumaShards",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.pinch-to-a-line",
+    "name": "Pinch to a Line",
+    "category": "Out",
+    "motion": "shutter",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 35.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.spin-off-label",
+    "name": "Spin Off Label",
+    "category": "Out",
+    "motion": "rotate",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 1.3,
+    "overlap": 24.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.burnt-print-exit",
+    "name": "Burnt Print Exit",
+    "category": "Out",
+    "motion": "skew",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.7,
+    "overlap": 32.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi37.draw.mezzotint",
+        "values": {}
+      },
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.signal-breakdown",
+    "name": "Signal Breakdown",
+    "category": "Out",
+    "motion": "decode",
+    "unit": "characters",
+    "order": "reverse",
+    "amplitude": 1.0,
+    "overlap": 24.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi31.signalDrop",
+        "values": {}
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.deep-card-exit",
+    "name": "Deep Card Exit",
+    "category": "3D Out",
+    "motion": "depth",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 1.1,
+    "overlap": 28.0,
+    "accent": "lift",
+    "effects": [
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ],
+    "material": "Chrome"
+  },
+  {
+    "id": "craft33.text.hinge-back-caption",
+    "name": "Hinge Back Caption",
+    "category": "3D Out",
+    "motion": "hinge",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.9,
+    "overlap": 30.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": "Plastic"
+  },
+  {
+    "id": "craft33.text.tumbling-letter-exit",
+    "name": "Tumbling Letter Exit",
+    "category": "3D Out",
+    "motion": "roll",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 1.1,
+    "overlap": 20.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": "Gold"
+  },
+  {
+    "id": "craft33.text.metal-fan-exit",
+    "name": "Metal Fan Exit",
+    "category": "3D Out",
+    "motion": "fan",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 1.0,
+    "overlap": 24.0,
+    "accent": "lift",
+    "effects": [
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": "Chrome"
+  },
+  {
+    "id": "craft33.text.glass-fold-away",
+    "name": "Glass Fold Away",
+    "category": "3D Out",
+    "motion": "fold",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.05,
+    "overlap": 25.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ],
+    "material": "Glass"
+  },
+  {
+    "id": "craft33.text.side-door-exit",
+    "name": "Side Door Exit",
+    "category": "3D Out",
+    "motion": "perspective",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 1.2,
+    "overlap": 18.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ],
+    "material": "Plastic"
+  },
+  {
+    "id": "craft33.text.neon-orbit-away",
+    "name": "Neon Orbit Away",
+    "category": "3D Out",
+    "motion": "orbit",
+    "unit": "characters",
+    "order": "reverse",
+    "amplitude": 1.0,
+    "overlap": 32.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": "Neon"
+  },
+  {
+    "id": "craft33.text.stone-blocks-fall",
+    "name": "Stone Blocks Fall",
+    "category": "3D Out",
+    "motion": "drop",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 1.25,
+    "overlap": 14.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": "Stone"
+  },
+  {
+    "id": "craft33.text.spinning-word-door",
+    "name": "Spinning Word Door",
+    "category": "3D Out",
+    "motion": "flip",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 1.2,
+    "overlap": 22.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": "Gold"
+  },
+  {
+    "id": "craft33.text.backplane-pull",
+    "name": "Backplane Pull",
+    "category": "3D Out",
+    "motion": "depth",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 1.5,
+    "overlap": 18.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      },
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ],
+    "material": "Chrome"
+  },
+  {
+    "id": "craft33.text.plain-terminal",
+    "name": "Plain Terminal",
+    "category": "Typewriter",
+    "motion": "type",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 4.0,
+    "accent": "none",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.word-processor",
+    "name": "Word Processor",
+    "category": "Typewriter",
+    "motion": "type",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 8.0,
+    "accent": "none",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.line-by-line-caption",
+    "name": "Line by Line Caption",
+    "category": "Typewriter",
+    "motion": "type",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 10.0,
+    "accent": "none",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.scrambled-terminal",
+    "name": "Scrambled Terminal",
+    "category": "Typewriter",
+    "motion": "decode",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.6,
+    "overlap": 12.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi31.rowDuplicate",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.signal-lock-letters",
+    "name": "Signal Lock Letters",
+    "category": "Typewriter",
+    "motion": "decode",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 1.1,
+    "overlap": 18.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.printed-receipt",
+    "name": "Printed Receipt",
+    "category": "Typewriter",
+    "motion": "type",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 2.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.stamp",
+        "values": {
+          "first": 7,
+          "second": 1.15,
+          "third": 0.9
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.carbon-copy-caption",
+    "name": "Carbon Copy Caption",
+    "category": "Typewriter",
+    "motion": "type",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 1.0,
+    "overlap": 10.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.quiet-subtitle-keys",
+    "name": "Quiet Subtitle Keys",
+    "category": "Typewriter",
+    "motion": "type",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 7.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "ae.gaussianBlur",
+        "values": {
+          "blurriness": 4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.type-and-bump",
+    "name": "Type and Bump",
+    "category": "Typewriter",
+    "motion": "type",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 5.0,
+    "accent": "rebound",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.cursor-glow-trail",
+    "name": "Cursor Glow Trail",
+    "category": "Typewriter",
+    "motion": "type",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 6.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.stitched-nameplate",
+    "name": "Stitched Nameplate",
+    "category": "Typewriter",
+    "motion": "type",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 10.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.stitch",
+        "values": {
+          "first": 7,
+          "second": 5,
+          "third": 1
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.wrong-channel-decode",
+    "name": "Wrong Channel Decode",
+    "category": "Typewriter",
+    "motion": "decode",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 0.9,
+    "overlap": 24.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi31.chromaShatter",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.teletext-arrival",
+    "name": "Teletext Arrival",
+    "category": "Typewriter",
+    "motion": "shutter",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.7,
+    "overlap": 8.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi31.scanlineRipple",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.stamp-by-stamp",
+    "name": "Stamp by Stamp",
+    "category": "Typewriter",
+    "motion": "scale",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.7,
+    "overlap": 8.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi48.craft.stamp",
+        "values": {
+          "first": 7,
+          "second": 1.15,
+          "third": 0.9
+        }
+      },
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.analog-letter-keys",
+    "name": "Analog Letter Keys",
+    "category": "Typewriter",
+    "motion": "type",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 1.0,
+    "overlap": 9.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi37.retro.compositeCrosstalk",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.code-rain-resolve",
+    "name": "Code Rain Resolve",
+    "category": "Typewriter",
+    "motion": "drop",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.55,
+    "overlap": 12.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi31.columnMelt",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.punched-tape-caption",
+    "name": "Punched Tape Caption",
+    "category": "Typewriter",
+    "motion": "type",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 3.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi.halftone",
+        "values": {
+          "size": 5
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.wireframe-decode",
+    "name": "Wireframe Decode",
+    "category": "Typewriter",
+    "motion": "decode",
+    "unit": "characters",
+    "order": "reverse",
+    "amplitude": 0.8,
+    "overlap": 15.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.reverse-terminal",
+    "name": "Reverse Terminal",
+    "category": "Typewriter",
+    "motion": "type",
+    "unit": "characters",
+    "order": "reverse",
+    "amplitude": 1.0,
+    "overlap": 5.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi37.retro.ccdSmear",
+        "values": {
+          "length": 35,
+          "threshold": 40,
+          "softness": 1,
+          "gain": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.fluorescent-word-keys",
+    "name": "Fluorescent Word Keys",
+    "category": "Typewriter",
+    "motion": "type",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 1.0,
+    "overlap": 12.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.channel-lock-reveal",
+    "name": "Channel Lock Reveal",
+    "category": "Glitch",
+    "motion": "decode",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 1.2,
+    "overlap": 26.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi31.chromaShatter",
+        "values": {}
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.raster-headline",
+    "name": "Raster Headline",
+    "category": "Glitch",
+    "motion": "skew",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 18.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "awi31.rasterSkew",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.column-corruption",
+    "name": "Column Corruption",
+    "category": "Glitch",
+    "motion": "drop",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.7,
+    "overlap": 16.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi31.columnMelt",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.codec-word-shuffle",
+    "name": "Codec Word Shuffle",
+    "category": "Glitch",
+    "motion": "scatter",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 0.55,
+    "overlap": 20.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi31.tileSlip",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.red-blue-relay",
+    "name": "Red Blue Relay",
+    "category": "Glitch",
+    "motion": "tracking",
+    "unit": "characters",
+    "order": "reverse",
+    "amplitude": 0.6,
+    "overlap": 25.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi31.chromaShatter",
+        "values": {}
+      },
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.signal-return-caption",
+    "name": "Signal Return Caption",
+    "category": "Glitch",
+    "motion": "focus",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 12.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi31.signalDrop",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.bitplane-alphabet",
+    "name": "Bitplane Alphabet",
+    "category": "Glitch",
+    "motion": "decode",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.7,
+    "overlap": 14.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi31.bitplaneSlip",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.scan-comb-resolve",
+    "name": "Scan Comb Resolve",
+    "category": "Glitch",
+    "motion": "shutter",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 24.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi31.scanlineRipple",
+        "values": {}
+      },
+      {
+        "id": "awi37.retro.ccdSmear",
+        "values": {
+          "length": 35,
+          "threshold": 40,
+          "softness": 1,
+          "gain": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.broken-printer-type",
+    "name": "Broken Printer Type",
+    "category": "Glitch",
+    "motion": "type",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 1.0,
+    "overlap": 8.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi31.rowDuplicate",
+        "values": {}
+      },
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.luma-shard-name",
+    "name": "Luma Shard Name",
+    "category": "Glitch",
+    "motion": "scale",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 1.1,
+    "overlap": 18.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi31.lumaShards",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.pixel-sorted-recall",
+    "name": "Pixel Sorted Recall",
+    "category": "Glitch",
+    "motion": "decode",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.9,
+    "overlap": 28.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi31.segmentSort",
+        "values": {
+          "length": 24,
+          "low": 20,
+          "high": 90,
+          "blend": 65
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.phase-scrambled-caption",
+    "name": "Phase Scrambled Caption",
+    "category": "Glitch",
+    "motion": "focus",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.65,
+    "overlap": 42.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi46.spectral.scramble",
+        "values": {
+          "first": 0.16,
+          "seed": 11,
+          "speed": 0.2
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.sideband-headline",
+    "name": "Sideband Headline",
+    "category": "Glitch",
+    "motion": "whip",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.6,
+    "overlap": 16.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "awi31.blockDesync",
+        "values": {}
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.unstable-baseline",
+    "name": "Unstable Baseline",
+    "category": "Glitch",
+    "motion": "rattle",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.6,
+    "overlap": 22.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi31.rasterSkew",
+        "values": {}
+      },
+      {
+        "id": "awi37.retro.compositeCrosstalk",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.ghost-channel-entry",
+    "name": "Ghost Channel Entry",
+    "category": "Glitch",
+    "motion": "orbit",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.4,
+    "overlap": 30.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi31.signalDrop",
+        "values": {}
+      },
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.chroma-melt-resolve",
+    "name": "Chroma Melt Resolve",
+    "category": "Glitch",
+    "motion": "stretch",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.9,
+    "overlap": 24.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi31.columnMelt",
+        "values": {}
+      },
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.torn-frame-words",
+    "name": "Torn Frame Words",
+    "category": "Glitch",
+    "motion": "hinge",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.55,
+    "overlap": 20.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi31.tileSlip",
+        "values": {}
+      },
+      {
+        "id": "awi31.lumaShards",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.carrier-wave-type",
+    "name": "Carrier Wave Type",
+    "category": "Glitch",
+    "motion": "wave",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.75,
+    "overlap": 12.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "awi46.spectral.dispersion",
+        "values": {
+          "first": 5,
+          "angle": 0
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.quadrature-caption",
+    "name": "Quadrature Caption",
+    "category": "Glitch",
+    "motion": "tracking",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.6,
+    "overlap": 40.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi46.spectral.quadrature",
+        "values": {
+          "first": 35,
+          "angle": 30
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.packet-burst-letters",
+    "name": "Packet Burst Letters",
+    "category": "Glitch",
+    "motion": "slam",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.7,
+    "overlap": 10.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi31.blockDesync",
+        "values": {}
+      },
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.heavy-word-hit",
+    "name": "Heavy Word Hit",
+    "category": "Impact",
+    "motion": "punch",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 1.2,
+    "overlap": 22.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.ink-hammer-type",
+    "name": "Ink Hammer Type",
+    "category": "Impact",
+    "motion": "slam",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 18.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.cracked-caption-hit",
+    "name": "Cracked Caption Hit",
+    "category": "Impact",
+    "motion": "rattle",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 1.1,
+    "overlap": 24.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi31.lumaShards",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.lens-punch-title",
+    "name": "Lens Punch Title",
+    "category": "Impact",
+    "motion": "punch",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 1.3,
+    "overlap": 35.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.sfx-letter-smash",
+    "name": "SFX Letter Smash",
+    "category": "Impact",
+    "motion": "slam",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 1.2,
+    "overlap": 12.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi.manga",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.rubber-word-impact",
+    "name": "Rubber Word Impact",
+    "category": "Impact",
+    "motion": "squash",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 1.3,
+    "overlap": 20.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.flash-print-hit",
+    "name": "Flash Print Hit",
+    "category": "Impact",
+    "motion": "punch",
+    "unit": "lines",
+    "order": "reverse",
+    "amplitude": 0.85,
+    "overlap": 28.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.stamp",
+        "values": {
+          "first": 7,
+          "second": 1.15,
+          "third": 0.9
+        }
+      },
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.double-take-caption",
+    "name": "Double Take Caption",
+    "category": "Impact",
+    "motion": "bounce",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 1.1,
+    "overlap": 24.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.recoil-nameplate",
+    "name": "Recoil Nameplate",
+    "category": "Impact",
+    "motion": "rattle",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.9,
+    "overlap": 18.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.glowing-contact-frame",
+    "name": "Glowing Contact Frame",
+    "category": "Impact",
+    "motion": "focusPulse",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 1.1,
+    "overlap": 30.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.flat-panel-smash",
+    "name": "Flat Panel Smash",
+    "category": "Impact",
+    "motion": "squash",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 1.4,
+    "overlap": 22.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.scratched-letter-hit",
+    "name": "Scratched Letter Hit",
+    "category": "Impact",
+    "motion": "rattle",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.8,
+    "overlap": 20.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi37.draw.adaptiveHatch",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.chromatic-thump",
+    "name": "Chromatic Thump",
+    "category": "Impact",
+    "motion": "punch",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 1.0,
+    "overlap": 14.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.stamp-and-shake",
+    "name": "Stamp and Shake",
+    "category": "Impact",
+    "motion": "rattle",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 1.2,
+    "overlap": 16.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi48.craft.stamp",
+        "values": {
+          "first": 7,
+          "second": 1.15,
+          "third": 0.9
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.skewed-caption-pop",
+    "name": "Skewed Caption Pop",
+    "category": "Impact",
+    "motion": "skew",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.9,
+    "overlap": 22.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.ringing-headline",
+    "name": "Ringing Headline",
+    "category": "Impact",
+    "motion": "punch",
+    "unit": "lines",
+    "order": "reverse",
+    "amplitude": 0.7,
+    "overlap": 26.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      },
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.snap-focus-word",
+    "name": "Snap Focus Word",
+    "category": "Impact",
+    "motion": "focusPulse",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.75,
+    "overlap": 16.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "ae.gaussianBlur",
+        "values": {
+          "blurriness": 4
+        }
+      },
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.metal-contact-title",
+    "name": "Metal Contact Title",
+    "category": "Impact",
+    "motion": "punch",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 18.0,
+    "accent": "lift",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": "Chrome"
+  },
+  {
+    "id": "craft33.text.paper-crunch-letters",
+    "name": "Paper Crunch Letters",
+    "category": "Impact",
+    "motion": "squash",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.95,
+    "overlap": 24.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      },
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.wire-snap-hit",
+    "name": "Wire Snap Hit",
+    "category": "Impact",
+    "motion": "rattle",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 1.4,
+    "overlap": 16.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.stitch",
+        "values": {
+          "first": 7,
+          "second": 5,
+          "third": 1
+        }
+      },
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.keyword-lift",
+    "name": "Keyword Lift",
+    "category": "Emphasis",
+    "motion": "baseline",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.5,
+    "overlap": 24.0,
+    "accent": "none",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.underline-glow-pass",
+    "name": "Underline Glow Pass",
+    "category": "Emphasis",
+    "motion": "wave",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.35,
+    "overlap": 30.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.focus-keyword",
+    "name": "Focus Keyword",
+    "category": "Emphasis",
+    "motion": "focusPulse",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.6,
+    "overlap": 22.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.tracking-accent",
+    "name": "Tracking Accent",
+    "category": "Emphasis",
+    "motion": "trackingWave",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.7,
+    "overlap": 24.0,
+    "accent": "none",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.outline-sweep",
+    "name": "Outline Sweep",
+    "category": "Emphasis",
+    "motion": "hue",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.45,
+    "overlap": 26.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.tiny-rubber-emphasis",
+    "name": "Tiny Rubber Emphasis",
+    "category": "Emphasis",
+    "motion": "squash",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.4,
+    "overlap": 30.0,
+    "accent": "rebound",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.word-bounce-accent",
+    "name": "Word Bounce Accent",
+    "category": "Emphasis",
+    "motion": "bounce",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.55,
+    "overlap": 18.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.soft-lens-highlight",
+    "name": "Soft Lens Highlight",
+    "category": "Emphasis",
+    "motion": "focusPulse",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.45,
+    "overlap": 45.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.ink-weight-accent",
+    "name": "Ink Weight Accent",
+    "category": "Emphasis",
+    "motion": "punch",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.45,
+    "overlap": 20.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.color-registration-pass",
+    "name": "Color Registration Pass",
+    "category": "Emphasis",
+    "motion": "trackingWave",
+    "unit": "characters",
+    "order": "reverse",
+    "amplitude": 0.5,
+    "overlap": 28.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.raised-foil-accent",
+    "name": "Raised Foil Accent",
+    "category": "Emphasis",
+    "motion": "depthWave",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.55,
+    "overlap": 22.0,
+    "accent": "lift",
+    "effects": [
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": "Gold"
+  },
+  {
+    "id": "craft33.text.prism-word-sweep",
+    "name": "Prism Word Sweep",
+    "category": "Emphasis",
+    "motion": "hue",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.7,
+    "overlap": 30.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      },
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.letter-nudge",
+    "name": "Letter Nudge",
+    "category": "Emphasis",
+    "motion": "wave",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.3,
+    "overlap": 12.0,
+    "accent": "none",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.sewn-caption-accent",
+    "name": "Sewn Caption Accent",
+    "category": "Emphasis",
+    "motion": "baseline",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.35,
+    "overlap": 26.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.stitch",
+        "values": {
+          "first": 7,
+          "second": 5,
+          "third": 1
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.soft-shadow-step",
+    "name": "Soft Shadow Step",
+    "category": "Emphasis",
+    "motion": "baseline",
+    "unit": "lines",
+    "order": "reverse",
+    "amplitude": 0.4,
+    "overlap": 32.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.held-breath-title",
+    "name": "Held Breath Title",
+    "category": "Emphasis",
+    "motion": "breath",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.75,
+    "overlap": 40.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.half-tone-emphasis",
+    "name": "Half-Tone Emphasis",
+    "category": "Emphasis",
+    "motion": "punch",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.6,
+    "overlap": 18.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi.halftone",
+        "values": {
+          "size": 5
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.channel-edge-accent",
+    "name": "Channel Edge Accent",
+    "category": "Emphasis",
+    "motion": "rattle",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 0.3,
+    "overlap": 20.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.spiral-highlight-pass",
+    "name": "Spiral Highlight Pass",
+    "category": "Emphasis",
+    "motion": "hue",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.5,
+    "overlap": 42.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi36.light.spiralLight",
+        "values": {
+          "angle": 35,
+          "pull": 16,
+          "softness": 1,
+          "intensity": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.split-ink-word",
+    "name": "Split Ink Word",
+    "category": "Emphasis",
+    "motion": "trackingWave",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.8,
+    "overlap": 25.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi37.draw.edgeSolarize",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.breathing-lyric-line",
+    "name": "Breathing Lyric Line",
+    "category": "Lyric",
+    "motion": "rise",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.4,
+    "overlap": 60.0,
+    "accent": "none",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.word-by-word-focus",
+    "name": "Word by Word Focus",
+    "category": "Lyric",
+    "motion": "focus",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.7,
+    "overlap": 24.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "ae.gaussianBlur",
+        "values": {
+          "blurriness": 4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.late-night-subtitle",
+    "name": "Late Night Subtitle",
+    "category": "Lyric",
+    "motion": "type",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 10.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.floating-verse",
+    "name": "Floating Verse",
+    "category": "Lyric",
+    "motion": "wave",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.5,
+    "overlap": 6.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.soft-word-steps",
+    "name": "Soft Word Steps",
+    "category": "Lyric",
+    "motion": "baseline",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.5,
+    "overlap": 28.0,
+    "accent": "rebound",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.split-verse-arrival",
+    "name": "Split Verse Arrival",
+    "category": "Lyric",
+    "motion": "shutter",
+    "unit": "lines",
+    "order": "reverse",
+    "amplitude": 0.8,
+    "overlap": 42.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.rising-ink-lyric",
+    "name": "Rising Ink Lyric",
+    "category": "Lyric",
+    "motion": "rise",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.65,
+    "overlap": 30.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.recorded-voice-caption",
+    "name": "Recorded Voice Caption",
+    "category": "Lyric",
+    "motion": "type",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 5.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi37.retro.compositeCrosstalk",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.reflective-chorus",
+    "name": "Reflective Chorus",
+    "category": "Lyric",
+    "motion": "orbit",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.4,
+    "overlap": 38.0,
+    "accent": "lift",
+    "effects": [
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ],
+    "material": "Glass"
+  },
+  {
+    "id": "craft33.text.chorus-impact",
+    "name": "Chorus Impact",
+    "category": "Lyric",
+    "motion": "punch",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 24.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.thin-line-verse",
+    "name": "Thin Line Verse",
+    "category": "Lyric",
+    "motion": "tracking",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.45,
+    "overlap": 48.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.stitch",
+        "values": {
+          "first": 7,
+          "second": 5,
+          "third": 1
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.focus-echo-lyric",
+    "name": "Focus Echo Lyric",
+    "category": "Lyric",
+    "motion": "depth",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.45,
+    "overlap": 38.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.warm-film-caption",
+    "name": "Warm Film Caption",
+    "category": "Lyric",
+    "motion": "rise",
+    "unit": "lines",
+    "order": "reverse",
+    "amplitude": 0.5,
+    "overlap": 45.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.two-step-word-reveal",
+    "name": "Two-Step Word Reveal",
+    "category": "Lyric",
+    "motion": "elastic",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.55,
+    "overlap": 18.0,
+    "accent": "counter",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.quiet-decode-lyric",
+    "name": "Quiet Decode Lyric",
+    "category": "Lyric",
+    "motion": "decode",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.4,
+    "overlap": 35.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.paper-song-title",
+    "name": "Paper Song Title",
+    "category": "Lyric",
+    "motion": "fold",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.6,
+    "overlap": 30.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.out-of-the-chorus",
+    "name": "Out of the Chorus",
+    "category": "Lyric",
+    "motion": "slide",
+    "unit": "lines",
+    "order": "reverse",
+    "amplitude": 0.7,
+    "overlap": 35.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.silver-lyric-cards",
+    "name": "Silver Lyric Cards",
+    "category": "Lyric",
+    "motion": "hinge",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.5,
+    "overlap": 35.0,
+    "accent": "lift",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": "Chrome"
+  },
+  {
+    "id": "craft33.text.drifting-last-word",
+    "name": "Drifting Last Word",
+    "category": "Lyric",
+    "motion": "arc",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.45,
+    "overlap": 22.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.lyric-frame-punch",
+    "name": "Lyric Frame Punch",
+    "category": "Lyric",
+    "motion": "punch",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.5,
+    "overlap": 40.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      },
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.ink-panel-caption",
+    "name": "Ink Panel Caption",
+    "category": "Manga/AMV",
+    "motion": "shutter",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 20.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      },
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.speech-balloon-pop",
+    "name": "Speech Balloon Pop",
+    "category": "Manga/AMV",
+    "motion": "scale",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 0.7,
+    "overlap": 20.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.speedline-letter-rush",
+    "name": "Speedline Letter Rush",
+    "category": "Manga/AMV",
+    "motion": "whip",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.2,
+    "overlap": 15.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      },
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.screentone-slab",
+    "name": "Screentone Slab",
+    "category": "Manga/AMV",
+    "motion": "slam",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 15.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi.halftone",
+        "values": {
+          "size": 5
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.hatching-reveal",
+    "name": "Hatching Reveal",
+    "category": "Manga/AMV",
+    "motion": "rise",
+    "unit": "characters",
+    "order": "reverse",
+    "amplitude": 0.85,
+    "overlap": 24.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi37.draw.adaptiveHatch",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.misprinted-battle-cry",
+    "name": "Misprinted Battle Cry",
+    "category": "Manga/AMV",
+    "motion": "rattle",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 1.25,
+    "overlap": 20.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.stretched-sfx",
+    "name": "Stretched SFX",
+    "category": "Manga/AMV",
+    "motion": "stretch",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.4,
+    "overlap": 16.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi.manga",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.broken-ink-dispatch",
+    "name": "Broken Ink Dispatch",
+    "category": "Manga/AMV",
+    "motion": "scatter",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 0.9,
+    "overlap": 18.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      },
+      {
+        "id": "awi31.lumaShards",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.curved-action-caption",
+    "name": "Curved Action Caption",
+    "category": "Manga/AMV",
+    "motion": "arc",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 1.25,
+    "overlap": 22.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi37.draw.curvature",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.frayed-sound-effect",
+    "name": "Frayed Sound Effect",
+    "category": "Manga/AMV",
+    "motion": "slam",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.9,
+    "overlap": 14.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.fringe",
+        "values": {
+          "first": 7,
+          "second": 3,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.embroidered-panel-name",
+    "name": "Embroidered Panel Name",
+    "category": "Manga/AMV",
+    "motion": "type",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 8.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.stitch",
+        "values": {
+          "first": 7,
+          "second": 5,
+          "third": 1
+        }
+      },
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.inverted-motion-letter",
+    "name": "Inverted Motion Letter",
+    "category": "Manga/AMV",
+    "motion": "roll",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 1.0,
+    "overlap": 18.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi37.draw.edgeSolarize",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.crosshatched-word-fan",
+    "name": "Crosshatched Word Fan",
+    "category": "Manga/AMV",
+    "motion": "fan",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.9,
+    "overlap": 20.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi37.draw.adaptiveHatch",
+        "values": {}
+      },
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.torn-color-caption",
+    "name": "Torn Color Caption",
+    "category": "Manga/AMV",
+    "motion": "skew",
+    "unit": "lines",
+    "order": "reverse",
+    "amplitude": 1.1,
+    "overlap": 24.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "awi31.lumaShards",
+        "values": {}
+      },
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.plexus-sound-burst",
+    "name": "Plexus Sound Burst",
+    "category": "Manga/AMV",
+    "motion": "scatter",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.7,
+    "overlap": 16.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      },
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.engraved-hero-name",
+    "name": "Engraved Hero Name",
+    "category": "Manga/AMV",
+    "motion": "depth",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.75,
+    "overlap": 25.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi37.draw.spiralEngraving",
+        "values": {}
+      }
+    ],
+    "material": "Stone"
+  },
+  {
+    "id": "craft33.text.panel-print-resolve",
+    "name": "Panel Print Resolve",
+    "category": "Manga/AMV",
+    "motion": "tracking",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 30.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi48.craft.stamp",
+        "values": {
+          "first": 7,
+          "second": 1.15,
+          "third": 0.9
+        }
+      },
+      {
+        "id": "awi.halftone",
+        "values": {
+          "size": 5
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.foil-action-word",
+    "name": "Foil Action Word",
+    "category": "Manga/AMV",
+    "motion": "flip",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.7,
+    "overlap": 20.0,
+    "accent": "lift",
+    "effects": [
+      {
+        "id": "awi48.craft.sequin",
+        "values": {
+          "first": 9,
+          "second": 25,
+          "third": 0.1
+        }
+      }
+    ],
+    "material": "Gold"
+  },
+  {
+    "id": "craft33.text.two-tone-impact-ink",
+    "name": "Two-Tone Impact Ink",
+    "category": "Manga/AMV",
+    "motion": "punch",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 1.1,
+    "overlap": 22.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi.manga",
+        "values": {}
+      },
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.perspective-caption-slash",
+    "name": "Perspective Caption Slash",
+    "category": "Manga/AMV",
+    "motion": "perspective",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 18.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "awi37.draw.edgeStretch",
+        "values": {}
+      },
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.baseline-tide",
+    "name": "Baseline Tide",
+    "category": "Loop",
+    "motion": "wave",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.7,
+    "overlap": 8.0,
+    "accent": "none",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.slow-caption-breathe",
+    "name": "Slow Caption Breathe",
+    "category": "Loop",
+    "motion": "breath",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.7,
+    "overlap": 10.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.rubber-alphabet",
+    "name": "Rubber Alphabet",
+    "category": "Loop",
+    "motion": "rubber",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 5.0,
+    "accent": "none",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.swinging-word-tags",
+    "name": "Swinging Word Tags",
+    "category": "Loop",
+    "motion": "pendulum",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 5.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.tracking-current",
+    "name": "Tracking Current",
+    "category": "Loop",
+    "motion": "trackingWave",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 7.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.neon-alphabet-buzz",
+    "name": "Neon Alphabet Buzz",
+    "category": "Loop",
+    "motion": "flicker",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.5,
+    "overlap": 6.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      },
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.ink-boil-caption",
+    "name": "Ink Boil Caption",
+    "category": "Loop",
+    "motion": "rattle",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.25,
+    "overlap": 10.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.chromatic-river-type",
+    "name": "Chromatic River Type",
+    "category": "Loop",
+    "motion": "wave",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 4.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.chromaTrails",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 2,
+          "halo": 6,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.hue-walk-letters",
+    "name": "Hue Walk Letters",
+    "category": "Loop",
+    "motion": "hue",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 9.0,
+    "accent": "none",
+    "effects": [],
+    "material": null
+  },
+  {
+    "id": "craft33.text.sequin-marquee",
+    "name": "Sequin Marquee",
+    "category": "Loop",
+    "motion": "breath",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.5,
+    "overlap": 8.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.sequin",
+        "values": {
+          "first": 9,
+          "second": 25,
+          "third": 0.1
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.wire-current-caption",
+    "name": "Wire Current Caption",
+    "category": "Loop",
+    "motion": "trackingWave",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.5,
+    "overlap": 5.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      },
+      {
+        "id": "awi48.craft.stitch",
+        "values": {
+          "first": 7,
+          "second": 5,
+          "third": 1
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.paper-pendulum",
+    "name": "Paper Pendulum",
+    "category": "Loop",
+    "motion": "pendulum",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.55,
+    "overlap": 7.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      },
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.trembling-print",
+    "name": "Trembling Print",
+    "category": "Loop",
+    "motion": "rattle",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 0.3,
+    "overlap": 8.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi37.draw.mezzotint",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.prism-focus-cycle",
+    "name": "Prism Focus Cycle",
+    "category": "Loop",
+    "motion": "focusPulse",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.65,
+    "overlap": 6.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.wavy-analog-line",
+    "name": "Wavy Analog Line",
+    "category": "Loop",
+    "motion": "wave",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.6,
+    "overlap": 4.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi37.retro.compositeCrosstalk",
+        "values": {}
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.ring-light-words",
+    "name": "Ring Light Words",
+    "category": "Loop",
+    "motion": "breath",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.8,
+    "overlap": 6.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.spectral-ribbon-type",
+    "name": "Spectral Ribbon Type",
+    "category": "Loop",
+    "motion": "twist",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.6,
+    "overlap": 8.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi46.spectral.dispersion",
+        "values": {
+          "first": 5,
+          "angle": 0
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.glitch-relay-loop",
+    "name": "Glitch Relay Loop",
+    "category": "Loop",
+    "motion": "flicker",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 0.4,
+    "overlap": 5.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi31.blockDesync",
+        "values": {}
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.fringe-sway-caption",
+    "name": "Fringe Sway Caption",
+    "category": "Loop",
+    "motion": "pendulum",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.65,
+    "overlap": 8.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.fringe",
+        "values": {
+          "first": 7,
+          "second": 3,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.silver-edge-pulse",
+    "name": "Silver Edge Pulse",
+    "category": "Loop",
+    "motion": "focusPulse",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.55,
+    "overlap": 6.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      },
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": null
+  },
+  {
+    "id": "craft33.text.chrome-card-assembly",
+    "name": "Chrome Card Assembly",
+    "category": "3D In",
+    "motion": "hinge",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 25.0,
+    "accent": "lift",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": "Chrome"
+  },
+  {
+    "id": "craft33.text.gold-word-flythrough",
+    "name": "Gold Word Flythrough",
+    "category": "3D In",
+    "motion": "depth",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 30.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ],
+    "material": "Gold"
+  },
+  {
+    "id": "craft33.text.glass-letter-turn",
+    "name": "Glass Letter Turn",
+    "category": "3D In",
+    "motion": "flip",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.75,
+    "overlap": 30.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ],
+    "material": "Glass"
+  },
+  {
+    "id": "craft33.text.plastic-block-drop",
+    "name": "Plastic Block Drop",
+    "category": "3D In",
+    "motion": "drop",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 0.9,
+    "overlap": 18.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ],
+    "material": "Plastic"
+  },
+  {
+    "id": "craft33.text.stone-headline-rise",
+    "name": "Stone Headline Rise",
+    "category": "3D In",
+    "motion": "rise",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 38.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      }
+    ],
+    "material": "Stone"
+  },
+  {
+    "id": "craft33.text.neon-depth-resolve",
+    "name": "Neon Depth Resolve",
+    "category": "3D In",
+    "motion": "depth",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.65,
+    "overlap": 32.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": "Neon"
+  },
+  {
+    "id": "craft33.text.toon-word-fan",
+    "name": "Toon Word Fan",
+    "category": "3D In",
+    "motion": "fan",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.85,
+    "overlap": 22.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": "Toon"
+  },
+  {
+    "id": "craft33.text.beveled-side-entry",
+    "name": "Beveled Side Entry",
+    "category": "3D In",
+    "motion": "perspective",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.75,
+    "overlap": 30.0,
+    "accent": "lift",
+    "effects": [
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": "Chrome"
+  },
+  {
+    "id": "craft33.text.orbiting-gold-type",
+    "name": "Orbiting Gold Type",
+    "category": "3D In",
+    "motion": "orbit",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.75,
+    "overlap": 28.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi36.light.spiralLight",
+        "values": {
+          "angle": 35,
+          "pull": 16,
+          "softness": 1,
+          "intensity": 0.8
+        }
+      }
+    ],
+    "material": "Gold"
+  },
+  {
+    "id": "craft33.text.glass-ribbons-assemble",
+    "name": "Glass Ribbons Assemble",
+    "category": "3D In",
+    "motion": "fold",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 0.8,
+    "overlap": 26.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      },
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ],
+    "material": "Glass"
+  },
+  {
+    "id": "craft33.text.extruded-caption-slam",
+    "name": "Extruded Caption Slam",
+    "category": "3D In",
+    "motion": "slam",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.65,
+    "overlap": 18.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": "Plastic"
+  },
+  {
+    "id": "craft33.text.metal-letter-roller",
+    "name": "Metal Letter Roller",
+    "category": "3D In",
+    "motion": "roll",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.85,
+    "overlap": 20.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ],
+    "material": "Chrome"
+  },
+  {
+    "id": "craft33.text.neon-scaffold-type",
+    "name": "Neon Scaffold Type",
+    "category": "3D In",
+    "motion": "type",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 8.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.stitch",
+        "values": {
+          "first": 7,
+          "second": 5,
+          "third": 1
+        }
+      },
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      }
+    ],
+    "material": "Neon"
+  },
+  {
+    "id": "craft33.text.stone-slab-rotation",
+    "name": "Stone Slab Rotation",
+    "category": "3D In",
+    "motion": "rotate",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 0.7,
+    "overlap": 20.0,
+    "accent": "counter",
+    "effects": [
+      {
+        "id": "awi37.draw.adaptiveHatch",
+        "values": {}
+      }
+    ],
+    "material": "Stone"
+  },
+  {
+    "id": "craft33.text.toon-elastic-blocks",
+    "name": "Toon Elastic Blocks",
+    "category": "3D In",
+    "motion": "elastic",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.9,
+    "overlap": 24.0,
+    "accent": "squeeze",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": "Toon"
+  },
+  {
+    "id": "craft33.text.prismatic-door-type",
+    "name": "Prismatic Door Type",
+    "category": "3D In",
+    "motion": "hinge",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.9,
+    "overlap": 22.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      },
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ],
+    "material": "Glass"
+  },
+  {
+    "id": "craft33.text.gold-tracking-name",
+    "name": "Gold Tracking Name",
+    "category": "3D In",
+    "motion": "tracking",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 35.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": "Gold"
+  },
+  {
+    "id": "craft33.text.chrome-caption-sweep",
+    "name": "Chrome Caption Sweep",
+    "category": "3D In",
+    "motion": "arc",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 28.0,
+    "accent": "trail",
+    "effects": [
+      {
+        "id": "ae.directionalBlur",
+        "values": {
+          "length": 16,
+          "direction": 0
+        }
+      }
+    ],
+    "material": "Chrome"
+  },
+  {
+    "id": "craft33.text.pixel-metal-resolve",
+    "name": "Pixel Metal Resolve",
+    "category": "3D In",
+    "motion": "decode",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.8,
+    "overlap": 25.0,
+    "accent": "lift",
+    "effects": [
+      {
+        "id": "awi31.bitplaneSlip",
+        "values": {}
+      },
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": "Chrome"
+  },
+  {
+    "id": "craft33.text.backlit-block-letter",
+    "name": "Backlit Block Letter",
+    "category": "3D In",
+    "motion": "scale",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.85,
+    "overlap": 20.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi37.retro.ccdSmear",
+        "values": {
+          "length": 35,
+          "threshold": 40,
+          "softness": 1,
+          "gain": 0.8
+        }
+      },
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": "Plastic"
+  },
+  {
+    "id": "craft33.text.chrome-letter-carousel",
+    "name": "Chrome Letter Carousel",
+    "category": "3D Loop",
+    "motion": "spin",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.7,
+    "overlap": 7.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": "Chrome"
+  },
+  {
+    "id": "craft33.text.gold-depth-current",
+    "name": "Gold Depth Current",
+    "category": "3D Loop",
+    "motion": "depthWave",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.85,
+    "overlap": 5.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": "Gold"
+  },
+  {
+    "id": "craft33.text.glass-torsion-caption",
+    "name": "Glass Torsion Caption",
+    "category": "3D Loop",
+    "motion": "twist",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.7,
+    "overlap": 6.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      }
+    ],
+    "material": "Glass"
+  },
+  {
+    "id": "craft33.text.neon-orbit-current",
+    "name": "Neon Orbit Current",
+    "category": "3D Loop",
+    "motion": "spin",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.8,
+    "overlap": 5.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      }
+    ],
+    "material": "Neon"
+  },
+  {
+    "id": "craft33.text.plastic-accordion",
+    "name": "Plastic Accordion",
+    "category": "3D Loop",
+    "motion": "rubber",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 7.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      }
+    ],
+    "material": "Plastic"
+  },
+  {
+    "id": "craft33.text.stone-hanging-words",
+    "name": "Stone Hanging Words",
+    "category": "3D Loop",
+    "motion": "pendulum",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.6,
+    "overlap": 5.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi37.draw.ridgeInk",
+        "values": {}
+      }
+    ],
+    "material": "Stone"
+  },
+  {
+    "id": "craft33.text.toon-letter-bounce",
+    "name": "Toon Letter Bounce",
+    "category": "3D Loop",
+    "motion": "wave",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.0,
+    "overlap": 6.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi36.light.annularGlow",
+        "values": {
+          "radius": 9,
+          "width": 1.2,
+          "softness": 0.8,
+          "intensity": 0.7
+        }
+      }
+    ],
+    "material": "Toon"
+  },
+  {
+    "id": "craft33.text.floating-chrome-line",
+    "name": "Floating Chrome Line",
+    "category": "3D Loop",
+    "motion": "depthWave",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.55,
+    "overlap": 8.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ],
+    "material": "Chrome"
+  },
+  {
+    "id": "craft33.text.glass-focus-drift",
+    "name": "Glass Focus Drift",
+    "category": "3D Loop",
+    "motion": "focusPulse",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.65,
+    "overlap": 5.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      },
+      {
+        "id": "awi36.light.lensGhosts",
+        "values": {
+          "spacing": 40,
+          "count": 3,
+          "dispersion": 2,
+          "softness": 1,
+          "intensity": 0.5
+        }
+      }
+    ],
+    "material": "Glass"
+  },
+  {
+    "id": "craft33.text.gold-tracking-machine",
+    "name": "Gold Tracking Machine",
+    "category": "3D Loop",
+    "motion": "trackingWave",
+    "unit": "characters",
+    "order": "reverse",
+    "amplitude": 0.8,
+    "overlap": 8.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.sequin",
+        "values": {
+          "first": 9,
+          "second": 25,
+          "third": 0.1
+        }
+      }
+    ],
+    "material": "Gold"
+  },
+  {
+    "id": "craft33.text.neon-baseline-current",
+    "name": "Neon Baseline Current",
+    "category": "3D Loop",
+    "motion": "wave",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.7,
+    "overlap": 5.0,
+    "accent": "edge",
+    "effects": [
+      {
+        "id": "awi48.craft.flowLight",
+        "values": {
+          "first": 22,
+          "second": 1,
+          "third": 2,
+          "halo": 5,
+          "energy": 0.8
+        }
+      }
+    ],
+    "material": "Neon"
+  },
+  {
+    "id": "craft33.text.plastic-tumble-chain",
+    "name": "Plastic Tumble Chain",
+    "category": "3D Loop",
+    "motion": "twist",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.9,
+    "overlap": 4.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi.rgbSplit",
+        "values": {
+          "amount": 3,
+          "angle": 15
+        }
+      }
+    ],
+    "material": "Plastic"
+  },
+  {
+    "id": "craft33.text.stone-engraving-turn",
+    "name": "Stone Engraving Turn",
+    "category": "3D Loop",
+    "motion": "spin",
+    "unit": "lines",
+    "order": "forward",
+    "amplitude": 0.55,
+    "overlap": 9.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi37.draw.spiralEngraving",
+        "values": {}
+      }
+    ],
+    "material": "Stone"
+  },
+  {
+    "id": "craft33.text.toon-spring-chain",
+    "name": "Toon Spring Chain",
+    "category": "3D Loop",
+    "motion": "rubber",
+    "unit": "words",
+    "order": "reverse",
+    "amplitude": 0.75,
+    "overlap": 4.0,
+    "accent": "rebound",
+    "effects": [
+      {
+        "id": "awi48.craft.paper",
+        "values": {
+          "first": 5,
+          "second": 2,
+          "third": 0.4
+        }
+      },
+      {
+        "id": "awi37.retro.plateRegistration",
+        "values": {}
+      }
+    ],
+    "material": "Toon"
+  },
+  {
+    "id": "craft33.text.chrome-signal-loop",
+    "name": "Chrome Signal Loop",
+    "category": "3D Loop",
+    "motion": "flicker",
+    "unit": "characters",
+    "order": "random",
+    "amplitude": 0.4,
+    "overlap": 8.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi31.chromaShatter",
+        "values": {}
+      }
+    ],
+    "material": "Chrome"
+  },
+  {
+    "id": "craft33.text.glass-word-pendulum",
+    "name": "Glass Word Pendulum",
+    "category": "3D Loop",
+    "motion": "pendulum",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 0.75,
+    "overlap": 7.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi36.light.spectralHalo",
+        "values": {
+          "radius": 10,
+          "dispersion": 55,
+          "width": 1.4,
+          "softness": 0.8,
+          "intensity": 0.8
+        }
+      },
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": "Glass"
+  },
+  {
+    "id": "craft33.text.gold-foil-breath",
+    "name": "Gold Foil Breath",
+    "category": "3D Loop",
+    "motion": "breath",
+    "unit": "words",
+    "order": "forward",
+    "amplitude": 0.8,
+    "overlap": 6.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi48.craft.sequin",
+        "values": {
+          "first": 9,
+          "second": 25,
+          "third": 0.1
+        }
+      },
+      {
+        "id": "awi48.craft.junctions",
+        "values": {
+          "first": 18,
+          "second": 1,
+          "third": 0.45,
+          "gain": 10,
+          "halo": 5,
+          "energy": 0.7
+        }
+      }
+    ],
+    "material": "Gold"
+  },
+  {
+    "id": "craft33.text.neon-focus-orbit",
+    "name": "Neon Focus Orbit",
+    "category": "3D Loop",
+    "motion": "depthWave",
+    "unit": "characters",
+    "order": "reverse",
+    "amplitude": 0.6,
+    "overlap": 7.0,
+    "accent": "focus",
+    "effects": [
+      {
+        "id": "awi.deepGlow",
+        "values": {
+          "radius": 28,
+          "exposure": -0.6,
+          "threshold": 12,
+          "mix": 70
+        }
+      },
+      {
+        "id": "awi36.light.spiralLight",
+        "values": {
+          "angle": 35,
+          "pull": 16,
+          "softness": 1,
+          "intensity": 0.8
+        }
+      }
+    ],
+    "material": "Neon"
+  },
+  {
+    "id": "craft33.text.plastic-rattle-blocks",
+    "name": "Plastic Rattle Blocks",
+    "category": "3D Loop",
+    "motion": "rattle",
+    "unit": "words",
+    "order": "random",
+    "amplitude": 0.5,
+    "overlap": 5.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi31.rowDuplicate",
+        "values": {}
+      }
+    ],
+    "material": "Plastic"
+  },
+  {
+    "id": "craft33.text.metal-wave-ribbon",
+    "name": "Metal Wave Ribbon",
+    "category": "3D Loop",
+    "motion": "wave",
+    "unit": "characters",
+    "order": "forward",
+    "amplitude": 1.1,
+    "overlap": 10.0,
+    "accent": "none",
+    "effects": [
+      {
+        "id": "awi46.spectral.dispersion",
+        "values": {
+          "first": 5,
+          "angle": 0
+        }
+      },
+      {
+        "id": "awi48.craft.prismInk",
+        "values": {
+          "first": 3,
+          "second": 1,
+          "third": 0.06,
+          "halo": 4,
+          "energy": 0.6
+        }
+      }
+    ],
+    "material": "Chrome"
+  }
+]
