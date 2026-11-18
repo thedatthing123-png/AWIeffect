@@ -44,6 +44,7 @@ final class EffectTests: XCTestCase {
 
     /// Colorful test scene with hard edges, brights, darks and a green "screen" area.
     private func scene(effect: EffectInstance?, onAdjustment: Bool = false) -> Project {
+        if let effect,effect.typeID.hasPrefix("awi44.finish.") { return DistanceEffectTests.scene(effect,onAdjustment:onAdjustment) }
         if let effect,effect.typeID.hasPrefix("awi42.projection.") { return ProjectionEffectTests.scene(effect,onAdjustment:onAdjustment) }
         if let effect,effect.typeID.hasPrefix("awi41.contour.") { return DistanceEffectTests.scene(effect,onAdjustment:onAdjustment) }
         if let effect,effect.typeID.hasPrefix("awi39.data.") { return DataEffectTests.scene(effect,onAdjustment:onAdjustment) }
@@ -199,6 +200,7 @@ final class EffectTests: XCTestCase {
             if d.id.hasPrefix("awi31.flow") { comparison=try render(r,FlowEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi39.data.") { comparison=try render(r,DataEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi41.contour.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
+            if d.id.hasPrefix("awi44.finish.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi42.projection.") { comparison=try render(r,ProjectionEffectTests.scene(nil,sourceID:d.id)) }
             if ["awi33.alphaDither","awi33.alphaSteps"].contains(d.id) {
                 var disabled=visible(d); disabled.isEnabled=false
@@ -223,6 +225,7 @@ final class EffectTests: XCTestCase {
             if d.id.hasPrefix("awi31.flow") { comparison=try render(r,FlowEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi39.data.") { comparison=try render(r,DataEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi41.contour.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
+            if d.id.hasPrefix("awi44.finish.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi42.projection.") { comparison=try render(r,ProjectionEffectTests.scene(nil,sourceID:d.id)) }
             if EffectFixtureRequirements.detailIDs.contains(d.id) {
                 var disabled=visible(d);disabled.isEnabled=false
@@ -243,6 +246,7 @@ final class EffectTests: XCTestCase {
             if d.id.hasPrefix("awi31.flow") { comparison=try render(r,FlowEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi39.data.") { comparison=try render(r,DataEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi41.contour.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
+            if d.id.hasPrefix("awi44.finish.") { comparison=try render(r,DistanceEffectTests.scene(nil)) }
             if d.id.hasPrefix("awi42.projection.") { comparison=try render(r,ProjectionEffectTests.scene(nil,sourceID:d.id)) }
             if ["awi33.alphaDither","awi33.alphaSteps"].contains(d.id) {
                 var reference=scene(effect:e)

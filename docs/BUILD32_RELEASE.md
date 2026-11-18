@@ -26,7 +26,7 @@ ExpansionRenderTests enforces the
 count gate; the current catalog is still below it. Passing the count gate alone
 does not prove distinctness, visual quality or performance.
 
-Current source enumeration is 838 definitions, including the legacy catalog.
+Current source enumeration is 846 definitions, including the legacy catalog.
 This is a source inventory, not a verified runtime count or a quality result. The
 remaining distance to 900 must be real, distinct tools; do not fill it with aliases
 or renamed settings. The all-effects test remains the runtime count authority.
@@ -42,7 +42,7 @@ Tests cover defaults, imported parameter fallbacks, bypass and uniform alignment
 Swift syntax checks pass locally; Metal compilation, rendered results and device
 performance remain unverified. Semi-transparent overlapping surfaces use ordinary
 depth-tested blending, not order-independent transparency. This is still a partial
-expansion checkpoint: the remaining 62 definitions and release gates are open.
+expansion checkpoint: the remaining 54 definitions and release gates are open.
 
 Contour family 41 adds ten distance-driven tools: signed distance and nearest
 boundary vectors, nearest-color extension, boundary pull, contour bands, medial
@@ -62,6 +62,12 @@ response and a frame-history grid. See
 [TEMPORAL_ANALYSIS_EFFECTS.md](TEMPORAL_ANALYSIS_EFFECTS.md). Tests include known
 temporal sample values against independent scalar oracles. Windows are bounded
 to eight frames (three for acceleration); runtime/visual/device checks are pending.
+
+Surface finish family 44 adds eight image-space materials: brushed, hammered,
+woven, cracked glaze, pooled ink, prism grooves, folded foil and iridescent ridges.
+See [SURFACE_FINISH_EFFECTS.md](SURFACE_FINISH_EFFECTS.md). CPU design references
+were inspected and weak defaults retuned. Coverage, fallback, bypass and flat-plane
+GPU lighting-oracle tests are added; actual GPU and moving-render review is pending.
 
 ## Release gates
 

@@ -75,6 +75,7 @@ enum EffectSection: String, CaseIterable, Identifiable {
         if d.id.hasPrefix("awi40.surface.") { return .threeD }
         if d.id.hasPrefix("awi42.projection.") { return .threeD }
         if d.id.hasPrefix("awi43.time.") { return .time }
+        if d.id.hasPrefix("awi44.finish.") { return .threeD }
         if d.id.hasPrefix("awi41.contour.") {
             if ["awi41.contour.map","awi41.contour.vectors"].contains(d.id) { return .data }
             if d.id=="awi41.contour.light" { return .glow }
