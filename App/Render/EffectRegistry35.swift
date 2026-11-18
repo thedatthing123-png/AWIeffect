@@ -54,10 +54,12 @@ extension EffectRegistry {
             .number("speed","Speed",0.5,-3,3),.number("turbulence","Drift",0.6,0,2),.number("seed","Seed",3,0,1000,step:1)],particle:true,color:first,color2:second)
     }
     private static func generator35(_ id:String,_ name:String,_ mode:UInt32,_ summary:String,_ controls:[ParamDef],particle:Bool,color:RGBA,color2:RGBA) -> EffectDefinition {
-        EffectDefinition(id:"awi35."+id,name:name,category:.generate,aeMatchNames:[],summary:summary,
-            params:controls+[.point("center","Center",Vec2(0.5,0.5)),.angle("angle","Direction",0),.color("color","Color",color)]
-                +(particle ? [.color("color2","End Color",color2)] : [])
-                + [.number("blend","Blend",100,0,100,unit:"%"),.toggle("only","Effect Only",false)],
+        var parameters=controls
+        parameters += [.point("center","Center",Vec2(0.5,0.5)),.angle("angle","Direction",0),.color("color","Color",color)]
+        if particle { parameters.append(.color("color2","End Color",color2)) }
+        parameters += [.number("blend","Blend",100,0,100,unit:"%"),.toggle("only","Effect Only",false)]
+        return EffectDefinition(id:"awi35."+id,name:name,category:.generate,aeMatchNames:[],summary:summary,
+            params:parameters,
             stage:.pixels { ctx in
                 let center=ctx.effect.params["center"]?.point(at:ctx.time) ?? Vec2(0.5,0.5)
                 var p=EffectParams()
