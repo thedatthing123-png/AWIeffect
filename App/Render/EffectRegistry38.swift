@@ -3,6 +3,54 @@ import Metal
 import simd
 
 extension EffectRegistry {
+    static let surfaces38:[EffectDefinition] = [
+        EffectDefinition(id:"awi38.surface.contourBloom",name:"Contour Bloom",category:.color,aeMatchNames:[],
+            summary:"Turn image contours into a sharp luminous core and a separately colored multi-scale halo.",
+            params:[.number("detail","Contour Scale",3,0.5,30,unit:"px"),
+                .number("threshold","Contour Threshold",10,0,100,unit:"%"),
+                .number("softness","Threshold Softness",15,1,100,unit:"%"),
+                .number("radius","Halo Radius",35,1,300,unit:"px"),
+                .number("core","Core Light",1.5,0,8),.number("halo","Halo Light",2,0,8),
+                .color("color","Core Color",RGBA(0.7,0.95,1)),.color("color2","Halo Color",RGBA(0.2,0.35,1)),
+                .number("blend","Blend",100,0,100,unit:"%"),.toggle("only","Effect Only",false)],
+            margin:{ e,t in 3*(e.params["radius"]?.number(at:t) ?? 35) },stage:.pixels { ctx in
+                if v29(ctx,"blend")<=0 { return ctx.input }
+                let soft=ctx.gpu.gaussian(ctx,input:ctx.input,sigma:v29(ctx,"detail")*ctx.unit)
+                var p=EffectParams();p.a=SIMD4(pc29(ctx,"threshold"),pc29(ctx,"softness"),0,0)
+                let contour=ctx.temp()
+                ctx.gpu.run("fxContourSource38",ctx.cb,textures:[ctx.input,contour,soft],params:p,grid:contour)
+                let halo=lightBloom25(ctx,contour,radius:v29(ctx,"radius")*ctx.unit,falloff:0.6)
+                return surfaceComposite38(ctx,base:ctx.input,core:contour,halo:halo)
+            }),
+        EffectDefinition(id:"awi38.surface.glassRelief",name:"Glass Relief",category:.distort,aeMatchNames:[],
+            summary:"Image brightness shapes a refracting relief with movable specular light and a separately softened reflection halo.",
+            params:[.number("detail","Surface Smoothing",2,0.5,20,unit:"px"),
+                .number("height","Relief Height",18,-80,80),.number("refraction","Refraction",1.2,0,4),
+                .angle("angle","Light Direction",-40),.number("elevation","Light Elevation",35,5,85,unit:"°"),
+                .number("gloss","Gloss",32,2,128),.number("radius","Reflection Halo",12,1,120,unit:"px"),
+                .number("core","Reflection",1.5,0,8),.number("halo","Halo Light",0.8,0,8),
+                .color("color","Reflection Color",RGBA(0.85,0.95,1)),.color("color2","Halo Color",RGBA(0.4,0.6,1)),
+                .number("blend","Blend",100,0,100,unit:"%"),.toggle("only","Effect Only",false)],
+            margin:{ e,t in 3*(e.params["radius"]?.number(at:t) ?? 12)+abs(e.params["height"]?.number(at:t) ?? 18)*(e.params["refraction"]?.number(at:t) ?? 1.2) },
+            stage:.pixels { ctx in
+                if v29(ctx,"blend")<=0 { return ctx.input }
+                let soft=ctx.gpu.gaussian(ctx,input:ctx.input,sigma:v29(ctx,"detail")*ctx.unit)
+                var p=EffectParams();p.a=SIMD4(f29(ctx,"height"),f29(ctx,"refraction")*Float(ctx.unit),f29(ctx,"gloss"),0)
+                p.b=SIMD4(f29(ctx,"angle") * .pi/180,f29(ctx,"elevation") * .pi/180,Float(max(0.5,ctx.unit)),0)
+                let refraction=ctx.temp(),reflection=ctx.temp()
+                ctx.gpu.run("fxGlassSurface38",ctx.cb,textures:[ctx.input,refraction,soft,reflection],params:p,grid:refraction)
+                let halo=ctx.gpu.gaussian(ctx,input:reflection,sigma:v29(ctx,"radius")*ctx.unit)
+                return surfaceComposite38(ctx,base:refraction,core:reflection,halo:halo)
+            })
+    ]
+    private static func surfaceComposite38(_ ctx:EffectContext,base:MTLTexture,core:MTLTexture,halo:MTLTexture) -> MTLTexture {
+        var p=EffectParams();p.a=SIMD4(f29(ctx,"core"),f29(ctx,"halo"),pc29(ctx,"blend"),b29(ctx,"only") ? 1:0)
+        p.b=col29(ctx,"color");p.c=col29(ctx,"color2")
+        let output=ctx.temp()
+        ctx.gpu.run("fxSurfaceComposite38",ctx.cb,textures:[ctx.input,output,base,core,halo],params:p,grid:output)
+        return output
+    }
+
     static let batch38:[EffectDefinition]=[
         motionLight38("motionGlow","Motion Glow",0,"Changes between actual upstream frames emit a multi-scale glow while the current image remains intact.",
             [.number("radius","Glow Radius",60,1,400,unit:"px"),.number("falloff","Halo Falloff",60,0,100,unit:"%")]),

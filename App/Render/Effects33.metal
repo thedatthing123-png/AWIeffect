@@ -4,6 +4,69 @@ struct EffectParams { float4 a; float4 b; float4 c; float4 d; uint4 i; };
 constexpr sampler matte33(address::clamp_to_zero,filter::linear,coord::pixel);
 static float3 straight33(float4 value) { return value.a>.00001 ? value.rgb/value.a : float3(0); }
 static float luma33(float3 value) { return dot(value,float3(.2126,.7152,.0722)); }
+constexpr sampler feature33(address::clamp_to_edge,filter::linear,coord::pixel);
+
+static float featureLight33(texture2d<half,access::sample> source,float2 uv) {
+    // Coverage is part of the signal: a silhouette edge must be detectable even
+    // when the unpremultiplied foreground itself has constant brightness.
+    return luma33(float3(source.sample(feature33,uv).rgb));
+}
+kernel void fxStructureTensor33(texture2d<half,access::sample> source [[texture(0)]],
+                               texture2d<half,access::write> output [[texture(1)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float2 uv=float2(gid)+.5;
+    // Central derivatives, followed by Gaussian tensor integration in Swift.
+    float dx=(featureLight33(source,uv+float2(1,0))-featureLight33(source,uv-float2(1,0)))*.5;
+    float dy=(featureLight33(source,uv+float2(0,1))-featureLight33(source,uv-float2(0,1)))*.5;
+    output.write(half4(float4(clamp(float3(dx*dx,dx*dy,dy*dy),float3(-65504),float3(65504)),1)),gid);
+}
+kernel void fxFeatureMatte33(texture2d<half,access::sample> source [[texture(0)]],
+                           texture2d<half,access::write> output [[texture(1)]],
+                           texture2d<half,access::sample> field [[texture(2)]],
+                           constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float2 uv=float2(gid)+.5;
+    float4 original=float4(source.sample(feature33,uv));
+    if(original.a<=0 || p.b.x<=0) { output.write(half4(original),gid);return; }
+    float response=0;
+    if(p.i.x<4) {
+        float3 tensor=float3(field.sample(feature33,uv).rgb);
+        float a=max(0.0,tensor.x),b=tensor.y,c=max(0.0,tensor.z);
+        float trace=a+c,det=max(0.0,a*c-b*b);
+        float discriminant=sqrt(max(0.0,(a-c)*(a-c)+4*b*b));
+        if(p.i.x==0) response=max(0.0,det-.04*trace*trace)/max(trace,1.e-8);
+        if(p.i.x==1) response=discriminant/max(trace,1.e-8)*sqrt(trace);
+        if(p.i.x==2) response=4*det/max(trace*trace,1.e-8)*sqrt(trace);
+        if(p.i.x==3) response=sqrt(trace);
+    } else {
+        int side=3+2*int(min(p.i.y,2u)),count=side*side;
+        float samples[49];float histogram[8]={0};float mean=0;
+        for(int y=0;y<side;y++) for(int x=0;x<side;x++) {
+            float2 offset=(float2(x,y)/float(side-1)*2-1)*p.a.x;
+            float value=featureLight33(source,uv+offset);
+            samples[y*side+x]=value;mean+=value/float(count);
+            int bin=int(clamp(floor(value*8),0.0,7.0));histogram[bin]+=1.0/float(count);
+        }
+        float variance=0,third=0,fourth=0,entropy=0;
+        for(int n=0;n<count;n++) {
+            float d=samples[n]-mean,d2=d*d;
+            variance+=d2/float(count);third+=d2*d/float(count);fourth+=d2*d2/float(count);
+        }
+        for(int n=0;n<8;n++) if(histogram[n]>0) entropy-=histogram[n]*log2(histogram[n]);
+        if(p.i.x==4) response=sqrt(max(0.0,variance));
+        if(p.i.x==5) response=entropy/3;
+        // Flat fields have no statistical shape. Weight standardized moments by
+        // deviation so numerical noise cannot turn them into opaque masks.
+        if(p.i.x==6) response=abs(third)/max(variance,1.e-8);
+        if(p.i.x==7) response=max(0.0,fourth/max(variance*variance,1.e-8)-3)*sqrt(max(0.0,variance))*.25;
+    }
+    response=clamp(response*p.a.y,0.0,1.0);
+    float width=max(.0001,p.a.w*.5);
+    float mask=smoothstep(p.a.z-width,p.a.z+width,response);
+    if(p.i.z!=0) mask=1-mask;
+    float4 result=p.i.w==0 ? original*mask:float4(float3(mask*original.a),original.a);
+    output.write(half4(mix(original,result,p.b.x)),gid);
+}
 
 kernel void fxRGBTime33(texture2d<half,access::read> red [[texture(0)]],
                        texture2d<half,access::write> output [[texture(1)]],

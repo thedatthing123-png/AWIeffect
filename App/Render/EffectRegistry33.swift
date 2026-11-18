@@ -3,6 +3,43 @@ import Metal
 import simd
 
 extension EffectRegistry {
+    static let featureMattes33:[EffectDefinition] = [
+        featureMatte33("corner","Corner Response Matte",0,"Isolate corner responses from a smoothed gradient tensor, rather than every edge."),
+        featureMatte33("coherence","Coherent Edge Matte",1,"Select neighborhoods with aligned gradients, useful for long strokes and line structures."),
+        featureMatte33("junction","Junction Matte",2,"Select mixed-direction neighborhoods where strokes intersect or texture changes direction."),
+        featureMatte33("energy","Gradient Energy Matte",3,"Select gradient energy over a controllable integration area without keying by brightness."),
+        featureMatte33("deviation","Texture Deviation Matte",4,"Select local contrast using sampled luminance standard deviation."),
+        featureMatte33("entropy","Texture Entropy Matte",5,"Select varied texture using an eight-bin neighborhood histogram."),
+        featureMatte33("skewness","Texture Skew Matte",6,"Select neighborhoods with an asymmetric distribution of light and dark samples."),
+        featureMatte33("kurtosis","Texture Peak Matte",7,"Select sparse intensity outliers using the neighborhood's standardized fourth moment.")
+    ]
+    private static func featureMatte33(_ id:String,_ name:String,_ mode:UInt32,_ summary:String) -> EffectDefinition {
+        var controls:[ParamDef] = [.number("radius","Neighborhood",4,0.5,40,unit:"px"),
+            .number("gain","Sensitivity",mode==0 ? 600:4,0,mode==0 ? 2000:40),
+            .number("threshold","Threshold",25,0,100,unit:"%"),
+            .number("softness","Softness",20,1,100,unit:"%")]
+        if mode>=4 { controls.append(.choice("quality","Neighborhood Samples",["9","25","49"],1)) }
+        controls += [.toggle("invert","Invert Matte",false),.choice("output","Output",["Cutout","Matte"],0),
+            .number("blend","Blend",100,0,100,unit:"%")]
+        return EffectDefinition(id:"awi33.feature."+id,name:name,category:.keying,aeMatchNames:[],summary:summary,
+            params:controls,stage:.pixels { ctx in
+                if v29(ctx,"blend")<=0 { return ctx.input }
+                let field:MTLTexture
+                if mode<4 {
+                    let tensor=ctx.temp()
+                    ctx.gpu.run("fxStructureTensor33",ctx.cb,textures:[ctx.input,tensor],grid:tensor)
+                    field=ctx.gpu.gaussian(ctx,input:tensor,sigma:Double(px29(ctx,"radius")))
+                } else { field=ctx.input }
+                var p=EffectParams()
+                p.a=SIMD4(px29(ctx,"radius"),f29(ctx,"gain"),pc29(ctx,"threshold"),pc29(ctx,"softness"))
+                p.b.x=pc29(ctx,"blend")
+                p.i=SIMD4(mode,UInt32(ch29(ctx,"quality")),b29(ctx,"invert") ? 1:0,UInt32(ch29(ctx,"output")))
+                let output=ctx.temp()
+                ctx.gpu.run("fxFeatureMatte33",ctx.cb,textures:[ctx.input,output,field],params:p,grid:output)
+                return output
+            })
+    }
+
     static let temporalIDs33:Set<String>=["awi33.time.slice","awi33.time.difference","awi33.time.median",
         "awi33.time.echo","awi33.time.hold","awi33.time.rgb","awi33.time.exposure","awi33.time.extrema","awi37.retro.phosphor",
         "awi38.motionGlow","awi38.motionStreaks","awi38.motionRays","awi38.motionRings"]

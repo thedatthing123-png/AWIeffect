@@ -198,3 +198,31 @@ cleanup and matte extraction, not an alpha choke or replacement for Remove BG.
 Neighborhoods are sampled in image pixels, with replicated buffer boundaries;
 source transparency contributes zero light. Fine antialiased edges retain their
 original coverage. Half-float intermediate scalar textures avoid 8-bit clipping.
+
+## Structure and texture mattes (batch 33)
+
+- Harris and Stephens, *A Combined Corner and Edge Detector*, AVC 1988:
+  https://www.bmva.org/bmvc/1988/avc-88-023.html
+- Local texture histogram entropy:
+  https://www.mathworks.com/help/images/ref/entropyfilt.html
+
+Independent central-derivative tensors are Gaussian integrated, then converted to
+corner response, directional coherence, isotropy/junction and gradient energy.
+The corner tool exposes a response field, not discrete nonmaximum-suppressed
+tracking points. Texture tools sample 9/25/49 locations across the chosen radius;
+this is a sparse neighborhood at large radii, not a dense all-pixel histogram.
+Skew and excess-kurtosis responses are deviation weighted to suppress unstable
+standardized moments in flat regions. Eight entropy bins use a bounded SDR
+histogram; tensor and moment paths retain HDR input. Coverage contributes to the
+signal so constant-color silhouettes still have detectable edges.
+
+## Surface composites (batch 38)
+
+Contour Bloom separates a difference-of-surround contour source from a four-scale
+halo. Sharp/halo intensities and color opacities remain independent. Glass Relief
+uses derivatives of smoothed image brightness as a height-field normal, offsets
+source sampling through that field, and shades a specular halfway-vector highlight
+before a separate halo pass. This is an artistic image-space relief, not ray-traced
+glass or a physical thickness simulation. Both composite in an approximate gamma
+2.2 linear space and retain HDR headroom rather than clamping each light channel to
+one. Their default appearance still requires the combined GPU/render review.

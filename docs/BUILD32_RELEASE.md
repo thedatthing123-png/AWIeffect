@@ -25,7 +25,7 @@ requires over 1,000 working, distinct definitions. ExpansionRenderTests enforces
 count gate; the current catalog is still below it. Passing the count gate alone
 does not prove distinctness, visual quality or performance.
 
-Current source enumeration is 732 definitions, including the legacy catalog.
+Current source enumeration is 742 definitions, including the legacy catalog.
 This is a source inventory, not a verified runtime count or a quality result. The
 remaining distance to 1,001 must be real, distinct tools; do not fill it with aliases
 or renamed settings. The all-effects test remains the runtime count authority.
@@ -72,3 +72,16 @@ Echo composites and extrema modes remain controls within their tool, not additio
 catalog entries. Tests now include held-clock stability and zero-delay channel
 reconstruction. Artifact generation includes the new temporal tools. No combined
 run has been dispatched for this incomplete checkpoint.
+
+Eight feature mattes add structure-tensor corner/coherence/junction/energy responses
+and sampled texture deviation/entropy/skew/peak responses. These are editable
+building blocks for isolating image structure; they do not identify semantic
+objects or replace AI selection. Source coverage is retained, empty fields stay
+empty, and the test matrix includes flat-field rejection and parameter fallbacks.
+
+Two further composite designs: Contour Bloom (separate sharp core and colored
+multi-scale halo) and Glass Relief (brightness-driven refraction, specular surface
+lighting and softened reflection halo). Their light is added in an approximate
+linear working space, with source coverage and both color opacities respected.
+Browser placement is explicit. Moving-review generation now covers every effect
+in batches 30–38, with a control/range manifest, instead of only selected examples.

@@ -73,8 +73,13 @@ enum EffectSection: String, CaseIterable, Identifiable {
         if d.id.hasPrefix("awi30.") { return .backgrounds }
         if d.id.hasPrefix("awi33.time.") { return .time }
         if d.id.hasPrefix("awi37.draw.") { return .stylize }
+        if d.id.hasPrefix("awi37.morph.") {
+            return ["awi37.morph.whiteHat","awi37.morph.blackHat","awi37.morph.gradient"].contains(d.id) ? .keying:.blur
+        }
         if d.id.hasPrefix("awi37.retro.") { return .retro }
         if d.id.hasPrefix("awi38.motion") { return .glow }
+        if d.id=="awi38.surface.contourBloom" { return .glow }
+        if d.id=="awi38.surface.glassRelief" { return .distort }
         if d.id.hasPrefix("awi32.liquid") { return .liquid }
         if d.id.hasPrefix("awi32.") { return .distort }
         if d.id.hasPrefix("awi35.particle") { return .particles }

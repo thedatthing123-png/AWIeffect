@@ -16,9 +16,21 @@ final class ExpansionRenderTests: XCTestCase {
             EffectRegistry.batch33,EffectRegistry.time33,EffectRegistry.batch34,EffectRegistry.cameraTransitions34,
             EffectRegistry.batch35,EffectRegistry.batch36,EffectRegistry.lights36,EffectRegistry.batch37,
             EffectRegistry.cleanup37,EffectRegistry.frequency37,EffectRegistry.drawing37,EffectRegistry.retro37,
-            EffectRegistry.textGeometry37,EffectRegistry.batch38,EffectRegistry.conformal32,EffectRegistry.morphology37,EffectRegistry.sampling33]
+            EffectRegistry.textGeometry37,EffectRegistry.batch38,EffectRegistry.conformal32,EffectRegistry.morphology37,EffectRegistry.sampling33,
+            EffectRegistry.featureMattes33,EffectRegistry.surfaces38]
         let newDefinitions=families.flatMap{$0}
         XCTAssertEqual(Set(newDefinitions.map(\.name)).count,newDefinitions.count,"New effects need distinct names and behaviors")
+    }
+    func testNewFamiliesHaveIntentionalBrowserSections() {
+        for definition in EffectRegistry.conformal32 { XCTAssertEqual(EffectSection.of(definition),.distort,definition.name) }
+        for definition in EffectRegistry.sampling33 { XCTAssertEqual(EffectSection.of(definition),.time,definition.name) }
+        for definition in EffectRegistry.featureMattes33 { XCTAssertEqual(EffectSection.of(definition),.keying,definition.name) }
+        XCTAssertEqual(EffectSection.of(EffectRegistry.surfaces38[0]),.glow)
+        XCTAssertEqual(EffectSection.of(EffectRegistry.surfaces38[1]),.distort)
+        for definition in EffectRegistry.morphology37 {
+            let matte=["awi37.morph.whiteHat","awi37.morph.blackHat","awi37.morph.gradient"].contains(definition.id)
+            XCTAssertEqual(EffectSection.of(definition),matte ? .keying:.blur,definition.name)
+        }
     }
     private func scene(_ effect: EffectInstance?) -> Project {
         var project=Project.new(name:"Expansion",width:192,height:144,fps:30,duration:3,background:RGBA(0,0,0,0))
@@ -250,6 +262,54 @@ final class ExpansionRenderTests: XCTestCase {
             XCTAssertEqual(original, try pixels(effect), definition.name)
         }
     }
+    func testFeatureMattesFallbacksAndBypass() throws {
+        let original=try pixels(nil)
+        for definition in EffectRegistry.featureMattes33 {
+            var effect=definition.makeInstance()
+            let result=try pixels(effect)
+            XCTAssertGreaterThan(difference(original,result),0.05,definition.name)
+            XCTAssertEqual(result,try pixels(EffectInstance(typeID:definition.id,params:[:])),definition.name)
+            effect.params["blend"] = .number(Animated(0))
+            XCTAssertEqual(original,try pixels(effect),definition.name)
+        }
+    }
+    func testSurfaceCompositesFallbackBypassAndEmptyInput() throws {
+        guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        let original=try pixels(nil)
+        for definition in EffectRegistry.surfaces38 {
+            var effect=definition.makeInstance()
+            let result=try pixels(effect)
+            XCTAssertGreaterThan(difference(original,result),0.05,definition.name)
+            XCTAssertEqual(result,try pixels(EffectInstance(typeID:definition.id,params:[:])),definition.name)
+            effect.params["blend"] = .number(Animated(0))
+            XCTAssertEqual(original,try pixels(effect),definition.name)
+            for only in [false,true] {
+                effect=definition.makeInstance();effect.params["only"] = .toggle(only)
+                var project=scene(effect)
+                for index in project.layers.indices where project.layers[index].content != .adjustment {
+                    project.layers[index].fill=Animated(RGBA(0,0,0,0))
+                }
+                let empty=try XCTUnwrap(renderer.renderPixels(project:project,time:0.4,
+                    preserveAlpha:true,mediaURL:{URL(fileURLWithPath:$0)})).rgba
+                XCTAssertTrue(empty.allSatisfy{$0==0},definition.name)
+            }
+        }
+    }
+    func testFlatFieldsProduceNoFeatureMatte() throws {
+        guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        for definition in EffectRegistry.featureMattes33 {
+            var project=Project.new(name:"Flat",width:32,height:32,fps:30,duration:1,background:RGBA(0,0,0,0))
+            var layer=project.makeLayer(name:"Uniform",content:.solid,size:Vec2(32,32))
+            layer.fill=Animated(RGBA(0.37,0.42,0.51));layer.effects=[definition.makeInstance()]
+            project.layers=[layer]
+            let result=try XCTUnwrap(renderer.renderPixels(project:project,time:0.4,
+                preserveAlpha:true,mediaURL:{URL(fileURLWithPath:$0)})).rgba
+            // Ignore the rasterizer's outer edge, which is a real silhouette.
+            for y in 10..<22 { for x in 10..<22 {
+                XCTAssertEqual(result[(y*32+x)*4+3],0,definition.name)
+            }}
+        }
+    }
     func testMorphologyRemovesAnIsolatedSpeckAndFillsAnIsolatedHole() throws {
         guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
         for opening in [true,false] {
@@ -361,7 +421,7 @@ final class ExpansionRenderTests: XCTestCase {
         let folder=URL(fileURLWithPath:"/tmp/awi-expansion",isDirectory:true)
         try FileManager.default.createDirectory(at:folder,withIntermediateDirectories:true)
         let families:[(String,[EffectDefinition])]=[
-            ("matte",EffectRegistry.batch33),
+            ("matte",EffectRegistry.batch33+EffectRegistry.featureMattes33),
             ("time",EffectRegistry.time33+EffectRegistry.sampling33),
             ("transition",EffectRegistry.batch34+EffectRegistry.cameraTransitions34),
             ("shape-particle",EffectRegistry.batch35),
@@ -370,7 +430,7 @@ final class ExpansionRenderTests: XCTestCase {
             ("drawing",EffectRegistry.drawing37),("sort",EffectRegistry.sorting31),
             ("retro",EffectRegistry.retro37),("text-geometry",EffectRegistry.textGeometry37),
             ("motion-light",EffectRegistry.batch38),("coordinate-map",EffectRegistry.conformal32),
-            ("morphology",EffectRegistry.morphology37)
+            ("morphology",EffectRegistry.morphology37),("surface-composite",EffectRegistry.surfaces38)
         ]
         for (name,definitions) in families {
             let height=CGFloat((definitions.count+3)/4)*180
@@ -387,7 +447,7 @@ final class ExpansionRenderTests: XCTestCase {
             try XCTUnwrap(sheet.pngData()).write(to:folder.appendingPathComponent(name+"-contact-sheet.png"))
         }
         // Animate actual editable controls, not a pan over a static contact sheet.
-        let previews:[(String,String,Double,Double)]=[
+        var previews:[(String,String,Double,Double)]=[
             ("awi33.localContrast","threshold",5,35),("awi33.fringeMatte","radius",1,20),
             ("awi33.lumaBand","threshold",15,85),("awi33.lightWrap","radius",2,30),
             ("awi33.alphaSteps","band",2,12),
@@ -419,6 +479,31 @@ final class ExpansionRenderTests: XCTestCase {
             ("awi38.motionGlow","radius",10,100),("awi38.motionStreaks","angle",0,120),
             ("awi38.motionRays","reach",5,90),("awi38.motionRings","radius",2,40)
         ]
+        // Every expansion effect gets motion review, not just the handpicked
+        // representatives above. Animate a meaningful authored control around its
+        // default; preserve explicit review ranges for effects that need them.
+        let explicitIDs=Set(previews.map{$0.0})
+        let expansion=EffectRegistry.all.filter { definition in
+            (30...38).contains { definition.id.hasPrefix("awi\($0).") }
+        }
+        for definition in expansion where !explicitIDs.contains(definition.id) {
+            for parameter in definition.params where !["blend","mix"].contains(parameter.id) {
+                if case .number(let low,let high,_,_)=parameter.kind,
+                   case .number(let value)=parameter.defaultValue {
+                    let center=value.staticValue,delta=(high-low)*0.15
+                    previews.append((definition.id,parameter.id,max(low,center-delta),min(high,center+delta)))
+                    break
+                }
+                if case .angle=parameter.kind,case .number(let value)=parameter.defaultValue {
+                    previews.append((definition.id,parameter.id,value.staticValue-90,value.staticValue+90));break
+                }
+            }
+        }
+        XCTAssertEqual(Set(previews.map{$0.0}).intersection(Set(expansion.map(\.id))).count,expansion.count,
+            "Every expansion effect needs an authored motion review")
+        let manifest=previews.map { ["id":$0.0,"parameter":$0.1,"start":$0.2,"end":$0.3] as [String:Any] }
+        try JSONSerialization.data(withJSONObject:manifest,options:[.prettyPrinted,.sortedKeys])
+            .write(to:folder.appendingPathComponent("motion-review.json"))
         for (id,key,start,end) in previews {
             let definition=try XCTUnwrap(EffectRegistry.definition(id))
             XCTAssertTrue(definition.params.contains{$0.id==key},"Review control missing: \(id).\(key)")
