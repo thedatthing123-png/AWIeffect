@@ -171,7 +171,7 @@ final class EffectGPU {
     init(device: MTLDevice, library: MTLLibrary) throws {
         self.device = device
         for name in [
-                     "fxSolveFlow31", "fxMeasuredFlow31", "fxContourSource38", "fxGlassSurface38", "fxSurfaceComposite38",
+                     "fxNonlinear37", "fxDCTBlocks37", "fxDoGInk37", "fxSolveFlow31", "fxMeasuredFlow31", "fxContourSource38", "fxGlassSurface38", "fxSurfaceComposite38",
                      "fxStructureTensor33", "fxFeatureMatte33", "fxRGBTime33", "fxTemporalAccumulate33", "fxTemporalFinish33",
                      "fxExtrema37", "fxMorphology37", "fxConformal32", "fxChangeComposite38", "fxChangeSource38", "fxRetro37", "fxPhosphor37",
                      "fxSegmentSort31", "fxDrawing37", "fxTimeSlice33", "fxTimeDifference33",
@@ -204,6 +204,18 @@ final class EffectGPU {
         let across=params.i.x==0 ? output.height:output.width
         encoder.dispatchThreadgroups(MTLSize(width:(along+length-1)/length,height:across,depth:1),
             threadsPerThreadgroup:MTLSize(width:lanes,height:1,depth:1))
+        encoder.endEncoding()
+    }
+
+    /// Exactly one lane per spatial/frequency coordinate of an 8x8 block.
+    /// All 64 lanes participate in the separable transform's barriers, including
+    /// padding lanes of a partial block at the image edge.
+    func dctBlocks37(_ ctx:EffectContext,input:MTLTexture,output:MTLTexture,params:EffectParams) {
+        guard let pso=psos["fxDCTBlocks37"],let encoder=ctx.cb.makeComputeCommandEncoder() else { return }
+        encoder.setComputePipelineState(pso);encoder.setTexture(input,index:0);encoder.setTexture(output,index:1)
+        var p=params;encoder.setBytes(&p,length:MemoryLayout<EffectParams>.stride,index:0)
+        encoder.dispatchThreadgroups(MTLSize(width:(output.width+7)/8,height:(output.height+7)/8,depth:1),
+            threadsPerThreadgroup:MTLSize(width:64,height:1,depth:1))
         encoder.endEncoding()
     }
 
@@ -296,7 +308,7 @@ enum EffectRegistry {
             batch12,batch13,batch14,batch15,batch16,batch17,batch18,batch19,batch20,
             batch21,batch22,batch23,batchR4,batch30,batch31,sorting31,batch32,batch33,
             time33,batch34,cameraTransitions34,batch35,batch36,lights36,batch37,
-            cleanup37,frequency37,drawing37,retro37,textGeometry37,batch38,conformal32,morphology37,sampling33,featureMattes33,surfaces38,flow31
+            cleanup37,frequency37,drawing37,retro37,textGeometry37,batch38,conformal32,morphology37,sampling33,featureMattes33,surfaces38,flow31,transforms37,nonlinear37
         ]
         for family in families { definitions.append(contentsOf:family) }
         return definitions

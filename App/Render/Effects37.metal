@@ -1,6 +1,117 @@
 #include <metal_stdlib>
 using namespace metal;
 struct EffectParams { float4 a; float4 b; float4 c; float4 d; uint4 i; };
+constexpr sampler nonlinear37(address::clamp_to_edge,filter::linear,coord::pixel);
+static float3 nonlinearColor37(texture2d<half,access::sample> image,float2 uv,float3 fallback) {
+    float4 pixel=float4(image.sample(nonlinear37,uv));
+    return pixel.a>1.e-6 ? pixel.rgb/pixel.a:fallback;
+}
+kernel void fxNonlinear37(texture2d<half,access::sample> source [[texture(0)]],
+                         texture2d<half,access::write> output [[texture(1)]],
+                         constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float2 uv=float2(gid)+.5;float4 original=float4(source.sample(nonlinear37,uv));
+    if(original.a<=0 || p.a.x<=0) { output.write(half4(original),gid);return; }
+    float3 center=original.rgb/original.a;float stepSize=max(.5,p.a.z);
+    float3 left=nonlinearColor37(source,uv-float2(stepSize,0),center),right=nonlinearColor37(source,uv+float2(stepSize,0),center);
+    float3 top=nonlinearColor37(source,uv-float2(0,stepSize),center),bottom=nonlinearColor37(source,uv+float2(0,stepSize),center);
+    float3 lo=min(center,min(min(left,right),min(top,bottom))),hi=max(center,max(max(left,right),max(top,bottom)));
+    float3 result=center;
+    if(p.i.x==0) {
+        float3 delta=0;float3 neighbors[4]={left,right,top,bottom};
+        for(int n=0;n<4;n++) {
+            float3 difference=neighbors[n]-center;
+            float contrast=dot(difference,difference)/(3*max(p.a.y*p.a.y,1.e-6));
+            float conduction=p.i.y==0 ? exp(-contrast):1/(1+contrast);
+            delta+=difference*conduction;
+        }
+        result+=delta*(.22*p.a.x);
+    } else if(p.i.x==1) {
+        float3 weights=float3(.2126,.7152,.0722);
+        float c=dot(center,weights),l=dot(left,weights),r=dot(right,weights),t=dot(top,weights),b=dot(bottom,weights);
+        float speed=-sign(l+r+t+b-4*c);
+        float gx=speed>0 ? max(max(l-c,r-c),0.0):max(max(c-l,c-r),0.0);
+        float gy=speed>0 ? max(max(t-c,b-c),0.0):max(max(c-t,c-b),0.0);
+        float target=max(0.0,c+speed*length(float2(gx,gy))*.18*p.a.x);
+        result=c>1.e-6 ? center*(target/c):float3(target);
+    } else {
+        float3 weights=float3(.2126,.7152,.0722);
+        float gx=dot(right-left,weights)*.5,gy=dot(bottom-top,weights)*.5;
+        float3 tl=nonlinearColor37(source,uv+float2(-stepSize,-stepSize),center);
+        float3 tr=nonlinearColor37(source,uv+float2(stepSize,-stepSize),center);
+        float3 bl=nonlinearColor37(source,uv+float2(-stepSize,stepSize),center);
+        float3 br=nonlinearColor37(source,uv+float2(stepSize,stepSize),center);
+        float3 hxx=left+right-2*center,hyy=top+bottom-2*center,hxy=(br+tl-tr-bl)*.25;
+        float epsilon=1.e-5;
+        float3 delta=((gy*gy+epsilon*.5)*hxx-2*gx*gy*hxy+(gx*gx+epsilon*.5)*hyy)/(gx*gx+gy*gy+epsilon);
+        result+=delta*(.15*p.a.x);
+    }
+    result=clamp(result,lo,hi);
+    output.write(half4(float4(min(result*original.a,float3(65504)),original.a)),gid);
+}
+
+static float cosineBasis37(uint frequency,uint position) {
+    return (frequency==0 ? .35355339059:.5)*cos((2*float(position)+1)*float(frequency)*.196349540849);
+}
+kernel void fxDCTBlocks37(texture2d<half,access::read> source [[texture(0)]],
+                         texture2d<half,access::write> output [[texture(1)]],
+                         constant EffectParams& p [[buffer(0)]],
+                         uint lane [[thread_index_in_threadgroup]],uint3 group [[threadgroup_position_in_grid]]) {
+    threadgroup float3 work[64];threadgroup float3 coefficients[64];threadgroup half4 pixels[64];
+    uint x=lane%8,y=lane/8;uint2 pixel=group.xy*8+uint2(x,y);
+    uint2 safe=min(pixel,uint2(source.get_width()-1,source.get_height()-1));
+    half4 original=source.read(safe);pixels[lane]=original;
+    float3 rgb=original.a>half(.00001) ? float3(original.rgb)/float(original.a):float3(0);
+    float light=dot(rgb,float3(.299,.587,.114));
+    coefficients[lane]=float3(light-.5,(rgb.b-light)*.492,(rgb.r-light)*.877);
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    float3 row=0;
+    for(uint n=0;n<8;n++) row+=coefficients[y*8+n]*cosineBasis37(x,n);
+    work[lane]=row;
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    float3 coefficient=0;
+    for(uint n=0;n<8;n++) coefficient+=work[n*8+x]*cosineBasis37(y,n);
+    float frequency=sqrt(float(x*x+y*y));
+    float stepSize=p.a.x*(1+pow(max(1.0,frequency),p.a.y))*.0625;
+    float3 step=max(float3(stepSize,stepSize*p.a.z,stepSize*p.a.z),float3(1.e-7));
+    if(!(p.i.y!=0 && lane==0)) {
+        if(p.i.x==0) coefficient=round(coefficient/step)*step;
+        else coefficient=sign(coefficient)*max(abs(coefficient)-step,float3(0));
+    }
+    coefficients[lane]=coefficient;
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    float3 column=0;
+    for(uint n=0;n<8;n++) column+=coefficients[n*8+x]*cosineBasis37(n,y);
+    work[lane]=column;
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    float3 reconstructed=0;
+    for(uint n=0;n<8;n++) reconstructed+=work[y*8+n]*cosineBasis37(n,x);
+    float lum=reconstructed.x+.5;
+    float red=lum+reconstructed.z/.877,blue=lum+reconstructed.y/.492;
+    float green=(lum-.299*red-.114*blue)/.587;
+    float alpha=float(pixels[lane].a);
+    float3 color=max(float3(0),float3(red,green,blue))*alpha;
+    if(pixel.x<output.get_width() && pixel.y<output.get_height()) {
+        output.write(half4(float4(min(mix(float3(pixels[lane].rgb),color,p.a.w),float3(65504)),alpha)),pixel);
+    }
+}
+
+kernel void fxDoGInk37(texture2d<half,access::read> source [[texture(0)]],
+                      texture2d<half,access::write> output [[texture(1)]],
+                      texture2d<half,access::read> near [[texture(2)]],
+                      texture2d<half,access::read> far [[texture(3)]],
+                      constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float4 original=float4(source.read(gid)),a=float4(near.read(gid)),b=float4(far.read(gid));
+    float3 first=a.a>1.e-6 ? a.rgb/a.a:float3(0),second=b.a>1.e-6 ? b.rgb/b.a:float3(0);
+    float difference=dot(first-p.a.x*second,float3(.2126,.7152,.0722));
+    float paper=difference>=p.a.y ? 1.0:1+tanh(p.a.z*(difference-p.a.y));
+    float ink=1-clamp(paper,0.0,1.0);
+    float3 color=p.b.rgb*p.b.a*ink+p.c.rgb*p.c.a*(1-ink);
+    float alpha=(p.b.a*ink+p.c.a*(1-ink))*original.a;
+    float4 result=float4(color*original.a,alpha);
+    output.write(half4(mix(original,result,p.a.w)),gid);
+}
 
 // Separable rectangular morphology. Scratch textures contain scalar fields;
 // only the first pass reads unpremultiplied image luminance. Boundary replication

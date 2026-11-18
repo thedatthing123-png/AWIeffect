@@ -25,7 +25,7 @@ requires over 1,000 working, distinct definitions. ExpansionRenderTests enforces
 count gate; the current catalog is still below it. Passing the count gate alone
 does not prove distinctness, visual quality or performance.
 
-Current source enumeration is 746 definitions, including the legacy catalog.
+Current source enumeration is 751 definitions, including the legacy catalog.
 This is a source inventory, not a verified runtime count or a quality result. The
 remaining distance to 1,001 must be real, distinct tools; do not fill it with aliases
 or renamed settings. The all-effects test remains the runtime count authority.
@@ -99,3 +99,17 @@ A small independent NumPy check of the flow equations and half-float rounding
 recovered shifts (4,-3) and (-4,3) with mean error 0.0612/0.0706 pixels on the
 analytic texture fixture, and zero for a static pair. This checks sign/scale math;
 it does not substitute for running the Metal fixture or reviewing footage.
+
+Frequency stylization adds DCT Blocks and DoG Ink. DCT Blocks performs cooperative
+8x8 forward/inverse cosine transforms with coefficient quantization or soft
+thresholding; it is not a checker overlay or a JPEG file encoder. All lanes,
+including partial-block padding, participate in barriers. Alpha is retained. An
+independent direct 2D CPU oracle checks both filters and non-multiple-of-eight
+image sizes. DoG Ink uses two Gaussian scales and a smooth extended-difference
+ink threshold. Both are included in full moving review; Metal remains unvalidated.
+
+Three nonlinear detail tools add contrast-dependent Edge Diffusion, bounded Shock
+Sharpen and Curvature Smooth. Iterative passes alternate two scratch textures, so
+raising the pass count does not allocate a full image for each iteration. Original
+coverage is retained; transparent neighbors use a no-flux boundary. Noisy fixtures
+exercise the cleanup controls. Metal/runtime and visual validation remain pending.

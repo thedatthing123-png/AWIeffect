@@ -17,7 +17,7 @@ final class ExpansionRenderTests: XCTestCase {
             EffectRegistry.batch35,EffectRegistry.batch36,EffectRegistry.lights36,EffectRegistry.batch37,
             EffectRegistry.cleanup37,EffectRegistry.frequency37,EffectRegistry.drawing37,EffectRegistry.retro37,
             EffectRegistry.textGeometry37,EffectRegistry.batch38,EffectRegistry.conformal32,EffectRegistry.morphology37,EffectRegistry.sampling33,
-            EffectRegistry.featureMattes33,EffectRegistry.surfaces38,EffectRegistry.flow31]
+            EffectRegistry.featureMattes33,EffectRegistry.surfaces38,EffectRegistry.flow31,EffectRegistry.transforms37,EffectRegistry.nonlinear37]
         let newDefinitions=families.flatMap{$0}
         XCTAssertEqual(Set(newDefinitions.map(\.name)).count,newDefinitions.count,"New effects need distinct names and behaviors")
     }
@@ -431,6 +431,7 @@ final class ExpansionRenderTests: XCTestCase {
             ("retro",EffectRegistry.retro37),("text-geometry",EffectRegistry.textGeometry37),
             ("motion-light",EffectRegistry.batch38),("coordinate-map",EffectRegistry.conformal32),
             ("morphology",EffectRegistry.morphology37),("surface-composite",EffectRegistry.surfaces38),
+            ("frequency-stylize",EffectRegistry.transforms37),("nonlinear-detail",EffectRegistry.nonlinear37),
             ("measured-motion",EffectRegistry.flow31)
         ]
         for (name,definitions) in families {
@@ -543,7 +544,7 @@ final class ExpansionRenderTests: XCTestCase {
                 project.layers[index].effects=[e]
             }
         }
-        if EffectRegistry.cleanup37.contains(where:{$0.id==effect.typeID}) || ["awi37.draw.flowPaint","awi31.segmentSort"].contains(effect.typeID) {
+        if EffectRegistry.cleanup37.contains(where:{$0.id==effect.typeID}) || EffectRegistry.nonlinear37.contains(where:{$0.id==effect.typeID}) || ["awi37.draw.flowPaint","awi31.segmentSort"].contains(effect.typeID) {
             let grain=EffectInstance(typeID:"ae.noise",params:["amount":.number(Animated(70)),"size":.number(Animated(0.5)),"color":.toggle(true)])
             for index in project.layers.indices where project.layers[index].content != .adjustment { project.layers[index].effects=[grain] }
         }

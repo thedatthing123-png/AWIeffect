@@ -76,6 +76,7 @@ enum EffectSection: String, CaseIterable, Identifiable {
         if d.id=="awi31.flowSmear" { return .blur }
         if d.id=="awi31.flowMap" { return .time }
         if d.id.hasPrefix("awi37.draw.") { return .stylize }
+        if d.id=="awi37.dogInk" { return .stylize }
         if d.id.hasPrefix("awi37.morph.") {
             return ["awi37.morph.whiteHat","awi37.morph.blackHat","awi37.morph.gradient"].contains(d.id) ? .keying:.blur
         }

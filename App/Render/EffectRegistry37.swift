@@ -3,6 +3,70 @@ import Metal
 import simd
 
 extension EffectRegistry {
+    static let nonlinear37:[EffectDefinition] = [
+        nonlinear37("edgeDiffusion","Edge Diffusion",0,.blur,"Iterative contrast-dependent diffusion smooths small variation while resisting strong boundaries.",
+            [.number("threshold","Edge Contrast",0.15,0.02,0.7),.choice("conduction","Edge Response",["Exponential","Reciprocal"],0)]),
+        nonlinear37("shockSharpen","Shock Sharpen",1,.blur,"A bounded nonlinear shock step steepens transitions without a ringing unsharp-mask halo.",[]),
+        nonlinear37("curvatureFlow","Curvature Smooth",2,.blur,"Image contours move along their local curvature, smoothing narrow bends while retaining broad edges.",[])
+    ]
+    private static func nonlinear37(_ id:String,_ name:String,_ mode:UInt32,_ category:EffectCategory,
+                                     _ summary:String,_ controls:[ParamDef]) -> EffectDefinition {
+        EffectDefinition(id:"awi37.pde."+id,name:name,category:category,aeMatchNames:[],summary:summary,
+            params:[.number("iterations","Passes",8,1,24,step:1),.number("strength","Step Strength",75,0,100,unit:"%")]+controls+[
+                .number("blend","Blend",100,0,100,unit:"%")],stage:.pixels { ctx in
+                if v29(ctx,"blend")<=0 || v29(ctx,"strength")<=0 { return ctx.input }
+                var p=EffectParams();p.i=SIMD4(mode,UInt32(ch29(ctx,"conduction")),0,0)
+                p.a=SIMD4(pc29(ctx,"strength"),f29(ctx,"threshold"),Float(max(0.5,ctx.unit)),0)
+                // Encoder ordering makes two alternating textures safe to reuse;
+                // iteration count must not multiply full-frame scratch storage.
+                let ping=ctx.temp(),pong=ctx.temp()
+                var current=ctx.input
+                for index in 0..<min(24,max(1,Int(v29(ctx,"iterations")))) {
+                    let output=index%2==0 ? ping:pong
+                    ctx.gpu.run("fxNonlinear37",ctx.cb,textures:[current,output],params:p,grid:output)
+                    current=output
+                }
+                if v29(ctx,"blend")>=100 { return current }
+                var mix=EffectParams();mix.a.x=pc29(ctx,"blend")
+                let output=ctx.temp()
+                ctx.gpu.run("fxTimeComposite33",ctx.cb,textures:[ctx.input,output,current],params:mix,grid:output)
+                return output
+            })
+    }
+
+    static let transforms37:[EffectDefinition] = [
+        EffectDefinition(id:"awi37.dctBlocks",name:"DCT Blocks",category:.glitch,aeMatchNames:[],
+            summary:"Transform real 8x8 image blocks into frequency coefficients, filter them, and reconstruct the image with preserved coverage.",
+            params:[.number("amount","Coefficient Loss",25,0,100,unit:"%"),
+                .number("frequency","High Frequency Loss",1.2,0,3),
+                .number("chroma","Chroma Loss",1.5,0,4),
+                .choice("method","Coefficient Filter",["Quantize","Soft Threshold"],0),.toggle("dc","Keep Average",true),
+                .number("blend","Blend",100,0,100,unit:"%")],stage:.pixels { ctx in
+                if v29(ctx,"blend")<=0 || v29(ctx,"amount")<=0 { return ctx.input }
+                var p=EffectParams();p.a=SIMD4(pc29(ctx,"amount"),f29(ctx,"frequency"),f29(ctx,"chroma"),pc29(ctx,"blend"))
+                p.i=SIMD4(UInt32(ch29(ctx,"method")),b29(ctx,"dc") ? 1:0,0,0)
+                let output=ctx.temp();ctx.gpu.dctBlocks37(ctx,input:ctx.input,output:output,params:p)
+                return output
+            }),
+        EffectDefinition(id:"awi37.dogInk",name:"DoG Ink",category:.stylize,aeMatchNames:[],
+            summary:"Two Gaussian scales form an extended difference response, then a smooth ink threshold draws fine light-dark boundaries.",
+            params:[.number("radius","Detail Scale",1.2,0.4,12,unit:"px"),
+                .number("ratio","Scale Ratio",1.6,1.1,5),.number("weight","Edge Weight",0.98,0.5,1.5),
+                .number("threshold","Ink Threshold",-0.01,-0.2,0.2),.number("hardness","Edge Hardness",60,1,100),
+                .color("ink","Ink",RGBA(0.03,0.03,0.05)),.color("paper","Paper",RGBA(0.98,0.97,0.94)),
+                .number("blend","Blend",100,0,100,unit:"%")],stage:.pixels { ctx in
+                if v29(ctx,"blend")<=0 { return ctx.input }
+                let radius=v29(ctx,"radius")*ctx.unit
+                let near=ctx.gpu.gaussian(ctx,input:ctx.input,sigma:radius)
+                let far=ctx.gpu.gaussian(ctx,input:ctx.input,sigma:radius*v29(ctx,"ratio"))
+                var p=EffectParams();p.a=SIMD4(f29(ctx,"weight"),f29(ctx,"threshold"),f29(ctx,"hardness"),pc29(ctx,"blend"))
+                p.b=col29(ctx,"ink");p.c=col29(ctx,"paper")
+                let output=ctx.temp()
+                ctx.gpu.run("fxDoGInk37",ctx.cb,textures:[ctx.input,output,near,far],params:p,grid:output)
+                return output
+            })
+    ]
+
     static let morphology37:[EffectDefinition] = [
         morphology37("opening", "Remove Bright Specks", 0, "Opening removes bright marks smaller than the neighborhood while retaining broad lighting."),
         morphology37("closing", "Fill Dark Gaps", 1, "Closing fills narrow dark gaps without blurring broad boundaries."),

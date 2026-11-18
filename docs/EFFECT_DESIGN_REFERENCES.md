@@ -245,3 +245,32 @@ changes remain ambiguous. Maximum Motion bounds correspondence search, not just
 the final artistic displacement. The solver performs no synchronous CPU readback
 in the editing/render path. Motion Field exposes direction, RG displacement and
 magnitude as controls in one tool rather than counting those as separate effects.
+
+## Frequency stylization (batch 37)
+
+Adobe Research's XDoG paper describes extended difference-of-Gaussians ink
+thresholding and its artistic range:
+https://research.adobe.com/publication/xdog-an-extended-difference-of-gaussians-compendium-including-advanced-image-stylization/
+DoG Ink independently applies two Gaussian scales and a tanh threshold; it does
+not implement the paper's separate flow-based variants or texture synthesis.
+DCT Blocks uses an orthonormal type-II cosine basis and its transpose, centered
+Rec.601-style YUV and an editable frequency-weighted coefficient filter. It has
+neither JPEG entropy coding nor chroma subsampling and does not claim bitstream
+compatibility. Filter type and chroma loss are options inside one tool, not catalog
+duplicates. Average-preserving mode skips the DC coefficient; original alpha is
+copied after reconstruction. Edge blocks replicate source coordinates, and all
+64 cooperative lanes reach every barrier.
+
+## Nonlinear detail (batch 37)
+
+- Perona and Malik, *Scale-Space and Edge Detection Using Anisotropic Diffusion*:
+  https://people.eecs.berkeley.edu/~malik/papers/MP-aniso.pdf
+- Osher and Rudin, *Feature-Oriented Image Enhancement Using Shock Filters*:
+  https://epubs.siam.org/doi/10.1137/0727053
+
+Independent explicit GPU updates implement four-neighbor contrast conduction,
+luminance-driven shock steepening, and regularized curvature-directed smoothing.
+Step sizes are bounded and the updated color is limited to local extrema. This
+preserves practical numerical bounds, not a claim to reproduce every continuous
+PDE property from the papers. Alpha is unchanged; transparent neighbors contribute
+the center value. Two scratch images alternate through encoder-ordered passes.
