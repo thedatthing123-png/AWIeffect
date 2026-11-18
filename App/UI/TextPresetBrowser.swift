@@ -187,7 +187,8 @@ struct TextPresetPreviewSource: Equatable {
         string = trimmed.isEmpty ? "Text" : String(trimmed.prefix(14))
         fontName = layer?.text?.fontName ?? "Helvetica-Bold"
         style = layer?.text?.style
-        styleFingerprint=(try? JSONEncoder().encode(style)).map{String($0.hashValue)} ?? "-"
+        let encoder=JSONEncoder();encoder.outputFormatting = .sortedKeys
+        styleFingerprint=(try? encoder.encode(style)).map{String($0.hashValue)} ?? "-"
     }
 
     var key: String { "\(string)|\(fontName)|\(styleFingerprint)" }

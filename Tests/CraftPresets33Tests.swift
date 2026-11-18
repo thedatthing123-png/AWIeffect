@@ -40,10 +40,15 @@ final class CraftPresets33Tests:XCTestCase {
         for recipe in CraftPresets33.textRecipes {
             XCTAssertTrue(["characters","words","lines"].contains(recipe.unit),recipe.id)
             XCTAssertTrue(["forward","reverse","random"].contains(recipe.order),recipe.id)
+            XCTAssertTrue(["rise","drop","slide","whip","scale","slam","fold","rotate","skew","tracking","focus","baseline","scatter","decode","shutter","orbit","roll","perspective","depth","flip","hinge","fan","stretch","arc","elastic","bounce","wave","breath","pendulum","rubber","depthWave","spin","twist","hue","flicker","punch","rattle","squash","focusPulse","trackingWave","type"].contains(recipe.motion),recipe.id)
+            XCTAssertTrue(["none","rebound","counter","squeeze","focus","lift","trail","edge"].contains(recipe.accent),recipe.id)
             if let material=recipe.material { XCTAssertNotNil(Text3DMaterial.preset(named:material),recipe.id) }
         }
         for recipe in CraftPresets33.lookRecipes {
             if let material=recipe.material { XCTAssertNotNil(Text3DMaterial.preset(named:material),recipe.id) }
+        }
+        for recipe in CraftPresets33.layerRecipes {
+            XCTAssertTrue(["none","slide","whip","zoom","pull","spin","tilt","shake","bounce","breath","squash","fadeIn","fadeOut"].contains(recipe.motion),recipe.id)
         }
     }
     func testEveryNewTextGroupRemovesOnlyItsOwnComponentsAndRoundTrips() throws {

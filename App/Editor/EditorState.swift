@@ -286,6 +286,23 @@ final class EditorState: ObservableObject {
 
     // MARK: Selection
 
+    private var lastTimelineTap:(id:UUID,time:TimeInterval)?
+
+    /// Resolve a single tap immediately. Competing single/double recognizers
+    /// otherwise hold every clip tap until the double-tap timeout has elapsed.
+    /// A second tap still opens a group/precomp without delaying the first one.
+    func tapTimelineLayer(_ id:UUID,timestamp:TimeInterval=ProcessInfo.processInfo.systemUptime) {
+        guard let layer=project.layers.first(where:{$0.id==id}) else { lastTimelineTap=nil;return }
+        if linkPicking { lastTimelineTap=nil;endLinkPick(parent:id);return }
+        if isMultiSelecting { lastTimelineTap=nil;toggleInMulti(id);return }
+        let doubleTap=lastTimelineTap.map{$0.id==id && timestamp >= $0.time && timestamp-$0.time<=0.32} ?? false
+        lastTimelineTap=doubleTap ? nil:(id,timestamp)
+        if selectedLayerID != id { selectedLayerID=id }
+        if doubleTap && layer.isGroup { openGroup() }
+        else if doubleTap,case .precomp=layer.content { openPrecomp() }
+        else if panel != .layerHome { panel = .layerHome }
+    }
+
     var selectedIndex: Int? {
         guard let id = selectedLayerID else { return nil }
         return project.layers.firstIndex { $0.id == id }

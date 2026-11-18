@@ -538,16 +538,7 @@ struct TimelineView: View, Equatable {
             }
         }
         .contentShape(Rectangle())
-        .onTapGesture(count: 2) {
-            guard !state.isMultiSelecting else { return }
-            state.select(layer.id)
-            if layer.isGroup { state.openGroup() }
-            else if case .precomp = layer.content { state.openPrecomp() }
-            else { state.openLayer(layer.id) }
-        }
-        .onTapGesture {
-            if state.isMultiSelecting { state.toggleInMulti(layer.id) } else { state.openLayer(layer.id) }
-        }
+        .onTapGesture { state.tapTimelineLayer(layer.id) }
         .gesture(TimelineHold(onMove: { _, delta in
                     // Several layers selected: holding one of them moves them all in time together.
                     if let multi = state.multiSelection {
