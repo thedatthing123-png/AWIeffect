@@ -415,7 +415,10 @@ struct EditorView: View {
                     let cutProject = state.cutoutDisplayProject(state.boneMeshDisplayProject(lp ?? state.project))
                     MetalPreview(project: state.viewMode == .orbit && !state.looksThroughCamera ? OrbitView.scene(cutProject, orbit: state.orbit, time: t)
                                     : (state.cameraView ? cutProject : state.freeViewProject(cutProject)),
-                                 time: t, redrawToken: state.redrawToken, mediaURL: { state.mediaURL($0) },
+                                 time: t, redrawToken: state.redrawToken,
+                                 contentRevision: state.viewMode != .orbit && state.cameraView && state.cutoutPreview == nil && state.cutoutPeekOriginal == nil && state.rigRestArtworkID == nil
+                                    ? state.geometryRevision &+ state.live.revision : nil,
+                                 mediaURL: { state.mediaURL($0) },
                                  viewZoom: state.canvasMode == .comp ? viewZoom : 1, viewPan: state.canvasMode == .comp ? viewPan : .zero,
                                  qualityCap: state.previewQuality.rawValue, isPlaying: state.isPlaying,
                                  // No RAM-cache writes mid-gesture: every frame changes, caching only churned memory.

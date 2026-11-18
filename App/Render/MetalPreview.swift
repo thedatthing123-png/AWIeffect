@@ -22,6 +22,8 @@ struct MetalPreview: UIViewRepresentable {
     let project: Project
     let time: Double
     let redrawToken: Int
+    /// Editor-owned revision avoids deep comparison of every layer on each playback tick.
+    var contentRevision: UInt64? = nil
     let mediaURL: (String) -> URL
     var viewZoom: CGFloat = 1
     var viewPan: CGSize = .zero
@@ -50,7 +52,7 @@ struct MetalPreview: UIViewRepresentable {
     }
 
     func updateUIView(_ v: MTKView, context: Context) {
-        context.coordinator.updateProject(project, redrawToken: redrawToken)
+        context.coordinator.updateProject(project, redrawToken: redrawToken, contentRevision: contentRevision)
         context.coordinator.time = time
         context.coordinator.mediaURL = mediaURL
         context.coordinator.viewZoom = viewZoom
@@ -65,18 +67,26 @@ struct MetalPreview: UIViewRepresentable {
         private(set) var project: Project?
         private(set) var renderRevision = 0
         private var lastRedrawToken: Int?
+        private var lastContentRevision: UInt64?
         private var suppressFullUntil: TimeInterval = 0
         private var prerenderInFlight = false
 
-        func updateProject(_ next: Project, redrawToken: Int) {
-            if project != next || lastRedrawToken != redrawToken {
+        func updateProject(_ next: Project, redrawToken: Int, contentRevision: UInt64? = nil) {
+            let changed:Bool
+            if let contentRevision {
+                changed = project?.id != next.id || lastContentRevision != contentRevision || lastRedrawToken != redrawToken
+            } else {
+                // Derived camera/cutout/mesh views without a revision keep the safe comparison.
+                changed = project != next || lastRedrawToken != redrawToken || lastContentRevision != nil
+            }
+            if changed {
                 renderRevision += 1
                 cache.removeAll(); cacheOrder.removeAll(); cacheBytes = 0
                 cacheToken = ""; prerenderToken = ""
                 prerenderWork?.cancel(); settleWork?.cancel()
                 pendingRedraw = true
             }
-            project = next; lastRedrawToken = redrawToken
+            project = next; lastRedrawToken = redrawToken; lastContentRevision = contentRevision
         }
         var time: Double = 0
         var mediaURL: ((String) -> URL)?
@@ -139,13 +149,17 @@ struct MetalPreview: UIViewRepresentable {
             publishCache()
         }
 
+        private var cachePublishScheduled=false
         private func publishCache() {
-            let set = IndexSet(cache.keys)
-            let fps = project?.fps ?? 30
-            Task { @MainActor in
-                let m = PreviewCacheMonitor.shared
-                if m.frames != set { m.frames = set }
-                if m.fps != fps { m.fps = fps }
+            guard !cachePublishScheduled else { return }
+            cachePublishScheduled=true
+            DispatchQueue.main.asyncAfter(deadline:.now()+0.1) { [weak self] in
+                guard let self else { return }
+                self.cachePublishScheduled=false
+                let set=IndexSet(self.cache.keys),fps=self.project?.fps ?? 30
+                let monitor=PreviewCacheMonitor.shared
+                if monitor.frames != set { monitor.frames=set }
+                if monitor.fps != fps { monitor.fps=fps }
             }
         }
 
@@ -201,9 +215,7 @@ struct MetalPreview: UIViewRepresentable {
         }
 
         func draw(in view: MTKView) {
-            guard let r = Renderer.shared, let project, let mediaURL,
-                  let drawable = view.currentDrawable, let rpd = view.currentRenderPassDescriptor,
-                  let cb = r.queue.makeCommandBuffer() else { return }
+            guard let r = Renderer.shared, let project, let mediaURL else { return }
             let ds = view.drawableSize
             let base = fitRect(compWidth: project.width, compHeight: project.height, in: ds)
             let fit = CGRect(x: base.midX - base.width * viewZoom / 2 + viewPan.width, y: base.midY - base.height * viewZoom / 2 + viewPan.height,
@@ -226,6 +238,9 @@ struct MetalPreview: UIViewRepresentable {
                 return
             }
             let sem = inFlight
+            // Acquiring a drawable can wait for the display. Check capacity first.
+            guard let drawable=view.currentDrawable,let rpd=view.currentRenderPassDescriptor,
+                  let cb=r.queue.makeCommandBuffer() else { sem.signal();return }
             // While playing at reduced quality (heavy effects), don't mix in sharp cached frames: alternating sharp / soft
             // frames looked like a twitch. Every frame of the playback stays the same sharpness.
             let playing = isPlaying
@@ -233,6 +248,7 @@ struct MetalPreview: UIViewRepresentable {
             var shown: MTLTexture? = cacheEnabled && !mixesQuality ? cache[frameIdx] : nil
             var renderedFull = false
             var rendered = false
+            let cpuStarted=ProcessInfo.processInfo.systemUptime
             if shown == nil {
                 let steps: [Double] = [1, 0.75, 0.5, 0.35, 0.25]
                 // Alight Motion-style playback: one steady, lighter quality for the whole play (a bit soft, never
@@ -242,7 +258,10 @@ struct MetalPreview: UIViewRepresentable {
                 if !playing { playQuality = nil }
                 wasPlaying = playing
                 if playing, let pq = playQuality, quality < pq - 1e-6 { playQuality = quality }
-                let q = forceFull && ProcessInfo.processInfo.systemUptime >= suppressFullUntil ? 1 : (playQuality ?? (steps.first { $0 <= quality + 1e-6 } ?? 0.25))
+                let requested = forceFull && ProcessInfo.processInfo.systemUptime >= suppressFullUntil ? 1 : (playQuality ?? (steps.first { $0 <= quality + 1e-6 } ?? 0.25))
+                // Gestures get an immediate lighter frame. On release the unchanged
+                // full-quality settle path restores detail; export is unaffected.
+                let q = cacheEnabled ? requested : min(0.5,requested)
                 let scale = fullScale * q
                 let w = max(1, Int((Double(project.width) * scale).rounded()))
                 let h = max(1, Int((Double(project.height) * scale).rounded()))
@@ -272,21 +291,23 @@ struct MetalPreview: UIViewRepresentable {
             let full = renderedFull
             if full && !playing && cacheEnabled { schedulePrerender(from: frameIdx, size: (fw, fh), scale: fullScale) }
             if playing { prerenderWork?.cancel() }
+            let cpuTime=ProcessInfo.processInfo.systemUptime-cpuStarted
             cb.addCompletedHandler { [weak self, weak view] buffer in
                 sem.signal()
                 let gpu = buffer.gpuEndTime - buffer.gpuStartTime
+                let frameCost=max(gpu,cpuTime)
                 DispatchQueue.main.async {
                     guard let self else { return }
                     if rendered {
                         // Budget ≈16 ms (60 fps): heavy frames drop resolution (down to 1/4 while playing), light ones recover.
                         let floor = playing ? 0.25 : 0.5
-                        if gpu > 0.018 { self.heavyRun += 1; self.lightRun = 0 } else if gpu < 0.008 { self.lightRun += 1; self.heavyRun = 0 } else { self.heavyRun = 0; self.lightRun = 0 }
-                        if self.heavyRun >= 3 || gpu > 0.05 { self.quality = max(floor, self.quality * (gpu > 0.04 ? 0.7 : 0.85)); self.heavyRun = 0 }
+                        if frameCost > 0.018 { self.heavyRun += 1; self.lightRun = 0 } else if frameCost < 0.008 { self.lightRun += 1; self.heavyRun = 0 } else { self.heavyRun = 0; self.lightRun = 0 }
+                        if self.heavyRun >= 3 || frameCost > 0.05 { self.quality = max(floor, self.quality * (frameCost > 0.04 ? 0.7 : 0.85)); self.heavyRun = 0 }
                         else if self.lightRun >= 12 && !playing && self.cacheEnabled { self.quality = min(1, self.quality * 1.15); self.lightRun = 0 }
                     }
                     if self.pendingRedraw { self.pendingRedraw = false; view?.setNeedsDisplay() }
                     // Settle: when nothing changes for a moment, show this frame at full quality.
-                    if rendered && !full && !playing && ProcessInfo.processInfo.systemUptime >= self.suppressFullUntil {
+                    if rendered && !full && !playing && self.cacheEnabled && ProcessInfo.processInfo.systemUptime >= self.suppressFullUntil {
                         self.settleWork?.cancel()
                         let w = DispatchWorkItem { [weak self, weak view] in self?.forceFull = true; view?.setNeedsDisplay() }
                         self.settleWork = w

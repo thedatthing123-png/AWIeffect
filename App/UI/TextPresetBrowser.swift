@@ -198,8 +198,9 @@ struct TextPresetBrowserTile: View {
     var applied = false
     @State private var frames: [UIImage] = []
     @State private var loadedKey = ""
+    @State private var request:TextPresetPreviewRequest?
 
-    private var key: String { item.id + "#" + source.key }
+    private var key: String { item.id + "#" + source.key + (selected ? "#motion":"#poster") }
 
     var body: some View {
         VStack(spacing: 6) {
@@ -207,7 +208,7 @@ struct TextPresetBrowserTile: View {
                 RoundedRectangle(cornerRadius: 12).fill(Color.black)
                 if frames.isEmpty {
                     ProgressView().tint(Theme.accent).frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if frames.count == 1 || isUITesting {
+                } else if frames.count == 1 || isUITesting || !selected {
                     Image(uiImage: frames[0]).resizable().scaledToFit()
                 } else {
                     SwiftUI.TimelineView(.periodic(from: .now, by: 1.0 / 12)) { ctx in
@@ -237,15 +238,17 @@ struct TextPresetBrowserTile: View {
         .contentShape(Rectangle())
         .onAppear(perform: load)
         .onChange(of: key) { _, _ in load() }
+        .onDisappear { request?.cancel(); request=nil; loadedKey = ""; frames = [] }
     }
 
     private func load() {
         let k = key
         guard loadedKey != k else { return }
+        request?.cancel();request=nil
         loadedKey = k
         if let cached = TextPresetBrowserPreviews.cache.get(k) { frames = cached; return }
         frames = []
-        TextPresetBrowserPreviews.frames(for: item, source: source, key: k) { imgs in
+        request = TextPresetBrowserPreviews.frames(for: item, source: source, key: k, animated: selected) { imgs in
             if loadedKey == k { frames = imgs }
         }
     }
@@ -281,12 +284,20 @@ final class TextPresetLRU<Value> {
     var count: Int { lock.lock(); defer { lock.unlock() }; return store.count }
 }
 
+/// A disappearing or superseded tile must not keep a queue of GPU jobs alive.
+final class TextPresetPreviewRequest {
+    private let lock=NSLock()
+    private var stopped=false
+    func cancel() { lock.lock();stopped=true;lock.unlock() }
+    var isCancelled:Bool { lock.lock();defer{lock.unlock()};return stopped }
+}
+
 enum TextPresetBrowserPreviews {
     static let cache = TextPresetLRU<[UIImage]>(capacity: 48)
     static let frameCount = 20
     static let fps = 12.0
     private static let queue = DispatchQueue(label: "awi.textpresetbrowser", qos: .userInitiated)
-    private static var waiting: [String: [([UIImage]) -> Void]] = [:]
+    private static var waiting: [String: [(TextPresetPreviewRequest,([UIImage]) -> Void)]] = [:]
     private static let waitLock = NSLock()
 
     /// Beat markers in preview projects so beat presets pulse.
@@ -316,26 +327,34 @@ enum TextPresetBrowserPreviews {
         return p
     }
 
-    static func frames(for item: TextPresetPreviewItem, source: TextPresetPreviewSource, key: String,
-                       completion: @escaping ([UIImage]) -> Void) {
+    @discardableResult
+    static func frames(for item: TextPresetPreviewItem, source: TextPresetPreviewSource, key: String, animated:Bool = true,
+                       completion: @escaping ([UIImage]) -> Void) -> TextPresetPreviewRequest {
+        let request=TextPresetPreviewRequest()
         waitLock.lock()
-        if waiting[key] != nil { waiting[key]?.append(completion); waitLock.unlock(); return }
-        waiting[key] = [completion]
+        if waiting[key] != nil { waiting[key]?.append((request,completion)); waitLock.unlock(); return request }
+        waiting[key] = [(request,completion)]
         waitLock.unlock()
         queue.async {
             var imgs: [UIImage] = cache.get(key) ?? []
             if imgs.isEmpty, let r = Renderer.shared {
                 let p = project(for: item, source: source)
-                imgs = (0..<frameCount).compactMap { i in
-                    r.renderImage(project: p, time: Double(i) / fps, maxDimension: 320, mediaURL: { URL(fileURLWithPath: $0) })
+                let samples = animated ? Array(0..<frameCount) : [Int(fps*0.75)]
+                for i in samples {
+                    waitLock.lock();let active=waiting[key]?.contains(where:{!$0.0.isCancelled}) ?? false;waitLock.unlock()
+                    guard active else { break }
+                    autoreleasepool {
+                        if let image=r.renderImage(project:p,time:Double(i)/fps,maxDimension:200,mediaURL:{URL(fileURLWithPath:$0)}) { imgs.append(image) }
+                    }
                 }
-                if !imgs.isEmpty { cache.set(key, imgs) }
+                if imgs.count==samples.count { cache.set(key, imgs) }
             }
             waitLock.lock()
             let done = waiting[key] ?? []
             waiting[key] = nil
             waitLock.unlock()
-            DispatchQueue.main.async { done.forEach { $0(imgs) } }
+            DispatchQueue.main.async { done.forEach { ticket,callback in if !ticket.isCancelled { callback(imgs) } } }
         }
+        return request
     }
 }
