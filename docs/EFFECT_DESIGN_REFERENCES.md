@@ -275,6 +275,22 @@ Newton points that do not converge within the bounded iteration budget are shown
 as background. Prime-number offsets cycle within a bounded range so trial division
 remains valid even at long timeline times. No reference shader code was copied.
 
+## Advanced denoise (batch 37)
+
+- He, Sun and Tang, *Guided Image Filtering*:
+  https://kaiminghe.github.io/publications/eccv10guidedfilter.pdf
+- Chambolle and Pock, *A First-Order Primal-Dual Algorithm for Convex Problems with
+  Applications to Imaging*: https://www.cmap.polytechnique.fr/preprint/repository/685.pdf
+
+Guided Smooth independently uses Gaussian-weighted, coverage-normalized moments,
+bounded local linear coefficients and a luminance/(1+luminance) guide. This differs
+from the reference's box-window implementation. TV Luma Clean uses ROF-style
+luminance fidelity, projected dual gradients, tau=sigma=0.25 and extrapolation one.
+Neumann boundaries exclude transparent neighbors. Half-float state is bounded;
+extreme HDR values above the solver range keep their original luminance plus the
+bounded solved correction. Original chroma and alpha are restored. CPU equation
+checks and eventual Metal fixtures are separate forms of evidence.
+
 ## Nonlinear detail (batch 37)
 
 - Perona and Malik, *Scale-Space and Edge Detection Using Anisotropic Diffusion*:

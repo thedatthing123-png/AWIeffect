@@ -25,7 +25,7 @@ requires over 1,000 working, distinct definitions. ExpansionRenderTests enforces
 count gate; the current catalog is still below it. Passing the count gate alone
 does not prove distinctness, visual quality or performance.
 
-Current source enumeration is 758 definitions, including the legacy catalog.
+Current source enumeration is 760 definitions, including the legacy catalog.
 This is a source inventory, not a verified runtime count or a quality result. The
 remaining distance to 1,001 must be real, distinct tools; do not fill it with aliases
 or renamed settings. The all-effects test remains the runtime count authority.
@@ -120,3 +120,10 @@ analytic/recursive constructions, not noise variants. Newton iteration, prime
 search and curve order have explicit bounds. The prime grid has a known-integer
 GPU fixture; every generator has fallback/bypass checks and full moving review.
 Their appearance and runtime cost remain unverified until the combined run.
+
+The remaining-expansion work now includes Guided Smooth and TV Luma Clean.
+Guided Smooth uses Gaussian-weighted local linear color coefficients and an HDR-
+bounded luminance guide. TV Luma Clean uses a bounded primal-dual solve, alternating
+four state textures instead of allocating per iteration. Both retain source alpha,
+have dedicated constant/empty/bypass checks, and use textured numeric-control
+fixtures. These implementations have not yet been validated on Metal.

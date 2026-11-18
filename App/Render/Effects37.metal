@@ -1,6 +1,101 @@
 #include <metal_stdlib>
 using namespace metal;
 struct EffectParams { float4 a; float4 b; float4 c; float4 d; uint4 i; };
+static float guideValue37(float3 rgb) {
+    float light=max(0.0,dot(rgb,float3(.2126,.7152,.0722)));
+    return light/(1+light);
+}
+kernel void fxGuidedMoments37(texture2d<half,access::read> source [[texture(0)]],
+                             texture2d<half,access::write> scalar [[texture(1)]],
+                             texture2d<half,access::write> cross [[texture(2)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=scalar.get_width() || gid.y>=scalar.get_height()) return;
+    float4 original=float4(source.read(gid));
+    float3 rgb=original.a>1.e-6 ? original.rgb/original.a:float3(0);
+    float guide=guideValue37(rgb);
+    scalar.write(half4(float4(guide*guide*original.a,guide*original.a,0,original.a)),gid);
+    cross.write(half4(float4(original.rgb*guide,original.a)),gid);
+}
+kernel void fxGuidedCoefficients37(texture2d<half,access::read> source [[texture(0)]],
+                                  texture2d<half,access::write> coefficientA [[texture(1)]],
+                                  texture2d<half,access::read> meanRGB [[texture(2)]],
+                                  texture2d<half,access::read> meanScalar [[texture(3)]],
+                                  texture2d<half,access::read> meanCross [[texture(4)]],
+                                  texture2d<half,access::write> coefficientB [[texture(5)]],
+                                  constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=coefficientA.get_width() || gid.y>=coefficientA.get_height()) return;
+    float alpha=float(source.read(gid).a);
+    float4 scalar=float4(meanScalar.read(gid)),mean=float4(meanRGB.read(gid)),cross=float4(meanCross.read(gid));
+    float weight=max(scalar.a,1.e-6),guide=scalar.g/weight;
+    float3 color=mean.rgb/max(mean.a,1.e-6);
+    float variance=max(0.0,scalar.r/weight-guide*guide);
+    float3 covariance=cross.rgb/max(cross.a,1.e-6)-guide*color;
+    float3 a=clamp(covariance/(variance+p.a.x*p.a.x),float3(-16),float3(16));
+    float3 b=color-a*guide;
+    coefficientA.write(half4(float4(a*alpha,alpha)),gid);
+    coefficientB.write(half4(float4(clamp(b*alpha,float3(-65504),float3(65504)),alpha)),gid);
+}
+kernel void fxGuidedFinish37(texture2d<half,access::read> source [[texture(0)]],
+                            texture2d<half,access::write> output [[texture(1)]],
+                            texture2d<half,access::read> coefficientA [[texture(2)]],
+                            texture2d<half,access::read> coefficientB [[texture(3)]],
+                            constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float4 original=float4(source.read(gid)),a=float4(coefficientA.read(gid)),b=float4(coefficientB.read(gid));
+    if(original.a<=0) { output.write(half4(original),gid);return; }
+    float3 color=a.rgb/max(a.a,1.e-6)*guideValue37(original.rgb/original.a)+b.rgb/max(b.a,1.e-6);
+    color=clamp(color,float3(0),float3(65504))*original.a;
+    output.write(half4(float4(mix(original.rgb,color,p.a.y),original.a)),gid);
+}
+kernel void fxTVPrepare37(texture2d<half,access::read> source [[texture(0)]],
+                         texture2d<half,access::write> state [[texture(1)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=state.get_width() || gid.y>=state.get_height()) return;
+    float4 original=float4(source.read(gid));
+    float light=original.a>1.e-6 ? dot(original.rgb/original.a,float3(.2126,.7152,.0722)):0;
+    light=clamp(light,0.0,4096.0);
+    state.write(half4(float4(light,light,light,original.a)),gid);
+}
+kernel void fxTVDual37(texture2d<half,access::read> state [[texture(0)]],
+                      texture2d<half,access::write> output [[texture(1)]],
+                      texture2d<half,access::read> previous [[texture(2)]],
+                      constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float4 center=float4(state.read(gid));
+    if(center.a<=0) { output.write(half4(0),gid);return; }
+    uint2 last=uint2(state.get_width()-1,state.get_height()-1);
+    float4 right=float4(state.read(min(gid+uint2(1,0),last))),bottom=float4(state.read(min(gid+uint2(0,1),last)));
+    float2 gradient=float2(right.a>0 ? right.g-center.g:0,bottom.a>0 ? bottom.g-center.g:0);
+    float2 dual=float2(previous.read(gid).rg)+.25*gradient;
+    dual/=max(1.0,length(dual)/max(p.a.x,.00001));
+    output.write(half4(float4(dual,0,1)),gid);
+}
+kernel void fxTVPrimal37(texture2d<half,access::read> state [[texture(0)]],
+                        texture2d<half,access::write> output [[texture(1)]],
+                        texture2d<half,access::read> dual [[texture(2)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float4 center=float4(state.read(gid));
+    if(center.a<=0) { output.write(half4(0),gid);return; }
+    float2 current=float2(dual.read(gid).rg);
+    float left=gid.x>0 ? float(dual.read(gid-uint2(1,0)).r):0;
+    float top=gid.y>0 ? float(dual.read(gid-uint2(0,1)).g):0;
+    float divergence=current.x-left+current.y-top;
+    float value=clamp((center.r+.25*(divergence+center.b))/1.25,0.0,4096.0);
+    output.write(half4(float4(value,clamp(2*value-center.r,-8192.0,8192.0),center.b,center.a)),gid);
+}
+kernel void fxTVFinish37(texture2d<half,access::read> source [[texture(0)]],
+                        texture2d<half,access::write> output [[texture(1)]],
+                        texture2d<half,access::read> state [[texture(2)]],
+                        constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
+    if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
+    float4 original=float4(source.read(gid)),solution=float4(state.read(gid));
+    if(original.a<=0) { output.write(half4(original),gid);return; }
+    float3 rgb=original.rgb/original.a;
+    float light=dot(rgb,float3(.2126,.7152,.0722)),target=max(0.0,light+solution.r-solution.b);
+    float3 chroma=rgb-light;
+    float minimum=min(chroma.r,min(chroma.g,chroma.b));
+    float compression=minimum<0 ? min(1.0,target/max(-minimum,1.e-6)):1.0;
+    float3 result=max(float3(0),target+chroma*compression)*original.a;
+    output.write(half4(float4(min(mix(original.rgb,result,p.a.w),float3(65504)),original.a)),gid);
+}
 constexpr sampler nonlinear37(address::clamp_to_edge,filter::linear,coord::pixel);
 static float3 nonlinearColor37(texture2d<half,access::sample> image,float2 uv,float3 fallback) {
     float4 pixel=float4(image.sample(nonlinear37,uv));

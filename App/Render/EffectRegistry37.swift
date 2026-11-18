@@ -3,6 +3,50 @@ import Metal
 import simd
 
 extension EffectRegistry {
+    static let advancedClean37:[EffectDefinition] = [
+        EffectDefinition(id:"awi37.guidedSmooth",name:"Guided Smooth",category:.blur,aeMatchNames:[],
+            summary:"A coverage-weighted local linear model smooths color while retaining the guidance image's stronger boundaries.",
+            params:[.number("radius","Neighborhood",8,0.5,100,unit:"px"),
+                .number("epsilon","Edge Regularization",0.04,0.001,0.4),.number("blend","Blend",100,0,100,unit:"%")],
+            stage:.pixels { ctx in
+                if v29(ctx,"blend")<=0 { return ctx.input }
+                let scalar=ctx.temp(),cross=ctx.temp()
+                ctx.gpu.run("fxGuidedMoments37",ctx.cb,textures:[ctx.input,scalar,cross],grid:scalar)
+                let radius=v29(ctx,"radius")*ctx.unit
+                let meanRGB=ctx.gpu.gaussian(ctx,input:ctx.input,sigma:radius)
+                let meanScalar=ctx.gpu.gaussian(ctx,input:scalar,sigma:radius)
+                let meanCross=ctx.gpu.gaussian(ctx,input:cross,sigma:radius)
+                let a=ctx.temp(),b=ctx.temp();var p=EffectParams()
+                p.a=SIMD4(f29(ctx,"epsilon"),pc29(ctx,"blend"),0,0)
+                ctx.gpu.run("fxGuidedCoefficients37",ctx.cb,textures:[ctx.input,a,meanRGB,meanScalar,meanCross,b],params:p,grid:a)
+                let smoothA=ctx.gpu.gaussian(ctx,input:a,sigma:radius)
+                let smoothB=ctx.gpu.gaussian(ctx,input:b,sigma:radius)
+                let output=ctx.temp()
+                ctx.gpu.run("fxGuidedFinish37",ctx.cb,textures:[ctx.input,output,smoothA,smoothB],params:p,grid:output)
+                return output
+            }),
+        EffectDefinition(id:"awi37.tvLuma",name:"TV Luma Clean",category:.blur,aeMatchNames:[],
+            summary:"Total-variation luminance denoising uses bounded primal-dual iterations while preserving source chroma and coverage.",
+            params:[.number("strength","Denoise Strength",0.12,0.01,0.5),
+                .number("iterations","Iterations",16,2,48,step:1),.number("blend","Blend",100,0,100,unit:"%")],
+            stage:.pixels { ctx in
+                if v29(ctx,"blend")<=0 { return ctx.input }
+                let primal=[ctx.temp(),ctx.temp()],dual=[ctx.temp(),ctx.temp()]
+                ctx.gpu.run("fxTVPrepare37",ctx.cb,textures:[ctx.input,primal[0]],grid:primal[0])
+                ctx.gpu.run("fxClear",ctx.cb,textures:[dual[0]],grid:dual[0])
+                var p=EffectParams();p.a=SIMD4(Float(v29(ctx,"strength")*ctx.unit),0,0,pc29(ctx,"blend"))
+                let iterations=min(48,max(2,Int(v29(ctx,"iterations"))))
+                for iteration in 0..<iterations {
+                    let read=iteration%2,write=1-read
+                    ctx.gpu.run("fxTVDual37",ctx.cb,textures:[primal[read],dual[write],dual[read]],params:p,grid:dual[write])
+                    ctx.gpu.run("fxTVPrimal37",ctx.cb,textures:[primal[read],primal[write],dual[write]],grid:primal[write])
+                }
+                let output=ctx.temp()
+                ctx.gpu.run("fxTVFinish37",ctx.cb,textures:[ctx.input,output,primal[iterations%2]],params:p,grid:output)
+                return output
+            })
+    ]
+
     static let nonlinear37:[EffectDefinition] = [
         nonlinear37("edgeDiffusion","Edge Diffusion",0,.blur,"Iterative contrast-dependent diffusion smooths small variation while resisting strong boundaries.",
             [.number("threshold","Edge Contrast",0.15,0.02,0.7),.choice("conduction","Edge Response",["Exponential","Reciprocal"],0)]),

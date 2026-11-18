@@ -101,4 +101,20 @@ final class DCTEffectTests:XCTestCase {
             XCTAssertEqual(try process(input,width:width,height:height,effect:effect),expected,definition.name)
         }
     }
+    func testAdvancedCleanersKeepCoverageConstantFieldsAndBlendBypass() throws {
+        let width=11,height=13,pixel:[Float]=[0.12,0.21,0.3,0.375]
+        let input=(0..<(width*height)).flatMap{_ in pixel},expected=input.map{Float(Float16($0))}
+        for definition in EffectRegistry.advancedClean37 {
+            var effect=definition.makeInstance()
+            let output=try process(input,width:width,height:height,effect:effect)
+            for index in output.indices {
+                XCTAssertEqual(output[index],expected[index],accuracy:index%4==3 ? 0:0.003,definition.name)
+            }
+            effect.params["blend"] = .number(Animated(0))
+            XCTAssertEqual(try process(input,width:width,height:height,effect:effect),expected,definition.name)
+            effect=definition.makeInstance()
+            let empty=[Float](repeating:0,count:input.count)
+            XCTAssertEqual(try process(empty,width:width,height:height,effect:effect),empty,definition.name)
+        }
+    }
 }
