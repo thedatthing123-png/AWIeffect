@@ -180,6 +180,8 @@ final class EffectGPU {
     init(device: MTLDevice, library: MTLLibrary) throws {
         self.device = device
         for name in [
+                     "fxTemporalAnalysis43",
+                     "fxProjection42",
                      "fxContourSeed41", "fxContourFlood41", "fxContourFinish41",
                      "fxData39", "fxGuidedMoments37", "fxGuidedCoefficients37", "fxGuidedFinish37",
                      "fxTVPrepare37", "fxTVDual37", "fxTVPrimal37", "fxTVFinish37",
@@ -320,7 +322,7 @@ enum EffectRegistry {
             batch12,batch13,batch14,batch15,batch16,batch17,batch18,batch19,batch20,
             batch21,batch22,batch23,batchR4,batch30,batch31,sorting31,batch32,batch33,
             time33,batch34,cameraTransitions34,batch35,batch36,lights36,batch37,
-            cleanup37,frequency37,drawing37,retro37,textGeometry37,batch38,conformal32,morphology37,sampling33,featureMattes33,surfaces38,flow31,transforms37,nonlinear37,math30,advancedClean37,data39,surfaces40,distance41
+            cleanup37,frequency37,drawing37,retro37,textGeometry37,batch38,conformal32,morphology37,sampling33,featureMattes33,surfaces38,flow31,transforms37,nonlinear37,math30,advancedClean37,data39,surfaces40,distance41,projection42,temporalAnalysis43
         ]
         for family in families { definitions.append(contentsOf:family) }
         return definitions

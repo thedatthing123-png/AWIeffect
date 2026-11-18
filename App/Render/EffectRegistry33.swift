@@ -43,7 +43,9 @@ extension EffectRegistry {
     static let temporalIDs33:Set<String>=["awi33.time.slice","awi33.time.difference","awi33.time.median",
         "awi33.time.echo","awi33.time.hold","awi33.time.rgb","awi33.time.exposure","awi33.time.extrema","awi37.retro.phosphor",
         "awi31.flowWarp","awi31.flowSmear","awi31.flowMap","awi31.flowDatamosh",
-        "awi38.motionGlow","awi38.motionStreaks","awi38.motionRays","awi38.motionRings"]
+        "awi38.motionGlow","awi38.motionStreaks","awi38.motionRays","awi38.motionRings",
+        "awi43.time.variance","awi43.time.occupancy","awi43.time.changeTime","awi43.time.acceleration",
+        "awi43.time.rank","awi43.time.sigma","awi43.time.trend","awi43.time.frequency","awi43.time.history"]
     static let sampling33:[EffectDefinition] = [
         EffectDefinition(id:"awi33.time.hold",name:"Frame Hold",category:.stylize,aeMatchNames:[],
             summary:"Hold actual upstream frames on an editable sampling clock, independently of the composition frame rate.",

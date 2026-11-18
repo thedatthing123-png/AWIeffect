@@ -64,6 +64,11 @@ Today a shape layer holds one path. The owner needs AE-style shape layers. Read 
 
 ## 4. Effects expansion: the vision
 
+Owner update, 2026-11-17: 900 usable, distinct effects is the accepted stopping
+point for this release. This supersedes the earlier approximate 1,000 ambition.
+Quality, designed new families, rendered review and performance still matter;
+do not pad the catalog or rush weak effects to reach the revised number.
+
 - **The effect count is the app's limit right now.** Aim for roughly **1,000 usable effects**. The number is *not* a target;
   "usable" means each one does its job cleanly and is worth picking. It may end above 1,000.
 - **Mix of simple, weird and complex.** Simple building blocks (a clean one-job effect) matter as much as big designed

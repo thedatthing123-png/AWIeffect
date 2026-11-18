@@ -21,13 +21,14 @@ the expansion, in that order. Training remains paused.
 Do not interpret the build number as a plan batch number. A candidate with only
 batch 30 finished is not the completed Build 32. Do not create aliases, color-only
 variants or hidden presets to inflate the effect count. The latest owner request
-requires over 1,000 working, distinct definitions. ExpansionRenderTests enforces the
+sets 900 working, distinct definitions as the revised stopping point (November 17).
+ExpansionRenderTests enforces the
 count gate; the current catalog is still below it. Passing the count gate alone
 does not prove distinctness, visual quality or performance.
 
-Current source enumeration is 817 definitions, including the legacy catalog.
+Current source enumeration is 838 definitions, including the legacy catalog.
 This is a source inventory, not a verified runtime count or a quality result. The
-remaining distance to 1,001 must be real, distinct tools; do not fill it with aliases
+remaining distance to 900 must be real, distinct tools; do not fill it with aliases
 or renamed settings. The all-effects test remains the runtime count authority.
 
 Textured surface family 40 adds 21 native depth-tested image meshes: bend, twist,
@@ -41,7 +42,7 @@ Tests cover defaults, imported parameter fallbacks, bypass and uniform alignment
 Swift syntax checks pass locally; Metal compilation, rendered results and device
 performance remain unverified. Semi-transparent overlapping surfaces use ordinary
 depth-tested blending, not order-independent transparency. This is still a partial
-expansion checkpoint: the remaining 184 definitions and release gates are open.
+expansion checkpoint: the remaining 62 definitions and release gates are open.
 
 Contour family 41 adds ten distance-driven tools: signed distance and nearest
 boundary vectors, nearest-color extension, boundary pull, contour bands, medial
@@ -49,6 +50,18 @@ ridges, contour refraction, tangential contour flow, contour light sweep and
 contour folding. See [DISTANCE_EFFECTS.md](DISTANCE_EFFECTS.md) for controls,
 algorithm references, memory/accuracy limits and tests. The local CPU oracle
 comparison passes; GPU results, visual review and device performance are pending.
+
+Projection family 42 adds twelve actual spherical camera/format tools, with
+independent analytic input-layout fixtures and decoder/orientation tests. See
+[PROJECTION_EFFECTS.md](PROJECTION_EFFECTS.md). CPU reference imagery was inspected
+to tune defaults; actual Metal contact sheets and moving renders remain pending.
+
+Temporal analysis family 43 adds nine actual-frame tools: variance, change
+occupancy/timing, acceleration, rank, sigma clipping, color trend, frequency
+response and a frame-history grid. See
+[TEMPORAL_ANALYSIS_EFFECTS.md](TEMPORAL_ANALYSIS_EFFECTS.md). Tests include known
+temporal sample values against independent scalar oracles. Windows are bounded
+to eight frames (three for acceleration); runtime/visual/device checks are pending.
 
 ## Release gates
 

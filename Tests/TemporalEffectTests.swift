@@ -40,7 +40,9 @@ final class TemporalEffectTests:XCTestCase {
     func testTemporalDefaultsFallbacksAndBypassOnBothLayerTypes() throws {
         for adjustment in [false,true] {
             let original=try render(Self.scene(nil,onAdjustment:adjustment))
-            for definition in EffectRegistry.time33+EffectRegistry.sampling33+EffectRegistry.retro37.filter({EffectRegistry.temporalIDs33.contains($0.id)})+EffectRegistry.batch38 {
+            let families:[[EffectDefinition]]=[EffectRegistry.time33,EffectRegistry.sampling33,
+                EffectRegistry.retro37.filter({EffectRegistry.temporalIDs33.contains($0.id)}),EffectRegistry.batch38,EffectRegistry.temporalAnalysis43]
+            for definition in families.flatMap({$0}) {
                 var effect=definition.makeInstance()
                 let result=try render(Self.scene(effect,onAdjustment:adjustment))
                 XCTAssertGreaterThan(difference(original,result),0.05,definition.name)
