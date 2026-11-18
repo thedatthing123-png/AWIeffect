@@ -3,7 +3,7 @@ import XCTest
 
 final class CraftPresets33Tests:XCTestCase {
     private func layer()->(Project,Layer) {
-        let p=Project.new(name:"Premade test",width:640,height:360,fps:60,duration:6)
+        var p=Project.new(name:"Premade test",width:640,height:360,fps:60,duration:6)
         var l=p.makeLayer(name:"User text",content:.text,size:Vec2(640,360))
         l.text=TextData(string:"Keep my words",fontSize:60)
         return (p,l)
