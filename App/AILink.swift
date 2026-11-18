@@ -158,6 +158,7 @@ final class AILink: ObservableObject {
             }
             return action(name, obj, e)
         default:
+            if let res = handleAdvanced(r) { return res }
             if let res = handleEditor(r) { return res }
             return .json(["error": "unknown endpoint \(r.method) \(r.path)"], status: 404)
         }
