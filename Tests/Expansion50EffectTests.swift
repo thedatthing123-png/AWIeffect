@@ -24,6 +24,7 @@ final class Expansion50EffectTests:XCTestCase {
             var rgb=[pattern,0.5+0.3*sin(u*17+v*11),0.5+0.3*cos(v*23-u*9)]
             if (sx/13+sy/17)%3==0 { rgb=rgb.map{$0*0.3} }
             if kind=="map" { rgb=[Double(x)/159,Double(y)/159,0.5+0.45*sin(Double(x)*0.12)*cos(Double(y)*0.1)] }
+            if kind=="depth" { let depth=0.5+0.45*sin(Double(x)*0.12)*cos(Double(y)*0.1);rgb=[depth,depth,depth] }
             if kind=="normal" {
                 let nx=0.6*sin(u*15),ny=0.6*cos(v*17),nz=sqrt(max(0.01,1-nx*nx-ny*ny));rgb=[nx*0.5+0.5,ny*0.5+0.5,nz*0.5+0.5]
             }
@@ -42,7 +43,7 @@ final class Expansion50EffectTests:XCTestCase {
         }
         var project=Project.new(name:"Expansion 50",width:160,height:160,fps:30,duration:3,background:RGBA(0,0,0,0))
         let key=effect.typeID.components(separatedBy:".").last ?? ""
-        let kind=key=="convolve" ? "psf":["correlate","register"].contains(key) ? "translated":key=="normalLight" ? "normal":key=="palette" ? "palette":"map"
+        let kind=key=="convolve" ? "psf":["correlate","register"].contains(key) ? "translated":key=="normalLight" ? "normal":key=="palette" ? "palette":["shadow","occlusion","fog","parallax","focus","refract"].contains(key) ? "depth":"map"
         var reference=project.makeLayer(name:"Reference map",content:.image(fileName:image(kind).path,pixelWidth:160,pixelHeight:160),size:Vec2(160,160))
         // References are visible under the opaque source so the renderer can resolve them.
         reference.transform.position=Animated(Vec2(80,80))

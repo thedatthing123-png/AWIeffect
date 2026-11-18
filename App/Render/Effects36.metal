@@ -131,10 +131,10 @@ static float2 cells36(float2 q,float time,uint metric) {
 static float procedural36(float2 q,float evolution,float detail,uint mode) {
     float3 point=float3(q,evolution);
     bool needsBase=mode==12 || mode==13 || mode==14 || mode==15 || mode==16 || mode==17 || mode==18 || mode==19
-                || mode==26 || mode==27 || mode==29 || mode==30 || mode==35;
+                || mode==18 || mode==26 || mode==27 || mode==29 || mode==30 || mode==35;
     float base=needsBase ? fbm36(point) : 0.0,field=0.0;
     switch(mode) {
-        case 1: field=1.0-abs(simplex36(point)); break;
+        case 1: field=pow(max(0.0,1.0-abs(simplex36(point))),detail); break;
         case 2: {
             float amplitude=.5,weight=1.0,sum=0.0;
             for(int octave=0;octave<4;octave++) {
@@ -231,8 +231,15 @@ kernel void fxField36(texture2d<half,access::sample> source [[texture(0)]],textu
     } else {
         float2 q=(uv-p.d.xy)/max(p.a.x,1.0);
         float c=cos(p.d.z),s=sin(p.d.z);q=float2(q.x*c+q.y*s,-q.x*s+q.y*c);
-        q+=float2(p.a.w*.371,p.a.w*.173);
-        value=procedural36(q,p.a.z,p.a.y,mode);
+        // A seed changes the turbulence, not the location of the front/taper.
+        // Large coordinate offsets previously saturated Storm Front and Fire Tongues.
+        if(mode==18 || mode==19) {
+            float seededTime=p.a.z+hash36(float2(p.a.w,17.0))*53.0;
+            value=procedural36(q,seededTime,p.a.y,mode);
+        } else {
+            q+=float2(p.a.w*.371,p.a.w*.173);
+            value=procedural36(q,p.a.z,p.a.y,mode);
+        }
     }
     float4 color=mix(p.b,p.c,value);
     color.a=clamp(color.a,0.0,1.0);color.rgb=max(color.rgb,0.0)*color.a;

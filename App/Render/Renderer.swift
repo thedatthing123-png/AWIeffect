@@ -812,7 +812,7 @@ final class Renderer {
             }
             let pixelFX = layer.effects.filter { e in
                 guard e.isEnabled, let d = EffectRegistry.definition(e.typeID) else { return false }
-                return !d.isTransformEffect
+                return !d.isTransformEffect && !Self.expansionPixelBypass(e,layer:layer,project:project,time:time)
             }
 
             if case .adjustment = layer.content {
@@ -1436,6 +1436,21 @@ final class Renderer {
         enc.endEncoding()
     }
 
+    /// Skip known identity stages before allocating an offscreen buffer, so
+    /// zero Blend does not introduce extra edge AA, padding or resampling.
+    private static let expansionIdentityPrefixes=["awi39.data.","awi40.surface.","awi41.contour.","awi42.projection.","awi43.time.",
+                      "awi44.finish.","awi45.poisson.","awi46.spectral.","awi47.layer.","awi48.craft.","awi36.light."]
+    private static func expansionPixelBypass(_ effect:EffectInstance,layer:Layer,project:Project,time:Double) -> Bool {
+        guard expansionIdentityPrefixes.contains(where:{effect.typeID.hasPrefix($0)}) else { return false }
+        if EffectStackR4.isMuted(effect) || EffectStackR4.mix(effect,time)<=0 { return true }
+        if let blend=effect.params["blend"],blend.number(at:time)<=0 { return true }
+        if EffectRegistry.layerRefIDs.contains(effect.typeID) {
+            guard let id=effect.text?["layer"].flatMap(UUID.init(uuidString:)),id != layer.id,
+                  project.layers.contains(where:{$0.id==id}) else { return true }
+        }
+        return false
+    }
+
     private func encodeAdjustment(_ layer: Layer, effects: [EffectInstance], time: Double, renderScale: Double, opacity: Double,
                                   comp: MTLTexture, cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL,
                                   shutter: Double = 0, sampleCount: Int = 1) {
@@ -1475,6 +1490,21 @@ final class Renderer {
                 }
                 context.inputPixels = SIMD2(min(Double(current.width),(Double(comp.width)+2*upstreamMargin)*renderScale),
                                             min(Double(current.height),(Double(comp.height)+2*upstreamMargin)*renderScale))
+                if EffectRegistry.layerRefIDs.contains(e.typeID),let sourceProject=groupSource,
+                   let id=e.text?["layer"].flatMap(UUID.init(uuidString:)),id != layer.id,
+                   let reference=sourceProject.layers.first(where:{$0.id==id}) {
+                    let image=fullLayer(reference,project:sourceProject,time:evaluationTime,renderScale:renderScale,
+                        comp:comp,cb:cb,pool:pool,mediaURL:mediaURL)
+                    if image.width==current.width && image.height==current.height { context.reference=image }
+                    else {
+                        let aligned=pool.acquire(width:current.width,height:current.height)
+                        fx.run("fxClear",cb,textures:[aligned],grid:aligned)
+                        let center=simd_double3x3(columns:(SIMD3(1,0,0),SIMD3(0,1,0),SIMD3(Double(aligned.width)/2,Double(aligned.height)/2,1)))
+                        drawQuad(cb:cb,target:aligned,matrix:center,halfSize:Vec2(Double(image.width)/2,Double(image.height)/2),aa:1,
+                            opacity:1,layer:reference,time:evaluationTime,source:.image(image),premultipliedImage:true,blendOverride:.normal)
+                        context.reference=aligned
+                    }
+                }
                 if EffectRegistry.temporalIDs33.contains(e.typeID),let sourceProject=groupSource {
                     let size=(current.width,current.height)
                     current=withTemporalContext(context,run:run) { sampleTime in

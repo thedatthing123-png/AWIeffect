@@ -108,7 +108,7 @@ static float geometry35(float2 q,constant EffectParams& p) {
         }
         case 17: {
             float corner=detail/100.0;
-            distance=abs(box35(q,float2(.5,.35)-corner)+corner); break;
+            distance=abs(box35(q,float2(.5,.35)-corner)-corner); break;
         }
         case 18: {
             float jagged=sin(q.x*43.0)+.4*sin(q.x*79.0+1.0);

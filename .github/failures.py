@@ -1,5 +1,6 @@
 import json
 import sys
+import re
 
 # Prints every failed test with its failure messages from `xcresulttool get test-results tests` JSON.
 data = json.load(sys.stdin)
@@ -11,7 +12,8 @@ def walk(node, path):
     if node.get("nodeType") == "Test Case" and node.get("result") == "Failed":
         msgs = [k.get("name", "") for k in kids if k.get("nodeType") == "Failure Message"]
         for m in msgs or ["(no message)"]:
-            print("SKIP-FAIL " + name + " :: " + m[:400])
+            m = re.sub(r"\[[\d, .-]{100,}\]", "[pixel array]", m)
+            print("SKIP-FAIL " + name + " :: " + m[:1200])
     for k in kids:
         walk(k, path + [name])
 

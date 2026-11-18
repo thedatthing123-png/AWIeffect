@@ -321,6 +321,11 @@ final class EffectTests: XCTestCase {
                         a.params[pd.id] = .number(low); b.params[pd.id] = .number(high)
                     }
                 }
+                if d.id == "awi33.time.hold" && pd.id == "phase" {
+                    // The broad +/-1s range aliases on the sampling clock after frame quantization.
+                    let rate=d.makeInstance().params["rate"]?.number(at:0) ?? 6
+                    a.params["phase"] = .number(Animated(0));b.params["phase"] = .number(Animated(0.5/rate))
+                }
                 if d.id == "awi48.craft.burn" && pd.id == "first" {
                     // The full 1000px range intentionally clears this small fixture. Exercise its visible band here.
                     a.params["first"] = .number(Animated(0));b.params["first"] = .number(Animated(18))

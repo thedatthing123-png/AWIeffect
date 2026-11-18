@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 
 enum EffectFixtureRequirements {
     static let detailIDs:Set<String> = {
-        let families:[[EffectDefinition]]=[EffectRegistry.cleanup37,EffectRegistry.nonlinear37,EffectRegistry.advancedClean37]
+        let families:[[EffectDefinition]]=[EffectRegistry.cleanup37,EffectRegistry.nonlinear37,EffectRegistry.advancedClean37,EffectRegistry.morphology37]
         return Set(families.flatMap{$0}.map(\.id)).union(["awi37.draw.flowPaint","awi31.segmentSort"])
     }()
 }
@@ -549,6 +549,9 @@ final class ExpansionRenderTests: XCTestCase {
                     previews.append((definition.id,parameter.id,max(low,center-delta),min(high,center+delta)))
                     break
                 }
+                if case .point=parameter.kind {
+                    previews.append((definition.id,parameter.id,0.25,0.75));break
+                }
                 if case .angle=parameter.kind,case .number(let value)=parameter.defaultValue {
                     previews.append((definition.id,parameter.id,value.staticValue-90,value.staticValue+90));break
                 }
@@ -564,7 +567,11 @@ final class ExpansionRenderTests: XCTestCase {
             XCTAssertTrue(definition.params.contains{$0.id==key},"Review control missing: \(id).\(key)")
             var effect=definition.makeInstance(),value=Animated(start)
             value.insertKeyframe(Keyframe(time:0,value:start));value.insertKeyframe(Keyframe(time:2,value:end))
-            effect.params[key] = .number(value)
+            if case .point?=definition.params.first(where:{$0.id==key})?.kind {
+                var point=Animated(Vec2(start,0.5))
+                point.insertKeyframe(Keyframe(time:0,value:Vec2(start,0.5)));point.insertKeyframe(Keyframe(time:2,value:Vec2(end,0.5)))
+                effect.params[key] = .point(point)
+            } else { effect.params[key] = .number(value) }
             let destination=try XCTUnwrap(CGImageDestinationCreateWithURL(folder.appendingPathComponent(id+".gif") as CFURL,UTType.gif.identifier as CFString,30,nil))
             CGImageDestinationSetProperties(destination,[kCGImagePropertyGIFDictionary:[kCGImagePropertyGIFLoopCount:0]] as CFDictionary)
             for frame in 0..<30 {

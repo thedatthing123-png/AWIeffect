@@ -45,14 +45,17 @@ extension EffectRegistry {
                 .number("intensity","Intensity",1.2,0,8),
                 .number("blend","Blend",100,0,100,unit:"%"),.toggle("only","Effect Only",false)],
             margin:{ effect,time in
-                let reach=effect.params["radius"]?.number(at:time) ?? effect.params["length"]?.number(at:time) ?? 0
-                let width=effect.params["width"]?.number(at:time) ?? 0
+                func value(_ key:String) -> Double {
+                    effect.params[key]?.number(at:time) ?? controls.first(where:{$0.id==key})?.defaultValue.number(at:time) ?? 0
+                }
+                let reach=max(value("radius"),value("length"))
+                let width=value("width")
                 let softness=effect.params["softness"]?.number(at:time) ?? 2
                 return reach*1.65+3*(width+softness)
             },stage:.pixels { ctx in
                 if v29(ctx,"blend")<=0 || v29(ctx,"intensity")<=0 { return ctx.input }
                 let emission=lightPrep25(ctx,threshold:v29(ctx,"threshold")/100)
-                let width=ctx.effect.params["width"] == nil ? v29(ctx,"softness") : v29(ctx,"width")+v29(ctx,"softness")
+                let width=v29(ctx,"width")+v29(ctx,"softness")
                 let softened=ctx.gpu.gaussian(ctx,input:emission,sigma:width*ctx.unit)
                 var p=EffectParams();p.i.x=mode
                 let center=ctx.effect.params["center"]?.point(at:ctx.time) ?? Vec2(0.5,0.5)

@@ -117,16 +117,17 @@ jobs:
         run: |
           if test -d TestResults.xcresult; then
             xcrun xcresulttool get test-results summary --path TestResults.xcresult --format json > test-summary.json
-            cat test-summary.json
+            python3 scripts/compact_test_summary.py test-summary.json
             echo '```json' >> "$GITHUB_STEP_SUMMARY"
-            cat test-summary.json >> "$GITHUB_STEP_SUMMARY"
+            python3 scripts/compact_test_summary.py test-summary.json >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Print test failures
         if: always()
         run: |
-          xcrun xcresulttool get test-results tests --path TestResults.xcresult --format json 2>/dev/null | python3 .github/failures.py | head -80 || true
+          xcrun xcresulttool get test-results tests --path TestResults.xcresult --format json > test-details.json 2>/dev/null || true
+          python3 .github/failures.py < test-details.json || true
 
       - name: Print app crash reports
         if: always()
@@ -162,6 +163,7 @@ jobs:
           path: |
             test.log
             test-summary.json
+            test-details.json
             TestResults.xcresult
           if-no-files-found: ignore
 
