@@ -270,5 +270,6 @@ kernel void smudgeCarry(texture2d<float, access::read_write> layer [[texture(0)]
     float a = (1.0 - smoothstep(clamp(p.dab.w, 0.0, 0.99), 1.0, d)) * p.color.a * selection.read(gid).r;
     layer.write(mix(under, carried, a), gid);
     // Low strength picks up more of what is underneath, so the paint runs out sooner.
-    tip.write(mix(carried, under, (1.0 - p.color.a) * 0.5 + 0.02), t);
+    // Full-strength smudge keeps the paint it picked up.
+    tip.write(mix(carried, under, (1.0 - p.color.a) * 0.5), t);
 }

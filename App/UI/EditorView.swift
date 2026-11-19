@@ -116,6 +116,9 @@ struct EditorView: View {
             }
         }
         .background(Theme.background.ignoresSafeArea())
+        .background(TimelineContainerTapObserver {
+            state.finishTimelineContainerDoubleTap()
+        }.allowsHitTesting(false))
         .environmentObject(drawLauncher)
         .environmentObject(cutoutSession)
         // Every slider in the editor keeps its edits live while dragging (smooth, no full-editor rebuilds).
@@ -829,10 +832,11 @@ struct EditorView: View {
     /// Top-most layer under a point (other than the selected one).
     private func layerAt(_ point: CGPoint, fit: CGRect) -> UUID? {
         let c = toComp(point, fit: fit)
+        let camera=Renderer.activeCamera(state.canvasViewProject(state.project),time:state.currentTime)
         for layer in state.displayProject.layers where layer.isActive(at: state.currentTime) && layer.id != state.selectedLayerID
             && (!state.linkPicking || state.layerPickAllows(layer.id))
             && layer.content != .camera && layer.content != .light && !layer.isAudioOnly {
-            let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(state.canvasViewProject(state.project), time: state.currentTime),
+            let M = Renderer.placementMatrix(layer, camera: camera,
                                              time: state.currentTime, renderScale: 1)
             let h = M.inverse * SIMD3(c.x, c.y, 1)
             let hs = Renderer.layerHalfSize(layer, time: state.currentTime)
@@ -844,10 +848,11 @@ struct EditorView: View {
     /// Selects the top-most layer whose bounds contain the tap; tapping the same spot again steps to the next one below.
     private func tapSelect(at point: CGPoint, fit: CGRect) {
         let c = toComp(point, fit: fit)
+        let camera=Renderer.activeCamera(state.canvasViewProject(state.project),time:state.currentTime)
         var hits: [UUID] = []
         for layer in state.displayProject.layers where layer.isActive(at: state.currentTime) && !layer.isLocked
             && layer.content != .adjustment && layer.content != .camera && layer.content != .light && !layer.isAudioOnly {
-            let M = Renderer.placementMatrix(layer, camera: Renderer.activeCamera(state.canvasViewProject(state.project), time: state.currentTime),
+            let M = Renderer.placementMatrix(layer, camera: camera,
                                              time: state.currentTime, renderScale: 1)
             let h = M.inverse * SIMD3(c.x, c.y, 1)
             let local = SIMD3(h.x / h.z, h.y / h.z, 1)

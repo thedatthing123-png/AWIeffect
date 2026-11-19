@@ -204,6 +204,16 @@ final class EffectTests: XCTestCase {
 
     /// Every slider must change the result somewhere in its range (catches unwired params).
     func testEveryNumericControlIsWired() throws {
+        try verifyNumericControls(shard:0)
+    }
+    func testNumericControlsPart1()throws { try verifyNumericControls(shard:1) }
+    func testNumericControlsPart2()throws { try verifyNumericControls(shard:2) }
+    func testNumericControlsPart3()throws { try verifyNumericControls(shard:3) }
+    func testNumericControlsPart4()throws { try verifyNumericControls(shard:4) }
+    func testNumericControlsPart5()throws { try verifyNumericControls(shard:5) }
+    func testNumericControlsPart6()throws { try verifyNumericControls(shard:6) }
+    func testNumericControlsPart7()throws { try verifyNumericControls(shard:7) }
+    private func verifyNumericControls(shard:Int)throws {
         let r = try renderer()
         // Params that only matter in a mode not active in this test (documented, not silent).
         let modal: Set<String> = ["ae.hueSaturation/colorizeSat", "awi18.negativeFlash/threshold", "awi18.grade/lutStrength", "awi18.transform/x", "awi18.transform/y",
@@ -222,7 +232,7 @@ final class EffectTests: XCTestCase {
                                    "awi11.colorRangeKey/softness", "awi11.colorRangeKey/spill",
                                    // Burst and floor controls only act with Burst / Floor switched on.
                                    "awi18.particles/burstTime", "awi18.particles/burstCount", "awi18.particles/floorY", "awi18.particles/bounce"]
-        for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
+        for (index,d) in EffectRegistry.all.enumerated() where index%8==shard && !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
             for pd in d.params {
                 guard case .number(let lo, let hi, _, _) = pd.kind, !modal.contains("\(d.id)/\(pd.id)"),
                       // Hue-vs curves and their qualifiers (softness, sat/luma range) only move pixels of their own hue (checked on a color wheel in the R4 grade tests).

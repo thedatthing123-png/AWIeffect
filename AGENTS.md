@@ -1,5 +1,7 @@
 # AWIeffect working rules
 
+- Owner update November 18: this is the stable editor recovery branch. Read `docs/RECOVERY_BUILD34.md` first. Keep performance/responsiveness fixes, original premades/effects and older cutout behavior. Do not reintroduce the discarded expansion, new preset catalogs or experimental AI selection from older plans. Preserve the archived AI data and all user projects/settings.
+
 - Inspect the existing model, renderer, UI interactions and related tools before changing a feature.
 - Improve the function of existing controls before adding buttons, tabs or duplicate workflows. Tap targets, numeric entry, gestures and selection must work together on a phone.
 - Preserve Text Studio and other established advanced systems; do not replace them with simpler effect wrappers.

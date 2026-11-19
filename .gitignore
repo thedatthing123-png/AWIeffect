@@ -22,3 +22,5 @@ dist/
 build_out/
 
 .claude/worktrees/
+# Local Python bytecode from CI inventory helpers.
+__pycache__/

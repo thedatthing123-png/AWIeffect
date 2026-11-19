@@ -14,17 +14,42 @@ on:
       validation:
         description: Test scope (audit runs do not publish an IPA)
         type: choice
-        options: [all, audit, timing, stability, authoring, quick]
+        options: [all, repairs, final-repairs, audit, timing, stability, authoring, segmentation, quick]
         default: all
+      package_ipa:
+        description: Package an IPA after validation (disable for expansion checkpoints)
+        type: boolean
+        default: true
 
 concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: matrix
+        env:
+          VALIDATION: ${{ inputs.validation || 'all' }}
+        run: |
+          python3 scripts/test_shards.py
+          python3 - <<'PY'
+          import json,os
+          from scripts.test_shards import active_shards
+          scope=os.environ['VALIDATION']
+          shards=active_shards(scope)
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:
+              f.write('value='+json.dumps({'shard':shards or ['quick']})+'\n')
+          PY
+
+  compile:
+    needs: plan
     runs-on: ${{ inputs.runner || 'macos-26' }}
-    timeout-minutes: 100
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
 
@@ -42,6 +67,9 @@ jobs:
             xcodebuild -downloadComponent MetalToolchain
             xcrun metal --version
           fi
+
+      - name: Compile and link every Metal shader (simulator and device)
+        run: python3 scripts/validate_metal.py
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -70,127 +98,178 @@ jobs:
       - name: Parse Swift sources
         run: find App Tests UITests -name '*.swift' -print0 | xargs -0 xcrun swiftc -frontend -parse
 
-      - name: Run tests (simulator)
-        # Quick builds: a commit message containing [quick] skips the test run and goes straight to the IPA.
-        if: ${{ !contains(github.event.head_commit.message, '[quick]') && inputs.validation != 'quick' }}
+      - name: Build simulator tests once
+        if: inputs.validation != 'quick'
+        timeout-minutes: 25
         run: |
-          SIM=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];c=[x for r,v in d.items() if 'iOS' in r for x in v if x['name'].startswith('iPhone')];print(c[-1]['udid'] if c else '')")
-          echo "Simulator: $SIM"
           set -o pipefail
-          set +e
-          FILTER=()
-          if [[ "${{ inputs.validation }}" == "audit" ]]; then
-            FILTER=(-only-testing:AWIeffectTests/AuditRegressionTests -only-testing:AWIeffectTests/AuditRenderRegressionTests -only-testing:AWIeffectTests/PrecompMaskImportTests -only-testing:AWIeffectTests/EssentialRegressionTests -only-testing:AWIeffectTests/DrawStudioTests -only-testing:AWIeffectTests/VisionTests -only-testing:AWIeffectTests/VideoDecodeTests -only-testing:AWIeffectTests/EditorPolishRegressionTests -only-testing:AWIeffectUITests/EditorPolishUITests)
-          fi
-          if [[ "${{ inputs.validation }}" == "timing" ]]; then
-            FILTER=(-only-testing:AWIeffectUITests/AnimationTimingUITests -only-testing:AWIeffectUITests/GraphRemakeUITests -only-testing:AWIeffectTests/GraphRemakeTests)
-          fi
-          if [[ "${{ inputs.validation }}" == "stability" ]]; then
-            FILTER=(-only-testing:AWIeffectTests/InlineToolsTests -only-testing:AWIeffectUITests/InlineToolsUITests -only-testing:AWIeffectUITests/EditorPolishUITests -only-testing:AWIeffectUITests/StabilityUITests -only-testing:AWIeffectUITests/AnimationTimingUITests)
-          fi
-          if [[ "${{ inputs.validation }}" == "authoring" ]]; then
-            FILTER=(-only-testing:AWIeffectTests/RigOverhaulTests -only-testing:AWIeffectTests/BoneMeshTests -only-testing:AWIeffectTests/BoneAuthoringTests -only-testing:AWIeffectTests/BugBatchBTests -only-testing:AWIeffectTests/TextStudioTests -only-testing:AWIeffectTests/AdvancedAuthoringRenderTests -only-testing:AWIeffectTests/GraphRemakeTests -only-testing:AWIeffectUITests/RigAuthoringUITests)
-          fi
-          xcodebuild test -jobs 2 "${FILTER[@]}" \
+          xcodebuild build-for-testing -jobs 2 \
             -project AWIeffect.xcodeproj -scheme AWIeffect \
-            -destination "id=$SIM" \
-            -resultBundlePath TestResults.xcresult \
-            -parallel-testing-enabled NO \
-            -test-timeouts-enabled YES -default-test-execution-time-allowance 240 -maximum-test-execution-time-allowance 600 \
-            CODE_SIGNING_ALLOWED=NO 2>&1 | tee test.log | grep -E "error:|warning: .*AWI|Test Case|Executed|SKIP|FAIL|Fatal|error represents|exceeded|crashed|Restarting"
-          TEST_STATUS=${PIPESTATUS[0]}
-          set -e
-          exit "$TEST_STATUS"
-
-      - name: Test summary
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/TestBuild CODE_SIGNING_ALLOWED=NO 2>&1 | tee compile.log
+      - name: Upload compile diagnostics
         if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compile-diagnostics
+          path: |
+            compile.log
+            build_out/metal-preflight/**/compile.log
+          if-no-files-found: ignore
+      - name: Pack simulator products
+        if: inputs.validation != 'quick'
+        run: tar -czf test-products.tgz -C build/TestBuild/Build Products
+      - name: Upload simulator products
+        if: inputs.validation != 'quick'
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-products
+          path: test-products.tgz
+          compression-level: 0
+          retention-days: 2
+
+  tests:
+    needs: [plan, compile]
+    if: inputs.validation != 'quick'
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    runs-on: ${{ inputs.runner || 'macos-26' }}
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+      - uses: actions/download-artifact@v4
+        with:
+          name: simulator-products
+      - name: Unpack simulator products
+        run: |
+          mkdir -p build/TestBuild/Build
+          tar -xzf test-products.tgz -C build/TestBuild/Build
+      - name: Run bounded simulator shard
+        timeout-minutes: 65
+        env:
+          TEST_SCOPE: ${{ inputs.validation || 'all' }}
+          TEST_SHARD: ${{ matrix.shard }}
+        run: python3 scripts/run_ci_shard.py
+      # Always upload plain logs BEFORE xcresult parsing. A broken/incomplete
+      # result bundle must never prevent us from finding the stalled test.
+      - name: Upload raw test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-log-${{ matrix.shard }}
+          path: |
+            test.log
+            test-inventory.json
+          if-no-files-found: ignore
+      - name: Summarize results
+        if: always()
+        timeout-minutes: 2
         run: |
           if test -d TestResults.xcresult; then
             xcrun xcresulttool get test-results summary --path TestResults.xcresult --format json > test-summary.json
-            cat test-summary.json
-            echo '```json' >> "$GITHUB_STEP_SUMMARY"
-            cat test-summary.json >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            python3 - <<'PY'
+          import json
+          from pathlib import Path
+          summary=json.loads(Path('test-summary.json').read_text())
+          expected=len(json.loads(Path('test-inventory.json').read_text())['selectors'])
+          assert summary['totalTestCount']==expected, f"Executed {summary['totalTestCount']} of {expected} assigned tests"
+          assert 'SKIP-GPU' not in Path('test.log').read_text(), 'GPU coverage was skipped'
+          PY
+            python3 scripts/compact_test_summary.py test-summary.json
+            python3 scripts/compact_test_summary.py test-summary.json >> "$GITHUB_STEP_SUMMARY"
+            xcrun xcresulttool get test-results tests --path TestResults.xcresult --format json > test-details.json
+            python3 .github/failures.py < test-details.json
+          fi
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.shard }}
+          path: |
+            test-summary.json
+            test-details.json
+            /Users/runner/Library/Logs/DiagnosticReports/AWIeffect*
+          if-no-files-found: ignore
+      - name: Upload visual review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-review-${{ matrix.shard }}
+          path: |
+            /tmp/awi-ui
+            /tmp/awi-selection
+            /tmp/awi-contact-sheet.png
+            /tmp/awi-contact-sheets
+            /tmp/awi-shapes
+            /tmp/awi-backgrounds
+            /tmp/awi-expansion
+            /tmp/awi-graphs
+            /tmp/awi-authoring
+            /tmp/awi-premades33
+          if-no-files-found: ignore
+
+  package:
+    needs: [compile, tests]
+    if: >-
+      ${{ always() && needs.compile.result == 'success' &&
+          (needs.tests.result == 'success' || inputs.validation == 'quick') &&
+          (github.event_name != 'workflow_dispatch' || inputs.package_ipa) &&
+          (inputs.validation == 'all' || inputs.validation == 'repairs' || inputs.validation == 'final-repairs' || inputs.validation == 'quick' || github.event_name != 'workflow_dispatch') }}
+    runs-on: ${{ inputs.runner || 'macos-26' }}
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          ls /Applications | grep -i xcode || true
+          XC=/Applications/Xcode_26.6.app
+          echo "Using $XC"
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
+
+      - name: Ensure Metal compiler toolchain
+        run: |
+          if ! xcrun metal --version; then
+            xcodebuild -downloadComponent MetalToolchain
+            xcrun metal --version
           fi
 
-      - name: Print test failures
-        if: always()
+      - name: Compile and link every Metal shader (simulator and device)
+        run: python3 scripts/validate_metal.py
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Prepare verified GLTFKit2 binary
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/prepare_gltf_ci.py
+
+      - name: Generate project
+        run: xcodegen generate
+
+      - name: Report Metal device
         run: |
-          xcrun xcresulttool get test-results tests --path TestResults.xcresult --format json 2>/dev/null | python3 .github/failures.py | head -80 || true
+          cat > /tmp/metal.swift <<'EOF'
+          import Metal
+          import Foundation
+          guard let device = MTLCreateSystemDefaultDevice() else {
+              fputs("Metal unavailable: refusing an unvalidated GPU build\n", stderr)
+              exit(1)
+          }
+          print("Metal device:", device.name)
+          EOF
+          swift /tmp/metal.swift
 
-      - name: Print app crash reports
-        if: always()
-        run: |
-          for f in $(find ~/Library/Logs/DiagnosticReports -name "AWIeffect*" 2>/dev/null | head -3); do
-            echo "SKIP-CRASH file $f"
-            python3 .github/crashdump.py "$f" | sed 's/^/SKIP-CRASH /' | head -120
-          done
-
-      - name: Upload build service diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: host-diagnostics
-          path: |
-            /Users/runner/Library/Logs/DiagnosticReports
-            /Library/Logs/DiagnosticReports
-          if-no-files-found: ignore
-
-      - name: Upload test artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: |
-            test.log
-            test-summary.json
-            TestResults.xcresult
-          if-no-files-found: ignore
-
-      - name: Upload UI screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ui-screenshots
-          path: /tmp/awi-ui
-          if-no-files-found: warn
-
-      - name: Upload contact sheet
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: contact-sheet
-          path: |
-            /tmp/awi-contact-sheet.png
-            /tmp/awi-shapes/shape-contact-sheet.png
-          if-no-files-found: warn
-
-      - name: Upload shape motion renders
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: shape-renders
-          path: /tmp/awi-shapes
-          if-no-files-found: ignore
-
-      - name: Upload graph motion renders
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: graph-renders
-          path: /tmp/awi-graphs
-          if-no-files-found: ignore
-
-      - name: Upload authoring motion renders
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: authoring-renders
-          path: /tmp/awi-authoring
-          if-no-files-found: ignore
+      - name: Parse Swift sources
+        run: find App Tests UITests -name '*.swift' -print0 | xargs -0 xcrun swiftc -frontend -parse
 
       - name: Archive (unsigned)
-        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' && inputs.validation != 'stability' && inputs.validation != 'authoring' }}
         run: |
           set -o pipefail
           set +e
@@ -217,7 +296,6 @@ jobs:
           if-no-files-found: ignore
 
       - name: Package IPA
-        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' && inputs.validation != 'stability' && inputs.validation != 'authoring' }}
         run: |
           mkdir -p Payload
           cp -R build/AWIeffect.xcarchive/Products/Applications/AWIeffect.app Payload/
@@ -230,7 +308,6 @@ jobs:
           ls -lh AWIeffect.ipa
 
       - name: Upload IPA
-        if: ${{ inputs.validation != 'audit' && inputs.validation != 'timing' && inputs.validation != 'stability' && inputs.validation != 'authoring' }}
         uses: actions/upload-artifact@v4
         with:
           name: AWIeffect-ipa
