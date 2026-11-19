@@ -51,6 +51,8 @@ def needs_final_repair_check(target, cls, method):
     if cls == 'EditorPolishUITests':
         return method in {'testHeaderHoldStartsRangeSelectionWhileTracksRemainScrollable','testTrackHoldCanLiftAndReorderUnselectedClip'}
     if cls == 'EssentialUITests': return method == 'testGroupOpensItsOwnEditorAndReturnsToParent'
+    if cls == 'Expansion50EffectTests':
+        return method in {'testJunctionFlaresSeeFlatCutoutCornersAndKeepEmptyInputEmpty','testDefaultsChangeRichSourceAndBlendZeroIsExact','testOldSerializedInstancesUseIdenticalParameterFallbacks'}
     return False
 
 def active_shards(scope):

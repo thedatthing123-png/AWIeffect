@@ -8,6 +8,20 @@ import UniformTypeIdentifiers
 /// Rich deterministic fixtures, including actual reference maps. Never compare an effect
 /// with its map present against a baseline that silently removed the map layer.
 final class Expansion50EffectTests:XCTestCase {
+    func testJunctionFlaresSeeFlatCutoutCornersAndKeepEmptyInputEmpty()throws {
+        let side=48
+        var source=[Float](repeating:0,count:side*side*4)
+        for y in 12..<36 { for x in 12..<36 {
+            let i=(y*side+x)*4
+            source[i]=0.8;source[i+1]=0.5;source[i+2]=0.2;source[i+3]=1
+        }}
+        let recipe=try XCTUnwrap(CraftPresets33.layerRecipes.first{$0.name=="Corner Spark Sweep"})
+        let effect=try XCTUnwrap(recipe.effects.first?.make(start:0,duration:1))
+        let rendered=try process(source,reference:nil,width:side,height:side,effect:effect)
+        XCTAssertGreaterThan(zip(source,rendered).filter{abs($0.0-$0.1)>0.01}.count,20,"Junction light must see constant-color alpha corners, not only internal texture")
+        let empty=[Float](repeating:0,count:source.count)
+        XCTAssertTrue(try process(empty,reference:nil,width:side,height:side,effect:effect).allSatisfy{$0==0})
+    }
     static let definitions=EffectRegistry.spectral46+EffectRegistry.interactions47+EffectRegistry.craft48
     static func contains(_ id:String)->Bool { id.hasPrefix("awi46.") || id.hasPrefix("awi47.") || id.hasPrefix("awi48.") }
     private static let directory=FileManager.default.temporaryDirectory.appendingPathComponent("expansion50-\(UUID().uuidString)")

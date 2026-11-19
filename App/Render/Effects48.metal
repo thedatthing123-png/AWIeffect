@@ -26,6 +26,15 @@ static float2 grad48(texture2d<half> t, float2 q, float h) {
                   lum48(sm48(t, q + float2(0, h))) - lum48(sm48(t, q - float2(0, h)))) /
            (2 * h);
 }
+// Corner detection must include coverage. Unpremultiplying a blurred cutout
+// makes a constant-colored shape look flat until the far transparent blur tail,
+// moving the response outside the actual artwork and losing the corner.
+static float2 cornerGradient48(texture2d<half> t, float2 q, float h) {
+    const float3 weights = float3(.2126, .7152, .0722);
+    float dx = dot(sm48(t, q + float2(h, 0)).rgb - sm48(t, q - float2(h, 0)).rgb, weights);
+    float dy = dot(sm48(t, q + float2(0, h)).rgb - sm48(t, q - float2(0, h)).rgb, weights);
+    return float2(dx, dy) / (2 * h);
+}
 static float seg48(float2 q, float2 a, float2 b) {
     float2 d = b - a;
     return length(q - a - d * clamp(dot(q - a, d) / max(dot(d, d), 1e-5), 0.0, 1.0));
@@ -78,18 +87,22 @@ kernel void fxCraftPrepare48(texture2d<half> source [[texture(0)]],
                 q += float2(sin(p.d.y + hash48(center + p.d.z) * 6.28),
                             cos(p.d.y + hash48(center - p.d.z) * 6.28)) *
                      cell * .08;
-                float xx = 0, xy = 0, yy = 0;
+                float xx = 0, xy = 0, yy = 0, coverage = 0;
                 for (int j = -1; j <= 1; j++)
                     for (int i = -1; i <= 1; i++) {
-                        float2 v = grad48(soft, q + float2(i, j) * p.a.y, max(.5, p.d.w));
+                        float2 v = cornerGradient48(soft, q + float2(i, j) * p.a.y, max(.5, p.d.w));
                         xx += v.x * v.x;
                         xy += v.x * v.y;
                         yy += v.y * v.y;
+                        // A junction's tensor covers this whole neighborhood.
+                        // Its maximum may lie just OUTSIDE an alpha edge; using
+                        // only the center alpha discarded valid cutout corners.
+                        coverage = max(coverage, sm48(source, q + float2(i, j) * p.a.y).a);
                     }
                 float score = max(0.0, (xx * yy - xy * xy) / max(xx + yy, 1e-6)) * as_type<float>(p.i.z) * 12;
                 if (score > best) {
                     best = score;
-                    result = float4(q, clamp(score, 0.0, 4.0), sm48(source, q).a);
+                    result = float4(q, clamp(score, 0.0, 4.0), coverage);
                 }
             }
         }

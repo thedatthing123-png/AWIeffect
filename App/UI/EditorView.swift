@@ -116,12 +116,9 @@ struct EditorView: View {
             }
         }
         .background(Theme.background.ignoresSafeArea())
-        // This surface does not move when the first clip tap opens a panel.
-        // Simultaneous recognition leaves single taps, holds and tool gestures
-        // immediate; only a pending timeline container tap can open anything.
-        .simultaneousGesture(SpatialTapGesture(count:2).onEnded { _ in
+        .background(TimelineContainerTapObserver {
             state.finishTimelineContainerDoubleTap()
-        })
+        }.allowsHitTesting(false))
         .environmentObject(drawLauncher)
         .environmentObject(cutoutSession)
         // Every slider in the editor keeps its edits live while dragging (smooth, no full-editor rebuilds).
