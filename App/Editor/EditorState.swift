@@ -303,6 +303,19 @@ final class EditorState: ObservableObject {
         else if panel != .layerHome { panel = .layerHome }
     }
 
+    /// Opening the panel changes the row's screen position after the first tap.
+    /// The editor's stationary simultaneous double-tap recognizer can finish the
+    /// original container action even when the second touch misses the moved row.
+    func finishTimelineContainerDoubleTap(timestamp:TimeInterval=ProcessInfo.processInfo.systemUptime) {
+        guard !isMultiSelecting,!linkPicking,let first=lastTimelineTap,
+              timestamp>=first.time,timestamp-first.time<=0.6,
+              let layer=project.layers.first(where:{$0.id==first.id}) else { return }
+        if !layer.isGroup { guard case .precomp=layer.content else { return } }
+        lastTimelineTap=nil
+        if selectedLayerID != first.id { selectedLayerID=first.id }
+        if layer.isGroup { openGroup() } else { openPrecomp() }
+    }
+
     var selectedIndex: Int? {
         guard let id = selectedLayerID else { return nil }
         return project.layers.firstIndex { $0.id == id }

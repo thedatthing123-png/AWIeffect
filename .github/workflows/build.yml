@@ -14,7 +14,7 @@ on:
       validation:
         description: Test scope (audit runs do not publish an IPA)
         type: choice
-        options: [all, repairs, audit, timing, stability, authoring, segmentation, quick]
+        options: [all, repairs, final-repairs, audit, timing, stability, authoring, segmentation, quick]
         default: all
       package_ipa:
         description: Package an IPA after validation (disable for expansion checkpoints)
@@ -218,7 +218,7 @@ jobs:
       ${{ always() && needs.compile.result == 'success' &&
           (needs.tests.result == 'success' || inputs.validation == 'quick') &&
           (github.event_name != 'workflow_dispatch' || inputs.package_ipa) &&
-          (inputs.validation == 'all' || inputs.validation == 'repairs' || inputs.validation == 'quick' || github.event_name != 'workflow_dispatch') }}
+          (inputs.validation == 'all' || inputs.validation == 'repairs' || inputs.validation == 'final-repairs' || inputs.validation == 'quick' || github.event_name != 'workflow_dispatch') }}
     runs-on: ${{ inputs.runner || 'macos-26' }}
     timeout-minutes: 35
     steps:

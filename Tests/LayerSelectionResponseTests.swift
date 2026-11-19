@@ -42,4 +42,25 @@ import XCTest
         XCTAssertEqual(state.project.id,group.id)
         XCTAssertNil(state.selectedLayerID)
     }
+    func testStableSurfaceCompletesContainerDoubleTapAfterTheRowMoves() {
+        let state=editor()
+        state.select(state.project.layers[0].id);state.groupSelected()
+        guard let group=state.project.layers.first(where:{$0.isGroup}) else { return XCTFail("Missing group") }
+        state.select(nil);state.tapTimelineLayer(group.id,timestamp:1)
+        XCTAssertEqual(state.panel,.layerHome)
+        // The second touch may hit empty canvas after the first opened a panel.
+        state.select(nil)
+        state.finishTimelineContainerDoubleTap(timestamp:1.25)
+        XCTAssertEqual(state.project.id,group.id)
+    }
+    func testStableSurfaceDoesNotOpenAnExpiredTapOrAnOrdinaryLayer() {
+        let state=editor(),root=state.project.id
+        state.tapTimelineLayer(state.project.layers[0].id,timestamp:1)
+        state.finishTimelineContainerDoubleTap(timestamp:1.2)
+        XCTAssertEqual(state.project.id,root)
+        state.groupSelected();let group=state.selectedLayerID!
+        state.select(nil);state.tapTimelineLayer(group,timestamp:2)
+        state.finishTimelineContainerDoubleTap(timestamp:3)
+        XCTAssertEqual(state.project.id,root)
+    }
 }

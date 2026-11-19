@@ -45,11 +45,20 @@ def needs_repair_check(target, cls, method):
         return method in {'testFrequencyFiltersKeepCoverageAndEmptyPixelsClean', 'testWriteRemainingFamilyReviewArtifacts'} or method.startswith('testRemainingReviewPart')
     return False
 
+def needs_final_repair_check(target, cls, method):
+    if cls in {'LibraryTests','LayerSelectionResponseTests','ContainerInteractionTests','ContainerInteractionUITests'}: return True
+    if cls == 'TextPresetSheetTests': return method == 'testGeneralGlow'
+    if cls == 'EditorPolishUITests':
+        return method in {'testHeaderHoldStartsRangeSelectionWhileTracksRemainScrollable','testTrackHoldCanLiftAndReorderUnselectedClip'}
+    if cls == 'EssentialUITests': return method == 'testGroupOpensItsOwnEditorAndReturnsToParent'
+    return False
+
 def active_shards(scope):
     if scope == 'quick': return ['quick']
     if scope == 'all': return SHARDS
-    if scope == 'repairs':
-        return [shard for shard in SHARDS if any(needs_repair_check(*test) and shard_for(*test)==shard for test in inventory())]
+    if scope in {'repairs','final-repairs'}:
+        predicate=needs_repair_check if scope=='repairs' else needs_final_repair_check
+        return [shard for shard in SHARDS if any(predicate(*test) and shard_for(*test)==shard for test in inventory())]
     return ['scope']
 
 def inventory():
@@ -80,8 +89,9 @@ def shard_for(target, cls, method):
 
 def selectors(scope, shard):
     tests = inventory()
-    if scope in {'all','repairs'}:
-        chosen = [test for test in tests if shard_for(*test) == shard and (scope=='all' or needs_repair_check(*test))]
+    if scope in {'all','repairs','final-repairs'}:
+        predicate=needs_repair_check if scope=='repairs' else needs_final_repair_check
+        chosen = [test for test in tests if shard_for(*test) == shard and (scope=='all' or predicate(*test))]
     else:
         assert scope in SCOPES, scope
         chosen = [test for test in tests if test[1] in SCOPES[scope]]
@@ -97,6 +107,9 @@ def check():
     repair_tests=[test for test in tests if needs_repair_check(*test)]
     repair_flags=[flag for shard in active_shards('repairs') for flag in selectors('repairs',shard)]
     assert len(repair_flags)==len(repair_tests)==len(set(repair_flags))
+    final_tests=[test for test in tests if needs_final_repair_check(*test)]
+    final_flags=[flag for shard in active_shards('final-repairs') for flag in selectors('final-repairs',shard)]
+    assert len(final_flags)==len(final_tests)==len(set(final_flags))
     return {shard: len(selectors('all', shard)) for shard in SHARDS}
 
 if __name__ == '__main__':

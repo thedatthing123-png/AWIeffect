@@ -823,12 +823,12 @@
       {
         "id": "awi48.craft.junctions",
         "values": {
-          "first": 18,
-          "second": 1,
-          "third": 0.45,
-          "gain": 10,
-          "halo": 5,
-          "energy": 0.7
+          "first": 12,
+          "second": 2,
+          "third": 0.85,
+          "gain": 24,
+          "halo": 18,
+          "energy": 2.8
         }
       }
     ]

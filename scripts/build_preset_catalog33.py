@@ -17,6 +17,7 @@ fx('F','awi48.craft.fringe',first=7,second=3,third=.4)
 fx('C','awi48.craft.stitch',first=7,second=5,third=1)
 fx('S','awi48.craft.sequin',first=9,second=25,third=.1)
 fx('J','awi48.craft.junctions',first=18,second=1,third=.45,gain=10,halo=5,energy=.7)
+fx('JS','awi48.craft.junctions',first=12,second=2,third=.85,gain=24,halo=18,energy=2.8)
 fx('L','awi48.craft.flowLight',first=22,second=1,third=2,halo=5,energy=.8)
 fx('R','awi48.craft.chromaTrails',first=18,second=1,third=2,halo=6,energy=.7)
 fx('Q','awi48.craft.prismInk',first=3,second=1,third=.06,halo=4,energy=.6)
@@ -466,7 +467,7 @@ layers('Glow & Light','''
 Soft Highlight Halo|none|0|1|0|G
 Ring Highlight Pop|none|0|.65|0|N
 Prismatic Light Edge|none|0|.85|0|Q+O
-Corner Spark Sweep|none|0|.75|0|J
+Corner Spark Sweep|none|0|.75|0|JS
 Ink Light Current|none|0|1.2|0|L
 Chromatic Speed Trail|none|0|.65|0|R
 Lens Reflection Hit|zoom|8|.7|0|Z
