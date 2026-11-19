@@ -188,7 +188,9 @@ struct TextPresetPreviewSource: Equatable {
         fontName = layer?.text?.fontName ?? "Helvetica-Bold"
         style = layer?.text?.style
         let encoder=JSONEncoder();encoder.outputFormatting = .sortedKeys
-        styleFingerprint=(try? encoder.encode(style)).map{String($0.hashValue)} ?? "-"
+        // Store the canonical payload, not a process-local hash. Explicit self
+        // also makes the captured input unambiguous during initialization.
+        styleFingerprint=(try? encoder.encode(self.style)).map{$0.base64EncodedString()} ?? "-"
     }
 
     var key: String { "\(string)|\(fontName)|\(styleFingerprint)" }

@@ -458,6 +458,20 @@ final class ExpansionRenderTests: XCTestCase {
         }
     }
     func testWriteRemainingFamilyReviewArtifacts() throws {
+        try writeRemainingFamilyReview(shard:0)
+    }
+    func testRemainingReviewPart1()throws { try writeRemainingFamilyReview(shard:1) }
+    func testRemainingReviewPart2()throws { try writeRemainingFamilyReview(shard:2) }
+    func testRemainingReviewPart3()throws { try writeRemainingFamilyReview(shard:3) }
+    func testRemainingReviewPart4()throws { try writeRemainingFamilyReview(shard:4) }
+    func testRemainingReviewPart5()throws { try writeRemainingFamilyReview(shard:5) }
+    func testRemainingReviewPart6()throws { try writeRemainingFamilyReview(shard:6) }
+    func testRemainingReviewPart7()throws { try writeRemainingFamilyReview(shard:7) }
+    func testRemainingReviewPart8()throws { try writeRemainingFamilyReview(shard:8) }
+    func testRemainingReviewPart9()throws { try writeRemainingFamilyReview(shard:9) }
+    func testRemainingReviewPart10()throws { try writeRemainingFamilyReview(shard:10) }
+    func testRemainingReviewPart11()throws { try writeRemainingFamilyReview(shard:11) }
+    private func writeRemainingFamilyReview(shard:Int)throws {
         guard let renderer=Renderer.shared else { throw XCTSkip("SKIP-GPU") }
         let folder=URL(fileURLWithPath:"/tmp/awi-expansion",isDirectory:true)
         try FileManager.default.createDirectory(at:folder,withIntermediateDirectories:true)
@@ -486,7 +500,8 @@ final class ExpansionRenderTests: XCTestCase {
             ("graphic-craft",EffectRegistry.craft48),
             ("measured-motion",EffectRegistry.flow31)
         ]
-        for (name,definitions) in families {
+        for (index,family) in families.enumerated() where index%12==shard {
+            let (name,definitions)=family
             let height=CGFloat((definitions.count+3)/4)*180
             let sheet=UIGraphicsImageRenderer(size:CGSize(width:768,height:height)).image { context in
                 UIColor(white:0.06,alpha:1).setFill();context.fill(CGRect(x:0,y:0,width:768,height:height))
@@ -562,7 +577,8 @@ final class ExpansionRenderTests: XCTestCase {
         let manifest=previews.map { ["id":$0.0,"parameter":$0.1,"start":$0.2,"end":$0.3] as [String:Any] }
         try JSONSerialization.data(withJSONObject:manifest,options:[.prettyPrinted,.sortedKeys])
             .write(to:folder.appendingPathComponent("motion-review.json"))
-        for (id,key,start,end) in previews {
+        for (index,preview) in previews.enumerated() where index%12==shard {
+            let (id,key,start,end)=preview
             let definition=try XCTUnwrap(EffectRegistry.definition(id))
             XCTAssertTrue(definition.params.contains{$0.id==key},"Review control missing: \(id).\(key)")
             var effect=definition.makeInstance(),value=Animated(start)

@@ -12,6 +12,10 @@ Path('test-inventory.json').write_text(json.dumps({'scope':scope,'shard':shard,'
 devices=json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','-j']))['devices']
 phones=[device['udid'] for runtime,items in devices.items() if 'iOS' in runtime for device in items if device['name'].startswith('iPhone')]
 if not phones: raise RuntimeError('No available iPhone simulator')
+state=subprocess.run(['xcrun','simctl','boot',phones[-1]],capture_output=True,text=True)
+# A reused runner may already have it booted. bootstatus waits for SpringBoard
+# before XCUITest asks Accessibility to initialize, instead of racing first boot.
+subprocess.run(['xcrun','simctl','bootstatus',phones[-1],'-b'],check=True,timeout=240)
 products=Path('build/TestBuild/Build/Products')
 runs=list(products.glob('*.xctestrun'))
 if len(runs)!=1: raise RuntimeError(f'Expected one relocatable xctestrun, got {runs}')

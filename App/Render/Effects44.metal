@@ -63,7 +63,7 @@ static float maskingFinish44(float3 w,float3 normal,float3 tangent,float3 bitang
 kernel void fxSurfaceFinish44(texture2d<half> source [[texture(0)]],texture2d<half,access::write> output [[texture(1)]],
                               texture2d<half> soft [[texture(2)]],constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
     if(gid.x>=output.get_width()||gid.y>=output.get_height()) return;
-    float2 uv=float2(gid)+.5;float4 original=float4(source.sample(finishSample44,uv));
+    float2 uv=float2(gid)+.5;float4 original=float4(source.read(gid));
     if(original.a<=1.e-6) { output.write(half4(original),gid);return; }
     float step=max(.5,p.d.w);
     float dx,dy,cellGap=0;

@@ -64,7 +64,7 @@ kernel void fxContourFinish41(texture2d<half> source [[texture(0)]],texture2d<ha
                               texture2d<float,access::read> field [[texture(2)]],constant EffectParams& p [[buffer(0)]],
                               uint2 gid [[thread_position_in_grid]]) {
     if(gid.x>=output.get_width()||gid.y>=output.get_height()) return;
-    float2 uv=float2(gid)+.5;float4 original=float4(source.sample(contourSample41,uv));
+    float2 uv=float2(gid)+.5;float4 original=float4(source.read(gid));
     float4 geometry=contourGeometry41(source,field,uv,p);
     if(geometry.w==0) { output.write(half4(original),gid);return; }
     float distance=geometry.x,depth=abs(distance),range=max(.5,abs(p.a.z));float2 normal=geometry.yz;

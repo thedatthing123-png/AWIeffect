@@ -54,7 +54,7 @@ kernel void fxLayerInteraction47(texture2d<half> source [[texture(0)]],
     if (gid.x >= output.get_width() || gid.y >= output.get_height())
         return;
     float2 q = float2(gid) + .5, size = float2(output.get_width(), output.get_height());
-    float4 original = float4(source.sample(layerRead47, q)), ref = float4(reference.sample(layerRead47, q)),
+    float4 original = float4(source.read(gid)), ref = float4(reference.sample(layerRead47, q)),
            result = original;
     float3 color = straight47(original);
     uint steps = uint(clamp(round(p.d.w), 1.0, 32.0));

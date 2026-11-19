@@ -1248,12 +1248,19 @@ final class DrawEngine: ObservableObject {
     }
 
     /// Color adjustments / filters on the active layer (Core Image), baked in one undo step.
-    private static let filterContext = CIContext()
+    private static let filterContext:CIContext = {
+        #if targetEnvironment(simulator) && arch(x86_64)
+        return CIContext(options:[.useSoftwareRenderer:true])
+        #else
+        return CIContext()
+        #endif
+    }()
     private let filterQueue = DispatchQueue(label: "awi.draw.filter", qos: .userInteractive)
     private var filterBase: (layer: DrawLayer, bytes: [UInt8], mask: [UInt8]?, image: CGImage)?
     private var filterPending: DrawFilter?
     private var filterBusy = false
     var isFiltering: Bool { filterBase != nil }
+    var isFilterUpdating:Bool { filterBusy || filterPending != nil }
 
     /// Starts a live filter on the active layer: the canvas updates while the sliders move.
     func beginFilter() {

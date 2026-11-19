@@ -59,6 +59,9 @@ extension EffectRegistry {
         params.append(.number("blend","Blend",100,0,100,unit:"%"))
         return EffectDefinition(id:"awi47.layer."+id,name:name,category:category,aeMatchNames:[],summary:summary,params:params,stage:.pixels { ctx in
             guard v29(ctx,"blend")>0,let reference=ctx.reference else { return ctx.input }
+            // Exact identity at the dissolve's first frame, without a sampling
+            // pass perturbing the original coverage on another GPU backend.
+            if mode==10 && v29(ctx,"amount")<=0 { return ctx.input }
             let sourceSoft=[8,9].contains(mode) ? ctx.gpu.gaussian(ctx,input:ctx.input,sigma:v29(ctx,"radius")*ctx.unit):ctx.input
             let referenceSoft=[5,8,9,18].contains(mode) ? ctx.gpu.gaussian(ctx,input:reference,sigma:v29(ctx,"radius")*ctx.unit):reference
             let flow=mode==16 ? measuredFlow31(ctx,previous:reference):reference

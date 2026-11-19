@@ -6,6 +6,7 @@ final class CraftPresets33Tests:XCTestCase {
         var p=Project.new(name:"Premade test",width:640,height:360,fps:60,duration:6)
         var l=p.makeLayer(name:"User text",content:.text,size:Vec2(640,360))
         l.text=TextData(string:"Keep my words",fontSize:60)
+        l.text?.migrateToCharIDs()
         return (p,l)
     }
     func testBundledCountsAndRecipesAreNotDuplicatePayloads() throws {
@@ -108,6 +109,7 @@ final class CraftPresets33Tests:XCTestCase {
     func testPreviewKeyInvalidatesForAStyleColorChange() {
         var (_,l)=layer();var style=TextStyleStack()
         style.fills=[TextFillLayer(kind:.solid,colors:[.white])];l.text?.style=style
+        XCTAssertNotNil(l.text?.style)
         let before=TextPresetPreviewSource(layer:l).key
         style.fills=[TextFillLayer(kind:.solid,colors:[.black])];l.text?.style=style
         XCTAssertNotEqual(before,TextPresetPreviewSource(layer:l).key)

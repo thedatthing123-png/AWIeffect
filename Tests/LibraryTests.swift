@@ -22,8 +22,12 @@ final class LibraryTests: XCTestCase {
 
     /// Every preset must change how the layer renders at the moment it targets.
     func testEveryPresetDoesSomething() throws {
-        let base = layerProject()
         for preset in PresetLibrary.all {
+            var base = layerProject()
+            if preset.kind == .velocity {
+                // Frame-time tools must see moving upstream content.
+                base.layers[0].transform.rotation=TPB.kf([(0,0.0),(3,100.0)],linear:true)
+            }
             var p = base
             let t: Double
             switch preset.kind {
@@ -33,7 +37,12 @@ final class LibraryTests: XCTestCase {
             }
             let anchor = preset.kind == .transitionIn ? 0.5 : (preset.kind == .transitionOut ? 2.5 : 1.2)
             preset.apply(&p.layers[0], p, anchor)
-            XCTAssertGreaterThan(diff(try render(base, t), try render(p, t)), 0.3, "\(preset.name) did nothing")
+            // Motion recipes are deliberately neutral on their first key. Check
+            // their active interval, rather than only that neutral anchor.
+            var largest=0.0
+            let samples=preset.kind == .transitionIn || preset.kind == .transitionOut ? [t]:[t+0.08,t+0.2,t+0.4,t+0.65]
+            for sample in samples { largest=max(largest,diff(try render(base,sample),try render(p,sample))) }
+            XCTAssertGreaterThan(largest,0.3,"\(preset.name) did nothing")
         }
     }
 

@@ -90,7 +90,7 @@ final class PromptSegmentationModel {
         guard masks.shape.count == 4 else { throw InteractiveSelection.SelectionError.modelOutput("Mask shape: \(masks.shape)") }
         let count = masks.shape[1].intValue, height = masks.shape[2].intValue, width = masks.shape[3].intValue
         // Use Core ML's typed tensor bridge for a contiguous view of GPU-backed FP16 output.
-        let logits = MLShapedArray<Float>(converting: masks).scalars
+        let logits = Self.scalarValues(masks)
         guard logits.count == count * width * height, logits.allSatisfy(\.isFinite) else {
             throw InteractiveSelection.SelectionError.modelOutput("Invalid mask tensor values")
         }
@@ -108,5 +108,16 @@ final class PromptSegmentationModel {
         print("SAM2 mask shape \(masks.shape), logit range \(logits.min() ?? 0)...\(logits.max() ?? 0), \(ranges)")
         #endif
         return candidates
+    }
+
+    /// Core ML's NSNumber accessor converts the actual element type and honors
+    /// the logical layout. Avoid the FP16 shaped-array conversion on Intel
+    /// simulators, where nonfinite decoder values were being reported.
+    static func scalarValues(_ tensor:MLMultiArray)->[Float] {
+        #if targetEnvironment(simulator) && arch(x86_64)
+        return (0..<tensor.count).map{tensor[$0].floatValue}
+        #else
+        return MLShapedArray<Float>(converting:tensor).scalars
+        #endif
     }
 }

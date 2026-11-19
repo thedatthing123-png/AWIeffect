@@ -333,10 +333,15 @@ final class Text3DRenderer {
             blit.copy(from: rt.view, to: output)
             blit.endEncoding()
         }
-        let done = DispatchSemaphore(value: 0)
-        buffer.addCompletedHandler { [renderer] _ in withExtendedLifetime(renderer) {}; done.signal() }
+        buffer.addCompletedHandler { [renderer] _ in withExtendedLifetime(renderer) {} }
         buffer.commit()
-        _ = done.wait(timeout: .now() + 2)
+        // This result is consumed on a different command queue. Never hand out
+        // a partially written texture or tear down its scene after a timeout.
+        buffer.waitUntilCompleted()
+        guard buffer.status == .completed else {
+            NSLog("Text 3D rendering failed: %@",buffer.error?.localizedDescription ?? "Unknown Metal error")
+            return nil
+        }
         renderer.scene = nil; renderer.pointOfView = nil
         if renderers.count < 4 { renderers.append(renderer) }
         return output

@@ -31,6 +31,26 @@ SCOPES = {
     'authoring': ['RigOverhaulTests', 'BoneMeshTests', 'BoneAuthoringTests', 'BugBatchBTests',
                   'TextStudioTests', 'AdvancedAuthoringRenderTests', 'GraphRemakeTests', 'RigAuthoringUITests'],
 }
+REPAIR_CLASSES = {'InteractiveSelectionTests', 'LibraryTests', 'RenderSpeedTests', 'MemoryTests',
+                  'ArtStudioRenewTests', 'Text3DTests', 'CraftPresets33Tests', 'TextPresetLibraryTests',
+                  'ResponsivePreviewTests', 'LayerSelectionResponseTests', 'DistanceEffectTests',
+                  'SurfaceFinishTests', 'Expansion50EffectTests', 'DCTEffectTests'}
+
+def needs_repair_check(target, cls, method):
+    if target == 'AWIeffectUITests': return True  # Previous UI runner never initialized.
+    if cls in REPAIR_CLASSES: return True
+    if cls == 'TextPresetSheetTests': return not method.startswith('testGeneral')
+    if cls == 'EffectTests': return method == 'testEveryNumericControlIsWired' or method.startswith('testNumericControlsPart')
+    if cls == 'ExpansionRenderTests':
+        return method in {'testFrequencyFiltersKeepCoverageAndEmptyPixelsClean', 'testWriteRemainingFamilyReviewArtifacts'} or method.startswith('testRemainingReviewPart')
+    return False
+
+def active_shards(scope):
+    if scope == 'quick': return ['quick']
+    if scope == 'all': return SHARDS
+    if scope == 'repairs':
+        return [shard for shard in SHARDS if any(needs_repair_check(*test) and shard_for(*test)==shard for test in inventory())]
+    return ['scope']
 
 def inventory():
     result = []
@@ -60,8 +80,8 @@ def shard_for(target, cls, method):
 
 def selectors(scope, shard):
     tests = inventory()
-    if scope == 'all':
-        chosen = [test for test in tests if shard_for(*test) == shard]
+    if scope in {'all','repairs'}:
+        chosen = [test for test in tests if shard_for(*test) == shard and (scope=='all' or needs_repair_check(*test))]
     else:
         assert scope in SCOPES, scope
         chosen = [test for test in tests if test[1] in SCOPES[scope]]
@@ -74,6 +94,9 @@ def check():
     selected = [s for shard in SHARDS for s in selectors('all', shard)]
     assert len(selected) == len(tests) == len(set(selected)), 'Shards overlap or omit tests'
     for scope in SCOPES: selectors(scope, 'scope')
+    repair_tests=[test for test in tests if needs_repair_check(*test)]
+    repair_flags=[flag for shard in active_shards('repairs') for flag in selectors('repairs',shard)]
+    assert len(repair_flags)==len(repair_tests)==len(set(repair_flags))
     return {shard: len(selectors('all', shard)) for shard in SHARDS}
 
 if __name__ == '__main__':

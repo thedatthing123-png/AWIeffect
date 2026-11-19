@@ -420,8 +420,8 @@ kernel void fxFrequency37(texture2d<half,access::sample> source [[texture(0)]],
                           constant EffectParams& p [[buffer(0)]],uint2 gid [[thread_position_in_grid]]) {
     if(gid.x>=output.get_width() || gid.y>=output.get_height()) return;
     float2 uv=float2(gid)+.5;
-    float4 original=float4(source.sample(finish37,uv));
-    if(original.a<=.00001) { output.write(half4(original),gid);return; }
+    float4 original=float4(source.read(gid));
+    if(original.a<=.00001) { output.write(half4(0),gid);return; }
     // Normalize by each surround's own coverage: transparent padding is missing
     // data, not a black illumination estimate.
     float3 current=straight37(original),near=straight37(float4(nearScale.sample(finish37,uv)));
