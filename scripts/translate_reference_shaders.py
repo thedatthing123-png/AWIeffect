@@ -48,11 +48,21 @@ vec4 referenceColor;
 '''
 
 
-def translate(root, slug, images=None):
+def translate(root, slug, images=None, filename=''):
     shaders = root.findall('.//shader')
     if len(shaders) != 1 or shaders[0].get('type') != 'fragment':
         raise ValueError('requires native or multiple shader stages')
     code = ''.join(shaders[0].itertext())
+    basename = Path(filename).name
+    # Native-format corrections found during render review. The original IPA is
+    # retained; geometry/noise math is unchanged by these alpha adaptations.
+    if basename == 'pixeledge.xml':
+        code = code.replace('float gradBias = gradientBias;', 'float gradBias = clamp(gradientBias, 0.0001, 0.9999);')
+    if basename == 'square_break_3d.xml':
+        code = code.replace('vec4(c.rgb,c.a*inside*(1.-smoothstep(.82,1.,t)))', 'c*(inside*(1.-smoothstep(.82,1.,t)))')
+    if basename == 'colorama.xml':
+        code = code.replace('mix(src.rgb, col, clamp(blend, 0.0, 1.0))', 'mix(src.rgb / max(src.a, 0.00001), col, clamp(blend, 0.0, 1.0))')
+        code = code.replace('vec3 outRGB =', 'if (blend <= 0.0 && alpha >= 1.0) { gl_FragColor = src; return; }\n      vec3 outRGB =')
     clean = re.sub(r'/\*.*?\*/|//[^\n]*', '', code, flags=re.S)
     globals_used = set(re.findall(r'\bac[A-Z]\w*', clean))
     known = set(re.findall(r'#define (ac\w+)', HEADER))
@@ -113,24 +123,36 @@ def translate(root, slug, images=None):
 void main() {
     referenceColor = vec4(0.);
     referenceMain();
+NATIVE_ALPHA_ADAPTER
     if (any(isnan(referenceColor)) || any(isinf(referenceColor))) referenceColor=vec4(0.);
     referenceColor.a=clamp(referenceColor.a,0.,1.);
     if (referenceColor.a<=0.) referenceColor=vec4(0.);
     finalColor=referenceColor;
 }
 '''
+    alpha_adapter = ''
+    if basename in {'pixeledge.xml', 'irridescence2.xml'}:
+        alpha_adapter = 'float nativeAlpha = texture(refInput, acScreenNorm).a;\n    referenceColor = vec4(referenceColor.rgb * nativeAlpha, nativeAlpha);'
+    source = source.replace('NATIVE_ALPHA_ADAPTER', alpha_adapter)
     return source, controls, slot
 
 
 def run(args):
     args.output.mkdir(parents=True, exist_ok=True)
     records = []
+    old_report = args.output / 'translation-report.json'
+    previous = {r['file']: r for r in json.loads(old_report.read_text(encoding='utf8'))} if args.only and old_report.exists() else {}
     with zipfile.ZipFile(args.ipa) as archive:
         for filename in archive.namelist():
             if not filename.endswith('.xml') or '/AEMotionQuarantine/' in filename:
                 continue
             root = ET.fromstring(archive.read(filename))
             if root.tag != 'effect' or root.get('deprecated') == 'true':
+                continue
+            if args.only and Path(filename).name not in args.only:
+                if filename not in previous:
+                    raise RuntimeError('Incremental translation needs the complete prior report')
+                records.append(previous[filename])
                 continue
             slug = 'e' + __import__('hashlib').sha256(filename.encode()).hexdigest()[:12]
             record = {'file': filename, 'id': root.get('id'), 'slug': slug}
@@ -150,7 +172,7 @@ def run(args):
                     asset_name = 'amref-' + __import__('hashlib').sha256(raw).hexdigest()[:16] + Path(src).suffix
                     (args.output / asset_name).write_bytes(raw)
                     images[texture.get('id')] = {'file': asset_name, 'source': asset, 'width': image.width, 'height': image.height}
-                source, controls, slots = translate(root, slug, images)
+                source, controls, slots = translate(root, slug, images, filename)
                 glsl = args.output / (slug + '.frag')
                 spirv = args.output / (slug + '.spv')
                 metal = args.output / (slug + '.metal')
@@ -181,4 +203,5 @@ if __name__ == '__main__':
     parser.add_argument('--glslang', type=Path, required=True)
     parser.add_argument('--cross', type=Path, required=True)
     parser.add_argument('--output', type=Path, default=Path('build_out/reference-translation'))
+    parser.add_argument('--only', action='append', help='Rebuild named XML files while retaining prior audit entries')
     run(parser.parse_args())

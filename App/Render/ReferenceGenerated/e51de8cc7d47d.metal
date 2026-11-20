@@ -121,17 +121,19 @@ fragment refAM35_e51de8cc7d47d_out refAM35_e51de8cc7d47d(constant ReferenceUnifo
     refAM35_e51de8cc7d47d_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(_123, refInput, refInputSmplr, gl_FragCoord, referenceColor);
-    bool _365 = any(isnan(referenceColor));
-    bool _372;
-    if (!_365)
+    float nativeAlpha = refInput.sample(refInputSmplr, (gl_FragCoord.xy / _123.refScreen.xy)).w;
+    referenceColor = float4(referenceColor.xyz * nativeAlpha, nativeAlpha);
+    bool _385 = any(isnan(referenceColor));
+    bool _392;
+    if (!_385)
     {
-        _372 = any(isinf(referenceColor));
+        _392 = any(isinf(referenceColor));
     }
     else
     {
-        _372 = _365;
+        _392 = _385;
     }
-    if (_372)
+    if (_392)
     {
         referenceColor = float4(0.0);
     }

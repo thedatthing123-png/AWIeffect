@@ -178,7 +178,22 @@ void referenceMain(constant ReferenceUniformsea3452b1fb102& _306, thread float4&
     }
     float2 param_3 = gl_FragCoord.xy / _306.refScreen.xy;
     float4 src = texture2DCv(refInput, refInputSmplr, param_3);
-    float3 outRGB = mix(src.xyz, col, float3(fast::clamp(_306.blend, 0.0, 1.0)));
+    bool _456 = _306.blend <= 0.0;
+    bool _463;
+    if (_456)
+    {
+        _463 = _306.alpha >= 1.0;
+    }
+    else
+    {
+        _463 = _456;
+    }
+    if (_463)
+    {
+        referenceColor = src;
+        return;
+    }
+    float3 outRGB = mix(src.xyz / float3(fast::max(src.w, 9.9999997473787516355514526367188e-06)), col, float3(fast::clamp(_306.blend, 0.0, 1.0)));
     float a = src.w * _306.alpha;
     referenceColor = float4(outRGB, 1.0) * a;
 }
@@ -188,17 +203,17 @@ fragment refAM35_ea3452b1fb102_out refAM35_ea3452b1fb102(constant ReferenceUnifo
     refAM35_ea3452b1fb102_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(_306, gl_FragCoord, refInput, refInputSmplr, referenceColor);
-    bool _485 = any(isnan(referenceColor));
-    bool _492;
-    if (!_485)
+    bool _504 = any(isnan(referenceColor));
+    bool _511;
+    if (!_504)
     {
-        _492 = any(isinf(referenceColor));
+        _511 = any(isinf(referenceColor));
     }
     else
     {
-        _492 = _485;
+        _511 = _504;
     }
-    if (_492)
+    if (_511)
     {
         referenceColor = float4(0.0);
     }

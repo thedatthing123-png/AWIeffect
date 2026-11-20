@@ -66,7 +66,7 @@ void referenceMain(constant ReferenceUniformseeab7e403ece5& _33, thread float4& 
     float2 param_1 = fast::clamp(moved, float2(0.0), float2(1.0));
     float4 c = texture2DCv(refInput, refInputSmplr, param_1);
     float inside = step(fast::max(abs(local.x), abs(local.y)), 0.5);
-    referenceColor = float4(c.xyz, (c.w * inside) * (1.0 - smoothstep(0.819999992847442626953125, 1.0, t)));
+    referenceColor = c * (inside * (1.0 - smoothstep(0.819999992847442626953125, 1.0, t)));
 }
 
 fragment refAM35_eeab7e403ece5_out refAM35_eeab7e403ece5(constant ReferenceUniformseeab7e403ece5& _33 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
@@ -74,17 +74,17 @@ fragment refAM35_eeab7e403ece5_out refAM35_eeab7e403ece5(constant ReferenceUnifo
     refAM35_eeab7e403ece5_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(_33, gl_FragCoord, refInput, refInputSmplr, referenceColor);
-    bool _229 = any(isnan(referenceColor));
-    bool _236;
-    if (!_229)
+    bool _220 = any(isnan(referenceColor));
+    bool _227;
+    if (!_220)
     {
-        _236 = any(isinf(referenceColor));
+        _227 = any(isinf(referenceColor));
     }
     else
     {
-        _236 = _229;
+        _227 = _220;
     }
-    if (_236)
+    if (_227)
     {
         referenceColor = float4(0.0);
     }

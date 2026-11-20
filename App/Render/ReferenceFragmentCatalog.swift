@@ -318,6 +318,7 @@ enum ReferenceFragmentCatalog {
     static let e977de7038c0d = make_e977de7038c0d()
     static let all: [ReferenceFragmentDefinition] = [ef85af76987e2, ed0ecd5892079, eefcbfad10b80, e5ce70fd654b4, eda4e4b9044e8, eb584ad357d55, e99719be0ea0e, e9aef1f7bd1aa, ec9e48a380de9, e98e0bd11fc6f, eac60c37101a4, ea7451d774e79, ef1a32c8ec2aa, ecfd444272da7, e4e3f06553794, e64e1f2cb0e3f, eb09dba903d3f, e003b34e765ad, ea36bd8dcebf0, e75f2a17f4488, e8aadbfe83ddc, ea8df009485f0, efe306ea22425, e6fdbbd5a476c, ea3452b1fb102, e44c3753736ad, eaeaf49f44c73, e43ead01bcc8f, e6e18bbe3f759, eccad7e332cdb, e24809c908d0e, e768f587f4504, ea4ee3a4adc94, e26bad7d24238, ee9dd225d9a0f, eb6dc61cb9fe1, eb027a40e1d3a, e1bceb7e68ceb, e8fb235f1d884, e5472df25c99f, efcd1d4eda677, e2dd6792a7249, ec5cb0732b786, e3fe027453e82, e0dd14e6286ab, e9f16e2302452, e31cec718c9c3, e51de8cc7d47d, edc4cbd35eb7f, e4a1c49d868e8, e0ab5e6dcc8c0, ebde5c0d65142, e675237abf793, ec29f6ff7df34, e230359933e7f, e5e7a2d0c070c, edd6ad99801bb, e38d7e5015fe7, e6d05f6c7aaa9, ec88108d754e8, ea1a6411e3d41, ee853e6522b03, e9ab745e60ca1, eaf016082e969, e3ba2e31e4cc1, ee8a4498bd81b, e58f62e819ee4, e00615d7bbc39, e3c8f206b44e5, e48e6cec62b62, e9d6d83cdc8f4, ee9c0bd2ca418, e7b0d60717ad7, ed21040ef427c, ec9d67f3d02bc, e081fdcec82af, e2aaed4b17802, ea64ba171e267, e9d6429555d0e, e7ab6e77c26cf, e9e78f72e74ef, eb03acc50b466, e82f843a1a29e, eefe0850cb533, e2365a45909ce, e02a0866ee9bc, e8f2ea0f3dea9, e04dda922fdfa, ef17cbbf42f17, e8e0a6f88c6f1, e40090140d122, ed6d467b0b2fc, ee29f513da8cb, eeab7e403ece5, e4390d04fc4d7, e0cdd4fb8685f, e8c9b81f88ba0, e69ae7b9c2440, e26753b8c360e, efec58c6d52e1, eeae22f0a3488, e1e32e5ce15e4, ef43fb8dd1562, ed499a706b3c1, ed2fdd321a8b0, e38f574cda1cf, ef86ca044f297, e8404b5764d4f, efccbd7a6588a, e32743646744c, e122258a4d83c, e089fe308a7e7, ef17fae31f9b4, e73314b9e0697, eb7eb87384a14, e7c3d6213e5be, e0a0f452e32e2, e21823176e06e, e357c6c9c05a9, ebb8471d24fd0, e46a11ff71be9, e40d45d33b0da, e3d7ae5137bb1, e5ad5e1e9a0fb, ea86c4dac0cf2, e48074a20347f, e1ab9310206cc, ea03f4bd384d7, ebf8fdec0b910, e77c18bb5f153, e45e8b482c9fc, e6134d019d8aa, e590db1c1e3be, e0755d4beacf9, e658cad5dcbff, ea601aa767c60, e9468c5afe78d, e2534d53346fd, e4c2c2a58de22, e4ce85d1762e0, e307c69c1ef53, e013a8d025a10, eab6572d7c425, e7dd301114b90, e45a6d8473da7, ebea9e058896e, e98c76d49aae0, e24e265506083, ed0445ed28fcb, e3457df3dfc47, e00491689d6e9, e093cdee083c0, e23c60d3376d8, edd9730a273e2, ed8c1364415bd, eb060c3395f8c, e4fafe3d586d7, e49936984c33e, e59a72c4fb146, e29290dcd29d4, e9dd30289c4d2, eb1207886e2d6, e10176b54c318, efa58da681936, e27453a82d053, e91c1f46e6267, e1175361457d7, e7c18ca08691c, e474c2c7bde18, eeb60ef76554d, e1fc2d92d8130, e1f35079f3835, e93a1a3d64a7f, ed357752a6a48, edb351ee38a79, e8a43530c7123, ecaa448a463ac, edd73a17d197e, e555ea7a6d24a, e150bc7e80a57, ef3abc6169292, ee8a291463cb3, e4dc1ec616108, ef21215b0b044, eb87bbcbaa3b5, ebf64cf4cbca0, e713978f9f30a, ed50f32b27cc7, e8d7c496ca902, e1b41b5dc7d75, eee91489e4221, e5d4a39880b98, e53cba70f20d3, e77bf324369ab, e9e38aadb715d, ef8c112b6b73b, e783368bd50f0, eb23379931981, ef9f0c8cfa4ec, e886f5cf1e803, e056049200a8a, e834231f5b840, e434450c9178e, ec4590c5a93be, e8d3ec4445d94, ee29040f105ce, ee005827e6d32, e7032742ce4d0, edab03f179817, e901c9ca1a178, e31db03cf71ce, e40ea8ab88a20, ef9366504bfe5, e6def5202c7d5, e230bc2e96177, ef6a8a2f4b278, ef5e7316def99, eccd079f37be9, ef9005da47ae5, e5076ce23c6fe, e3418485b643b, e821e62f4d00a, e8b0453ce568a, e30b77c55f65f, e0125c8bfdb26, ebbe5a37d5059, eea5299388c79, ebd5db59a84a3, e8d45b247abcc, e25b952116050, ea3dde846bc3a, e3f8177ab74b3, e698f2bbd9994, e3785488e69de, eb5616c5f1f1c, e18058eae046e, ea91c7052d0a1, e990dbd10b606, e6c55023d327b, e9c493c5dcbcc, e33e0fb4d4196, ed6991313756f, e3403bb405f80, e7c9356e79187, e8b58c95215e1, ec7335e01190b, ec0fe8068a939, e748e5aade0a7, eac124fb5a85b, ead6e7b5a8a95, e4de40580aecf, ecabb31d99e3c, e6e273782504a, e11a7cbe63246, e0eaef7a0da9e, e48da38194e65, e6a4f65d4030d, e472d3b9c136f, e2b36e815b6cb, e2d942b159289, ea0f52d685790, e0105d31bfccd, eaf2f95b1ab6a, ec199db7a28a6, e16b0e9488eac, ef296141d8982, e9ae917ac0b5d, edf4550c7d022, ef570d703a6f8, ef9ec2b77c95e, e747b3f01d9e8, ec2cdadc6c8df, e4e43a09d7b11, eb8f8ae278481, ee63cf8dafb63, e3e1c55e27b00, e56dda678d3a3, eb8490e7ab00f, edd3f3773971b, e9f4328ecdff1, e853b38753337, e9d1fe3cb6559, ef0dd00935b91, e06e1e8442923, e62c9cb20d026, e063e6fea36fc, e33fc7922712c, ebad4c68d6739, ec69cd2450d1e, e88d742244e73, e04f7ac7054f9, eb9c690bc1b0a, ea9b0eb53c085, e656bf85e2a2e, e96fdd2c111c7, e2e4f2d594baa, eaf4b83be09ed, e9093183a3660, e66563e1861dc, ec8c8369bd4f7, e227d3c4d2f74, e9a676789bdc9, e26dde3c2724a, e68dc1acb0c4e, ed1142f9e5fc6, e4cca71a4fa76, e056a7f11c36f, e3817a19bd21a, ea60f3ed290c4, e0b36f4e17fc1, e3f20da3f4268, eb44607c6a5bb, e977de7038c0d]
     static let publicCandidates: [ReferenceFragmentDefinition] = [ed0ecd5892079, e75f2a17f4488, efe306ea22425, ea3452b1fb102, eaeaf49f44c73, ea4ee3a4adc94, e51de8cc7d47d, ec88108d754e8, e7b0d60717ad7, e9e78f72e74ef, eeab7e403ece5, e26753b8c360e, e8404b5764d4f, e658cad5dcbff, e3457df3dfc47, e00491689d6e9, ed8c1364415bd, efa58da681936, e27453a82d053, e4dc1ec616108, e783368bd50f0, e3418485b643b, eaf2f95b1ab6a, ec2cdadc6c8df, eb8f8ae278481, edd3f3773971b, e656bf85e2a2e, e056a7f11c36f]
+    static let promoted: [ReferenceFragmentDefinition] = [ed0ecd5892079, e75f2a17f4488, ea3452b1fb102, eaeaf49f44c73, ea4ee3a4adc94, e51de8cc7d47d, eeab7e403ece5, e26753b8c360e, e8404b5764d4f, e658cad5dcbff, e3457df3dfc47, ed8c1364415bd, eaf2f95b1ab6a, e656bf85e2a2e, e056a7f11c36f]
     private static func make_ef85af76987e2() -> ReferenceFragmentDefinition {
         var parameters: [ReferenceFragmentParameter] = []
         parameters.append(ReferenceFragmentParameter(definition: .number("noiseFreq", "Blob Scale", 3.5, 0.1, 20.0, step: 0.1), slot: 11))
@@ -684,15 +685,15 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.05, 20.0, step: 0.01), slot: 12))
         parameters.append(ReferenceFragmentParameter(definition: .number("lacunarity", "Lacunarity", 2.0, 1.0, 4.0, step: 0.01), slot: 13))
         parameters.append(ReferenceFragmentParameter(definition: .number("gain", "Gain", 0.5, 0.0, 1.0, step: 0.01), slot: 14))
-        parameters.append(ReferenceFragmentParameter(definition: .number("timeSpeed", "Time Speed", 0.2, 0.0, 5.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("timeSpeed", "Evolution Speed", 0.2, 0.0, 5.0, step: 0.01), slot: 15))
         parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 1000.0, step: 0.01), slot: 16))
         parameters.append(ReferenceFragmentParameter(definition: .toggle("colorizeHSV", "HSV Colorize", true), slot: 17))
-        parameters.append(ReferenceFragmentParameter(definition: .number("hueScale", "Hue Scale", 10.0, 0.0, 50.0, step: 0.1), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hueScale", "Color Bands", 10.0, 0.0, 50.0, step: 0.1), slot: 18))
         parameters.append(ReferenceFragmentParameter(definition: .number("saturation", "Saturation", 1.0, 0.0, 1.0, step: 0.01), slot: 19))
-        parameters.append(ReferenceFragmentParameter(definition: .number("value", "Value", 1.0, 0.0, 2.0, step: 0.01), slot: 20))
-        parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend with Source", 1.0, 0.0, 1.0, step: 0.01), slot: 21))
-        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
-        return ReferenceFragmentDefinition(id: "awi.amref.ea3452b1fb102", name: "Colorama", summary: "Cycle source brightness through an adjustable color palette.",
+        parameters.append(ReferenceFragmentParameter(definition: .number("value", "Brightness", 1.0, 0.0, 2.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Effect Mix", 1.0, 0.0, 1.0, step: 0.01), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Opacity", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.ea3452b1fb102", name: "Fractal Color Bands", summary: "Fractal noise drives moving HSV color bands, with editable octaves, gain and hue density.",
             category: .generate, function: "refAM35_ea3452b1fb102", slots: 23,
             parameters: parameters, images: [])
     }
@@ -814,7 +815,7 @@ enum ReferenceFragmentCatalog {
 
     private static func make_ea4ee3a4adc94() -> ReferenceFragmentDefinition {
         var parameters: [ReferenceFragmentParameter] = []
-        parameters.append(ReferenceFragmentParameter(definition: .choice("palette", "Palette", ["CGA Green/Red/Yellow", "CGA Cyan/Magenta/White", "CGA Blue/Cyan/Magenta/White", "EGA Classic", "EGA Vibrant", "3-bit RGB", "2-bit Grey", "Custom 3-Color", "Custom 4-Color", "Custom 6-Color", "Custom 8-Color"], 1), slot: 11, choiceValues: [0, 1, 10, 2, 3, 4, 5, 6, 7, 8, 9]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("palette", "Palette", ["CGA Green/Red/Yellow", "CGA Cyan/Magenta/White", "CGA Blue/Cyan/Magenta/White", "EGA Classic", "EGA Vibrant", "3-bit RGB", "2-bit Grey", "Custom 3-Color", "Custom 4-Color", "Custom 6-Color", "Custom 8-Color"], 1), slot: 11, choiceValues: [0, 1, 10, 2, 3, 4, 5, 6, 7, 8, 9], choiceTargets: [[], [], [], [], [], [], [], ["color1", "color2", "color3", "shades"], ["color1", "color2", "color3", "color4", "shades"], ["color1", "color2", "color3", "color4", "color5", "color6", "shades"], ["color1", "color2", "color3", "color4", "color5", "color6", "color7", "color8", "shades"]]))
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 1.0, 0.0, 1.0, step: 0.01), slot: 12))
         parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color 1", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 13))
         parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color 2", RGBA(0.3333333333333333, 0.3333333333333333, 1.0, 1.0)), slot: 14))
@@ -1218,7 +1219,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("colorG", "Color G", 0.5, 0.0, 1.0, step: 0.01), slot: 31))
         parameters.append(ReferenceFragmentParameter(definition: .number("colorB", "Color B", 0.0, 0.0, 1.0, step: 0.01), slot: 32))
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Overall Blend", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 33, scalarScale: 0.01))
-        return ReferenceFragmentDefinition(id: "awi.amref.ec88108d754e8", name: "Waveloq", summary: "Layered wave deformation with independently adjustable wave controls.",
+        return ReferenceFragmentDefinition(id: "awi.amref.ec88108d754e8", name: "Waveloq", summary: "A luminance-driven dot display with glow, wave animation and layout presets.",
             category: .generate, function: "refAM35_ec88108d754e8", slots: 34,
             parameters: parameters, images: [])
     }
@@ -1712,15 +1713,15 @@ enum ReferenceFragmentCatalog {
 
     private static func make_eeab7e403ece5() -> ReferenceFragmentDefinition {
         var parameters: [ReferenceFragmentParameter] = []
-        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Progress", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 11, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Progress", 35.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 11, scalarScale: 0.01))
         parameters.append(ReferenceFragmentParameter(definition: .number("grid", "Grid", 14.0, 2.0, 40.0, step: 1.0), slot: 12))
         parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.45, 0.0, 2.0, step: 0.01), slot: 13))
         parameters.append(ReferenceFragmentParameter(definition: .number("gravity", "Gravity", 0.55, -2.0, 2.0, step: 0.01), slot: 14))
         parameters.append(ReferenceFragmentParameter(definition: .number("rotation", "Rotation", 90.0, -360.0, 360.0, step: 0.1), slot: 15))
         parameters.append(ReferenceFragmentParameter(definition: .number("randomness", "Randomness", 0.5, 0.0, 1.0, step: 0.01), slot: 16))
         parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 1000.0, step: 1.0), slot: 17))
-        return ReferenceFragmentDefinition(id: "awi.amref.eeab7e403ece5", name: "Square Break 3D", summary: "Break the source into independently displaced square tiles.",
-            category: .distort, function: "refAM35_eeab7e403ece5", slots: 18,
+        return ReferenceFragmentDefinition(id: "awi.amref.eeab7e403ece5", name: "Tile Break", summary: "Animate Progress to break the source into delayed, rotating tiles with gravity and a fading finish.",
+            category: .transition, function: "refAM35_eeab7e403ece5", slots: 18,
             parameters: parameters, images: [])
     }
 
@@ -2349,7 +2350,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("steps", "Steps", 35.0, 1.0, 200.0, step: 1.0), slot: 13))
         parameters.append(ReferenceFragmentParameter(definition: .number("errorWeight", "Error Weight", 0.75, 0.0, 10.0, step: 0.001), slot: 14))
         parameters.append(ReferenceFragmentParameter(definition: .number("errorFalloff", "Weight Falloff", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
-        parameters.append(ReferenceFragmentParameter(definition: .choice("palette", "Palette", ["Black/White", "RGB Posterize, 2 Levels", "RGB Posterize, 3 Levels", "RGB Posterize, 4 Levels", "Grey, 3 Levels", "Grey, 4 Levels", "CGA Green/Red/Yellow", "CGA Cyan/Magenta/White", "CGA Blue/Cyan/Magenta/White", "Saturate and Posterize", "Custom 2-Color", "Custom 3-Color", "Custom 4-Color", "Custom 5-Color", "Custom 6-Color"], 2), slot: 16, choiceValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14, 15, 16]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("palette", "Palette", ["Black/White", "RGB Posterize, 2 Levels", "RGB Posterize, 3 Levels", "RGB Posterize, 4 Levels", "Grey, 3 Levels", "Grey, 4 Levels", "CGA Green/Red/Yellow", "CGA Cyan/Magenta/White", "CGA Blue/Cyan/Magenta/White", "Saturate and Posterize", "Custom 2-Color", "Custom 3-Color", "Custom 4-Color", "Custom 5-Color", "Custom 6-Color"], 2), slot: 16, choiceValues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14, 15, 16], choiceTargets: [[], [], [], [], [], [], [], [], [], [], ["color1", "color2"], ["color1", "color2", "color3"], ["color1", "color2", "color3", "color4"], ["color1", "color2", "color3", "color4", "color5"], ["color1", "color2", "color3", "color4", "color5", "color6"]]))
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 1.0, 0.0, 1.0, step: 0.01), slot: 17))
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["Normal", "Multiply", "Screen"], 0), slot: 18, choiceValues: [0, 1, 2]))
         parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color 1", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 19))
@@ -2358,8 +2359,8 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("color4", "Color 4", RGBA(0.3333333333333333, 1.0, 1.0, 1.0)), slot: 22))
         parameters.append(ReferenceFragmentParameter(definition: .color("color5", "Color 5", RGBA(1.0, 0.3333333333333333, 0.3333333333333333, 1.0)), slot: 23))
         parameters.append(ReferenceFragmentParameter(definition: .color("color6", "Color 6", RGBA(1.0, 0.3333333333333333, 1.0, 1.0)), slot: 24))
-        return ReferenceFragmentDefinition(id: "awi.amref.e658cad5dcbff", name: "Omino Diffusion", summary: "Diffuse image structure through an adjustable nonlinear field.",
-            category: .generate, function: "refAM35_e658cad5dcbff", slots: 25,
+        return ReferenceFragmentDefinition(id: "awi.amref.e658cad5dcbff", name: "Error Diffusion", summary: "Quantize into a palette while propagating sample error along a chosen direction.",
+            category: .stylize, function: "refAM35_e658cad5dcbff", slots: 25,
             parameters: parameters, images: [])
     }
 
@@ -4165,21 +4166,21 @@ enum ReferenceFragmentCatalog {
     private static func make_eaf2f95b1ab6a() -> ReferenceFragmentDefinition {
         var parameters: [ReferenceFragmentParameter] = []
         parameters.append(ReferenceFragmentParameter(definition: .angle("stripeDirDeg", "Stripe Dir", 15.0), slot: 11))
-        parameters.append(ReferenceFragmentParameter(definition: .number("stripeMag", "Stripe Mag", 2.32, 0.0, 20.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("stripeMag", "Stripe Density", 12.0, 0.0, 20.0, step: 0.01), slot: 12))
         parameters.append(ReferenceFragmentParameter(definition: .number("phaseStart", "Phase Start", 0.5, -10.0, 10.0, step: 0.001), slot: 13))
         parameters.append(ReferenceFragmentParameter(definition: .number("phaseSpeed", "Phase Speed", 1.0, -10.0, 10.0, step: 0.001), slot: 14))
-        parameters.append(ReferenceFragmentParameter(definition: .number("offset", "Offset", 0.0, -10.0, 10.0, step: 0.001), slot: 15))
-        parameters.append(ReferenceFragmentParameter(definition: .number("freqColors", "Freq Colors", 1.9, 0.0, 20.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offset", "Phase Offset", 0.0, -10.0, 10.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("freqColors", "Color Frequency", 1.9, 0.0, 20.0, step: 0.01), slot: 16))
         parameters.append(ReferenceFragmentParameter(definition: .number("freqRed", "Freq Red", 1.0, 0.0, 5.0, step: 0.01), slot: 17))
         parameters.append(ReferenceFragmentParameter(definition: .number("freqGreen", "Freq Green", 1.1, 0.0, 5.0, step: 0.01), slot: 18))
         parameters.append(ReferenceFragmentParameter(definition: .number("freqBlue", "Freq Blue", 1.2, 0.0, 5.0, step: 0.01), slot: 19))
         parameters.append(ReferenceFragmentParameter(definition: .number("phaseRed", "Phase Red", 0.0, -6.2832, 6.2832, step: 0.001), slot: 20))
-        parameters.append(ReferenceFragmentParameter(definition: .number("phaseGreen", "Phase Green", 0.0, -6.2832, 6.2832, step: 0.001), slot: 21))
-        parameters.append(ReferenceFragmentParameter(definition: .number("phaseBlue", "Phase Blue", 0.0, -6.2832, 6.2832, step: 0.001), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("phaseGreen", "Phase Green", 2.094, -6.2832, 6.2832, step: 0.001), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("phaseBlue", "Phase Blue", 4.189, -6.2832, 6.2832, step: 0.001), slot: 22))
         parameters.append(ReferenceFragmentParameter(definition: .number("brightness", "Brightness", 1.0, 0.0, 3.0, step: 0.01), slot: 23))
         parameters.append(ReferenceFragmentParameter(definition: .color("tintColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 24))
         parameters.append(ReferenceFragmentParameter(definition: .number("saturation", "Saturation", 1.0, 0.0, 2.0, step: 0.01), slot: 25))
-        parameters.append(ReferenceFragmentParameter(definition: .number("edgeAmt", "Edge Strength", 1.0, 0.0, 10.0, step: 0.01), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("edgeAmt", "Edge Strength", 0.45, 0.0, 10.0, step: 0.01), slot: 26))
         parameters.append(ReferenceFragmentParameter(definition: .number("edgeWarp", "Edge Warp", 0.5, -5.0, 5.0, step: 0.01), slot: 27))
         parameters.append(ReferenceFragmentParameter(definition: .number("edgeWidth", "Edge Width", 1.0, 0.0, 10.0, step: 0.1), slot: 28))
         parameters.append(ReferenceFragmentParameter(definition: .toggle("edgeInvert", "Invert Edges", false), slot: 29))
@@ -4618,8 +4619,8 @@ enum ReferenceFragmentCatalog {
         var parameters: [ReferenceFragmentParameter] = []
         parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Corner Radius", 0.15, 0.0, 1.0, step: 0.005), slot: 11))
         parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Feather (Softness)", 0.08, 0.0, 1.0, step: 0.005), slot: 12))
-        parameters.append(ReferenceFragmentParameter(definition: .number("scaleX", "Scale X", 1.0, 0.01, 2.0, step: 0.01), slot: 13))
-        parameters.append(ReferenceFragmentParameter(definition: .number("scaleY", "Scale Y", 1.0, 0.01, 2.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scaleX", "Scale X", 0.8, 0.01, 2.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scaleY", "Scale Y", 0.8, 0.01, 2.0, step: 0.01), slot: 14))
         parameters.append(ReferenceFragmentParameter(definition: .number("offsetX", "Offset X", 0.0, -1.0, 1.0, step: 0.005), slot: 15))
         parameters.append(ReferenceFragmentParameter(definition: .number("offsetY", "Offset Y", 0.0, -1.0, 1.0, step: 0.005), slot: 16))
         parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert Mask", false), slot: 17))
@@ -4800,7 +4801,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("overshoot", "Overshoot", 2.0, 0.5, 2.0, step: 0.0), slot: 18))
         parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 5.0, step: 0.01), slot: 19))
         return ReferenceFragmentDefinition(id: "awi.amref.e056a7f11c36f", name: "Block Noise", summary: "A discrete block-based noise generator with editable pattern controls.",
-            category: .generate, function: "refAM35_e056a7f11c36f", slots: 20,
+            category: .stylize, function: "refAM35_e056a7f11c36f", slots: 20,
             parameters: parameters, images: [])
     }
 
@@ -4854,7 +4855,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 12))
         parameters.append(ReferenceFragmentParameter(definition: .number("intensity", "Strength", 0.25, 0.0, 2.5, step: 0.001), slot: 13))
         parameters.append(ReferenceFragmentParameter(definition: .number("evolution", "Evolution", 0.0, -50.0, 50.0, step: 0.01), slot: 14))
-        parameters.append(ReferenceFragmentParameter(definition: .choice("direction", "direction", ["φ", "r", "φr", "X", "Y", "XY"], 2), slot: 15, choiceValues: [5, 3, 4, 0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("direction", "direction", ["φ", "r", "φr", "X", "Y", "XY"], 2), slot: 15, choiceValues: [5, 3, 4, 0, 1, 2], choiceTargets: [["singleAxis"], ["singleAxis"], [], ["singleAxis"], ["singleAxis"], []]))
         parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 16))
         parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 17, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
         parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 5.0, step: 0.01), slot: 18))

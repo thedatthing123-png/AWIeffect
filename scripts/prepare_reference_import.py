@@ -15,17 +15,17 @@ PUBLIC = {
     'skexnxxlinescape.xml': ('Linescape', 'Layered noise-driven terrain lines with perspective, rotation and two colors.'),
     'pixeledge.xml': ('Pixelate Edge', 'Pixelated coverage at the silhouette rather than pixelating the entire image.'),
     'skexnxxlumastampernew.xml': ('Luma Stamper', 'Stamp shapes across the source according to its brightness.'),
-    'colorama.xml': ('Colorama', 'Cycle source brightness through an adjustable color palette.'),
+    'colorama.xml': ('Fractal Color Bands', 'Fractal noise drives moving HSV color bands, with editable octaves, gain and hue density.'),
     'tileshift2.xml': ('Tile Shift', 'Offset alternating tile rows or columns while repeating the source.'),
     'palette-map.xml': ('Palette Map', 'Quantize and remap source colors into a selected palette.'),
     'irridescence2.xml': ('Iridescence', 'Nested fractal noise produces a flowing iridescent texture.'),
-    'waveloq-3.xml': ('Waveloq', 'Layered wave deformation with independently adjustable wave controls.'),
+    'waveloq-3.xml': ('Waveloq', 'A luminance-driven dot display with glow, wave animation and layout presets.'),
     'radialshadow2.xml': ('Radial Shadow', 'Project a shadow radially from a chosen origin.'),
     'skexnxxcomet.xml': ('Comet', 'A procedural comet head with a flowing trailing body.'),
-    'square_break_3d.xml': ('Square Break 3D', 'Break the source into independently displaced square tiles.'),
+    'square_break_3d.xml': ('Tile Break', 'Animate Progress to break the source into delayed, rotating tiles with gravity and a fading finish.'),
     'heatmap_perlin_noise.xml': ('Heatmap', 'Noise-modulated heat color bands driven by the source.'),
     'tilerotate2.xml': ('Tile Rotate', 'Rotate repeating tiles around their individual centers.'),
-    'omino-diffusion.xml': ('Omino Diffusion', 'Diffuse image structure through an adjustable nonlinear field.'),
+    'omino-diffusion.xml': ('Error Diffusion', 'Quantize into a palette while propagating sample error along a chosen direction.'),
     'skexnxxfractaltexture.xml': ('Fractal Texture', 'An evolving fractal texture with offset, scale and rotation.'),
     'bloodsplash.xml': ('Blood Splash Spheres', 'A procedural arrangement of splash-like spherical forms.'),
     'skexnxxmoney.xml': ('Money Filter', 'Convert tonal detail into an engraved banknote-style pattern.'),
@@ -40,6 +40,26 @@ PUBLIC = {
     'ink_splash.xml': ('Ink Splash', 'Procedural splashed ink with adjustable shape and coverage.'),
     'rounded_edge_mask.xml': ('Rounded Edge Mask', 'Mask the image to a rounded rectangular boundary.'),
     'blocknoise2.xml': ('Block Noise', 'A discrete block-based noise generator with editable pattern controls.'),
+}
+
+# Promoted only after still/motion review of run 44683887738. Other candidates
+# remain in the internal audit catalog, including neutral defaults needing
+# dedicated utility fixtures and entries overlapping the accepted catalog.
+APPROVED = {
+    'skexnxxlinescape.xml', 'pixeledge.xml', 'colorama.xml', 'tileshift2.xml',
+    'palette-map.xml', 'irridescence2.xml', 'heatmap_perlin_noise.xml',
+    'skexnxxfractaltexture.xml', 'omino-diffusion.xml', 'skexnxxmoney.xml',
+    'psykostripes.xml', 'square_break_3d.xml', 'rounded_edge_mask.xml',
+    'blocknoise2.xml', 'tilerotate2.xml',
+}
+DEFAULTS = {
+    'square_break_3d.xml': {'progress': '0.35'},
+    'rounded_edge_mask.xml': {'scaleX': '0.8', 'scaleY': '0.8'},
+    'psykostripes.xml': {'stripeMag': '12', 'phaseGreen': '2.094', 'phaseBlue': '4.189', 'edgeAmt': '0.45'},
+}
+LABELS = {
+    'colorama.xml': {'blend': 'Effect Mix', 'alpha': 'Opacity', 'timeSpeed': 'Evolution Speed', 'hueScale': 'Color Bands', 'value': 'Brightness'},
+    'psykostripes.xml': {'stripeMag': 'Stripe Density', 'freqColors': 'Color Frequency', 'offset': 'Phase Offset'},
 }
 
 
@@ -102,6 +122,9 @@ def parameter(control, labels):
         raise ValueError('needs native parameter UI: ' + kind)
     if choice_values:
         extras.append('choiceValues: ' + str(choice_values))
+        targets = [c.get('enableTargets', '').split(',') if c.get('enableTargets') else [] for c in control['choices']]
+        if any(targets):
+            extras.append('choiceTargets: ' + json.dumps(targets))
     extra = ', ' + ', '.join(extras) if extras else ''
     return prefix + definition + f', slot: {control["slot"]}' + extra + ')'
 
@@ -117,7 +140,7 @@ def prepare(args):
     textures.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(Path(__file__).parent / 'reference' / 'ReferenceFragmentEffects.swift.template', destination / 'ReferenceFragmentEffects.swift')
     shutil.copyfile(Path(__file__).parent / 'reference' / 'ReferenceFragmentAuditTests.swift.template', destination / 'ReferenceFragmentAuditTests.swift')
-    functions, symbols, public, report = [], [], [], []
+    functions, symbols, public, promoted, report = [], [], [], [], []
     category = {'procedural': 'generate', '3d': 'generate', 'blur': 'blur', 'color': 'color', 'distort': 'distort', 'drawing': 'stylize', 'transform': 'motion', 'matte': 'keying', 'opacity': 'keying', 'text': 'text', 'repeat': 'motion', 'other': 'stylize'}
     for row in translated:
         if row['status'] != 'translated-not-integrated':
@@ -125,10 +148,11 @@ def prepare(args):
             continue
         reference = inventory[row['file']]
         labels = {p.get('id'): p.get('label', p.get('id', '')) for p in reference['params']}
+        labels.update(LABELS.get(Path(row['file']).name, {}))
         for p in reference['params']:
             labels.update({p.get('id', '') + '/' + str(i): c.get('label', '') for i, c in enumerate(p.get('choices', []))})
         try:
-            controls = [parameter(c, labels) for c in row['controls']]
+            controls = [parameter({**c, **({'default': DEFAULTS[Path(row['file']).name][c['id']]} if c['id'] in DEFAULTS.get(Path(row['file']).name, {}) else {})}, labels) for c in row['controls']]
         except (ValueError, IndexError, KeyError) as error:
             report.append({'file': row['file'], 'status': 'needs-parameter-adapter', 'reason': str(error)})
             continue
@@ -137,19 +161,23 @@ def prepare(args):
         image_names = [v['file'] for v in row.get('images', {}).values()]
         body = [f'    private static func make_{symbol}() -> ReferenceFragmentDefinition {{', '        var parameters: [ReferenceFragmentParameter] = []']
         body += ['        parameters.append(' + c + ')' for c in controls]
-        body += [f'        return ReferenceFragmentDefinition(id: "awi.amref.{symbol}", name: {string(name)}, summary: {string(summary)},', f'            category: .{category[reference["category"]]}, function: "refAM35_{symbol}", slots: {row["slots"]},', '            parameters: parameters, images: [' + ', '.join(string(n) for n in image_names) + '])', '    }']
+        selected_category = {'square_break_3d.xml': 'transition', 'colorama.xml': 'generate', 'omino-diffusion.xml': 'stylize', 'blocknoise2.xml': 'stylize'}.get(Path(row['file']).name, category[reference['category']])
+        body += [f'        return ReferenceFragmentDefinition(id: "awi.amref.{symbol}", name: {string(name)}, summary: {string(summary)},', f'            category: .{selected_category}, function: "refAM35_{symbol}", slots: {row["slots"]},', '            parameters: parameters, images: [' + ', '.join(string(n) for n in image_names) + '])', '    }']
         functions.append('\n'.join(body))
         symbols.append(symbol)
         if Path(row['file']).name in PUBLIC:
             public.append(symbol)
+        if Path(row['file']).name in APPROVED:
+            promoted.append(symbol)
         shutil.copyfile(args.translated / (symbol + '.metal'), metal / (symbol + '.metal'))
         for name in image_names:
             shutil.copyfile(args.translated / name, textures / name)
-        report.append({'file': row['file'], 'status': 'prepared-not-integrated', 'id': 'awi.amref.' + symbol, 'public_candidate': symbol in public, 'source_name': reference['name'], 'existing_name_matches': reference['existing_name_matches']})
+        report.append({'file': row['file'], 'status': 'promoted-pending-validation' if symbol in promoted else 'internal-audit', 'id': 'awi.amref.' + symbol, 'public_candidate': symbol in public, 'promoted': symbol in promoted, 'source_name': reference['name'], 'existing_name_matches': reference['existing_name_matches']})
     code = 'import Foundation\nimport Metal\n\n// Generated by scripts/prepare_reference_import.py. Do not edit bindings by hand.\nenum ReferenceFragmentCatalog {\n'
     code += '\n'.join(f'    static let {symbol} = make_{symbol}()' for symbol in symbols)
     code += '\n    static let all: [ReferenceFragmentDefinition] = [' + ', '.join(symbols) + ']\n'
     code += '    static let publicCandidates: [ReferenceFragmentDefinition] = [' + ', '.join(public) + ']\n'
+    code += '    static let promoted: [ReferenceFragmentDefinition] = [' + ', '.join(promoted) + ']\n'
     code += '\n\n'.join(functions) + '\n}\n'
     (destination / 'ReferenceFragmentCatalog.swift').write_text(code, encoding='utf8')
     (destination / 'preparation-report.json').write_text(json.dumps(report, indent=2), encoding='utf8')

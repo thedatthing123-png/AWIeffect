@@ -51,6 +51,17 @@ struct RootView: View {
 
     init() {
         #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-referenceEffect") {
+            var p = Project.new(name: "Reviewed Effect Controls", width: 320, height: 240, fps: 30, duration: 3)
+            var layer = p.makeLayer(name: "Artwork", content: .shape(.star), size: Vec2(180, 160))
+            layer.fill = Animated(RGBA(0.8, 0.5, 0.2))
+            if ProcessInfo.processInfo.arguments.contains("-uiTesting-referencePalette") {
+                var effect = ReferenceFragmentCatalog.e658cad5dcbff.definition.makeInstance()
+                effect.params["palette"] = .choice(10)
+                layer.effects = [effect]
+            } else { layer.effects = [ReferenceFragmentCatalog.eeab7e403ece5.definition.makeInstance()] }
+            p.layers = [layer]; _openProject = State(initialValue: p)
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-motionBlur") {
             var p = Project.new(name: "Motion Blur Controls", width: 160, height: 120, fps: 30, duration: 2)
             var camera = p.makeLayer(name: "Camera", content: .camera, size: Vec2(160,120))

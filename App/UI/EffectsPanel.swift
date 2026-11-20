@@ -440,6 +440,8 @@ struct EffectsPanel: View {
                 }
                 ForEach(def.params.filter { pd in
                     guard def.id != EffectRegistry.grade.id else { return false }
+                    let shown = EffectStackR4.resolved(e, at: state.currentTime) ?? e
+                    guard ReferenceFragmentControls.isVisible(pd.id, effect: shown) else { return false }
                     guard def.id == "awi.halftone" else { return true }
                     let version = e.choice("version")
                     if version == 0 { return ["size", "angle", "color", "version"].contains(pd.id) }

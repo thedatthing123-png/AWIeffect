@@ -12,6 +12,7 @@ struct ReferenceFragmentParameter {
     var pointMinimum: Vec2? = nil
     var pointMaximum: Vec2? = nil
     var choiceValues: [Int] = []
+    var choiceTargets: [[String]] = []
 }
 
 struct ReferenceFragmentDefinition {
@@ -168,5 +169,30 @@ final class ReferenceFragmentGPU {
         encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
         encoder.endEncoding()
         return output
+    }
+}
+
+
+extension EffectRegistry {
+    static let reviewedReferenceEffects: [EffectDefinition] = ReferenceFragmentCatalog.promoted.map { $0.definition }
+}
+
+
+enum ReferenceFragmentControls {
+    private static let reviewed = Dictionary(uniqueKeysWithValues: ReferenceFragmentCatalog.promoted.map { ($0.id, $0) })
+
+    static func isVisible(_ parameterID: String, effect: EffectInstance) -> Bool {
+        guard let definition = reviewed[effect.typeID] else { return true }
+        for controller in definition.parameters where !controller.choiceTargets.isEmpty {
+            guard controller.choiceTargets.joined().contains(parameterID) else { continue }
+            let value = effect.params[controller.definition.id] ?? controller.definition.defaultValue
+            let index: Int
+            if case .choice(let selected) = value { index = selected } else { index = 0 }
+            guard controller.choiceTargets.indices.contains(index), controller.choiceTargets[index].contains(parameterID) else { return false }
+        }
+        if effect.typeID == "awi.amref.ea3452b1fb102", ["hueScale", "saturation", "value"].contains(parameterID) {
+            return effect.params["colorizeHSV"].map { if case .toggle(let on) = $0 { return on }; return true } ?? true
+        }
+        return true
     }
 }

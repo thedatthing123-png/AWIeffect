@@ -19,7 +19,7 @@ final class EffectTests: XCTestCase {
     }
 
     /// Effects that work from the layer's alpha shape (no visible change on an opaque adjustment layer, like in AE).
-    static let alphaShaped: Set<String> = ["ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow", "awi11.featherEdges", "awi11.matteChoker", "awi11.alphaLevels", "awi11.edgeRefine", "awi10.bevelAlpha", "awi10.smoothBevel", "awi10.glass", "awi10.edgeAO", "awi10.innerShadow", "awi10.fresnel", "awi16.tornEdges", "awi17.extrudeFlat"]
+    static let alphaShaped: Set<String> = ["awi.amref.e656bf85e2a2e", "ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow", "awi11.featherEdges", "awi11.matteChoker", "awi11.alphaLevels", "awi11.edgeRefine", "awi10.bevelAlpha", "awi10.smoothBevel", "awi10.glass", "awi10.edgeAO", "awi10.innerShadow", "awi10.fresnel", "awi16.tornEdges", "awi17.extrudeFlat"]
 
     private func renderer() throws -> Renderer {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU: no Metal device available; effect tests not run") }
@@ -74,6 +74,10 @@ final class EffectTests: XCTestCase {
         var e = def.makeInstance()
         func n(_ k: String, _ v: Double) { e.params[k] = .number(Animated(v)) }
         switch def.id {
+        // A transition needs a progressed fixture to show its breakup clearly.
+        case "awi.amref.eeab7e403ece5": n("progress", 65)
+        // Custom palette mode activates Shades; fixed retro palettes do not use it.
+        case "awi.amref.ea4ee3a4adc94": e.params["palette"] = .choice(7)
         case "ae.gaussianBlur": n("blurriness", 12)
         case "ae.directionalBlur": n("length", 20); n("direction", 90)
         case "ae.radialBlur": n("amount", 40)

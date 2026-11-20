@@ -130,7 +130,7 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformse75f2a
     }
     float edge = sqrt((gx * gx) + (gy * gy));
     edge = smoothstep(_48.edgeThresh, 1.0, edge);
-    float gradBias = _48.gradientBias;
+    float gradBias = fast::clamp(_48.gradientBias, 9.9999997473787516355514526367188e-05, 0.99989998340606689453125);
     float3 gradCol = mix(_48.color1.xyz, _48.color2.xyz, float3(smoothstep(0.0, gradBias, edge)));
     gradCol = mix(gradCol, _48.color3.xyz, float3(smoothstep(gradBias, 1.0, edge)));
     referenceColor = float4(gradCol, 1.0);
@@ -141,17 +141,19 @@ fragment refAM35_e75f2a17f4488_out refAM35_e75f2a17f4488(constant ReferenceUnifo
     refAM35_e75f2a17f4488_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(gl_FragCoord, _48, refInput, refInputSmplr, referenceColor);
-    bool _232 = any(isnan(referenceColor));
-    bool _239;
-    if (!_232)
+    float nativeAlpha = refInput.sample(refInputSmplr, (gl_FragCoord.xy / _48.refScreen.xy)).w;
+    referenceColor = float4(referenceColor.xyz * nativeAlpha, nativeAlpha);
+    bool _255 = any(isnan(referenceColor));
+    bool _262;
+    if (!_255)
     {
-        _239 = any(isinf(referenceColor));
+        _262 = any(isinf(referenceColor));
     }
     else
     {
-        _239 = _232;
+        _262 = _255;
     }
-    if (_239)
+    if (_262)
     {
         referenceColor = float4(0.0);
     }
