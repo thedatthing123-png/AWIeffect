@@ -170,7 +170,7 @@ final class EffectGPU {
         for name in ["fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
                      "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix", "fxBackdropMix", "fxBackdropMask", "fxBackdropTransform",
                      "fxWarp", "fxStylize", "fxGlitch", "fxColor2", "fxSaberCore", "fxShine", "fxParticles", "fxPixelSort",
-                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet", "fxGrade", "maskMix", "fxLayerRef", "flowEstimate", "flowBlur", "fxAccumulate", "fx19", "fx19GlowKeep", "fx19KeyInvert", "fx19AlphaOf", "fx19ColorSelect", "fx19Bend", "fx20Flip", "fx20AMWave", "fx20AMFractal", "fx21", "fx22", "fx23", "fxGX", "fxInnerGlow24", "fxArt24", "fxLightPrep25", "fxLightSum25", "fxLightComp25", "fxStreak25", "fxLightGen25", "fxBlur26", "fxPrint27", "fxInk27", "fxFilm27", "fxGlitch27", "fxTurbulent28", "fxWaveWarp28", "fxPolar28", "fxRipple28", "fxMagnify28", "fxTrans28", "fxWarp14AA28", "fxDistort6AA28", "fxFractalNoise29", "fxGen29", "fxKey29", "fxColor29", "fxDeepSource", "fxDeepAccumulate", "fxDeepComposite", "fxProxyPremultiply", "fxGradeR4", "fxMixR4", "fxGradientR4"] {
+                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet", "fxGrade", "maskMix", "fxLayerRef", "flowEstimate", "flowBlur", "fxAccumulate", "fx19", "fx19GlowKeep", "fx19KeyInvert", "fx19AlphaOf", "fx19ColorSelect", "fx19Bend", "fx20Flip", "fx20AMWave", "fx20AMFractal", "fx21", "fx22", "fx23", "fxGX", "fxInnerGlow24", "fxArt24", "fxLightPrep25", "fxLightSum25", "fxLightComp25", "fxStreak25", "fxLightGen25", "fxBlur26", "fxPrint27", "fxInk27", "fxFilm27", "fxGlitch27", "fxTurbulent28", "fxWaveWarp28", "fxPolar28", "fxRipple28", "fxMagnify28", "fxTrans28", "fxWarp14AA28", "fxDistort6AA28", "fxFractalNoise29", "fxGen29", "fxKey29", "fxColor29", "fxDeepSource", "fxDeepAccumulate", "fxDeepComposite", "fxProxyPremultiply", "fxGradeR4", "fxMixR4", "fxGradientR4", "fxFractalRidgesAM35"] {
             guard let f = library.makeFunction(name: name) else { throw RenderError.pipeline(name) }
             psos[name] = try device.makeComputePipelineState(function: f)
         }
@@ -257,7 +257,7 @@ enum EffectRegistry {
         gaussianBlur, directionalBlur, radialBlur,
         exposure, brightnessContrast, hueSaturation, tint, levels, invert, fill, vignette,
         glow, rgbSplit, fractalNoise, chromaKey, shake,
-    ] + [letterSpacing] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22 + batch23 + batchR4
+    ] + [letterSpacing] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22 + batch23 + batchR4 + batchAM35
 
     private static let byID: [String: EffectDefinition] = Dictionary(uniqueKeysWithValues: all.map { ($0.id, EffectStackR4.wrap($0)) })
     private static let byMatchName: [String: EffectDefinition] = {
@@ -282,7 +282,7 @@ enum EffectRegistry {
         ],
         margin: { e, t in e.bool("repeatEdges") ? 0 : e.number("blurriness", t) * 1.5 },
         stage: .pixels { ctx in
-            // Calibration placeholder: AE Blurriness ≈ 2σ. Tuned against AE reference renders later.
+            // Calibration placeholder: AE Blurriness â‰ˆ 2Ïƒ. Tuned against AE reference renders later.
             let sigma = ctx.num("blurriness") / 2 * ctx.unit
             let dim = ctx.effect.choice("dimensions")
             return ctx.gpu.gaussian(ctx, input: ctx.input, sigma: sigma, horizontal: dim != 2, vertical: dim != 1,
@@ -301,7 +301,7 @@ enum EffectRegistry {
         stage: .pixels { ctx in
             let len = ctx.num("length") * ctx.unit
             guard len > 0.5 else { return ctx.input }
-            // AE: 0° = vertical streak.
+            // AE: 0Â° = vertical streak.
             let a = ctx.num("direction") * .pi / 180
             let v = SIMD2<Float>(Float(sin(a) * len), Float(-cos(a) * len))
             let out = ctx.temp()
@@ -536,7 +536,7 @@ enum EffectRegistry {
             .angle("subRotation", "Sub Rotation", 0),
             .number("subOffsetX", "Sub Offset X", 0, -2000, 2000, unit: "px"),
             .number("subOffsetY", "Sub Offset Y", 0, -2000, 2000, unit: "px"),
-            .number("evolution", "Evolution", 0, -3600, 3600, unit: "°", ae: 21),
+            .number("evolution", "Evolution", 0, -3600, 3600, unit: "Â°", ae: 21),
             .number("evoSpeed", "Evolution Speed", 0, -5, 5, step: 0.01, unit: "rev/s"),
             .toggle("cycle", "Cycle Evolution", false),
             .number("cycles", "Cycle (in Revolutions)", 1, 1, 30, step: 1),
@@ -586,7 +586,7 @@ enum EffectRegistry {
         params: [
             .number("frequency", "Frequency", 8, 0, 60, step: 0.1, unit: "/s"),
             .number("amplitude", "Position Amount", 30, 0, 1000, unit: "px"),
-            .number("rotation", "Rotation Amount", 2, 0, 180, unit: "°"),
+            .number("rotation", "Rotation Amount", 2, 0, 180, unit: "Â°"),
             .number("zoom", "Zoom Amount", 0, 0, 100, unit: "%"),
             .number("octaves", "Detail", 2, 1, 6, step: 1),
             .number("seed", "Random Seed", 1, 0, 1000, step: 1),
@@ -631,7 +631,7 @@ enum Wiggle {
 extension EffectRegistry {
     static let letterSpacing = EffectDefinition(
         id: "awi.textSpacing", name: "Letter Spacing", category: .text, aeMatchNames: [],
-        summary: "Spaces the whole text layer without a text animator. Adds to the layer’s existing tracking.",
+        summary: "Spaces the whole text layer without a text animator. Adds to the layerâ€™s existing tracking.",
         params: [.number("spacing", "Letter Spacing", 0, -300, 1000, unit: "px"),
                  .choice("anchor", "Spacing From", ["Layer Setting", "Left", "Center", "Right"], 0)],
         stage: .transform { _, _ in (0, 0, 0, 1) })
