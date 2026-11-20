@@ -1,0 +1,3873 @@
+[
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/fade.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s_psykoblobs.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef85af76987e2",
+    "public_candidate": false,
+    "source_name": "PsykoBlobs",
+    "existing_name_matches": [
+      "awi.am35.psykoBlobs"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxlinescape.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ed0ecd5892079",
+    "public_candidate": true,
+    "source_name": "Linescape",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/warpblur.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\eb9d2e1133709.frag\nERROR: build_out\\reference-translation-images\\eb9d2e1133709.frag:329: '' :  syntax error, unexpected SAMPLE, expecting COMMA or SEMICOLON\nERROR: 1 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/normal_map.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eefcbfad10b80",
+    "public_candidate": false,
+    "source_name": "Normal Map",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/time_slice_mask.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxnewlensflare.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported control: xyz"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/spinblur2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e5ce70fd654b4",
+    "public_candidate": false,
+    "source_name": "Spin Blur",
+    "existing_name_matches": [
+      "awi8.spinBlur"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/flicker2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/tritone.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eda4e4b9044e8",
+    "public_candidate": false,
+    "source_name": "Tritone",
+    "existing_name_matches": [
+      "ae.tritone"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/3text-smooth-anim.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxhexagonblur.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxcrossglitch.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_hexagonTileShift.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb584ad357d55",
+    "public_candidate": false,
+    "source_name": "Hexagon Tile Shift",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/repeat-path.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_s_glint_rainbow.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e99719be0ea0e",
+    "public_candidate": false,
+    "source_name": "S_GlintRainbow (AE Motion)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/hexshift.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acLTS"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxfrosted.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9aef1f7bd1aa",
+    "public_candidate": false,
+    "source_name": "Frosted",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/gradientoverlay2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ec9e48a380de9",
+    "public_candidate": false,
+    "source_name": "Gradient Overlay",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/mulitsharpen.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e98e0bd11fc6f",
+    "public_candidate": false,
+    "source_name": "ultra sharpen",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxisoline.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eac60c37101a4",
+    "public_candidate": false,
+    "source_name": "Isoline",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_s_gamma.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea7451d774e79",
+    "public_candidate": false,
+    "source_name": "S_Gamma (AE Motion)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/motionblur4.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/turbulence2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef1a32c8ec2aa",
+    "public_candidate": false,
+    "source_name": "Turbulence",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blurmocurves.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/stretchsegment.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\e99e7b4a5ff23.frag\nERROR: build_out\\reference-translation-images\\e99e7b4a5ff23.frag:12: '' :  syntax error, unexpected SMOOTH, expecting IDENTIFIER\nERROR: 1 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/gradientmap.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ecfd444272da7",
+    "public_candidate": false,
+    "source_name": "Gradient Map",
+    "existing_name_matches": [
+      "awi.gradientMap"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/internal-border-outside.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-box.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/chromakey.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_puddle.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e4e3f06553794",
+    "public_candidate": false,
+    "source_name": "Puddle",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/1vhs.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\e032beb914427.frag\nERROR: build_out\\reference-translation-images\\e032beb914427.frag:69: '' :  syntax error, unexpected SAMPLE, expecting COMMA or SEMICOLON\nERROR: 1 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/3audiospactrum.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_aurora.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e64e1f2cb0e3f",
+    "public_candidate": false,
+    "source_name": "Aurora",
+    "existing_name_matches": [
+      "awi7.aurora"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/mosaic.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxisolinev2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxdith.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/DeepGlow Enhanced.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/longshadow2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb09dba903d3f",
+    "public_candidate": false,
+    "source_name": "Long Shadow",
+    "existing_name_matches": [
+      "awi8.longShadow"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/pro_lens_flare.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e003b34e765ad",
+    "public_candidate": false,
+    "source_name": "Pro Lens Flare",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/randomdisplace.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/1block_glitch.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/bcc gradient map.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea36bd8dcebf0",
+    "public_candidate": false,
+    "source_name": "BCC Gradient Map",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/pixeledge.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e75f2a17f4488",
+    "public_candidate": true,
+    "source_name": "Pixelate Edge",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxsgradientmapnew.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e8aadbfe83ddc",
+    "public_candidate": false,
+    "source_name": "[X] Gradient Map+",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_fluidPro.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea8df009485f0",
+    "public_candidate": false,
+    "source_name": "Fluid Pro",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxlumastampernew.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.efe306ea22425",
+    "public_candidate": true,
+    "source_name": "[X] Luma Stamper+",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/radialwipe.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e6fdbbd5a476c",
+    "public_candidate": false,
+    "source_name": "Radial Wipe",
+    "existing_name_matches": [
+      "ae.radialWipe"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/colorama.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea3452b1fb102",
+    "public_candidate": true,
+    "source_name": "colorama",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s_warp_waves2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e44c3753736ad",
+    "public_candidate": false,
+    "source_name": "Warp Waves 2",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxinstantgrass.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/repeat-grid.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/tileshift2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eaeaf49f44c73",
+    "public_candidate": true,
+    "source_name": "Tile Shift",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-subtract.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/difference.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxbadsignal.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e43ead01bcc8f",
+    "public_candidate": false,
+    "source_name": "Bad Signal",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxlightsaber.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/crossfade_noise_wipe.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported parameter identifier"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxseascape.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/bend.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e6e18bbe3f759",
+    "public_candidate": false,
+    "source_name": "Bend",
+    "existing_name_matches": [
+      "awi6.bend"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/tile.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eccad7e332cdb",
+    "public_candidate": false,
+    "source_name": "Tiles",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/pulsate2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/halftone_dots2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e24809c908d0e",
+    "public_candidate": false,
+    "source_name": "Halftone Light Dots",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/bumpmap2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/filters.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e768f587f4504",
+    "public_candidate": false,
+    "source_name": "Filters",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/gaussianblur.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/shake2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/smoothbevel.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/palette-map.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea4ee3a4adc94",
+    "public_candidate": true,
+    "source_name": "Palette Map",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxplasmawave.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e26bad7d24238",
+    "public_candidate": false,
+    "source_name": "Plasma Wave",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_noiseReduction.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ee9dd225d9a0f",
+    "public_candidate": false,
+    "source_name": "Noise Reduction",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxgradientdisplace.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/Awiggle.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb6dc61cb9fe1",
+    "public_candidate": false,
+    "source_name": "2D Camera Shake (Wiggle)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_dreamBloom.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb027a40e1d3a",
+    "public_candidate": false,
+    "source_name": "Dream Bloom",
+    "existing_name_matches": [
+      "awi15.dreamBloom"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-darker-color.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_freePaletteColor.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e1bceb7e68ceb",
+    "public_candidate": false,
+    "source_name": "Free Palette Color",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/3polygontun.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_lumetriColor.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e8fb235f1d884",
+    "public_candidate": false,
+    "source_name": "Lumetri Color Ultra",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/newhalf.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e5472df25c99f",
+    "public_candidate": false,
+    "source_name": "T_Halftone",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_liquidGlass.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.efcd1d4eda677",
+    "public_candidate": false,
+    "source_name": "Liquid Glass",
+    "existing_name_matches": [
+      "awi21.liquidGlass"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/pose_shake.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e2dd6792a7249",
+    "public_candidate": false,
+    "source_name": "pose shake",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/noise3.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ec5cb0732b786",
+    "public_candidate": false,
+    "source_name": "Noise",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/Liquid Wipe.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e3fe027453e82",
+    "public_candidate": false,
+    "source_name": "Z_Liquid dissolve",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/unmult.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\eeb953c7a62af.frag\nERROR: build_out\\reference-translation-images\\eeb953c7a62af.frag:46: '' :  syntax error, unexpected IDENTIFIER, expecting RIGHT_PAREN\nERROR: 1 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/internal-border-inside.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/360-reorient-sphere.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported control: orient"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/3dcubeskybox.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_godRays.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e0dd14e6286ab",
+    "public_candidate": false,
+    "source_name": "God Rays",
+    "existing_name_matches": [
+      "awi.godRays"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxx2dtuunnell.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/fourcolorgradient.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9f16e2302452",
+    "public_candidate": false,
+    "source_name": "Four-color Gradient",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxwingsline.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_halftone.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e31cec718c9c3",
+    "public_candidate": false,
+    "source_name": "Halftone Pro",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/irridescence2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e51de8cc7d47d",
+    "public_candidate": true,
+    "source_name": "Iridescence",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/grunge.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/fillbehind.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxmtint.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.edc4cbd35eb7f",
+    "public_candidate": false,
+    "source_name": "Magic Colortint",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_polytraceSampler.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e4a1c49d868e8",
+    "public_candidate": false,
+    "source_name": "Polytrace Sampler",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/turbulent_displace.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e0ab5e6dcc8c0",
+    "public_candidate": false,
+    "source_name": "Turbulent Pro",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxtransform2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/chromakey-advanced.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/zoomblur3.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ebde5c0d65142",
+    "public_candidate": false,
+    "source_name": "Zoom Blur",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/timequant.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/circlewipe.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e675237abf793",
+    "public_candidate": false,
+    "source_name": "Wipe Circle",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_fractalWarp.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ec29f6ff7df34",
+    "public_candidate": false,
+    "source_name": "Fractal Warp",
+    "existing_name_matches": [
+      "awi20.fractalWarp"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s_dissolveshake.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e230359933e7f",
+    "public_candidate": false,
+    "source_name": "S_dissolveshake",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/lensblur2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e5e7a2d0c070c",
+    "public_candidate": false,
+    "source_name": "Lens Blur",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/starfield3.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.edd6ad99801bb",
+    "public_candidate": false,
+    "source_name": "Starfield",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/colorize.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported control: hue-disc"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_fiber.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e38d7e5015fe7",
+    "public_candidate": false,
+    "source_name": "Quality Group Fiber",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/spherize2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/pixelate2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e6d05f6c7aaa9",
+    "public_candidate": false,
+    "source_name": "Pixelate",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/cube2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/waveloq-3.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ec88108d754e8",
+    "public_candidate": true,
+    "source_name": "Waveloq",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/unsharpmask.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxnewoffsetglitch.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxvhstape.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/streaks-linear.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea1a6411e3d41",
+    "public_candidate": false,
+    "source_name": "Linear Streaks",
+    "existing_name_matches": [
+      "awi15.linearStreaks"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_gradientExposure.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ee853e6522b03",
+    "public_candidate": false,
+    "source_name": "Gradient Exposure",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/noisetunnelblue.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/water_droplets.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/cartoon_outline.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\eab75323f2408.frag\nERROR: build_out\\reference-translation-images\\eab75323f2408.frag:85: '' :  syntax error, unexpected SAMPLE, expecting COMMA or SEMICOLON\nERROR: 1 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-vivid-light.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxextrudepoint.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/mattechoke2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_lensDistortion.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9ab745e60ca1",
+    "public_candidate": false,
+    "source_name": "Lens Distortion+",
+    "existing_name_matches": [
+      "awi6.lensDistortion"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/hexarray.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acLTS"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/stripes.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eaf016082e969",
+    "public_candidate": false,
+    "source_name": "Stripes",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxfuji.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/channelmap.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e3ba2e31e4cc1",
+    "public_candidate": false,
+    "source_name": "Channel Remap (RGB)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_fluid.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ee8a4498bd81b",
+    "public_candidate": false,
+    "source_name": "Fluid",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxspeedlines.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e58f62e819ee4",
+    "public_candidate": false,
+    "source_name": "SpeedLines+",
+    "existing_name_matches": [
+      "awi7.speedLines"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/echo-keyframe.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_gaussianBlur.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e00615d7bbc39",
+    "public_candidate": false,
+    "source_name": "Gaussian Blur+",
+    "existing_name_matches": [
+      "ae.gaussianBlur"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/mystery_book.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\eb128ccb140e5.frag\nERROR: build_out\\reference-translation-images\\eb128ccb140e5.frag:202: 'sampler/image' : cannot construct this type \nERROR: build_out\\reference-translation-images\\eb128ccb140e5.frag:202: '' : compilation terminated \nERROR: 2 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_longShadow.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e3c8f206b44e5",
+    "public_candidate": false,
+    "source_name": "Long Shadow",
+    "existing_name_matches": [
+      "awi8.longShadow"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/rays_edge_detect.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e48e6cec62b62",
+    "public_candidate": false,
+    "source_name": "Rays Edge Detect",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_fractalZoomTrails.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9d6d83cdc8f4",
+    "public_candidate": false,
+    "source_name": "Fractal Zoom Trails",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-linear-light.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/T_edge_blur.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ee9c0bd2ca418",
+    "public_candidate": false,
+    "source_name": "T_Edge Blur",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/radialshadow2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e7b0d60717ad7",
+    "public_candidate": true,
+    "source_name": "Radial Shadow",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/S_BleachPyBass.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ed21040ef427c",
+    "public_candidate": false,
+    "source_name": "S_BleachBypass",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/AE CC Toner.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ec9d67f3d02bc",
+    "public_candidate": false,
+    "source_name": "CC Toner",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/Fastadjust++.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e081fdcec82af",
+    "public_candidate": false,
+    "source_name": "Fast Adjusting++",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_rgbMotionBlur.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e2aaed4b17802",
+    "public_candidate": false,
+    "source_name": "RGB MotionBlur",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/spectralmap.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea64ba171e267",
+    "public_candidate": false,
+    "source_name": "Spectral Map",
+    "existing_name_matches": [
+      "awi.am35.spectralMap"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/textprogress.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/magnify-background.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_deepGlow.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9d6429555d0e",
+    "public_candidate": false,
+    "source_name": "Deep Glow",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/contourstrips.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxoldsharpen.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_saber.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e7ab6e77c26cf",
+    "public_candidate": false,
+    "source_name": "Saber",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxsharpenv3.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxcomet.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9e78f72e74ef",
+    "public_candidate": true,
+    "source_name": "Comet",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/contour.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/fbm_time_displace_fade.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\ecef0c8a880bd.frag\nERROR: build_out\\reference-translation-images\\ecef0c8a880bd.frag:80: 'explicit typecast' : required extension not requested: GL_NV_explicit_typecast\nERROR: build_out\\reference-translation-images\\ecef0c8a880bd.frag:80: '' : unsupported construction \nERROR: build_out\\reference-translation-images\\ecef0c8a880bd.frag:80: '' : compilation terminated \nERROR: 3 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-octahedron.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/omino-glass.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_gradient.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb03acc50b466",
+    "public_candidate": false,
+    "source_name": "New Gradient",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/color balance hsl 2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e82f843a1a29e",
+    "public_candidate": false,
+    "source_name": "Color Balance HSL Pro",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/shake-parts.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxmatrixcode.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported parameter identifier"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/grow-parts.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxflame.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eefe0850cb533",
+    "public_candidate": false,
+    "source_name": "Flame",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/spotcolor2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/3wipeplasma.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e2365a45909ce",
+    "public_candidate": false,
+    "source_name": "Wipe Plasma",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/bcc_blur_h.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e02a0866ee9bc",
+    "public_candidate": false,
+    "source_name": "BCC Blur H",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/hand_drawn.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e8f2ea0f3dea9",
+    "public_candidate": false,
+    "source_name": "Hand Drawn",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_dropShadow.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e04dda922fdfa",
+    "public_candidate": false,
+    "source_name": "S_Drop Shadow",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/dblur.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef17cbbf42f17",
+    "public_candidate": false,
+    "source_name": "Directional Blur",
+    "existing_name_matches": [
+      "ae.directionalBlur"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/shatter_voronoi_mp.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s_wipepixelate.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e8e0a6f88c6f1",
+    "public_candidate": false,
+    "source_name": "S_WipePixelate",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/noise_distortion_ca.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e40090140d122",
+    "public_candidate": false,
+    "source_name": "Distort RGB",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/transform.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\ec620fa828e95.frag\nERROR: build_out\\reference-translation-images\\ec620fa828e95.frag:15: '' :  syntax error, unexpected SAMPLE, expecting IDENTIFIER\nERROR: 1 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxlutreader.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-hard-light.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/anoiseline.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ed6d467b0b2fc",
+    "public_candidate": false,
+    "source_name": "Glitch Noise Lines",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/fisheye.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ee29f513da8cb",
+    "public_candidate": false,
+    "source_name": "Fisheye / Anti\u2011Fisheye",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/square_break_3d.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eeab7e403ece5",
+    "public_candidate": true,
+    "source_name": "Square Break 3D",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/glass2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/cosuv.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e4390d04fc4d7",
+    "public_candidate": false,
+    "source_name": "texture",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-color-multiply.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/scanlines.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e0cdd4fb8685f",
+    "public_candidate": false,
+    "source_name": "VHS Scanline",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-color-burn.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxvshakenew.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-heart2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/colorista.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e8c9b81f88ba0",
+    "public_candidate": false,
+    "source_name": "Colorista",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s_flicker.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e69ae7b9c2440",
+    "public_candidate": false,
+    "source_name": "S_Flicker",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/heatmap_perlin_noise.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e26753b8c360e",
+    "public_candidate": true,
+    "source_name": "Heatmap",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxburningwipe.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_proDiffusion.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.efec58c6d52e1",
+    "public_candidate": false,
+    "source_name": "Pro Diffusion",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxedgeline.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eeae22f0a3488",
+    "public_candidate": false,
+    "source_name": "Edge Line",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/vortexblur.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e1e32e5ce15e4",
+    "public_candidate": false,
+    "source_name": "Vortex Blur",
+    "existing_name_matches": [
+      "awi15.vortexBlur"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-plus.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/rgbsep.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef43fb8dd1562",
+    "public_candidate": false,
+    "source_name": "RGB Split",
+    "existing_name_matches": [
+      "awi.rgbSplit"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-extrude.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/glowscan.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/tunnel.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ed499a706b3c1",
+    "public_candidate": false,
+    "source_name": "Tunnel",
+    "existing_name_matches": [
+      "awi7.tunnel"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-ellipsoid.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-pyramid.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/colorhot.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported control: hue-disc"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/streaks-zoom.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ed2fdd321a8b0",
+    "public_candidate": false,
+    "source_name": "Zoom Streaks",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/poseshake.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e38f574cda1cf",
+    "public_candidate": false,
+    "source_name": "S_Pos Shake",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/startunnel.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported control: xyz"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/counter.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-starpoly.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/glow-inner.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/edgeglow.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/8bit.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef86ca044f297",
+    "public_candidate": false,
+    "source_name": "8Bit",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-divide.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/tilerotate2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e8404b5764d4f",
+    "public_candidate": true,
+    "source_name": "Tile Rotate",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxssswirl.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.efccbd7a6588a",
+    "public_candidate": false,
+    "source_name": "Swirl+",
+    "existing_name_matches": [
+      "awi6.swirl"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/x_sharpen.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e32743646744c",
+    "public_candidate": false,
+    "source_name": "Sharpen pro",
+    "existing_name_matches": [
+      "awi8.sharpenPro"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxbbmaker.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e122258a4d83c",
+    "public_candidate": false,
+    "source_name": "BlackBar Maker+",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/ Aflare.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e089fe308a7e7",
+    "public_candidate": false,
+    "source_name": "Flare ",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxplexustriangle.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/rgb_curves_gamma.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef17fae31f9b4",
+    "public_candidate": false,
+    "source_name": "RGB Curves",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/unsharp_gauss_v.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e73314b9e0697",
+    "public_candidate": false,
+    "source_name": "Unsharp Gaussian V",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_depthDisplacement.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb7eb87384a14",
+    "public_candidate": false,
+    "source_name": "Depth Displacement",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_dithering.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e7c3d6213e5be",
+    "public_candidate": false,
+    "source_name": "New Dithering",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/hexrotate.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acLTS"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxwaterwave.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/copy_background.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_maskBlur.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e0a0f452e32e2",
+    "public_candidate": false,
+    "source_name": "Mask Blur",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_flashbulbs.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e21823176e06e",
+    "public_candidate": false,
+    "source_name": "S_Flashbulbs",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/lensflare.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e357c6c9c05a9",
+    "public_candidate": false,
+    "source_name": "Lens Flare",
+    "existing_name_matches": [
+      "ae.lensFlare"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxtvanalogue.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ebb8471d24fd0",
+    "public_candidate": false,
+    "source_name": "TV Analogue",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/warp+.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e46a11ff71be9",
+    "public_candidate": false,
+    "source_name": "Warp+",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/firey_border.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e40d45d33b0da",
+    "public_candidate": false,
+    "source_name": "Firey Border",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/spill-cleaner.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxvcr.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e3d7ae5137bb1",
+    "public_candidate": false,
+    "source_name": "VCR Distortion+",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/glitch_pro.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e5ad5e1e9a0fb",
+    "public_candidate": false,
+    "source_name": "Precision Glitch",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/cinematic_bokeh.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea86c4dac0cf2",
+    "public_candidate": false,
+    "source_name": "Bokeh Blur",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxhdr.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_radialShadow.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e48074a20347f",
+    "public_candidate": false,
+    "source_name": "Radial Shadow",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/luma_color.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e1ab9310206cc",
+    "public_candidate": false,
+    "source_name": "Color-Luma Key",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxdotsloader.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxvoronoi3.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/wobble-rail-streaks.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxnewcolortemp.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea03f4bd384d7",
+    "public_candidate": false,
+    "source_name": "New ColorTemp",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxhsl.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/internal-border.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/colorgrade.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ebf8fdec0b910",
+    "public_candidate": false,
+    "source_name": "Advanced Color Grading",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/hueshift.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e77c18bb5f153",
+    "public_candidate": false,
+    "source_name": "Hue Shift",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/threshold.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e45e8b482c9fc",
+    "public_candidate": false,
+    "source_name": "Threshold",
+    "existing_name_matches": [
+      "ae.threshold"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/timecode.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxinnerblurplus.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/sharpen.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e6134d019d8aa",
+    "public_candidate": false,
+    "source_name": "Sharpen",
+    "existing_name_matches": [
+      "ae.sharpen"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxbubble.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_constellation.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e590db1c1e3be",
+    "public_candidate": false,
+    "source_name": "Constellation",
+    "existing_name_matches": [
+      "awi12.constellation"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/halftonelines.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e0755d4beacf9",
+    "public_candidate": false,
+    "source_name": "Halftone Lines",
+    "existing_name_matches": [
+      "awi16.halftoneLines"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/omino-diffusion.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e658cad5dcbff",
+    "public_candidate": true,
+    "source_name": "Omino Diffusion+",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxbonfire.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/chromatic-zoomblur.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea601aa767c60",
+    "public_candidate": false,
+    "source_name": "Chromatic Zoom Blur",
+    "existing_name_matches": [
+      "awi.chromaticZoom"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/InsaneSignal.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9468c5afe78d",
+    "public_candidate": false,
+    "source_name": "INSANE Signal",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/jpegquality.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\e0ed618b33e7c.frag\nERROR: build_out\\reference-translation-images\\e0ed618b33e7c.frag:96: 'split' : undeclared identifier \nERROR: build_out\\reference-translation-images\\e0ed618b33e7c.frag:96: '' : compilation terminated \nERROR: 2 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/lumastamper.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e2534d53346fd",
+    "public_candidate": false,
+    "source_name": "Luma Stamper",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_sshakeultra.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e4c2c2a58de22",
+    "public_candidate": false,
+    "source_name": "S_Shake Ultra",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/repeat-radial.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/3colorgrad.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e4ce85d1762e0",
+    "public_candidate": false,
+    "source_name": "3 Color Gradient+",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_bokehParallax.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e307c69c1ef53",
+    "public_candidate": false,
+    "source_name": "Bokeh Parallax",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxpaperburn.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported parameter identifier"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/findedges-edgeglow.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e013a8d025a10",
+    "public_candidate": false,
+    "source_name": "Find Edges",
+    "existing_name_matches": [
+      "ae.findEdges"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/3adbg.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\ef1f2a785b8af.frag\nERROR: build_out\\reference-translation-images\\ef1f2a785b8af.frag:65: 'active' : Reserved word. \nERROR: build_out\\reference-translation-images\\ef1f2a785b8af.frag:65: '' : compilation terminated \nERROR: 2 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxvhsnoise.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxpointunnel.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/repeat.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/oscillate3.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_rippleLighting.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eab6572d7c425",
+    "public_candidate": false,
+    "source_name": "Ripple Lighting",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/colortemperature.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e7dd301114b90",
+    "public_candidate": false,
+    "source_name": "Color Temperature",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_halation.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e45a6d8473da7",
+    "public_candidate": false,
+    "source_name": "Halation",
+    "existing_name_matches": [
+      "awi.halation"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/move-along-path3.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/kaleidoscope.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ebea9e058896e",
+    "public_candidate": false,
+    "source_name": "Kaleidoscope",
+    "existing_name_matches": [
+      "awi6.kaleidoscope"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxtonecurve.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e98c76d49aae0",
+    "public_candidate": false,
+    "source_name": "Tone Curve",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxfrostednew.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e24e265506083",
+    "public_candidate": false,
+    "source_name": "Frosted Blur",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-pin-light.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/lift.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/vr-player.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported control: orient"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxsolidcolornew.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ed0445ed28fcb",
+    "public_candidate": false,
+    "source_name": "[X] Solid Color+",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxfractaltexture.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e3457df3dfc47",
+    "public_candidate": true,
+    "source_name": "Fractal Texture",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/bloodsplash.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e00491689d6e9",
+    "public_candidate": true,
+    "source_name": "Blood Splash Spheres",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxboxblurplus.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/warped_noise_field.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e093cdee083c0",
+    "public_candidate": false,
+    "source_name": "Warped Noise Field",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/internal-border-three.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxhexagonlens.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxnoisefade.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxgradientoverlay2new.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e23c60d3376d8",
+    "public_candidate": false,
+    "source_name": "[X] Gradient Overlay+",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxcosmicycles.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxfencingwire.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.edd9730a273e2",
+    "public_candidate": false,
+    "source_name": "Fencing Wire+",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/pagecurl.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxmoney.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ed8c1364415bd",
+    "public_candidate": true,
+    "source_name": "Money Filter",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxrainyfalls.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/curl.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb060c3395f8c",
+    "public_candidate": false,
+    "source_name": "Curl",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/lightning.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acLTS"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/T_sharpen.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/glow.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/scaleassist.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/warp_styles.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e4fafe3d586d7",
+    "public_candidate": false,
+    "source_name": "Warp",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxhardglitch.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e49936984c33e",
+    "public_candidate": false,
+    "source_name": "Glitch Offset",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s_warp_puff.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e59a72c4fb146",
+    "public_candidate": false,
+    "source_name": "Warp Puff",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-torus.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxfloorgrid.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported control: xyz"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-linear-burn.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/crtemu.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e29290dcd29d4",
+    "public_candidate": false,
+    "source_name": "CRT Emulator",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxpartx.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9dd30289c4d2",
+    "public_candidate": false,
+    "source_name": "Light Particle",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/softglow.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_opticCompensation.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb1207886e2d6",
+    "public_candidate": false,
+    "source_name": "Optic Compensation",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/quality_enhancer-1.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e10176b54c318",
+    "public_candidate": false,
+    "source_name": "Quality Enhancer",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/textrand.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/repeat-scatter.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/ribbon.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.efa58da681936",
+    "public_candidate": true,
+    "source_name": "Ribbon",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/radial_rays.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e27453a82d053",
+    "public_candidate": true,
+    "source_name": "Radial Rays",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/VCR GLITCH.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e91c1f46e6267",
+    "public_candidate": false,
+    "source_name": "VCR Glitch",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/electricedges.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/clouds3.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e1175361457d7",
+    "public_candidate": false,
+    "source_name": "Clouds",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/rays.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e7c18ca08691c",
+    "public_candidate": false,
+    "source_name": "Rays",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_bevelLightSweep.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e474c2c7bde18",
+    "public_candidate": false,
+    "source_name": "Bevel + Light Sweep",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxx2dclouds.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/unsharp_gauss_h_wide.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eeb60ef76554d",
+    "public_candidate": false,
+    "source_name": "Unsharp Gaussian H (Wide)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxsmoothbevelnew.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/ridges2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e1fc2d92d8130",
+    "public_candidate": false,
+    "source_name": "Fractal Ridges",
+    "existing_name_matches": [
+      "awi.am35.fractalRidges"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/bcc_blur_v.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e1f35079f3835",
+    "public_candidate": false,
+    "source_name": "BCC Blur V",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/MultiScaleSharpen.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e93a1a3d64a7f",
+    "public_candidate": false,
+    "source_name": "Sharpen 2",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/grid2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ed357752a6a48",
+    "public_candidate": false,
+    "source_name": "Grid",
+    "existing_name_matches": [
+      "ae.grid"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/plasmav2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.edb351ee38a79",
+    "public_candidate": false,
+    "source_name": "Procedural Plasma Isolines",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/spot_exposure.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e8a43530c7123",
+    "public_candidate": false,
+    "source_name": "Spot Exposure",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/halftonecmyk.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ecaa448a463ac",
+    "public_candidate": false,
+    "source_name": "CMYK Halftone Dots",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/fill.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.edd73a17d197e",
+    "public_candidate": false,
+    "source_name": "fill",
+    "existing_name_matches": [
+      "ae.fill"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/replacecolor.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/mirror.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e555ea7a6d24a",
+    "public_candidate": false,
+    "source_name": "Mirror",
+    "existing_name_matches": [
+      "ae.mirror"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/streakstrips.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e150bc7e80a57",
+    "public_candidate": false,
+    "source_name": "Streak Strips",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_s_monochrome.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef3abc6169292",
+    "public_candidate": false,
+    "source_name": "S_Monochrome (AE Motion)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/colortune2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported control: hue-disc"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s_sharpen.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ee8a291463cb3",
+    "public_candidate": false,
+    "source_name": "structure",
+    "existing_name_matches": [
+      "awi15.structure"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/metalballs.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e4dc1ec616108",
+    "public_candidate": true,
+    "source_name": "Metal Balls",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_hexagonTiling.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef21215b0b044",
+    "public_candidate": false,
+    "source_name": "Hexagon Tiling",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/morph-path.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/cclens.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb87bbcbaa3b5",
+    "public_candidate": false,
+    "source_name": "CC Lens",
+    "existing_name_matches": [
+      "cc.lens"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_chromaticAberration.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ebf64cf4cbca0",
+    "public_candidate": false,
+    "source_name": "Chromatic Aberration",
+    "existing_name_matches": [
+      "awi.chromaticAberration"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/3d_point_cloud.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e713978f9f30a",
+    "public_candidate": false,
+    "source_name": "gaussian splatting",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxeclipse.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/ccglass.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/bccedgeglow.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ed50f32b27cc7",
+    "public_candidate": false,
+    "source_name": "BCC Edge Glow",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/negative.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e8d7c496ca902",
+    "public_candidate": false,
+    "source_name": "Negative",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/swing2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_colorBlend.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e1b41b5dc7d75",
+    "public_candidate": false,
+    "source_name": "Color Blend",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/Amimpact.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eee91489e4221",
+    "public_candidate": false,
+    "source_name": "Impact Shake (Per-Beat Punch)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-lighter-color.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/posterize.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e5d4a39880b98",
+    "public_candidate": false,
+    "source_name": "Posterize",
+    "existing_name_matches": [
+      "ae.posterize"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/text-spacing.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxsmokeparticle.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e53cba70f20d3",
+    "public_candidate": false,
+    "source_name": "Smoke Particle",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxcolorgrid.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported parameter identifier"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/holomatrix2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e77bf324369ab",
+    "public_candidate": false,
+    "source_name": "Holomatrix II",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/stretch2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9e38aadb715d",
+    "public_candidate": false,
+    "source_name": "Stretch Axis",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/solidmatte.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef8c112b6b73b",
+    "public_candidate": false,
+    "source_name": "Solid Matte",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/highlight-shadow.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e783368bd50f0",
+    "public_candidate": true,
+    "source_name": "Highlights and Shadows",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/colormatch.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/pulse_opacity2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/wavewarp2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb23379931981",
+    "public_candidate": false,
+    "source_name": "Wave Warp",
+    "existing_name_matches": [
+      "ae.waveWarp"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/halftonedots.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef9f0c8cfa4ec",
+    "public_candidate": false,
+    "source_name": "Halftone Dots",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/2bumpmap.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_s_channel_switcher.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e886f5cf1e803",
+    "public_candidate": false,
+    "source_name": "S_ChannelSwitcher (AE Motion)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/exposure.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e056049200a8a",
+    "public_candidate": false,
+    "source_name": "Exposure / Gamma",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxglitchvhs.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e834231f5b840",
+    "public_candidate": false,
+    "source_name": "Glitch VHS",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/unsharp_gauss_h.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e434450c9178e",
+    "public_candidate": false,
+    "source_name": "Unsharp Gaussian H",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxvshake.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/stroke-taper.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxelectricrough.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/displacemap3.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxpixelsorter.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ec4590c5a93be",
+    "public_candidate": false,
+    "source_name": "Pixel Sorter",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/sanchezae_cc.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e8d3ec4445d94",
+    "public_candidate": false,
+    "source_name": "sanchezae_cc",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/perfect_slice.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ee29040f105ce",
+    "public_candidate": false,
+    "source_name": "Perfect Slice",
+    "existing_name_matches": [
+      "awi6.slice"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/3D Perception (BETA).xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxvrcombinednew.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported control: orient"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_s_clamp_chroma.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ee005827e6d32",
+    "public_candidate": false,
+    "source_name": "S_ClampChroma (AE Motion)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/internal-border-center.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxfourcolorgradientnew.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e7032742ce4d0",
+    "public_candidate": false,
+    "source_name": "[X] 4 Color Gradient+",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/glaw.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.edab03f179817",
+    "public_candidate": false,
+    "source_name": "Deep bloom",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxfworks.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\e45f1e97696b4.frag\nERROR: build_out\\reference-translation-images\\e45f1e97696b4.frag:79: '' :  syntax error, unexpected SEMICOLON, expecting RIGHT_PAREN or COMMA\nERROR: 1 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/active_blackhole.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e901c9ca1a178",
+    "public_candidate": false,
+    "source_name": "Black Hole circle",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxdeepglow.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_s_hue_sat_bright.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e31db03cf71ce",
+    "public_candidate": false,
+    "source_name": "S_HueSatBright (AE Motion)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_mixedColors.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e40ea8ab88a20",
+    "public_candidate": false,
+    "source_name": "BCC Mixed Colors",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/gradientdisplace.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/fractalwarp4.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\e7efd76a1919d.frag\nERROR: build_out\\reference-translation-images\\e7efd76a1919d.frag:102: '' :  syntax error, unexpected SAMPLE, expecting COMMA or SEMICOLON\nERROR: 1 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/coloradjust.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/chromatic-vortexblur.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef9366504bfe5",
+    "public_candidate": false,
+    "source_name": "Chromatic VortexBlur",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/shatter_break.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e6def5202c7d5",
+    "public_candidate": false,
+    "source_name": "Shatter Break",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/checkerdissolve2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e230bc2e96177",
+    "public_candidate": false,
+    "source_name": "Block Dissolve",
+    "existing_name_matches": [
+      "ae.blockDissolve"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/cartoon.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef6a8a2f4b278",
+    "public_candidate": false,
+    "source_name": "Cartoon",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/lighting.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_strokeColor.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef5e7316def99",
+    "public_candidate": false,
+    "source_name": "Stroke Color",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxparticle3d.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\efc60eccebd05.frag\nERROR: build_out\\reference-translation-images\\efc60eccebd05.frag:73: 'active' : Reserved word. \nERROR: build_out\\reference-translation-images\\efc60eccebd05.frag:73: '' : compilation terminated \nERROR: 2 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxnewtrails.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_smear.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eccd079f37be9",
+    "public_candidate": false,
+    "source_name": "Smear",
+    "existing_name_matches": [
+      "awi15.smear"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s_pixelsort.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef9005da47ae5",
+    "public_candidate": false,
+    "source_name": "s_pixelsort",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_pixelPoly.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e5076ce23c6fe",
+    "public_candidate": false,
+    "source_name": "Pixel Poly",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/contour-grad.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/Adamagedots.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e3418485b643b",
+    "public_candidate": true,
+    "source_name": "Film Damage Dots",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/newdisshake.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e821e62f4d00a",
+    "public_candidate": false,
+    "source_name": "Dissolve Shake Pro",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_edgeColorize.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e8b0453ce568a",
+    "public_candidate": false,
+    "source_name": "Edge Colorize",
+    "existing_name_matches": [
+      "awi16.edgeColorize"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/mattefringe.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-saturation.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxglitchpixel.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e30b77c55f65f",
+    "public_candidate": false,
+    "source_name": "Glitch Pixel",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/simplestars2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported control: xyz"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/repeat-line.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/vhs_suite.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e0125c8bfdb26",
+    "public_candidate": false,
+    "source_name": "VHS Suite",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxraindropsfloor.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/starpannel.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ebbe5a37d5059",
+    "public_candidate": false,
+    "source_name": "Starry Planes",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_cosineWeb2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eea5299388c79",
+    "public_candidate": false,
+    "source_name": "Cosine Web (Zozuar 2)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/rgb-mixer.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ebd5db59a84a3",
+    "public_candidate": false,
+    "source_name": "RGB Mixer",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-lighten.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_cameraLensBlur.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e8d45b247abcc",
+    "public_candidate": false,
+    "source_name": "Camera Lens Blur",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/rippledisto.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported parameter identifier"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxx2Dtunnelv2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_twitch.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e25b952116050",
+    "public_candidate": false,
+    "source_name": "Twitch",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxbrushsketch.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxsnowreal.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea3dde846bc3a",
+    "public_candidate": false,
+    "source_name": "Snow Falling",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_sway.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e3f8177ab74b3",
+    "public_candidate": false,
+    "source_name": "Sway",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/lensdistoration.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e698f2bbd9994",
+    "public_candidate": false,
+    "source_name": "Lens Distortion",
+    "existing_name_matches": [
+      "awi6.lensDistortion"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_ccGlow.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e3785488e69de",
+    "public_candidate": false,
+    "source_name": "CC Glow",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/spin.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_waterWaves.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb5616c5f1f1c",
+    "public_candidate": false,
+    "source_name": "Water Waves",
+    "existing_name_matches": [
+      "awi21.waterWaves"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/internal-shadow.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s_glow_aura.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e18058eae046e",
+    "public_candidate": false,
+    "source_name": "S_GlowAura",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/solidcolor.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea91c7052d0a1",
+    "public_candidate": false,
+    "source_name": "Solid Color",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_refractionWarp.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e990dbd10b606",
+    "public_candidate": false,
+    "source_name": "Refraction Warp",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-hexprism.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/offset.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e6c55023d327b",
+    "public_candidate": false,
+    "source_name": "Offset",
+    "existing_name_matches": [
+      "ae.offset"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/rays_edge (3).xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9c493c5dcbcc",
+    "public_candidate": false,
+    "source_name": "Rays Edge",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-luminance.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/pixelwave.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_autoPaint.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e33e0fb4d4196",
+    "public_candidate": false,
+    "source_name": "Auto Paint",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/darkglow.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s_warp_magnify.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ed6991313756f",
+    "public_candidate": false,
+    "source_name": "Warp Magnify",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-triprism2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/dualtexture.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/swirl4.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e3403bb405f80",
+    "public_candidate": false,
+    "source_name": "Swirl",
+    "existing_name_matches": [
+      "awi6.swirl"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/vignette.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e7c9356e79187",
+    "public_candidate": false,
+    "source_name": "Vignette",
+    "existing_name_matches": [
+      "awi.vignette"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/unsharp_gauss_v_wide.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e8b58c95215e1",
+    "public_candidate": false,
+    "source_name": "Unsharp Gaussian V (Wide)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_cosmicBurn.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ec7335e01190b",
+    "public_candidate": false,
+    "source_name": "Cosmic Burn",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/voronoi2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/pinchbulge2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ec0fe8068a939",
+    "public_candidate": false,
+    "source_name": "Pinch/Bulge",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxvortextdust.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/1mojo.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e748e5aade0a7",
+    "public_candidate": false,
+    "source_name": "Mojo",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/colorista IV.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported control: hue-disc"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/split-cubes-raymarch.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/dots2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eac124fb5a85b",
+    "public_candidate": false,
+    "source_name": "Dots",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/new-lensflare-shadertoy.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported control: xyz"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-hue.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_strokeTaper.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ead6e7b5a8a95",
+    "public_candidate": false,
+    "source_name": "Stroke Taper",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_rgbCurves.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e4de40580aecf",
+    "public_candidate": false,
+    "source_name": "RGB Curves Pro",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/displacemap-radial.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_motionBlur.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ecabb31d99e3c",
+    "public_candidate": false,
+    "source_name": "Motion Blur",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/3drop shadow.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e6e273782504a",
+    "public_candidate": false,
+    "source_name": "Drop Shadow",
+    "existing_name_matches": [
+      "ae.dropShadow"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxglowribbon.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e11a7cbe63246",
+    "public_candidate": false,
+    "source_name": "Glow Ribbon+",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-overlay.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s_shake.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_s_glow_dist.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e0eaef7a0da9e",
+    "public_candidate": false,
+    "source_name": "S_GlowDist (AE Motion)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-linear-dodge.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/findedges.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e48da38194e65",
+    "public_candidate": false,
+    "source_name": "Find Edges",
+    "existing_name_matches": [
+      "ae.findEdges"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-ring.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/pinchbulgeinside.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e6a4f65d4030d",
+    "public_candidate": false,
+    "source_name": "Inner Pinch/Bulge",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/drawing-progress.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/colorbalance.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\eeef2ff66407b.frag\nWARNING: build_out\\reference-translation-images\\eeef2ff66407b.frag:45: '' : all default precisions are highp; use precision statements to quiet warning, e.g.:\n         \"precision mediump int; precision highp float;\" \nERROR: build_out\\reference-translation-images\\eeef2ff66407b.frag:63: 'filter' : Reserved word. \nERROR: build_out\\reference-translation-images\\eeef2ff66407b.frag:63: '' : compilation terminated \nERROR: 2 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/shapefield.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported control: xyz"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/rgb-gamma.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e472d3b9c136f",
+    "public_candidate": false,
+    "source_name": "RGB Gamma",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/internal-border-two.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/volumetric-clouds.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s_glow.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e2b36e815b6cb",
+    "public_candidate": false,
+    "source_name": "S_Glow",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/vibrance-saturation.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported parameter identifier"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/flip3.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\e80ca9b1eae55.frag\nERROR: build_out\\reference-translation-images\\e80ca9b1eae55.frag:127: 'highp' : overloaded functions must have the same parameter precision qualifiers for argument 1\nERROR: build_out\\reference-translation-images\\e80ca9b1eae55.frag:128: '' : compilation terminated \nERROR: 2 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/boxblur3.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-soft-overlay.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/jitter.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/star.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e2d942b159289",
+    "public_candidate": false,
+    "source_name": "Star",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/circularripple2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea0f52d685790",
+    "public_candidate": false,
+    "source_name": "Circular Ripple",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_directionalSkew.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e0105d31bfccd",
+    "public_candidate": false,
+    "source_name": "Directional Skew",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/warpgeid.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxparticlev2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-exclusion.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/psykostripes.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eaf2f95b1ab6a",
+    "public_candidate": true,
+    "source_name": "Psykostripes",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-color-dodge.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_minimax.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ec199db7a28a6",
+    "public_candidate": false,
+    "source_name": "Minimax",
+    "existing_name_matches": [
+      "awi15.minimax"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/feather.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/dissolve.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e16b0e9488eac",
+    "public_candidate": false,
+    "source_name": "Dissolve",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/roughenedges.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef296141d8982",
+    "public_candidate": false,
+    "source_name": "Roughen Edges",
+    "existing_name_matches": [
+      "ae.roughenEdges"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_filmGlow.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9ae917ac0b5d",
+    "public_candidate": false,
+    "source_name": "BCC Film Glow",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/monitor_on_table.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\e52053df16be1.frag\nERROR: build_out\\reference-translation-images\\e52053df16be1.frag:205: 'sampler/image' : cannot construct this type \nERROR: build_out\\reference-translation-images\\e52053df16be1.frag:205: '' : compilation terminated \nERROR: 2 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxnewcolorgrid.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxmultigradmap.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.edf4550c7d022",
+    "public_candidate": false,
+    "source_name": "MultiGradient Map+",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/tiles-rot-glow.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/invertadv.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef570d703a6f8",
+    "public_candidate": false,
+    "source_name": "S_Invert",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/chromatic.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef9ec2b77c95e",
+    "public_candidate": false,
+    "source_name": "Chromatic Displacement",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/squeeze.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e747b3f01d9e8",
+    "public_candidate": false,
+    "source_name": "Squeeze",
+    "existing_name_matches": [
+      "awi6.squeeze"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/channelmaphsv.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ec2cdadc6c8df",
+    "public_candidate": true,
+    "source_name": "Channel Remap (HSV)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/streaks-spin.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e4e43a09d7b11",
+    "public_candidate": false,
+    "source_name": "Spin Streaks",
+    "existing_name_matches": [
+      "awi15.spinStreaks"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxxrgb.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxmeteor.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb8f8ae278481",
+    "public_candidate": true,
+    "source_name": "Meteor",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/rays_generate.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ee63cf8dafb63",
+    "public_candidate": false,
+    "source_name": "Rays Generate",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/checker2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e3e1c55e27b00",
+    "public_candidate": false,
+    "source_name": "Checker",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxfibersglow.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/burning_texture_fade2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/brightness-contrast-2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e56dda678d3a3",
+    "public_candidate": false,
+    "source_name": "Brightness / Contrast",
+    "existing_name_matches": [
+      "ae.brightnessContrast"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_drowned.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb8490e7ab00f",
+    "public_candidate": false,
+    "source_name": "Drowned",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/ink_splash.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.edd3f3773971b",
+    "public_candidate": true,
+    "source_name": "Ink Splash",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/energybeam.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9f4328ecdff1",
+    "public_candidate": false,
+    "source_name": "Energy Beam",
+    "existing_name_matches": [
+      "awi7.energyBeam"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_cosmicNebula.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e853b38753337",
+    "public_candidate": false,
+    "source_name": "Cosmic Nebula",
+    "existing_name_matches": [
+      "awi12.cosmicNebula"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_hexagonTileRotate.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9d1fe3cb6559",
+    "public_candidate": false,
+    "source_name": "Hexagon Tile Rotate",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxwarpdist.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ef0dd00935b91",
+    "public_candidate": false,
+    "source_name": "Warp Distortion",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/clouds3d.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/neural_network.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e06e1e8442923",
+    "public_candidate": false,
+    "source_name": "Neural Network",
+    "existing_name_matches": [
+      "awi12.neuralNetwork"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_wipeChecker.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e62c9cb20d026",
+    "public_candidate": false,
+    "source_name": "Wipe Checker",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/atimeslice.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxglowtunnels.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/bcc_ripple.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e063e6fea36fc",
+    "public_candidate": false,
+    "source_name": "bcc ripple",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_hslSecondary.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e33fc7922712c",
+    "public_candidate": false,
+    "source_name": "HSL Secondary",
+    "existing_name_matches": [
+      "awi8.hslSecondary"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_cosineWeb.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ebad4c68d6739",
+    "public_candidate": false,
+    "source_name": "Cosine Web (Zozuar)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/text-transform.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-darken.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/organic_particles_up.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ec69cd2450d1e",
+    "public_candidate": false,
+    "source_name": "Organic Particles Up",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/vr-combined.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "unsupported control: orient"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxobjectevo.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e88d742244e73",
+    "public_candidate": false,
+    "source_name": "Object Evolution",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/Bioscanner_1.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\e9052edfe9633.frag\nERROR: build_out\\reference-translation-images\\e9052edfe9633.frag:41: 'active' : Reserved word. \nERROR: build_out\\reference-translation-images\\e9052edfe9633.frag:41: '' : compilation terminated \nERROR: 2 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_ghost.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e04f7ac7054f9",
+    "public_candidate": false,
+    "source_name": "Ghost",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-starprism.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/lumakey3.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb9c690bc1b0a",
+    "public_candidate": false,
+    "source_name": "Luma Key",
+    "existing_name_matches": [
+      "ae.lumaKey"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_starGlint.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea9b0eb53c085",
+    "public_candidate": false,
+    "source_name": "StarGlint V2",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/rounded_edge_mask.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e656bf85e2a2e",
+    "public_candidate": true,
+    "source_name": "Rounded Edge Mask",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blink2.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/lightglow.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native context: acPass"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/invert.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e96fdd2c111c7",
+    "public_candidate": false,
+    "source_name": "Invert",
+    "existing_name_matches": [
+      "ae.invert"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-cylinder.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxtvdamage.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e2e4f2d594baa",
+    "public_candidate": false,
+    "source_name": "TV Damage + Scanlines",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/eye_split_bend.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eaf4b83be09ed",
+    "public_candidate": false,
+    "source_name": "Split",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxextrudeflat.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/directional_blur-1.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9093183a3660",
+    "public_candidate": false,
+    "source_name": "Directional Blur++",
+    "existing_name_matches": [
+      "ae.directionalBlur"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_s_glow_noise.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e66563e1861dc",
+    "public_candidate": false,
+    "source_name": "S_GlowNoise (AE Motion)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/wipe2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ec8c8369bd4f7",
+    "public_candidate": false,
+    "source_name": "Wipe",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxgradshadow.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e227d3c4d2f74",
+    "public_candidate": false,
+    "source_name": "Gradient Shadow+",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxrgbglitch.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e9a676789bdc9",
+    "public_candidate": false,
+    "source_name": "Glitch RGB",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxcolorbalanceold.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e26dde3c2724a",
+    "public_candidate": false,
+    "source_name": "Old ColorBalance",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_s_duotone.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e68dc1acb0c4e",
+    "public_candidate": false,
+    "source_name": "S_DuoTone (AE Motion)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-hollowbox.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_brightnessHBlurAdd.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ed1142f9e5fc6",
+    "public_candidate": false,
+    "source_name": "Brightness H-Blur Add",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_polarDisplacement.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e4cca71a4fa76",
+    "public_candidate": false,
+    "source_name": "Polar Displacement Map",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/innerblur.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blocknoise2.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e056a7f11c36f",
+    "public_candidate": true,
+    "source_name": "Block Noise",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/3city_sdf.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "SPIR-V is not generated for failed compile or link\nbuild_out\\reference-translation-images\\e667ffd209ce2.frag\nERROR: build_out\\reference-translation-images\\e667ffd209ce2.frag:65: 'active' : Reserved word. \nERROR: build_out\\reference-translation-images\\e667ffd209ce2.frag:65: '' : compilation terminated \nERROR: 2 compilation errors.  No code generated.\n\n\nERROR: Linking fragment stage: Missing entry point: Each stage requires one entry point\n\n"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_s_hotspots.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e3817a19bd21a",
+    "public_candidate": false,
+    "source_name": "S_Hotspots (AE Motion)",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/bcc_led.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.ea60f3ed290c4",
+    "public_candidate": false,
+    "source_name": "BCC LED",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-soft-light.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/blend-diff.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_smoothEdges.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e0b36f4e17fc1",
+    "public_candidate": false,
+    "source_name": "Smooth Edges",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/turbulentdisplace3.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e3f20da3f4268",
+    "public_candidate": false,
+    "source_name": "Turbulent Displace",
+    "existing_name_matches": [
+      "ae.turbulentDisplace"
+    ]
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxsmokenoise.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.eb44607c6a5bb",
+    "public_candidate": false,
+    "source_name": "Smoke Noise",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/aemotion_native_burnTexture.xml",
+    "status": "prepared-not-integrated",
+    "id": "awi.amref.e977de7038c0d",
+    "public_candidate": false,
+    "source_name": "Burn Texture",
+    "existing_name_matches": []
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxsmallringswater.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxplexusparticle.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/stroke-color.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires native or multiple shader stages"
+  },
+  {
+    "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxrainydew.xml",
+    "status": "requires-adapter-or-repair",
+    "reason": "requires buffer, background or secondary texture adapter"
+  }
+]

@@ -51,3 +51,12 @@ Run 44676484328 finished with only EditorPolishUITests/testIndividualAndCameraBl
 Commit a6708ee reads live selected-layer/project state in the blur switch getter, adds unique accessibility identifiers to the existing selected-layer and Every Layer switches, and makes the UI test hit the switch track once and wait for published accessibility state. It does not add controls or enable all layers. The focused motion-blur scope includes EditorPolishUITests and MotionBlurTests. Run 44680703554 is validating this repair with package_ipa=false. Do not activate the bulk import until that gate passes; inspect its blur screenshots.
 
 The native bulk adapter, generated registry and 313 Metal translations are still staged in build_out, not in App. No public-candidate definitions have been activated beyond the original three checkpoint additions. The 247 remaining native/multipass/unconverted references are explicitly unfinished. The next substantial action is a consolidated native import audit, not a claim that all 560 references are finished.
+
+
+## Checkpoint gate cleared; consolidated native audit integrated
+
+Focused run 44680703554 passed all 16 tests with zero failures/skips. Both downloaded screenshots show the selected layer/camera blur switch on and Every Layer off, without new layout overlaps. This clears the checkpoint repair gate while retaining all earlier passing non-UI checks.
+
+The native fragment adapter and 313 converted fragment programs (plus one shared vertex function) are now integrated on this development branch, with five deduplicated reference texture resources. The eight ReferenceFragmentAuditTests exercise every converted program through Metal, compare complete/default-missing instances, check GPU completion and finite pixels, and write per-source stills/reports. The 28 current public candidates additionally produce eight-frame motion GIFs. The established full validation suite is being dispatched as one consolidated run, package_ipa=false.
+
+Important: the internal ReferenceFragmentCatalog is not appended to EffectRegistry.all. The browser still has 455 accepted definitions. Candidate promotion follows native render review and overlap checks; 313 translations are not 313 new public effects. The other 247 reference definitions still require native/multipass adapters or repairs. No claim of a finished full expansion or releasable new IPA is made here.

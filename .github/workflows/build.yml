@@ -204,6 +204,7 @@ jobs:
             /tmp/awi-selection
             /tmp/awi-contact-sheet.png
             /tmp/awi-contact-sheets
+            /tmp/awi-reference-review
             /tmp/awi-shapes
             /tmp/awi-backgrounds
             /tmp/awi-expansion

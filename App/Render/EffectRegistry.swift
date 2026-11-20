@@ -163,10 +163,12 @@ final class TexturePool {
 /// Compute pipelines for effects.
 final class EffectGPU {
     let device: MTLDevice
+    let referenceFragments: ReferenceFragmentGPU
     private var psos: [String: MTLComputePipelineState] = [:]
 
     init(device: MTLDevice, library: MTLLibrary) throws {
         self.device = device
+        self.referenceFragments = try ReferenceFragmentGPU(device: device, library: library)
         for name in ["fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
                      "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix", "fxBackdropMix", "fxBackdropMask", "fxBackdropTransform",
                      "fxWarp", "fxStylize", "fxGlitch", "fxColor2", "fxSaberCore", "fxShine", "fxParticles", "fxPixelSort",

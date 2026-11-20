@@ -1,6 +1,8 @@
 import XCTest
 import Metal
 import UIKit
+import ImageIO
+import UniformTypeIdentifiers
 @testable import AWIeffect
 
 /// Exercise every translated reference through the native adapter, including
@@ -31,11 +33,25 @@ final class ReferenceFragmentAuditTests: XCTestCase {
         fixture.withUnsafeBytes { bytes in
             input.replace(region: MTLRegionMake2D(0, 0, size, size), mipmapLevel: 0, withBytes: bytes.baseAddress!, bytesPerRow: size * 8)
         }
-        func render(_ definition: ReferenceFragmentDefinition, missing: Bool = false, time: Double = 0.4) throws -> [Float16] {
+        func render(_ definition: ReferenceFragmentDefinition, missing: Bool = false, time: Double = 0.4, animate: Bool = false) throws -> [Float16] {
             let pool = TexturePool(device: device)
             let buffer = try XCTUnwrap(queue.makeCommandBuffer())
             var effect = definition.definition.makeInstance()
             if missing { effect.params.removeAll() }
+            if animate, let parameter = definition.parameters.first(where: {
+                let key = $0.definition.id.lowercased()
+                return key.contains("phase") || key.contains("evolution") || key.hasPrefix("progress")
+            }) {
+                let pd = parameter.definition
+                if case .number(let low, let high, _, _) = pd.kind {
+                    let initial = pd.defaultValue.number(at: 0)
+                    let end = min(high, max(low, initial + (high - low) * 0.05))
+                    var curve = Animated(initial)
+                    curve.insertKeyframe(Keyframe(time: 0, value: initial))
+                    curve.insertKeyframe(Keyframe(time: 2, value: end))
+                    effect.params[pd.id] = .number(curve)
+                }
+            }
             let context = EffectContext(gpu: gpu, cb: buffer, input: input, effect: effect, time: time,
                 unit: 1, pool: pool, layerPixels: SIMD2(Double(size), Double(size)), compositionPixels: SIMD2(Double(size), Double(size)))
             let output = gpu.referenceFragments.render(definition, context)
@@ -61,21 +77,36 @@ final class ReferenceFragmentAuditTests: XCTestCase {
                 let difference = zip(output, fixture).reduce(0.0) { $0 + abs(Double($1.0) - Double($1.1)) } / Double(output.count)
                 report.append(["id": definition.id, "name": definition.name, "defaultDifference": difference,
                     "parameters": definition.parameters.map { $0.definition.id }])
-                var bytes = [UInt8](repeating: 0, count: size * size * 4)
-                for pixel in 0..<(size * size) {
-                    let alpha = max(0, min(1, Float(output[pixel * 4 + 3])))
-                    for channel in 0..<3 {
-                        let value = alpha > 0.00001 ? Float(output[pixel * 4 + channel]) / alpha : 0
-                        bytes[pixel * 4 + channel] = UInt8((max(0, min(1, value)) * 255).rounded())
+                func image(_ output: [Float16]) throws -> CGImage {
+                    var bytes = [UInt8](repeating: 0, count: size * size * 4)
+                    for pixel in 0..<(size * size) {
+                        let alpha = max(0, min(1, Float(output[pixel * 4 + 3])))
+                        for channel in 0..<3 {
+                            let raw = alpha > 0.00001 ? Float(output[pixel * 4 + channel]) / alpha : 0
+                            let value = raw.isFinite ? raw : 0
+                            bytes[pixel * 4 + channel] = UInt8((max(0, min(1, value)) * 255).rounded())
+                        }
+                        bytes[pixel * 4 + 3] = UInt8((alpha * 255).rounded())
                     }
-                    bytes[pixel * 4 + 3] = UInt8((alpha * 255).rounded())
+                    let provider = try XCTUnwrap(CGDataProvider(data: Data(bytes) as CFData))
+                    return try XCTUnwrap(CGImage(width: size, height: size, bitsPerComponent: 8, bitsPerPixel: 32,
+                        bytesPerRow: size * 4, space: CGColorSpaceCreateDeviceRGB(),
+                        bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.last.rawValue), provider: provider,
+                        decode: nil, shouldInterpolate: true, intent: .defaultIntent))
                 }
-                let provider = try XCTUnwrap(CGDataProvider(data: Data(bytes) as CFData))
-                let image = try XCTUnwrap(CGImage(width: size, height: size, bitsPerComponent: 8, bitsPerPixel: 32,
-                    bytesPerRow: size * 4, space: CGColorSpaceCreateDeviceRGB(),
-                    bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.last.rawValue), provider: provider,
-                    decode: nil, shouldInterpolate: true, intent: .defaultIntent))
-                try UIImage(cgImage: image).pngData()?.write(to: folder.appendingPathComponent(definition.id + ".png"))
+                try UIImage(cgImage: image(output)).pngData()?.write(to: folder.appendingPathComponent(definition.id + ".png"))
+                if ReferenceFragmentCatalog.publicCandidates.contains(where: { $0.id == definition.id }) {
+                    let destination = try XCTUnwrap(CGImageDestinationCreateWithURL(
+                        folder.appendingPathComponent(definition.id + "-motion.gif") as CFURL,
+                        UTType.gif.identifier as CFString, 8, nil))
+                    CGImageDestinationSetProperties(destination, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+                    for frame in 0..<8 {
+                        let pixels = try render(definition, time: Double(frame) / 4, animate: true)
+                        CGImageDestinationAddImage(destination, try image(pixels),
+                            [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 0.25]] as CFDictionary)
+                    }
+                    XCTAssertTrue(CGImageDestinationFinalize(destination), definition.name)
+                }
             }
         }
         XCTAssertTrue(gpu.referenceFragments.diagnostics.isEmpty, "Reference pipeline failures: \(gpu.referenceFragments.diagnostics)")
