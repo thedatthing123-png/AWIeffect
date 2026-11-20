@@ -191,10 +191,12 @@ struct MotionBlurPanel: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
                         Toggle(l.content == .camera ? "Camera Motion Blur" : "Motion Blur", isOn: Binding(get: {
-                            l.content == .camera ? l.motionBlur : p.blurs(l, at: state.currentTime)
+                            guard let selected = state.selectedLayer else { return false }
+                            return selected.content == .camera ? selected.motionBlur : state.project.blurs(selected, at: state.currentTime)
                         }, set: { b in
                             state.setSelectedMotionBlur(b)
                         }))
+                        .accessibilityIdentifier("selected-layer-motion-blur")
                         .font(.system(size: 15, weight: .bold)).tint(Theme.accent).foregroundStyle(Theme.text)
                         Text(l.content == .camera
                              ? "Blur layers seen through this camera. Layers marked Keep Sharp remain sharp."
@@ -203,6 +205,7 @@ struct MotionBlurPanel: View {
                         Toggle("Every layer", isOn: Binding(get: { p.blurAllLayers }, set: { b in
                             state.mutate("Blur Every Layer") { $0.blurAllLayers = b; if b { $0.motionBlurEnabled = true } }
                         }))
+                        .accessibilityIdentifier("blur-every-layer")
                         .tint(Theme.accent).foregroundStyle(Theme.text)
                         if l.content != .camera, p.blurAllLayers { layerRow(l, p) }
                         if !p.motionBlurEnabled {

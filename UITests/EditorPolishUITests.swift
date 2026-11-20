@@ -7,18 +7,24 @@ final class EditorPolishUITests: XCTestCase {
             let app = XCUIApplication()
             app.launchArguments = ["-uiTesting", "-uiTesting-motionBlur"] + (camera ? ["-uiTesting-motionBlurCamera"] : [])
             app.launch()
-            let toggle = app.switches[camera ? "Camera Motion Blur" : "Motion Blur"].firstMatch
+            let toggle = app.switches["selected-layer-motion-blur"].firstMatch
             XCTAssertTrue(toggle.waitForExistence(timeout: 15))
-            let every = app.switches["Every layer"].firstMatch
+            let every = app.switches["blur-every-layer"].firstMatch
             XCTAssertEqual(every.value as? String, "0")
-            toggle.tap()
-            XCTAssertEqual(toggle.value as? String, "1")
-            XCTAssertEqual(every.value as? String, "0", "individual opt-in must not turn on Every Layer")
+            // SwiftUI exposes the label and control as one wide accessibility
+            // frame. Hit the actual switch once, then wait for its published state.
+            XCTAssertTrue(toggle.isHittable)
+            toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+            let changed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "1"), object: toggle)
+            let result = XCTWaiter.wait(for: [changed], timeout: 3)
             let shot = XCUIScreen.main.screenshot()
             let name = camera ? "polish-camera-motion-blur" : "polish-layer-motion-blur"
             let attachment = XCTAttachment(screenshot: shot); attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
             try? FileManager.default.createDirectory(atPath: "/tmp/awi-ui", withIntermediateDirectories: true)
             try? shot.pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/awi-ui/\(name).png"))
+            XCTAssertEqual(result, .completed, "One tap must enable the selected layer/camera switch")
+            XCTAssertEqual(toggle.value as? String, "1")
+            XCTAssertEqual(every.value as? String, "0", "individual opt-in must not turn on Every Layer")
             app.terminate()
         }
     }

@@ -14,7 +14,7 @@ on:
       validation:
         description: Test scope (audit runs do not publish an IPA)
         type: choice
-        options: [all, repairs, final-repairs, audit, timing, stability, authoring, segmentation, quick]
+        options: [all, repairs, final-repairs, audit, timing, stability, authoring, segmentation, motion-blur, quick]
         default: all
       package_ipa:
         description: Package an IPA after validation (disable for expansion checkpoints)

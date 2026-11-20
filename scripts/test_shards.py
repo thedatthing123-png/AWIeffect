@@ -20,6 +20,7 @@ RENDERS = {'ExpansionRenderTests', 'ContactSheetTests', 'BackgroundExpansionTest
 TEXT = {'CraftPresets33Tests', 'TextPresetLibraryTests', 'TextStudioTests',
         'TextStudioEngineTests', 'Text3DTests', 'TextTests'}
 SCOPES = {
+    'motion-blur': ['EditorPolishUITests', 'MotionBlurTests'],
     'segmentation': ['CutoutStudioTests', 'ArtStudioRenewTests'],
     'audit': ['AuditRegressionTests', 'AuditRenderRegressionTests', 'PrecompMaskImportTests',
               'EssentialRegressionTests', 'DrawStudioTests', 'VisionTests', 'VideoDecodeTests',
