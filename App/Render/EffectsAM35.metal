@@ -226,3 +226,64 @@ kernel void fxFractalRidgesAM35(texture2d<half, access::sample> src [[texture(0)
     result += original * (1.0 - color.a);
     dst.write(half4(mix(original, result, p.d.w)), gid);
 }
+
+// Reference: s_psykoblobs.xml. Three-octave value noise and luminance-driven sinusoidal palette.
+static float hashBlobsAM35(float2 p) { return fract(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453123); }
+static float noiseBlobsAM35(float2 p) {
+    float2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hashBlobsAM35(i), hashBlobsAM35(i + float2(1, 0)), f.x),
+               mix(hashBlobsAM35(i + float2(0, 1)), hashBlobsAM35(i + float2(1, 1)), f.x), f.y);
+}
+static float fbmBlobsAM35(float2 p) {
+    float v = 0.0, a = 0.5;
+    for (int i = 0; i < 3; i++) { v += a * noiseBlobsAM35(p); p = p * 2.0 + 100.0; a *= 0.5; }
+    return v;
+}
+kernel void fxPsykoBlobsAM35(texture2d<half, access::sample> src [[texture(0)]],
+                             texture2d<half, access::write> dst [[texture(1)]],
+                             constant ParamsAM35& p [[buffer(0)]], uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    float4 original = float4(src.sample(sampleAM35, float2(gid) + 0.5));
+    if (original.a <= 0.0 || p.b.z >= 1.0) { dst.write(half4(original), gid); return; }
+    float3 source = original.rgb / original.a;
+    float luma = dot(source, float3(0.299, 0.587, 0.114));
+    float2 uv = (float2(gid) + 0.5) / float2(dst.get_width(), dst.get_height());
+    float combined = luma * p.a.y + fbmBlobsAM35(uv * p.a.x);
+    float3 phase = combined * p.a.z * float3(1, 1.15, 1.3) + float3(0, 0.33, 0.67) + p.b.w * p.a.w;
+    float3 color = 0.5 + 0.5 * sin(phase * 6.283185);
+    color = mix(float3(dot(color, float3(0.299, 0.587, 0.114))), color, p.b.x);
+    // Avoid a reversed/zero-width smoothstep at Preserve Outlines = 0.
+    float mask = smoothstep(0.05, max(0.05001, 0.3 * p.b.y), luma);
+    color *= mix(1.0, mask, p.b.y);
+    dst.write(half4(float4(clamp(mix(color, source, p.b.z), 0.0, 1.0) * original.a, original.a)), gid);
+}
+
+// Reference: spectralmap.xml. Periodic triangular palette weights, YUV saturation adjustment.
+static float4 unpackAM35(uint c) {
+    return float4(float((c >> 24) & 255), float((c >> 16) & 255), float((c >> 8) & 255), float(c & 255)) / 255.0;
+}
+static float bandAM35(float v, float squeeze) { return clamp(abs(fract(v) - 0.5) * 4.0 - squeeze, 0.0, 1.0); }
+kernel void fxSpectralMapAM35(texture2d<half, access::sample> src [[texture(0)]],
+                              texture2d<half, access::write> dst [[texture(1)]],
+                              constant ParamsAM35& p [[buffer(0)]], uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    float4 original = float4(src.sample(sampleAM35, float2(gid) + 0.5));
+    if (original.a <= 0.0 || p.a.z <= 0.0) { dst.write(half4(original), gid); return; }
+    float3 source = original.rgb / original.a;
+    float luminance = dot(source, float3(0.2126, 0.7152, 0.0722));
+    float brightness = (p.i.x & 2u) ? luminance : 1.0;
+    if (p.i.x & 1u) luminance = 1.0 - luminance;
+    luminance = luminance * p.a.y + p.a.x;
+    float f = mix(0.333, 0.1, p.a.w);
+    float4 color = bandAM35(luminance, f) * unpackAM35(p.i.y)
+                 + bandAM35(luminance - 1.0 / 3.0, f) * unpackAM35(p.i.z)
+                 + bandAM35(luminance - 2.0 / 3.0, f) * unpackAM35(p.i.w);
+    float y = dot(color.rgb, float3(0.299, 0.587, 0.114));
+    float u = dot(color.rgb, float3(-0.14713, -0.28886, 0.436)) * (1.0 + p.b.x);
+    float v = dot(color.rgb, float3(0.615, -0.51499, -0.10001)) * (1.0 + p.b.x);
+    float3 rgb = float3(y + 1.13983 * v, y - 0.39465 * u - 0.58060 * v, y + 2.03211 * u);
+    // Unlike the reference's sum of palette alphas, never expand source coverage above 1.
+    float alpha = clamp(color.a, 0.0, 1.0) * original.a;
+    float4 mapped = float4(clamp(rgb * brightness, 0.0, 1.0) * alpha, alpha);
+    dst.write(half4(mix(original, mapped, p.a.z)), gid);
+}

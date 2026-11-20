@@ -40,26 +40,70 @@ final class ReferenceEffectsTests: XCTestCase {
         effect.params["color2"] = .color(Animated(RGBA(1, 0.4, 0.03)))
         XCTAssertNotEqual(try render(effect), baseline)
     }
-    func testWriteRidgesStillAndMotionReview() throws {
+    func testReferenceColorMapsPreserveCoverageAndBypassExactly() throws {
+        let baseline = try render(nil)
+        for definition in [EffectRegistry.psykoBlobsAM35, EffectRegistry.spectralMapAM35] {
+            var effect = definition.makeInstance()
+            let result = try render(effect)
+            XCTAssertNotEqual(result, baseline, definition.name)
+            XCTAssertEqual(stride(from: 3, to: baseline.count, by: 4).map { baseline[$0] },
+                           stride(from: 3, to: result.count, by: 4).map { result[$0] }, definition.name)
+            effect.params[definition.id == "awi.am35.psykoBlobs" ? "mixWithSource" : "alpha"] = .number(Animated(definition.id == "awi.am35.psykoBlobs" ? 1 : 0))
+            XCTAssertEqual(try render(effect), baseline, definition.name)
+            effect.params.removeAll()
+            XCTAssertEqual(try render(effect), try render(definition.makeInstance()), definition.name)
+        }
+    }
+    func testNormalMapOutputExtendsExistingEffectWithoutChangingOldProjects() throws {
+        let definition = EffectRegistry.normalLight10
+        var effect = definition.makeInstance()
+        let lit = try render(effect)
+        effect.params.removeValue(forKey: "output")
+        effect.params.removeValue(forKey: "invertHeight")
+        XCTAssertEqual(try render(effect), lit)
+        effect.params["output"] = .choice(1)
+        let normals = try render(effect)
+        XCTAssertNotEqual(normals, lit)
+        let baseline = try render(nil)
+        XCTAssertEqual(stride(from: 3, to: normals.count, by: 4).map { normals[$0] },
+                       stride(from: 3, to: baseline.count, by: 4).map { baseline[$0] })
+    }
+    func testWriteRegisteredCatalogForReferenceAudit() throws {
+        let rows: [[String: Any]] = EffectRegistry.all.map { definition in
+            ["id": definition.id, "name": definition.name, "params": definition.params.map { ["id": $0.id, "name": $0.name] }]
+        }
         let directory = URL(fileURLWithPath: "/tmp/awi-ui")
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let destination = try XCTUnwrap(CGImageDestinationCreateWithURL(
-            directory.appendingPathComponent("fractal-ridges-motion.gif") as CFURL, UTType.gif.identifier as CFString, 24, nil))
-        CGImageDestinationSetProperties(destination, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
-        for frame in 0..<24 {
-            var effect = EffectRegistry.fractalRidgesAM35.makeInstance()
-            effect.params["evolution"] = .number(Animated(Double(frame) / 24))
-            effect.params["color1"] = .color(Animated(RGBA(0.015, 0.025, 0.12)))
-            effect.params["color2"] = .color(Animated(RGBA(1, 0.4, 0.04)))
-            let pixels = try render(effect)
-            let provider = try XCTUnwrap(CGDataProvider(data: Data(pixels) as CFData))
-            let image = try XCTUnwrap(CGImage(width: 256, height: 256, bitsPerComponent: 8, bitsPerPixel: 32,
-                bytesPerRow: 1024, space: CGColorSpaceCreateDeviceRGB(),
-                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.last.rawValue), provider: provider,
-                decode: nil, shouldInterpolate: true, intent: .defaultIntent))
-            if frame == 0 { try UIImage(cgImage: image).pngData()?.write(to: directory.appendingPathComponent("fractal-ridges-still.png")) }
-            CGImageDestinationAddImage(destination, image, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 1.0 / 12]] as CFDictionary)
+        try JSONSerialization.data(withJSONObject: rows, options: [.prettyPrinted, .sortedKeys])
+            .write(to: directory.appendingPathComponent("registered-effects.json"))
+    }
+    func testWriteReferenceStillAndMotionReview() throws {
+        let directory = URL(fileURLWithPath: "/tmp/awi-ui")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        for definition in EffectRegistry.batchAM35 {
+            let slug = definition.id.replacingOccurrences(of: ".", with: "-")
+            let destination = try XCTUnwrap(CGImageDestinationCreateWithURL(
+                directory.appendingPathComponent("\(slug)-motion.gif") as CFURL, UTType.gif.identifier as CFString, 24, nil))
+            CGImageDestinationSetProperties(destination, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+            for frame in 0..<24 {
+                var effect = definition.makeInstance()
+                if definition.id == "awi.am35.fractalRidges" {
+                    effect.params["evolution"] = .number(Animated(Double(frame) / 24))
+                    effect.params["color1"] = .color(Animated(RGBA(0.015, 0.025, 0.12)))
+                    effect.params["color2"] = .color(Animated(RGBA(1, 0.4, 0.04)))
+                } else if definition.id == "awi.am35.spectralMap" {
+                    effect.params["phase"] = .number(Animated(Double(frame) / 24))
+                }
+                let pixels = try render(effect, time: Double(frame) / 12)
+                let provider = try XCTUnwrap(CGDataProvider(data: Data(pixels) as CFData))
+                let image = try XCTUnwrap(CGImage(width: 256, height: 256, bitsPerComponent: 8, bitsPerPixel: 32,
+                    bytesPerRow: 1024, space: CGColorSpaceCreateDeviceRGB(),
+                    bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.last.rawValue), provider: provider,
+                    decode: nil, shouldInterpolate: true, intent: .defaultIntent))
+                if frame == 0 { try UIImage(cgImage: image).pngData()?.write(to: directory.appendingPathComponent("\(slug)-still.png")) }
+                CGImageDestinationAddImage(destination, image, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 1.0 / 12]] as CFDictionary)
+            }
+            XCTAssertTrue(CGImageDestinationFinalize(destination))
         }
-        XCTAssertTrue(CGImageDestinationFinalize(destination))
     }
 }

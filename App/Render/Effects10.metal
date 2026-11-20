@@ -78,6 +78,7 @@ kernel void fxLight10(texture2d<half, access::sample> src [[texture(0)]],
         }
         case 4: { // normal-map lighting: a = (lx, ly, light height, depth), b = light color, c = (ambient, specular, shininess)
             float3 n = nrm10(aux, c, p.a.w);
+            if (p.i.y == 1u) { o = float4((n * 0.5 + 0.5) * s.a, s.a); break; }
             float3 L = normalize(float3(p.a.xy - c, max(p.a.z, 1.0)));
             float3 H = normalize(L + float3(0, 0, 1));
             float diff = max(dot(n, L), 0.0);

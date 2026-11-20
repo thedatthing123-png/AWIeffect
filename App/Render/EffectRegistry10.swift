@@ -83,12 +83,13 @@ extension EffectRegistry {
         params: [.point("light", "Light Position", Vec2(0.3, 0.3)), .number("height", "Light Height", 120, 10, 600, unit: "px"),
                  .number("ambient", "Ambient", 0.25, 0, 1, step: 0.01), .number("specular", "Specular", 0.6, 0, 2, step: 0.01),
                  .number("shininess", "Shininess", 24, 1, 128, step: 0.5), .number("depth", "Bump Depth", 8, 0, 40, step: 0.1),
-                 .number("softness", "Softness", 1.5, 0, 20, unit: "px"), .color("color", "Light Color", RGBA(1, 0.95, 0.85))],
+                 .number("softness", "Softness", 1.5, 0, 20, unit: "px"), .color("color", "Light Color", RGBA(1, 0.95, 0.85)),
+                 .choice("output", "Output", ["Lit", "Normal Map"], 0), .toggle("invertHeight", "Invert Height", false)],
         stage: .pixels { ctx in
             let h = height10(ctx, luma: 1, soft: ctx.num("softness"))
-            return r10(ctx, 4, aux: h) { p in
+            return r10(ctx, 4, aux: h, sub: UInt32(ch29(ctx, "output"))) { p in
                 let l = pt10(ctx, "light")
-                p.a = SIMD4(l.x, l.y, Float(ctx.num("height") * ctx.unit), depth10(ctx, "depth"))
+                p.a = SIMD4(l.x, l.y, Float(ctx.num("height") * ctx.unit), depth10(ctx, "depth") * (b29(ctx, "invertHeight") ? -1 : 1))
                 p.b = col10(ctx, "color")
                 p.c = SIMD4(Float(ctx.num("ambient")), Float(ctx.num("specular")), Float(ctx.num("shininess")), 0) }
         })
