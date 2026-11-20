@@ -24,3 +24,21 @@ All new definitions and kernels are explicitly registered. Tests cover bypass, a
 Complete semantic mapping of the remaining reference definitions against the actual registered catalog; prioritize genuine missing capabilities, not counts. Inspect still and motion output before accepting this checkpoint. Extend existing Turbulent Displace (already X/Y/XY) only after matching radial/angular direction, single-axis, parallax/seed and coordinate-space behavior without altering old renders. Continue other families from the mapped backlog; do not label unreviewed candidates as implemented.
 
 No presets, AI models, cutout behavior, projects, AI Link settings or editor layout were changed. No IPA should be sent from an unreviewed checkpoint. CI checkpoints use validation=all and package_ipa=false.
+
+
+## Consolidated import preparation (not yet integrated)
+
+Owner follow-up: after checkpoint validation, assemble the expansion before a single consolidated full validation run rather than dispatching small runs after each effect.
+
+Checkpoint a709ea2 / run 44676484328 has passed compilation (Swift, simulator/device Metal), core, effects, contact sheets and text tests. The UI job is still running at this preparation checkpoint. Downloaded contact-9.png shows all three new effects on the common artwork fixture. Sampled motion GIF frames 0/6/12/18 show evolving ridges, animated PsykoBlobs and shifting spectral phase. These are actual native renders, not generated mockups.
+
+The actual registered catalog artifact contains 455 definitions. The reference comparison must use build_out/44676484328-core-review/awi-ui/registered-effects.json rather than guesses from source names.
+
+Offline tools: glslang 16.6.0 (official Windows release) and locally built Khronos SPIRV-Cross commit 57e4efcc84112abcd426dc5ec248b5339bee04f2, built with two compiler workers. No model training is running.
+
+- scripts/translate_reference_shaders.py: translate complete single-fragment definitions through GLSL -> SPIR-V -> MSL; preserve explicit std140 parameter slots, selectors' native values, coordinate uniforms and bundled image inputs. Outputs and shader diagnostics remain under build_out. The full pass translates 313 / 560 non-deprecated reference definitions. The other 247 remain explicitly unsupported or require repairs/adapters; they are not claimed implemented.
+- A reflection audit of all 313 converted shaders found zero parameter offset/texture binding mismatches. Report: build_out/reference-translation-images/reflection-audit.json.
+- scripts/prepare_reference_import.py: generate typed Swift descriptors and native shader sources into build_out/prepared-reference-import. All 313 descriptors are internal audit candidates; 28 explicit names are public candidates pending native validation and semantic/visual review. Never treat the internal audit catalog as 313 new public effects.
+- scripts/reference/*.swift.template: native fragment adapter and eight bounded audit tests. These remain templates outside App until the checkpoint gate passes. Pipeline and image caches are bounded by the catalog; raw source imagery and integer/bool parameter layouts are handled explicitly. Targets clear before fragment draws so discard cannot expose recycled pixels. Percentage controls use the same displayed 0..100 convention as the editor and convert back to source ratios.
+
+Preparation is not a completed expansion. Multi-pass shaders, missing native context, 3D orientation matrices, background buffers and path/text operations need deliberate adapters; do not activate placeholder equivalents. Keep existing IDs and render behavior, and do not restore the discarded count-driven catalog.
