@@ -42,3 +42,12 @@ Offline tools: glslang 16.6.0 (official Windows release) and locally built Khron
 - scripts/reference/*.swift.template: native fragment adapter and eight bounded audit tests. These remain templates outside App until the checkpoint gate passes. Pipeline and image caches are bounded by the catalog; raw source imagery and integer/bool parameter layouts are handled explicitly. Targets clear before fragment draws so discard cannot expose recycled pixels. Percentage controls use the same displayed 0..100 convention as the editor and convert back to source ratios.
 
 Preparation is not a completed expansion. Multi-pass shaders, missing native context, 3D orientation matrices, background buffers and path/text operations need deliberate adapters; do not activate placeholder equivalents. Keep existing IDs and render behavior, and do not restore the discarded count-driven catalog.
+
+
+## Checkpoint UI repair — gate still pending
+
+Run 44676484328 finished with only EditorPolishUITests/testIndividualAndCameraBlurDoNotEnableEveryLayer failing: its first selected-layer switch still read 0 after tap. Core had 556 passes / one skip, and all 85 effect tests, contact sheets and text groups passed; UI had 26 passes / one failure.
+
+Commit a6708ee reads live selected-layer/project state in the blur switch getter, adds unique accessibility identifiers to the existing selected-layer and Every Layer switches, and makes the UI test hit the switch track once and wait for published accessibility state. It does not add controls or enable all layers. The focused motion-blur scope includes EditorPolishUITests and MotionBlurTests. Run 44680703554 is validating this repair with package_ipa=false. Do not activate the bulk import until that gate passes; inspect its blur screenshots.
+
+The native bulk adapter, generated registry and 313 Metal translations are still staged in build_out, not in App. No public-candidate definitions have been activated beyond the original three checkpoint additions. The 247 remaining native/multipass/unconverted references are explicitly unfinished. The next substantial action is a consolidated native import audit, not a claim that all 560 references are finished.
