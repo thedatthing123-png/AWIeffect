@@ -73,5 +73,8 @@ kernel void fx20AMFractal(texture2d<half, access::sample> src [[texture(0)]],
         float top = smoothstep(0.0, s, uv.y), bot = smoothstep(0.0, s, 1.0 - uv.y), lf = smoothstep(0.0, s, uv.x), rt = smoothstep(0.0, s, 1.0 - uv.x);
         pin = p.i.y == 1 ? top * bot * lf * rt : (p.i.y == 2 ? top : (p.i.y == 3 ? bot : (p.i.y == 4 ? lf : rt)));
     }
-    dst.write(src.sample(sAM, c + float2(dx - 0.5, dy - 0.5) * p.c.x * ref * pin), gid);
+    float2 displacement = float2(dx - 0.5, dy - 0.5);
+    if (p.i.z == 1) displacement.y = 0.;
+    if (p.i.z == 2) displacement.x = 0.;
+    dst.write(src.sample(sAM, c + displacement * p.c.x * ref * pin), gid);
 }

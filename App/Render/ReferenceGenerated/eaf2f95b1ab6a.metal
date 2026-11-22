@@ -77,21 +77,21 @@ float2 getTexSize(thread const float2& size)
 }
 
 static inline __attribute__((always_inline))
-float2 getResolution(constant ReferenceUniformseaf2f95b1ab6a& _61)
+float2 getResolution(texture2d<float> refInput, sampler refInputSmplr)
 {
-    float2 param = _61.refScreen.xy;
+    float2 param = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 s = getTexSize(param);
-    bool _75 = s.x <= 0.0;
-    bool _83;
-    if (!_75)
+    bool _73 = s.x <= 0.0;
+    bool _81;
+    if (!_73)
     {
-        _83 = s.y <= 0.0;
+        _81 = s.y <= 0.0;
     }
     else
     {
-        _83 = _75;
+        _81 = _73;
     }
-    if (_83)
+    if (_81)
     {
         s = float2(1920.0, 1080.0);
     }
@@ -152,20 +152,20 @@ float sobel(thread const float2& uv, thread const float2& pixel, thread const fl
 }
 
 static inline __attribute__((always_inline))
-void referenceMain(constant ReferenceUniformseaf2f95b1ab6a& _61, texture2d<float> refInput, sampler refInputSmplr, thread float4& gl_FragCoord, thread float4& referenceColor)
+void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread float4& gl_FragCoord, constant ReferenceUniformseaf2f95b1ab6a& _238, thread float4& referenceColor)
 {
-    float2 res = getResolution(_61);
-    float2 uv = gl_FragCoord.xy / _61.refScreen.xy;
+    float2 res = getResolution(refInput, refInputSmplr);
+    float2 uv = gl_FragCoord.xy / _238.refScreen.xy;
     float2 pixel = float2(1.0) / res;
-    float ang = radians(_61.stripeDirDeg);
+    float ang = radians(_238.stripeDirDeg);
     float param = ang;
     float2 dir = rot2(param) * float2(1.0, 0.0);
     float2 param_1 = uv;
     float2 param_2 = pixel;
-    float param_3 = _61.edgeWidth;
-    float edge = sobel(param_1, param_2, param_3, refInput, refInputSmplr) * _61.edgeAmt;
+    float param_3 = _238.edgeWidth;
+    float edge = sobel(param_1, param_2, param_3, refInput, refInputSmplr) * _238.edgeAmt;
     float maskEdge = fast::clamp(edge, 0.0, 1.0);
-    if (_61.edgeInvert != 0u)
+    if (_238.edgeInvert != 0u)
     {
         maskEdge = 1.0 - maskEdge;
     }
@@ -173,19 +173,19 @@ void referenceMain(constant ReferenceUniformseaf2f95b1ab6a& _61, texture2d<float
     float4 s0 = texture2DCv(refInput, refInputSmplr, param_4);
     float4 param_5 = s0;
     float amp = gray(param_5);
-    float basePhase = (_61.phaseStart + (_61.refScreen.z * _61.phaseSpeed)) + _61.offset;
-    float mag = _61.stripeMag;
+    float basePhase = (_238.phaseStart + (_238.refScreen.z * _238.phaseSpeed)) + _238.offset;
+    float mag = _238.stripeMag;
     float wave = (dot(uv - float2(0.5), dir) * mag) + basePhase;
-    wave += (edge * _61.edgeWarp);
-    wave += ((amp * _61.edgeWarp) * 0.5);
-    float fBase = _61.freqColors;
-    float rC = 0.5 + (0.5 * sin(((wave * fBase) * _61.freqRed) + _61.phaseRed));
-    float gC = 0.5 + (0.5 * sin(((wave * fBase) * _61.freqGreen) + _61.phaseGreen));
-    float bC = 0.5 + (0.5 * sin(((wave * fBase) * _61.freqBlue) + _61.phaseBlue));
+    wave += (edge * _238.edgeWarp);
+    wave += ((amp * _238.edgeWarp) * 0.5);
+    float fBase = _238.freqColors;
+    float rC = 0.5 + (0.5 * sin(((wave * fBase) * _238.freqRed) + _238.phaseRed));
+    float gC = 0.5 + (0.5 * sin(((wave * fBase) * _238.freqGreen) + _238.phaseGreen));
+    float bC = 0.5 + (0.5 * sin(((wave * fBase) * _238.freqBlue) + _238.phaseBlue));
     float3 colS = float3(rC, gC, bC);
-    float3 tint = _61.tintColor.xyz;
+    float3 tint = _238.tintColor.xyz;
     float3 colT = colS * tint;
-    if (!(_61.edgeInvert != 0u))
+    if (!(_238.edgeInvert != 0u))
     {
         colT *= (1.0 - (maskEdge * 0.800000011920928955078125));
     }
@@ -194,31 +194,31 @@ void referenceMain(constant ReferenceUniformseaf2f95b1ab6a& _61, texture2d<float
         colT += float3(maskEdge * 0.5);
     }
     float g = dot(colT, float3(0.2989999949932098388671875, 0.58700001239776611328125, 0.114000000059604644775390625));
-    float3 colSat = mix(float3(g), colT, float3(fast::clamp(_61.saturation, 0.0, 2.0)));
-    colSat *= _61.brightness;
+    float3 colSat = mix(float3(g), colT, float3(fast::clamp(_238.saturation, 0.0, 2.0)));
+    colSat *= _238.brightness;
     float3 srcCol = s0.xyz;
     float aIn = s0.w;
-    float3 stripeBlend = mix(colSat, srcCol, float3(_61.mixWithSource));
+    float3 stripeBlend = mix(colSat, srcCol, float3(_238.mixWithSource));
     float3 outCol = mix(srcCol, stripeBlend, float3(aIn));
     referenceColor = float4(outCol, aIn);
 }
 
-fragment refAM35_eaf2f95b1ab6a_out refAM35_eaf2f95b1ab6a(constant ReferenceUniformseaf2f95b1ab6a& _61 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
+fragment refAM35_eaf2f95b1ab6a_out refAM35_eaf2f95b1ab6a(constant ReferenceUniformseaf2f95b1ab6a& _238 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
 {
     refAM35_eaf2f95b1ab6a_out out = {};
     float4 referenceColor = float4(0.0);
-    referenceMain(_61, refInput, refInputSmplr, gl_FragCoord, referenceColor);
-    bool _470 = any(isnan(referenceColor));
-    bool _477;
-    if (!_470)
+    referenceMain(refInput, refInputSmplr, gl_FragCoord, _238, referenceColor);
+    bool _472 = any(isnan(referenceColor));
+    bool _479;
+    if (!_472)
     {
-        _477 = any(isinf(referenceColor));
+        _479 = any(isinf(referenceColor));
     }
     else
     {
-        _477 = _470;
+        _479 = _472;
     }
-    if (_477)
+    if (_479)
     {
         referenceColor = float4(0.0);
     }
@@ -227,6 +227,11 @@ fragment refAM35_eaf2f95b1ab6a_out refAM35_eaf2f95b1ab6a(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _492 = referenceColor;
+    float3 _498 = fast::clamp(_492.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _498.x;
+    referenceColor.y = _498.y;
+    referenceColor.z = _498.z;
     out.finalColor = referenceColor;
     return out;
 }

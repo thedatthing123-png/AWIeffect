@@ -107,7 +107,16 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     syamjaidtz *= rot2m(param_1);
     syamjaidtz += ((float2(0.0 + _144.position.x, 0.0 + _144.position.y) * float2(-1.0, 1.0)) / float2(250.0));
     float2 p = syamjaidtz;
-    p /= float2(_144.scale - 0.5);
+    float _250;
+    if (abs(_144.scale - 0.5) > 0.001000000047497451305389404296875)
+    {
+        _250 = _144.scale - 0.5;
+    }
+    else
+    {
+        _250 = 0.001000000047497451305389404296875;
+    }
+    p /= float2(_250);
     float d = length(p) + 0.100000001490116119384765625;
     p = float2(precise::atan2(p.x, p.y) / 3.141590118408203125, 2.5 / d);
     if (false)
@@ -117,19 +126,28 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     float t = _144.progressa * 0.4000000059604644775390625;
     float2 param_2 = p;
     float param_3 = t;
-    float _289 = vDrop(param_2, param_3);
-    float3 col = _144.color1.xyz * _289;
+    float _300 = vDrop(param_2, param_3);
+    float3 col = _144.color1.xyz * _300;
     float2 param_4 = p;
     float param_5 = t + 0.3300000131130218505859375;
-    float _301 = vDrop(param_4, param_5);
-    col += (_144.color2.xyz * _301);
+    float _312 = vDrop(param_4, param_5);
+    col += (_144.color2.xyz * _312);
     float2 param_6 = p;
     float param_7 = t + 0.660000026226043701171875;
-    float _315 = vDrop(param_6, param_7);
-    col += (_144.color3.xyz * _315);
+    float _326 = vDrop(param_6, param_7);
+    col += (_144.color3.xyz * _326);
     float4 fragColor = float4(col * (d * d), 1.0);
     float2 uvX = syamjaidtz;
-    uvX /= float2(_144.scale - 0.5);
+    float _347;
+    if (abs(_144.scale - 0.5) > 0.001000000047497451305389404296875)
+    {
+        _347 = _144.scale - 0.5;
+    }
+    else
+    {
+        _347 = 0.001000000047497451305389404296875;
+    }
+    uvX /= float2(_347);
     uvX.y = 1.0 - uvX.y;
     if (false)
     {
@@ -175,14 +193,14 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
         {
             factor *= _144.bright;
             float4 c = factor + (float4(1.0) * (1.0 - factor.w));
-            resultfinal = float4((texColor.xyz / float3(texColor.w)) * c.xyz, 1.0) * texColor.w;
+            resultfinal = float4((texColor.xyz / float3(fast::max(texColor.w, 9.9999997473787516355514526367188e-06))) * c.xyz, 1.0) * texColor.w;
         }
         else
         {
             if (_144.blendMode == 2)
             {
                 factor *= _144.bright;
-                resultfinal = float4(float3(1.0) - ((float3(1.0) - (texColor.xyz / float3(texColor.w))) * (float3(1.0) - factor.xyz)), 1.0) * texColor.w;
+                resultfinal = float4(float3(1.0) - ((float3(1.0) - (texColor.xyz / float3(fast::max(texColor.w, 9.9999997473787516355514526367188e-06)))) * (float3(1.0) - factor.xyz)), 1.0) * texColor.w;
             }
         }
     }
@@ -194,17 +212,17 @@ fragment refAM35_e9e78f72e74ef_out refAM35_e9e78f72e74ef(constant ReferenceUnifo
     refAM35_e9e78f72e74ef_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(refInput, refInputSmplr, gl_FragCoord, _144, referenceColor);
-    bool _547 = any(isnan(referenceColor));
-    bool _554;
-    if (!_547)
+    bool _571 = any(isnan(referenceColor));
+    bool _578;
+    if (!_571)
     {
-        _554 = any(isinf(referenceColor));
+        _578 = any(isinf(referenceColor));
     }
     else
     {
-        _554 = _547;
+        _578 = _571;
     }
-    if (_554)
+    if (_578)
     {
         referenceColor = float4(0.0);
     }
@@ -213,6 +231,11 @@ fragment refAM35_e9e78f72e74ef_out refAM35_e9e78f72e74ef(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _591 = referenceColor;
+    float3 _597 = fast::clamp(_591.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _597.x;
+    referenceColor.y = _597.y;
+    referenceColor.z = _597.z;
     out.finalColor = referenceColor;
     return out;
 }

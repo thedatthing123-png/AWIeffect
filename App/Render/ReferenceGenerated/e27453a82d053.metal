@@ -104,7 +104,7 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     st.y = 1.0 - st.y;
     st -= float2(0.5);
     st.x *= (_165.refLayer.z / _165.refLayer.w);
-    float2 param_1 = _165.refScreen.xy;
+    float2 param_1 = float2(int2(refInput.get_width(), refInput.get_height()));
     float pixelSize = 1.0 / length(getTexSize(param_1));
     float2 param_2 = st - (_165.position / float2(1000.0));
     float param_3 = pixelSize;
@@ -119,22 +119,21 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     float param_12 = _165.bendPhase;
     float param_13 = _165.angle / 57.29579925537109375;
     float p = rays(param_2, param_3, param_4, param_5, param_6, param_7, param_8, param_9, param_10, param_11, param_12, param_13);
-    float4 adjColor = _165.color * p;
+    float4 adjColor = float4(_165.color.xyz * _165.color.w, _165.color.w) * p;
     float4 result;
     if (_165.blendMode == 1)
     {
-        result = float4((texColor.xyz / float3(texColor.w)) * adjColor.xyz, 1.0) * texColor.w;
+        result = float4((texColor.xyz / float3(fast::max(texColor.w, 9.9999997473787516355514526367188e-06))) * adjColor.xyz, 1.0) * texColor.w;
     }
     else
     {
         if (_165.blendMode == 2)
         {
-            result = float4(float3(1.0) - ((float3(1.0) - (texColor.xyz / float3(texColor.w))) * (float3(1.0) - adjColor.xyz)), 1.0) * texColor.w;
+            result = float4(float3(1.0) - ((float3(1.0) - (texColor.xyz / float3(fast::max(texColor.w, 9.9999997473787516355514526367188e-06)))) * (float3(1.0) - adjColor.xyz)), 1.0) * texColor.w;
         }
         else
         {
-            result = adjColor * texColor.w;
-            result = (texColor * (1.0 - result.w)) + result;
+            result = float4((adjColor.xyz * texColor.w) + (texColor.xyz * (1.0 - adjColor.w)), texColor.w);
         }
     }
     referenceColor = mix(texColor, result, float4(_165.alpha));
@@ -145,17 +144,17 @@ fragment refAM35_e27453a82d053_out refAM35_e27453a82d053(constant ReferenceUnifo
     refAM35_e27453a82d053_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(refInput, refInputSmplr, gl_FragCoord, _165, referenceColor);
-    bool _359 = any(isnan(referenceColor));
-    bool _366;
-    if (!_359)
+    bool _381 = any(isnan(referenceColor));
+    bool _388;
+    if (!_381)
     {
-        _366 = any(isinf(referenceColor));
+        _388 = any(isinf(referenceColor));
     }
     else
     {
-        _366 = _359;
+        _388 = _381;
     }
-    if (_366)
+    if (_388)
     {
         referenceColor = float4(0.0);
     }
@@ -164,6 +163,11 @@ fragment refAM35_e27453a82d053_out refAM35_e27453a82d053(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _401 = referenceColor;
+    float3 _407 = fast::clamp(_401.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _407.x;
+    referenceColor.y = _407.y;
+    referenceColor.z = _407.z;
     out.finalColor = referenceColor;
     return out;
 }

@@ -119,7 +119,7 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     float2 param = gl_FragCoord.xy / _43.refScreen.xy;
     float4 texColor = texture2DCv(refInput, refInputSmplr, param);
     float4 texColorX = float4(0.0, 0.0, 0.0, 1.0) * texColor.w;
-    float2 param_1 = _43.refScreen.xy;
+    float2 param_1 = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 image_size = getTexSize(param_1);
     float2 iRes = float2(_43.refScreen.x, _43.refScreen.y);
     float maxF = fast::max(_43.refScreen.x, _43.refScreen.y);
@@ -147,17 +147,17 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
         float grosor = grosorInicial * float(i + 1);
         float dist = mod((punto.y + (grosor * 0.5)) - (sin(punto.x * _43.frecuencia) * _43.amplitud), divisor);
         float brillo = ((0.300000011920928955078125 * color.x) + (0.4000000059604644775390625 * color.y)) + (0.300000011920928955078125 * color.z);
-        bool _226 = dist < grosor;
-        bool _237;
-        if (_226)
+        bool _228 = dist < grosor;
+        bool _239;
+        if (_228)
         {
-            _237 = brillo < (0.75 - (0.119999997317790985107421875 * float(i)));
+            _239 = brillo < (0.75 - (0.119999997317790985107421875 * float(i)));
         }
         else
         {
-            _237 = _226;
+            _239 = _228;
         }
-        if (_237)
+        if (_239)
         {
             float k = datosPatron[i].z;
             float x = (grosor - dist) / grosor;
@@ -197,17 +197,17 @@ fragment refAM35_ed8c1364415bd_out refAM35_ed8c1364415bd(constant ReferenceUnifo
     refAM35_ed8c1364415bd_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(refInput, refInputSmplr, gl_FragCoord, _43, referenceColor);
-    bool _369 = any(isnan(referenceColor));
-    bool _376;
-    if (!_369)
+    bool _371 = any(isnan(referenceColor));
+    bool _378;
+    if (!_371)
     {
-        _376 = any(isinf(referenceColor));
+        _378 = any(isinf(referenceColor));
     }
     else
     {
-        _376 = _369;
+        _378 = _371;
     }
-    if (_376)
+    if (_378)
     {
         referenceColor = float4(0.0);
     }
@@ -216,6 +216,11 @@ fragment refAM35_ed8c1364415bd_out refAM35_ed8c1364415bd(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _391 = referenceColor;
+    float3 _397 = fast::clamp(_391.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _397.x;
+    referenceColor.y = _397.y;
+    referenceColor.z = _397.z;
     out.finalColor = referenceColor;
     return out;
 }

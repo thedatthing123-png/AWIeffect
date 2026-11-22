@@ -57,7 +57,7 @@ static inline __attribute__((always_inline))
 void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformse474c2c7bde18& _69, texture2d<float> refInput, sampler refInputSmplr, thread float4& referenceColor)
 {
     float2 uv = gl_FragCoord.xy / _69.refScreen.xy;
-    float2 param = _69.refScreen.xy;
+    float2 param = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 px = (float2(1.0) / fast::max(getTexSize(param), float2(1.0))) * fast::max(1.0, _69.radius * 0.119999997317790985107421875);
     float2 param_1 = uv;
     float4 src = texture2DCv(refInput, refInputSmplr, param_1);
@@ -74,7 +74,7 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformse474c2
     float3 param_10 = texture2DCv(refInput, refInputSmplr, param_9).xyz;
     float ly = aeLum(param_8) - aeLum(param_10);
     float edge = smoothstep(0.02500000037252902984619140625, 0.2199999988079071044921875, length(float2(lx, ly)) * _69.scale);
-    float2 param_11 = _69.refScreen.xy;
+    float2 param_11 = float2(int2(refInput.get_width(), refInput.get_height()));
     float pat = 0.5 + (0.5 * sin((((uv.x + uv.y) * getTexSize(param_11).x) / fast::max(3.0, _69.radius)) + 18.0));
     float3 ink = mix(_69.colorA.xyz, _69.colorB.xyz, float3(fract((l * 3.0) + 1.2599999904632568359375)));
     float3 outc = src.xyz;
@@ -104,7 +104,7 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformse474c2
                 {
                     if (true)
                     {
-                        float2 param_12 = _69.refScreen.xy;
+                        float2 param_12 = float2(int2(refInput.get_width(), refInput.get_height()));
                         float2 cell = floor((uv * getTexSize(param_12)) / float2(fast::max(2.0, _69.radius)));
                         float2 param_13 = cell;
                         float n = aeHash(param_13);
@@ -135,17 +135,17 @@ fragment refAM35_e474c2c7bde18_out refAM35_e474c2c7bde18(constant ReferenceUnifo
     refAM35_e474c2c7bde18_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(gl_FragCoord, _69, refInput, refInputSmplr, referenceColor);
-    bool _368 = any(isnan(referenceColor));
-    bool _375;
-    if (!_368)
+    bool _372 = any(isnan(referenceColor));
+    bool _379;
+    if (!_372)
     {
-        _375 = any(isinf(referenceColor));
+        _379 = any(isinf(referenceColor));
     }
     else
     {
-        _375 = _368;
+        _379 = _372;
     }
-    if (_375)
+    if (_379)
     {
         referenceColor = float4(0.0);
     }
@@ -154,6 +154,11 @@ fragment refAM35_e474c2c7bde18_out refAM35_e474c2c7bde18(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _392 = referenceColor;
+    float3 _398 = fast::clamp(_392.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _398.x;
+    referenceColor.y = _398.y;
+    referenceColor.z = _398.z;
     out.finalColor = referenceColor;
     return out;
 }

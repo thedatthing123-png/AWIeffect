@@ -1,5 +1,13 @@
 # Reference-led effect expansion — November 19
 
+## Current checkpoint — November 22
+
+The complete available pixel-shader import is implemented on `feat/reference-effects`, pending native validation. It contains **547 internal programs: 513 active definitions plus 34 required legacy dependency stages**. Legacy stages remain private. The other **47 definitions need native animation/vector/text or host-selected multi-shader mapping**; see `REFERENCE_NATIVE_WORKFLOWS.md`. These counts are not counts of new browser effects.
+
+The browser now contains **482 definitions**: the 452-definition recovery catalog, three initial additions, 25 curated reference entries and two original transitions. Ten additional reference entries and the two transitions were integrated at this checkpoint. **42 reference candidates** receive stills, configured examples, motion GIFs, exact review settings and numeric-control observation reports in the full run. Seventeen candidates remain internal until their renders and overlap checks are accepted. The complete expansion is not release-approved yet.
+
+The final batch must use `validation=all`, `package_ipa=false`. After dispatch, the owner requested stopping active work while CI runs. Do not send an IPA or claim release readiness from shader translation alone. Review the new control reports, screenshots and moving renders first, then repair failures and retune defaults.
+
 The owner authorized a new expansion using the supplied AE Motion 2.5 IPA as a concrete reference. This supersedes the no-new-expansion restriction for this branch only; it does not authorize restoring the discarded batches 30–48 or presets. Stable Build 34 remains recoverable on feat/stable-editor-recovery. Work continues on feat/reference-effects.
 
 ## Inventory and comparison
@@ -83,3 +91,17 @@ Run 44691530406 compiled successfully and passed core, rendering and text checks
 Tile Rotate now labels random strength explicitly, hides Seed while that field is disabled, and tests Seed with random rotation enabled. Regression coverage also checks that changing Seed with random rotation off leaves the image unchanged. The timeline observer records individual window taps in editor state so a recreated view cannot lose the first tap; nearby second taps can complete only a matching recorded container action. The unselected-group UI test remains unchanged, and unit tests reject distant/expired observations.
 
 The reference-repairs scope runs numeric controls, reviewed effects, container/selection logic and related UI workflows. Local Swift parsing, shard coverage and whitespace checks passed; actual iOS behavior and GPU checks remain pending CI. No additional effects were promoted by this repair.
+
+## Complete pixel-pipeline implementation and consolidated review batch
+
+The second repair run, 45061040677, still failed the unselected-group double tap. The Seed fixture passed. The revised group observer captures the original container from its visible clip bounds at touch-down, observes completed taps without claiming or delaying UIKit gestures, and survives the first tap's panel reflow. Drags/holds cancel pending container taps. The original UI test is unchanged and remains part of the full gate.
+
+Deeper archive inspection found that deprecated XML files are active rendering dependencies of current effects, including the hexadecimal IDs. The importer now resolves that dependency closure instead of discarding it. All 547 available shader programs pass GLSL-to-SPIR-V-to-MSL conversion. The adapter retains named intermediate buffers, downsampling, ordered stages, supported external prepasses, explicit stage sources, iteration counts, sparse choices, and scalar unit conversion between parent and dependency. XYZ/orientation/hue-disc controls map to keyframeable components without inventing new tool panels. An RGBA16Float range guard retains HDR while preventing final half-float overflow. Unsupported host scripts are never executed.
+
+The ten additional browser entries are Wave Dot Display, Radial Shadow, Comet Trails, Ribbon, Bent Rays, Glass Spheres, Highlights and Shadows, Film Damage Dots, Channel Remap HSV and Ink Splash. Defaults were adjusted after inspection of native still/motion output from 44683887738; the updated output still requires review. Alpha adaptations preserve translucent artwork for the dot display/ribbon/rays, composite glass with its tint alpha, and keep ink matte RGB and alpha consistent. Radial Shadow reserves room for its output and anchors its light to the source layer rather than the grown scratch buffer.
+
+New original effects are Liquid Lens Wipe and Voronoi Peel, in one registry/Metal pair. Both have exact intact/empty completion endpoints, deterministic seeds, ordinary keyframes and transparent output revealing the actual layer beneath. Liquid Lens Wipe uses a noise-shaped refractive boundary with lens width and chromatic separation. Voronoi Peel uses independently contracting/turning cells with radial/directional/random delay. Their motion review writes 16 frames each, rather than a decorative static mockup. Research reference: [Adobe transition controls and compositing](https://helpx.adobe.com/after-effects/desktop/apply-effects-and-animation-presets/list-of-effects/transition-effects.html).
+
+Existing Fractal Warp gains X/Y restriction with XY as the unchanged default. Native point fields now display actual offset/stretch units; radial light handles convert between canvas and native coordinates. Abstract vectors do not receive misleading normalized-position crosshairs. No working transport controls, panels, projects, AI data/settings or Motion Sketch behavior were replaced.
+
+Local checks: Swift parsing, ten host-side translation contracts, complete XCTest shard inventory and graph dependency/binding checks. Only macOS CI can establish Metal compilation, actual rendering, workflow/UI results and screenshots. Pending native workflows are described separately rather than counted as imported effects.

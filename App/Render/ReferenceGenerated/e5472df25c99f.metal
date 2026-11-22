@@ -108,21 +108,21 @@ float2 getTexSize(thread const float2& size)
 }
 
 static inline __attribute__((always_inline))
-float2 getResolution(constant ReferenceUniformse5472df25c99f& _70)
+float2 getResolution(texture2d<float> refInput, sampler refInputSmplr)
 {
-    float2 param = _70.refScreen.xy;
+    float2 param = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 s = getTexSize(param);
-    bool _84 = s.x <= 0.0;
-    bool _92;
-    if (!_84)
+    bool _82 = s.x <= 0.0;
+    bool _90;
+    if (!_82)
     {
-        _92 = s.y <= 0.0;
+        _90 = s.y <= 0.0;
     }
     else
     {
-        _92 = _84;
+        _90 = _82;
     }
-    if (_92)
+    if (_90)
     {
         s = float2(1920.0, 1080.0);
     }
@@ -188,11 +188,11 @@ float blurMask(thread const float2& uv, thread const float2& px, thread const fl
     float s = 0.0;
     float count = 0.0;
     int r = int(fast::max(0.0, floor(radius)));
-    int _310 = -r;
-    for (int y = _310; y <= r; y++)
+    int _307 = -r;
+    for (int y = _307; y <= r; y++)
     {
-        int _321 = -r;
-        for (int x = _321; x <= r; x++)
+        int _318 = -r;
+        for (int x = _318; x <= r; x++)
         {
             float2 off = float2(float(x) * px.x, float(y) * px.y);
             float2 param = fast::clamp(uv + off, float2(0.0), float2(1.0));
@@ -205,37 +205,37 @@ float blurMask(thread const float2& uv, thread const float2& px, thread const fl
 }
 
 static inline __attribute__((always_inline))
-void referenceMain(constant ReferenceUniformse5472df25c99f& _70, texture2d<float> refInput, sampler refInputSmplr, thread float4& gl_FragCoord, thread float4& referenceColor)
+void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread float4& gl_FragCoord, constant ReferenceUniformse5472df25c99f& _372, thread float4& referenceColor)
 {
-    float2 res = getResolution(_70);
-    float2 uv = gl_FragCoord.xy / _70.refScreen.xy;
+    float2 res = getResolution(refInput, refInputSmplr);
+    float2 uv = gl_FragCoord.xy / _372.refScreen.xy;
     float2 frag = uv * res;
     float2 center = res * 0.5;
     float2 px = float2(1.0 / res.x, 1.0 / res.y);
-    float dSize = fast::max(1.0, _70.dotSize);
-    float dSpacing = fast::max(1.0, _70.spacing);
-    float angDeg = _70.angle;
-    float rotAngle = radians(angDeg) + (_70.progress * 6.283185482025146484375);
-    float s = _70.scale;
-    float edgeSoftness = fast::max(0.001000000047497451305389404296875, _70.edgeSoft);
-    float cont = fast::max(0.0, _70.contrast);
-    float bright = _70.brightness;
-    bool useSampleColor = _70.colorMode != 0u;
-    bool useEllipse = _70.ellipse != 0u;
-    float eX = fast::max(0.001000000047497451305389404296875, _70.ellipseX);
-    float eY = fast::max(0.001000000047497451305389404296875, _70.ellipseY);
-    float blendOut = fast::clamp(_70.blend, 0.0, 1.0);
-    bool doDisp = _70.useDisplacement != 0u;
-    float dispAmountPx = _70.dispAmount;
-    float dispThresholdVal = fast::clamp(_70.dispThreshold, 0.0, 1.0);
-    bool dispInv = _70.dispInvert != 0u;
-    float dispSoft = fast::max(0.0, _70.dispSoft);
-    float3 colPrimary = _70.primaryColor.xyz;
-    float3 colSecondary = _70.secondaryColor.xyz;
-    bool onlyEdges = _70.edgesHalftone != 0u;
-    float eThresh = fast::clamp(_70.edgeThreshold, 0.0, 1.0);
-    float eBlur = fast::max(0.0, _70.edgeBlur);
-    float eStr = fast::max(0.0, _70.edgeStrength);
+    float dSize = fast::max(1.0, _372.dotSize);
+    float dSpacing = fast::max(1.0, _372.spacing);
+    float angDeg = _372.angle;
+    float rotAngle = radians(angDeg) + (_372.progress * 6.283185482025146484375);
+    float s = _372.scale;
+    float edgeSoftness = fast::max(0.001000000047497451305389404296875, _372.edgeSoft);
+    float cont = fast::max(0.0, _372.contrast);
+    float bright = _372.brightness;
+    bool useSampleColor = _372.colorMode != 0u;
+    bool useEllipse = _372.ellipse != 0u;
+    float eX = fast::max(0.001000000047497451305389404296875, _372.ellipseX);
+    float eY = fast::max(0.001000000047497451305389404296875, _372.ellipseY);
+    float blendOut = fast::clamp(_372.blend, 0.0, 1.0);
+    bool doDisp = _372.useDisplacement != 0u;
+    float dispAmountPx = _372.dispAmount;
+    float dispThresholdVal = fast::clamp(_372.dispThreshold, 0.0, 1.0);
+    bool dispInv = _372.dispInvert != 0u;
+    float dispSoft = fast::max(0.0, _372.dispSoft);
+    float3 colPrimary = _372.primaryColor.xyz;
+    float3 colSecondary = _372.secondaryColor.xyz;
+    bool onlyEdges = _372.edgesHalftone != 0u;
+    float eThresh = fast::clamp(_372.edgeThreshold, 0.0, 1.0);
+    float eBlur = fast::max(0.0, _372.edgeBlur);
+    float eStr = fast::max(0.0, _372.edgeStrength);
     float2 local = frag - center;
     float2 param = local;
     float param_1 = rotAngle;
@@ -250,8 +250,8 @@ void referenceMain(constant ReferenceUniformse5472df25c99f& _70, texture2d<float
     float param_3 = lum;
     float param_4 = cont;
     float param_5 = bright;
-    float _559 = applyToneF(param_3, param_4, param_5);
-    lum = _559;
+    float _561 = applyToneF(param_3, param_4, param_5);
+    lum = _561;
     float inv = 1.0 - lum;
     float baseRadius = fast::clamp(((dSize * s) * 0.5) / dSpacing, 0.0, 0.5);
     float radius = baseRadius * inv;
@@ -315,24 +315,24 @@ void referenceMain(constant ReferenceUniformse5472df25c99f& _70, texture2d<float
     }
     float eMask = smoothstep(eThresh, eThresh + (0.25 * fast::max(0.001000000047497451305389404296875, eBlur)), e) * eStr;
     eMask = fast::clamp(eMask, 0.0, 1.0);
-    float3 _775;
+    float3 _777;
     if (doDisp)
     {
-        _775 = displacedBackground;
+        _777 = displacedBackground;
     }
     else
     {
         float2 param_16 = uv;
-        _775 = texture2DCv(refInput, refInputSmplr, param_16).xyz;
+        _777 = texture2DCv(refInput, refInputSmplr, param_16).xyz;
     }
-    float3 baseBg = _775;
+    float3 baseBg = _777;
     float finalDotMix = alphaDot * blendOut;
     if (onlyEdges)
     {
         finalDotMix *= eMask;
     }
     float3 outCol;
-    if (_70.overlay != 0u)
+    if (_372.overlay != 0u)
     {
         outCol = mix(baseBg, halftone, float3(finalDotMix));
     }
@@ -352,22 +352,22 @@ void referenceMain(constant ReferenceUniformse5472df25c99f& _70, texture2d<float
     referenceColor = float4(outCol, 1.0);
 }
 
-fragment refAM35_e5472df25c99f_out refAM35_e5472df25c99f(constant ReferenceUniformse5472df25c99f& _70 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
+fragment refAM35_e5472df25c99f_out refAM35_e5472df25c99f(constant ReferenceUniformse5472df25c99f& _372 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
 {
     refAM35_e5472df25c99f_out out = {};
     float4 referenceColor = float4(0.0);
-    referenceMain(_70, refInput, refInputSmplr, gl_FragCoord, referenceColor);
-    bool _843 = any(isnan(referenceColor));
-    bool _850;
-    if (!_843)
+    referenceMain(refInput, refInputSmplr, gl_FragCoord, _372, referenceColor);
+    bool _845 = any(isnan(referenceColor));
+    bool _852;
+    if (!_845)
     {
-        _850 = any(isinf(referenceColor));
+        _852 = any(isinf(referenceColor));
     }
     else
     {
-        _850 = _843;
+        _852 = _845;
     }
-    if (_850)
+    if (_852)
     {
         referenceColor = float4(0.0);
     }
@@ -376,6 +376,11 @@ fragment refAM35_e5472df25c99f_out refAM35_e5472df25c99f(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _866 = referenceColor;
+    float3 _872 = fast::clamp(_866.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _872.x;
+    referenceColor.y = _872.y;
+    referenceColor.z = _872.z;
     out.finalColor = referenceColor;
     return out;
 }

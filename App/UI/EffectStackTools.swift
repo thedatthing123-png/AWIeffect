@@ -203,7 +203,9 @@ struct EffectPointOverlay: View {
             for pd in def.params {
                 if case .point = pd.kind {
                     let v = e.params[pd.id]?.point(at: t) ?? pd.defaultValue.point(at: t)
-                    if let s = screen(Vec2(-hs.x + 2 * hs.x * v.x, -hs.y + 2 * hs.y * v.y), M) {
+                    if ReferenceFragmentControls.isVisible(pd.id,effect:e,time:t),
+                       let position = ReferenceFragmentControls.canvasPoint(e.typeID,pd.id,v),
+                       let s = screen(Vec2(-hs.x + 2 * hs.x * position.x, -hs.y + 2 * hs.y * position.y), M) {
                         out.append(Handle(id: "\(e.id)|\(pd.id)", effect: e.id, key: pd.id, emitter: false, at: s, name: pd.name))
                     }
                 }
@@ -255,7 +257,9 @@ struct EffectPointOverlay: View {
             state.setEffectParam(h.effect, "emitX") { pv, time in if case .number(var a) = pv { a.set(min(100, max(-100, q.x / max(hs.x, 1e-6) * 100)), at: time); pv = .number(a) } }
             state.setEffectParam(h.effect, "emitY") { pv, time in if case .number(var a) = pv { a.set(min(100, max(-100, q.y / max(hs.y, 1e-6) * 100)), at: time); pv = .number(a) } }
         } else {
-            let v = Vec2((q.x + hs.x) / max(2 * hs.x, 1e-6), (q.y + hs.y) / max(2 * hs.y, 1e-6))
+            let position = Vec2((q.x + hs.x) / max(2 * hs.x, 1e-6), (q.y + hs.y) / max(2 * hs.y, 1e-6))
+            guard let effect=l.effects.first(where:{$0.id==h.effect}),
+                  let v=ReferenceFragmentControls.canvasPoint(effect.typeID,h.key,position,inverse:true) else { return }
             state.setEffectParam(h.effect, h.key) { pv, time in if case .point(var a) = pv { a.set(v, at: time); pv = .point(a) } }
         }
     }

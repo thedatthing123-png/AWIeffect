@@ -51,7 +51,7 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     float2 syamjaidtz = gl_FragCoord.xy / _50.refScreen.xy;
     float2 uv = syamjaidtz;
     float4 t = float4(0.0);
-    float2 texel = float2(1.0) / _50.refScreen.xy;
+    float2 texel = float2(1.0) / float2(int2(refInput.get_width(), refInput.get_height()));
     float2 d = texel * _50.progressa;
     for (float i = 0.0; i < 3.0; i += 1.0)
     {
@@ -72,17 +72,17 @@ fragment refAM35_e9aef1f7bd1aa_out refAM35_e9aef1f7bd1aa(constant ReferenceUnifo
     refAM35_e9aef1f7bd1aa_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(refInput, refInputSmplr, gl_FragCoord, _50, referenceColor);
-    bool _168 = any(isnan(referenceColor));
-    bool _175;
-    if (!_168)
+    bool _170 = any(isnan(referenceColor));
+    bool _177;
+    if (!_170)
     {
-        _175 = any(isinf(referenceColor));
+        _177 = any(isinf(referenceColor));
     }
     else
     {
-        _175 = _168;
+        _177 = _170;
     }
-    if (_175)
+    if (_177)
     {
         referenceColor = float4(0.0);
     }
@@ -91,6 +91,11 @@ fragment refAM35_e9aef1f7bd1aa_out refAM35_e9aef1f7bd1aa(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _191 = referenceColor;
+    float3 _197 = fast::clamp(_191.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _197.x;
+    referenceColor.y = _197.y;
+    referenceColor.z = _197.z;
     out.finalColor = referenceColor;
     return out;
 }

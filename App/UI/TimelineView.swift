@@ -113,7 +113,10 @@ struct TimelineView: View, Equatable {
                                 let lifted = liftLayer == layer.id
                                 HStack(spacing: 0) {
                                     header(layer)
-                                    ClockReader(clock: clock) { time in layerRow(layer, offset: offset - CGFloat(time) * zoom, trackWidth: trackWidth) }
+                                    ClockReader(clock: clock) { time in layerRow(layer, offset: offset - CGFloat(time) * zoom, trackWidth: trackWidth,
+                                        viewport: CGRect(x: geo.frame(in: .global).minX + headerWidth,
+                                                         y: geo.frame(in: .global).minY + rulerHeight,
+                                                         width: trackWidth, height: max(0, geo.size.height - rulerHeight))) }
                                         .frame(width: trackWidth, height: rowHeight, alignment: .topLeading)
                                         .clipped()
                                 }
@@ -446,7 +449,7 @@ struct TimelineView: View, Equatable {
         }
     }
 
-    private func layerRow(_ layer: Layer, offset: CGFloat, trackWidth: CGFloat) -> some View {
+    private func layerRow(_ layer: Layer, offset: CGFloat, trackWidth: CGFloat, viewport: CGRect) -> some View {
         let selected = state.multiSelection.map { $0.contains(layer.id) } ?? (layer.id == state.selectedLayerID)
         let editable = selected && !state.isMultiSelecting && !layer.isLocked
         let color = Theme.tagColor(layer.tag)
@@ -481,6 +484,14 @@ struct TimelineView: View, Equatable {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(layer.name)
                 .accessibilityIdentifier("timeline-clip-\(layer.name)")
+                .background {
+                    if layer.isGroup || { if case .precomp = layer.content { return true }; return false }() {
+                        GeometryReader { geometry in
+                            Color.clear.preference(key: TimelineContainerFramesKey.self,
+                                                   value: [layer.id: geometry.frame(in: .global).intersection(viewport)])
+                        }
+                    }
+                }
                 // Hold a clip to lift it: up / down reorders, sideways moves it in time (snaps to frames, beats, playhead).
 
                 .offset(x: x0, y: 4)

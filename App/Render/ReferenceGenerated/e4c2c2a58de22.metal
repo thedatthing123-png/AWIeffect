@@ -73,7 +73,7 @@ float2 aeMirror(thread const float2& p)
 }
 
 static inline __attribute__((always_inline))
-float2 aeShakeUV(thread const float2& uv, thread const float& phaseOffset, constant ReferenceUniformse4c2c2a58de22& _106)
+float2 aeShakeUV(thread const float2& uv, thread const float& phaseOffset, constant ReferenceUniformse4c2c2a58de22& _106, texture2d<float> refInput, sampler refInputSmplr)
 {
     float t = ((_106.refScreen.z * _106.frequency) + _106.phase) + phaseOffset;
     float param = t;
@@ -89,7 +89,7 @@ float2 aeShakeUV(thread const float2& uv, thread const float& phaseOffset, const
     float param_8 = (t * 0.730000019073486328125) + 39.0;
     float param_9 = _106.seed + 151.0;
     float nr = aeNoise(param_8, param_9);
-    float2 param_10 = _106.refScreen.xy;
+    float2 param_10 = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 px = float2(1.0) / fast::max(getTexSize(param_10), float2(1.0));
     float2 p = (uv - float2(0.5)) - ((float2(nx, ny) * _106.amplitude) * px);
     float ang = ((-nr) * _106.rotation) * 0.01745329238474369049072265625;
@@ -99,7 +99,7 @@ float2 aeShakeUV(thread const float2& uv, thread const float& phaseOffset, const
 }
 
 static inline __attribute__((always_inline))
-void referenceMain(constant ReferenceUniformse4c2c2a58de22& _106, thread float4& gl_FragCoord, texture2d<float> refInput, sampler refInputSmplr, thread float4& referenceColor)
+void referenceMain(constant ReferenceUniformse4c2c2a58de22& _106, texture2d<float> refInput, sampler refInputSmplr, thread float4& gl_FragCoord, thread float4& referenceColor)
 {
     float2 uv = gl_FragCoord.xy / _106.refScreen.xy;
     float2 param = uv;
@@ -107,15 +107,15 @@ void referenceMain(constant ReferenceUniformse4c2c2a58de22& _106, thread float4&
     float split = _106.rgbSplit * 0.0030000000260770320892333984375;
     float2 param_1 = uv;
     float param_2 = split;
-    float2 param_3 = aeShakeUV(param_1, param_2, _106);
+    float2 param_3 = aeShakeUV(param_1, param_2, _106, refInput, refInputSmplr);
     float4 r = texture2DCv(refInput, refInputSmplr, param_3);
     float2 param_4 = uv;
     float param_5 = 0.0;
-    float2 param_6 = aeShakeUV(param_4, param_5, _106);
+    float2 param_6 = aeShakeUV(param_4, param_5, _106, refInput, refInputSmplr);
     float4 g = texture2DCv(refInput, refInputSmplr, param_6);
     float2 param_7 = uv;
     float param_8 = -split;
-    float2 param_9 = aeShakeUV(param_7, param_8, _106);
+    float2 param_9 = aeShakeUV(param_7, param_8, _106, refInput, refInputSmplr);
     float4 b = texture2DCv(refInput, refInputSmplr, param_9);
     float4 shaken = float4(r.x, g.y, b.z, g.w);
     referenceColor = mix(src, shaken, float4(fast::clamp(_106.mixAmount, 0.0, 1.0)));
@@ -126,18 +126,18 @@ fragment refAM35_e4c2c2a58de22_out refAM35_e4c2c2a58de22(constant ReferenceUnifo
 {
     refAM35_e4c2c2a58de22_out out = {};
     float4 referenceColor = float4(0.0);
-    referenceMain(_106, gl_FragCoord, refInput, refInputSmplr, referenceColor);
-    bool _326 = any(isnan(referenceColor));
-    bool _333;
-    if (!_326)
+    referenceMain(_106, refInput, refInputSmplr, gl_FragCoord, referenceColor);
+    bool _328 = any(isnan(referenceColor));
+    bool _335;
+    if (!_328)
     {
-        _333 = any(isinf(referenceColor));
+        _335 = any(isinf(referenceColor));
     }
     else
     {
-        _333 = _326;
+        _335 = _328;
     }
-    if (_333)
+    if (_335)
     {
         referenceColor = float4(0.0);
     }
@@ -146,6 +146,11 @@ fragment refAM35_e4c2c2a58de22_out refAM35_e4c2c2a58de22(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _348 = referenceColor;
+    float3 _354 = fast::clamp(_348.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _354.x;
+    referenceColor.y = _354.y;
+    referenceColor.z = _354.z;
     out.finalColor = referenceColor;
     return out;
 }

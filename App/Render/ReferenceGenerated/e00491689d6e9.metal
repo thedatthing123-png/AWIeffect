@@ -134,6 +134,11 @@ fragment refAM35_e00491689d6e9_out refAM35_e00491689d6e9(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _338 = referenceColor;
+    float3 _344 = fast::clamp(_338.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _344.x;
+    referenceColor.y = _344.y;
+    referenceColor.z = _344.z;
     out.finalColor = referenceColor;
     return out;
 }

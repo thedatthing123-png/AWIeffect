@@ -68,21 +68,21 @@ float2 getTexSize(thread const float2& size)
 }
 
 static inline __attribute__((always_inline))
-float2 getResolution(constant ReferenceUniformse4dc1ec616108& _54)
+float2 getResolution(texture2d<float> refInput, sampler refInputSmplr)
 {
-    float2 param = _54.refScreen.xy;
+    float2 param = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 s = getTexSize(param);
-    bool _68 = s.x <= 0.0;
-    bool _76;
-    if (!_68)
+    bool _66 = s.x <= 0.0;
+    bool _74;
+    if (!_66)
     {
-        _76 = s.y <= 0.0;
+        _74 = s.y <= 0.0;
     }
     else
     {
-        _76 = _68;
+        _74 = _66;
     }
-    if (_76)
+    if (_74)
     {
         s = float2(1920.0, 1080.0);
     }
@@ -116,20 +116,22 @@ float intersectSphere(thread const float3& ro, thread const float3& rd, thread c
 }
 
 static inline __attribute__((always_inline))
-void referenceMain(constant ReferenceUniformse4dc1ec616108& _54, thread float4& gl_FragCoord, texture2d<float> refInput, sampler refInputSmplr, thread float4& referenceColor)
+void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread float4& gl_FragCoord, constant ReferenceUniformse4dc1ec616108& _139, thread float4& referenceColor)
 {
-    float2 res = getResolution(_54);
-    float2 fragCoord = (gl_FragCoord.xy / _54.refScreen.xy) * res;
-    float2 uv = gl_FragCoord.xy / _54.refScreen.xy;
+    float2 res = getResolution(refInput, refInputSmplr);
+    float2 fragCoord = (gl_FragCoord.xy / _139.refScreen.xy) * res;
+    float2 uv = gl_FragCoord.xy / _139.refScreen.xy;
     float2 p = (fragCoord - (res * 0.5)) / float2(res.y);
     float3 ro = float3(0.0, 0.0, -2.0);
-    float3 rd = fast::normalize(float3(p, _54.fov));
-    float3 lightPos = fast::normalize(float3(_54.lightX, _54.lightY, _54.lightZ));
+    float3 rd = fast::normalize(float3(p, _139.fov));
+    float3 lightPos = fast::normalize(float3(_139.lightX, _139.lightY, _139.lightZ));
     float2 param = uv;
-    float3 col = texture2DCv(refInput, refInputSmplr, param).xyz;
+    float4 sourcePixel = texture2DCv(refInput, refInputSmplr, param);
+    float coverage = sourcePixel.w;
+    float3 col = sourcePixel.xyz / float3(fast::max(sourcePixel.w, 9.9999997473787516355514526367188e-06));
     float minT = 10000.0;
     float3 hitCenter = float3(0.0);
-    int maxBalls = int(_54.ballCount);
+    int maxBalls = int(_139.ballCount);
     float aspect = res.x / res.y;
     for (int i = 0; i < 400; i++)
     {
@@ -137,20 +139,20 @@ void referenceMain(constant ReferenceUniformse4dc1ec616108& _54, thread float4& 
         {
             break;
         }
-        float param_1 = (float(i) * 56.700000762939453125) + _54.randSeed;
+        float param_1 = (float(i) * 56.700000762939453125) + _139.randSeed;
         float2 rnd = hash2(param_1);
-        float t_anim = (_54.progress * 20.0) + (float(i) * 12.0);
+        float t_anim = (_139.progress * 20.0) + (float(i) * 12.0);
         float3 center = float3(0.0);
-        center.x = ((sin(t_anim + (rnd.x * 6.283185482025146484375)) * 0.800000011920928955078125) * aspect) * _54.spread;
-        center.y = (cos((t_anim * 0.89999997615814208984375) + (rnd.y * 6.283185482025146484375)) * 0.4000000059604644775390625) * _54.spread;
-        center.z = sin(t_anim * 0.5) * _54.zSpread;
-        center += float3(_54.posX, _54.posY, _54.posZ);
+        center.x = ((sin(t_anim + (rnd.x * 6.283185482025146484375)) * 0.800000011920928955078125) * aspect) * _139.spread;
+        center.y = (cos((t_anim * 0.89999997615814208984375) + (rnd.y * 6.283185482025146484375)) * 0.4000000059604644775390625) * _139.spread;
+        center.z = sin(t_anim * 0.5) * _139.zSpread;
+        center += float3(_139.posX, _139.posY, _139.posZ);
         float rVar = 1.0;
-        if (_54.randomSize != 0u)
+        if (_139.randomSize != 0u)
         {
-            rVar = 1.0 + (((rnd.x * 2.0) - 1.0) * _54.sizeVar);
+            rVar = 1.0 + (((rnd.x * 2.0) - 1.0) * _139.sizeVar);
         }
-        float rBall = fast::clamp(_54.ballRadius * rVar, 0.001000000047497451305389404296875, 10.0);
+        float rBall = fast::clamp(_139.ballRadius * rVar, 0.001000000047497451305389404296875, 10.0);
         float3 param_2 = ro;
         float3 param_3 = rd;
         float3 param_4 = center;
@@ -169,43 +171,44 @@ void referenceMain(constant ReferenceUniformse4dc1ec616108& _54, thread float4& 
         float3 viewDir = -rd;
         float cosTheta = fast::clamp(dot(normal, viewDir), 0.0, 1.0);
         float fresnel = powr(1.0 - cosTheta, 4.0);
-        float reflStrength = (0.100000001490116119384765625 + (0.89999997615814208984375 * fresnel)) * _54.reflectMix;
-        float3 refrVec = refract(rd, normal, 1.0 / _54.ior);
-        float2 refrUV = uv + (refrVec.xy * _54.refractScale);
+        float reflStrength = (0.100000001490116119384765625 + (0.89999997615814208984375 * fresnel)) * _139.reflectMix;
+        float3 refrVec = refract(rd, normal, 1.0 / _139.ior);
+        float2 refrUV = uv + (refrVec.xy * _139.refractScale);
         float2 param_6 = refrUV;
         float3 glassColor = texture2DCv(refInput, refInputSmplr, param_6).xyz;
-        float3 absorb = _54.ballColor.xyz * (0.5 + (0.5 * cosTheta));
+        float3 absorb = _139.ballColor.xyz * (0.5 + (0.5 * cosTheta));
         glassColor *= (absorb * 1.5);
         float3 reflVec = reflect(rd, normal);
-        float2 reflUV = uv + (reflVec.xy * _54.reflectScale);
+        float2 reflUV = uv + (reflVec.xy * _139.reflectScale);
         float2 param_7 = reflUV;
         float3 reflColor = texture2DCv(refInput, refInputSmplr, param_7).xyz;
         float3 halfVec = fast::normalize(lightPos + viewDir);
-        float spec = powr(fast::max(dot(normal, halfVec), 0.0), _54.shininess);
+        float spec = powr(fast::max(dot(normal, halfVec), 0.0), _139.shininess);
         float3 sphereCol = mix(glassColor, reflColor, float3(reflStrength));
         sphereCol += (float3(1.0) * spec);
         sphereCol += ((float3(1.0, 0.20000000298023223876953125, 0.20000000298023223876953125) * fresnel) * 0.300000011920928955078125);
-        col = sphereCol;
+        coverage = _139.ballColor.w + (sourcePixel.w * (1.0 - _139.ballColor.w));
+        col = ((sphereCol * _139.ballColor.w) + (sourcePixel.xyz * (1.0 - _139.ballColor.w))) / float3(fast::max(coverage, 9.9999997473787516355514526367188e-06));
     }
-    referenceColor = float4(col, 1.0);
+    referenceColor = float4(col * coverage, coverage);
 }
 
-fragment refAM35_e4dc1ec616108_out refAM35_e4dc1ec616108(constant ReferenceUniformse4dc1ec616108& _54 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
+fragment refAM35_e4dc1ec616108_out refAM35_e4dc1ec616108(constant ReferenceUniformse4dc1ec616108& _139 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
 {
     refAM35_e4dc1ec616108_out out = {};
     float4 referenceColor = float4(0.0);
-    referenceMain(_54, gl_FragCoord, refInput, refInputSmplr, referenceColor);
-    bool _484 = any(isnan(referenceColor));
-    bool _491;
-    if (!_484)
+    referenceMain(refInput, refInputSmplr, gl_FragCoord, _139, referenceColor);
+    bool _525 = any(isnan(referenceColor));
+    bool _532;
+    if (!_525)
     {
-        _491 = any(isinf(referenceColor));
+        _532 = any(isinf(referenceColor));
     }
     else
     {
-        _491 = _484;
+        _532 = _525;
     }
-    if (_491)
+    if (_532)
     {
         referenceColor = float4(0.0);
     }
@@ -214,6 +217,11 @@ fragment refAM35_e4dc1ec616108_out refAM35_e4dc1ec616108(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _545 = referenceColor;
+    float3 _551 = fast::clamp(_545.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _551.x;
+    referenceColor.y = _551.y;
+    referenceColor.z = _551.z;
     out.finalColor = referenceColor;
     return out;
 }

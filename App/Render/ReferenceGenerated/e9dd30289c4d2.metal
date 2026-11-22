@@ -99,7 +99,7 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     float2 param = gl_FragCoord.xy / _88.refScreen.xy;
     float4 texColor = texture2DCv(refInput, refInputSmplr, param);
     float4 texColorX = float4(0.0, 0.0, 0.0, 1.0) * texColor.w;
-    float2 param_1 = _88.refScreen.xy;
+    float2 param_1 = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 image_size = getTexSize(param_1);
     float2 iRes = float2(_88.refScreen.x, _88.refScreen.y);
     float2 syamjaidtz = ((float2((gl_FragCoord.xy / _88.refScreen.xy).x, 1.0 - (gl_FragCoord.xy / _88.refScreen.xy).y) * _88.refScreen.xy) - float2(_88.refLayer.x + (_88.refLayer.z * 0.5), (_88.refScreen.y - _88.refLayer.y) - (_88.refLayer.w * 0.5))) / _88.refLayer.zw;
@@ -112,16 +112,16 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     syamjaidtz /= scaleVec;
     float ff = getBeat();
     float2 resolution = iRes;
-    float _230;
+    float _232;
     if (_88.autop != 0u)
     {
-        _230 = _88.EVO + (_88.refScreen.z * 0.5);
+        _232 = _88.EVO + (_88.refScreen.z * 0.5);
     }
     else
     {
-        _230 = _88.EVO;
+        _232 = _88.EVO;
     }
-    float time = _230;
+    float time = _232;
     float2 p = syamjaidtz;
     p.x = (p.x * _88.refScreen.x) / _88.refScreen.y;
     float2 position = p;
@@ -183,17 +183,17 @@ fragment refAM35_e9dd30289c4d2_out refAM35_e9dd30289c4d2(constant ReferenceUnifo
     refAM35_e9dd30289c4d2_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(refInput, refInputSmplr, gl_FragCoord, _88, referenceColor);
-    bool _516 = any(isnan(referenceColor));
-    bool _523;
-    if (!_516)
+    bool _518 = any(isnan(referenceColor));
+    bool _525;
+    if (!_518)
     {
-        _523 = any(isinf(referenceColor));
+        _525 = any(isinf(referenceColor));
     }
     else
     {
-        _523 = _516;
+        _525 = _518;
     }
-    if (_523)
+    if (_525)
     {
         referenceColor = float4(0.0);
     }
@@ -202,6 +202,11 @@ fragment refAM35_e9dd30289c4d2_out refAM35_e9dd30289c4d2(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _538 = referenceColor;
+    float3 _544 = fast::clamp(_538.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _544.x;
+    referenceColor.y = _544.y;
+    referenceColor.z = _544.z;
     out.finalColor = referenceColor;
     return out;
 }

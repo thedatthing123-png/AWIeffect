@@ -90,7 +90,7 @@ float smoothLum(thread const float2& uv, constant ReferenceUniformse24809c908d0e
         float3 param_1 = texture2DCv(refInput, refInputSmplr, param).xyz;
         return greyScale(param_1);
     }
-    float2 param_2 = _78.refScreen.xy;
+    float2 param_2 = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 texel = float2(1.0) / getTexSize(param_2);
     float r = fast::clamp(_78.smoothSource, 0.0, 2.0);
     float2 o = texel * r;
@@ -168,17 +168,17 @@ fragment refAM35_e24809c908d0e_out refAM35_e24809c908d0e(constant ReferenceUnifo
     refAM35_e24809c908d0e_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(_78, refInput, refInputSmplr, gl_FragCoord, referenceColor);
-    bool _365 = any(isnan(referenceColor));
-    bool _372;
-    if (!_365)
+    bool _367 = any(isnan(referenceColor));
+    bool _374;
+    if (!_367)
     {
-        _372 = any(isinf(referenceColor));
+        _374 = any(isinf(referenceColor));
     }
     else
     {
-        _372 = _365;
+        _374 = _367;
     }
-    if (_372)
+    if (_374)
     {
         referenceColor = float4(0.0);
     }
@@ -187,6 +187,11 @@ fragment refAM35_e24809c908d0e_out refAM35_e24809c908d0e(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _387 = referenceColor;
+    float3 _393 = fast::clamp(_387.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _393.x;
+    referenceColor.y = _393.y;
+    referenceColor.z = _393.z;
     out.finalColor = referenceColor;
     return out;
 }

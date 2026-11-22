@@ -129,7 +129,7 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformsedd3f3
     float4 texColor = texture2DCv(refInput, refInputSmplr, param_5);
     if (_174.alphaMode != 0u)
     {
-        referenceColor = float4(texColor.xyz, texColor.w * mask);
+        referenceColor = texColor * mask;
     }
     else
     {
@@ -143,17 +143,17 @@ fragment refAM35_edd3f3773971b_out refAM35_edd3f3773971b(constant ReferenceUnifo
     refAM35_edd3f3773971b_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(gl_FragCoord, _174, refInput, refInputSmplr, referenceColor);
-    bool _358 = any(isnan(referenceColor));
-    bool _365;
-    if (!_358)
+    bool _351 = any(isnan(referenceColor));
+    bool _358;
+    if (!_351)
     {
-        _365 = any(isinf(referenceColor));
+        _358 = any(isinf(referenceColor));
     }
     else
     {
-        _365 = _358;
+        _358 = _351;
     }
-    if (_365)
+    if (_358)
     {
         referenceColor = float4(0.0);
     }
@@ -162,6 +162,11 @@ fragment refAM35_edd3f3773971b_out refAM35_edd3f3773971b(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _371 = referenceColor;
+    float3 _377 = fast::clamp(_371.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _377.x;
+    referenceColor.y = _377.y;
+    referenceColor.z = _377.z;
     out.finalColor = referenceColor;
     return out;
 }

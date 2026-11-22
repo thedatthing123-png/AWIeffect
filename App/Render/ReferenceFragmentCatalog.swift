@@ -5,52 +5,93 @@ import Metal
 enum ReferenceFragmentCatalog {
     static let ef85af76987e2 = make_ef85af76987e2()
     static let ed0ecd5892079 = make_ed0ecd5892079()
+    static let eb9d2e1133709 = make_eb9d2e1133709()
     static let eefcbfad10b80 = make_eefcbfad10b80()
+    static let e0cd08bc006aa = make_e0cd08bc006aa()
+    static let eb68b042d0b49 = make_eb68b042d0b49()
     static let e5ce70fd654b4 = make_e5ce70fd654b4()
     static let eda4e4b9044e8 = make_eda4e4b9044e8()
+    static let eed18fc59f8e7 = make_eed18fc59f8e7()
+    static let e92894954531f = make_e92894954531f()
     static let eb584ad357d55 = make_eb584ad357d55()
     static let e99719be0ea0e = make_e99719be0ea0e()
+    static let e4f4cabb4ff42 = make_e4f4cabb4ff42()
     static let e9aef1f7bd1aa = make_e9aef1f7bd1aa()
     static let ec9e48a380de9 = make_ec9e48a380de9()
     static let e98e0bd11fc6f = make_e98e0bd11fc6f()
     static let eac60c37101a4 = make_eac60c37101a4()
     static let ea7451d774e79 = make_ea7451d774e79()
     static let ef1a32c8ec2aa = make_ef1a32c8ec2aa()
+    static let e99e7b4a5ff23 = make_e99e7b4a5ff23()
     static let ecfd444272da7 = make_ecfd444272da7()
+    static let e1c0590e4ceef = make_e1c0590e4ceef()
+    static let eb0c7148e4047 = make_eb0c7148e4047()
+    static let e101af6b51e30 = make_e101af6b51e30()
     static let e4e3f06553794 = make_e4e3f06553794()
+    static let e032beb914427 = make_e032beb914427()
+    static let e5233aa604543 = make_e5233aa604543()
     static let e64e1f2cb0e3f = make_e64e1f2cb0e3f()
+    static let ec9e8361126df = make_ec9e8361126df()
+    static let ecd33a51c7cb3 = make_ecd33a51c7cb3()
+    static let e398a5f60192e = make_e398a5f60192e()
+    static let e3ff064ef7353 = make_e3ff064ef7353()
     static let eb09dba903d3f = make_eb09dba903d3f()
     static let e003b34e765ad = make_e003b34e765ad()
+    static let e4f080156a045 = make_e4f080156a045()
     static let ea36bd8dcebf0 = make_ea36bd8dcebf0()
     static let e75f2a17f4488 = make_e75f2a17f4488()
     static let e8aadbfe83ddc = make_e8aadbfe83ddc()
     static let ea8df009485f0 = make_ea8df009485f0()
+    static let e9540262aa1f0 = make_e9540262aa1f0()
     static let efe306ea22425 = make_efe306ea22425()
     static let e6fdbbd5a476c = make_e6fdbbd5a476c()
     static let ea3452b1fb102 = make_ea3452b1fb102()
     static let e44c3753736ad = make_e44c3753736ad()
+    static let eef0730511250 = make_eef0730511250()
     static let eaeaf49f44c73 = make_eaeaf49f44c73()
+    static let e9d6a291b2496 = make_e9d6a291b2496()
+    static let e13aa6c6f3b1c = make_e13aa6c6f3b1c()
     static let e43ead01bcc8f = make_e43ead01bcc8f()
+    static let efc580f636abc = make_efc580f636abc()
+    static let ef17257e3434e = make_ef17257e3434e()
+    static let e9fb4203c1389 = make_e9fb4203c1389()
     static let e6e18bbe3f759 = make_e6e18bbe3f759()
     static let eccad7e332cdb = make_eccad7e332cdb()
     static let e24809c908d0e = make_e24809c908d0e()
+    static let ed31095823fed = make_ed31095823fed()
     static let e768f587f4504 = make_e768f587f4504()
+    static let eb89a5a2a3d4c = make_eb89a5a2a3d4c()
+    static let ea2681cd2906f = make_ea2681cd2906f()
     static let ea4ee3a4adc94 = make_ea4ee3a4adc94()
     static let e26bad7d24238 = make_e26bad7d24238()
     static let ee9dd225d9a0f = make_ee9dd225d9a0f()
+    static let e8d9cd41a7d1f = make_e8d9cd41a7d1f()
     static let eb6dc61cb9fe1 = make_eb6dc61cb9fe1()
     static let eb027a40e1d3a = make_eb027a40e1d3a()
+    static let e430c29609f0f = make_e430c29609f0f()
+    static let e066e5f75d7f0 = make_e066e5f75d7f0()
     static let e1bceb7e68ceb = make_e1bceb7e68ceb()
+    static let eaf9be5de3d0e = make_eaf9be5de3d0e()
     static let e8fb235f1d884 = make_e8fb235f1d884()
     static let e5472df25c99f = make_e5472df25c99f()
     static let efcd1d4eda677 = make_efcd1d4eda677()
     static let e2dd6792a7249 = make_e2dd6792a7249()
     static let ec5cb0732b786 = make_ec5cb0732b786()
+    static let e301e478fe822 = make_e301e478fe822()
     static let e3fe027453e82 = make_e3fe027453e82()
+    static let eeb953c7a62af = make_eeb953c7a62af()
+    static let e9ca70f7a9e82 = make_e9ca70f7a9e82()
+    static let e6b65a73fb112 = make_e6b65a73fb112()
+    static let e039f5ed2414d = make_e039f5ed2414d()
     static let e0dd14e6286ab = make_e0dd14e6286ab()
+    static let e64da4f6f68f7 = make_e64da4f6f68f7()
     static let e9f16e2302452 = make_e9f16e2302452()
+    static let ead6e335ee83d = make_ead6e335ee83d()
     static let e31cec718c9c3 = make_e31cec718c9c3()
     static let e51de8cc7d47d = make_e51de8cc7d47d()
+    static let ef2dcaa1a1b11 = make_ef2dcaa1a1b11()
+    static let e616b758142ef = make_e616b758142ef()
+    static let e298f589ff9b7 = make_e298f589ff9b7()
     static let edc4cbd35eb7f = make_edc4cbd35eb7f()
     static let e4a1c49d868e8 = make_e4a1c49d868e8()
     static let e0ab5e6dcc8c0 = make_e0ab5e6dcc8c0()
@@ -60,20 +101,44 @@ enum ReferenceFragmentCatalog {
     static let e230359933e7f = make_e230359933e7f()
     static let e5e7a2d0c070c = make_e5e7a2d0c070c()
     static let edd6ad99801bb = make_edd6ad99801bb()
+    static let e6feb51eff8a6 = make_e6feb51eff8a6()
     static let e38d7e5015fe7 = make_e38d7e5015fe7()
+    static let eba020406a0bb = make_eba020406a0bb()
+    static let e790401dd864c = make_e790401dd864c()
     static let e6d05f6c7aaa9 = make_e6d05f6c7aaa9()
+    static let e0fb0e4c76b45 = make_e0fb0e4c76b45()
     static let ec88108d754e8 = make_ec88108d754e8()
+    static let e381a990a1423 = make_e381a990a1423()
+    static let eb54b9b7ba7f0 = make_eb54b9b7ba7f0()
+    static let e7517f325885d = make_e7517f325885d()
     static let ea1a6411e3d41 = make_ea1a6411e3d41()
     static let ee853e6522b03 = make_ee853e6522b03()
+    static let efc18076eae6c = make_efc18076eae6c()
+    static let e2576aa506ac9 = make_e2576aa506ac9()
+    static let eab75323f2408 = make_eab75323f2408()
+    static let e22cff686fb71 = make_e22cff686fb71()
+    static let e8d03cb65185e = make_e8d03cb65185e()
+    static let e4cc43ae57f09 = make_e4cc43ae57f09()
+    static let ea59380346749 = make_ea59380346749()
+    static let e721f96053989 = make_e721f96053989()
+    static let ee1dac8291e76 = make_ee1dac8291e76()
     static let e9ab745e60ca1 = make_e9ab745e60ca1()
+    static let e08f25e008dac = make_e08f25e008dac()
     static let eaf016082e969 = make_eaf016082e969()
+    static let e7264ea0961dc = make_e7264ea0961dc()
+    static let e1d78bb4e006a = make_e1d78bb4e006a()
+    static let e85891f96edbc = make_e85891f96edbc()
+    static let eff35e38bd9ec = make_eff35e38bd9ec()
     static let e3ba2e31e4cc1 = make_e3ba2e31e4cc1()
     static let ee8a4498bd81b = make_ee8a4498bd81b()
     static let e58f62e819ee4 = make_e58f62e819ee4()
+    static let ed38844b01140 = make_ed38844b01140()
     static let e00615d7bbc39 = make_e00615d7bbc39()
+    static let eb128ccb140e5 = make_eb128ccb140e5()
     static let e3c8f206b44e5 = make_e3c8f206b44e5()
     static let e48e6cec62b62 = make_e48e6cec62b62()
     static let e9d6d83cdc8f4 = make_e9d6d83cdc8f4()
+    static let e0eab7d6dffc8 = make_e0eab7d6dffc8()
     static let ee9c0bd2ca418 = make_ee9c0bd2ca418()
     static let e7b0d60717ad7 = make_e7b0d60717ad7()
     static let ed21040ef427c = make_ed21040ef427c()
@@ -81,98 +146,172 @@ enum ReferenceFragmentCatalog {
     static let e081fdcec82af = make_e081fdcec82af()
     static let e2aaed4b17802 = make_e2aaed4b17802()
     static let ea64ba171e267 = make_ea64ba171e267()
+    static let ece8ee8d914b3 = make_ece8ee8d914b3()
     static let e9d6429555d0e = make_e9d6429555d0e()
+    static let e81af622a8da9 = make_e81af622a8da9()
+    static let e255ba2d47539 = make_e255ba2d47539()
+    static let e16da2c411f51 = make_e16da2c411f51()
     static let e7ab6e77c26cf = make_e7ab6e77c26cf()
+    static let ecb1990cb8e5f = make_ecb1990cb8e5f()
     static let e9e78f72e74ef = make_e9e78f72e74ef()
+    static let e2deb6e722aec = make_e2deb6e722aec()
+    static let ecef0c8a880bd = make_ecef0c8a880bd()
+    static let e813d2c65b932 = make_e813d2c65b932()
+    static let e8302ca417075 = make_e8302ca417075()
+    static let ec8c20b043809 = make_ec8c20b043809()
     static let eb03acc50b466 = make_eb03acc50b466()
     static let e82f843a1a29e = make_e82f843a1a29e()
+    static let ed7d2b3080174 = make_ed7d2b3080174()
     static let eefe0850cb533 = make_eefe0850cb533()
     static let e2365a45909ce = make_e2365a45909ce()
     static let e02a0866ee9bc = make_e02a0866ee9bc()
     static let e8f2ea0f3dea9 = make_e8f2ea0f3dea9()
     static let e04dda922fdfa = make_e04dda922fdfa()
     static let ef17cbbf42f17 = make_ef17cbbf42f17()
+    static let ebd05c868a466 = make_ebd05c868a466()
     static let e8e0a6f88c6f1 = make_e8e0a6f88c6f1()
     static let e40090140d122 = make_e40090140d122()
+    static let ec620fa828e95 = make_ec620fa828e95()
+    static let e06869eae4c9f = make_e06869eae4c9f()
+    static let ecd9799211148 = make_ecd9799211148()
     static let ed6d467b0b2fc = make_ed6d467b0b2fc()
     static let ee29f513da8cb = make_ee29f513da8cb()
     static let eeab7e403ece5 = make_eeab7e403ece5()
+    static let ecc27e58ef42f = make_ecc27e58ef42f()
     static let e4390d04fc4d7 = make_e4390d04fc4d7()
+    static let e092986811ff4 = make_e092986811ff4()
+    static let e59e2c22f99da = make_e59e2c22f99da()
     static let e0cdd4fb8685f = make_e0cdd4fb8685f()
+    static let e576b3cde47e6 = make_e576b3cde47e6()
+    static let e3a7a37a31d09 = make_e3a7a37a31d09()
     static let e8c9b81f88ba0 = make_e8c9b81f88ba0()
     static let e69ae7b9c2440 = make_e69ae7b9c2440()
     static let e26753b8c360e = make_e26753b8c360e()
+    static let ea93a6cc8fee5 = make_ea93a6cc8fee5()
     static let efec58c6d52e1 = make_efec58c6d52e1()
     static let eeae22f0a3488 = make_eeae22f0a3488()
     static let e1e32e5ce15e4 = make_e1e32e5ce15e4()
+    static let e3dc893f46bd6 = make_e3dc893f46bd6()
+    static let e83f3250e5723 = make_e83f3250e5723()
     static let ef43fb8dd1562 = make_ef43fb8dd1562()
+    static let eead7fb687e24 = make_eead7fb687e24()
+    static let e0136f093b8d4 = make_e0136f093b8d4()
     static let ed499a706b3c1 = make_ed499a706b3c1()
+    static let e074e7c9296ef = make_e074e7c9296ef()
+    static let ec2da1b62e988 = make_ec2da1b62e988()
+    static let ea8e0a421faa8 = make_ea8e0a421faa8()
     static let ed2fdd321a8b0 = make_ed2fdd321a8b0()
     static let e38f574cda1cf = make_e38f574cda1cf()
+    static let e3db98197ff5f = make_e3db98197ff5f()
+    static let ede5369a89427 = make_ede5369a89427()
+    static let e60ed1f64f84c = make_e60ed1f64f84c()
+    static let eadb757aa8f44 = make_eadb757aa8f44()
     static let ef86ca044f297 = make_ef86ca044f297()
+    static let e750df21668d2 = make_e750df21668d2()
     static let e8404b5764d4f = make_e8404b5764d4f()
+    static let eed3b0af3caab = make_eed3b0af3caab()
     static let efccbd7a6588a = make_efccbd7a6588a()
     static let e32743646744c = make_e32743646744c()
     static let e122258a4d83c = make_e122258a4d83c()
     static let e089fe308a7e7 = make_e089fe308a7e7()
+    static let e772b68314f0d = make_e772b68314f0d()
     static let ef17fae31f9b4 = make_ef17fae31f9b4()
     static let e73314b9e0697 = make_e73314b9e0697()
     static let eb7eb87384a14 = make_eb7eb87384a14()
     static let e7c3d6213e5be = make_e7c3d6213e5be()
+    static let e3cedc1a9644b = make_e3cedc1a9644b()
+    static let e6b5bf0e6539d = make_e6b5bf0e6539d()
+    static let ef2888d105ad3 = make_ef2888d105ad3()
     static let e0a0f452e32e2 = make_e0a0f452e32e2()
     static let e21823176e06e = make_e21823176e06e()
     static let e357c6c9c05a9 = make_e357c6c9c05a9()
     static let ebb8471d24fd0 = make_ebb8471d24fd0()
     static let e46a11ff71be9 = make_e46a11ff71be9()
     static let e40d45d33b0da = make_e40d45d33b0da()
+    static let e624154b0ab99 = make_e624154b0ab99()
+    static let efc98f41c805f = make_efc98f41c805f()
     static let e3d7ae5137bb1 = make_e3d7ae5137bb1()
     static let e5ad5e1e9a0fb = make_e5ad5e1e9a0fb()
     static let ea86c4dac0cf2 = make_ea86c4dac0cf2()
+    static let ed66b9748347b = make_ed66b9748347b()
     static let e48074a20347f = make_e48074a20347f()
     static let e1ab9310206cc = make_e1ab9310206cc()
+    static let e2236f1691530 = make_e2236f1691530()
+    static let e9ce9204922a1 = make_e9ce9204922a1()
+    static let e095ca329604f = make_e095ca329604f()
     static let ea03f4bd384d7 = make_ea03f4bd384d7()
+    static let e4f0ab48c1424 = make_e4f0ab48c1424()
+    static let e9493bb625413 = make_e9493bb625413()
     static let ebf8fdec0b910 = make_ebf8fdec0b910()
     static let e77c18bb5f153 = make_e77c18bb5f153()
     static let e45e8b482c9fc = make_e45e8b482c9fc()
+    static let e91bf849db644 = make_e91bf849db644()
     static let e6134d019d8aa = make_e6134d019d8aa()
+    static let e38a4c9012d33 = make_e38a4c9012d33()
     static let e590db1c1e3be = make_e590db1c1e3be()
     static let e0755d4beacf9 = make_e0755d4beacf9()
     static let e658cad5dcbff = make_e658cad5dcbff()
+    static let ead4fd5807e6b = make_ead4fd5807e6b()
     static let ea601aa767c60 = make_ea601aa767c60()
     static let e9468c5afe78d = make_e9468c5afe78d()
+    static let e0ed618b33e7c = make_e0ed618b33e7c()
     static let e2534d53346fd = make_e2534d53346fd()
     static let e4c2c2a58de22 = make_e4c2c2a58de22()
     static let e4ce85d1762e0 = make_e4ce85d1762e0()
     static let e307c69c1ef53 = make_e307c69c1ef53()
+    static let ee491c4fae043 = make_ee491c4fae043()
     static let e013a8d025a10 = make_e013a8d025a10()
+    static let ef1f2a785b8af = make_ef1f2a785b8af()
+    static let e5a72f8989e71 = make_e5a72f8989e71()
+    static let eb739822f4bca = make_eb739822f4bca()
     static let eab6572d7c425 = make_eab6572d7c425()
     static let e7dd301114b90 = make_e7dd301114b90()
     static let e45a6d8473da7 = make_e45a6d8473da7()
     static let ebea9e058896e = make_ebea9e058896e()
     static let e98c76d49aae0 = make_e98c76d49aae0()
     static let e24e265506083 = make_e24e265506083()
+    static let e107ba25ead0a = make_e107ba25ead0a()
+    static let ea37015d76f84 = make_ea37015d76f84()
+    static let ecb9c2e3a4604 = make_ecb9c2e3a4604()
     static let ed0445ed28fcb = make_ed0445ed28fcb()
     static let e3457df3dfc47 = make_e3457df3dfc47()
     static let e00491689d6e9 = make_e00491689d6e9()
+    static let edebde49dbce4 = make_edebde49dbce4()
     static let e093cdee083c0 = make_e093cdee083c0()
+    static let edd81f48cdbdf = make_edd81f48cdbdf()
+    static let ea162bb012e3b = make_ea162bb012e3b()
+    static let e6098f47050c7 = make_e6098f47050c7()
     static let e23c60d3376d8 = make_e23c60d3376d8()
+    static let e4adb23d89e62 = make_e4adb23d89e62()
+    static let e4ec48e14972e = make_e4ec48e14972e()
     static let edd9730a273e2 = make_edd9730a273e2()
+    static let e8a16b62f87bf = make_e8a16b62f87bf()
     static let ed8c1364415bd = make_ed8c1364415bd()
+    static let e0f1ffcd1d80c = make_e0f1ffcd1d80c()
     static let eb060c3395f8c = make_eb060c3395f8c()
+    static let e8da2ffb2563e = make_e8da2ffb2563e()
+    static let e48384ac931a8 = make_e48384ac931a8()
     static let e4fafe3d586d7 = make_e4fafe3d586d7()
     static let e49936984c33e = make_e49936984c33e()
     static let e59a72c4fb146 = make_e59a72c4fb146()
+    static let e81d6711ee96b = make_e81d6711ee96b()
+    static let ef7bfc66a0331 = make_ef7bfc66a0331()
+    static let ec7037817df3f = make_ec7037817df3f()
     static let e29290dcd29d4 = make_e29290dcd29d4()
     static let e9dd30289c4d2 = make_e9dd30289c4d2()
+    static let e166786ce98e5 = make_e166786ce98e5()
     static let eb1207886e2d6 = make_eb1207886e2d6()
     static let e10176b54c318 = make_e10176b54c318()
     static let efa58da681936 = make_efa58da681936()
     static let e27453a82d053 = make_e27453a82d053()
     static let e91c1f46e6267 = make_e91c1f46e6267()
+    static let ea6d12a4200af = make_ea6d12a4200af()
     static let e1175361457d7 = make_e1175361457d7()
     static let e7c18ca08691c = make_e7c18ca08691c()
     static let e474c2c7bde18 = make_e474c2c7bde18()
+    static let e21ccdcaf0ae5 = make_e21ccdcaf0ae5()
     static let eeb60ef76554d = make_eeb60ef76554d()
+    static let ebaeb07e01f6b = make_ebaeb07e01f6b()
     static let e1fc2d92d8130 = make_e1fc2d92d8130()
     static let e1f35079f3835 = make_e1f35079f3835()
     static let e93a1a3d64a7f = make_e93a1a3d64a7f()
@@ -181,144 +320,240 @@ enum ReferenceFragmentCatalog {
     static let e8a43530c7123 = make_e8a43530c7123()
     static let ecaa448a463ac = make_ecaa448a463ac()
     static let edd73a17d197e = make_edd73a17d197e()
+    static let e73a88d78bb90 = make_e73a88d78bb90()
     static let e555ea7a6d24a = make_e555ea7a6d24a()
     static let e150bc7e80a57 = make_e150bc7e80a57()
     static let ef3abc6169292 = make_ef3abc6169292()
+    static let e0993d9baf897 = make_e0993d9baf897()
     static let ee8a291463cb3 = make_ee8a291463cb3()
     static let e4dc1ec616108 = make_e4dc1ec616108()
     static let ef21215b0b044 = make_ef21215b0b044()
     static let eb87bbcbaa3b5 = make_eb87bbcbaa3b5()
     static let ebf64cf4cbca0 = make_ebf64cf4cbca0()
     static let e713978f9f30a = make_e713978f9f30a()
+    static let e66253689247b = make_e66253689247b()
+    static let e93ea7e7dc7b8 = make_e93ea7e7dc7b8()
     static let ed50f32b27cc7 = make_ed50f32b27cc7()
     static let e8d7c496ca902 = make_e8d7c496ca902()
+    static let efaa1c624f7db = make_efaa1c624f7db()
     static let e1b41b5dc7d75 = make_e1b41b5dc7d75()
     static let eee91489e4221 = make_eee91489e4221()
+    static let ec11d6a3d006f = make_ec11d6a3d006f()
     static let e5d4a39880b98 = make_e5d4a39880b98()
     static let e53cba70f20d3 = make_e53cba70f20d3()
+    static let e9bbf96906c5c = make_e9bbf96906c5c()
     static let e77bf324369ab = make_e77bf324369ab()
     static let e9e38aadb715d = make_e9e38aadb715d()
     static let ef8c112b6b73b = make_ef8c112b6b73b()
     static let e783368bd50f0 = make_e783368bd50f0()
+    static let ea9431f1f103e = make_ea9431f1f103e()
     static let eb23379931981 = make_eb23379931981()
     static let ef9f0c8cfa4ec = make_ef9f0c8cfa4ec()
+    static let e3d09e9ed63ea = make_e3d09e9ed63ea()
+    static let ee7da68f54175 = make_ee7da68f54175()
     static let e886f5cf1e803 = make_e886f5cf1e803()
     static let e056049200a8a = make_e056049200a8a()
     static let e834231f5b840 = make_e834231f5b840()
     static let e434450c9178e = make_e434450c9178e()
+    static let ec2c84e7a71ac = make_ec2c84e7a71ac()
+    static let e224b997f55d0 = make_e224b997f55d0()
     static let ec4590c5a93be = make_ec4590c5a93be()
     static let e8d3ec4445d94 = make_e8d3ec4445d94()
     static let ee29040f105ce = make_ee29040f105ce()
+    static let eece15aa8abca = make_eece15aa8abca()
+    static let e7b3f4c464331 = make_e7b3f4c464331()
     static let ee005827e6d32 = make_ee005827e6d32()
+    static let e633579a25d59 = make_e633579a25d59()
     static let e7032742ce4d0 = make_e7032742ce4d0()
     static let edab03f179817 = make_edab03f179817()
+    static let e45f1e97696b4 = make_e45f1e97696b4()
     static let e901c9ca1a178 = make_e901c9ca1a178()
+    static let ebb5b2972b1ff = make_ebb5b2972b1ff()
     static let e31db03cf71ce = make_e31db03cf71ce()
     static let e40ea8ab88a20 = make_e40ea8ab88a20()
+    static let e23cb70b90de7 = make_e23cb70b90de7()
+    static let e7efd76a1919d = make_e7efd76a1919d()
+    static let eb2d23670aea9 = make_eb2d23670aea9()
+    static let e8b3ce2e14963 = make_e8b3ce2e14963()
     static let ef9366504bfe5 = make_ef9366504bfe5()
     static let e6def5202c7d5 = make_e6def5202c7d5()
     static let e230bc2e96177 = make_e230bc2e96177()
     static let ef6a8a2f4b278 = make_ef6a8a2f4b278()
+    static let e24dfb8c8d8fe = make_e24dfb8c8d8fe()
+    static let eeb04e6930133 = make_eeb04e6930133()
     static let ef5e7316def99 = make_ef5e7316def99()
+    static let efc60eccebd05 = make_efc60eccebd05()
+    static let e0549745d4c9d = make_e0549745d4c9d()
     static let eccd079f37be9 = make_eccd079f37be9()
     static let ef9005da47ae5 = make_ef9005da47ae5()
     static let e5076ce23c6fe = make_e5076ce23c6fe()
+    static let e2d8cfa9ed315 = make_e2d8cfa9ed315()
     static let e3418485b643b = make_e3418485b643b()
     static let e821e62f4d00a = make_e821e62f4d00a()
     static let e8b0453ce568a = make_e8b0453ce568a()
+    static let e85488cdebd7e = make_e85488cdebd7e()
+    static let e50dd1fbb8f49 = make_e50dd1fbb8f49()
     static let e30b77c55f65f = make_e30b77c55f65f()
+    static let e1525a7897d86 = make_e1525a7897d86()
+    static let ebdacb4cdd872 = make_ebdacb4cdd872()
+    static let eb8205ef3d0f1 = make_eb8205ef3d0f1()
     static let e0125c8bfdb26 = make_e0125c8bfdb26()
+    static let e89a1eb7a5666 = make_e89a1eb7a5666()
     static let ebbe5a37d5059 = make_ebbe5a37d5059()
     static let eea5299388c79 = make_eea5299388c79()
     static let ebd5db59a84a3 = make_ebd5db59a84a3()
+    static let e2d3e44709b6f = make_e2d3e44709b6f()
     static let e8d45b247abcc = make_e8d45b247abcc()
+    static let e37c233b48fbb = make_e37c233b48fbb()
+    static let e4881aa2b86ec = make_e4881aa2b86ec()
     static let e25b952116050 = make_e25b952116050()
+    static let e93b2f3664b11 = make_e93b2f3664b11()
     static let ea3dde846bc3a = make_ea3dde846bc3a()
     static let e3f8177ab74b3 = make_e3f8177ab74b3()
     static let e698f2bbd9994 = make_e698f2bbd9994()
     static let e3785488e69de = make_e3785488e69de()
     static let eb5616c5f1f1c = make_eb5616c5f1f1c()
+    static let ee2c49cfac5c8 = make_ee2c49cfac5c8()
     static let e18058eae046e = make_e18058eae046e()
     static let ea91c7052d0a1 = make_ea91c7052d0a1()
     static let e990dbd10b606 = make_e990dbd10b606()
+    static let ecda745583188 = make_ecda745583188()
     static let e6c55023d327b = make_e6c55023d327b()
     static let e9c493c5dcbcc = make_e9c493c5dcbcc()
+    static let e6948e54523d7 = make_e6948e54523d7()
+    static let e909744660eae = make_e909744660eae()
     static let e33e0fb4d4196 = make_e33e0fb4d4196()
+    static let ec31ef6da209d = make_ec31ef6da209d()
     static let ed6991313756f = make_ed6991313756f()
+    static let e22830a1895e5 = make_e22830a1895e5()
+    static let e8d940d696d5a = make_e8d940d696d5a()
     static let e3403bb405f80 = make_e3403bb405f80()
     static let e7c9356e79187 = make_e7c9356e79187()
     static let e8b58c95215e1 = make_e8b58c95215e1()
     static let ec7335e01190b = make_ec7335e01190b()
     static let ec0fe8068a939 = make_ec0fe8068a939()
+    static let ecca4f087003b = make_ecca4f087003b()
     static let e748e5aade0a7 = make_e748e5aade0a7()
+    static let e218bd5ad9eda = make_e218bd5ad9eda()
+    static let e54bb2887bbf3 = make_e54bb2887bbf3()
     static let eac124fb5a85b = make_eac124fb5a85b()
+    static let e939fda13ce29 = make_e939fda13ce29()
+    static let e1e81130342ef = make_e1e81130342ef()
     static let ead6e7b5a8a95 = make_ead6e7b5a8a95()
     static let e4de40580aecf = make_e4de40580aecf()
+    static let eeff3703c0a9f = make_eeff3703c0a9f()
     static let ecabb31d99e3c = make_ecabb31d99e3c()
     static let e6e273782504a = make_e6e273782504a()
     static let e11a7cbe63246 = make_e11a7cbe63246()
+    static let e63808d29c55e = make_e63808d29c55e()
     static let e0eaef7a0da9e = make_e0eaef7a0da9e()
+    static let e7f0617cd0abe = make_e7f0617cd0abe()
     static let e48da38194e65 = make_e48da38194e65()
+    static let eb0eb768807ba = make_eb0eb768807ba()
     static let e6a4f65d4030d = make_e6a4f65d4030d()
+    static let efa9cf9246771 = make_efa9cf9246771()
+    static let eeef2ff66407b = make_eeef2ff66407b()
+    static let e8c15bfe725c8 = make_e8c15bfe725c8()
     static let e472d3b9c136f = make_e472d3b9c136f()
+    static let e1762eb454967 = make_e1762eb454967()
+    static let e5af76da00575 = make_e5af76da00575()
     static let e2b36e815b6cb = make_e2b36e815b6cb()
+    static let e377fcdc80f21 = make_e377fcdc80f21()
+    static let e80ca9b1eae55 = make_e80ca9b1eae55()
+    static let ed78228da4249 = make_ed78228da4249()
+    static let e81edd0afbc37 = make_e81edd0afbc37()
     static let e2d942b159289 = make_e2d942b159289()
     static let ea0f52d685790 = make_ea0f52d685790()
     static let e0105d31bfccd = make_e0105d31bfccd()
+    static let ed295c84e419e = make_ed295c84e419e()
+    static let ecbe59eeb6875 = make_ecbe59eeb6875()
+    static let e76d3ec759f5a = make_e76d3ec759f5a()
     static let eaf2f95b1ab6a = make_eaf2f95b1ab6a()
+    static let ea75e9a4eecad = make_ea75e9a4eecad()
     static let ec199db7a28a6 = make_ec199db7a28a6()
+    static let e0da4c5935943 = make_e0da4c5935943()
     static let e16b0e9488eac = make_e16b0e9488eac()
     static let ef296141d8982 = make_ef296141d8982()
     static let e9ae917ac0b5d = make_e9ae917ac0b5d()
+    static let e52053df16be1 = make_e52053df16be1()
+    static let e12a0fb215dc9 = make_e12a0fb215dc9()
     static let edf4550c7d022 = make_edf4550c7d022()
+    static let ea91d335188cb = make_ea91d335188cb()
     static let ef570d703a6f8 = make_ef570d703a6f8()
     static let ef9ec2b77c95e = make_ef9ec2b77c95e()
+    static let e691abb4cb767 = make_e691abb4cb767()
     static let e747b3f01d9e8 = make_e747b3f01d9e8()
     static let ec2cdadc6c8df = make_ec2cdadc6c8df()
     static let e4e43a09d7b11 = make_e4e43a09d7b11()
+    static let ed929f4c9bbc0 = make_ed929f4c9bbc0()
     static let eb8f8ae278481 = make_eb8f8ae278481()
     static let ee63cf8dafb63 = make_ee63cf8dafb63()
     static let e3e1c55e27b00 = make_e3e1c55e27b00()
+    static let eee7dc5eaa354 = make_eee7dc5eaa354()
+    static let ee440d77aa644 = make_ee440d77aa644()
     static let e56dda678d3a3 = make_e56dda678d3a3()
     static let eb8490e7ab00f = make_eb8490e7ab00f()
     static let edd3f3773971b = make_edd3f3773971b()
     static let e9f4328ecdff1 = make_e9f4328ecdff1()
     static let e853b38753337 = make_e853b38753337()
     static let e9d1fe3cb6559 = make_e9d1fe3cb6559()
+    static let e4923184f9377 = make_e4923184f9377()
     static let ef0dd00935b91 = make_ef0dd00935b91()
+    static let e46253edb996c = make_e46253edb996c()
     static let e06e1e8442923 = make_e06e1e8442923()
     static let e62c9cb20d026 = make_e62c9cb20d026()
+    static let e1a661f41fde7 = make_e1a661f41fde7()
+    static let eea433d51ae47 = make_eea433d51ae47()
     static let e063e6fea36fc = make_e063e6fea36fc()
     static let e33fc7922712c = make_e33fc7922712c()
     static let ebad4c68d6739 = make_ebad4c68d6739()
+    static let e5938b7aea087 = make_e5938b7aea087()
+    static let eb1510e292581 = make_eb1510e292581()
     static let ec69cd2450d1e = make_ec69cd2450d1e()
+    static let e7b6e4b43c51e = make_e7b6e4b43c51e()
     static let e88d742244e73 = make_e88d742244e73()
+    static let e9052edfe9633 = make_e9052edfe9633()
     static let e04f7ac7054f9 = make_e04f7ac7054f9()
+    static let e549fd9c36ceb = make_e549fd9c36ceb()
     static let eb9c690bc1b0a = make_eb9c690bc1b0a()
     static let ea9b0eb53c085 = make_ea9b0eb53c085()
     static let e656bf85e2a2e = make_e656bf85e2a2e()
+    static let ec0f84c556368 = make_ec0f84c556368()
     static let e96fdd2c111c7 = make_e96fdd2c111c7()
+    static let e228c81dec835 = make_e228c81dec835()
     static let e2e4f2d594baa = make_e2e4f2d594baa()
     static let eaf4b83be09ed = make_eaf4b83be09ed()
+    static let e9bbc23eabea4 = make_e9bbc23eabea4()
     static let e9093183a3660 = make_e9093183a3660()
     static let e66563e1861dc = make_e66563e1861dc()
     static let ec8c8369bd4f7 = make_ec8c8369bd4f7()
     static let e227d3c4d2f74 = make_e227d3c4d2f74()
     static let e9a676789bdc9 = make_e9a676789bdc9()
     static let e26dde3c2724a = make_e26dde3c2724a()
+    static let e66a98a028d06 = make_e66a98a028d06()
+    static let ecc34859ed935 = make_ecc34859ed935()
     static let e68dc1acb0c4e = make_e68dc1acb0c4e()
     static let ed1142f9e5fc6 = make_ed1142f9e5fc6()
     static let e4cca71a4fa76 = make_e4cca71a4fa76()
+    static let e5fd9ac31193b = make_e5fd9ac31193b()
     static let e056a7f11c36f = make_e056a7f11c36f()
+    static let e667ffd209ce2 = make_e667ffd209ce2()
     static let e3817a19bd21a = make_e3817a19bd21a()
     static let ea60f3ed290c4 = make_ea60f3ed290c4()
+    static let e88e324e915a2 = make_e88e324e915a2()
+    static let e742ebb30f871 = make_e742ebb30f871()
     static let e0b36f4e17fc1 = make_e0b36f4e17fc1()
+    static let e6bbee04d6850 = make_e6bbee04d6850()
     static let e3f20da3f4268 = make_e3f20da3f4268()
     static let eb44607c6a5bb = make_eb44607c6a5bb()
     static let e977de7038c0d = make_e977de7038c0d()
-    static let all: [ReferenceFragmentDefinition] = [ef85af76987e2, ed0ecd5892079, eefcbfad10b80, e5ce70fd654b4, eda4e4b9044e8, eb584ad357d55, e99719be0ea0e, e9aef1f7bd1aa, ec9e48a380de9, e98e0bd11fc6f, eac60c37101a4, ea7451d774e79, ef1a32c8ec2aa, ecfd444272da7, e4e3f06553794, e64e1f2cb0e3f, eb09dba903d3f, e003b34e765ad, ea36bd8dcebf0, e75f2a17f4488, e8aadbfe83ddc, ea8df009485f0, efe306ea22425, e6fdbbd5a476c, ea3452b1fb102, e44c3753736ad, eaeaf49f44c73, e43ead01bcc8f, e6e18bbe3f759, eccad7e332cdb, e24809c908d0e, e768f587f4504, ea4ee3a4adc94, e26bad7d24238, ee9dd225d9a0f, eb6dc61cb9fe1, eb027a40e1d3a, e1bceb7e68ceb, e8fb235f1d884, e5472df25c99f, efcd1d4eda677, e2dd6792a7249, ec5cb0732b786, e3fe027453e82, e0dd14e6286ab, e9f16e2302452, e31cec718c9c3, e51de8cc7d47d, edc4cbd35eb7f, e4a1c49d868e8, e0ab5e6dcc8c0, ebde5c0d65142, e675237abf793, ec29f6ff7df34, e230359933e7f, e5e7a2d0c070c, edd6ad99801bb, e38d7e5015fe7, e6d05f6c7aaa9, ec88108d754e8, ea1a6411e3d41, ee853e6522b03, e9ab745e60ca1, eaf016082e969, e3ba2e31e4cc1, ee8a4498bd81b, e58f62e819ee4, e00615d7bbc39, e3c8f206b44e5, e48e6cec62b62, e9d6d83cdc8f4, ee9c0bd2ca418, e7b0d60717ad7, ed21040ef427c, ec9d67f3d02bc, e081fdcec82af, e2aaed4b17802, ea64ba171e267, e9d6429555d0e, e7ab6e77c26cf, e9e78f72e74ef, eb03acc50b466, e82f843a1a29e, eefe0850cb533, e2365a45909ce, e02a0866ee9bc, e8f2ea0f3dea9, e04dda922fdfa, ef17cbbf42f17, e8e0a6f88c6f1, e40090140d122, ed6d467b0b2fc, ee29f513da8cb, eeab7e403ece5, e4390d04fc4d7, e0cdd4fb8685f, e8c9b81f88ba0, e69ae7b9c2440, e26753b8c360e, efec58c6d52e1, eeae22f0a3488, e1e32e5ce15e4, ef43fb8dd1562, ed499a706b3c1, ed2fdd321a8b0, e38f574cda1cf, ef86ca044f297, e8404b5764d4f, efccbd7a6588a, e32743646744c, e122258a4d83c, e089fe308a7e7, ef17fae31f9b4, e73314b9e0697, eb7eb87384a14, e7c3d6213e5be, e0a0f452e32e2, e21823176e06e, e357c6c9c05a9, ebb8471d24fd0, e46a11ff71be9, e40d45d33b0da, e3d7ae5137bb1, e5ad5e1e9a0fb, ea86c4dac0cf2, e48074a20347f, e1ab9310206cc, ea03f4bd384d7, ebf8fdec0b910, e77c18bb5f153, e45e8b482c9fc, e6134d019d8aa, e590db1c1e3be, e0755d4beacf9, e658cad5dcbff, ea601aa767c60, e9468c5afe78d, e2534d53346fd, e4c2c2a58de22, e4ce85d1762e0, e307c69c1ef53, e013a8d025a10, eab6572d7c425, e7dd301114b90, e45a6d8473da7, ebea9e058896e, e98c76d49aae0, e24e265506083, ed0445ed28fcb, e3457df3dfc47, e00491689d6e9, e093cdee083c0, e23c60d3376d8, edd9730a273e2, ed8c1364415bd, eb060c3395f8c, e4fafe3d586d7, e49936984c33e, e59a72c4fb146, e29290dcd29d4, e9dd30289c4d2, eb1207886e2d6, e10176b54c318, efa58da681936, e27453a82d053, e91c1f46e6267, e1175361457d7, e7c18ca08691c, e474c2c7bde18, eeb60ef76554d, e1fc2d92d8130, e1f35079f3835, e93a1a3d64a7f, ed357752a6a48, edb351ee38a79, e8a43530c7123, ecaa448a463ac, edd73a17d197e, e555ea7a6d24a, e150bc7e80a57, ef3abc6169292, ee8a291463cb3, e4dc1ec616108, ef21215b0b044, eb87bbcbaa3b5, ebf64cf4cbca0, e713978f9f30a, ed50f32b27cc7, e8d7c496ca902, e1b41b5dc7d75, eee91489e4221, e5d4a39880b98, e53cba70f20d3, e77bf324369ab, e9e38aadb715d, ef8c112b6b73b, e783368bd50f0, eb23379931981, ef9f0c8cfa4ec, e886f5cf1e803, e056049200a8a, e834231f5b840, e434450c9178e, ec4590c5a93be, e8d3ec4445d94, ee29040f105ce, ee005827e6d32, e7032742ce4d0, edab03f179817, e901c9ca1a178, e31db03cf71ce, e40ea8ab88a20, ef9366504bfe5, e6def5202c7d5, e230bc2e96177, ef6a8a2f4b278, ef5e7316def99, eccd079f37be9, ef9005da47ae5, e5076ce23c6fe, e3418485b643b, e821e62f4d00a, e8b0453ce568a, e30b77c55f65f, e0125c8bfdb26, ebbe5a37d5059, eea5299388c79, ebd5db59a84a3, e8d45b247abcc, e25b952116050, ea3dde846bc3a, e3f8177ab74b3, e698f2bbd9994, e3785488e69de, eb5616c5f1f1c, e18058eae046e, ea91c7052d0a1, e990dbd10b606, e6c55023d327b, e9c493c5dcbcc, e33e0fb4d4196, ed6991313756f, e3403bb405f80, e7c9356e79187, e8b58c95215e1, ec7335e01190b, ec0fe8068a939, e748e5aade0a7, eac124fb5a85b, ead6e7b5a8a95, e4de40580aecf, ecabb31d99e3c, e6e273782504a, e11a7cbe63246, e0eaef7a0da9e, e48da38194e65, e6a4f65d4030d, e472d3b9c136f, e2b36e815b6cb, e2d942b159289, ea0f52d685790, e0105d31bfccd, eaf2f95b1ab6a, ec199db7a28a6, e16b0e9488eac, ef296141d8982, e9ae917ac0b5d, edf4550c7d022, ef570d703a6f8, ef9ec2b77c95e, e747b3f01d9e8, ec2cdadc6c8df, e4e43a09d7b11, eb8f8ae278481, ee63cf8dafb63, e3e1c55e27b00, e56dda678d3a3, eb8490e7ab00f, edd3f3773971b, e9f4328ecdff1, e853b38753337, e9d1fe3cb6559, ef0dd00935b91, e06e1e8442923, e62c9cb20d026, e063e6fea36fc, e33fc7922712c, ebad4c68d6739, ec69cd2450d1e, e88d742244e73, e04f7ac7054f9, eb9c690bc1b0a, ea9b0eb53c085, e656bf85e2a2e, e96fdd2c111c7, e2e4f2d594baa, eaf4b83be09ed, e9093183a3660, e66563e1861dc, ec8c8369bd4f7, e227d3c4d2f74, e9a676789bdc9, e26dde3c2724a, e68dc1acb0c4e, ed1142f9e5fc6, e4cca71a4fa76, e056a7f11c36f, e3817a19bd21a, ea60f3ed290c4, e0b36f4e17fc1, e3f20da3f4268, eb44607c6a5bb, e977de7038c0d]
-    static let publicCandidates: [ReferenceFragmentDefinition] = [ed0ecd5892079, e75f2a17f4488, efe306ea22425, ea3452b1fb102, eaeaf49f44c73, ea4ee3a4adc94, e51de8cc7d47d, ec88108d754e8, e7b0d60717ad7, e9e78f72e74ef, eeab7e403ece5, e26753b8c360e, e8404b5764d4f, e658cad5dcbff, e3457df3dfc47, e00491689d6e9, ed8c1364415bd, efa58da681936, e27453a82d053, e4dc1ec616108, e783368bd50f0, e3418485b643b, eaf2f95b1ab6a, ec2cdadc6c8df, eb8f8ae278481, edd3f3773971b, e656bf85e2a2e, e056a7f11c36f]
-    static let promoted: [ReferenceFragmentDefinition] = [ed0ecd5892079, e75f2a17f4488, ea3452b1fb102, eaeaf49f44c73, ea4ee3a4adc94, e51de8cc7d47d, eeab7e403ece5, e26753b8c360e, e8404b5764d4f, e658cad5dcbff, e3457df3dfc47, ed8c1364415bd, eaf2f95b1ab6a, e656bf85e2a2e, e056a7f11c36f]
+    static let e6e6f1350a372 = make_e6e6f1350a372()
+    static let efe1e52957db3 = make_efe1e52957db3()
+    static let ea55a014f7a51 = make_ea55a014f7a51()
+    static let all: [ReferenceFragmentDefinition] = [ef85af76987e2, ed0ecd5892079, eb9d2e1133709, eefcbfad10b80, e0cd08bc006aa, eb68b042d0b49, e5ce70fd654b4, eda4e4b9044e8, eed18fc59f8e7, e92894954531f, eb584ad357d55, e99719be0ea0e, e4f4cabb4ff42, e9aef1f7bd1aa, ec9e48a380de9, e98e0bd11fc6f, eac60c37101a4, ea7451d774e79, ef1a32c8ec2aa, e99e7b4a5ff23, ecfd444272da7, e1c0590e4ceef, eb0c7148e4047, e101af6b51e30, e4e3f06553794, e032beb914427, e5233aa604543, e64e1f2cb0e3f, ec9e8361126df, ecd33a51c7cb3, e398a5f60192e, e3ff064ef7353, eb09dba903d3f, e003b34e765ad, e4f080156a045, ea36bd8dcebf0, e75f2a17f4488, e8aadbfe83ddc, ea8df009485f0, e9540262aa1f0, efe306ea22425, e6fdbbd5a476c, ea3452b1fb102, e44c3753736ad, eef0730511250, eaeaf49f44c73, e9d6a291b2496, e13aa6c6f3b1c, e43ead01bcc8f, efc580f636abc, ef17257e3434e, e9fb4203c1389, e6e18bbe3f759, eccad7e332cdb, e24809c908d0e, ed31095823fed, e768f587f4504, eb89a5a2a3d4c, ea2681cd2906f, ea4ee3a4adc94, e26bad7d24238, ee9dd225d9a0f, e8d9cd41a7d1f, eb6dc61cb9fe1, eb027a40e1d3a, e430c29609f0f, e066e5f75d7f0, e1bceb7e68ceb, eaf9be5de3d0e, e8fb235f1d884, e5472df25c99f, efcd1d4eda677, e2dd6792a7249, ec5cb0732b786, e301e478fe822, e3fe027453e82, eeb953c7a62af, e9ca70f7a9e82, e6b65a73fb112, e039f5ed2414d, e0dd14e6286ab, e64da4f6f68f7, e9f16e2302452, ead6e335ee83d, e31cec718c9c3, e51de8cc7d47d, ef2dcaa1a1b11, e616b758142ef, e298f589ff9b7, edc4cbd35eb7f, e4a1c49d868e8, e0ab5e6dcc8c0, ebde5c0d65142, e675237abf793, ec29f6ff7df34, e230359933e7f, e5e7a2d0c070c, edd6ad99801bb, e6feb51eff8a6, e38d7e5015fe7, eba020406a0bb, e790401dd864c, e6d05f6c7aaa9, e0fb0e4c76b45, ec88108d754e8, e381a990a1423, eb54b9b7ba7f0, e7517f325885d, ea1a6411e3d41, ee853e6522b03, efc18076eae6c, e2576aa506ac9, eab75323f2408, e22cff686fb71, e8d03cb65185e, e4cc43ae57f09, ea59380346749, e721f96053989, ee1dac8291e76, e9ab745e60ca1, e08f25e008dac, eaf016082e969, e7264ea0961dc, e1d78bb4e006a, e85891f96edbc, eff35e38bd9ec, e3ba2e31e4cc1, ee8a4498bd81b, e58f62e819ee4, ed38844b01140, e00615d7bbc39, eb128ccb140e5, e3c8f206b44e5, e48e6cec62b62, e9d6d83cdc8f4, e0eab7d6dffc8, ee9c0bd2ca418, e7b0d60717ad7, ed21040ef427c, ec9d67f3d02bc, e081fdcec82af, e2aaed4b17802, ea64ba171e267, ece8ee8d914b3, e9d6429555d0e, e81af622a8da9, e255ba2d47539, e16da2c411f51, e7ab6e77c26cf, ecb1990cb8e5f, e9e78f72e74ef, e2deb6e722aec, ecef0c8a880bd, e813d2c65b932, e8302ca417075, ec8c20b043809, eb03acc50b466, e82f843a1a29e, ed7d2b3080174, eefe0850cb533, e2365a45909ce, e02a0866ee9bc, e8f2ea0f3dea9, e04dda922fdfa, ef17cbbf42f17, ebd05c868a466, e8e0a6f88c6f1, e40090140d122, ec620fa828e95, e06869eae4c9f, ecd9799211148, ed6d467b0b2fc, ee29f513da8cb, eeab7e403ece5, ecc27e58ef42f, e4390d04fc4d7, e092986811ff4, e59e2c22f99da, e0cdd4fb8685f, e576b3cde47e6, e3a7a37a31d09, e8c9b81f88ba0, e69ae7b9c2440, e26753b8c360e, ea93a6cc8fee5, efec58c6d52e1, eeae22f0a3488, e1e32e5ce15e4, e3dc893f46bd6, e83f3250e5723, ef43fb8dd1562, eead7fb687e24, e0136f093b8d4, ed499a706b3c1, e074e7c9296ef, ec2da1b62e988, ea8e0a421faa8, ed2fdd321a8b0, e38f574cda1cf, e3db98197ff5f, ede5369a89427, e60ed1f64f84c, eadb757aa8f44, ef86ca044f297, e750df21668d2, e8404b5764d4f, eed3b0af3caab, efccbd7a6588a, e32743646744c, e122258a4d83c, e089fe308a7e7, e772b68314f0d, ef17fae31f9b4, e73314b9e0697, eb7eb87384a14, e7c3d6213e5be, e3cedc1a9644b, e6b5bf0e6539d, ef2888d105ad3, e0a0f452e32e2, e21823176e06e, e357c6c9c05a9, ebb8471d24fd0, e46a11ff71be9, e40d45d33b0da, e624154b0ab99, efc98f41c805f, e3d7ae5137bb1, e5ad5e1e9a0fb, ea86c4dac0cf2, ed66b9748347b, e48074a20347f, e1ab9310206cc, e2236f1691530, e9ce9204922a1, e095ca329604f, ea03f4bd384d7, e4f0ab48c1424, e9493bb625413, ebf8fdec0b910, e77c18bb5f153, e45e8b482c9fc, e91bf849db644, e6134d019d8aa, e38a4c9012d33, e590db1c1e3be, e0755d4beacf9, e658cad5dcbff, ead4fd5807e6b, ea601aa767c60, e9468c5afe78d, e0ed618b33e7c, e2534d53346fd, e4c2c2a58de22, e4ce85d1762e0, e307c69c1ef53, ee491c4fae043, e013a8d025a10, ef1f2a785b8af, e5a72f8989e71, eb739822f4bca, eab6572d7c425, e7dd301114b90, e45a6d8473da7, ebea9e058896e, e98c76d49aae0, e24e265506083, e107ba25ead0a, ea37015d76f84, ecb9c2e3a4604, ed0445ed28fcb, e3457df3dfc47, e00491689d6e9, edebde49dbce4, e093cdee083c0, edd81f48cdbdf, ea162bb012e3b, e6098f47050c7, e23c60d3376d8, e4adb23d89e62, e4ec48e14972e, edd9730a273e2, e8a16b62f87bf, ed8c1364415bd, e0f1ffcd1d80c, eb060c3395f8c, e8da2ffb2563e, e48384ac931a8, e4fafe3d586d7, e49936984c33e, e59a72c4fb146, e81d6711ee96b, ef7bfc66a0331, ec7037817df3f, e29290dcd29d4, e9dd30289c4d2, e166786ce98e5, eb1207886e2d6, e10176b54c318, efa58da681936, e27453a82d053, e91c1f46e6267, ea6d12a4200af, e1175361457d7, e7c18ca08691c, e474c2c7bde18, e21ccdcaf0ae5, eeb60ef76554d, ebaeb07e01f6b, e1fc2d92d8130, e1f35079f3835, e93a1a3d64a7f, ed357752a6a48, edb351ee38a79, e8a43530c7123, ecaa448a463ac, edd73a17d197e, e73a88d78bb90, e555ea7a6d24a, e150bc7e80a57, ef3abc6169292, e0993d9baf897, ee8a291463cb3, e4dc1ec616108, ef21215b0b044, eb87bbcbaa3b5, ebf64cf4cbca0, e713978f9f30a, e66253689247b, e93ea7e7dc7b8, ed50f32b27cc7, e8d7c496ca902, efaa1c624f7db, e1b41b5dc7d75, eee91489e4221, ec11d6a3d006f, e5d4a39880b98, e53cba70f20d3, e9bbf96906c5c, e77bf324369ab, e9e38aadb715d, ef8c112b6b73b, e783368bd50f0, ea9431f1f103e, eb23379931981, ef9f0c8cfa4ec, e3d09e9ed63ea, ee7da68f54175, e886f5cf1e803, e056049200a8a, e834231f5b840, e434450c9178e, ec2c84e7a71ac, e224b997f55d0, ec4590c5a93be, e8d3ec4445d94, ee29040f105ce, eece15aa8abca, e7b3f4c464331, ee005827e6d32, e633579a25d59, e7032742ce4d0, edab03f179817, e45f1e97696b4, e901c9ca1a178, ebb5b2972b1ff, e31db03cf71ce, e40ea8ab88a20, e23cb70b90de7, e7efd76a1919d, eb2d23670aea9, e8b3ce2e14963, ef9366504bfe5, e6def5202c7d5, e230bc2e96177, ef6a8a2f4b278, e24dfb8c8d8fe, eeb04e6930133, ef5e7316def99, efc60eccebd05, e0549745d4c9d, eccd079f37be9, ef9005da47ae5, e5076ce23c6fe, e2d8cfa9ed315, e3418485b643b, e821e62f4d00a, e8b0453ce568a, e85488cdebd7e, e50dd1fbb8f49, e30b77c55f65f, e1525a7897d86, ebdacb4cdd872, eb8205ef3d0f1, e0125c8bfdb26, e89a1eb7a5666, ebbe5a37d5059, eea5299388c79, ebd5db59a84a3, e2d3e44709b6f, e8d45b247abcc, e37c233b48fbb, e4881aa2b86ec, e25b952116050, e93b2f3664b11, ea3dde846bc3a, e3f8177ab74b3, e698f2bbd9994, e3785488e69de, eb5616c5f1f1c, ee2c49cfac5c8, e18058eae046e, ea91c7052d0a1, e990dbd10b606, ecda745583188, e6c55023d327b, e9c493c5dcbcc, e6948e54523d7, e909744660eae, e33e0fb4d4196, ec31ef6da209d, ed6991313756f, e22830a1895e5, e8d940d696d5a, e3403bb405f80, e7c9356e79187, e8b58c95215e1, ec7335e01190b, ec0fe8068a939, ecca4f087003b, e748e5aade0a7, e218bd5ad9eda, e54bb2887bbf3, eac124fb5a85b, e939fda13ce29, e1e81130342ef, ead6e7b5a8a95, e4de40580aecf, eeff3703c0a9f, ecabb31d99e3c, e6e273782504a, e11a7cbe63246, e63808d29c55e, e0eaef7a0da9e, e7f0617cd0abe, e48da38194e65, eb0eb768807ba, e6a4f65d4030d, efa9cf9246771, eeef2ff66407b, e8c15bfe725c8, e472d3b9c136f, e1762eb454967, e5af76da00575, e2b36e815b6cb, e377fcdc80f21, e80ca9b1eae55, ed78228da4249, e81edd0afbc37, e2d942b159289, ea0f52d685790, e0105d31bfccd, ed295c84e419e, ecbe59eeb6875, e76d3ec759f5a, eaf2f95b1ab6a, ea75e9a4eecad, ec199db7a28a6, e0da4c5935943, e16b0e9488eac, ef296141d8982, e9ae917ac0b5d, e52053df16be1, e12a0fb215dc9, edf4550c7d022, ea91d335188cb, ef570d703a6f8, ef9ec2b77c95e, e691abb4cb767, e747b3f01d9e8, ec2cdadc6c8df, e4e43a09d7b11, ed929f4c9bbc0, eb8f8ae278481, ee63cf8dafb63, e3e1c55e27b00, eee7dc5eaa354, ee440d77aa644, e56dda678d3a3, eb8490e7ab00f, edd3f3773971b, e9f4328ecdff1, e853b38753337, e9d1fe3cb6559, e4923184f9377, ef0dd00935b91, e46253edb996c, e06e1e8442923, e62c9cb20d026, e1a661f41fde7, eea433d51ae47, e063e6fea36fc, e33fc7922712c, ebad4c68d6739, e5938b7aea087, eb1510e292581, ec69cd2450d1e, e7b6e4b43c51e, e88d742244e73, e9052edfe9633, e04f7ac7054f9, e549fd9c36ceb, eb9c690bc1b0a, ea9b0eb53c085, e656bf85e2a2e, ec0f84c556368, e96fdd2c111c7, e228c81dec835, e2e4f2d594baa, eaf4b83be09ed, e9bbc23eabea4, e9093183a3660, e66563e1861dc, ec8c8369bd4f7, e227d3c4d2f74, e9a676789bdc9, e26dde3c2724a, e66a98a028d06, ecc34859ed935, e68dc1acb0c4e, ed1142f9e5fc6, e4cca71a4fa76, e5fd9ac31193b, e056a7f11c36f, e667ffd209ce2, e3817a19bd21a, ea60f3ed290c4, e88e324e915a2, e742ebb30f871, e0b36f4e17fc1, e6bbee04d6850, e3f20da3f4268, eb44607c6a5bb, e977de7038c0d, e6e6f1350a372, efe1e52957db3, ea55a014f7a51]
+    static let bySourceID = Dictionary(all.map { ($0.sourceID, $0) }, uniquingKeysWith: { first, _ in first })
+    static let publicCandidates: [ReferenceFragmentDefinition] = [ed0ecd5892079, eb9d2e1133709, e75f2a17f4488, ea3452b1fb102, e44c3753736ad, eef0730511250, eaeaf49f44c73, ea4ee3a4adc94, e51de8cc7d47d, e616b758142ef, ec88108d754e8, eb128ccb140e5, e7b0d60717ad7, e255ba2d47539, e9e78f72e74ef, e8f2ea0f3dea9, eeab7e403ece5, e26753b8c360e, ea8e0a421faa8, e8404b5764d4f, e772b68314f0d, e5ad5e1e9a0fb, e658cad5dcbff, e3457df3dfc47, ea162bb012e3b, ed8c1364415bd, e49936984c33e, efa58da681936, e27453a82d053, e150bc7e80a57, e4dc1ec616108, e77bf324369ab, e783368bd50f0, ea9431f1f103e, e3418485b643b, eaf2f95b1ab6a, e52053df16be1, ec2cdadc6c8df, eee7dc5eaa354, edd3f3773971b, e656bf85e2a2e, e056a7f11c36f]
+    static let promoted: [ReferenceFragmentDefinition] = [ed0ecd5892079, e75f2a17f4488, ea3452b1fb102, eaeaf49f44c73, ea4ee3a4adc94, e51de8cc7d47d, ec88108d754e8, e7b0d60717ad7, e9e78f72e74ef, eeab7e403ece5, e26753b8c360e, e8404b5764d4f, e658cad5dcbff, e3457df3dfc47, ed8c1364415bd, efa58da681936, e27453a82d053, e4dc1ec616108, e783368bd50f0, e3418485b643b, eaf2f95b1ab6a, ec2cdadc6c8df, edd3f3773971b, e656bf85e2a2e, e056a7f11c36f]
     private static func make_ef85af76987e2() -> ReferenceFragmentDefinition {
         var parameters: [ReferenceFragmentParameter] = []
         parameters.append(ReferenceFragmentParameter(definition: .number("noiseFreq", "Blob Scale", 3.5, 0.1, 20.0, step: 0.1), slot: 11))
@@ -330,7 +565,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixWithSource", "Mix With Source", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ef85af76987e2", name: "PsykoBlobs", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ef85af76987e2", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.s_psykoblobs", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ed0ecd5892079() -> ReferenceFragmentDefinition {
@@ -347,7 +582,26 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 20, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.ed0ecd5892079", name: "Linescape", summary: "Layered noise-driven terrain lines with perspective, rotation and two colors.",
             category: .stylize, function: "refAM35_ed0ecd5892079", slots: 21,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.linescape", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eb9d2e1133709() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .point("parr", "Parallax", Vec2(0.0, 0.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("intensity", "Strength", 0.25, 0.0, 2.5, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("evolution", "Evolution", 0.0, -50.0, 50.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("direction", "direction", ["Φ", "R", "ΦR", "X", "Y", "XY"], 2), slot: 15, choiceValues: [5, 3, 4, 0, 1, 2], choiceTargets: [["singleAxis"], ["singleAxis"], [], ["singleAxis"], ["singleAxis"], []]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 17, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 5.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("singleAxis", "Constrain Sample Axis", true), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("screenSpace", "Screen Space", false), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("octaves", "Octaves", 6.0, 1.0, 9.0, step: 1.0), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offs", "Bias", 0.0, -1.0, 1.0, step: 0.001), slot: 22))
+        return ReferenceFragmentDefinition(id: "awi.amref.eb9d2e1133709", name: "Fractal Blur", summary: "Blur along a fractal displacement field with radial, angular, X, Y and XY sampling directions, evolving noise, bias and octave control.",
+            category: .blur, function: "refAM35_eb9d2e1133709", slots: 23,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.warpblur", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eefcbfad10b80() -> ReferenceFragmentDefinition {
@@ -364,7 +618,40 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.eefcbfad10b80", name: "Normal Map", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_eefcbfad10b80", slots: 21,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.custom.effects.normal_map", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e0cd08bc006aa() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("count", "Count", 10.0, 1.0, 200.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smoothness", "Smoothness", 0.5, 0.0, 1.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("speed", "Speed", 1.0, -5.0, 5.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Feather", 0.02, 0.0, 100.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("reverse", "Reverse (0/1)", 0.0, 0.0, 1.0, step: 1.0), slot: 16))
+        return ReferenceFragmentDefinition(id: "awi.amref.e0cd08bc006aa", name: "Time Slice Mask", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e0cd08bc006aa", slots: 17,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.time_slice_mask", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eb68b042d0b49() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 0.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 100.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressc", "Orient X", 100.0, -1000.0, 1000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressd", "Orient Y", 0.0, 0.0, 1000.0, step: 2.5, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progresse", "Strength", 25.0, 10.0, 1000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Reflection", 180.0, 0.0, 100000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressb", "Luminance", 100.0, 0.0, 1000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Flare Color", RGBA(0.4392156862745098, 0.23921568627450981, 0.2, 1.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color3", "Base Color", RGBA(0.2980392156862745, 0.2, 0.0196078431372549, 1.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color4", "Secondary Color", RGBA(0.2, 0.5019607843137255, 0.8, 1.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 21, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.eb68b042d0b49", name: "New Lensflare", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_eb68b042d0b49", slots: 22,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.newlensflare", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e5ce70fd654b4() -> ReferenceFragmentDefinition {
@@ -373,7 +660,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 5.0), slot: 12))
         return ReferenceFragmentDefinition(id: "awi.amref.e5ce70fd654b4", name: "Spin Blur", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e5ce70fd654b4", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.spinblur2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eda4e4b9044e8() -> ReferenceFragmentDefinition {
@@ -384,7 +671,41 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend With Original", 0.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 14, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.eda4e4b9044e8", name: "Tritone", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_eda4e4b9044e8", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.tritone", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eed18fc59f8e7() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("NUM_SAMPLES", "Samples", 15.0, 5.0, 30.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("STRENGTH", "Strength", 50.0, 0.0, 100.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("iter", "Hardness", 1.0, 1.0, 3.0, step: 1.0), slot: 15))
+        return ReferenceFragmentDefinition(id: "awi.amref.eed18fc59f8e7", name: "Hexagon Blur", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .blur, function: "refAM35_eed18fc59f8e7", slots: 16,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xdist", binding: 1, downsample: 1)], passes: ["xdist", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.hexagonblur", externalPasses: [0: "com.alightcreative.effects.fastadj"], sourcePasses: [:], iterationParameter: "iter")
+    }
+
+    private static func make_e92894954531f() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 11, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxc", "Strength", 300.0, 100.0, 360.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxd", "Thickness", 700.0, 600.0, 800.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxf", "Seed", 1.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxh", "Alpha Noise", 15.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("iter", "Sample", 1.0, 1.0, 5.0, step: 1.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxi", "Freq Block", 20000.0, -1000.0, 50000.0, step: 10.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxj", "Lenght Block", 200.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxk", "Width Block", 200.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxl", "Y Offset", 20.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxm", "Distance Block X", 200.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxn", "Distance Block Y", 800.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxo", "X Block Offset", 50.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxp", "Y Block Offset", 30.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e92894954531f", name: "Glitch Noise", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e92894954531f", slots: 26,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.crossglitch", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e63726f7373676c69746368"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_eb584ad357d55() -> ReferenceFragmentDefinition {
@@ -396,7 +717,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.eb584ad357d55", name: "Hexagon Tile Shift", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_eb584ad357d55", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.hexagonTileShift", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e99719be0ea0e() -> ReferenceFragmentDefinition {
@@ -410,7 +731,22 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 1.0, 0.0, 1.0, step: 0.01), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.e99719be0ea0e", name: "S_GlintRainbow (AE Motion)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e99719be0ea0e", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.sapphire.glint-rainbow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e4f4cabb4ff42() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.1, 0.0, 1.0, step: 0.001), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("size", "Size", 10.0, 0.5, 200.0, step: 0.1), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 14, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 5.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("screenSpace", "Screen Space", false), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("maskToLayer", "Mask To Layer", false), slot: 18))
+        return ReferenceFragmentDefinition(id: "awi.amref.e4f4cabb4ff42", name: "Hexagon Tile Shift", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e4f4cabb4ff42", slots: 19,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.hexshift", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9aef1f7bd1aa() -> ReferenceFragmentDefinition {
@@ -419,7 +755,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e9aef1f7bd1aa", name: "Frosted", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e9aef1f7bd1aa", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.frosted", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ec9e48a380de9() -> ReferenceFragmentDefinition {
@@ -434,7 +770,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["Normal", "Multiply", "Screen"], 0), slot: 18, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.ec9e48a380de9", name: "Gradient Overlay", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ec9e48a380de9", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.gradientoverlay2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e98e0bd11fc6f() -> ReferenceFragmentDefinition {
@@ -459,7 +795,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 28, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e98e0bd11fc6f", name: "ultra sharpen", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e98e0bd11fc6f", slots: 29,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.ult_sharpen", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eac60c37101a4() -> ReferenceFragmentDefinition {
@@ -477,7 +813,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 21, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.eac60c37101a4", name: "Isoline", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_eac60c37101a4", slots: 22,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.isoline", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea7451d774e79() -> ReferenceFragmentDefinition {
@@ -489,7 +825,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 1.0, 0.0, 1.0, step: 0.01), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ea7451d774e79", name: "S_Gamma (AE Motion)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ea7451d774e79", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.sapphire.gamma", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef1a32c8ec2aa() -> ReferenceFragmentDefinition {
@@ -509,7 +845,18 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("octaves", "Octaves", 6.0, 1.0, 9.0, step: 1.0), slot: 23))
         return ReferenceFragmentDefinition(id: "awi.amref.ef1a32c8ec2aa", name: "Turbulence", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ef1a32c8ec2aa", slots: 24,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.turbulence2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e99e7b4a5ff23() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("stretch", "Stretch", 10.0, 0.0, 900.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offset", "Offset", 0.0, -2000.0, 2000.0, step: 1.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smooth", "Smoothing", 0.0, 0.0, 1.0, step: 0.01), slot: 14))
+        return ReferenceFragmentDefinition(id: "awi.amref.e99e7b4a5ff23", name: "Stretch Segment", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e99e7b4a5ff23", slots: 15,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.stretchsegment", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ecfd444272da7() -> ReferenceFragmentDefinition {
@@ -518,7 +865,78 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color 2", RGBA(1.0, 0.9333333333333333, 0.5333333333333333, 1.0)), slot: 12))
         return ReferenceFragmentDefinition(id: "awi.amref.ecfd444272da7", name: "Gradient Map", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ecfd444272da7", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.gradientmap", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e1c0590e4ceef() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("b0size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b0color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 12))
+        return ReferenceFragmentDefinition(id: "awi.amref.e1c0590e4ceef", name: "[INTERNAL] Border", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e1c0590e4ceef", slots: 13,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.internal.border-outside", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eb0c7148e4047() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("ITER", "Iteration", 8.0, 0.0, 20.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autob", "Auto Blink", true), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressb", "Progress", 200.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressc", "Blink", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autor", "Auto Rotation", false), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autos", "Auto Zoom", false), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Evolution", 400.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 50.0, 20.0, 1000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 22, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 2), slot: 27, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.eb0c7148e4047", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_eb0c7148e4047", slots: 28,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e706c657875737061727469636c65", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e101af6b51e30() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("width", "Width", 1.0, 0.01, 10.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("height", "Height", 3.0, 0.01, 10.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("depth", "Depth", 1.0, 0.01, 10.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smooth", "Smoothing", 0.0, 0.0, 5.0, step: 0.001), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 17, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 100.0, -10000.0, 10000.0, step: 0.01), slot: 17, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 600.0, -10000.0, 10000.0, step: 0.01), slot: 17, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 19, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("texStretch", "Stretch", false), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatX", "Repeat X", 1.0, 0.01, 20.0, step: 0.01), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatY", "Repeat Y", 1.0, 0.01, 20.0, step: 0.01), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texTwirl", "Twirl", 0.0), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 34))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 60.0, 10.0, 200.0, step: 1.0), slot: 35))
+        return ReferenceFragmentDefinition(id: "awi.amref.e101af6b51e30", name: "Box", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e101af6b51e30", slots: 36,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.box", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e4e3f06553794() -> ReferenceFragmentDefinition {
@@ -530,7 +948,59 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e4e3f06553794", name: "Puddle", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e4e3f06553794", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.puddle", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e032beb914427() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("lumaShrink", "Luma Shrink Ratio", 0.5, 0.05, 1.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("chromaShrink", "Chroma Shrink Ratio", 0.03125, 0.01, 0.25, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("unsharpAmount", "Amount", 2.0, 0.0, 4.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("unsharpRadius", "Radius (px)", 2.0, 0.5, 10.0, step: 0.1), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("unsharpThreshold", "Threshold", 0.0, 0.0, 0.5, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blackLevel", "Black Level", 0.1, 0.0, 1.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("whiteLevel", "White Level", 0.9, 0.0, 1.0, step: 0.01), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("saturation", "Saturation", 0.75, 0.0, 2.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .color("shadowTint", "Shadow Tint", RGBA(0.7019607843137254, 0.0, 0.9019607843137255, 1.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("sourceFps", "Source FPS", 30.0, 1.0, 120.0, step: 1.0), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lineHeight", "Interlace Line Height", 2.0, 1.0, 10.0, step: 0.5), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("noiseGrain", "Noise Grain Size", 4.0, 1.0, 16.0, step: 1.0), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("noiseBlend", "Noise Blend", 0.05, 0.0, 0.5, step: 0.01), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("trackingSpeed", "Tracking Speed", 8.0, 0.5, 20.0, step: 0.5), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("trackingOffset", "Tracking Offset", 8.0, 0.0, 40.0, step: 0.5), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("trackingJitter", "Tracking Jitter", 20.0, 0.0, 60.0, step: 0.5), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("waveFreq", "Wave Frequency", 70.0, 1.0, 140.0, step: 1.0), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("waveOffset", "Wave Offset", 1.0, 0.0, 10.0, step: 0.1), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bottomWarpH", "Bottom Warp Height", 15.0, 0.0, 100.0, step: 0.5), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bottomWarpOff", "Bottom Warp Offset", 100.0, 0.0, 200.0, step: 1.0), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bottomWarpJit", "Bottom Warp Jitter", 50.0, 0.0, 100.0, step: 1.0), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .number("noiseLineThick", "Noise Line Thickness", 6.0, 1.0, 20.0, step: 1.0), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .number("noiseLineOpac", "Noise Line Opacity", 0.3, 0.0, 1.0, step: 0.01), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("showOriginal", "Show Original", false), slot: 34))
+        return ReferenceFragmentDefinition(id: "awi.amref.e032beb914427", name: "un.VHS", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e032beb914427", slots: 35,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.vhs", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e5233aa604543() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color", "Color", RGBA(0.8392156862745098, 0.16470588235294117, 0.8509803921568627, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Opacity", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("line_thickness", "Baseline Thickness", 0.006, 0.0, 0.05, step: 0.0005), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bar_width", "Bar Width", 0.009, 0.003, 0.06, step: 0.0005), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("dot_size", "Dot Size", 0.006, 0.001, 0.05, step: 0.0005), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("baseline_y", "Baseline Y", 0.5, 0.0, 1.0, step: 0.001), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("left_margin", "Left/Right Margin", 0.06, 0.0, 0.3, step: 0.001), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bar_count", "Bar Count", 60.0, 10.0, 200.0, step: 1.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bar_max_height", "Max Height", 0.2, 0.02, 0.6, step: 0.001), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("audio_level", "Audio Level", 80.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("reactivity", "Reactivity", 1.0, 0.1, 3.0, step: 0.01), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("jitter", "Band Randomness", 0.2, 0.0, 1.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("speed", "Wobble Speed", 1.0, 0.0, 5.0, step: 0.01), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 1000.0, step: 1.0), slot: 24))
+        return ReferenceFragmentDefinition(id: "awi.amref.e5233aa604543", name: "Audio Spectrum (Transparent)", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e5233aa604543", slots: 25,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.audio_spectrum_purple", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e64e1f2cb0e3f() -> ReferenceFragmentDefinition {
@@ -542,7 +1012,89 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e64e1f2cb0e3f", name: "Aurora", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e64e1f2cb0e3f", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.aurora", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ec9e8361126df() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("size", "Size", 10.0, 1.0, 500.0, step: 0.5), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .point("phase", "Offset", Vec2(0.0, 0.0)), slot: 12))
+        return ReferenceFragmentDefinition(id: "awi.amref.ec9e8361126df", name: "Mosaic", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .blur, function: "refAM35_ec9e8361126df", slots: 13,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "hblur", binding: 1, downsample: 1)], passes: ["hblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.mosaic", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ecd33a51c7cb3() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 50.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 17, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 20, choiceValues: [0, 3, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("GRADMAP", "Custom Color", true), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        return ReferenceFragmentDefinition(id: "awi.amref.ecd33a51c7cb3", name: "Fractal Isoline", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ecd33a51c7cb3", slots: 24,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "buff1", binding: 1, downsample: 1)], passes: ["buff1", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.isolinev2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e398a5f60192e() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .choice("type", "Type", ["LINE", "DOTS", "DITHERING"], 2), slot: 11, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 150.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("amount", "Amount", 400.0, 200.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle Texture", 20.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("satt", "Intensify", 120.0, 50.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("exposure", "exposure", 0.0, -2.0, 2.0, step: 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gamma", "gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("brightness", "brightness", 0.0, -1.0, 1.0, step: 0.005), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("contrast", "contrast", 0.0, -1.0, 3.0, step: 0.005), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("highlights", "highlights", 100.0, 0.0, 200.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shadows", "shadows", 100.0, 0.0, 200.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offset", "offset", 0.0, -0.9, 0.9, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("greyscale", "Greyscale", false), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("inv", "Invert Color", false), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendmode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 26, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e398a5f60192e", name: "Dithering", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e398a5f60192e", slots: 27,
+            parameters: parameters, images: ["amref-4077aff07cf226c4.png"], buffers: [ReferenceFragmentBuffer(name: "xdist", binding: 2, downsample: 1)], passes: ["xdist", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.dithh", externalPasses: [0: "com.alightcreative.effects.fastadj"], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e3ff064ef7353() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .choice("bmode", "bmode", ["SCREEN", "COLOR", "LINEAR", "LAYER"], 2), slot: 11, choiceValues: [0, 1, 2, 3]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("overd", "Anti Overdraw", false), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Glow Radius", 0.15, 0.0, 2.0, step: 0.005), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("oalpha", "Glow Alpha", 75.0, 0.0, 300.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lowThreshold", "Low Threshold", 10.0, 0.0, 100.0, step: 0.5, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("highThreshold", "High Threshold", 100.0, 0.0, 100.0, step: 0.5, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Feather", 30.0, 0.0, 1000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(0.0, 0.0)), slot: 19, pointMinimum: Vec2(0.0, 0.0), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .point("satvib", "Saturate Vibrance", Vec2(0.0, 1.0)), slot: 20, pointMinimum: Vec2(-1.0, 1.0), pointMaximum: Vec2(1.0, 2.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("hue", "hue", 360.0), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("calpha", "Comp Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("GCE", "Gamma Correction", false), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("CHROM", "Enable Chromatic FX", false), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("strengthhh", "strength", 0.15, -8.0, 8.0, step: 0.01), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angleee", "angle", 0.0), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .point("OFT", "Offset RGB", Vec2(0.0, 0.0)), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("centerChannel", "channel", ["R", "G", "B"], 1), slot: 28, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("cblend", "Glow ColorBlend", false), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("cmode", "cmode", ["ADD", "REPLACE"], 0), slot: 30, choiceValues: [0, 1]))
+        parameters.append(ReferenceFragmentParameter(definition: .color("colblend", "Key Color", RGBA(1.0, 0.6588235294117647, 0.0, 1.0)), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpb", "Alpha Blend", 50.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 32, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("iter", "Iteration", 1.0, 1.0, 3.0, step: 1.0), slot: 33))
+        return ReferenceFragmentDefinition(id: "awi.amref.e3ff064ef7353", name: "DeepGlow Enhanced", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_e3ff064ef7353", slots: 34,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "vblur", binding: 1, downsample: 1)], passes: ["vblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.deepglow_enc", externalPasses: [0: "com.alightcreative.effects.gaussianblur"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_eb09dba903d3f() -> ReferenceFragmentDefinition {
@@ -557,7 +1109,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("fadeType", "Fade Type", ["Exact", "Angle", "X-Axis", "Y-Axis"], 0), slot: 18, choiceValues: [0, 1, 2, 3]))
         return ReferenceFragmentDefinition(id: "awi.amref.eb09dba903d3f", name: "Long Shadow", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_eb09dba903d3f", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.longshadow2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e003b34e765ad() -> ReferenceFragmentDefinition {
@@ -573,7 +1125,21 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("starburstStr", "Starburst Strength", 0.0, 0.0, 2.0, step: 0.01), slot: 19))
         return ReferenceFragmentDefinition(id: "awi.amref.e003b34e765ad", name: "Pro Lens Flare", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e003b34e765ad", slots: 20,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.pro_lens_flare", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e4f080156a045() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .choice("contentSrc", "Content Source", ["Current Layer", "Composition (behind)"], 0), slot: 11, choiceValues: [0, 1]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("speed", "Speed", 10.0, 0.0, 100.0, step: 0.1), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blockWidthScale", "Block Width Scale", 0.2, 0.01, 10.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blockHeightScale", "Block Height Scale", 1.5, 0.01, 10.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("strengthPix", "Strength (px)", 50.0, 0.0, 500.0, step: 1.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("thresholdLevel", "Block Threshold", 90.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("cropEdges", "Crop Edges", true), slot: 17))
+        return ReferenceFragmentDefinition(id: "awi.amref.e4f080156a045", name: " Glitch New", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e4f080156a045", slots: 18,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.block_glitch", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea36bd8dcebf0() -> ReferenceFragmentDefinition {
@@ -611,7 +1177,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("globalMix", "Global Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 41, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ea36bd8dcebf0", name: "BCC Gradient Map", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ea36bd8dcebf0", slots: 42,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.bccgradientmap", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e75f2a17f4488() -> ReferenceFragmentDefinition {
@@ -622,9 +1188,9 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("color3", "Edge Color 3", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 14))
         parameters.append(ReferenceFragmentParameter(definition: .number("edgeThresh", "Edge Threshold", 0.2, 0.01, 1.0, step: 0.01), slot: 15))
         parameters.append(ReferenceFragmentParameter(definition: .number("gradientBias", "Gradient Bias", 0.5, 0.0, 1.0, step: 0.01), slot: 16))
-        return ReferenceFragmentDefinition(id: "awi.amref.e75f2a17f4488", name: "Pixelate Edge", summary: "Pixelated coverage at the silhouette rather than pixelating the entire image.",
+        return ReferenceFragmentDefinition(id: "awi.amref.e75f2a17f4488", name: "Pixelate Edge", summary: "Pixelate image detail around edges while retaining the source transparency.",
             category: .stylize, function: "refAM35_e75f2a17f4488", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "alightcreative.effects.pixelate_edge_gradient", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e8aadbfe83ddc() -> ReferenceFragmentDefinition {
@@ -636,7 +1202,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alphab", "Alpha Blend", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e8aadbfe83ddc", name: "[X] Gradient Map+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e8aadbfe83ddc", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.gradientmapnew", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea8df009485f0() -> ReferenceFragmentDefinition {
@@ -648,7 +1214,22 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ea8df009485f0", name: "Fluid Pro", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ea8df009485f0", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.fluidPro", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e9540262aa1f0() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Steps", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 11, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 15, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 18, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e9540262aa1f0", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e9540262aa1f0", slots: 19,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e6e6f69736566616465", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_efe306ea22425() -> ReferenceFragmentDefinition {
@@ -661,9 +1242,9 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN", "OVERLAY", "COLOR", "LIGHTEN", "LIGHTEN COLOR", "COLOR DODGE", "COLOR BURN", "LINEAR DODGE", "LINEAR BURN", "LINEAR LIGHT", "DARKEN", "DARKEN COLOR", "SOFT LIGHT", "SOFT OVERLAY", "HARD LIGHT", "VIVID LIGHT", "PIN LIGHT", "HUE", "DIFFERENT", "LUMINANCE", "SATURATION", "DIVIDE", "SUBSTRACT"], 0), slot: 17, choiceValues: [0, 1, 2, 3, 4, 5, 13, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 21, 22, 17, 18, 19, 20, 23, 24]))
         parameters.append(ReferenceFragmentParameter(definition: .number("alphab", "Alpha Blend", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
-        return ReferenceFragmentDefinition(id: "awi.amref.efe306ea22425", name: "Luma Stamper", summary: "Stamp shapes across the source according to its brightness.",
+        return ReferenceFragmentDefinition(id: "awi.amref.efe306ea22425", name: "[X] Luma Stamper+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_efe306ea22425", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.lumastampernew", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e6fdbbd5a476c() -> ReferenceFragmentDefinition {
@@ -676,7 +1257,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("repeatCount", "Count", 1.0, 1.0, 16.0, step: 1.0), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.e6fdbbd5a476c", name: "Radial Wipe", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_e6fdbbd5a476c", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.radialwipe", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea3452b1fb102() -> ReferenceFragmentDefinition {
@@ -695,7 +1276,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Opacity", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ea3452b1fb102", name: "Fractal Color Bands", summary: "Fractal noise drives moving HSV color bands, with editable octaves, gain and hue density.",
             category: .generate, function: "refAM35_ea3452b1fb102", slots: 23,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.procedural_perlin_hsv_noise", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e44c3753736ad() -> ReferenceFragmentDefinition {
@@ -716,9 +1297,29 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("wrapMode", "Wrap Mode (0:No, 1:Tile, 2:Reflect)", 2.0, 0.0, 2.0, step: 1.0), slot: 24))
         parameters.append(ReferenceFragmentParameter(definition: .toggle("followLayer", "Follow Layer", true), slot: 25))
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 26, scalarScale: 0.01))
-        return ReferenceFragmentDefinition(id: "awi.amref.e44c3753736ad", name: "Warp Waves 2", summary: "Internal reference shader for comparison and adapter validation.",
+        return ReferenceFragmentDefinition(id: "awi.amref.e44c3753736ad", name: "Dual Wave Warp", summary: "Combine two independent wave fields, each with its own wave and displacement directions, phase and speed. Choose transparent, tiled or reflected edges.",
             category: .distort, function: "refAM35_e44c3753736ad", slots: 27,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.s_warp_waves2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eef0730511250() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("AMOUNT", "Amount", 10.0, 0.0, 20.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 18, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hardness", 120.0, 0.0, 300.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Grass Color", RGBA(0.11764705882352941, 0.8509803921568627, 0.11764705882352941, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 23, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.eef0730511250", name: "2D Grass", summary: "Wind-driven procedural grass blades with editable density, growth, stretch and colors, using the complete inherited shader stage.",
+            category: .generate, function: "refAM35_eef0730511250", slots: 24,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.instantgrass", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e696e7374616e746772617373"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_eaeaf49f44c73() -> ReferenceFragmentDefinition {
@@ -732,7 +1333,21 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("screenSpace", "Screen Space", false), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.eaeaf49f44c73", name: "Tile Shift", summary: "Offset alternating tile rows or columns while repeating the source.",
             category: .distort, function: "refAM35_eaeaf49f44c73", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.tileshift2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e9d6a291b2496() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e9d6a291b2496", name: "Blend/Subtract", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e9d6a291b2496", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.subtract", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e13aa6c6f3b1c() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e13aa6c6f3b1c", name: "Difference", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_e13aa6c6f3b1c", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.diff", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e43ead01bcc8f() -> ReferenceFragmentDefinition {
@@ -749,7 +1364,66 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 20, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e43ead01bcc8f", name: "Bad Signal", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e43ead01bcc8f", slots: 21,
-            parameters: parameters, images: ["amref-58838fd473c2533f.png", "amref-334a66740ff27398.png"])
+            parameters: parameters, images: ["amref-58838fd473c2533f.png", "amref-334a66740ff27398.png"], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.badsignal", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_efc580f636abc() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color Shadow", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color Line", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("AMOUNT", "Line Amount", 8.0, 0.0, 20.0, step: 1.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPREAD", "Spread Amount", 0.0, 0.0, 5.0, step: 1.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("EVO", "Line Evo", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("EVO2", "Spread Evo", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 20, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 0), slot: 23, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.efc580f636abc", name: "Random LightSaber", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_efc580f636abc", slots: 24,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.lightsaber", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6c696768747361626572"], sourcePasses: [:], iterationParameter: "iter")
+    }
+
+    private static func make_ef17257e3434e() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Progress", 0.0, 0.0, 1.0, step: 0.001), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("crossfadeLength", "Crossfade Length", 1.0, 0.0, 2.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("textureZoom", "Noise Zoom", 0.3, 0.01, 4.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert Direction", false), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .color("bgColor", "Background Color", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bgStrength", "Background Strength", 1.0, 0.0, 1.0, step: 0.01), slot: 16))
+        return ReferenceFragmentDefinition(id: "awi.amref.ef17257e3434e", name: "Crossfade Noise Wipe", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .keying, function: "refAM35_ef17257e3434e", slots: 17,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.crossfade_noise_wipe", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e9fb4203c1389() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("nmode", "Night Mode", false), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("camprog", "Cam Progress", 100.0, -100000.0, 100000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("camx", "Cam Landscape", 0.0, -1000.0, 1000.0, step: 1.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("camy", "Cam Potrait", 0.0, -1000.0, 1000.0, step: 1.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Wave Evolution", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SEA_HEIGHT", "Wave Height", 50.0, 10.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SEA_CHOPPY", "Wave Choppy", 50.0, 10.0, 200.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SEA_FREQ", "Wave Freq", 50.0, 10.0, 75.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("SEA_BASE", "Base Color", RGBA(0.10980392156862745, 0.18823529411764706, 0.2196078431372549, 1.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .color("SEA_WATER_COLOR", "Diffuse WaveColor", RGBA(0.5490196078431373, 0.8980392156862745, 0.7019607843137254, 1.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .color("CSKY", "Wave BlendColor", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("SKYCOLOR", "Sky BlendColor", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("NUM_STEPS", "Octave", 4.0, 1.0, 8.0, step: 1.0), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ITER_FRAGMENT", "Map Detail", 3.0, 1.0, 5.0, step: 1.0), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("progressc", "Angle", 0.0), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 28, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("adaptive", "Adaptive to Layer", true), slot: 29))
+        return ReferenceFragmentDefinition(id: "awi.amref.e9fb4203c1389", name: "3D Seascape", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e9fb4203c1389", slots: 30,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.seascape", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7365617363617065"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e6e18bbe3f759() -> ReferenceFragmentDefinition {
@@ -762,7 +1436,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("lowLimit", "Tune Tail", 25.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e6e18bbe3f759", name: "Bend", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e6e18bbe3f759", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.bendwarp", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eccad7e332cdb() -> ReferenceFragmentDefinition {
@@ -774,7 +1448,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.eccad7e332cdb", name: "Tiles", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_eccad7e332cdb", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.tile", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e24809c908d0e() -> ReferenceFragmentDefinition {
@@ -793,7 +1467,34 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e24809c908d0e", name: "Halftone Light Dots", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e24809c908d0e", slots: 23,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.halftone_lightdots", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ed31095823fed() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .choice("imgNo", "Bump map", ["Layer Luminance", "Background Luminance", "Preset - Canvas", "Preset - Leather", "Preset - Mud", "Preset - Parchment", "Preset - Wood", "Preset - Weave"], 2), slot: 11, choiceValues: [0, 1, 2, 3, 4, 5, 6, 7]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("texNo", "Fill", ["Layer", "Background", "Color"], 0), slot: 12, choiceValues: [1, 0, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .color("texColor", "Fill Color", RGBA(0.5333333333333333, 0.8, 0.9333333333333333, 1.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texScale", "Scale", 1.0, 0.001, 10.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texStretch", "Stretch", Vec2(1.0, 1.0)), slot: 16, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Point Light", "Directional Light"], 0), slot: 20, choiceValues: [1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.6, 0.0, 1.0, step: 0.01), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .color("shineColor", "Shine Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 600.0, 0.0, 1000.0, step: 0.5), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("height", "Height", 10.0, -100.0, 100.0, step: 1.0, unit: "%"), slot: 29, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smoothing", "Smoothing", 1.0, 1.0, 10.0, step: 0.01), slot: 30))
+        return ReferenceFragmentDefinition(id: "awi.amref.ed31095823fed", name: "Bump Map", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_ed31095823fed", slots: 31,
+            parameters: parameters, images: ["amref-3c8b5df49fb3b2e3.png", "amref-d060d27b1e138211.png"], buffers: [], passes: [], referenceBinding: 3, sourceID: "com.alightcreative.effects.bumpmap2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e768f587f4504() -> ReferenceFragmentDefinition {
@@ -810,7 +1511,32 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Overall Blend", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 20, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e768f587f4504", name: "Filters", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e768f587f4504", slots: 21,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.advanced_filters", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eb89a5a2a3d4c() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.15, 0.0, 2.0, step: 0.005), slot: 11))
+        return ReferenceFragmentDefinition(id: "awi.amref.eb89a5a2a3d4c", name: "Gaussian Blur", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .blur, function: "refAM35_eb89a5a2a3d4c", slots: 12,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "downImg", binding: 1, downsample: 2), ReferenceFragmentBuffer(name: "hblur", binding: 2, downsample: 2), ReferenceFragmentBuffer(name: "vblur", binding: 3, downsample: 2)], passes: ["downImg", "hblur", "vblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.gaussianblur", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ea2681cd2906f() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 44.0, 0.0, 200.0, step: 0.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("angle_d", "Diffuse Angle", 45.0, 0.0, 360.0, step: 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("angle_s", "Specular Angle", 45.0, 0.0, 360.0, step: 0.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color_d", "Diffuse Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color_s", "Specular Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("intensity_d", "Diffuse Intensity", 0.5, 0.0, 1.0, step: 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("intensity_s", "Specular Intensity", 1.0, 0.0, 1.0, step: 0.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("elevation_d", "Diffuse Elevation", 0.0, 0.0, 5.0, step: 0.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("elevation_s", "Specular Elevation", 2.2, 0.0, 5.0, step: 0.0), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specular Coefficient", 35.0, 1.0, 50.0, step: 0.0), slot: 20))
+        return ReferenceFragmentDefinition(id: "awi.amref.ea2681cd2906f", name: "Smooth Bevel", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_ea2681cd2906f", slots: 21,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.internal.smoothbevel", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea4ee3a4adc94() -> ReferenceFragmentDefinition {
@@ -828,7 +1554,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("shades", "Include Shades", false), slot: 21))
         return ReferenceFragmentDefinition(id: "awi.amref.ea4ee3a4adc94", name: "Palette Map", summary: "Quantize and remap source colors into a selected palette.",
             category: .color, function: "refAM35_ea4ee3a4adc94", slots: 22,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.palettemap", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e26bad7d24238() -> ReferenceFragmentDefinition {
@@ -844,7 +1570,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 19, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e26bad7d24238", name: "Plasma Wave", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e26bad7d24238", slots: 20,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.plasmawave", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ee9dd225d9a0f() -> ReferenceFragmentDefinition {
@@ -856,7 +1582,16 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ee9dd225d9a0f", name: "Noise Reduction", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_ee9dd225d9a0f", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.noiseReduction", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e8d9cd41a7d1f() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "strength", 0.1, -100.0, 100.0, step: 0.001), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smoothing", "smoothing", 1.0, 0.125, 5.0, step: 0.01), slot: 12))
+        return ReferenceFragmentDefinition(id: "awi.amref.e8d9cd41a7d1f", name: "Gradient Displace", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_e8d9cd41a7d1f", slots: 13,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.skegradientdisplace", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eb6dc61cb9fe1() -> ReferenceFragmentDefinition {
@@ -876,7 +1611,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("expand", "Auto Expand (relative)", 0.05, 0.0, 0.5, step: 0.001), slot: 23))
         return ReferenceFragmentDefinition(id: "awi.amref.eb6dc61cb9fe1", name: "2D Camera Shake (Wiggle)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .motion, function: "refAM35_eb6dc61cb9fe1", slots: 24,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.motion_wiggle", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eb027a40e1d3a() -> ReferenceFragmentDefinition {
@@ -888,7 +1623,37 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.eb027a40e1d3a", name: "Dream Bloom", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_eb027a40e1d3a", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.dreamBloom", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e430c29609f0f() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e430c29609f0f", name: "Blend/Darker Color", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e430c29609f0f", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.darkercolor", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e066e5f75d7f0() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("colorfg", "Color Point", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("colorbg", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("EVOTYPE", "Evo Mode", ["OFF", "FORWARD", "REVERSE"], 1), slot: 13, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 500.0, 500.0, 100000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("MANUAL", "Manual Movement", false), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .point("EVO", "Movement", Vec2(1.0, 1.0)), slot: 16, pointMinimum: Vec2(-50.0, -50.0), pointMaximum: Vec2(50.0, 50.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("TUNNEL_LAYERS", "Amount", 45.0, -10.0, 100.0, step: 1.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("RING_POINTS", "Rings Point", 64.0, -10.0, 100.0, step: 1.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("POINT_SIZE", "Point Size", 3.35, -10.0, 100.0, step: 0.01), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 75.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 22, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 26, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e066e5f75d7f0", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e066e5f75d7f0", slots: 27,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e706f696e74756e6e656c", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e1bceb7e68ceb() -> ReferenceFragmentDefinition {
@@ -900,7 +1665,30 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e1bceb7e68ceb", name: "Free Palette Color", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e1bceb7e68ceb", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.freePaletteColor", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eaf9be5de3d0e() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Time Speed", 0.5, 0.0, 5.0, step: 0.001), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("TWIST_K", "Twist Amount", 0.07, 0.0, 1.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("TWIST_FREQ", "Twist Freq", 1.0, 0.0, 8.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PHASE", "Round/Rect Phase", 2.0, 0.0, 10.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("GRID_SCALE", "Grid Scale", 7.0, 1.0, 20.0, step: 0.1), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("GRID_PHASE", "Grid Phase Amp", 5.0, 0.0, 10.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PREWARP_AMP", "Pre-warp Amp", 0.25, 0.0, 1.0, step: 0.001), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PREWARP_FREQ", "Pre-warp Freq", 2.0, 0.0, 10.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ROT", "Draw Rotation (rad)", 1.570796, -6.283, 6.283, step: 0.0001), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("RECT_SIZE", "Rect Size", 0.12, 0.01, 0.5, step: 0.001), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("TRI_SIZE", "Tri Size", 0.12, 0.01, 0.5, step: 0.001), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("RECT_OFF_Y", "Rect Offset Y", -0.08, -0.5, 0.5, step: 0.001), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .point("TRI_OFFSET", "Tri Offset", Vec2(-0.047, 0.15)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("COLOR_GAIN", "Color Gain", 1.5, 0.0, 5.0, step: 0.01), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("OUTER_BIAS", "Outer Bias", 0.15, 0.0, 1.0, step: 0.001), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("GAMMA", "Gamma", 1.0, 0.2, 2.2, step: 0.01), slot: 26))
+        return ReferenceFragmentDefinition(id: "awi.amref.eaf9be5de3d0e", name: "Polygon Tunnel Arrow", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_eaf9be5de3d0e", slots: 27,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.polygon_tunnel_arrow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e8fb235f1d884() -> ReferenceFragmentDefinition {
@@ -912,7 +1700,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e8fb235f1d884", name: "Lumetri Color Ultra", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e8fb235f1d884", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.lumetriColor", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e5472df25c99f() -> ReferenceFragmentDefinition {
@@ -944,7 +1732,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Mix", 1.0, 0.0, 1.0, step: 0.01), slot: 35))
         return ReferenceFragmentDefinition(id: "awi.amref.e5472df25c99f", name: "T_Halftone", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e5472df25c99f", slots: 36,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.halftone_displace_edges", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_efcd1d4eda677() -> ReferenceFragmentDefinition {
@@ -956,7 +1744,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.efcd1d4eda677", name: "Liquid Glass", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_efcd1d4eda677", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.liquidGlass", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e2dd6792a7249() -> ReferenceFragmentDefinition {
@@ -968,7 +1756,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("motionBlur", "Motion Blur", 0.25, 0.0, 1.0, step: 0.01), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e2dd6792a7249", name: "pose shake", summary: "Internal reference shader for comparison and adapter validation.",
             category: .motion, function: "refAM35_e2dd6792a7249", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.custom.effects.New_shake", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ec5cb0732b786() -> ReferenceFragmentDefinition {
@@ -981,7 +1769,27 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("overshoot", "Overshoot", 2.0, 0.5, 2.0, step: 0.0), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.ec5cb0732b786", name: "Noise", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ec5cb0732b786", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.noise3", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e301e478fe822() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("AMOUNT", "Amount", 10.0, 0.0, 20.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 18, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hardness", 120.0, 0.0, 300.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Grass Color", RGBA(0.11764705882352941, 0.8509803921568627, 0.11764705882352941, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 23, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e301e478fe822", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e301e478fe822", slots: 24,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e696e7374616e746772617373", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e3fe027453e82() -> ReferenceFragmentDefinition {
@@ -994,7 +1802,76 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("fill_color", "Edge Color", RGBA(0.0, 0.0, 1.0, 0.0)), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.e3fe027453e82", name: "Z_Liquid dissolve", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e3fe027453e82", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.z.effects.zliquidwipe", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eeb953c7a62af() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("blackLevel", "Black Level Threshold (0-255)", 0.0, 0.0, 255.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("softness", "Edge Softness", 1.0, 0.0, 1.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("featherPx", "Feather (px)", 10.0, 0.0, 10.0, step: 0.1), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cleanupPx", "Matte Cleanup (Choke - / Spread +) px", 0.0, -10.0, 10.0, step: 0.1), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("edgeGamma", "Edge Gamma", 1.0, 0.5, 3.0, step: 0.05), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("preserveLuma", "Preserve Luminance (Unmult Color)", false), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("previewMatte", "Preview Matte", false), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("quality", "Quality (0 Low, 1 Med, 2 High)", 1.0, 0.0, 2.0, step: 1.0), slot: 18))
+        return ReferenceFragmentDefinition(id: "awi.amref.eeb953c7a62af", name: "Unmult", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .keying, function: "refAM35_eeb953c7a62af", slots: 19,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.unmult", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e9ca70f7a9e82() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("b0size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b0color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 12))
+        return ReferenceFragmentDefinition(id: "awi.amref.e9ca70f7a9e82", name: "[INTERNAL] Border", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e9ca70f7a9e82", slots: 13,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.internal.border-inside", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e6b65a73fb112() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        return ReferenceFragmentDefinition(id: "awi.amref.e6b65a73fb112", name: "360º Reorient Sphere", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e6b65a73fb112", slots: 13,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.360-reorient-sphere", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e039f5ed2414d() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("skyRotate_x", "Skybox Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 13, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("skyRotate_y", "Skybox Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 13, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("skyRotate_z", "Skybox Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 13, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("width", "Width", 1.0, 0.01, 10.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("height", "Height", 1.0, 0.01, 10.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("depth", "Depth", 1.0, 0.01, 10.0, step: 0.001), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 18, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 100.0, -10000.0, 10000.0, step: 0.01), slot: 18, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 600.0, -10000.0, 10000.0, step: 0.01), slot: 18, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 20, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 27))
+        return ReferenceFragmentDefinition(id: "awi.amref.e039f5ed2414d", name: "Cube Skybox", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e039f5ed2414d", slots: 28,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.cube_skybox", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e0dd14e6286ab() -> ReferenceFragmentDefinition {
@@ -1006,7 +1883,27 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e0dd14e6286ab", name: "God Rays", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e0dd14e6286ab", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.godRays", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e64da4f6f68f7() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color Line", RGBA(0.0, 1.0, 1.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("scalex", "Scale Normalize", false), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 100.0, 2000.0, step: 0.5, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Evolution", 100.0, -10000.0, 10000.0, step: 0.5, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressb", "Amplitude", 100.0, 100.0, 1000.0, step: 12.5, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressc", "Hole Depth", 0.0, 0.0, 100000.0, step: 200.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 19, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Brightness", 100.0, 100.0, 1000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 23, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e64da4f6f68f7", name: "2D Tunnel", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e64da4f6f68f7", slots: 24,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.2dtuunnell", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9f16e2302452() -> ReferenceFragmentDefinition {
@@ -1024,7 +1921,24 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["Normal", "Multiply", "Screen"], 0), slot: 21, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e9f16e2302452", name: "Four-color Gradient", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e9f16e2302452", slots: 22,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.fourcolorgradient", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ead6e335ee83d() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 65.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 17, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 0), slot: 20, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.ead6e335ee83d", name: "Wings Line", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ead6e335ee83d", slots: 21,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.wingsline", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e77696e67736c696e65"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e31cec718c9c3() -> ReferenceFragmentDefinition {
@@ -1036,7 +1950,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e31cec718c9c3", name: "Halftone Pro", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e31cec718c9c3", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.halftone", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e51de8cc7d47d() -> ReferenceFragmentDefinition {
@@ -1049,7 +1963,209 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("LUMA", "Luma", 1.0, 0.1, 2.0, step: 0.005), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.e51de8cc7d47d", name: "Iridescence", summary: "Nested fractal noise produces a flowing iridescent texture.",
             category: .generate, function: "refAM35_e51de8cc7d47d", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.irridescence2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ef2dcaa1a1b11() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .choice("TYPE", "TYPE", ["NOISE1", "NOISE2", "NOISE3", "NOISE4"], 0), slot: 11, choiceValues: [0, 1, 2, 3]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 1.0, 1.0, 10.0, step: 0.1), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("sharpness", "Strength", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.ef2dcaa1a1b11", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ef2dcaa1a1b11", slots: 15,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e7368617270656e7633", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e616b758142ef() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Edge Size", 0.35, 0.0, 2.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t1active", "Texture 1", true), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t1region", "t1region", ["Edge", "Center", "Fill", "Glow"], 0), slot: 13, choiceValues: [1, 2, 3, 4], choiceTargets: [["t1grain", "t1scale", "t1angle", "t1offset", "t1gamma", "t1contrast", "t1alpha", "t1color", "t1burn", "t1invert", "t1light", "t1lightAngle", "t1blendMode", "t1choke", "t1spread"], ["t1grain", "t1scale", "t1angle", "t1offset", "t1gamma", "t1contrast", "t1alpha", "t1color", "t1burn", "t1invert", "t1light", "t1lightAngle", "t1blendMode", "t1choke", "t1spread"], ["t1grain", "t1scale", "t1angle", "t1offset", "t1gamma", "t1contrast", "t1alpha", "t1color", "t1burn", "t1invert", "t1light", "t1lightAngle", "t1blendMode"], ["t1grain", "t1scale", "t1angle", "t1offset", "t1gamma", "t1contrast", "t1alpha", "t1color", "t1burn", "t1invert", "t1light", "t1lightAngle", "t1choke", "t1spread"]]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t1grain", "Grain", 1.0, 1.0, 16.0, step: 1.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t1scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t1angle", "Angle", 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("t1offset", "Offset", Vec2(0.0, 0.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t1gamma", "Gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t1contrast", "Contrast", 0.0, -100.0, 100.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t1alpha", "Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("t1color", "Color", RGBA(1.0, 0.3333333333333333, 0.4, 1.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t1burn", "Dodge/Burn", 0.5, -1.0, 1.0, step: 0.0), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t1spread", "Spread", 0.0, 0.0, 1.0, step: 0.0), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t1choke", "Choke", 0.0, 0.0, 1.0, step: 0.0), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t1invert", "Invert Grain", false), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t1light", "Directional Shading", false), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t1lightAngle", "Shading Angle", 0.0), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t1blendMode", "Blending Mode", ["Normal", "Multiply", "Screen", "Punch Out", "Copy Original"], 1), slot: 28, choiceValues: [0, 1, 2, 3, 4]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t2active", "Texture 2", true), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t2region", "t2region", ["Edge", "Center", "Fill", "Glow"], 1), slot: 30, choiceValues: [1, 2, 3, 4], choiceTargets: [["t2grain", "t2scale", "t2angle", "t2offset", "t2gamma", "t2contrast", "t2alpha", "t2color", "t2burn", "t2invert", "t2light", "t2lightAngle", "t2blendMode", "t2choke", "t2spread"], ["t2grain", "t2scale", "t2angle", "t2offset", "t2gamma", "t2contrast", "t2alpha", "t2color", "t2burn", "t2invert", "t2light", "t2lightAngle", "t2blendMode", "t2choke", "t2spread"], ["t2grain", "t2scale", "t2angle", "t2offset", "t2gamma", "t2contrast", "t2alpha", "t2color", "t2burn", "t2invert", "t2light", "t2lightAngle", "t2blendMode"], ["t2grain", "t2scale", "t2angle", "t2offset", "t2gamma", "t2contrast", "t2alpha", "t2color", "t2burn", "t2invert", "t2light", "t2lightAngle", "t2choke", "t2spread"]]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t2grain", "Grain", 3.0, 1.0, 16.0, step: 1.0), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t2scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t2angle", "Angle", 0.0), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .point("t2offset", "Offset", Vec2(0.0, 0.0)), slot: 34))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t2gamma", "Gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 35))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t2contrast", "Contrast", 0.0, -100.0, 100.0, step: 1.0, unit: "%"), slot: 36, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t2alpha", "Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 37, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("t2color", "Color", RGBA(1.0, 0.4, 0.2, 1.0)), slot: 38))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t2burn", "Dodge/Burn", -0.5, -1.0, 1.0, step: 0.0), slot: 39))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t2spread", "Spread", 0.0, 0.0, 1.0, step: 0.0), slot: 40))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t2choke", "Choke", 0.0, 0.0, 1.0, step: 0.0), slot: 41))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t2invert", "Invert Grain", false), slot: 42))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t2light", "Directional Shading", false), slot: 43))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t2lightAngle", "Shading Angle", 0.0), slot: 44))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t2blendMode", "Blending Mode", ["Normal", "Multiply", "Screen", "Punch Out", "Copy Original"], 2), slot: 45, choiceValues: [0, 1, 2, 3, 4]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t3active", "Texture 3", false), slot: 46))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t3region", "t3region", ["Edge", "Center", "Fill", "Glow"], 2), slot: 47, choiceValues: [1, 2, 3, 4], choiceTargets: [["t3grain", "t3scale", "t3angle", "t3offset", "t3gamma", "t3contrast", "t3alpha", "t3color", "t3burn", "t3invert", "t3light", "t3lightAngle", "t3blendMode", "t3choke", "t3spread"], ["t3grain", "t3scale", "t3angle", "t3offset", "t3gamma", "t3contrast", "t3alpha", "t3color", "t3burn", "t3invert", "t3light", "t3lightAngle", "t3blendMode", "t3choke", "t3spread"], ["t3grain", "t3scale", "t3angle", "t3offset", "t3gamma", "t3contrast", "t3alpha", "t3color", "t3burn", "t3invert", "t3light", "t3lightAngle", "t3blendMode"], ["t3grain", "t3scale", "t3angle", "t3offset", "t3gamma", "t3contrast", "t3alpha", "t3color", "t3burn", "t3invert", "t3light", "t3lightAngle", "t3choke", "t3spread"]]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t3grain", "Grain", 1.0, 1.0, 16.0, step: 1.0), slot: 48))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t3scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 49))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t3angle", "Angle", 0.0), slot: 50))
+        parameters.append(ReferenceFragmentParameter(definition: .point("t3offset", "Offset", Vec2(0.0, 0.0)), slot: 51))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t3gamma", "Gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 52))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t3contrast", "Contrast", 0.0, -100.0, 100.0, step: 1.0, unit: "%"), slot: 53, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t3alpha", "Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 54, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("t3color", "Color", RGBA(1.0, 0.3333333333333333, 0.4, 1.0)), slot: 55))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t3burn", "Dodge/Burn", 0.0, -1.0, 1.0, step: 0.0), slot: 56))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t3spread", "Spread", 0.0, 0.0, 1.0, step: 0.0), slot: 57))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t3choke", "Choke", 0.0, 0.0, 1.0, step: 0.0), slot: 58))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t3invert", "Invert Grain", false), slot: 59))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t3light", "Directional Shading", false), slot: 60))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t3lightAngle", "Shading Angle", 0.0), slot: 61))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t3blendMode", "Blending Mode", ["Normal", "Multiply", "Screen", "Punch Out", "Copy Original"], 1), slot: 62, choiceValues: [0, 1, 2, 3, 4]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t4active", "Texture 4", false), slot: 63))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t4region", "t4region", ["Edge", "Center", "Fill", "Glow"], 2), slot: 64, choiceValues: [1, 2, 3, 4], choiceTargets: [["t4grain", "t4scale", "t4angle", "t4offset", "t4gamma", "t4contrast", "t4alpha", "t4color", "t4burn", "t4invert", "t4light", "t4lightAngle", "t4blendMode", "t4choke", "t4spread"], ["t4grain", "t4scale", "t4angle", "t4offset", "t4gamma", "t4contrast", "t4alpha", "t4color", "t4burn", "t4invert", "t4light", "t4lightAngle", "t4blendMode", "t4choke", "t4spread"], ["t4grain", "t4scale", "t4angle", "t4offset", "t4gamma", "t4contrast", "t4alpha", "t4color", "t4burn", "t4invert", "t4light", "t4lightAngle", "t4blendMode"], ["t4grain", "t4scale", "t4angle", "t4offset", "t4gamma", "t4contrast", "t4alpha", "t4color", "t4burn", "t4invert", "t4light", "t4lightAngle", "t4choke", "t4spread"]]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t4grain", "Grain", 1.0, 1.0, 16.0, step: 1.0), slot: 65))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t4scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 66))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t4angle", "Angle", 0.0), slot: 67))
+        parameters.append(ReferenceFragmentParameter(definition: .point("t4offset", "Offset", Vec2(0.0, 0.0)), slot: 68))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t4gamma", "Gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 69))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t4contrast", "Contrast", 0.0, -100.0, 100.0, step: 1.0, unit: "%"), slot: 70, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t4alpha", "Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 71, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("t4color", "Color", RGBA(1.0, 0.3333333333333333, 0.4, 1.0)), slot: 72))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t4burn", "Dodge/Burn", 0.0, -1.0, 1.0, step: 0.0), slot: 73))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t4spread", "Spread", 0.0, 0.0, 1.0, step: 0.0), slot: 74))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t4choke", "Choke", 0.0, 0.0, 1.0, step: 0.0), slot: 75))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t4invert", "Invert Grain", false), slot: 76))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t4light", "Directional Shading", false), slot: 77))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t4lightAngle", "Shading Angle", 0.0), slot: 78))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t4blendMode", "Blending Mode", ["Normal", "Multiply", "Screen", "Punch Out", "Copy Original"], 1), slot: 79, choiceValues: [0, 1, 2, 3, 4]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t5active", "Texture 5", false), slot: 80))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t5region", "t5region", ["Edge", "Center", "Fill", "Glow"], 2), slot: 81, choiceValues: [1, 2, 3, 4], choiceTargets: [["t5grain", "t5scale", "t5angle", "t5offset", "t5gamma", "t5contrast", "t5alpha", "t5color", "t5burn", "t5invert", "t5light", "t5lightAngle", "t5blendMode", "t5choke", "t5spread"], ["t5grain", "t5scale", "t5angle", "t5offset", "t5gamma", "t5contrast", "t5alpha", "t5color", "t5burn", "t5invert", "t5light", "t5lightAngle", "t5blendMode", "t5choke", "t5spread"], ["t5grain", "t5scale", "t5angle", "t5offset", "t5gamma", "t5contrast", "t5alpha", "t5color", "t5burn", "t5invert", "t5light", "t5lightAngle", "t5blendMode"], ["t5grain", "t5scale", "t5angle", "t5offset", "t5gamma", "t5contrast", "t5alpha", "t5color", "t5burn", "t5invert", "t5light", "t5lightAngle", "t5choke", "t5spread"]]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t5grain", "Grain", 1.0, 1.0, 16.0, step: 1.0), slot: 82))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t5scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 83))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t5angle", "Angle", 0.0), slot: 84))
+        parameters.append(ReferenceFragmentParameter(definition: .point("t5offset", "Offset", Vec2(0.0, 0.0)), slot: 85))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t5gamma", "Gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 86))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t5contrast", "Contrast", 0.0, -100.0, 100.0, step: 1.0, unit: "%"), slot: 87, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t5alpha", "Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 88, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("t5color", "Color", RGBA(1.0, 0.3333333333333333, 0.4, 1.0)), slot: 89))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t5burn", "Dodge/Burn", 0.0, -1.0, 1.0, step: 0.0), slot: 90))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t5spread", "Spread", 0.0, 0.0, 1.0, step: 0.0), slot: 91))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t5choke", "Choke", 0.0, 0.0, 1.0, step: 0.0), slot: 92))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t5invert", "Invert Grain", false), slot: 93))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t5light", "Directional Shading", false), slot: 94))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t5lightAngle", "Shading Angle", 0.0), slot: 95))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t5blendMode", "Blending Mode", ["Normal", "Multiply", "Screen", "Punch Out", "Copy Original"], 1), slot: 96, choiceValues: [0, 1, 2, 3, 4]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t6active", "Texture 6", false), slot: 97))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t6region", "t6region", ["Edge", "Center", "Fill", "Glow"], 2), slot: 98, choiceValues: [1, 2, 3, 4], choiceTargets: [["t6grain", "t6scale", "t6angle", "t6offset", "t6gamma", "t6contrast", "t6alpha", "t6color", "t6burn", "t6invert", "t6light", "t6lightAngle", "t6blendMode", "t6choke", "t6spread"], ["t6grain", "t6scale", "t6angle", "t6offset", "t6gamma", "t6contrast", "t6alpha", "t6color", "t6burn", "t6invert", "t6light", "t6lightAngle", "t6blendMode", "t6choke", "t6spread"], ["t6grain", "t6scale", "t6angle", "t6offset", "t6gamma", "t6contrast", "t6alpha", "t6color", "t6burn", "t6invert", "t6light", "t6lightAngle", "t6blendMode"], ["t6grain", "t6scale", "t6angle", "t6offset", "t6gamma", "t6contrast", "t6alpha", "t6color", "t6burn", "t6invert", "t6light", "t6lightAngle", "t6choke", "t6spread"]]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t6grain", "Grain", 1.0, 1.0, 16.0, step: 1.0), slot: 99))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t6scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 100))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t6angle", "Angle", 0.0), slot: 101))
+        parameters.append(ReferenceFragmentParameter(definition: .point("t6offset", "Offset", Vec2(0.0, 0.0)), slot: 102))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t6gamma", "Gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 103))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t6contrast", "Contrast", 0.0, -100.0, 100.0, step: 1.0, unit: "%"), slot: 104, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t6alpha", "Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 105, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("t6color", "Color", RGBA(1.0, 0.3333333333333333, 0.4, 1.0)), slot: 106))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t6burn", "Dodge/Burn", 0.0, -1.0, 1.0, step: 0.0), slot: 107))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t6spread", "Spread", 0.0, 0.0, 1.0, step: 0.0), slot: 108))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t6choke", "Choke", 0.0, 0.0, 1.0, step: 0.0), slot: 109))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t6invert", "Invert Grain", false), slot: 110))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t6light", "Directional Shading", false), slot: 111))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t6lightAngle", "Shading Angle", 0.0), slot: 112))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t6blendMode", "Blending Mode", ["Normal", "Multiply", "Screen", "Punch Out", "Copy Original"], 1), slot: 113, choiceValues: [0, 1, 2, 3, 4]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t7active", "Texture 7", false), slot: 114))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t7region", "t7region", ["Edge", "Center", "Fill", "Glow"], 2), slot: 115, choiceValues: [1, 2, 3, 4], choiceTargets: [["t7grain", "t7scale", "t7angle", "t7offset", "t7gamma", "t7contrast", "t7alpha", "t7color", "t7burn", "t7invert", "t7light", "t7lightAngle", "t7blendMode", "t7choke", "t7spread"], ["t7grain", "t7scale", "t7angle", "t7offset", "t7gamma", "t7contrast", "t7alpha", "t7color", "t7burn", "t7invert", "t7light", "t7lightAngle", "t7blendMode", "t7choke", "t7spread"], ["t7grain", "t7scale", "t7angle", "t7offset", "t7gamma", "t7contrast", "t7alpha", "t7color", "t7burn", "t7invert", "t7light", "t7lightAngle", "t7blendMode"], ["t7grain", "t7scale", "t7angle", "t7offset", "t7gamma", "t7contrast", "t7alpha", "t7color", "t7burn", "t7invert", "t7light", "t7lightAngle", "t7choke", "t7spread"]]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t7grain", "Grain", 1.0, 1.0, 16.0, step: 1.0), slot: 116))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t7scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 117))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t7angle", "Angle", 0.0), slot: 118))
+        parameters.append(ReferenceFragmentParameter(definition: .point("t7offset", "Offset", Vec2(0.0, 0.0)), slot: 119))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t7gamma", "Gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 120))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t7contrast", "Contrast", 0.0, -100.0, 100.0, step: 1.0, unit: "%"), slot: 121, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t7alpha", "Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 122, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("t7color", "Color", RGBA(1.0, 0.3333333333333333, 0.4, 1.0)), slot: 123))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t7burn", "Dodge/Burn", 0.0, -1.0, 1.0, step: 0.0), slot: 124))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t7spread", "Spread", 0.0, 0.0, 1.0, step: 0.0), slot: 125))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t7choke", "Choke", 0.0, 0.0, 1.0, step: 0.0), slot: 126))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t7invert", "Invert Grain", false), slot: 127))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t7light", "Directional Shading", false), slot: 128))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t7lightAngle", "Shading Angle", 0.0), slot: 129))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t7blendMode", "Blending Mode", ["Normal", "Multiply", "Screen", "Punch Out", "Copy Original"], 1), slot: 130, choiceValues: [0, 1, 2, 3, 4]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t8active", "Texture 8", false), slot: 131))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t8region", "t8region", ["Edge", "Center", "Fill", "Glow"], 2), slot: 132, choiceValues: [1, 2, 3, 4], choiceTargets: [["t8grain", "t8scale", "t8angle", "t8offset", "t8gamma", "t8contrast", "t8alpha", "t8color", "t8burn", "t8invert", "t8light", "t8lightAngle", "t8blendMode", "t8choke", "t8spread"], ["t8grain", "t8scale", "t8angle", "t8offset", "t8gamma", "t8contrast", "t8alpha", "t8color", "t8burn", "t8invert", "t8light", "t8lightAngle", "t8blendMode", "t8choke", "t8spread"], ["t8grain", "t8scale", "t8angle", "t8offset", "t8gamma", "t8contrast", "t8alpha", "t8color", "t8burn", "t8invert", "t8light", "t8lightAngle", "t8blendMode"], ["t8grain", "t8scale", "t8angle", "t8offset", "t8gamma", "t8contrast", "t8alpha", "t8color", "t8burn", "t8invert", "t8light", "t8lightAngle", "t8choke", "t8spread"]]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t8grain", "Grain", 1.0, 1.0, 16.0, step: 1.0), slot: 133))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t8scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 134))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t8angle", "Angle", 0.0), slot: 135))
+        parameters.append(ReferenceFragmentParameter(definition: .point("t8offset", "Offset", Vec2(0.0, 0.0)), slot: 136))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t8gamma", "Gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 137))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t8contrast", "Contrast", 0.0, -100.0, 100.0, step: 1.0, unit: "%"), slot: 138, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t8alpha", "Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 139, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("t8color", "Color", RGBA(1.0, 0.3333333333333333, 0.4, 1.0)), slot: 140))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t8burn", "Dodge/Burn", 0.0, -1.0, 1.0, step: 0.0), slot: 141))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t8spread", "Spread", 0.0, 0.0, 1.0, step: 0.0), slot: 142))
+        parameters.append(ReferenceFragmentParameter(definition: .number("t8choke", "Choke", 0.0, 0.0, 1.0, step: 0.0), slot: 143))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t8invert", "Invert Grain", false), slot: 144))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("t8light", "Directional Shading", false), slot: 145))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("t8lightAngle", "Shading Angle", 0.0), slot: 146))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("t8blendMode", "Blending Mode", ["Normal", "Multiply", "Screen", "Punch Out", "Copy Original"], 1), slot: 147, choiceValues: [0, 1, 2, 3, 4]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("d1active", "Displacement 1", false), slot: 148))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("d1region", "d1region", ["Edge", "Center", "Fill"], 1), slot: 149, choiceValues: [1, 2, 3]))
+        parameters.append(ReferenceFragmentParameter(definition: .point("d1offset", "Offset", Vec2(0.0, 0.0)), slot: 150))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("d1fromctr", "From Center", true), slot: 151))
+        parameters.append(ReferenceFragmentParameter(definition: .number("d1grain", "Grain", 1.0, 1.0, 16.0, step: 1.0), slot: 152))
+        parameters.append(ReferenceFragmentParameter(definition: .number("d1scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 153))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("d1angle", "Angle", 0.0), slot: 154))
+        parameters.append(ReferenceFragmentParameter(definition: .point("d1toffset", "Texture Offset", Vec2(0.0, 0.0)), slot: 155))
+        parameters.append(ReferenceFragmentParameter(definition: .number("d1gamma", "Gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 156))
+        parameters.append(ReferenceFragmentParameter(definition: .number("d1contrast", "Contrast", 0.0, -100.0, 100.0, step: 1.0, unit: "%"), slot: 157, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("d2active", "Displacement 2", false), slot: 158))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("d2region", "d2region", ["Edge", "Center", "Fill"], 1), slot: 159, choiceValues: [1, 2, 3]))
+        parameters.append(ReferenceFragmentParameter(definition: .point("d2offset", "Offset", Vec2(0.0, 0.0)), slot: 160))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("d2fromctr", "From Center", true), slot: 161))
+        parameters.append(ReferenceFragmentParameter(definition: .number("d2grain", "Grain", 1.0, 1.0, 16.0, step: 1.0), slot: 162))
+        parameters.append(ReferenceFragmentParameter(definition: .number("d2scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 163))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("d2angle", "Angle", 0.0), slot: 164))
+        parameters.append(ReferenceFragmentParameter(definition: .point("d2toffset", "Texture Offset", Vec2(0.0, 0.0)), slot: 165))
+        parameters.append(ReferenceFragmentParameter(definition: .number("d2gamma", "Gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 166))
+        parameters.append(ReferenceFragmentParameter(definition: .number("d2contrast", "Contrast", 0.0, -100.0, 100.0, step: 1.0, unit: "%"), slot: 167, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("c1active", "Solid Color Overlay", false), slot: 168))
+        parameters.append(ReferenceFragmentParameter(definition: .color("fillColor", "Color", RGBA(0.4666666666666667, 0.4666666666666667, 0.4666666666666667, 1.0)), slot: 169))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fillColorBlend", "Amount", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 170, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e616b758142ef", name: "Grunge", summary: "Extract and composite a textured surface treatment from a smoothed source, with color and contrast control.",
+            category: .generate, function: "refAM35_e616b758142ef", slots: 171,
+            parameters: parameters, images: ["amref-758596724a0faed9.png", "amref-7f50134d0f0e4d86.png"], buffers: [ReferenceFragmentBuffer(name: "blurBuf", binding: 3, downsample: 1)], passes: ["blurBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.grunge", externalPasses: [0: "com.alightcreative.effects.gaussianblur"], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e298f589ff9b7() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.3, 0.0, 2.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Feather", 0.05, 0.0, 1.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("saturation", "Saturation", 0.0, -1.0, 1.0, step: 0.005), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("brightness", "Brightness", 0.0, -1.0, 1.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gamma", "Gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "BG Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fgAlpha", "FG Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("tintColor", "Tint Color", RGBA(1.0, 0.3333333333333333, 0.4, 1.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("tintStrength", "Tint", 0.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("edgeColor", "Edge Color", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("edgeStrength", "Edge Strength", 0.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scanLines", "Scan Line Strength", 0.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scanLineCount", "Scan Line Count", 720.0, 100.0, 2160.0, step: 1.0), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .point("fgOffset", "FG Offset", Vec2(0.0, 0.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fgScale", "FG Scale", 1.0, 0.01, 100.0, step: 0.01), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .point("bgOffset", "BG Offset", Vec2(0.0, 0.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bgScale", "BG Scale", 1.0, 0.01, 100.0, step: 0.01), slot: 27))
+        return ReferenceFragmentDefinition(id: "awi.amref.e298f589ff9b7", name: "Fill Behind", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_e298f589ff9b7", slots: 28,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "blurBuf", binding: 1, downsample: 1)], passes: ["blurBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.fillbehind", externalPasses: [0: "com.alightcreative.effects.gaussianblur"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_edc4cbd35eb7f() -> ReferenceFragmentDefinition {
@@ -1064,7 +2180,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 18, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.edc4cbd35eb7f", name: "Magic Colortint", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_edc4cbd35eb7f", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.mtint", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e4a1c49d868e8() -> ReferenceFragmentDefinition {
@@ -1076,7 +2192,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e4a1c49d868e8", name: "Polytrace Sampler", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e4a1c49d868e8", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.polytraceSampler", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e0ab5e6dcc8c0() -> ReferenceFragmentDefinition {
@@ -1097,7 +2213,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e0ab5e6dcc8c0", name: "Turbulent Pro", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e0ab5e6dcc8c0", slots: 25,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.turbulent_displace", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ebde5c0d65142() -> ReferenceFragmentDefinition {
@@ -1107,7 +2223,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("adaptive", "Adaptive", true), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.ebde5c0d65142", name: "Zoom Blur", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_ebde5c0d65142", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.zoomblur3", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e675237abf793() -> ReferenceFragmentDefinition {
@@ -1119,7 +2235,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert Mask", false), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e675237abf793", name: "Wipe Circle", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_e675237abf793", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.wipecircle", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ec29f6ff7df34() -> ReferenceFragmentDefinition {
@@ -1131,7 +2247,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ec29f6ff7df34", name: "Fractal Warp", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ec29f6ff7df34", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.fractalWarp", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e230359933e7f() -> ReferenceFragmentDefinition {
@@ -1143,7 +2259,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("motionBlur", "Motion Blur", 0.25, 0.0, 1.0, step: 0.01), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e230359933e7f", name: "S_dissolveshake", summary: "Internal reference shader for comparison and adapter validation.",
             category: .motion, function: "refAM35_e230359933e7f", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.s_dissolveshake", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e5e7a2d0c070c() -> ReferenceFragmentDefinition {
@@ -1153,7 +2269,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 0.15, 0.0, 1.0, step: 0.005), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.e5e7a2d0c070c", name: "Lens Blur", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e5e7a2d0c070c", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.lensblur2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_edd6ad99801bb() -> ReferenceFragmentDefinition {
@@ -1164,7 +2280,17 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("darkmatter", "Dark Matter", 0.3, 0.001, 2.0, step: 0.001), slot: 14))
         return ReferenceFragmentDefinition(id: "awi.amref.edd6ad99801bb", name: "Starfield", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_edd6ad99801bb", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.starfield3", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e6feb51eff8a6() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("tint_hue", "Tint Hue", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("tint_saturation", "Tint Saturation", 0.0, 0.0, 2.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("tint_bias", "Tint Bias", 0.0, -1.0, 1.0, step: 0.01), slot: 11, component: 2))
+        return ReferenceFragmentDefinition(id: "awi.amref.e6feb51eff8a6", name: "Colorize", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_e6feb51eff8a6", slots: 12,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.colorize", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e38d7e5015fe7() -> ReferenceFragmentDefinition {
@@ -1176,7 +2302,62 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e38d7e5015fe7", name: "Quality Group Fiber", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e38d7e5015fe7", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.fiber", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eba020406a0bb() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 2.5, 0.01, 5.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 14, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", -20.0, -10000.0, 10000.0, step: 0.01), slot: 14, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 550.0, -10000.0, 10000.0, step: 0.01), slot: 14, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 16, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texScale", "Scale", 1.0, 0.01, 20.0, step: 0.001), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texStretch", "Stretch", Vec2(1.0, 1.0)), slot: 27, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texTwirl", "Twirl", 0.0), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 60.0, 10.0, 200.0, step: 1.0), slot: 31))
+        return ReferenceFragmentDefinition(id: "awi.amref.eba020406a0bb", name: "Spherize", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_eba020406a0bb", slots: 32,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.spherize2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e790401dd864c() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("COLOR", "Color", RGBA(0.0, 1.0, 1.0, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("AMOUNT", "Amount", 8.0, 0.0, 40.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxc", "Radius Glow", 1.0, 0.0, 2.0, step: 0.05, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxb", "Orient X", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxa", "Orient Y", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxe", "Space X", 20.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxd", "Space Y", 20.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 21, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 24, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e790401dd864c", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e790401dd864c", slots: 25,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e646f74736c6f61646572", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e6d05f6c7aaa9() -> ReferenceFragmentDefinition {
@@ -1191,37 +2372,119 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("saturation", "Saturation", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e6d05f6c7aaa9", name: "Pixelate", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e6d05f6c7aaa9", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.pixelate2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e0fb0e4c76b45() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("width", "Width", 1.0, 0.01, 10.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("height", "Height", 1.0, 0.01, 10.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("depth", "Depth", 1.0, 0.01, 10.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 17, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 100.0, -10000.0, 10000.0, step: 0.01), slot: 17, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 600.0, -10000.0, 10000.0, step: 0.01), slot: 17, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 19, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 26))
+        return ReferenceFragmentDefinition(id: "awi.amref.e0fb0e4c76b45", name: "Cube", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e0fb0e4c76b45", slots: 27,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.cube2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ec88108d754e8() -> ReferenceFragmentDefinition {
         var parameters: [ReferenceFragmentParameter] = []
-        parameters.append(ReferenceFragmentParameter(definition: .choice("preset", "Preset", ["Wave Preset", "Signal Preset", "Chaos Preset", "CRT LED Preset", "Raw LED Preset", "Glitch Preset", "Jagged Preset", "Modular Preset", "Particle Preset"], 0), slot: 11, choiceValues: [0, 1, 2, 3, 4, 5, 6, 7, 8]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("preset", "Pattern", ["Wave Preset", "Signal Preset", "Chaos Preset", "CRT LED Preset", "Raw LED Preset", "Glitch Preset", "Jagged Preset", "Modular Preset", "Particle Preset"], 0), slot: 11, choiceValues: [0, 1, 2, 3, 4, 5, 6, 7, 8]))
         parameters.append(ReferenceFragmentParameter(definition: .number("cutoff", "Cutoff", 0.15, 0.0, 1.0, step: 0.01), slot: 12))
-        parameters.append(ReferenceFragmentParameter(definition: .number("range", "Range", 0.8, 0.0, 1.0, step: 0.01), slot: 13))
-        parameters.append(ReferenceFragmentParameter(definition: .number("fade", "Fade", 0.3, 0.0, 1.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("range", "Luma Range", 0.8, 0.0, 1.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fade", "Threshold Softness", 0.3, 0.0, 1.0, step: 0.01), slot: 14))
         parameters.append(ReferenceFragmentParameter(definition: .number("distortion", "Distortion", 0.3, 0.0, 2.0, step: 0.01), slot: 15))
         parameters.append(ReferenceFragmentParameter(definition: .number("frequency", "Frequency", 450.0, 1.0, 1000.0, step: 1.0), slot: 16))
         parameters.append(ReferenceFragmentParameter(definition: .number("phase", "Phase", 0.0, -180.0, 180.0, step: 0.1), slot: 17))
-        parameters.append(ReferenceFragmentParameter(definition: .number("animSpeed", "Anim Speed", 1.0, 0.0, 5.0, step: 0.1), slot: 18))
-        parameters.append(ReferenceFragmentParameter(definition: .number("thickness", "Thickness", 2.0, 0.5, 8.0, step: 0.1), slot: 19))
-        parameters.append(ReferenceFragmentParameter(definition: .number("pitch", "Pitch", 8.0, 2.0, 30.0, step: 0.5), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("animSpeed", "Wave Speed", 1.0, 0.0, 5.0, step: 0.1), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("thickness", "Dot Size", 3.5, 0.5, 8.0, step: 0.1), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("pitch", "Dot Spacing", 7.0, 2.0, 30.0, step: 0.5), slot: 20))
         parameters.append(ReferenceFragmentParameter(definition: .number("density", "Density", 5.0, 0.5, 20.0, step: 0.1), slot: 21))
         parameters.append(ReferenceFragmentParameter(definition: .number("decay", "Decay", 1.0, 0.0, 5.0, step: 0.01), slot: 22))
-        parameters.append(ReferenceFragmentParameter(definition: .number("glow", "Glow", 3.0, 0.0, 10.0, step: 0.1), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("glow", "Glow", 2.0, 0.0, 10.0, step: 0.1), slot: 23))
         parameters.append(ReferenceFragmentParameter(definition: .choice("orientation", "Orientation", ["Vertical", "Horizontal"], 0), slot: 24, choiceValues: [0, 1]))
         parameters.append(ReferenceFragmentParameter(definition: .number("xShift", "X Shift", 0.0, -10.0, 10.0, step: 0.1), slot: 25))
         parameters.append(ReferenceFragmentParameter(definition: .number("yShift", "Y Shift", 0.0, -10.0, 10.0, step: 0.1), slot: 26))
-        parameters.append(ReferenceFragmentParameter(definition: .number("generators", "Generators", 1.0, 1.0, 10.0, step: 1.0), slot: 27))
-        parameters.append(ReferenceFragmentParameter(definition: .number("compress", "Compress", 1.0, 0.1, 5.0, step: 0.1), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("generators", "Wave Layers", 1.0, 1.0, 10.0, step: 1.0), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("compress", "Displacement Scale", 1.0, 0.1, 5.0, step: 0.1), slot: 28))
         parameters.append(ReferenceFragmentParameter(definition: .choice("colorMode", "Color Mode", ["Source Image", "Single Color", "Rainbow / Neon"], 0), slot: 29, choiceValues: [0, 1, 2]))
         parameters.append(ReferenceFragmentParameter(definition: .number("colorR", "Color R", 1.0, 0.0, 1.0, step: 0.01), slot: 30))
         parameters.append(ReferenceFragmentParameter(definition: .number("colorG", "Color G", 0.5, 0.0, 1.0, step: 0.01), slot: 31))
         parameters.append(ReferenceFragmentParameter(definition: .number("colorB", "Color B", 0.0, 0.0, 1.0, step: 0.01), slot: 32))
-        parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Overall Blend", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 33, scalarScale: 0.01))
-        return ReferenceFragmentDefinition(id: "awi.amref.ec88108d754e8", name: "Waveloq", summary: "A luminance-driven dot display with glow, wave animation and layout presets.",
+        parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Effect Mix", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 33, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.ec88108d754e8", name: "Wave Dot Display", summary: "Sample the source on a luminous dot grid with independent wave, signal, chaos and burst displacement patterns.",
             category: .generate, function: "refAM35_ec88108d754e8", slots: 34,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.waveloq", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e381a990a1423() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.02, 0.0, 2.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("amount", "Amount", 50.0, 0.0, 200.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("threshold", "Threshold", 50.0, -50.0, 100.0, step: 0.1, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("showMask", "Show Mask", false), slot: 14))
+        return ReferenceFragmentDefinition(id: "awi.amref.e381a990a1423", name: "Unsharp Mask", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .blur, function: "refAM35_e381a990a1423", slots: 15,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "hblur", binding: 1, downsample: 1)], passes: ["hblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.unsharpmask", externalPasses: [0: "com.alightcreative.effects.gaussianblur"], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eb54b9b7ba7f0() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("OFFSIDE", "Anti Offside", false), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 200.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("glitchAmplitude", "Amplitude", 20.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("AMOUNT", "Amount", 800.0, 0.0, 10000.0, step: 2.5, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 18, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("DISTORT", "Distort", 120.0, 100.0, 10000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("STEP", "Step", 20.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("glitchNarrowness", "Narrowness", 500.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("glitchBlockiness", "Blockiness", 400.0, 0.0, 10000.0, step: 10.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("glitchMinimizer", "Minimizer", 200.0, 0.0, 10000.0, step: 10.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("rcolor", "Red Offset", false), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("gcolor", "Green Offset", false), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("bcolor", "Blue Offset", false), slot: 27))
+        return ReferenceFragmentDefinition(id: "awi.amref.eb54b9b7ba7f0", name: "Glitch Blocks", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_eb54b9b7ba7f0", slots: 28,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.newoffsetglitch", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6e65776f6666736574676c69746368"], sourcePasses: [:], iterationParameter: "iter")
+    }
+
+    private static func make_e7517f325885d() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Evolution", 100.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 11, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressc", "Amount", 240.0, 0.0, 500.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 15, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 21, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e7517f325885d", name: "VHS Tape", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e7517f325885d", slots: 22,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.vhstape", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea1a6411e3d41() -> ReferenceFragmentDefinition {
@@ -1236,7 +2499,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("amode", "A", ["Min", "Max", "Avg", "Off"], 1), slot: 18, choiceValues: [0, 1, 3, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.ea1a6411e3d41", name: "Linear Streaks", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_ea1a6411e3d41", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.streaks", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ee853e6522b03() -> ReferenceFragmentDefinition {
@@ -1248,7 +2511,183 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ee853e6522b03", name: "Gradient Exposure", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ee853e6522b03", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.gradientExposure", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_efc18076eae6c() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Scroll Speed", 2.0, 0.0, 10.0, step: 0.001), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("CYCLE", "Cycle Length (t2)", 4.0, 0.5, 20.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ROT_Y", "Yaw (ay rad)", 0.0, -3.1416, 3.1416, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ROT_X", "Pitch (ax rad)", 0.0, -3.1416, 3.1416, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ROT_SPEED", "Angular Scroll Speed", 0.3, -4.0, 4.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("FBM_SCALE", "Start Scale", 5.0, 0.5, 16.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("FBM_OCT", "Octaves (1..8)", 5.0, 1.0, 8.0, step: 1.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("FBM_PERSIST", "Persistence", 0.75, 0.1, 1.0, step: 0.001), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("FOCAL_DEPTH", "Focal Depth", 0.15, 0.005, 1.0, step: 0.001), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("DISK_MIN", "Disk Min Size", 0.025, 0.0, 0.5, step: 0.001), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("DISK_SCALE", "Disk Scale", 1.5, 0.0, 4.0, step: 0.01), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("COLOR_BASE", "Base Color", RGBA(0.15294117647058825, 0.4, 0.9019607843137255, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("WHITE_GAIN", "White Spots Gain", 0.35, 0.0, 1.0, step: 0.001), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("GAMMA", "Gamma", 1.0, 0.2, 2.2, step: 0.01), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("WHITEOUT", "Whiteout Mode", ["Enabled", "Disabled"], 0), slot: 25, choiceValues: [1, 0]))
+        return ReferenceFragmentDefinition(id: "awi.amref.efc18076eae6c", name: "Noise Tunnel Blue", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_efc18076eae6c", slots: 26,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.noise_tunnel_blue", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e2576aa506ac9() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("dropletCount", "Droplet Count", 10.0, 1.0, 64.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("expandSpeed", "Expand Speed", 1.5, 0.0, 5.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("heightFactor", "Height Factor", 0.3, 0.0, 2.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rippleFreq", "Ripple Frequency", 80.0, 0.0, 200.0, step: 0.5), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("timeSpeed", "Time Speed", 0.5, 0.0, 5.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Random Seed", 1245.6789, 0.0, 99999.0, step: 0.1), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("normalOffset", "Normal Sample Offset", 0.0078125, 0.001, 0.05, step: 0.0005), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("normalStrength", "Normal Strength", 1.0, 0.0, 4.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Additive Blend with Source", 1.0, 0.0, 1.0, step: 0.01), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("dropletsOnly", "Show Only Droplets", true), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("shockwave", "Shockwave Distort (affects clip)", false), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shockStrength", "Strength", 0.02, 0.0, 0.2, step: 0.001), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shockWidth", "Edge Sharpness", 8.0, 1.0, 40.0, step: 0.5), slot: 24))
+        return ReferenceFragmentDefinition(id: "awi.amref.e2576aa506ac9", name: "Water Droplets", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e2576aa506ac9", slots: 25,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.water_droplets", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eab75323f2408() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("outlineWidth", "Width", 2.0, 0.5, 10.0, step: 0.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("outlineIntensity", "Intensity", 1.0, 0.1, 2.0, step: 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .color("outlineColor", "Color", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("edgeThreshold", "Threshold", 0.1, 0.01, 0.5, step: 0.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("smoothEdges", "Smooth", true), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("preserveOriginal", "Preserve Original", false), slot: 16))
+        return ReferenceFragmentDefinition(id: "awi.amref.eab75323f2408", name: "Cartoon Outline", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_eab75323f2408", slots: 17,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.cartoon_outline", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e22cff686fb71() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e22cff686fb71", name: "Blend/Hard Light", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e22cff686fb71", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.vividlight", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e8d03cb65185e() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xscale", "X Scale", 50.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("yscale", "Y Scale", 1200.0, 0.0, 10000.0, step: 5.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xdistort", "X Distort", 5.0, 0.0, 10000.0, step: 0.1, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ydistort", "Y Distort", 1.0, 0.0, 10000.0, step: 0.1, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e8d03cb65185e", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e8d03cb65185e", slots: 19,
+            parameters: parameters, images: ["amref-b4b8d1b76bd07b7f.png"], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 2, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e7261696e7966616c6c73", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e4cc43ae57f09() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 13, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 100.0, -10000.0, 10000.0, step: 0.01), slot: 13, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 500.0, -10000.0, 10000.0, step: 0.01), slot: 13, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 14, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("depth", "Depth", 0.005, 0.0, 10.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 300.0, 200.0, 400.0, step: 1.0), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("inton", "Interior Color", false), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .color("interiorColor", "Interior Color", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("interiorBlend", "Interior", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 27, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("fadeColor", "Fade Color", RGBA(0.2627450980392157, 0.2627450980392157, 0.2627450980392157, 1.0)), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fadeBlend", "Fade", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 29, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e4cc43ae57f09", name: "3D Extrude PointLight", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e4cc43ae57f09", slots: 30,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.extrudepoint", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ea59380346749() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Position", Vec2(0.0, 0.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .point("orient", "Orientation", Vec2(0.0, 0.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITERATIONS", "Octave", 5.0, 0.0, 10.0, step: 1.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .color("bgColor", "BG Color", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Flare Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXK", "Flare Interval", 250.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXH", "Hexagon Size", 200.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXI", "Hexagon Alpha", 25.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lensFlareScale", "FlareScale", 17.5, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXA", "Small Circle", 4.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXB", "Big Circle", 1.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXC", "Alpha Circle", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXD", "Intensity", 7.5, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXE", "BigCircle Size", 20.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lensFlareExposure", "Exposure", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lensFlareBrightness", "Brightness", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 26, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 27, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 0.65)), slot: 29, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 30, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 31, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "MULTIPLY", "SCREEN", "LAYER"], 3), slot: 32, choiceValues: [0, 1, 2, 3]))
+        return ReferenceFragmentDefinition(id: "awi.amref.ea59380346749", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ea59380346749", slots: 33,
+            parameters: parameters, images: ["amref-a9593acb391d87f9.png"], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 2, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e68657861676f6e6c656e73", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e721f96053989() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("scalex", "Scale Normalize", false), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .point("positionn", "Sun Position", Vec2(0.0, 0.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Sun Progress", 100.0, 0.0, 100000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scalen", "Scale Sun", 50.0, 10.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("anglen", "Angle Sun", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alphan", "Alpha Sun", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Position Grid", Vec2(0.0, 0.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .point("sstretch", "Stretch", Vec2(1.0, 1.0)), slot: 18, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 19, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressb", "Grid Progress", 100.0, 0.0, 1000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale Grid", 50.0, 10.0, 10000.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle Grid", 0.0), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("visible", "Remove Grid", false), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Base ColorSun", RGBA(0.8666666666666667, 0.26666666666666666, 0.8666666666666667, 1.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color3", "Top ColorSun", RGBA(0.8666666666666667, 0.4, 0.8666666666666667, 1.0)), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color4", "Grid Color", RGBA(0.8666666666666667, 0.4666666666666667, 0.8666666666666667, 1.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Backgrund", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha Comp", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 28, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 29, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 30, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e721f96053989", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e721f96053989", slots: 31,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e66756a69", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ee1dac8291e76() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("choke", "Choke", 5.0, 0.0, 200.0, step: 0.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Feather", 0.0, 0.0, 1.0, step: 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert", false), slot: 13))
+        return ReferenceFragmentDefinition(id: "awi.amref.ee1dac8291e76", name: "Matte Choker", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .keying, function: "refAM35_ee1dac8291e76", slots: 14,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.mattechoke", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9ab745e60ca1() -> ReferenceFragmentDefinition {
@@ -1260,7 +2699,29 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e9ab745e60ca1", name: "Lens Distortion+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e9ab745e60ca1", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.lensDistortion", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e08f25e008dac() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("size", "Size", 10.0, 0.5, 200.0, step: 0.1), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("stretch", "Stretch", 1.0, 0.01, 10.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("colorMode", "Coloring", ["Layer", "Solid", "Stripes", "Tricolor", "Cube", "Triangles", "Pentagonal"], 1), slot: 14, choiceValues: [0, 1, 2, 3, 4, 5, 6]))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color 1", RGBA(0.0, 0.0, 1.0, 1.0)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color 2", RGBA(1.0, 0.0, 0.0, 1.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color3", "Color 3", RGBA(0.0, 1.0, 0.0, 1.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["Normal", "Multiply", "Screen", "Overlay", "Overflow", "Punch Out"], 0), slot: 19, choiceValues: [0, 1, 2, 5, 3, 4]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("alphaScale", "Scale Using Layer Alpha", false), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("copyAlpha", "Copy Layer Alpha", false), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lineWidth", "Line Width", 0.1, 0.0, 1.0, step: 0.005), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Feather", 0.05, 0.0, 1.0, step: 0.0), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("screenSpace", "Screen Space", false), slot: 25))
+        return ReferenceFragmentDefinition(id: "awi.amref.e08f25e008dac", name: "Hexagon Array", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e08f25e008dac", slots: 26,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.hexarray", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eaf016082e969() -> ReferenceFragmentDefinition {
@@ -1275,7 +2736,100 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("screenSpace", "Screen Space", false), slot: 18))
         return ReferenceFragmentDefinition(id: "awi.amref.eaf016082e969", name: "Stripes", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_eaf016082e969", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.stripes", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e7264ea0961dc() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("numIterations", "Amount", 4.0, 0.0, 5.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rainSpeed", "Rain Speed", 15.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("sharpnessx", "Sharpness", 450.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("expansionSpeed", "Expand Speed", 400.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("numRings", "Num Rings", 300.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 30.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 22, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 25, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e7264ea0961dc", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e7264ea0961dc", slots: 26,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e736d616c6c72696e67737761746572", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e1d78bb4e006a() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("COL", "Color Stars", RGBA(0.6078431372549019, 0.4, 0.6, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("NUM_LAYERS", "Amount", 2.0, 1.0, 7.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 500.0, 0.0, 1000.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 150.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxg", "Stars Shine", 0.0, 0.0, 10000.0, step: 0.5, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxh", "Stars Blink", 0.0, 0.0, 10000.0, step: 0.5, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", false), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("rrr", "Reverse Progress", false), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autos", "Auto Scale", true), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autor", "Auto Rotate", true), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("BURST", "Enable", false), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxa", "Burst Evolution", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxb", "Burst Size", 50.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("COLB", "Color Burst", RGBA(1.0, 0.5019607843137255, 0.09803921568627451, 1.0)), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 27, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 28, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 29, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 0), slot: 30, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e1d78bb4e006a", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e1d78bb4e006a", slots: 31,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e636f736d696379636c6573", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e85891f96edbc() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("water_color", "Color Wave", RGBA(0.5019607843137255, 0.5019607843137255, 0.5137254901960784, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("HEI", "Height", 20.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("STR", "Wave Strength", 300.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("FREQ", "Wave Freq", 800.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("TRP", "Alpha Wave", 40.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ANG", "Angle", 200.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e85891f96edbc", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e85891f96edbc", slots: 21,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e776174657277617665", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eff35e38bd9ec() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("scalex", "Scale Normalize", false), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .point("positionn", "Sun Position", Vec2(0.0, 0.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Sun Progress", 100.0, 0.0, 100000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scalen", "Scale Sun", 50.0, 10.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("anglen", "Angle Sun", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alphan", "Alpha Sun", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Position Grid", Vec2(0.0, 0.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .point("sstretch", "Stretch", Vec2(1.0, 1.0)), slot: 18, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 19, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressb", "Grid Progress", 100.0, 0.0, 1000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale Grid", 50.0, 10.0, 10000.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle Grid", 0.0), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("visible", "Remove Grid", false), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Base ColorSun", RGBA(0.8666666666666667, 0.26666666666666666, 0.8666666666666667, 1.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color3", "Top ColorSun", RGBA(0.8666666666666667, 0.4, 0.8666666666666667, 1.0)), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color4", "Grid Color", RGBA(0.8666666666666667, 0.4666666666666667, 0.8666666666666667, 1.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Backgrund", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha Comp", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 28, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 29, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 30, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.eff35e38bd9ec", name: "Retro Grid and Sun", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_eff35e38bd9ec", slots: 31,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.fuji", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e66756a69"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e3ba2e31e4cc1() -> ReferenceFragmentDefinition {
@@ -1286,7 +2840,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("alpha", "A", ["R", "G", "B", "A", "Y", "0", "1"], 3), slot: 14, choiceValues: [0, 1, 2, 3, 4, 5, 6]))
         return ReferenceFragmentDefinition(id: "awi.amref.e3ba2e31e4cc1", name: "Channel Remap (RGB)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e3ba2e31e4cc1", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.channelmap", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ee8a4498bd81b() -> ReferenceFragmentDefinition {
@@ -1298,7 +2852,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ee8a4498bd81b", name: "Fluid", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ee8a4498bd81b", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.fluid", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e58f62e819ee4() -> ReferenceFragmentDefinition {
@@ -1315,7 +2869,29 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e58f62e819ee4", name: "SpeedLines+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_e58f62e819ee4", slots: 21,
-            parameters: parameters, images: ["amref-334a66740ff27398.png", "amref-a09a956e7c4300cf.png"])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.speedlines", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ed38844b01140() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("COLORS", "Color Lines", RGBA(1.0, 0.30196078431372547, 0.30196078431372547, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("COLORS2", "BG Lines", RGBA(0.09803921568627451, 0.30196078431372547, 0.6, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 19, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 22, choiceValues: [0, 3, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("GRADMAP", "GradientMap Color", false), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 25))
+        return ReferenceFragmentDefinition(id: "awi.amref.ed38844b01140", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ed38844b01140", slots: 26,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e666962657273676c6f77", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e00615d7bbc39() -> ReferenceFragmentDefinition {
@@ -1327,7 +2903,17 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e00615d7bbc39", name: "Gaussian Blur+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e00615d7bbc39", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.gaussianBlur", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eb128ccb140e5() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("openProgress", "Opening", 0.65, 0.0, 1.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("zoom", "Camera Zoom", 1.0, 0.5, 2.5, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("camRot", "Camera Orbit", 0.0, -3.14, 3.14, step: 0.01), slot: 13))
+        return ReferenceFragmentDefinition(id: "awi.amref.eb128ccb140e5", name: "Opening Book", summary: "A raymarched opening book with the source image mapped onto its pages. Animate Opening; adjust camera zoom and rotation.",
+            category: .generate, function: "refAM35_eb128ccb140e5", slots: 14,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.creative.mystery_book", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e3c8f206b44e5() -> ReferenceFragmentDefinition {
@@ -1339,7 +2925,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e3c8f206b44e5", name: "Long Shadow", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e3c8f206b44e5", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.longShadow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e48e6cec62b62() -> ReferenceFragmentDefinition {
@@ -1350,7 +2936,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("useLuma", "Use Luminance", true), slot: 14))
         return ReferenceFragmentDefinition(id: "awi.amref.e48e6cec62b62", name: "Rays Edge Detect", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_e48e6cec62b62", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.rays_edge_detect", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9d6d83cdc8f4() -> ReferenceFragmentDefinition {
@@ -1362,7 +2948,14 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e9d6d83cdc8f4", name: "Fractal Zoom Trails", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e9d6d83cdc8f4", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.fractalZoomTrails", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e0eab7d6dffc8() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e0eab7d6dffc8", name: "Blend/Hard Light", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e0eab7d6dffc8", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.linearlight", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ee9c0bd2ca418() -> ReferenceFragmentDefinition {
@@ -1372,23 +2965,23 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blurRadius", "Blur Amount", 4.7, 0.0, 10.0, step: 0.1), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.ee9c0bd2ca418", name: "T_Edge Blur", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_ee9c0bd2ca418", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.edgeblur", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e7b0d60717ad7() -> ReferenceFragmentDefinition {
         var parameters: [ReferenceFragmentParameter] = []
-        parameters.append(ReferenceFragmentParameter(definition: .point("light", "Light", Vec2(0.0, -100.0)), slot: 11))
-        parameters.append(ReferenceFragmentParameter(definition: .number("size", "Size", 0.25, 0.0, 1.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .point("light", "Light", Vec2(-120.0, -160.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("size", "Shadow Length", 0.25, 0.0, 1.0, step: 0.001), slot: 12))
         parameters.append(ReferenceFragmentParameter(definition: .color("color", "Color", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 13))
-        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 10.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Shadow Opacity", 65.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 14, scalarScale: 0.01))
         parameters.append(ReferenceFragmentParameter(definition: .number("solidity", "Solidity", 100.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 15, scalarScale: 0.01))
-        parameters.append(ReferenceFragmentParameter(definition: .number("fill", "Fill", 100.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fill", "Source Opacity", 100.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 16, scalarScale: 0.01))
         parameters.append(ReferenceFragmentParameter(definition: .number("fade", "Fade", 0.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 17, scalarScale: 0.01))
         parameters.append(ReferenceFragmentParameter(definition: .choice("fadeType", "Fade Type", ["Exact", "Solid"], 0), slot: 18, choiceValues: [0, 1]))
-        parameters.append(ReferenceFragmentParameter(definition: .number("quality", "Quality", 150.0, 10.0, 800.0, step: 1.0), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("quality", "Samples", 96.0, 10.0, 800.0, step: 1.0), slot: 19))
         return ReferenceFragmentDefinition(id: "awi.amref.e7b0d60717ad7", name: "Radial Shadow", summary: "Project a shadow radially from a chosen origin.",
             category: .color, function: "refAM35_e7b0d60717ad7", slots: 20,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.radialshadow2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ed21040ef427c() -> ReferenceFragmentDefinition {
@@ -1422,7 +3015,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("bwPreview", "BW Preview", false), slot: 37))
         return ReferenceFragmentDefinition(id: "awi.amref.ed21040ef427c", name: "S_BleachBypass", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ed21040ef427c", slots: 38,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.bleach_bypass_v1", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ec9d67f3d02bc() -> ReferenceFragmentDefinition {
@@ -1447,7 +3040,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("tonerOnly", "Toner Only Mode", false), slot: 28))
         return ReferenceFragmentDefinition(id: "awi.amref.ec9d67f3d02bc", name: "CC Toner", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ec9d67f3d02bc", slots: 29,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.cc_toner_v1", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e081fdcec82af() -> ReferenceFragmentDefinition {
@@ -1468,7 +3061,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blueGamma", "Blue", 1.0, 0.2, 3.0, step: 0.01), slot: 24))
         return ReferenceFragmentDefinition(id: "awi.amref.e081fdcec82af", name: "Fast Adjusting++", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e081fdcec82af", slots: 25,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.fastadjusting", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e2aaed4b17802() -> ReferenceFragmentDefinition {
@@ -1480,7 +3073,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e2aaed4b17802", name: "RGB MotionBlur", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e2aaed4b17802", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.rgbMotionBlur", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea64ba171e267() -> ReferenceFragmentDefinition {
@@ -1497,7 +3090,17 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("scaleBrightness", "Scale Brightness", false), slot: 20))
         return ReferenceFragmentDefinition(id: "awi.amref.ea64ba171e267", name: "Spectral Map", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ea64ba171e267", slots: 21,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.spectralmap", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ece8ee8d914b3() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("scaleMask", "Magnify Layer", false), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("sample", "Sampling", ["Nearest", "Linear"], 1), slot: 13, choiceValues: [0, 1]))
+        return ReferenceFragmentDefinition(id: "awi.amref.ece8ee8d914b3", name: "Magnify Background", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_ece8ee8d914b3", slots: 14,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.magnifybg", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9d6429555d0e() -> ReferenceFragmentDefinition {
@@ -1509,7 +3112,56 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e9d6429555d0e", name: "Deep Glow", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e9d6429555d0e", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.deepGlow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e81af622a8da9() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 65.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 17, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 0), slot: 20, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e81af622a8da9", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e81af622a8da9", slots: 21,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e77696e67736c696e65", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e255ba2d47539() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("amount", "Count", 10.0, 0.5, 200.0, step: 0.1), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("width", "Height", 1.0, 0.0, 15.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("thickness", "Thickness", 0.005, 0.0, 1.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("phase", "Phase", 0.0, -1000.0, 1000.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert", false), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lineColor", "Edge Color", RGBA(0.13333333333333333, 0.2, 0.3333333333333333, 1.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color 1", RGBA(1.0, 0.6, 0.2, 1.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color 2", RGBA(0.6666666666666666, 0.2, 0.6, 1.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Light Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("lightAngle", "Light Angle", 0.0), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("heightSource", "Height Map", ["Alpha", "Luminance"], 1), slot: 22, choiceValues: [0, 1]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("maskToLayer", "Mask To Layer", true), slot: 23))
+        return ReferenceFragmentDefinition(id: "awi.amref.e255ba2d47539", name: "Contour Strips", summary: "Build strips from a smoothed source contour field, with independently adjustable strip appearance.",
+            category: .generate, function: "refAM35_e255ba2d47539", slots: 24,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "blurBuf", binding: 1, downsample: 1)], passes: ["blurBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.contourstrips", externalPasses: [0: "com.alightcreative.effects.gaussianblur"], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e16da2c411f51() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.15, 0.0, 2.0, step: 0.005), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("brig", "Brightness", 1.0, 0.0, 10.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("iter", "Quality", 2.0, 1.0, 5.0, step: 1.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("whiteonly", "White Sharp", false), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("bluredonly", "Only Sharp", false), slot: 15))
+        return ReferenceFragmentDefinition(id: "awi.amref.e16da2c411f51", name: "New Sharpen", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .blur, function: "refAM35_e16da2c411f51", slots: 16,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "ds1", binding: 1, downsample: 2), ReferenceFragmentBuffer(name: "ds2", binding: 2, downsample: 2), ReferenceFragmentBuffer(name: "hblur", binding: 3, downsample: 2)], passes: ["ds1", "ds2", "hblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.newsharpen", externalPasses: [:], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e7ab6e77c26cf() -> ReferenceFragmentDefinition {
@@ -1521,25 +3173,143 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e7ab6e77c26cf", name: "Saber", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e7ab6e77c26cf", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.saber", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ecb1990cb8e5f() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .choice("TYPE", "TYPE", ["NOISE1", "NOISE2", "NOISE3", "NOISE4"], 0), slot: 11, choiceValues: [0, 1, 2, 3]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 1.0, 1.0, 10.0, step: 0.1), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("sharpness", "Strength", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.ecb1990cb8e5f", name: "Sharpen V3", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .blur, function: "refAM35_ecb1990cb8e5f", slots: 15,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.sharpenv3", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7368617270656e7633"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e9e78f72e74ef() -> ReferenceFragmentDefinition {
         var parameters: [ReferenceFragmentParameter] = []
         parameters.append(ReferenceFragmentParameter(definition: .choice("typeComet", "Type", ["TUNNEL", "ONE AWAY"], 0), slot: 11, choiceValues: [0, 1]))
         parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
-        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Progress", 100.0, 0.0, 100000.0, step: 0.5, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Travel", 100.0, 0.0, 100000.0, step: 0.5, unit: "%"), slot: 13, scalarScale: 0.01))
         parameters.append(ReferenceFragmentParameter(definition: .point("position", "Position", Vec2(0.0, 0.0)), slot: 14))
         parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
         parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 17))
-        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Base Color", RGBA(1.0, 0.0, 1.0, 1.0)), slot: 18))
-        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color Tunnel 1", RGBA(0.0, 1.0, 1.0, 1.0)), slot: 19))
-        parameters.append(ReferenceFragmentParameter(definition: .color("color3", "Color Tunnel 2", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Trail Color", RGBA(1.0, 0.0, 1.0, 1.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Tunnel Color 2", RGBA(0.0, 1.0, 1.0, 1.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color3", "Tunnel Color 3", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 20))
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 21, choiceValues: [0, 1, 2]))
-        return ReferenceFragmentDefinition(id: "awi.amref.e9e78f72e74ef", name: "Comet", summary: "A procedural comet head with a flowing trailing body.",
+        return ReferenceFragmentDefinition(id: "awi.amref.e9e78f72e74ef", name: "Comet Trails", summary: "Layer-colored falling streaks or a perspective streak tunnel. Animate Travel to move along the trails.",
             category: .generate, function: "refAM35_e9e78f72e74ef", slots: 22,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.comet", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e2deb6e722aec() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color", "Color", RGBA(0.17647058823529413, 0.11764705882352941, 0.9647058823529412, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offset", "Outset", 10.0, 0.0, 150.0, step: 0.1), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("width", "Width", 5.0, 0.0, 100.0, step: 0.1), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fill", "Fill", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("count", "Count", 1.0, 1.0, 10.0, step: 1.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("phase", "Phase", 0.0, -999.0, 999.0, step: 0.01), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("fade", "Fade", false), slot: 18))
+        return ReferenceFragmentDefinition(id: "awi.amref.e2deb6e722aec", name: "Contour Lines", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_e2deb6e722aec", slots: 19,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.contour", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ecef0c8a880bd() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("time", "Time", 0.0, 0.0, 10000.0, step: 0.001), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("timeDiv", "Time Divisor (fract iTime/Div)", 2.0, 0.1, 10.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("timeScale", "Secondary Time Scale (iTime/Scale)", 3.0, 0.1, 10.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fbmScale", "FBM Pixel Scale", 50.0, 1.0, 500.0, step: 0.1), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("dispClamp", "Displacement Clamp", 0.3333, 0.0, 2.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fadeBias", "Fade Bias", 1.0, 0.0, 3.0, step: 0.01), slot: 16))
+        return ReferenceFragmentDefinition(id: "awi.amref.ecef0c8a880bd", name: "FBM Time Displace Fade", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_ecef0c8a880bd", slots: 17,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "custom.fbm_time_displace_fade", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e813d2c65b932() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("size", "Size", 3.0, 0.01, 10.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("height", "Height", 1.0, 0.15, 10.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smooth", "Smoothing", 0.0, 0.0, 5.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 55.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 500.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 18, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texSqueeze", "Squeeze", 0.0, 0.0, 1.0, step: 0.01), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatX", "Repeat X", 1.0, 0.01, 20.0, step: 0.01), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatY", "Repeat Y", 1.0, 0.01, 20.0, step: 0.01), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texTwirl", "Twirl", 0.0), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 60.0, 10.0, 200.0, step: 1.0), slot: 34))
+        return ReferenceFragmentDefinition(id: "awi.amref.e813d2c65b932", name: "Octahedron", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e813d2c65b932", slots: 35,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.octahedron", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e8302ca417075() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_RADIUS", "Max Radius", 1.0, 1.0, 4.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("RAINSPEED", "Control Speed", 0.3, 0.0, 100.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("RANSIZE", "Floor Size", 70.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 17, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 35.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e8302ca417075", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e8302ca417075", slots: 19,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e7261696e64726f7073666c6f6f72", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ec8c20b043809() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Bevel", 0.1, 0.0, 2.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("refraction", "Refraction", 5.0, -100.0, 100.0, step: 0.1), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("aberration", "Chromatic Aberration", 5.0, -100.0, 100.0, step: 0.1), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("featureSize", "Feature Size", 100.0, 5.0, 500.0, step: 1.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("samples", "Smoothing Samples", 2.0, 1.0, 20.0, step: 1.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .color("tintcolor", "Color", RGBA(1.0, 0.3333333333333333, 0.4, 1.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend", 0.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["None", "Point Light", "Directional Light"], 1), slot: 18, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightShine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightSpec", "Specularity", 30.0, 1.0, 250.0, step: 0.5), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightAmbient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("useLumaHeight", "Use Layer Luminance", true), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("roughness", "Amount", 0.0, -100.0, 100.0, step: 1.0, unit: "%"), slot: 27, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("roughnessScale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("evolution", "Evolution", 0.0, -50.0, 50.0, step: 0.01), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 5.0, step: 0.01), slot: 30))
+        return ReferenceFragmentDefinition(id: "awi.amref.ec8c20b043809", name: "Omino Glass", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_ec8c20b043809", slots: 31,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "blurBuf", binding: 1, downsample: 1), ReferenceFragmentBuffer(name: "surfBuf", binding: 2, downsample: 1)], passes: ["blurBuf", "surfBuf", ""], referenceBinding: 3, sourceID: "com.alightcreative.effects.ominoglass", externalPasses: [0: "com.alightcreative.effects.gaussianblur"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eb03acc50b466() -> ReferenceFragmentDefinition {
@@ -1551,7 +3321,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.eb03acc50b466", name: "New Gradient", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_eb03acc50b466", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.gradient", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e82f843a1a29e() -> ReferenceFragmentDefinition {
@@ -1579,7 +3349,24 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("globalMix", "Global Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 31, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e82f843a1a29e", name: "Color Balance HSL Pro", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e82f843a1a29e", slots: 32,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.colorbalancehslpro", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ed7d2b3080174() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .choice("typeC", "Type Char", ["RANDOM", "BINARY"], 0), slot: 11, choiceValues: [0, 1]))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Evolution", 10000.0, -50000.0, 50000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 2000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(0.0, 0.8666666666666667, 0.0, 1.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 20, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.ed7d2b3080174", name: "Matrix Code", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ed7d2b3080174", slots: 21,
+            parameters: parameters, images: ["amref-45be0c9118f31a6b.png", "amref-de59679f2c22cbf3.png"], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.matrixcode", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eefe0850cb533() -> ReferenceFragmentDefinition {
@@ -1596,7 +3383,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 20, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.eefe0850cb533", name: "Flame", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_eefe0850cb533", slots: 21,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.flame", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e2365a45909ce() -> ReferenceFragmentDefinition {
@@ -1609,7 +3396,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("fill_color", "Edge Color", RGBA(0.0, 0.0, 1.0, 0.0)), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.e2365a45909ce", name: "Wipe Plasma", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e2365a45909ce", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.wipe_plasma", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e02a0866ee9bc() -> ReferenceFragmentDefinition {
@@ -1620,7 +3407,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e02a0866ee9bc", name: "BCC Blur H", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e02a0866ee9bc", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.bcc_blur_h", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e8f2ea0f3dea9() -> ReferenceFragmentDefinition {
@@ -1628,9 +3415,9 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("warpAmount", "Warp Intensity", 0.01, 0.0, 0.03, step: 0.001), slot: 11))
         parameters.append(ReferenceFragmentParameter(definition: .number("outlineStr", "Outline Strength", 5.6, 0.0, 10.0, step: 0.1), slot: 12))
         parameters.append(ReferenceFragmentParameter(definition: .number("fps", "Effect FPS", 3.9, 1.0, 30.0, step: 0.1), slot: 13))
-        return ReferenceFragmentDefinition(id: "awi.amref.e8f2ea0f3dea9", name: "Hand Drawn", summary: "Internal reference shader for comparison and adapter validation.",
+        return ReferenceFragmentDefinition(id: "awi.amref.e8f2ea0f3dea9", name: "Line Boil", summary: "Animated hand-drawn jitter with an independently controlled outline and redraw frame rate.",
             category: .generate, function: "refAM35_e8f2ea0f3dea9", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.hand_drawn", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e04dda922fdfa() -> ReferenceFragmentDefinition {
@@ -1642,7 +3429,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e04dda922fdfa", name: "S_Drop Shadow", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e04dda922fdfa", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.dropShadow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef17cbbf42f17() -> ReferenceFragmentDefinition {
@@ -1651,7 +3438,26 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 12))
         return ReferenceFragmentDefinition(id: "awi.amref.ef17cbbf42f17", name: "Directional Blur", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_ef17cbbf42f17", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.dblur", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ebd05c868a466() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Progress", 0.0, 0.0, 100.0, step: 0.5, unit: "%"), slot: 11, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cellScale", "Cell Scale", 40.0, 4.0, 200.0, step: 0.5), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("randomness", "Randomness", 0.5, 0.0, 1.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scatter", "Scatter", 0.2, 0.0, 1.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotAmount", "Rotation", 90.0, -720.0, 720.0, step: 1.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gravity", "Gravity", 0.5, -2.0, 2.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("edgeWidth", "Edge Width", 0.8, 0.1, 4.0, step: 0.05), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("edgeFeather", "Edge Feather", 0.5, 0.0, 2.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .color("edgeColor", "Edge Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("edgeGlow", "Edge Glow", 0.6, 0.0, 3.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("quality", "Quality", ["Low", "Medium", "High"], 1), slot: 21, choiceValues: [1, 2, 3]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("glowOnly", "Glow Only", false), slot: 22))
+        return ReferenceFragmentDefinition(id: "awi.amref.ebd05c868a466", name: "Shatter (Voronoi MP)", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .keying, function: "refAM35_ebd05c868a466", slots: 23,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "shatterPass", binding: 1, downsample: 1), ReferenceFragmentBuffer(name: "edgeMask", binding: 2, downsample: 2), ReferenceFragmentBuffer(name: "hblur", binding: 3, downsample: 2), ReferenceFragmentBuffer(name: "vblur", binding: 4, downsample: 2)], passes: ["shatterPass", "edgeMask", "hblur", "vblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.shatter_voronoi_mp", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e8e0a6f88c6f1() -> ReferenceFragmentDefinition {
@@ -1668,7 +3474,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("showWipe", "Show Wipe", 0.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 20, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e8e0a6f88c6f1", name: "S_WipePixelate", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_e8e0a6f88c6f1", slots: 21,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.s_wipepixelate", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e40090140d122() -> ReferenceFragmentDefinition {
@@ -1684,7 +3490,38 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("shadows", "Blue Channel Tint", RGBA(0.0, 0.0, 1.0, 1.0)), slot: 19))
         return ReferenceFragmentDefinition(id: "awi.amref.e40090140d122", name: "Distort RGB", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e40090140d122", slots: 20,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.noise_distortion_ca", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ec620fa828e95() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .point("offset", "Offset", Vec2(0.0, 0.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("maskToLayer", "Mask To Layer", false), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fill", "Fill", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("sample", "Sampling", ["Nearest", "Linear"], 1), slot: 17, choiceValues: [0, 1]))
+        return ReferenceFragmentDefinition(id: "awi.amref.ec620fa828e95", name: "Raster Transform", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .motion, function: "refAM35_ec620fa828e95", slots: 18,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.transform", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e06869eae4c9f() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("enableLut", "Enabled", false), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("RAW", "RAW Mode", false), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lutLevel", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e06869eae4c9f", name: "LUT Stealer", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_e06869eae4c9f", slots: 14,
+            parameters: parameters, images: ["amref-11a182277a2e0c66.png"], buffers: [ReferenceFragmentBuffer(name: "buff1", binding: 2, downsample: 1)], passes: ["buff1", ""], referenceBinding: 3, sourceID: "com.alightcreative.effects.lutreader", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ecd9799211148() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.ecd9799211148", name: "Blend/Hard Light", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ecd9799211148", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.hardlight", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ed6d467b0b2fc() -> ReferenceFragmentDefinition {
@@ -1696,7 +3533,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("LINE_SCALE", "Line Scale (1/px)", 0.25, 0.05, 2.0, step: 0.05), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ed6d467b0b2fc", name: "Glitch Noise Lines", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ed6d467b0b2fc", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.glitch_noise_lines", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ee29f513da8cb() -> ReferenceFragmentDefinition {
@@ -1708,7 +3545,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ee29f513da8cb", name: "Fisheye / Anti‑Fisheye", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ee29f513da8cb", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.fisheye_antifisheye", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eeab7e403ece5() -> ReferenceFragmentDefinition {
@@ -1722,7 +3559,24 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 1000.0, step: 1.0), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.eeab7e403ece5", name: "Tile Break", summary: "Animate Progress to break the source into delayed, rotating tiles with gravity and a fading finish.",
             category: .transition, function: "refAM35_eeab7e403ece5", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.custom.effects.square_break_3d", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ecc27e58ef42f() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 50.0, 0.0, 200.0, step: 0.1), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 45.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("elevation", "Elevation", 2.5, 0.0, 5.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("intensity", "Intensity", 1.0, 0.0, 2.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color_d", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color_s", "Shine", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("refract", "Refraction", 0.25, 0.0, 2.0, step: 0.01), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 50.0, step: 0.5), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fill", "Fill", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.ecc27e58ef42f", name: "Glass", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_ecc27e58ef42f", slots: 21,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: 2, sourceID: "com.alightcreative.effect.glass2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e4390d04fc4d7() -> ReferenceFragmentDefinition {
@@ -1735,7 +3589,36 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("opacity", "Opacity", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e4390d04fc4d7", name: "texture", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e4390d04fc4d7", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.cos_uv_flow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e092986811ff4() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e092986811ff4", name: "Blend/Color Multiply", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e092986811ff4", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.colormultiply", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e59e2c22f99da() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 11, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxc", "Strength", 300.0, 100.0, 360.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxd", "Thickness", 700.0, 600.0, 800.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxf", "Seed", 1.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxh", "Alpha Noise", 15.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("iter", "Sample", 1.0, 1.0, 5.0, step: 1.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxi", "Freq Block", 20000.0, -1000.0, 50000.0, step: 10.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxj", "Lenght Block", 200.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxk", "Width Block", 200.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxl", "Y Offset", 20.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxm", "Distance Block X", 200.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxn", "Distance Block Y", 800.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxo", "X Block Offset", 50.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxp", "Y Block Offset", 30.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e59e2c22f99da", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e59e2c22f99da", slots: 26,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e63726f7373676c69746368", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e0cdd4fb8685f() -> ReferenceFragmentDefinition {
@@ -1762,7 +3645,49 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("bandPos", "Band Position", 0.0, 0.0, 1.0, step: 0.001), slot: 30))
         return ReferenceFragmentDefinition(id: "awi.amref.e0cdd4fb8685f", name: "VHS Scanline", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e0cdd4fb8685f", slots: 31,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.vhs_scanline", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e576b3cde47e6() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e576b3cde47e6", name: "Blend/Color Burn", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e576b3cde47e6", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.colorburn", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e3a7a37a31d09() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("size", "Size", 2.5, 0.01, 5.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shape", "Shape", 1.0, 0.01, 1.5, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 15, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", -20.0, -10000.0, 10000.0, step: 0.01), slot: 15, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 550.0, -10000.0, 10000.0, step: 0.01), slot: 15, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 17, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texScale", "Scale", 1.0, 0.01, 20.0, step: 0.001), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texStretch", "Stretch", Vec2(1.0, 1.0)), slot: 28, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texTwirl", "Twirl", 0.0), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 60.0, 10.0, 200.0, step: 1.0), slot: 32))
+        return ReferenceFragmentDefinition(id: "awi.amref.e3a7a37a31d09", name: "Heart", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e3a7a37a31d09", slots: 33,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.heart2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e8c9b81f88ba0() -> ReferenceFragmentDefinition {
@@ -1778,7 +3703,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e8c9b81f88ba0", name: "Colorista", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e8c9b81f88ba0", slots: 20,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.mbl_colorista", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e69ae7b9c2440() -> ReferenceFragmentDefinition {
@@ -1803,7 +3728,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 28, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e69ae7b9c2440", name: "S_Flicker", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e69ae7b9c2440", slots: 29,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.s_flicker_pro", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e26753b8c360e() -> ReferenceFragmentDefinition {
@@ -1821,7 +3746,25 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 21, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e26753b8c360e", name: "Heatmap", summary: "Noise-modulated heat color bands driven by the source.",
             category: .generate, function: "refAM35_e26753b8c360e", slots: 22,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.heatmap_perlin_noise", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ea93a6cc8fee5() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color", "Color", RGBA(0.7725490196078432, 0.22745098039215686, 0.10588235294117647, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("colorbg", "Color BG", RGBA(0.3568627450980392, 0.6666666666666666, 0.3568627450980392, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Progress", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("deltab", "Thresold", 0.5, -5.0, 5.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("deltac", "Evolution", 1510.0, -500.0, 5000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("deltad", "Seed", 0.0, -15.0, 15.0, step: 0.1), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 19, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 21))
+        return ReferenceFragmentDefinition(id: "awi.amref.ea93a6cc8fee5", name: "Burning Wipe+", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .keying, function: "refAM35_ea93a6cc8fee5", slots: 22,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.burningwipe", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_efec58c6d52e1() -> ReferenceFragmentDefinition {
@@ -1833,7 +3776,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.efec58c6d52e1", name: "Pro Diffusion", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_efec58c6d52e1", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.proDiffusion", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eeae22f0a3488() -> ReferenceFragmentDefinition {
@@ -1850,7 +3793,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert", false), slot: 20))
         return ReferenceFragmentDefinition(id: "awi.amref.eeae22f0a3488", name: "Edge Line", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_eeae22f0a3488", slots: 21,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.edgeline", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e1e32e5ce15e4() -> ReferenceFragmentDefinition {
@@ -1860,7 +3803,71 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 0.3, 0.0, 0.8, step: 0.01), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.e1e32e5ce15e4", name: "Vortex Blur", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e1e32e5ce15e4", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.vortexblur", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e3dc893f46bd6() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("size", "Size", 1.0, 0.01, 10.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ratio", "Thickness", 50.0, 1.0, 100.0, step: 0.1, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smooth", "Smoothing", 0.0, 0.0, 5.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 55.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 500.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 18, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("texStretch", "Stretch", false), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatX", "Repeat X", 1.0, 0.01, 20.0, step: 0.01), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatY", "Repeat Y", 1.0, 0.01, 20.0, step: 0.01), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texTwirl", "Twirl", 0.0), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 60.0, 10.0, 200.0, step: 1.0), slot: 34))
+        return ReferenceFragmentDefinition(id: "awi.amref.e3dc893f46bd6", name: "Three-axis Cross", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e3dc893f46bd6", slots: 35,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.plus", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e83f3250e5723() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mode", "Comp Mode", false), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("exposure", "Exposure", 0.0, -2.0, 2.0, step: 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gamma", "Gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("brightness", "Brightness", 0.0, -1.0, 1.0, step: 0.005), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("contrast", "Contrast", 0.0, -1.0, 3.0, step: 0.005), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("highlights", "Highlights", 100.0, 0.0, 200.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shadows", "Shadows", 100.0, 0.0, 200.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offset", "Offset", 0.0, -0.9, 0.9, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("saturation", "Saturation", 0.0, -1.0, 1.0, step: 0.005), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("vib", "Vibrance", 1.0, 1.0, 2.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("hue", "Hue Shift", 360.0), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("temperature", "Temperature", 6.5, 1.0, 15.0, step: 0.05), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("redGamma", "RED", 1.0, 0.01, 9.99, step: 0.005), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("greenGamma", "GREEN", 1.0, 0.01, 9.99, step: 0.005), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blueGamma", "BLUE", 1.0, 0.01, 9.99, step: 0.005), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("red", "R", ["R", "G", "B", "A", "Y", "0", "1"], 0), slot: 26, choiceValues: [0, 1, 2, 3, 4, 5, 6]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("green", "G", ["R", "G", "B", "A", "Y", "0", "1"], 1), slot: 27, choiceValues: [0, 1, 2, 3, 4, 5, 6]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blue", "B", ["R", "G", "B", "A", "Y", "0", "1"], 2), slot: 28, choiceValues: [0, 1, 2, 3, 4, 5, 6]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("alphay", "A", ["R", "G", "B", "A", "Y", "0", "1"], 3), slot: 29, choiceValues: [0, 1, 2, 3, 4, 5, 6]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alphax", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 30, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e83f3250e5723", name: "AdjHidden+", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_e83f3250e5723", slots: 31,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xdist", binding: 1, downsample: 2)], passes: ["xdist", ""], referenceBinding: 2, sourceID: "com.alightcreative.effects.fastadj", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef43fb8dd1562() -> ReferenceFragmentDefinition {
@@ -1871,7 +3878,55 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("mode", "Mode", ["Light", "Dark", "Mask", "Luma"], 0), slot: 14, choiceValues: [2, 3, 0, 1]))
         return ReferenceFragmentDefinition(id: "awi.amref.ef43fb8dd1562", name: "RGB Split", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ef43fb8dd1562", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.rgbsep", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eead7fb687e24() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("widthRatio", "Width", 100.0, 1.0, 1000.0, step: 0.1, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("heightRatio", "Height", 100.0, 1.0, 1000.0, step: 0.1, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("depth", "Depth", 0.1, 0.01, 10.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 100.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 500.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .color("interiorColor", "Interior Color", RGBA(0.2, 0.4, 0.6666666666666666, 1.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("interiorBlend", "Interior", 0.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("fadeColor", "Fade Color", RGBA(0.6666666666666666, 0.2, 0.4, 1.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fadeBlend", "Fade", 0.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 22, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 200.0, 10.0, 800.0, step: 1.0), slot: 30))
+        return ReferenceFragmentDefinition(id: "awi.amref.eead7fb687e24", name: "Raster Extrude", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_eead7fb687e24", slots: 31,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "blurBuf", binding: 1, downsample: 1)], passes: ["blurBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.extrude", externalPasses: [0: "com.alightcreative.effects.gaussianblur"], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e0136f093b8d4() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("threshold", "Threshold", 0.5, 0.0, 1.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 0.1, 0.0, 1.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("power", "Feather", 2.0, 0.0, 4.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Smoothing", 0.05, 0.0, 2.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .color("fillColor", "Color", RGBA(0.0, 0.5333333333333333, 1.0, 1.0)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend", 0.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fill", "Fill", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e0136f093b8d4", name: "Glow Scan", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_e0136f093b8d4", slots: 19,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "hblur", binding: 1, downsample: 1)], passes: ["hblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.glowscan", externalPasses: [0: "com.alightcreative.effects.gaussianblur"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ed499a706b3c1() -> ReferenceFragmentDefinition {
@@ -1886,7 +3941,93 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", true), slot: 18))
         return ReferenceFragmentDefinition(id: "awi.amref.ed499a706b3c1", name: "Tunnel", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ed499a706b3c1", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.tunnel", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e074e7c9296ef() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 2.5, 0.01, 5.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("squeeze", "Squeeze", 100.0, 25.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("flatten", "Flatten", 100.0, 25.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", -20.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 550.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 18, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatX", "Repeat X", 1.0, 0.01, 20.0, step: 0.01), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatY", "Repeat Y", 1.0, 0.01, 20.0, step: 0.01), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texTwirl", "Twirl", 0.0), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 60.0, 10.0, 200.0, step: 1.0), slot: 33))
+        return ReferenceFragmentDefinition(id: "awi.amref.e074e7c9296ef", name: "Ellipsoid", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e074e7c9296ef", slots: 34,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.ellipsoid", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ec2da1b62e988() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("size", "Size", 1.0, 0.01, 10.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("height", "Height", 1.0, 0.35, 10.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smooth", "Smoothing", 0.0, 0.0, 5.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 55.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 500.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 3.0, 0.0, 10.0, step: 0.01), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 18, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texSqueeze", "Squeeze", 0.0, 0.0, 1.0, step: 0.01), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatX", "Repeat X", 1.0, 0.01, 20.0, step: 0.01), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatY", "Repeat Y", 1.0, 0.01, 20.0, step: 0.01), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texTwirl", "Twirl", 0.0), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 60.0, 10.0, 200.0, step: 1.0), slot: 34))
+        return ReferenceFragmentDefinition(id: "awi.amref.ec2da1b62e988", name: "Pyramid", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ec2da1b62e988", slots: 35,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.pyramid", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ea8e0a421faa8() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("color_hue", "Color Hue", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("color_saturation", "Color Saturation", 1.0, 0.0, 2.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("color_bias", "Color Bias", 0.0, -1.0, 1.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("tint_hue", "Tint Hue", 60.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("tint_saturation", "Tint Saturation", 1.0, 0.0, 2.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("tint_bias", "Tint Bias", 0.0, -1.0, 1.0, step: 0.01), slot: 12, component: 2))
+        return ReferenceFragmentDefinition(id: "awi.amref.ea8e0a421faa8", name: "Hot Color", summary: "Map luminance through two hue-controlled tonal colors, with saturation, gamma, cutoff and bias controls.",
+            category: .color, function: "refAM35_ea8e0a421faa8", slots: 13,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.colorhot", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ed2fdd321a8b0() -> ReferenceFragmentDefinition {
@@ -1902,7 +4043,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("amode", "A", ["Min", "Max", "Avg", "Off"], 1), slot: 19, choiceValues: [0, 1, 3, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.ed2fdd321a8b0", name: "Zoom Streaks", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_ed2fdd321a8b0", slots: 20,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.streaks-zoom", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e38f574cda1cf() -> ReferenceFragmentDefinition {
@@ -1940,7 +4081,97 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("globalMix", "Global Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 41, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e38f574cda1cf", name: "S_Pos Shake", summary: "Internal reference shader for comparison and adapter validation.",
             category: .motion, function: "refAM35_e38f574cda1cf", slots: 42,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.sposshake", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e3db98197ff5f() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("camX", "Pos X", 0.0, -5.0, 500.0, step: 0.001), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("camY", "Pos Y", 0.0, -5.0, 500.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("camZ", "Pos Z", 0.0, -50.0, 500.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotDeg_x", "Rotation (deg) X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 14, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotDeg_y", "Rotation (deg) Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 14, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotDeg_z", "Rotation (deg) Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 14, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("zSpeed", "Forward Speed", 1.0, -10.0, 10.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autoBlur", "Auto Motion Blur", true), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blurFactor", "Blur Factor", 0.25, 0.0, 2.0, step: 0.01), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotBlurSpeed", "Rot Blur Speed (deg/s)", 0.0, 0.0, 3600.0, step: 0.1), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("manualTrail", "Manual Trail (if Auto off)", 0.008, 0.0, 0.1, step: 0.0005), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("brightness", "Brightness", 2.5, 0.0, 6.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("particleSize", "Particle Size", 0.015, 0.001, 0.06, step: 0.001), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("particleCount", "Pass Count", 1.0, 1.0, 3.0, step: 1.0), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e3db98197ff5f", name: "Star Tunnel ", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e3db98197ff5f", slots: 24,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.star_tunnel_camera", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ede5369a89427() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("size", "Size", 0.5, 0.01, 10.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("height", "Depth", 0.5, 0.15, 10.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("pointLength", "Point Length", 1.0, 1.0, 10.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smooth", "Smoothing", 0.0, 0.0, 5.0, step: 0.001), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 17, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 100.0, -10000.0, 10000.0, step: 0.01), slot: 17, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 500.0, -10000.0, 10000.0, step: 0.01), slot: 17, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 3.0, 0.0, 10.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("pointCount", "Points", 5.0, 2.0, 16.0, step: 1.0), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 20, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatX", "Repeat X", 1.0, 0.01, 20.0, step: 0.01), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatY", "Repeat Y", 1.0, 0.01, 20.0, step: 0.01), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texTwirl", "Twirl", 0.0), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 34))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 60.0, 10.0, 200.0, step: 1.0), slot: 35))
+        return ReferenceFragmentDefinition(id: "awi.amref.ede5369a89427", name: "Star Polyhedron", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ede5369a89427", slots: 36,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.starpoly", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e60ed1f64f84c() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 50.0, 0.0, 400.0, step: 0.1), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 75.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hardness", 0.2, 0.0, 1.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color", "@am:string/effect_param_glowColor", RGBA(1.0, 1.0, 0.6666666666666666, 1.0)), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["Normal", "Multiply", "Screen"], 2), slot: 15, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e60ed1f64f84c", name: "Inner Glow", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_e60ed1f64f84c", slots: 16,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.inner-glow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eadb757aa8f44() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("smoothing", "Smoothing", 5.0, 1.0, 10.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("threshold", "Threshold", 0.7, 0.0, 1.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert", false), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Blur", 0.1, 0.0, 2.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spread", "Spread", 1.5, 0.0, 3.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .color("fillColor", "Color", RGBA(0.0, 0.5333333333333333, 1.0, 1.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend", 0.0, 0.0, 200.0, step: 0.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gamma", "Gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("brightness", "Brightness", 0.0, -1.0, 1.0, step: 0.01), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .color("tintColor", "Tint Color", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("tint", "Tint", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.eadb757aa8f44", name: "Edge Glow", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_eadb757aa8f44", slots: 22,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "edge", binding: 1, downsample: 1), ReferenceFragmentBuffer(name: "hblur", binding: 2, downsample: 1)], passes: ["edge", "hblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.edgeglow", externalPasses: [0: "com.alightcreative.effects.findedges-edgeglow", 1: "com.alightcreative.effects.gaussianblur"], sourcePasses: [1: "edge"], iterationParameter: nil)
     }
 
     private static func make_ef86ca044f297() -> ReferenceFragmentDefinition {
@@ -1957,7 +4188,14 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blending", "Blending", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 20, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ef86ca044f297", name: "8Bit", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ef86ca044f297", slots: 21,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.s_8bit", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e750df21668d2() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e750df21668d2", name: "Blend/Subtract", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e750df21668d2", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.divide", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e8404b5764d4f() -> ReferenceFragmentDefinition {
@@ -1972,7 +4210,27 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("screenSpace", "Screen Space", false), slot: 18))
         return ReferenceFragmentDefinition(id: "awi.amref.e8404b5764d4f", name: "Tile Rotate", summary: "Rotate repeating tiles around their individual centers.",
             category: .distort, function: "refAM35_e8404b5764d4f", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.tilerotate2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eed3b0af3caab() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color Shadow", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color Line", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("AMOUNT", "Line Amount", 8.0, 0.0, 20.0, step: 1.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPREAD", "Spread Amount", 0.0, 0.0, 5.0, step: 1.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("EVO", "Line Evo", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("EVO2", "Spread Evo", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 20, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 0), slot: 23, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.eed3b0af3caab", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_eed3b0af3caab", slots: 24,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e6c696768747361626572", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_efccbd7a6588a() -> ReferenceFragmentDefinition {
@@ -1982,7 +4240,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 0.3, 0.0, 10.0, step: 0.01), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.efccbd7a6588a", name: "Swirl+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_efccbd7a6588a", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.newswirl", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e32743646744c() -> ReferenceFragmentDefinition {
@@ -1993,7 +4251,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e32743646744c", name: "Sharpen pro", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e32743646744c", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.denoise_sharpen", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e122258a4d83c() -> ReferenceFragmentDefinition {
@@ -2007,7 +4265,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("featherA", "Feather", 0.0, 0.0, 100.0, step: 0.1), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.e122258a4d83c", name: "BlackBar Maker+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e122258a4d83c", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.bbmaker", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e089fe308a7e7() -> ReferenceFragmentDefinition {
@@ -2028,7 +4286,32 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 1.0, 0.0, 1.0, step: 0.01), slot: 24))
         return ReferenceFragmentDefinition(id: "awi.amref.e089fe308a7e7", name: "Flare ", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e089fe308a7e7", slots: 25,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.flare_shadertoy", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e772b68314f0d() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autoe", "Auto Evolution", true), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autob", "Auto Blink", true), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autor", "Auto Rotate", true), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXA", "Evolution", 1000.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXB", "Blink", 100.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 21, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Brightness", 100.0, 100.0, 1000.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 2), slot: 24, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert Color", false), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autos", "Enable", false), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto ScaleAnimation", false), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXC", "Scale Animation", 100.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 28, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e772b68314f0d", name: "Plexus Faces", summary: "An evolving triangular plexus field with separate motion, rotation and color controls.",
+            category: .generate, function: "refAM35_e772b68314f0d", slots: 29,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.plexustriangle", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e706c65787573747269616e676c65"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_ef17fae31f9b4() -> ReferenceFragmentDefinition {
@@ -2039,7 +4322,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("masterContrast", "Master Contrast", 1.0, 0.0, 2.0, step: 0.01), slot: 14))
         return ReferenceFragmentDefinition(id: "awi.amref.ef17fae31f9b4", name: "RGB Curves", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ef17fae31f9b4", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.rgb_curves_gamma", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e73314b9e0697() -> ReferenceFragmentDefinition {
@@ -2048,7 +4331,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("quality", "Quality", ["Fast", "Normal", "High"], 1), slot: 12, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e73314b9e0697", name: "Unsharp Gaussian V", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e73314b9e0697", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.unsharp_gauss_v", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eb7eb87384a14() -> ReferenceFragmentDefinition {
@@ -2060,7 +4343,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.eb7eb87384a14", name: "Depth Displacement", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_eb7eb87384a14", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.depthDisplacement", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e7c3d6213e5be() -> ReferenceFragmentDefinition {
@@ -2072,7 +4355,48 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e7c3d6213e5be", name: "New Dithering", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e7c3d6213e5be", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.dithering", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e3cedc1a9644b() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .angle("rotate", "Rotation", 45.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("warpAngle", "Swirl", 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("size", "Size", 10.0, 0.5, 200.0, step: 0.1), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 15, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("screenSpace", "Screen Space", false), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("twirl", "Rotation Range", 0.0, 0.0, 3600.0, step: 1.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 5.0, step: 0.01), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("maskToLayer", "Mask To Layer", false), slot: 20))
+        return ReferenceFragmentDefinition(id: "awi.amref.e3cedc1a9644b", name: "Hexagon Tile Rotate", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e3cedc1a9644b", slots: 21,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.hexrotate", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e6b5bf0e6539d() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("water_color", "Color Wave", RGBA(0.5019607843137255, 0.5019607843137255, 0.5137254901960784, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("HEI", "Height", 20.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("STR", "Wave Strength", 300.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("FREQ", "Wave Freq", 800.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("TRP", "Alpha Wave", 40.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ANG", "Angle", 200.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e6b5bf0e6539d", name: "Surface Waterwave", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e6b5bf0e6539d", slots: 21,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.waterwave", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e776174657277617665"], sourcePasses: [:], iterationParameter: "iter")
+    }
+
+    private static func make_ef2888d105ad3() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.ef2888d105ad3", name: "Copy Background", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_ef2888d105ad3", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.copy_background", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e0a0f452e32e2() -> ReferenceFragmentDefinition {
@@ -2084,7 +4408,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e0a0f452e32e2", name: "Mask Blur", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e0a0f452e32e2", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.maskBlur", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e21823176e06e() -> ReferenceFragmentDefinition {
@@ -2096,7 +4420,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e21823176e06e", name: "S_Flashbulbs", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e21823176e06e", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.flashbulbs", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e357c6c9c05a9() -> ReferenceFragmentDefinition {
@@ -2111,7 +4435,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["Normal", "Multiply", "Screen"], 2), slot: 18, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e357c6c9c05a9", name: "Lens Flare", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e357c6c9c05a9", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.lensflare", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ebb8471d24fd0() -> ReferenceFragmentDefinition {
@@ -2123,7 +4447,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ebb8471d24fd0", name: "TV Analogue", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ebb8471d24fd0", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.tvanalogue", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e46a11ff71be9() -> ReferenceFragmentDefinition {
@@ -2158,7 +4482,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("globalMix", "Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 38, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e46a11ff71be9", name: "Warp+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e46a11ff71be9", slots: 39,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.warp+", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e40d45d33b0da() -> ReferenceFragmentDefinition {
@@ -2172,7 +4496,35 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("distortionScale", "Distortion Freq", 6.0, 1.0, 20.0, step: 0.1), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.e40d45d33b0da", name: "Firey Border", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e40d45d33b0da", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.firey_border", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e624154b0ab99() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("AMOUNT", "Iteration", 3.0, 0.0, 10.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 200.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 18, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("UVNEW", "Center UV", false), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("COLOR", "Color Blend", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 23, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e624154b0ab99", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e624154b0ab99", slots: 24,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e626f6e66697265", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_efc98f41c805f() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.02, 0.0, 2.0, step: 0.01), slot: 11))
+        return ReferenceFragmentDefinition(id: "awi.amref.efc98f41c805f", name: "Key Spill Cleaner", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .keying, function: "refAM35_efc98f41c805f", slots: 12,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "blurImg", binding: 1, downsample: 1), ReferenceFragmentBuffer(name: "hstreak", binding: 2, downsample: 1), ReferenceFragmentBuffer(name: "vstreak", binding: 3, downsample: 1)], passes: ["blurImg", "hstreak", "vstreak", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.spill-cleanup", externalPasses: [0: "com.alightcreative.effects.gaussianblur"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e3d7ae5137bb1() -> ReferenceFragmentDefinition {
@@ -2187,7 +4539,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("mode", "Lighten Layer", false), slot: 18))
         return ReferenceFragmentDefinition(id: "awi.amref.e3d7ae5137bb1", name: "VCR Distortion+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e3d7ae5137bb1", slots: 19,
-            parameters: parameters, images: ["amref-334a66740ff27398.png"])
+            parameters: parameters, images: ["amref-334a66740ff27398.png"], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.vcr", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e5ad5e1e9a0fb() -> ReferenceFragmentDefinition {
@@ -2209,9 +4561,9 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("staticProbThr", "Static vs Datamosh Split", 0.7, 0.0, 1.0, step: 0.01), slot: 25))
         parameters.append(ReferenceFragmentParameter(definition: .toggle("enableColorBands", "Enable Colored Bands", true), slot: 26))
         parameters.append(ReferenceFragmentParameter(definition: .number("bandProbThr", "Band Trigger", 0.6, 0.0, 1.0, step: 0.01), slot: 27))
-        return ReferenceFragmentDefinition(id: "awi.amref.e5ad5e1e9a0fb", name: "Precision Glitch", summary: "Internal reference shader for comparison and adapter validation.",
+        return ReferenceFragmentDefinition(id: "awi.amref.e5ad5e1e9a0fb", name: "Precision Glitch", summary: "Combine individually adjustable scanline tears, block corruption, static and color-band interference with controlled trigger timing.",
             category: .distort, function: "refAM35_e5ad5e1e9a0fb", slots: 28,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.precision_glitch", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea86c4dac0cf2() -> ReferenceFragmentDefinition {
@@ -2225,7 +4577,18 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("quality", "Quality (Iterations)", 48.0, 8.0, 128.0, step: 8.0), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.ea86c4dac0cf2", name: "Bokeh Blur", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_ea86c4dac0cf2", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.creative.cinematic_bokeh", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ed66b9748347b() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Feather", 0.2, 0.0, 2.0, step: 0.005), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("exposure", "Strength", 0.75, 0.0, 2.0, step: 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("iter", "Hardness", 1.0, 1.0, 3.0, step: 1.0), slot: 14))
+        return ReferenceFragmentDefinition(id: "awi.amref.ed66b9748347b", name: "HDR Quality CC", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_ed66b9748347b", slots: 15,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "vblur", binding: 1, downsample: 1)], passes: ["vblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.hdr", externalPasses: [0: "com.alightcreative.effects.gaussianblur"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e48074a20347f() -> ReferenceFragmentDefinition {
@@ -2237,7 +4600,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e48074a20347f", name: "Radial Shadow", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e48074a20347f", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.radialShadow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e1ab9310206cc() -> ReferenceFragmentDefinition {
@@ -2251,7 +4614,83 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e1ab9310206cc", name: "Color-Luma Key", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_e1ab9310206cc", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.color_luma_key", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e2236f1691530() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("COLOR", "Color", RGBA(0.0, 1.0, 1.0, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("AMOUNT", "Amount", 8.0, 0.0, 40.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxc", "Radius Glow", 1.0, 0.0, 2.0, step: 0.05, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxb", "Orient X", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxa", "Orient Y", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxe", "Space X", 20.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxd", "Space Y", 20.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 21, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 24, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e2236f1691530", name: "Dots Spinner", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e2236f1691530", slots: 25,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.dotsloader", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e646f74736c6f61646572"], sourcePasses: [:], iterationParameter: "iter")
+    }
+
+    private static func make_e9ce9204922a1() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 17, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 20, choiceValues: [0, 3, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("GRADMAP", "Custom Color", true), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        return ReferenceFragmentDefinition(id: "awi.amref.e9ce9204922a1", name: "Shape Voronoi", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e9ce9204922a1", slots: 24,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "buff1", binding: 1, downsample: 1)], passes: ["buff1", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.voronoi3", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e095ca329604f() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Z Speed", 28.0, 0.0, 100.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("UV_SCALE", "UV Scale", 0.5, 0.1, 2.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("STEPS", "Max Rails", 150.0, 1.0, 300.0, step: 1.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("DENOM_BIAS", "Distance Bias", 30.0, 0.0, 100.0, step: 0.1), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("GAIN", "Overall Gain", 30.0, 0.0, 100.0, step: 0.1), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("WOBBLE_FREQ", "Wobble Freq", 20.0, 0.0, 60.0, step: 0.1), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("WOBBLE_AMP", "Wobble Amp", 0.05, 0.0, 0.5, step: 0.001), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PULL_MIN", "Pullback Min", 1.0, 0.0, 5.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PULL_ADD", "Pullback Add", 4.0, 0.0, 8.0, step: 0.01), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("DOT_MIN", "Dot Size Min", 0.1, 0.0, 1.0, step: 0.001), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("DOT_ADD", "Dot Size Add", 0.5, 0.0, 1.0, step: 0.001), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PAT_MIN", "Pattern Scale Min", 2.0, 0.0, 10.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PAT_ADD", "Pattern Scale Add", 2.0, 0.0, 10.0, step: 0.01), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PAT_BASE", "Pattern Base", 0.9, 0.0, 2.0, step: 0.001), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PAT_GAIN", "Pattern Gain", 0.1, 0.0, 2.0, step: 0.001), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("THRESH_1", "Near Thresh", 0.2, 0.0, 1.0, step: 0.001), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("THRESH_2", "Mid Thresh", 0.22, 0.0, 1.0, step: 0.001), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("BRIGHT_1", "Near Bright", 1.2, 0.0, 4.0, step: 0.01), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("BRIGHT_2", "Mid Bright", 0.9, 0.0, 4.0, step: 0.01), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SHADOW_DECAY", "Shadow Decay", 2.0, 0.0, 8.0, step: 0.01), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SHADOW_GAIN", "Shadow Gain", 0.2, 0.0, 1.0, step: 0.001), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .number("R_MIN", "R Min", 1.4, 0.0, 3.0, step: 0.001), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .number("R_ADD", "R Add", 0.5, 0.0, 2.0, step: 0.001), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .number("G_MIN", "G Min", 0.7, 0.0, 3.0, step: 0.001), slot: 34))
+        parameters.append(ReferenceFragmentParameter(definition: .number("G_ADD", "G Add", 0.5, 0.0, 2.0, step: 0.001), slot: 35))
+        parameters.append(ReferenceFragmentParameter(definition: .number("B_MIN", "B Min", 0.7, 0.0, 3.0, step: 0.001), slot: 36))
+        parameters.append(ReferenceFragmentParameter(definition: .number("B_ADD", "B Add", 0.5, 0.0, 2.0, step: 0.001), slot: 37))
+        parameters.append(ReferenceFragmentParameter(definition: .number("GAMMA", "Gamma", 1.0, 0.2, 2.2, step: 0.01), slot: 38))
+        return ReferenceFragmentDefinition(id: "awi.amref.e095ca329604f", name: "Wobble Rail Streaks", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e095ca329604f", slots: 39,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.wobble_rail_streaks", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea03f4bd384d7() -> ReferenceFragmentDefinition {
@@ -2265,7 +4704,76 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alphab", "Alpha Blend", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ea03f4bd384d7", name: "New ColorTemp", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ea03f4bd384d7", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.newcolortemp", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e4f0ab48c1424() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("rex", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("rey", "Saturate", 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("rez", "Luminance", 0.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orx", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("ory", "Saturate", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("orz", "Luminance", 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("yex", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("yey", "Saturate", 0.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("yez", "Luminance", 0.0), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("grx", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("gry", "Saturate", 0.0), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("grz", "Luminance", 0.0), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cyx", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("cyy", "Saturate", 0.0), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("cyz", "Luminance", 0.0), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blx", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("bly", "Saturate", 0.0), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("blz", "Luminance", 0.0), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("pux", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("puy", "Saturate", 0.0), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("puz", "Luminance", 0.0), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .number("maxx", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("may", "Saturate", 0.0), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("maz", "Luminance", 0.0), slot: 34))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Exposure", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 35, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 36, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 37, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e4f0ab48c1424", name: "Mixer HSL", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_e4f0ab48c1424", slots: 38,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.hsl", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e68736c"], sourcePasses: [:], iterationParameter: "iter")
+    }
+
+    private static func make_e9493bb625413() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("maxsize", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("b0size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b0color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("b0direction", "Direction", ["out", "in", "center"], 0), slot: 14, choiceValues: [1, -1, 0]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("b1size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b1color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("b1direction", "Direction", ["out", "in", "center"], 0), slot: 17, choiceValues: [1, -1, 0]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("b2size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b2color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("b2direction", "Direction", ["out", "in", "center"], 0), slot: 20, choiceValues: [1, -1, 0]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("b3size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b3color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("b3direction", "Direction", ["out", "in", "center"], 0), slot: 23, choiceValues: [1, -1, 0]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("b4size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b4color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("b4direction", "Direction", ["out", "in", "center"], 0), slot: 26, choiceValues: [1, -1, 0]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("b5size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b5color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("b5direction", "Direction", ["out", "in", "center"], 0), slot: 29, choiceValues: [1, -1, 0]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("b6size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b6color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("b6direction", "Direction", ["out", "in", "center"], 0), slot: 32, choiceValues: [1, -1, 0]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("b7size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b7color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 34))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("b7direction", "Direction", ["out", "in", "center"], 0), slot: 35, choiceValues: [1, -1, 0]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("b8size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 36))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b8color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 37))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("b8direction", "Direction", ["out", "in", "center"], 0), slot: 38, choiceValues: [1, -1, 0]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e9493bb625413", name: "[INTERNAL] Border", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e9493bb625413", slots: 39,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.internal.border", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ebf8fdec0b910() -> ReferenceFragmentDefinition {
@@ -2287,7 +4795,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("FADE", "Fade", 5.0, 0.0, 50.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ebf8fdec0b910", name: "Advanced Color Grading", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ebf8fdec0b910", slots: 26,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.colorgrade", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e77c18bb5f153() -> ReferenceFragmentDefinition {
@@ -2295,7 +4803,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .angle("hue", "Hue Shift", 0.0), slot: 11))
         return ReferenceFragmentDefinition(id: "awi.amref.e77c18bb5f153", name: "Hue Shift", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e77c18bb5f153", slots: 12,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.hueshift", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e45e8b482c9fc() -> ReferenceFragmentDefinition {
@@ -2306,7 +4814,18 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["Normal", "Multiply", "Screen"], 0), slot: 14, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e45e8b482c9fc", name: "Threshold", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e45e8b482c9fc", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.threshold", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e91bf849db644() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mode", "Comp Mode", false), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.0, 0.0, 2.0, step: 0.005), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fill", "Comp Fill", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("iter", "Iterations", 2.0, 1.0, 6.0, step: 1.0), slot: 14))
+        return ReferenceFragmentDefinition(id: "awi.amref.e91bf849db644", name: "Inner Blur+", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .blur, function: "refAM35_e91bf849db644", slots: 15,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "hblur", binding: 1, downsample: 1)], passes: ["hblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.innerblurplus", externalPasses: [0: "com.alightcreative.effects.boxblurplus"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e6134d019d8aa() -> ReferenceFragmentDefinition {
@@ -2315,7 +4834,30 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 1.0, 1.0, 10.0, step: 0.1), slot: 12))
         return ReferenceFragmentDefinition(id: "awi.amref.e6134d019d8aa", name: "Sharpen", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e6134d019d8aa", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.sharpen", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e38a4c9012d33() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("B1", "Massive Bubble", true), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("B2", "Huge Bubble", false), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("B3", "Big Bubble", true), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("B4", "Medium Bubble", false), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("B5", "Small Bubble", false), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("B6", "Tiny Bubble", false), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 75.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 23, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "SCREEN"], 1), slot: 26, choiceValues: [0, 1]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e38a4c9012d33", name: "Bubble", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e38a4c9012d33", slots: 27,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.bubble", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e627562626c65"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e590db1c1e3be() -> ReferenceFragmentDefinition {
@@ -2327,7 +4869,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e590db1c1e3be", name: "Constellation", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e590db1c1e3be", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.constellation", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e0755d4beacf9() -> ReferenceFragmentDefinition {
@@ -2340,7 +4882,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color 2", RGBA(1.0, 0.9333333333333333, 0.8666666666666667, 1.0)), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.e0755d4beacf9", name: "Halftone Lines", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e0755d4beacf9", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.halftonelines", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e658cad5dcbff() -> ReferenceFragmentDefinition {
@@ -2361,7 +4903,27 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("color6", "Color 6", RGBA(1.0, 0.3333333333333333, 1.0, 1.0)), slot: 24))
         return ReferenceFragmentDefinition(id: "awi.amref.e658cad5dcbff", name: "Error Diffusion", summary: "Quantize into a palette while propagating sample error along a chosen direction.",
             category: .stylize, function: "refAM35_e658cad5dcbff", slots: 25,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.ominodiff", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ead4fd5807e6b() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("AMOUNT", "Iteration", 3.0, 0.0, 10.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 200.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 18, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("UVNEW", "Center UV", false), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("COLOR", "Color Blend", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 23, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.ead4fd5807e6b", name: "Bonfire", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ead4fd5807e6b", slots: 24,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.bonfire", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e626f6e66697265"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_ea601aa767c60() -> ReferenceFragmentDefinition {
@@ -2371,7 +4933,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("adaptive", "Adaptive", true), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.ea601aa767c60", name: "Chromatic Zoom Blur", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_ea601aa767c60", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.chromaticzoomblur", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9468c5afe78d() -> ReferenceFragmentDefinition {
@@ -2383,7 +4945,18 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("chromaGain", "Chroma", 1.0, 0.0, 3.0, step: 0.01), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e9468c5afe78d", name: "INSANE Signal", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e9468c5afe78d", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.insane_signal", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e0ed618b33e7c() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("quality", "Quantization Scale", 4.0, 0.5, 30.0, step: 0.1), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("detail", "Kept Frequencies", ["Low (3)", "Medium (6)", "High (10)"], 1), slot: 12, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("showGrid", "Show 8x8 Grid", false), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e0ed618b33e7c", name: "jpeg quality", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e0ed618b33e7c", slots: 15,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.dct_compress_demo", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e2534d53346fd() -> ReferenceFragmentDefinition {
@@ -2395,7 +4968,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert", false), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e2534d53346fd", name: "Luma Stamper", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_e2534d53346fd", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.lumastamper", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e4c2c2a58de22() -> ReferenceFragmentDefinition {
@@ -2410,7 +4983,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 100.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 18, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e4c2c2a58de22", name: "S_Shake Ultra", summary: "Internal reference shader for comparison and adapter validation.",
             category: .motion, function: "refAM35_e4c2c2a58de22", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.sshakeultra", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e4ce85d1762e0() -> ReferenceFragmentDefinition {
@@ -2425,7 +4998,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("opacity", "Opacity", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e4ce85d1762e0", name: "3 Color Gradient+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e4ce85d1762e0", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.3colorgrad", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e307c69c1ef53() -> ReferenceFragmentDefinition {
@@ -2437,7 +5010,18 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e307c69c1ef53", name: "Bokeh Parallax", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e307c69c1ef53", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.bokehParallax", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ee491c4fae043() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color", "Color", RGBA(1.0, 0.26666666666666666, 0.26666666666666666, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Spread", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Feather", 700.0, 100.0, 20000.0, step: 50.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.ee491c4fae043", name: "Paper Burn", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ee491c4fae043", slots: 15,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.paperburn", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e013a8d025a10() -> ReferenceFragmentDefinition {
@@ -2447,7 +5031,74 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert", false), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.e013a8d025a10", name: "Find Edges", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e013a8d025a10", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.findedges-edgeglow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ef1f2a785b8af() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autoMove", "Auto Move", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Progress", 0.0, -100.0, 100.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("speed", "Speed", 0.48, -5.0, 5.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 1000.0, step: 1.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cameraX", "Camera X", 0.0, -3.0, 3.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cameraHeight", "Camera Height", 0.72, 0.15, 2.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("yaw", "Yaw", 0.0, -45.0, 45.0, step: 0.1), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("horizon", "Horizon", 0.08, -0.4, 0.5, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("buildingCount", "Buildings", 40.0, 12.0, 56.0, step: 1.0), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cityWidth", "City Width", 2.5, 0.8, 6.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cityDepth", "City Depth", 8.0, 2.0, 16.0, step: 0.01), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("heightScale", "Building Height", 1.2, 0.2, 3.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("widthScale", "Building Width", 1.0, 0.3, 2.5, step: 0.01), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("windowGlow", "Window Glow", 1.2, 0.0, 4.0, step: 0.01), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fog", "Distance Fog", 0.55, 0.0, 2.0, step: 0.01), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .color("skyTop", "Sky Top", RGBA(0.03137254901960784, 0.07058823529411765, 0.1450980392156863, 1.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .color("skyBottom", "Sky Horizon", RGBA(0.1450980392156863, 0.2901960784313726, 0.4392156862745098, 1.0)), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .color("buildingColor", "Buildings", RGBA(0.09019607843137255, 0.1411764705882353, 0.23529411764705882, 1.0)), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .color("windowColor", "Windows", RGBA(1.0, 0.7764705882352941, 0.42745098039215684, 1.0)), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .number("sourceMix", "Source Mix", 8.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 30, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("opacity", "Opacity", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 31, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.ef1f2a785b8af", name: " 3D Background", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ef1f2a785b8af", slots: 32,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.shadertoy_bg3d", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e5a72f8989e71() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Noise Evolution", 1.0, -1000.0, 1000.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 50.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 14, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Brightness", 150.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 2), slot: 19, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e5a72f8989e71", name: "VHS Noise", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e5a72f8989e71", slots: 20,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.vhsnoise", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eb739822f4bca() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("colorfg", "Color Point", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("colorbg", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("EVOTYPE", "Evo Mode", ["OFF", "FORWARD", "REVERSE"], 1), slot: 13, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 500.0, 500.0, 100000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("MANUAL", "Manual Movement", false), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .point("EVO", "Movement", Vec2(1.0, 1.0)), slot: 16, pointMinimum: Vec2(-50.0, -50.0), pointMaximum: Vec2(50.0, 50.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("TUNNEL_LAYERS", "Amount", 45.0, -10.0, 100.0, step: 1.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("RING_POINTS", "Rings Point", 64.0, -10.0, 100.0, step: 1.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("POINT_SIZE", "Point Size", 3.35, -10.0, 100.0, step: 0.01), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 75.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 22, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 26, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.eb739822f4bca", name: "Point Tunnel", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_eb739822f4bca", slots: 27,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.pointunnel", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e706f696e74756e6e656c"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_eab6572d7c425() -> ReferenceFragmentDefinition {
@@ -2459,7 +5110,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.eab6572d7c425", name: "Ripple Lighting", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_eab6572d7c425", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.rippleLighting", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e7dd301114b90() -> ReferenceFragmentDefinition {
@@ -2468,7 +5119,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 100.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 12, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e7dd301114b90", name: "Color Temperature", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e7dd301114b90", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.colortemperature", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e45a6d8473da7() -> ReferenceFragmentDefinition {
@@ -2480,7 +5131,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e45a6d8473da7", name: "Halation", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e45a6d8473da7", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.halation", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ebea9e058896e() -> ReferenceFragmentDefinition {
@@ -2491,7 +5142,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", true), slot: 14))
         return ReferenceFragmentDefinition(id: "awi.amref.ebea9e058896e", name: "Kaleidoscope", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ebea9e058896e", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.kaleidoscope", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e98c76d49aae0() -> ReferenceFragmentDefinition {
@@ -2503,7 +5154,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e98c76d49aae0", name: "Tone Curve", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e98c76d49aae0", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.tonecurve", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e24e265506083() -> ReferenceFragmentDefinition {
@@ -2513,7 +5164,38 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e24e265506083", name: "Frosted Blur", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e24e265506083", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.sfrostednew", externalPasses: [:], sourcePasses: [:], iterationParameter: "iter")
+    }
+
+    private static func make_e107ba25ead0a() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e107ba25ead0a", name: "Blend/Hard Light", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e107ba25ead0a", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.pinlight", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ea37015d76f84() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("fill", "Fill", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 11, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.ea37015d76f84", name: "Copy Background", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ea37015d76f84", slots: 12,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.lift", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ecb9c2e3a4604() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("dist", "Distance", 1.0, 0.2, 2.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("aspectRatio", "", ["16:9", "4:3", "1:1", "4:5", "9:16"], 0), slot: 14, choiceValues: [0, 1, 2, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.1, 2.0, step: 0.01), slot: 15))
+        return ReferenceFragmentDefinition(id: "awi.amref.ecb9c2e3a4604", name: "360º Viewer", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_ecb9c2e3a4604", slots: 16,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.vrplayer", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ed0445ed28fcb() -> ReferenceFragmentDefinition {
@@ -2525,7 +5207,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alphab", "Alpha Blend", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ed0445ed28fcb", name: "[X] Solid Color+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ed0445ed28fcb", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.solidcolornew", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e3457df3dfc47() -> ReferenceFragmentDefinition {
@@ -2537,7 +5219,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 15, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e3457df3dfc47", name: "Fractal Texture", summary: "An evolving fractal texture with offset, scale and rotation.",
             category: .generate, function: "refAM35_e3457df3dfc47", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.fractaltexture", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e00491689d6e9() -> ReferenceFragmentDefinition {
@@ -2550,9 +5232,19 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("gloss", "Glossiness", 0.7, 0.0, 1.0, step: 0.01), slot: 16))
         parameters.append(ReferenceFragmentParameter(definition: .number("anim", "Animation Progress", 0.0, 0.0, 1.0, step: 0.01), slot: 17))
         parameters.append(ReferenceFragmentParameter(definition: .toggle("blendSource", "Blend with Source Image", false), slot: 18))
-        return ReferenceFragmentDefinition(id: "awi.amref.e00491689d6e9", name: "Blood Splash Spheres", summary: "A procedural arrangement of splash-like spherical forms.",
+        return ReferenceFragmentDefinition(id: "awi.amref.e00491689d6e9", name: "Blood Splash Spheres", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e00491689d6e9", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "custom.blood_splash_spheres", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_edebde49dbce4() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mode", "Comp Mode", false), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.15, 0.0, 2.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fill", "Comp Fill", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.edebde49dbce4", name: "Box Blur+", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .blur, function: "refAM35_edebde49dbce4", slots: 14,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "ds1", binding: 1, downsample: 2), ReferenceFragmentBuffer(name: "hblur", binding: 2, downsample: 2)], passes: ["ds1", "hblur", ""], referenceBinding: 3, sourceID: "com.alightcreative.effects.boxblurplus", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e093cdee083c0() -> ReferenceFragmentDefinition {
@@ -2566,7 +5258,68 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("blendSource", "Blend with Source (Multiply)", false), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.e093cdee083c0", name: "Warped Noise Field", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e093cdee083c0", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.warped_noise_field", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_edd81f48cdbdf() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("maxsize", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("b0size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b0color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("b0direction", "Direction", ["out", "in", "center"], 0), slot: 14, choiceValues: [1, -1, 0]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("b1size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b1color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("b1direction", "Direction", ["out", "in", "center"], 0), slot: 17, choiceValues: [1, -1, 0]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("b2size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b2color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("b2direction", "Direction", ["out", "in", "center"], 0), slot: 20, choiceValues: [1, -1, 0]))
+        return ReferenceFragmentDefinition(id: "awi.amref.edd81f48cdbdf", name: "[INTERNAL] Border", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_edd81f48cdbdf", slots: 21,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.internal.border-three", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ea162bb012e3b() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Position", Vec2(0.0, 0.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .point("orient", "Orientation", Vec2(0.0, 0.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITERATIONS", "Octave", 5.0, 0.0, 10.0, step: 1.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .color("bgColor", "BG Color", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Flare Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXK", "Flare Interval", 250.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXH", "Hexagon Size", 200.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXI", "Hexagon Alpha", 25.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lensFlareScale", "FlareScale", 17.5, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXA", "Small Circle", 4.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXB", "Big Circle", 1.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXC", "Alpha Circle", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXD", "Intensity", 7.5, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXE", "BigCircle Size", 20.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lensFlareExposure", "Exposure", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lensFlareBrightness", "Brightness", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 26, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 27, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 0.65)), slot: 29, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 30, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 31, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "MULTIPLY", "SCREEN", "LAYER"], 3), slot: 32, choiceValues: [0, 1, 2, 3]))
+        return ReferenceFragmentDefinition(id: "awi.amref.ea162bb012e3b", name: "Hex Lens", summary: "A raymarched hexagonal lens field with orientation, reflection highlights and flare controls.",
+            category: .generate, function: "refAM35_ea162bb012e3b", slots: 33,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.hexagonlens", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e68657861676f6e6c656e73"], sourcePasses: [:], iterationParameter: "iter")
+    }
+
+    private static func make_e6098f47050c7() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Steps", 50.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 11, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 15, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 18, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e6098f47050c7", name: "Fade Noise", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .keying, function: "refAM35_e6098f47050c7", slots: 19,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.noisefade", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6e6f69736566616465"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e23c60d3376d8() -> ReferenceFragmentDefinition {
@@ -2583,7 +5336,60 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alphab", "Alpha Blend", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e23c60d3376d8", name: "[X] Gradient Overlay+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e23c60d3376d8", slots: 21,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.gradientoverlay2new", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e4adb23d89e62() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("nmode", "Night Mode", false), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("camprog", "Cam Progress", 100.0, -100000.0, 100000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("camx", "Cam Landscape", 0.0, -1000.0, 1000.0, step: 1.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("camy", "Cam Potrait", 0.0, -1000.0, 1000.0, step: 1.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Wave Evolution", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SEA_HEIGHT", "Wave Height", 50.0, 10.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SEA_CHOPPY", "Wave Choppy", 50.0, 10.0, 200.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SEA_FREQ", "Wave Freq", 50.0, 10.0, 75.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("SEA_BASE", "Base Color", RGBA(0.10980392156862745, 0.18823529411764706, 0.2196078431372549, 1.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .color("SEA_WATER_COLOR", "Diffuse WaveColor", RGBA(0.5490196078431373, 0.8980392156862745, 0.7019607843137254, 1.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .color("CSKY", "Wave BlendColor", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("SKYCOLOR", "Sky BlendColor", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("NUM_STEPS", "Octave", 4.0, 1.0, 8.0, step: 1.0), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ITER_FRAGMENT", "Map Detail", 3.0, 1.0, 5.0, step: 1.0), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("progressc", "Angle", 0.0), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 28, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("adaptive", "Adaptive to Layer", true), slot: 29))
+        return ReferenceFragmentDefinition(id: "awi.amref.e4adb23d89e62", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e4adb23d89e62", slots: 30,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e7365617363617065", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e4ec48e14972e() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("COL", "Color Stars", RGBA(0.6078431372549019, 0.4, 0.6, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("NUM_LAYERS", "Amount", 2.0, 1.0, 7.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 500.0, 0.0, 1000.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 150.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxg", "Stars Shine", 0.0, 0.0, 10000.0, step: 0.5, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxh", "Stars Blink", 0.0, 0.0, 10000.0, step: 0.5, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", false), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("rrr", "Reverse Progress", false), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autos", "Auto Scale", true), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autor", "Auto Rotate", true), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("BURST", "Enable", false), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxa", "Burst Evolution", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxb", "Burst Size", 50.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("COLB", "Color Burst", RGBA(1.0, 0.5019607843137255, 0.09803921568627451, 1.0)), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 27, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 28, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 29, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 0), slot: 30, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e4ec48e14972e", name: "Cosmic Starfield", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e4ec48e14972e", slots: 31,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.cosmicycles", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e636f736d696379636c6573"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_edd9730a273e2() -> ReferenceFragmentDefinition {
@@ -2597,7 +5403,32 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 17, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.edd9730a273e2", name: "Fencing Wire+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_edd9730a273e2", slots: 18,
-            parameters: parameters, images: ["amref-b56359b6cc7243e8.png"])
+            parameters: parameters, images: ["amref-b56359b6cc7243e8.png"], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.fencingwire", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e8a16b62f87bf() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Progress", 40.0, 0.0, 200.0, step: 1.0, unit: "%"), slot: 11, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 0.1, 0.0, 10.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 38.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Blur", 0.1, 0.0, 2.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .color("backColor", "Color", RGBA(0.5333333333333333, 0.5333333333333333, 0.5333333333333333, 1.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("backAlpha", "Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("backBlendMode", "Blending Mode", ["Normal", "Multiply", "Screen"], 1), slot: 18, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .color("shineColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shineAlpha", "Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shineSpec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shineBlendMode", "Blending Mode", ["Normal", "Multiply", "Screen"], 2), slot: 22, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .color("dropShadowColor", "Color", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("dropShadowAlpha", "Alpha", 80.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("softDropShadow", "Soft Edges", true), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .color("frontShadowColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("frontShadowAlpha", "Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 27, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("frontShadowBlendMode", "Blending Mode", ["Normal", "Multiply", "Screen"], 2), slot: 28, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e8a16b62f87bf", name: "Page Curl", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e8a16b62f87bf", slots: 29,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "blurBuf", binding: 1, downsample: 1)], passes: ["blurBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.pagecurl", externalPasses: [0: "com.alightcreative.effects.gaussianblur"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ed8c1364415bd() -> ReferenceFragmentDefinition {
@@ -2611,7 +5442,22 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 17, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.ed8c1364415bd", name: "Money Filter", summary: "Convert tonal detail into an engraved banknote-style pattern.",
             category: .stylize, function: "refAM35_ed8c1364415bd", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.money", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e0f1ffcd1d80c() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xscale", "X Scale", 50.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("yscale", "Y Scale", 1200.0, 0.0, 10000.0, step: 5.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xdistort", "X Distort", 5.0, 0.0, 10000.0, step: 0.1, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ydistort", "Y Distort", 1.0, 0.0, 10000.0, step: 0.1, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e0f1ffcd1d80c", name: "Rainy Screen", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e0f1ffcd1d80c", slots: 19,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.rainyfalls", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7261696e7966616c6c73"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_eb060c3395f8c() -> ReferenceFragmentDefinition {
@@ -2623,7 +5469,42 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("stretch", "Stretch", 1.0, 0.01, 50.0, step: 0.001), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.eb060c3395f8c", name: "Curl", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_eb060c3395f8c", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.curl", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e8da2ffb2563e() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .point("start", "Point 1", Vec2(-400.0, -400.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .point("end", "Point 2", Vec2(400.0, 400.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("evolution", "Evolution", 0.0, -999.0, 999.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 5.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color 1", RGBA(0.0, 0.0, 1.0, 1.0)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color 2", RGBA(1.0, 0.0, 0.0, 1.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color3", "Color 3", RGBA(0.0, 1.0, 0.0, 1.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("limit", "Threshold", 0.5, -2.0, 2.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("intensity", "Intensity", 1.0, 0.0, 20.0, step: 0.01), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("glow", "Glow", 1.0, 0.0, 20.0, step: 0.001), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("core", "Core", 1.0, 0.0, 20.0, step: 0.001), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("count", "Count", 6.0, 1.0, 9.0, step: 1.0), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("octaves", "Octaves", 3.0, 1.0, 5.0, step: 1.0), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("smooth", "Smooth", false), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["Normal", "Multiply", "Screen", "Overlay", "Punch Out", "Source Only"], 2), slot: 26, choiceValues: [0, 1, 2, 5, 4, 6]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e8da2ffb2563e", name: "Lightning", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e8da2ffb2563e", slots: 27,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.lightning", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e48384ac931a8() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 100.0, 0.0, 400.0, step: 0.1), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 75.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hardness", 0.5, 0.0, 1.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color", "Color", RGBA(1.0, 1.0, 0.6666666666666666, 1.0)), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["Normal", "Multiply", "Screen"], 2), slot: 15, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e48384ac931a8", name: "Glow", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_e48384ac931a8", slots: 16,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: 2, sourceID: "com.alightcreative.glow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e4fafe3d586d7() -> ReferenceFragmentDefinition {
@@ -2638,7 +5519,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("tileMode", "Tile Mode", ["Transparent", "Repeat", "Mirror", "Clamp"], 0), slot: 18, choiceValues: [0, 1, 2, 3]))
         return ReferenceFragmentDefinition(id: "awi.amref.e4fafe3d586d7", name: "Warp", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e4fafe3d586d7", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.warp_styles", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e49936984c33e() -> ReferenceFragmentDefinition {
@@ -2654,9 +5535,9 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("rcolor", "Red Offset", false), slot: 19))
         parameters.append(ReferenceFragmentParameter(definition: .toggle("gcolor", "Green Offset", false), slot: 20))
         parameters.append(ReferenceFragmentParameter(definition: .toggle("bcolor", "Blue Offset", false), slot: 21))
-        return ReferenceFragmentDefinition(id: "awi.amref.e49936984c33e", name: "Glitch Offset", summary: "Internal reference shader for comparison and adapter validation.",
+        return ReferenceFragmentDefinition(id: "awi.amref.e49936984c33e", name: "Fractal Glitch", summary: "Displace channels through a fractal block field, with threshold selection, blockiness, narrowing and independent channel colors.",
             category: .distort, function: "refAM35_e49936984c33e", slots: 22,
-            parameters: parameters, images: ["amref-334a66740ff27398.png"])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.hardglitch", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e59a72c4fb146() -> ReferenceFragmentDefinition {
@@ -2670,7 +5551,71 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 1000.0, step: 1.0), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.e59a72c4fb146", name: "Warp Puff", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e59a72c4fb146", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.s_warppuff", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e81d6711ee96b() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.4871745, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 2.0, 0.01, 10.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("thickness", "Width", 1.0, 0.01, 10.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 15, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 100.0, -10000.0, 10000.0, step: 0.01), slot: 15, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 550.0, -10000.0, 10000.0, step: 0.01), slot: 15, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 17, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatX", "Repeat X", 1.0, 0.01, 20.0, step: 0.01), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatY", "Repeat Y", 1.0, 0.01, 20.0, step: 0.01), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texTwirl", "Twirl", 0.0), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 60.0, 10.0, 200.0, step: 1.0), slot: 32))
+        return ReferenceFragmentDefinition(id: "awi.amref.e81d6711ee96b", name: "Torus", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e81d6711ee96b", slots: 33,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.torus", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ef7bfc66a0331() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("colora", "Edge Color", RGBA(0.4666666666666667, 0.4666666666666667, 0.4666666666666667, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 0.0, -10000.0, 10000.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 20.0, -10000.0, 10000.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Circular", 0.0, -10000.0, 10000.0, step: 2.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressb", "Perspective", 200.0, 0.0, 500.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressh", "Thickness", 30.0, 10.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressg", "Second Grid", 200.0, 0.0, 200.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Brightness", 100.0, 0.0, 300.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("gradient", "Custom Color", false), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 23, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.ef7bfc66a0331", name: "360° Floor Grid", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ef7bfc66a0331", slots: 24,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.floorgrid", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ec7037817df3f() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.ec7037817df3f", name: "Blend/Linear Burn", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ec7037817df3f", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.linearburn", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e29290dcd29d4() -> ReferenceFragmentDefinition {
@@ -2701,7 +5646,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("intensity", "Intensity", 100.0, 0.0, 100.0, step: 0.5, unit: "%"), slot: 34, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e29290dcd29d4", name: "CRT Emulator", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e29290dcd29d4", slots: 35,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.crt_emulator", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9dd30289c4d2() -> ReferenceFragmentDefinition {
@@ -2722,7 +5667,22 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 24, choiceValues: [0, 3, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e9dd30289c4d2", name: "Light Particle", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e9dd30289c4d2", slots: 25,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.partx", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e166786ce98e5() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Diffusion", 0.1, 0.0, 2.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("brightness", "Brightness", 100.0, 0.0, 200.0, step: 0.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("contrast", "Contrast", 20.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("highlights", "Highlights", 50.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color", "Color", RGBA(1.0, 0.3333333333333333, 0.4, 1.0)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend", 25.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("outsideAlpha", "Outer Glow", 0.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e166786ce98e5", name: "Soft Glow", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_e166786ce98e5", slots: 19,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "blurBuf", binding: 1, downsample: 1)], passes: ["blurBuf", ""], referenceBinding: 2, sourceID: "com.alightcreative.effects.softglow", externalPasses: [0: "com.alightcreative.effects.gaussianblur"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eb1207886e2d6() -> ReferenceFragmentDefinition {
@@ -2734,7 +5694,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.eb1207886e2d6", name: "Optic Compensation", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_eb1207886e2d6", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.opticCompensation", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e10176b54c318() -> ReferenceFragmentDefinition {
@@ -2746,31 +5706,31 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e10176b54c318", name: "Quality Enhancer", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e10176b54c318", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.toji.effects.quality_enhancer", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_efa58da681936() -> ReferenceFragmentDefinition {
         var parameters: [ReferenceFragmentParameter] = []
-        parameters.append(ReferenceFragmentParameter(definition: .number("amplitude", "Magnitude", 0.2, 0.0, 1.0, step: 0.001), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("amplitude", "Wave Height", 0.4, 0.0, 1.0, step: 0.001), slot: 11))
         parameters.append(ReferenceFragmentParameter(definition: .number("frequency", "Frequency", 3.0, 0.1, 20.0, step: 0.01), slot: 12))
-        parameters.append(ReferenceFragmentParameter(definition: .number("width", "Width", 0.2, 0.0, 5.0, step: 0.001), slot: 13))
-        parameters.append(ReferenceFragmentParameter(definition: .number("phase", "Phase", 0.0, 0.0, 1000.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("width", "Width", 1.6, 0.0, 5.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("phase", "Travel", 0.0, 0.0, 1000.0, step: 0.01), slot: 14))
         parameters.append(ReferenceFragmentParameter(definition: .number("offset", "Offset", 0.0, -1.0, 1.0, step: 0.001), slot: 15))
         parameters.append(ReferenceFragmentParameter(definition: .color("color", "Color", RGBA(0.17647058823529413, 0.11764705882352941, 0.9647058823529412, 1.0)), slot: 16))
         parameters.append(ReferenceFragmentParameter(definition: .toggle("punchout", "Punch Out", false), slot: 17))
-        parameters.append(ReferenceFragmentParameter(definition: .number("smoothing", "Smoothing", 0.01, 0.0, 1.0, step: 0.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smoothing", "Edge Softness", 0.01, 0.0, 1.0, step: 0.0), slot: 18))
         parameters.append(ReferenceFragmentParameter(definition: .color("tintColor", "Tint", RGBA(0.5333333333333333, 0.8, 1.0, 1.0)), slot: 19))
-        parameters.append(ReferenceFragmentParameter(definition: .number("tint", "Tint Color", 0.0, 0.0, 1.0, step: 0.0), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("tint", "Tint Mix", 0.0, 0.0, 1.0, step: 0.0), slot: 20))
         parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 21))
         return ReferenceFragmentDefinition(id: "awi.amref.efa58da681936", name: "Ribbon", summary: "A procedural ribbon field with adjustable shape and color.",
             category: .generate, function: "refAM35_efa58da681936", slots: 22,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.ribbon", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e27453a82d053() -> ReferenceFragmentDefinition {
         var parameters: [ReferenceFragmentParameter] = []
         parameters.append(ReferenceFragmentParameter(definition: .point("position", "Position", Vec2(0.0, 0.0)), slot: 11))
-        parameters.append(ReferenceFragmentParameter(definition: .number("pointCount", "Count", 5.0, 3.0, 32.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("pointCount", "Wedges", 9.0, 3.0, 32.0, step: 1.0), slot: 12))
         parameters.append(ReferenceFragmentParameter(definition: .number("rayWidth", "Width", 0.5, 0.0, 1.0, step: 0.001), slot: 13))
         parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 14))
         parameters.append(ReferenceFragmentParameter(definition: .color("color", "Color", RGBA(0.17647058823529413, 0.11764705882352941, 0.9647058823529412, 1.0)), slot: 15))
@@ -2778,14 +5738,14 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["Normal", "Multiply", "Screen"], 0), slot: 17, choiceValues: [0, 1, 2]))
         parameters.append(ReferenceFragmentParameter(definition: .number("innerRadius", "Inner Radius", 0.0, 0.0, 1.0, step: 0.005), slot: 18))
         parameters.append(ReferenceFragmentParameter(definition: .number("outerRadius", "Outer Radius", 1.0, 0.0, 1.0, step: 0.005), slot: 19))
-        parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Angular", 1.0, 1.0, 500.0, step: 1.0), slot: 20))
-        parameters.append(ReferenceFragmentParameter(definition: .number("radialFeather", "Radial", 1.0, 1.0, 500.0, step: 1.0), slot: 21))
-        parameters.append(ReferenceFragmentParameter(definition: .number("bendStrength", "Magnitude", 0.0, 0.0, 10.0, step: 0.001), slot: 22))
-        parameters.append(ReferenceFragmentParameter(definition: .number("bendFrequency", "Frequency", 50.0, 0.0, 200.0, step: 0.1), slot: 23))
-        parameters.append(ReferenceFragmentParameter(definition: .number("bendPhase", "Phase", 0.0, 0.0, 2000.0, step: 0.1), slot: 24))
-        return ReferenceFragmentDefinition(id: "awi.amref.e27453a82d053", name: "Radial Rays", summary: "Generate patterned rays around an adjustable radial origin.",
+        parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Angular Edge", 1.0, 1.0, 500.0, step: 1.0), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("radialFeather", "Radial Edge", 1.0, 1.0, 500.0, step: 1.0), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bendStrength", "Bend", 0.45, 0.0, 10.0, step: 0.001), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bendFrequency", "Bend Frequency", 18.0, 0.0, 200.0, step: 0.1), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bendPhase", "Bend Phase", 0.0, 0.0, 2000.0, step: 0.1), slot: 24))
+        return ReferenceFragmentDefinition(id: "awi.amref.e27453a82d053", name: "Bent Rays", summary: "Solid radial wedges with sinusoidal angular bending, independent angular and radial softness, and an editable inner and outer radius.",
             category: .generate, function: "refAM35_e27453a82d053", slots: 25,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.radialrays", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e91c1f46e6267() -> ReferenceFragmentDefinition {
@@ -2806,7 +5766,34 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("contrast", "Contrast", 1.0, 0.5, 2.0, step: 0.1), slot: 24))
         return ReferenceFragmentDefinition(id: "awi.amref.e91c1f46e6267", name: "VCR Glitch", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e91c1f46e6267", slots: 25,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.vhs_glitch", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ea6d12a4200af() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("distance", "Distance", 0.3, 0.0, 1.0, step: 0.001), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("thickness", "Thickness", 0.8, 0.0, 1.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("complexity", "Detail", 2.0, 0.0, 20.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("disort", "Distortion", 0.5, -1.0, 1.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color", RGBA(1.0, 0.4666666666666667, 1.0, 1.0)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Glow Color", RGBA(0.8666666666666667, 0.7333333333333333, 0.6666666666666666, 1.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("glowAlpha", "Glow", 50.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 5.0, step: 0.01), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("evolution", "Evolution", 0.0, -999.0, 999.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fill", "Fill", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("maskStrength", "Strength", 0.0, 0.0, 1.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("maskEvolution", "Evolution", 0.0, -50.0, 50.0, step: 0.01), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("maskScale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("maskSeed", "Seed", 0.0, 0.0, 5.0, step: 0.01), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .color("maskColor", "Color", RGBA(0.9333333333333333, 0.8666666666666667, 0.3333333333333333, 1.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("renderContours", "Render Contours", false), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("contourCount", "Count", 20.0, 0.0, 200.0, step: 0.1), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("contourOffset", "Phase", 0.0, -999.0, 999.0, step: 0.001), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("contourAngle", "Angle", 0.0), slot: 30))
+        return ReferenceFragmentDefinition(id: "awi.amref.ea6d12a4200af", name: "Electric Edges", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_ea6d12a4200af", slots: 31,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "blurBuf", binding: 1, downsample: 1)], passes: ["blurBuf", ""], referenceBinding: 2, sourceID: "com.alightcreative.effects.electricedges", externalPasses: [0: "com.alightcreative.effects.gaussianblur"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e1175361457d7() -> ReferenceFragmentDefinition {
@@ -2822,7 +5809,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("octaves", "Octaves", 6.0, 1.0, 9.0, step: 1.0), slot: 19))
         return ReferenceFragmentDefinition(id: "awi.amref.e1175361457d7", name: "Clouds", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e1175361457d7", slots: 20,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.clouds3", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e7c18ca08691c() -> ReferenceFragmentDefinition {
@@ -2837,7 +5824,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("quality", "Quality", 150.0, 10.0, 800.0, step: 1.0), slot: 18))
         return ReferenceFragmentDefinition(id: "awi.amref.e7c18ca08691c", name: "Rays", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e7c18ca08691c", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.rays", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e474c2c7bde18() -> ReferenceFragmentDefinition {
@@ -2849,7 +5836,30 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e474c2c7bde18", name: "Bevel + Light Sweep", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e474c2c7bde18", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.bevelLightSweep", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e21ccdcaf0ae5() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("skycolour2", "BaseSky Color", RGBA(0.4, 0.7019607843137254, 1.0, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("skycolour1", "TrimSky Color", RGBA(0.2, 0.4, 0.6, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .color("ccolor", "Cloud Color", RGBA(1.0, 1.0, 0.8980392156862745, 1.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 0.5, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 175.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("clouddark", "Dark Cloud", 50.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cloudlight", "Light Cloud", 30.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cloudcover", "Threshold", 20.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cloudalpha", "Alpha Cloud", 800.0, 0.0, 1000.0, step: 10.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("skytint", "Sky Tint", 50.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.5, 1.0)), slot: 23, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 26, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e21ccdcaf0ae5", name: "Sky Clouds", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e21ccdcaf0ae5", slots: 27,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.2dclouds", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e3264636c6f756473"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_eeb60ef76554d() -> ReferenceFragmentDefinition {
@@ -2858,7 +5868,23 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("quality", "Quality", ["Fast", "Normal", "High"], 1), slot: 12, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.eeb60ef76554d", name: "Unsharp Gaussian H (Wide)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_eeb60ef76554d", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.unsharp_gauss_h_wide", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ebaeb07e01f6b() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 10.0, 0.0, 200.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle_d", "Diffuse Angle", 45.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle_s", "Specular Angle", 45.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .point("intensity", "Intensity", Vec2(0.5, 1.0)), slot: 14, pointMinimum: Vec2(0.0, 0.0), pointMaximum: Vec2(1.0, 1.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .point("elevation", "Elevation", Vec2(0.0, 2.2)), slot: 15, pointMinimum: Vec2(0.0, 0.0), pointMaximum: Vec2(5.0, 5.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specular Coefficient", 35.0, 1.0, 50.0, step: 0.5), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color_d", "Diffuse Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color_s", "Specular Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("iter", "Quality", 1.0, 1.0, 3.0, step: 1.0), slot: 19))
+        return ReferenceFragmentDefinition(id: "awi.amref.ebaeb07e01f6b", name: "[X] Smooth Bevel+", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_ebaeb07e01f6b", slots: 20,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.internal.smoothbevelnew", externalPasses: [:], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e1fc2d92d8130() -> ReferenceFragmentDefinition {
@@ -2875,7 +5901,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("octaves", "Octaves", 6.0, 1.0, 9.0, step: 1.0), slot: 20))
         return ReferenceFragmentDefinition(id: "awi.amref.e1fc2d92d8130", name: "Fractal Ridges", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e1fc2d92d8130", slots: 21,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.ridges2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e1f35079f3835() -> ReferenceFragmentDefinition {
@@ -2886,7 +5912,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e1f35079f3835", name: "BCC Blur V", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e1f35079f3835", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.bcc_blur_v", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e93a1a3d64a7f() -> ReferenceFragmentDefinition {
@@ -2905,7 +5931,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("sharpenBlue", "Sharpen Blue", 1.0, 0.0, 3.0, step: 0.01), slot: 22))
         return ReferenceFragmentDefinition(id: "awi.amref.e93a1a3d64a7f", name: "Sharpen 2", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e93a1a3d64a7f", slots: 23,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.custom.effects.multiscalesharpen", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ed357752a6a48() -> ReferenceFragmentDefinition {
@@ -2919,7 +5945,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("screenSpace", "Screen Space", false), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.ed357752a6a48", name: "Grid", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ed357752a6a48", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.grid2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_edb351ee38a79() -> ReferenceFragmentDefinition {
@@ -2927,7 +5953,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 11, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.edb351ee38a79", name: "Procedural Plasma Isolines", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_edb351ee38a79", slots: 12,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.procedural_plasma_isolines", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e8a43530c7123() -> ReferenceFragmentDefinition {
@@ -2940,7 +5966,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("centerY", "Center Y", 0.5, 0.0, 1.0, step: 0.001), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.e8a43530c7123", name: "Spot Exposure", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e8a43530c7123", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.spot_exposure", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ecaa448a463ac() -> ReferenceFragmentDefinition {
@@ -2952,7 +5978,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("phase", "Phase", 0.5, -1000.0, 1000.0, step: 0.01), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ecaa448a463ac", name: "CMYK Halftone Dots", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_ecaa448a463ac", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.halftonedotscmyk", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_edd73a17d197e() -> ReferenceFragmentDefinition {
@@ -2966,7 +5992,29 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Feather", 0.0, 0.0, 100.0, step: 0.1), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.edd73a17d197e", name: "fill", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_edd73a17d197e", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.solid_color_wipe", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e73a88d78bb90() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("ITERATIONS", "Amount", 5.0, 0.0, 30.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SEEDX", "Seed", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PAN", "Pan", 280.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MASK_VIS", "Mask", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed", 25.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 20, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 25, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e73a88d78bb90", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e73a88d78bb90", slots: 26,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e766f727465787464757374", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e555ea7a6d24a() -> ReferenceFragmentDefinition {
@@ -2977,7 +6025,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("offset", "Offset", 0.0, -200.0, 200.0, step: 0.1, unit: "%"), slot: 14, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e555ea7a6d24a", name: "Mirror", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e555ea7a6d24a", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.mirror", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e150bc7e80a57() -> ReferenceFragmentDefinition {
@@ -2987,9 +6035,9 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("phase", "Phase", 0.0, 0.0, 1000.0, step: 0.01), slot: 13))
         parameters.append(ReferenceFragmentParameter(definition: .toggle("maskToLayer", "Mask To Layer", false), slot: 14))
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
-        return ReferenceFragmentDefinition(id: "awi.amref.e150bc7e80a57", name: "Streak Strips", summary: "Internal reference shader for comparison and adapter validation.",
+        return ReferenceFragmentDefinition(id: "awi.amref.e150bc7e80a57", name: "Streak Strips", summary: "Stretch the source through alternating angled strips. Animate Phase to move the strip pattern.",
             category: .blur, function: "refAM35_e150bc7e80a57", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.streakstrips", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef3abc6169292() -> ReferenceFragmentDefinition {
@@ -3002,7 +6050,26 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 1.0, 0.0, 1.0, step: 0.01), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.ef3abc6169292", name: "S_Monochrome (AE Motion)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ef3abc6169292", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.sapphire.monochrome", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e0993d9baf897() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("lift_hue", "Lift Hue", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lift_saturation", "Lift Saturation", 0.0, 0.0, 2.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lift_bias", "Lift Bias", 0.0, -1.0, 1.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gamma_hue", "Gamma Hue", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gamma_saturation", "Gamma Saturation", 0.0, 0.0, 2.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gamma_bias", "Gamma Bias", 0.0, -1.0, 1.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gain_hue", "Gain Hue", 0.0, -3600.0, 3600.0, step: 0.01), slot: 13, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gain_saturation", "Gain Saturation", 0.0, 0.0, 2.0, step: 0.01), slot: 13, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gain_bias", "Gain Bias", 0.0, -1.0, 1.0, step: 0.01), slot: 13, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offset_hue", "Offset Hue", 0.0, -3600.0, 3600.0, step: 0.01), slot: 14, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offset_saturation", "Offset Saturation", 0.0, 0.0, 2.0, step: 0.01), slot: 14, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offset_bias", "Offset Bias", 0.0, -1.0, 1.0, step: 0.01), slot: 14, component: 2))
+        return ReferenceFragmentDefinition(id: "awi.amref.e0993d9baf897", name: "Color Tune", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_e0993d9baf897", slots: 15,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.colortune2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ee8a291463cb3() -> ReferenceFragmentDefinition {
@@ -3014,7 +6081,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ee8a291463cb3", name: "structure", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_ee8a291463cb3", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.s_sharpen", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e4dc1ec616108() -> ReferenceFragmentDefinition {
@@ -3023,14 +6090,14 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("ballRadius", "Radius", 0.09, 0.01, 0.5, step: 0.001), slot: 12))
         parameters.append(ReferenceFragmentParameter(definition: .number("spread", "Spread", 1.0, 0.1, 4.0, step: 0.01), slot: 13))
         parameters.append(ReferenceFragmentParameter(definition: .number("zSpread", "Z Spread", 0.2, 0.0, 2.0, step: 0.01), slot: 14))
-        parameters.append(ReferenceFragmentParameter(definition: .color("ballColor", "Color", RGBA(0.0, 0.054901960784313725, 1.0, 0.9019607843137255)), slot: 15))
-        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Progress", 0.0, 0.0, 1.0, step: 0.001), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .color("ballColor", "Glass Tint", RGBA(0.0, 0.054901960784313725, 1.0, 0.9019607843137255)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Travel", 0.0, 0.0, 1.0, step: 0.001), slot: 16))
         parameters.append(ReferenceFragmentParameter(definition: .toggle("randomSize", "Random Size", true), slot: 17))
         parameters.append(ReferenceFragmentParameter(definition: .number("sizeVar", "Size Variance", 0.5, 0.0, 2.0, step: 0.01), slot: 18))
         parameters.append(ReferenceFragmentParameter(definition: .number("randSeed", "Seed", 0.0, 0.0, 100.0, step: 0.01), slot: 19))
-        parameters.append(ReferenceFragmentParameter(definition: .number("posX", "Position X", 0.0, -2.0, 2.0, step: 0.01), slot: 20))
-        parameters.append(ReferenceFragmentParameter(definition: .number("posY", "Position Y", 0.0, -2.0, 2.0, step: 0.01), slot: 21))
-        parameters.append(ReferenceFragmentParameter(definition: .number("posZ", "Position Z", 0.0, -2.0, 2.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("posX", "Offset X", 0.0, -2.0, 2.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("posY", "Offset Y", 0.0, -2.0, 2.0, step: 0.01), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("posZ", "Depth Offset", 0.0, -2.0, 2.0, step: 0.01), slot: 22))
         parameters.append(ReferenceFragmentParameter(definition: .number("ior", "Index of Refraction", 1.45, 1.0, 2.5, step: 0.001), slot: 23))
         parameters.append(ReferenceFragmentParameter(definition: .number("shininess", "Shininess", 100.0, 1.0, 300.0, step: 1.0), slot: 24))
         parameters.append(ReferenceFragmentParameter(definition: .number("reflectMix", "Reflection Mix", 1.0, 0.0, 2.0, step: 0.01), slot: 25))
@@ -3040,9 +6107,9 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("lightX", "Light X", 0.5, -2.0, 2.0, step: 0.01), slot: 29))
         parameters.append(ReferenceFragmentParameter(definition: .number("lightY", "Light Y", 0.8, -2.0, 2.0, step: 0.01), slot: 30))
         parameters.append(ReferenceFragmentParameter(definition: .number("lightZ", "Light Z", -1.0, -2.0, 2.0, step: 0.01), slot: 31))
-        return ReferenceFragmentDefinition(id: "awi.amref.e4dc1ec616108", name: "Metal Balls", summary: "Shaded spherical forms with metallic surface controls.",
+        return ReferenceFragmentDefinition(id: "awi.amref.e4dc1ec616108", name: "Glass Spheres", summary: "Scatter refractive spheres with source reflections, Fresnel rims, lighting and independently adjustable depth and motion.",
             category: .generate, function: "refAM35_e4dc1ec616108", slots: 32,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.glass_balls", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef21215b0b044() -> ReferenceFragmentDefinition {
@@ -3054,7 +6121,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ef21215b0b044", name: "Hexagon Tiling", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ef21215b0b044", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.hexagonTiling", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eb87bbcbaa3b5() -> ReferenceFragmentDefinition {
@@ -3063,7 +6130,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("convergence", "Convergence", 1.0, -2.0, 2.0, step: 0.1), slot: 12))
         return ReferenceFragmentDefinition(id: "awi.amref.eb87bbcbaa3b5", name: "CC Lens", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_eb87bbcbaa3b5", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.example.learning.cclens", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ebf64cf4cbca0() -> ReferenceFragmentDefinition {
@@ -3075,7 +6142,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ebf64cf4cbca0", name: "Chromatic Aberration", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ebf64cf4cbca0", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.chromaticAberration", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e713978f9f30a() -> ReferenceFragmentDefinition {
@@ -3090,7 +6157,48 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("rotZ", "Rotation Z", 0.0, -180.0, 180.0, step: 0.1), slot: 18))
         return ReferenceFragmentDefinition(id: "awi.amref.e713978f9f30a", name: "gaussian splatting", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e713978f9f30a", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.3d_point_cloud", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e66253689247b() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 19, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 22, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e66253689247b", name: "Eclipse", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e66253689247b", slots: 23,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.eclipse", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e93ea7e7dc7b8() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .choice("property", "Property", ["Luminance", "Red", "Green", "Blue", "Alpha"], 0), slot: 11, choiceValues: [0, 1, 2, 3, 4]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("softness", "Softness", 20.0, 0.0, 100.0, step: 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("height", "Height", 25.0, 0.0, 100.0, step: 0.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("displacement", "Displacement", 0.0, -100.0, 100.0, step: 0.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("lightType", "Light Type", ["Distant Light", "Point Light"], 0), slot: 15, choiceValues: [0, 1]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Light Intensity", 100.0, 0.0, 200.0, step: 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Light Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightHeight", "Light Height", 50.0, 0.0, 100.0, step: 0.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightPosition", "Light Position", Vec2(0.5, 0.5)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDirection", "Light Direction", 0.0, -360.0, 360.0, step: 0.0), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 40.0, 0.0, 100.0, step: 0.0), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("diffuse", "Diffuse", 50.0, 0.0, 100.0, step: 0.0), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("specular", "Specular", 50.0, 0.0, 100.0, step: 0.0), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("roughness", "Roughness", 0.05, 0.0, 1.0, step: 0.0), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("metal", "Metal", 0.0, 0.0, 100.0, step: 0.0), slot: 25))
+        return ReferenceFragmentDefinition(id: "awi.amref.e93ea7e7dc7b8", name: "CC Glass", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e93ea7e7dc7b8", slots: 26,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.cc_glass", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ed50f32b27cc7() -> ReferenceFragmentDefinition {
@@ -3131,7 +6239,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("globalMix", "Global Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 44, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ed50f32b27cc7", name: "BCC Edge Glow", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_ed50f32b27cc7", slots: 45,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.bccedgeglow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e8d7c496ca902() -> ReferenceFragmentDefinition {
@@ -3144,7 +6252,29 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("grainAmount", "Film Grain", 0.03, 0.0, 0.2, step: 0.005), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.e8d7c496ca902", name: "Negative", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e8d7c496ca902", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.negative", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_efaa1c624f7db() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("xnxx", "New Pattern", false), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Evolution", 500.0, 500.0, 100000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scaleuv", "Scale Comp", 150.0, 10.0, 500.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha Comp", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Position", Vec2(0.0, 0.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("space", "Distance", Vec2(6.0, 10.0)), slot: 17, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(50.0, 50.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scalex", "Scale Static", 100.0, -1000.0, 1000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scaley", "Scale Mid", 100.0, -1000.0, 1000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scalez", "Scale Base", 185.0, -1000.0, 1000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpx", "Alpha Static", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpy", "Alpha Base", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("xxx", "Specularity", false), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("lightfx", "Lighting", false), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("aai", "Lighting Temp", 50.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.efaa1c624f7db", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_efaa1c624f7db", slots: 26,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e7261696e79646577", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e1b41b5dc7d75() -> ReferenceFragmentDefinition {
@@ -3156,7 +6286,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e1b41b5dc7d75", name: "Color Blend", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e1b41b5dc7d75", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.colorBlend", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eee91489e4221() -> ReferenceFragmentDefinition {
@@ -3178,7 +6308,14 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("repeatPeriod", "Repeat Every (s)", 1.0, 0.01, 60.0, step: 0.001), slot: 25))
         return ReferenceFragmentDefinition(id: "awi.amref.eee91489e4221", name: "Impact Shake (Per-Beat Punch)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .motion, function: "refAM35_eee91489e4221", slots: 26,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.motion_impact_shake", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ec11d6a3d006f() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.ec11d6a3d006f", name: "Blend/Lighter Color", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ec11d6a3d006f", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.lightercolor", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e5d4a39880b98() -> ReferenceFragmentDefinition {
@@ -3187,7 +6324,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("offset", "Offset", 0.0, -1.0, 1.0, step: 0.001), slot: 12))
         return ReferenceFragmentDefinition(id: "awi.amref.e5d4a39880b98", name: "Posterize", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e5d4a39880b98", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.posterize", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e53cba70f20d3() -> ReferenceFragmentDefinition {
@@ -3203,7 +6340,20 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 19, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e53cba70f20d3", name: "Smoke Particle", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e53cba70f20d3", slots: 20,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.smokeparticle", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e9bbf96906c5c() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Evolution", 1000.0, 0.0, 10000.0, step: 5.0, unit: "%"), slot: 11, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressb", "Hue", 250.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1000.0, 0.0, 2000.0, step: 5.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 16, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e9bbf96906c5c", name: "Color Grid", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_e9bbf96906c5c", slots: 17,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.colorgrid", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e77bf324369ab() -> ReferenceFragmentDefinition {
@@ -3255,9 +6405,9 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("tvDistOn", "TV Distortion", false), slot: 55))
         parameters.append(ReferenceFragmentParameter(definition: .number("tvDistAmt", "Distort Amount", 0.03, 0.0, 0.1, step: 0.001), slot: 56))
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend with Original", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 57, scalarScale: 0.01))
-        return ReferenceFragmentDefinition(id: "awi.amref.e77bf324369ab", name: "Holomatrix II", summary: "Internal reference shader for comparison and adapter validation.",
+        return ReferenceFragmentDefinition(id: "awi.amref.e77bf324369ab", name: "Holomatrix", summary: "An editable holographic signal stack: low resolution, scan lines, line drift, channel separation, static, flicker, distortion and threshold glow.",
             category: .generate, function: "refAM35_e77bf324369ab", slots: 58,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.holomatrix2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9e38aadb715d() -> ReferenceFragmentDefinition {
@@ -3267,7 +6417,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("contentOnly", "Mask To Layer", false), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.e9e38aadb715d", name: "Stretch Axis", summary: "Internal reference shader for comparison and adapter validation.",
             category: .motion, function: "refAM35_e9e38aadb715d", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.stretch2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef8c112b6b73b() -> ReferenceFragmentDefinition {
@@ -3278,16 +6428,30 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("screenSpace", "Screen Space", false), slot: 14))
         return ReferenceFragmentDefinition(id: "awi.amref.ef8c112b6b73b", name: "Solid Matte", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_ef8c112b6b73b", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.solidmatte", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e783368bd50f0() -> ReferenceFragmentDefinition {
         var parameters: [ReferenceFragmentParameter] = []
-        parameters.append(ReferenceFragmentParameter(definition: .number("highlights", "Highlights", 100.0, 0.0, 200.0, step: 1.0, unit: "%"), slot: 11, scalarScale: 0.01))
-        parameters.append(ReferenceFragmentParameter(definition: .number("shadows", "Shadows", 100.0, 0.0, 200.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("highlights", "Highlights", 85.0, 0.0, 200.0, step: 1.0, unit: "%"), slot: 11, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shadows", "Shadows", 114.99999999999999, 0.0, 200.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e783368bd50f0", name: "Highlights and Shadows", summary: "Adjust dark and bright tonal regions independently.",
             category: .color, function: "refAM35_e783368bd50f0", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.highlightshadow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ea9431f1f103e() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("useLayerBelow", "Use Layer Below as Reference", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 1.0, 0.0, 1.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("chromaStrength", "Chroma Strength", 1.0, 0.0, 1.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("preserveLuma", "Preserve Luma (chroma only)", false), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("matchContrast", "Match Contrast (min/max)", true), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("halfSamples", "Fast Sampling (reduced)", false), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.ea9431f1f103e", name: "Color Transfer", summary: "Match the source color distribution to a selected reference layer, with adjustable strength and sampling region.",
+            category: .color, function: "refAM35_ea9431f1f103e", slots: 18,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.color_transfer_match", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eb23379931981() -> ReferenceFragmentDefinition {
@@ -3303,7 +6467,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("screenSpace", "Screen Space", false), slot: 19))
         return ReferenceFragmentDefinition(id: "awi.amref.eb23379931981", name: "Wave Warp", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_eb23379931981", slots: 20,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.wavewarp2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef9f0c8cfa4ec() -> ReferenceFragmentDefinition {
@@ -3316,7 +6480,53 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color 2", RGBA(1.0, 0.9333333333333333, 0.8666666666666667, 1.0)), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.ef9f0c8cfa4ec", name: "Halftone Dots", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_ef9f0c8cfa4ec", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.halftonedots", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e3d09e9ed63ea() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .choice("heightSource", "Height Source", ["Input Luminance", "Separate Height Map"], 0), slot: 11, choiceValues: [0, 1]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("heightScale", "Height Scale", 1.0, 0.0, 5.0, step: 0.05), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bumpIntensity", "Bump Intensity", 1.0, 0.0, 5.0, step: 0.05), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("normalRes", "Normal Sample Radius (px)", 1.0, 0.1, 10.0, step: 0.1), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("quality", "Normal Quality", ["Standard (4 taps)", "High (Sobel 8 taps)"], 0), slot: 15, choiceValues: [0, 1]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("lightType", "Light Type", ["Directional", "Point"], 1), slot: 16, choiceValues: [0, 1]))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Light Direction/Position (X,Y)", Vec2(75.0, -75.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Light Depth (Z)", 100.0, -1000.0, 1000.0, step: 1.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Light Intensity", 100.0, 0.0, 400.0, step: 5.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient (Environment)", 20.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("roughness", "Surface Roughness", 50.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("specularIntensity", "Specular Intensity", 0.75, 0.0, 2.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("specularTint", "Specular Tint", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("preserveAlpha", "Preserve Source Alpha", true), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("unpremultBeforeShade", "Unpremultiply Before Shading", false), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("exposure", "Exposure", 1.0, 0.25, 4.0, step: 0.01), slot: 26))
+        return ReferenceFragmentDefinition(id: "awi.amref.e3d09e9ed63ea", name: "Bump Map pro", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e3d09e9ed63ea", slots: 27,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.bumpmap_universal", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ee7da68f54175() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("AMOUNT", "Amount", 8.0, 1.0, 15.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MBS", "Length", 900.0, 0.0, 2000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("TS", "Space", 260.0, 0.0, 1000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("TIMEAMP", "Amplitudo", 30.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 50.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 23, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 26, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.ee7da68f54175", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ee7da68f54175", slots: 27,
+            parameters: parameters, images: ["amref-b4b8d1b76bd07b7f.png"], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 2, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e7061727469636c657632", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e886f5cf1e803() -> ReferenceFragmentDefinition {
@@ -3327,7 +6537,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 1.0, 0.0, 1.0, step: 0.01), slot: 14))
         return ReferenceFragmentDefinition(id: "awi.amref.e886f5cf1e803", name: "S_ChannelSwitcher (AE Motion)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e886f5cf1e803", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.sapphire.channel-switcher", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e056049200a8a() -> ReferenceFragmentDefinition {
@@ -3337,7 +6547,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("offset", "Offset", 0.0, -0.9, 0.9, step: 0.01), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.e056049200a8a", name: "Exposure / Gamma", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e056049200a8a", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.exposure", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e834231f5b840() -> ReferenceFragmentDefinition {
@@ -3347,7 +6557,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e834231f5b840", name: "Glitch VHS", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e834231f5b840", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.glitchvhs", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e434450c9178e() -> ReferenceFragmentDefinition {
@@ -3356,7 +6566,41 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("quality", "Quality", ["Fast", "Normal", "High"], 1), slot: 12, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e434450c9178e", name: "Unsharp Gaussian H", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e434450c9178e", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.unsharp_gauss_h", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ec2c84e7a71ac() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Strength", 50.0, 5.0, 50.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressb", "Evolution", 100.0, 0.0, 1000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressd", "Phase", 2000.0, 0.0, 5000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progresse", "Thickness", 2.5, 0.0, 100.0, step: 0.5, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 500.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "BG Color", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Base Color", RGBA(0.0, 1.0, 1.0, 1.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color3", "Fade Color", RGBA(0.6549019607843137, 1.0, 1.0, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color4", "Glow Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 24, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.ec2c84e7a71ac", name: "Electric Rough", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ec2c84e7a71ac", slots: 25,
+            parameters: parameters, images: ["amref-b4b8d1b76bd07b7f.png"], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.electricrough", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e224b997f55d0() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .point("offs", "Offset", Vec2(0.0, 0.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("typex", "X", ["Lum", "R", "G", "B"], 1), slot: 12, choiceValues: [0, 1, 2, 3]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("typey", "Y", ["Lum", "R", "G", "B"], 2), slot: 13, choiceValues: [0, 1, 2, 3]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("edges", "Edges", ["Repeat", "Mirror", "Clear", "Tile"], 1), slot: 14, choiceValues: [0, 1, 2, 3]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("fromctr", "From Center", false), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert", false), slot: 16))
+        return ReferenceFragmentDefinition(id: "awi.amref.e224b997f55d0", name: "Displacement Map", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e224b997f55d0", slots: 17,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.displacemap3", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ec4590c5a93be() -> ReferenceFragmentDefinition {
@@ -3371,7 +6615,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("offside", "Offside", false), slot: 18))
         return ReferenceFragmentDefinition(id: "awi.amref.ec4590c5a93be", name: "Pixel Sorter", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ec4590c5a93be", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.pixelsorter", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e8d3ec4445d94() -> ReferenceFragmentDefinition {
@@ -3385,7 +6629,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("tintStrength", "Tint Strength", 0.5, 0.0, 1.0, step: 0.01), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.e8d3ec4445d94", name: "sanchezae_cc", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e8d3ec4445d94", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.sanchezae_cc", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ee29040f105ce() -> ReferenceFragmentDefinition {
@@ -3399,7 +6643,36 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 1000.0, step: 1.0), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.ee29040f105ce", name: "Perfect Slice", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ee29040f105ce", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.perfect_slice", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eece15aa8abca() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("ROT_x", "Rotation X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ROT_y", "Rotation Y", 0.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ROT_z", "Rotation Z", 100.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MIRX", "X", 0.0, 0.0, 1.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MIRY", "Y", 0.0, 0.0, 1.0, step: 1.0), slot: 13))
+        return ReferenceFragmentDefinition(id: "awi.amref.eece15aa8abca", name: "3D Perception (BETA)", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .motion, function: "refAM35_eece15aa8abca", slots: 14,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "buff1", binding: 1, downsample: 1)], passes: ["buff1", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.3dperception", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e7b3f4c464331() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("flatten", "Flatten", true), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("dist", "Distance", 2.0, 0.2, 5.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("w", "Width", 16.0, 1.0, 32.0, step: 1.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("h", "Height", 9.0, 1.0, 32.0, step: 1.0), slot: 16))
+        return ReferenceFragmentDefinition(id: "awi.amref.e7b3f4c464331", name: "VR Combined", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_e7b3f4c464331", slots: 17,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.vrcombinednew", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ee005827e6d32() -> ReferenceFragmentDefinition {
@@ -3410,7 +6683,16 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 1.0, 0.0, 1.0, step: 0.01), slot: 14))
         return ReferenceFragmentDefinition(id: "awi.amref.ee005827e6d32", name: "S_ClampChroma (AE Motion)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ee005827e6d32", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.sapphire.clamp-chroma", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e633579a25d59() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("b0size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b0color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 12))
+        return ReferenceFragmentDefinition(id: "awi.amref.e633579a25d59", name: "[INTERNAL] Border", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e633579a25d59", slots: 13,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.internal.border-center", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e7032742ce4d0() -> ReferenceFragmentDefinition {
@@ -3430,7 +6712,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alphab", "Alpha Blend", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e7032742ce4d0", name: "[X] 4 Color Gradient+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e7032742ce4d0", slots: 24,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.fourcolorgradientnew", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_edab03f179817() -> ReferenceFragmentDefinition {
@@ -3447,7 +6729,27 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmt", "Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.edab03f179817", name: "Deep bloom", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_edab03f179817", slots: 21,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.deep_glow_urp", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e45f1e97696b4() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "SCREEN"], 0), slot: 11, choiceValues: [0, 1]))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Progress", 0.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orientX", "Orient X", 100.0, 0.0, 18000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orientY", "Orient Y", 100.0, 0.0, 18000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 0.0, 1000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("AMOUNT", "Amount", 6.0, 0.0, 20.0, step: 1.0), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPARKS", "Sparks", 10.0, 0.0, 20.0, step: 1.0), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("onecolor", "One Color Mode", false), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        return ReferenceFragmentDefinition(id: "awi.amref.e45f1e97696b4", name: "Firework Particle", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e45f1e97696b4", slots: 24,
+            parameters: parameters, images: ["amref-334a66740ff27398.png"], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.fireworks", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e901c9ca1a178() -> ReferenceFragmentDefinition {
@@ -3460,7 +6762,32 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert Mask", false), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.e901c9ca1a178", name: "Black Hole circle", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e901c9ca1a178", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.activeblackhole", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ebb5b2972b1ff() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Glow Radius", 0.15, 0.0, 2.0, step: 0.005), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rrr", "Intensity", 150.0, 0.0, 500.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("higsha", "Highlight Shadow", Vec2(0.0, 0.0)), slot: 13, pointMinimum: Vec2(0.0, 0.0), pointMaximum: Vec2(5.0, 5.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .point("satvib", "Saturate Vibrance", Vec2(0.0, 1.0)), slot: 14, pointMinimum: Vec2(-1.0, 1.0), pointMaximum: Vec2(1.0, 2.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("hue", "Hue Shift", 360.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Center Point", Vec2(0.0, 0.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("oalpha", "Glow Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("calpha", "Comp Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("sshadow", "Shadow", false), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("power", "Power", 0.15, 0.0, 2.0, step: 0.005), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alphaa", "Shadow Strength", 75.0, 0.0, 200.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("cblend", "Glow ColorBlend", false), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color", "Key Color", RGBA(0.6666666666666666, 0.0, 0.0, 1.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpb", "Alpha Blend", 50.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("thrs", "Glow Threshold", false), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lowThreshold", "Threshold", 0.0, 0.0, 100.0, step: 0.5, unit: "%"), slot: 26, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Feather", 300.0, 0.0, 1000.0, step: 1.0, unit: "%"), slot: 27, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("iter", "Hardness", 1.0, 1.0, 3.0, step: 1.0), slot: 28))
+        return ReferenceFragmentDefinition(id: "awi.amref.ebb5b2972b1ff", name: "Deep Glow+", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_ebb5b2972b1ff", slots: 29,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "vblur", binding: 1, downsample: 1), ReferenceFragmentBuffer(name: "hblur", binding: 2, downsample: 1)], passes: ["vblur", "hblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.deepglow", externalPasses: [0: "com.alightcreative.effects.gaussianblur", 1: "com.alightcreative.effects.boxblur2"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e31db03cf71ce() -> ReferenceFragmentDefinition {
@@ -3471,7 +6798,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 1.0, 0.0, 1.0, step: 0.01), slot: 14))
         return ReferenceFragmentDefinition(id: "awi.amref.e31db03cf71ce", name: "S_HueSatBright (AE Motion)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e31db03cf71ce", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.sapphire.hue-sat-bright", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e40ea8ab88a20() -> ReferenceFragmentDefinition {
@@ -3483,7 +6810,67 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e40ea8ab88a20", name: "BCC Mixed Colors", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e40ea8ab88a20", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.mixedColors", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e23cb70b90de7() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.1, -100.0, 100.0, step: 0.001), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smoothing", "Smoothing", 1.0, 0.125, 5.0, step: 0.01), slot: 12))
+        return ReferenceFragmentDefinition(id: "awi.amref.e23cb70b90de7", name: "Gradient Displacement", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e23cb70b90de7", slots: 13,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.gradientdisplace", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e7efd76a1919d() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .point("offs", "Position", Vec2(0.0, 0.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .point("parr", "Parallax", Vec2(0.0, 0.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("mag", "Magnitude", 0.2, -5.0, 5.0, step: 0.005), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Detail", 1.0, 0.1, 4.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("intensity", "Lacunarity", 0.5, 0.25, 0.75, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("screenSpace", "Screen Space", false), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("octaves", "Octaves", 6.0, 1.0, 9.0, step: 1.0), slot: 17))
+        return ReferenceFragmentDefinition(id: "awi.amref.e7efd76a1919d", name: "Fractal Warp", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e7efd76a1919d", slots: 18,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.fractalwarp4", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eb2d23670aea9() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("useLayerBelowAsRef", "Use Layer Below as Reference", false), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 1.0, 0.0, 1.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("chromaStrength", "Chroma Strength", 1.0, 0.0, 1.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("preserveLuma", "Preserve Luma (chroma only)", false), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("matchContrast", "Match Contrast (min/max)", true), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("halfSamples", "Fast Sampling (reduced)", false), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.eb2d23670aea9", name: "Color Transfer (Adjustment)", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_eb2d23670aea9", slots: 18,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.color_transfer_adjustment", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e8b3ce2e14963() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("B1", "Massive Bubble", true), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("B2", "Huge Bubble", false), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("B3", "Big Bubble", true), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("B4", "Medium Bubble", false), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("B5", "Small Bubble", false), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("B6", "Tiny Bubble", false), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 75.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 23, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "SCREEN"], 1), slot: 26, choiceValues: [0, 1]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e8b3ce2e14963", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e8b3ce2e14963", slots: 27,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e627562626c65", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef9366504bfe5() -> ReferenceFragmentDefinition {
@@ -3496,7 +6883,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("mode", "Mode", ["LIGHT", "DARK", "MASK", "LUMA"], 0), slot: 16, choiceValues: [2, 3, 0, 1]))
         return ReferenceFragmentDefinition(id: "awi.amref.ef9366504bfe5", name: "Chromatic VortexBlur", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_ef9366504bfe5", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.chromaticvortexblur", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e6def5202c7d5() -> ReferenceFragmentDefinition {
@@ -3510,7 +6897,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 1000.0, step: 1.0), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.e6def5202c7d5", name: "Shatter Break", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e6def5202c7d5", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.shatter_break", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e230bc2e96177() -> ReferenceFragmentDefinition {
@@ -3523,7 +6910,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .point("offset", "Offset", Vec2(0.0, 0.0)), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.e230bc2e96177", name: "Block Dissolve", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_e230bc2e96177", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.checkerdissolve2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef6a8a2f4b278() -> ReferenceFragmentDefinition {
@@ -3532,7 +6919,43 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("outline_color", "Color", RGBA(1.0, 0.0, 0.0, 1.0)), slot: 12))
         return ReferenceFragmentDefinition(id: "awi.amref.ef6a8a2f4b278", name: "Cartoon", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ef6a8a2f4b278", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.cartoon", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e24dfb8c8d8fe() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("colorR", "Color R", 0.2, 0.0, 2.0, step: 0.001), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("colorG", "Color G", 0.3, 0.0, 2.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("colorB", "Color B", 0.8, 0.0, 2.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("intensity", "Intensity", 0.07, 0.0, 1.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("width", "Width", 1.0, 0.1, 4.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("speed", "Speed", 0.8, -5.0, 5.0, step: 0.001), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("octaves", "FBM Octaves", 10.0, 1.0, 12.0, step: 1.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("warp", "FBM Warp", 2.0, 0.0, 4.0, step: 0.001), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate", "Octave Rotate", 0.45, -3.14159, 3.14159, step: 0.001), slot: 19))
+        return ReferenceFragmentDefinition(id: "awi.amref.e24dfb8c8d8fe", name: "Lightning (Procedural)", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e24dfb8c8d8fe", slots: 20,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.lightning_procedural", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eeb04e6930133() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 17, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("HRD", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 20, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("GRADMAP", "Custom OneColor", false), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 0.0, 0.0, 1.0)), slot: 23))
+        return ReferenceFragmentDefinition(id: "awi.amref.eeb04e6930133", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_eeb04e6930133", slots: 24,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e676c6f7774756e6e656c73", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef5e7316def99() -> ReferenceFragmentDefinition {
@@ -3544,7 +6967,63 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ef5e7316def99", name: "Stroke Color", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_ef5e7316def99", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.strokeColor", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_efc60eccebd05() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .choice("emitterShape", "Emitter Shape", ["Box", "Sphere", "Ring"], 1), slot: 11, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("amount", "Particle Count", 64.0, 16.0, 96.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spread", "Emitter Size", 1.25, 0.1, 4.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("depth", "Depth", 4.0, 0.5, 10.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Random Seed", 0.0, 0.0, 1000.0, step: 1.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Progress", 0.0, -20.0, 20.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autoMove", "Auto Animate", true), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("speed", "Speed", 0.65, -5.0, 5.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("velocityX", "Velocity X", 0.0, -3.0, 3.0, step: 0.01), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("velocityY", "Velocity Y", 0.15, -3.0, 3.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("velocityZ", "Velocity Z", 0.25, -3.0, 3.0, step: 0.01), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gravity", "Gravity", -0.12, -3.0, 3.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("turbulence", "Turbulence", 0.22, 0.0, 2.0, step: 0.01), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("drag", "Drag", 0.18, 0.0, 2.0, step: 0.01), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("particleSize", "Size", 0.042, 0.003, 0.18, step: 0.001), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("sizeRandom", "Size Random", 0.55, 0.0, 1.0, step: 0.01), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("glow", "Glow", 1.25, 0.0, 5.0, step: 0.01), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("motionBlur", "Trail", 0.45, 0.0, 2.0, step: 0.01), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .color("startColor", "Birth Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .color("endColor", "Death Color", RGBA(0.3568627450980392, 0.5490196078431373, 1.0, 1.0)), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotX", "Rotation X", -7.0, -180.0, 180.0, step: 0.1), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotY", "Rotation Y", 20.0, -180.0, 180.0, step: 0.1), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotZ", "Rotation Z", 0.0, -180.0, 180.0, step: 0.1), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cameraDistance", "Camera Distance", 2.5, 0.5, 10.0, step: 0.01), slot: 34))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fov", "FOV", 1.1, 0.35, 2.5, step: 0.01), slot: 35))
+        parameters.append(ReferenceFragmentParameter(definition: .number("sourceMix", "Source Mix", 18.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 36, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("opacity", "Opacity", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 37, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.efc60eccebd05", name: "3D Particles", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_efc60eccebd05", slots: 38,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.particle3d", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e0549745d4c9d() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "BG Color", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Base Color", RGBA(1.0, 0.0, 1.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color3", "Sec Color", RGBA(0.0, 1.0, 1.0, 1.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ITER", "Length", 30.0, 0.0, 80.0, step: 1.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 50.0, 0.0, 100.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXA", "Amount", 0.1, 0.0, 10.0, step: 0.1, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXB", "Step", 60.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 200.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 0.75)), slot: 22, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 500.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blend Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 25, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e0549745d4c9d", name: "New Startrails", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e0549745d4c9d", slots: 26,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.newtrails", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6e6577747261696c73"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_eccd079f37be9() -> ReferenceFragmentDefinition {
@@ -3556,7 +7035,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.eccd079f37be9", name: "Smear", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_eccd079f37be9", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.smear", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef9005da47ae5() -> ReferenceFragmentDefinition {
@@ -3572,7 +7051,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixWithSource", "Mix With Source", 0.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 19, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ef9005da47ae5", name: "s_pixelsort", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ef9005da47ae5", slots: 20,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.s_pixelsort_v4", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e5076ce23c6fe() -> ReferenceFragmentDefinition {
@@ -3584,15 +7063,29 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e5076ce23c6fe", name: "Pixel Poly", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e5076ce23c6fe", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.pixelPoly", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e2d8cfa9ed315() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color 1", RGBA(0.9803921568627451, 0.9137254901960784, 0.396078431372549, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color 2", RGBA(0.9450980392156862, 0.403921568627451, 0.3176470588235294, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("width", "Width", 25.0, 0.0, 100.0, step: 0.1), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offset", "Outset", 0.0, 0.0, 150.0, step: 0.1), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fill", "Fill", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("fade", "Fade", false), slot: 17))
+        return ReferenceFragmentDefinition(id: "awi.amref.e2d8cfa9ed315", name: "Contour Gradient", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_e2d8cfa9ed315", slots: 18,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.contourgrad", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e3418485b643b() -> ReferenceFragmentDefinition {
         var parameters: [ReferenceFragmentParameter] = []
         parameters.append(ReferenceFragmentParameter(definition: .color("dotColor", "Dot Color", RGBA(0.8156862745098039, 0.7803921568627451, 0.6901960784313725, 1.0)), slot: 11))
-        parameters.append(ReferenceFragmentParameter(definition: .number("dotSize", "Dot Size (px)", 2.0, 0.5, 100.0, step: 0.1), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("dotSize", "Dot Size (px)", 3.0, 0.5, 100.0, step: 0.1), slot: 12))
         parameters.append(ReferenceFragmentParameter(definition: .number("softness", "Softness", 0.0, 0.0, 1.0, step: 0.01), slot: 13))
-        parameters.append(ReferenceFragmentParameter(definition: .number("density", "Density (per 1000x1000)", 40.0, 0.0, 800.0, step: 1.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("density", "Density (per 1000x1000)", 120.0, 0.0, 800.0, step: 1.0), slot: 14))
         parameters.append(ReferenceFragmentParameter(definition: .number("opacity", "Dot Opacity", 0.8, 0.0, 1.0, step: 0.01), slot: 15))
         parameters.append(ReferenceFragmentParameter(definition: .number("speed", "Drift Speed", 0.2, 0.0, 5.0, step: 0.01), slot: 16))
         parameters.append(ReferenceFragmentParameter(definition: .number("flicker", "Flicker", 0.0, 0.0, 1.0, step: 0.01), slot: 17))
@@ -3601,7 +7094,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 1.0, 0.0, 1.0, step: 0.01), slot: 20))
         return ReferenceFragmentDefinition(id: "awi.amref.e3418485b643b", name: "Film Damage Dots", summary: "Animated film damage made from localized marks and dots.",
             category: .generate, function: "refAM35_e3418485b643b", slots: 21,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.film_damage_dots", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e821e62f4d00a() -> ReferenceFragmentDefinition {
@@ -3645,7 +7138,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("globalMix", "Global Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 47, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e821e62f4d00a", name: "Dissolve Shake Pro", summary: "Internal reference shader for comparison and adapter validation.",
             category: .motion, function: "refAM35_e821e62f4d00a", slots: 48,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.dissolveshake", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e8b0453ce568a() -> ReferenceFragmentDefinition {
@@ -3657,7 +7150,29 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e8b0453ce568a", name: "Edge Colorize", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e8b0453ce568a", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.edgeColorize", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e85488cdebd7e() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("thickness", "Edge Size", 5.0, 0.0, 200.0, step: 0.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Feather", 50.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("excludeColor1", "Color", RGBA(0.8666666666666667, 0.4666666666666667, 0.3333333333333333, 1.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("threshold1", "Threshold", 0.0, 0.0, 1.0, step: 0.0002), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .color("excludeColor2", "Color", RGBA(0.8666666666666667, 0.4666666666666667, 0.3333333333333333, 1.0)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("threshold2", "Threshold", 0.0, 0.0, 1.0, step: 0.0002), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .color("excludeColor3", "Color", RGBA(0.8666666666666667, 0.4666666666666667, 0.3333333333333333, 1.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("threshold3", "Threshold", 0.0, 0.0, 1.0, step: 0.0002), slot: 18))
+        return ReferenceFragmentDefinition(id: "awi.amref.e85488cdebd7e", name: "Matte Fringe", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .keying, function: "refAM35_e85488cdebd7e", slots: 19,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: 2, sourceID: "com.alightcreative.effects.mattefringe", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e50dd1fbb8f49() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e50dd1fbb8f49", name: "Blend/Hue", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e50dd1fbb8f49", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.saturation", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e30b77c55f65f() -> ReferenceFragmentDefinition {
@@ -3672,7 +7187,84 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("progressb", "B", 0.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e30b77c55f65f", name: "Glitch Pixel", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e30b77c55f65f", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.glitchpixel", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e1525a7897d86() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autoe", "Auto Evolution", true), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autob", "Auto Blink", true), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autor", "Auto Rotate", true), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXA", "Evolution", 1000.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXB", "Blink", 100.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 21, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Brightness", 100.0, 100.0, 1000.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 2), slot: 24, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert Color", false), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autos", "Enable", false), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto ScaleAnimation", false), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXC", "Scale Animation", 100.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 28, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e1525a7897d86", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e1525a7897d86", slots: 29,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e706c65787573747269616e676c65", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ebdacb4cdd872() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("rex", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("rey", "Saturate", 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("rez", "Luminance", 0.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orx", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("ory", "Saturate", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("orz", "Luminance", 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("yex", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("yey", "Saturate", 0.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("yez", "Luminance", 0.0), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("grx", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("gry", "Saturate", 0.0), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("grz", "Luminance", 0.0), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cyx", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("cyy", "Saturate", 0.0), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("cyz", "Luminance", 0.0), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blx", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("bly", "Saturate", 0.0), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("blz", "Luminance", 0.0), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("pux", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("puy", "Saturate", 0.0), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("puz", "Luminance", 0.0), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .number("maxx", "Hue", 0.0, -100.0, 100.0, step: 0.5), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("may", "Saturate", 0.0), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("maz", "Luminance", 0.0), slot: 34))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Exposure", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 35, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 36, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 37, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.ebdacb4cdd872", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ebdacb4cdd872", slots: 38,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e68736c", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eb8205ef3d0f1() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("starParallax_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("starParallax_y", "Position Y", 0.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("starParallax_z", "Position Z", 0.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("starSize", "Size", 0.1, 0.0, 5.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("starFeather", "Feather", 1.0, 0.0, 20.0, step: 0.1), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("starCount", "Amount", 25.0, 1.0, 50.0, step: 1.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("brightness", "Brightness", 1.0, 0.0, 5.0, step: 0.005), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["Normal", "Multiply", "Screen", "Punch Out"], 2), slot: 19, choiceValues: [0, 1, 2, 3]))
+        return ReferenceFragmentDefinition(id: "awi.amref.eb8205ef3d0f1", name: "Simple Starfield", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_eb8205ef3d0f1", slots: 20,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.simplestars2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e0125c8bfdb26() -> ReferenceFragmentDefinition {
@@ -3684,7 +7276,22 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("chromaGain", "Chroma", 1.0, 0.0, 3.0, step: 0.01), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e0125c8bfdb26", name: "VHS Suite", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e0125c8bfdb26", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.vhs_suite", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e89a1eb7a5666() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_RADIUS", "Max Radius", 1.0, 1.0, 4.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("RAINSPEED", "Control Speed", 0.3, 0.0, 100.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("RANSIZE", "Floor Size", 70.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 17, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 35.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e89a1eb7a5666", name: "Raindrops Floor", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e89a1eb7a5666", slots: 19,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.raindropsfloor", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7261696e64726f7073666c6f6f72"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_ebbe5a37d5059() -> ReferenceFragmentDefinition {
@@ -3695,7 +7302,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("opacity", "Opacity", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ebbe5a37d5059", name: "Starry Planes", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ebbe5a37d5059", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.starry_planes", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eea5299388c79() -> ReferenceFragmentDefinition {
@@ -3707,7 +7314,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.eea5299388c79", name: "Cosine Web (Zozuar 2)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_eea5299388c79", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.cosineWeb2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ebd5db59a84a3() -> ReferenceFragmentDefinition {
@@ -3719,7 +7326,14 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("offset", "Offset", 0.0, -0.9, 0.9, step: 0.01), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ebd5db59a84a3", name: "RGB Mixer", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ebd5db59a84a3", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.rgb-mixer", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e2d3e44709b6f() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e2d3e44709b6f", name: "Blend/Lighten", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e2d3e44709b6f", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.lighten", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e8d45b247abcc() -> ReferenceFragmentDefinition {
@@ -3731,7 +7345,50 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e8d45b247abcc", name: "Camera Lens Blur", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e8d45b247abcc", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.cameraLensBlur", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e37c233b48fbb() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autoTime", "Auto Time (use clip time)", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("duration", "Effect Duration (s)", 1.0, 0.05, 20.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Progress (manual when Auto Time off)", 0.0, 0.0, 1.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("effectWidth", "Band Width", 0.4, 0.01, 1.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fadeInTimeFactor", "Fade-In Time Factor", 0.5, 0.0, 1.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("maxTexelOffset", "Max Texel Offset", 20.0, 0.0, 200.0, step: 0.1), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("centerX", "Center X", 0.5, 0.0, 1.0, step: 0.001), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("centerY", "Center Y", 0.5, 0.0, 1.0, step: 0.001), slot: 18))
+        return ReferenceFragmentDefinition(id: "awi.amref.e37c233b48fbb", name: "Ring Distortion Fade", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e37c233b48fbb", slots: 19,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.ring_distortion_fade", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e4881aa2b86ec() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(0.0, 1.0, 1.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("newpath", "Sinus Pattern", false), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed", 40.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Position", Vec2(0.0, 0.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxj", "Sharpen", 250.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxg", "Thickness V1", 12.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxi", "Thicknes V2", 12.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxe", "Amount Grid", 5.0, 0.0, 50.0, step: 0.5), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxc", "Circular Grid", 25.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxd", "Rotate Grid", 120.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxb", "Grid Z", 0.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("xxx", "Factor", Vec2(4.0, 4.0)), slot: 25, pointMinimum: Vec2(-10.0, -10.0), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 26, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 28, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 29, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 30, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 31, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e4881aa2b86ec", name: "2DTunnel V2", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e4881aa2b86ec", slots: 32,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.2Dtunnelv2", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e324474756e6e656c7632"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e25b952116050() -> ReferenceFragmentDefinition {
@@ -3743,7 +7400,16 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e25b952116050", name: "Twitch", summary: "Internal reference shader for comparison and adapter validation.",
             category: .motion, function: "refAM35_e25b952116050", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.twitch", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e93b2f3664b11() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("RADIUSS", "Strength", 10.0, 0.0, 15.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e93b2f3664b11", name: "Brush Sketch", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_e93b2f3664b11", slots: 13,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.brushsketch", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6272757368736b65746368"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_ea3dde846bc3a() -> ReferenceFragmentDefinition {
@@ -3761,7 +7427,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 2), slot: 21, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.ea3dde846bc3a", name: "Snow Falling", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ea3dde846bc3a", slots: 22,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.snowreal", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e3f8177ab74b3() -> ReferenceFragmentDefinition {
@@ -3773,7 +7439,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e3f8177ab74b3", name: "Sway", summary: "Internal reference shader for comparison and adapter validation.",
             category: .motion, function: "refAM35_e3f8177ab74b3", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.sway", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e698f2bbd9994() -> ReferenceFragmentDefinition {
@@ -3782,7 +7448,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend With Image", 1.0, 0.0, 1.0, step: 0.01), slot: 12))
         return ReferenceFragmentDefinition(id: "awi.amref.e698f2bbd9994", name: "Lens Distortion", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e698f2bbd9994", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.lensdistort", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e3785488e69de() -> ReferenceFragmentDefinition {
@@ -3794,7 +7460,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e3785488e69de", name: "CC Glow", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e3785488e69de", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.ccGlow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eb5616c5f1f1c() -> ReferenceFragmentDefinition {
@@ -3806,7 +7472,19 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.eb5616c5f1f1c", name: "Water Waves", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_eb5616c5f1f1c", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.waterWaves", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ee2c49cfac5c8() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("sigma", "sigma", 1.0, 0.0, 10.0, step: 0.005), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("sdx", "@string/offsx", 5.0, -50.0, 50.0, step: 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("sdy", "@string/offsy", 5.0, -50.0, 50.0, step: 0.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color", "Color", RGBA(1.0, 1.0, 0.6666666666666666, 1.0)), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.ee2c49cfac5c8", name: "@string/name", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ee2c49cfac5c8", slots: 16,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "downImg", binding: 1, downsample: 2), ReferenceFragmentBuffer(name: "hblur", binding: 2, downsample: 2)], passes: ["downImg", "hblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.internal.shadow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e18058eae046e() -> ReferenceFragmentDefinition {
@@ -3821,7 +7499,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 18, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e18058eae046e", name: "S_GlowAura", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e18058eae046e", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.s_glow_aura", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea91c7052d0a1() -> ReferenceFragmentDefinition {
@@ -3831,7 +7509,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["Normal", "Multiply", "Screen"], 0), slot: 13, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.ea91c7052d0a1", name: "Solid Color", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ea91c7052d0a1", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.solidcolor", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e990dbd10b606() -> ReferenceFragmentDefinition {
@@ -3843,7 +7521,43 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e990dbd10b606", name: "Refraction Warp", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e990dbd10b606", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.refractionWarp", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ecda745583188() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 1.0, 0.01, 10.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("height", "Length", 3.0, 0.01, 10.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smooth", "Smoothing", 0.0, 0.0, 5.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 55.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 500.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 18, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatX", "Repeat X", 1.0, 0.01, 20.0, step: 0.01), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatY", "Repeat Y", 1.0, 0.01, 20.0, step: 0.01), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texTwirl", "Twirl", 0.0), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 60.0, 10.0, 200.0, step: 1.0), slot: 33))
+        return ReferenceFragmentDefinition(id: "awi.amref.ecda745583188", name: "Hexagonal Prism", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ecda745583188", slots: 34,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.hexprism", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e6c55023d327b() -> ReferenceFragmentDefinition {
@@ -3853,7 +7567,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("mask", "Mask To Layer", false), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.e6c55023d327b", name: "Offset", summary: "Internal reference shader for comparison and adapter validation.",
             category: .motion, function: "refAM35_e6c55023d327b", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.offset", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9c493c5dcbcc() -> ReferenceFragmentDefinition {
@@ -3867,7 +7581,29 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e9c493c5dcbcc", name: "Rays Edge", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e9c493c5dcbcc", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.rays_edge", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e6948e54523d7() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e6948e54523d7", name: "Blend/Color", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e6948e54523d7", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.luminance", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e909744660eae() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("frequency", "Frequency", 5.0, 0.1, 50.0, step: 0.1), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("amplitude", "Amplitude", 10.0, 0.0, 50.0, step: 0.1), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("speed", "Speed", 1.0, 0.0, 10.0, step: 0.1), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("pixelSize", "Pixel Size", 10.0, 1.0, 50.0, step: 1.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .point("direction", "Direction", Vec2(1.0, 1.0)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .color("tintColor", "Tint Color", RGBA(1.0, 1.0, 0.5019607843137255, 1.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blend Mode", ["Normal", "Multiply", "Screen", "Overlay"], 0), slot: 18, choiceValues: [0, 1, 2, 3]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e909744660eae", name: "Pixel Wave", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e909744660eae", slots: 19,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.pixelwave", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e33e0fb4d4196() -> ReferenceFragmentDefinition {
@@ -3879,7 +7615,19 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e33e0fb4d4196", name: "Auto Paint", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e33e0fb4d4196", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.autoPaint", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ec31ef6da209d() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Diffusion", 0.25, 0.0, 2.0, step: 0.005), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("threshold", "Threshold", 0.3, 0.0, 1.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color", "Color", RGBA(1.0, 0.3333333333333333, 0.4, 1.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend", 25.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 75.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.ec31ef6da209d", name: "Dark Glow", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_ec31ef6da209d", slots: 16,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "downImg", binding: 1, downsample: 2), ReferenceFragmentBuffer(name: "hblur", binding: 2, downsample: 2), ReferenceFragmentBuffer(name: "vblur", binding: 3, downsample: 2)], passes: ["downImg", "hblur", "vblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.darkglow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ed6991313756f() -> ReferenceFragmentDefinition {
@@ -3898,7 +7646,50 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 22, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ed6991313756f", name: "Warp Magnify", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ed6991313756f", slots: 23,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.s_warp_magnify", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e22830a1895e5() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 1.0, 0.01, 10.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("height", "Length", 3.0, 0.01, 10.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("zdist", "Distance", 6.0, 0.0, 20.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 16, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texScale", "Scale", 1.0, 0.01, 20.0, step: 0.001), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texStretch", "Stretch", Vec2(1.0, 1.0)), slot: 27, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texTwirl", "Twirl", 0.0), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 30))
+        return ReferenceFragmentDefinition(id: "awi.amref.e22830a1895e5", name: "Triangular Prism", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e22830a1895e5", slots: 31,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.triprism2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e8d940d696d5a() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("offsetX", "Offset X", 0.033, -3.0, 3.0, step: 0.001), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offsetY", "Offset Y", -0.016, -3.0, 3.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("mapAmount", "Map Amount", 0.172, -2.0, 2.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("useLayerBelow", "Use Layer Below as Map", true), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("channelPair", "Channels for X/Y", ["R / G", "R / B", "G / B"], 1), slot: 15, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("edgeMode", "Edge Mode", ["Clamp", "Repeat"], 0), slot: 16, choiceValues: [0, 1]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("edgeFeather", "Edge Feather", 0.0, 0.0, 0.25, step: 0.001), slot: 17))
+        return ReferenceFragmentDefinition(id: "awi.amref.e8d940d696d5a", name: "Texture Displace", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e8d940d696d5a", slots: 18,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.shadertoy_dualtexture_displace", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e3403bb405f80() -> ReferenceFragmentDefinition {
@@ -3908,7 +7699,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 0.3, 0.0, 0.8, step: 0.01), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.e3403bb405f80", name: "Swirl", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e3403bb405f80", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.swirl4", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e7c9356e79187() -> ReferenceFragmentDefinition {
@@ -3922,7 +7713,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("punchout", "Punch Out", false), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.e7c9356e79187", name: "Vignette", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_e7c9356e79187", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.vignette", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e8b58c95215e1() -> ReferenceFragmentDefinition {
@@ -3931,7 +7722,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("quality", "Quality", ["Fast", "Normal", "High"], 1), slot: 12, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e8b58c95215e1", name: "Unsharp Gaussian V (Wide)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e8b58c95215e1", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.unsharp_gauss_v_wide", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ec7335e01190b() -> ReferenceFragmentDefinition {
@@ -3943,7 +7734,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ec7335e01190b", name: "Cosmic Burn", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ec7335e01190b", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.cosmicBurn", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ec0fe8068a939() -> ReferenceFragmentDefinition {
@@ -3953,7 +7744,29 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 0.3, 0.0, 2.5, step: 0.005), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.ec0fe8068a939", name: "Pinch/Bulge", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ec0fe8068a939", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.pinchbulge2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ecca4f087003b() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("ITERATIONS", "Amount", 5.0, 0.0, 30.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SEEDX", "Seed", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PAN", "Pan", 280.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MASK_VIS", "Mask", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed", 25.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 20, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 25, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.ecca4f087003b", name: "Vortex Dust", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ecca4f087003b", slots: 26,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.vortextdust", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e766f727465787464757374"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e748e5aade0a7() -> ReferenceFragmentDefinition {
@@ -3973,7 +7786,89 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("protectSkinTones", "Protect Skin Tones", true), slot: 23))
         return ReferenceFragmentDefinition(id: "awi.amref.e748e5aade0a7", name: "Mojo", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e748e5aade0a7", slots: 24,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.mojo", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e218bd5ad9eda() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("exposure", "Exposure", 0.0, -5.0, 5.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("contrast", "Contrast", 0.0, -100.0, 100.0, step: 0.5), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("pivot", "Contrast Pivot", 0.18, 0.0, 1.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("saturation", "Saturation", 1.0, 0.0, 2.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("vibrance", "Vibrance", 0.0, -1.0, 1.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("temperature", "Temperature", 0.0, -100.0, 100.0, step: 0.5), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("tint", "Tint", 0.0, -100.0, 100.0, step: 0.5), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lift_hue", "Lift Hue", 0.0, -3600.0, 3600.0, step: 0.01), slot: 18, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lift_saturation", "Lift Saturation", 0.0, 0.0, 2.0, step: 0.01), slot: 18, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lift_bias", "Lift Bias", 0.0, -1.0, 1.0, step: 0.01), slot: 18, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("liftRange", "Shadow Range", 0.5, 0.1, 1.0, step: 0.01), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gamma_hue", "Gamma Hue", 0.0, -3600.0, 3600.0, step: 0.01), slot: 20, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gamma_saturation", "Gamma Saturation", 0.0, 0.0, 2.0, step: 0.01), slot: 20, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gamma_bias", "Gamma Bias", 0.0, -1.0, 1.0, step: 0.01), slot: 20, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gammaRange", "Midtone Width", 0.5, 0.1, 1.0, step: 0.01), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gain_hue", "Gain Hue", 0.0, -3600.0, 3600.0, step: 0.01), slot: 22, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gain_saturation", "Gain Saturation", 0.0, 0.0, 2.0, step: 0.01), slot: 22, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gain_bias", "Gain Bias", 0.0, -1.0, 1.0, step: 0.01), slot: 22, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("gainRange", "Highlight Range", 0.5, 0.1, 1.0, step: 0.01), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offset_hue", "Offset Hue", 0.0, -3600.0, 3600.0, step: 0.01), slot: 24, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offset_saturation", "Offset Saturation", 0.0, 0.0, 2.0, step: 0.01), slot: 24, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offset_bias", "Offset Bias", 0.0, -1.0, 1.0, step: 0.01), slot: 24, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("curveBlacks", "Blacks", 0.0, -100.0, 100.0, step: 0.5), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("curveShadows", "Shadows", 0.0, -100.0, 100.0, step: 0.5), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("curveLowMids", "Low Mids", 0.0, -100.0, 100.0, step: 0.5), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("curveMidtones", "Midtones", 0.0, -100.0, 100.0, step: 0.5), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("curveHighMids", "High Mids", 0.0, -100.0, 100.0, step: 0.5), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .number("curveHighlights", "Highlights", 0.0, -100.0, 100.0, step: 0.5), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .number("curveWhites", "Whites", 0.0, -100.0, 100.0, step: 0.5), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .color("splitShadow", "Shadow Tint", RGBA(0.5019607843137255, 0.5019607843137255, 0.5019607843137255, 1.0)), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .number("splitShadowStr", "Shadow Strength", 0.0, 0.0, 100.0, step: 0.5), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .color("splitMidtone", "Midtone Tint", RGBA(0.5019607843137255, 0.5019607843137255, 0.5019607843137255, 1.0)), slot: 34))
+        parameters.append(ReferenceFragmentParameter(definition: .number("splitMidtoneStr", "Midtone Strength", 0.0, 0.0, 100.0, step: 0.5), slot: 35))
+        parameters.append(ReferenceFragmentParameter(definition: .color("splitHighlight", "Highlight Tint", RGBA(0.5019607843137255, 0.5019607843137255, 0.5019607843137255, 1.0)), slot: 36))
+        parameters.append(ReferenceFragmentParameter(definition: .number("splitHighlightStr", "Highlight Strength", 0.0, 0.0, 100.0, step: 0.5), slot: 37))
+        parameters.append(ReferenceFragmentParameter(definition: .number("splitBalance", "Balance", 0.0, -100.0, 100.0, step: 0.5), slot: 38))
+        parameters.append(ReferenceFragmentParameter(definition: .number("printerR", "Red", 25.0, 0.0, 50.0, step: 0.5), slot: 39))
+        parameters.append(ReferenceFragmentParameter(definition: .number("printerG", "Green", 25.0, 0.0, 50.0, step: 0.5), slot: 40))
+        parameters.append(ReferenceFragmentParameter(definition: .number("printerB", "Blue", 25.0, 0.0, 50.0, step: 0.5), slot: 41))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hdrHlRolloff", "Highlight Rolloff", 0.0, 0.0, 100.0, step: 0.5), slot: 42))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hdrShRolloff", "Shadow Rolloff", 0.0, 0.0, 100.0, step: 0.5), slot: 43))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hdrWhitePoint", "White Point", 1.0, 0.5, 2.0, step: 0.01), slot: 44))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hdrBlackPoint", "Black Point", 0.0, 0.0, 0.2, step: 0.005), slot: 45))
+        parameters.append(ReferenceFragmentParameter(definition: .number("filmDensity", "Density", 0.0, -50.0, 50.0, step: 0.5), slot: 46))
+        parameters.append(ReferenceFragmentParameter(definition: .number("filmFade", "Fade", 0.0, 0.0, 100.0, step: 0.5), slot: 47))
+        parameters.append(ReferenceFragmentParameter(definition: .number("filmBleach", "Bleach Bypass", 0.0, 0.0, 100.0, step: 0.5), slot: 48))
+        parameters.append(ReferenceFragmentParameter(definition: .number("filmCrossProcess", "Cross Process", 0.0, 0.0, 100.0, step: 0.5), slot: 49))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hlRecovery", "Highlight Recovery", 0.0, 0.0, 100.0, step: 0.5), slot: 50))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shRecovery", "Shadow Recovery", 0.0, 0.0, 100.0, step: 0.5), slot: 51))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("secActive", "Enable Secondary", false), slot: 52))
+        parameters.append(ReferenceFragmentParameter(definition: .color("secTarget", "Target Color", RGBA(1.0, 0.0, 0.0, 1.0)), slot: 53))
+        parameters.append(ReferenceFragmentParameter(definition: .number("secRange", "Range", 30.0, 5.0, 180.0, step: 1.0), slot: 54))
+        parameters.append(ReferenceFragmentParameter(definition: .number("secSoftness", "Softness", 15.0, 1.0, 90.0, step: 1.0), slot: 55))
+        parameters.append(ReferenceFragmentParameter(definition: .number("secHueShift", "Hue Shift", 0.0, -180.0, 180.0, step: 1.0), slot: 56))
+        parameters.append(ReferenceFragmentParameter(definition: .number("secSaturation", "Saturation", 0.0, -100.0, 100.0, step: 0.5), slot: 57))
+        parameters.append(ReferenceFragmentParameter(definition: .number("secLuminance", "Luminance", 0.0, -100.0, 100.0, step: 0.5), slot: 58))
+        parameters.append(ReferenceFragmentParameter(definition: .number("skinProtect", "Skin Protection", 0.0, 0.0, 1.0, step: 0.01), slot: 59))
+        parameters.append(ReferenceFragmentParameter(definition: .number("skinHue", "Skin Hue", 0.08, 0.0, 1.0, step: 0.005), slot: 60))
+        parameters.append(ReferenceFragmentParameter(definition: .number("skinRange", "Skin Range", 0.06, 0.01, 0.2, step: 0.005), slot: 61))
+        parameters.append(ReferenceFragmentParameter(definition: .color("matchTarget", "Target", RGBA(0.5019607843137255, 0.5019607843137255, 0.5019607843137255, 1.0)), slot: 62))
+        parameters.append(ReferenceFragmentParameter(definition: .number("matchStr", "Strength", 0.0, 0.0, 1.0, step: 0.01), slot: 63))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("preserveLum", "Preserve Luminance", false), slot: 64))
+        parameters.append(ReferenceFragmentParameter(definition: .number("globalMix", "Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 65, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e218bd5ad9eda", name: "Colorista IV", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_e218bd5ad9eda", slots: 66,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.colorista4", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e54bb2887bbf3() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("BPM", "Beats Per Minute", 180.0, 1.0, 300.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("STEPS", "Max Steps", 100.0, 1.0, 200.0, step: 1.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("EPS", "Hit Epsilon", 0.001, 0.0001, 0.01, step: 0.0001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_DIST", "Max Distance", 10.0, 1.0, 50.0, step: 0.1), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPIN_SCALE", "Spin Scale", 1.0, 0.0, 2.0, step: 0.01), slot: 15))
+        return ReferenceFragmentDefinition(id: "awi.amref.e54bb2887bbf3", name: "Split Cubes Raymarch", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e54bb2887bbf3", slots: 16,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.split_cubes_raymarch", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eac124fb5a85b() -> ReferenceFragmentDefinition {
@@ -3993,7 +7888,34 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("slack", "Slack", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.eac124fb5a85b", name: "Dots", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_eac124fb5a85b", slots: 24,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.dots2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e939fda13ce29() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 0.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 100.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressc", "Orient X", 100.0, -1000.0, 1000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressd", "Orient Y", 0.0, 0.0, 1000.0, step: 2.5, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progresse", "Strength", 25.0, 10.0, 1000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Reflection", 180.0, 0.0, 100000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressb", "Luminance", 100.0, 0.0, 1000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Flare Color", RGBA(0.4392156862745098, 0.23921568627450981, 0.2, 1.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color3", "Base Color", RGBA(0.2980392156862745, 0.2, 0.0196078431372549, 1.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color4", "Secondary Color", RGBA(0.2, 0.5019607843137255, 0.8, 1.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 21, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e939fda13ce29", name: "New Lensflare", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e939fda13ce29", slots: 22,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.new_lensflare_shadertoy", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e1e81130342ef() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e1e81130342ef", name: "Blend/Hue", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e1e81130342ef", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.hue", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ead6e7b5a8a95() -> ReferenceFragmentDefinition {
@@ -4005,7 +7927,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ead6e7b5a8a95", name: "Stroke Taper", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_ead6e7b5a8a95", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.strokeTaper", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e4de40580aecf() -> ReferenceFragmentDefinition {
@@ -4017,7 +7939,22 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e4de40580aecf", name: "RGB Curves Pro", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e4de40580aecf", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.rgbCurves", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eeff3703c0a9f() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .angle("offsAngle", "Angle", 0.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("offsRadius", "Inset/Outset", 0.0, -1000.0, 1000.0, step: 0.1), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("typex", "φ", ["Lum", "R", "G", "B"], 1), slot: 13, choiceValues: [0, 1, 2, 3]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("typey", "ρ", ["Lum", "R", "G", "B"], 2), slot: 14, choiceValues: [0, 1, 2, 3]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("edges", "Edges", ["Repeat", "Mirror", "Clear", "Tile"], 1), slot: 15, choiceValues: [0, 1, 2, 3]))
+        parameters.append(ReferenceFragmentParameter(definition: .point("centerPoint", "Center", Vec2(0.0, 0.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("fromctr", "From Center", false), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert", false), slot: 18))
+        return ReferenceFragmentDefinition(id: "awi.amref.eeff3703c0a9f", name: "Polar Displacement Map", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_eeff3703c0a9f", slots: 19,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.displacemaprad", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ecabb31d99e3c() -> ReferenceFragmentDefinition {
@@ -4029,7 +7966,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ecabb31d99e3c", name: "Motion Blur", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_ecabb31d99e3c", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.motionBlur", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e6e273782504a() -> ReferenceFragmentDefinition {
@@ -4042,7 +7979,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("shadowOnly", "Shadow Only", false), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.e6e273782504a", name: "Drop Shadow", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e6e273782504a", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.dropshadow.custom", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e11a7cbe63246() -> ReferenceFragmentDefinition {
@@ -4061,7 +7998,14 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 2), slot: 22, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e11a7cbe63246", name: "Glow Ribbon+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e11a7cbe63246", slots: 23,
-            parameters: parameters, images: ["amref-334a66740ff27398.png"])
+            parameters: parameters, images: ["amref-334a66740ff27398.png"], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.glowribbon", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e63808d29c55e() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e63808d29c55e", name: "Blend/Overlay", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e63808d29c55e", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.overlay", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e0eaef7a0da9e() -> ReferenceFragmentDefinition {
@@ -4073,7 +8017,14 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 1.0, 0.0, 1.0, step: 0.01), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e0eaef7a0da9e", name: "S_GlowDist (AE Motion)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e0eaef7a0da9e", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.sapphire.glow-dist", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e7f0617cd0abe() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e7f0617cd0abe", name: "Blend/Linear Dodge", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e7f0617cd0abe", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.lineardodge", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e48da38194e65() -> ReferenceFragmentDefinition {
@@ -4083,7 +8034,45 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("invert", "Invert", false), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.e48da38194e65", name: "Find Edges", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e48da38194e65", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.findedges", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eb0eb768807ba() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 1.0, 0.01, 10.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("thickness", "Width", 0.1, 0.01, 10.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("height", "Length", 0.5, 0.01, 10.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smooth", "Smoothing", 0.0, 0.0, 5.0, step: 0.001), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 17, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 100.0, -10000.0, 10000.0, step: 0.01), slot: 17, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 600.0, -10000.0, 10000.0, step: 0.01), slot: 17, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 19, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("texStretch", "Stretch", false), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatX", "Repeat X", 1.0, 0.01, 20.0, step: 0.01), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatY", "Repeat Y", 1.0, 0.01, 20.0, step: 0.01), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texTwirl", "Twirl", 0.0), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 34))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 60.0, 10.0, 200.0, step: 1.0), slot: 35))
+        return ReferenceFragmentDefinition(id: "awi.amref.eb0eb768807ba", name: "Ring", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_eb0eb768807ba", slots: 36,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.ring", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e6a4f65d4030d() -> ReferenceFragmentDefinition {
@@ -4095,7 +8084,76 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("gaussian", "Gaussian", false), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e6a4f65d4030d", name: "Inner Pinch/Bulge", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e6a4f65d4030d", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.pinchbulgeinside", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_efa9cf9246771() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "BG Color", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Base Color", RGBA(1.0, 0.0, 1.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color3", "Sec Color", RGBA(0.0, 1.0, 1.0, 1.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ITER", "Length", 30.0, 0.0, 80.0, step: 1.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 50.0, 0.0, 100.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXA", "Amount", 0.1, 0.0, 10.0, step: 0.1, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("XXB", "Step", 60.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 200.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 0.75)), slot: 22, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 500.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blend Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 25, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.efa9cf9246771", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_efa9cf9246771", slots: 26,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e6e6577747261696c73", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eeef2ff66407b() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("crLow", "C/R", 0.0, -100.0, 100.0, step: 0.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("mgLow", "M/G", 0.0, -100.0, 100.0, step: 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ybLow", "Y/B", 0.0, -100.0, 100.0, step: 0.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("crMid", "C/R", 0.0, -100.0, 100.0, step: 0.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("mgMid", "M/G", 0.0, -100.0, 100.0, step: 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ybMid", "Y/B", 0.0, -100.0, 100.0, step: 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("crHigh", "C/R", 0.0, -100.0, 100.0, step: 0.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("mgHigh", "M/G", 0.0, -100.0, 100.0, step: 0.0), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ybHigh", "Y/B", 0.0, -100.0, 100.0, step: 0.0), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("fixLum", "Preserve Luminance", true), slot: 20))
+        return ReferenceFragmentDefinition(id: "awi.amref.eeef2ff66407b", name: "Color Balance", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_eeef2ff66407b", slots: 21,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.colorbalance", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e8c15bfe725c8() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("pos_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("pos_y", "Position Y", 0.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("pos_z", "Position Z", 0.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("density", "Density", 0.3, 0.0, 1.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("evolution", "Evolution", 0.0, -50.0, 50.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 5.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.01, 50.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shapeSize", "Size", 0.5, 0.0, 1.0, step: 0.001), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("shapeAngle", "Angle", 0.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("sizeVariance", "Size Variance", 50.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("angleVariance", "Angle Variance", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("layerCount", "Amount", 15.0, 1.0, 20.0, step: 1.0), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fade", "Fade", 100.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("slack", "Slack", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["Normal", "Multiply", "Screen"], 0), slot: 24, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("coloring", "Coloring", ["None", "Solid", "Random 1-color", "Random 2-color", "Random 3-color", "Depth 1-color", "Depth 2-color", "Depth 3-color", "Depth + Random"], 0), slot: 25, choiceValues: [0, 1, 2, 3, 4, 5, 6, 7, 8], choiceTargets: [[], ["color1", "lockLuminance", "lockSaturation"], ["color1", "lockLuminance", "lockSaturation"], ["color1", "color2", "lockLuminance", "lockSaturation", "interpHue"], ["color1", "color2", "color3", "lockLuminance", "lockSaturation", "interpHue"], ["color1", "lockLuminance", "lockSaturation"], ["color1", "color2", "lockLuminance", "lockSaturation", "interpHue"], ["color1", "color2", "color3", "lockLuminance", "lockSaturation", "interpHue"], ["color1", "color2", "color3", "lockLuminance", "lockSaturation", "interpHue"]]))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color 1", RGBA(1.0, 0.3333333333333333, 0.6666666666666666, 1.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color 2", RGBA(0.3333333333333333, 0.6666666666666666, 1.0, 1.0)), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color3", "Color 3", RGBA(1.0, 0.6666666666666666, 0.3333333333333333, 1.0)), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("lockLuminance", "Lock Luminance", true), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("lockSaturation", "Lock Saturation", false), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("interpHue", "Interpolate Hue", false), slot: 31))
+        return ReferenceFragmentDefinition(id: "awi.amref.e8c15bfe725c8", name: "Scatter Field", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .motion, function: "refAM35_e8c15bfe725c8", slots: 32,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.shapefield", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e472d3b9c136f() -> ReferenceFragmentDefinition {
@@ -4105,7 +8163,36 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blueGamma", "Blue Gamma", 1.0, 0.01, 9.99, step: 0.005), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.e472d3b9c136f", name: "RGB Gamma", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e472d3b9c136f", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.rgb-gamma", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e1762eb454967() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("maxsize", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("b0size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b0color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("b0direction", "Direction", ["out", "in", "center"], 0), slot: 14, choiceValues: [1, -1, 0]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("b1size", "Inner Size", 5.0, 0.0, 200.0, step: 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .color("b1color", "Inner Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("b1direction", "Direction", ["out", "in", "center"], 0), slot: 17, choiceValues: [1, -1, 0]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e1762eb454967", name: "[INTERNAL] Border", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e1762eb454967", slots: 18,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xDistBuf", binding: 1, downsample: 1)], passes: ["xDistBuf", ""], referenceBinding: nil, sourceID: "com.alightcreative.internal.border-two", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e5af76da00575() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("camera_x", "Camera X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("camera_y", "Camera Y", 100.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("camera_z", "Camera Z", -100.0, -10000.0, 10000.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("densityParam", "Density", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 5.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .color("shadowColor", "Shadows", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Light", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fill", "Fill", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e5af76da00575", name: "Volumetric Clouds", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e5af76da00575", slots: 17,
+            parameters: parameters, images: ["amref-8221a94a8d6df6aa.png"], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.volumetricclouds", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e2b36e815b6cb() -> ReferenceFragmentDefinition {
@@ -4120,7 +8207,54 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 18, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e2b36e815b6cb", name: "S_Glow", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e2b36e815b6cb", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.s_glow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e377fcdc80f21() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("saturation", "Saturation", 0.0, -1.0, 1.0, step: 0.005), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("vib", "Vibrance", 1.0, 1.0, 2.0, step: 0.01), slot: 12))
+        return ReferenceFragmentDefinition(id: "awi.amref.e377fcdc80f21", name: "Saturation / Vibrance", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_e377fcdc80f21", slots: 13,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.satvib", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e80ca9b1eae55() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("axis", "Axis", 0.0), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .point("pivot", "Pivot", Vec2(0.0, 0.0)), slot: 13, pointMinimum: Vec2(-100.0, -100.0), pointMaximum: Vec2(100.0, 100.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("crop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("zdist", "Distance", 0.0, 0.0, 10.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("solid", "Solid", false), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .color("solidColor", "Color", RGBA(0.8666666666666667, 0.26666666666666666, 0.3333333333333333, 1.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("thickness", "Thickness", 1.0, 0.0, 2.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("enableLight", "Enable Lighting", false), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 100.0, step: 0.1, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", -100.0, -100.0, 800.0, step: 0.5), slot: 26))
+        return ReferenceFragmentDefinition(id: "awi.amref.e80ca9b1eae55", name: "Flip Layer", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e80ca9b1eae55", slots: 27,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.flip3", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ed78228da4249() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.15, 0.0, 2.0, step: 0.001), slot: 11))
+        return ReferenceFragmentDefinition(id: "awi.amref.ed78228da4249", name: "Box Blur", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .blur, function: "refAM35_ed78228da4249", slots: 12,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "ds1", binding: 1, downsample: 2), ReferenceFragmentBuffer(name: "hblur", binding: 2, downsample: 2)], passes: ["ds1", "hblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.boxblur3", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e81edd0afbc37() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e81edd0afbc37", name: "Blend/Soft Overlay", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e81edd0afbc37", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.softoverlay", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e2d942b159289() -> ReferenceFragmentDefinition {
@@ -4135,7 +8269,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["Normal", "Multiply", "Screen"], 2), slot: 18, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e2d942b159289", name: "Star", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e2d942b159289", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.star", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea0f52d685790() -> ReferenceFragmentDefinition {
@@ -4148,7 +8282,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Feather", 0.1, 0.001, 1.0, step: 0.001), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.ea0f52d685790", name: "Circular Ripple", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ea0f52d685790", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.circularripple2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e0105d31bfccd() -> ReferenceFragmentDefinition {
@@ -4160,7 +8294,51 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e0105d31bfccd", name: "Directional Skew", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e0105d31bfccd", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.directionalSkew", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ed295c84e419e() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("gridSize", "Grid Size", 20.0, 5.0, 100.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotationSpeed", "Rotation Speed", 0.5, -2.0, 2.0, step: 0.05), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("zoomSpeed", "Zoom Speed", 0.2, -1.0, 1.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("warpAmount", "Warp Amount", 0.1, 0.0, 1.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("warpFrequency", "Warp Freq.", 5.0, 1.0, 20.0, step: 0.1), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .color("gridColor", "Grid Color", RGBA(0.10196078431372549, 0.23921568627450981, 0.32941176470588235, 1.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .color("bgColor", "Background Color", RGBA(0.0, 0.03529411764705882, 0.10980392156862745, 1.0)), slot: 17))
+        return ReferenceFragmentDefinition(id: "awi.amref.ed295c84e419e", name: "Warped Grid", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ed295c84e419e", slots: 18,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.warpedGrid", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ecbe59eeb6875() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("AMOUNT", "Amount", 8.0, 1.0, 15.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MBS", "Length", 900.0, 0.0, 2000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("TS", "Space", 260.0, 0.0, 1000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("TIMEAMP", "Amplitudo", 30.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 50.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 23, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 26, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.ecbe59eeb6875", name: "StarGlow Particle V2", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ecbe59eeb6875", slots: 27,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.particlev2", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7061727469636c657632"], sourcePasses: [:], iterationParameter: "iter")
+    }
+
+    private static func make_e76d3ec759f5a() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e76d3ec759f5a", name: "Blend/Hard Light", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e76d3ec759f5a", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.exclusion", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eaf2f95b1ab6a() -> ReferenceFragmentDefinition {
@@ -4187,7 +8365,14 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixWithSource", "Mix With Source", 0.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 30, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.eaf2f95b1ab6a", name: "Psykostripes", summary: "Procedural psychedelic stripe bands with editable phase and color.",
             category: .generate, function: "refAM35_eaf2f95b1ab6a", slots: 31,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.psykostripes", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ea75e9a4eecad() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.ea75e9a4eecad", name: "Blend/Color Dodge", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ea75e9a4eecad", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.colordodge", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ec199db7a28a6() -> ReferenceFragmentDefinition {
@@ -4199,7 +8384,16 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ec199db7a28a6", name: "Minimax", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_ec199db7a28a6", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.minimax", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e0da4c5935943() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.15, 0.0, 2.0, step: 0.005), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("iter", "Iterations", 3.0, 1.0, 5.0, step: 1.0), slot: 12))
+        return ReferenceFragmentDefinition(id: "awi.amref.e0da4c5935943", name: "Feather", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .keying, function: "refAM35_e0da4c5935943", slots: 13,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "ds1", binding: 1, downsample: 2), ReferenceFragmentBuffer(name: "ds2", binding: 2, downsample: 4), ReferenceFragmentBuffer(name: "hblur", binding: 3, downsample: 4)], passes: ["ds1", "ds2", "hblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.feather", externalPasses: [:], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e16b0e9488eac() -> ReferenceFragmentDefinition {
@@ -4208,7 +8402,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 5.0, step: 0.01), slot: 12))
         return ReferenceFragmentDefinition(id: "awi.amref.e16b0e9488eac", name: "Dissolve", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_e16b0e9488eac", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.dissolve", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef296141d8982() -> ReferenceFragmentDefinition {
@@ -4220,7 +8414,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("octaves", "Octaves", 6.0, 1.0, 9.0, step: 1.0), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ef296141d8982", name: "Roughen Edges", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_ef296141d8982", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.roughenedges", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9ae917ac0b5d() -> ReferenceFragmentDefinition {
@@ -4232,7 +8426,35 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e9ae917ac0b5d", name: "BCC Film Glow", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e9ae917ac0b5d", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.filmGlow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e52053df16be1() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("zoom", "Zoom Level", 2.3, 0.2, 3.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotation", "View Rotation", -0.15, -1.5, 1.5, step: 0.01), slot: 12))
+        return ReferenceFragmentDefinition(id: "awi.amref.e52053df16be1", name: "Monitor Scene", summary: "Map the source onto a monitor in a raymarched table scene, with camera zoom and orbit.",
+            category: .generate, function: "refAM35_e52053df16be1", slots: 13,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.creative.monitor_on_table", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e12a0fb215dc9() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(0.0, 1.0, 0.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxa", "Progress", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 50.0, 0.0, 1000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 19, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 22, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e12a0fb215dc9", name: "ColorGrid V2", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e12a0fb215dc9", slots: 23,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.newcolorgrid", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6e6577636f6c6f7267726964"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_edf4550c7d022() -> ReferenceFragmentDefinition {
@@ -4248,7 +8470,25 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alphab", "Alpha Blend", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.edf4550c7d022", name: "MultiGradient Map+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_edf4550c7d022", slots: 20,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.multigradmap", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ea91d335188cb() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("SCALE", "Tile Scale", 20.0, 1.0, 200.0, step: 0.1), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ROT_SPEED", "Rotation Speed", -0.05, -2.0, 2.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("BORDER", "Border", 0.001, 0.0001, 0.02, step: 0.0001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("DIST_COEF", "Distance Coef", 0.05, 0.0, 0.3, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("EDGE_FREQ", "Edge Freq Mult", 10.0, 0.0, 50.0, step: 0.1), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("EDGE_TIME", "Edge Time Scale", 0.05, 0.0, 1.0, step: 0.001), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("EDGE_POW", "Edge Power", 2.2, 0.1, 5.0, step: 0.01), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("EDGE_GAIN", "Edge Gain", 0.5, 0.0, 2.0, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("POW_R", "Red Power", 0.5, 0.1, 5.0, step: 0.01), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("POW_G", "Green Power", 1.5, 0.1, 5.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("POW_B", "Blue Power", 3.0, 0.1, 5.0, step: 0.01), slot: 21))
+        return ReferenceFragmentDefinition(id: "awi.amref.ea91d335188cb", name: "Rotating Tiled Boxes Glow", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ea91d335188cb", slots: 22,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.tiles_rot_glow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef570d703a6f8() -> ReferenceFragmentDefinition {
@@ -4262,7 +8502,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Overall Blend", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 17, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ef570d703a6f8", name: "S_Invert", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ef570d703a6f8", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.s_invert", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef9ec2b77c95e() -> ReferenceFragmentDefinition {
@@ -4275,7 +8515,16 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("beamIntensity", "Beam Intensity", 1.0, 0.0, 1.0, step: 0.01), slot: 16))
         return ReferenceFragmentDefinition(id: "awi.amref.ef9ec2b77c95e", name: "Chromatic Displacement", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ef9ec2b77c95e", slots: 17,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.chromaticdisplacementsearch", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e691abb4cb767() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.15, 0.0, 1.0, step: 0.005), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("iter", "Iterations", 2.0, 1.0, 6.0, step: 1.0), slot: 12))
+        return ReferenceFragmentDefinition(id: "awi.amref.e691abb4cb767", name: "Precise Box Blur", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .blur, function: "refAM35_e691abb4cb767", slots: 13,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "hblur", binding: 1, downsample: 1)], passes: ["hblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.boxblur2", externalPasses: [:], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e747b3f01d9e8() -> ReferenceFragmentDefinition {
@@ -4283,7 +8532,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.0, -2.0, 2.0, step: 0.01), slot: 11))
         return ReferenceFragmentDefinition(id: "awi.amref.e747b3f01d9e8", name: "Squeeze", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e747b3f01d9e8", slots: 12,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.squeeze", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ec2cdadc6c8df() -> ReferenceFragmentDefinition {
@@ -4294,7 +8543,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("alpha", "A", ["H", "S", "V", "A", "0", "1"], 3), slot: 14, choiceValues: [0, 1, 2, 3, 5, 6]))
         return ReferenceFragmentDefinition(id: "awi.amref.ec2cdadc6c8df", name: "Channel Remap HSV", summary: "Reassign hue, saturation and value channels independently.",
             category: .generate, function: "refAM35_ec2cdadc6c8df", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.channelmaphsv", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e4e43a09d7b11() -> ReferenceFragmentDefinition {
@@ -4309,7 +8558,19 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("amode", "A", ["Min", "Max", "Avg", "Off"], 1), slot: 18, choiceValues: [0, 1, 3, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e4e43a09d7b11", name: "Spin Streaks", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e4e43a09d7b11", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.streaks-spin", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ed929f4c9bbc0() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strengthh", "Strength", 0.15, -8.0, 8.0, step: 0.01), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Smoothest", 0.0, 0.0, 2.0, step: 0.005), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("centerChannel", "Center", ["R", "G", "B"], 1), slot: 14, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("mode", "Mode", ["Light", "Dark", "Mask", "Luma"], 0), slot: 15, choiceValues: [2, 3, 0, 1]))
+        return ReferenceFragmentDefinition(id: "awi.amref.ed929f4c9bbc0", name: "[X] RGB Split+", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_ed929f4c9bbc0", slots: 16,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "vblur", binding: 1, downsample: 1)], passes: ["vblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.rgbsepnew", externalPasses: [0: "com.alightcreative.effects.gaussianblur"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eb8f8ae278481() -> ReferenceFragmentDefinition {
@@ -4330,9 +8591,9 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("mirrx", "Mirror X", false), slot: 24))
         parameters.append(ReferenceFragmentParameter(definition: .toggle("mirry", "Mirror Y", true), slot: 25))
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 2), slot: 26, choiceValues: [0, 1, 2]))
-        return ReferenceFragmentDefinition(id: "awi.amref.eb8f8ae278481", name: "Meteor", summary: "A procedural meteor with editable head and trail appearance.",
+        return ReferenceFragmentDefinition(id: "awi.amref.eb8f8ae278481", name: "Meteor", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_eb8f8ae278481", slots: 27,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.meteor", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ee63cf8dafb63() -> ReferenceFragmentDefinition {
@@ -4346,7 +8607,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ee63cf8dafb63", name: "Rays Generate", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_ee63cf8dafb63", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.rays_generate", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e3e1c55e27b00() -> ReferenceFragmentDefinition {
@@ -4360,7 +8621,45 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("screenSpace", "Screen Space", false), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.e3e1c55e27b00", name: "Checker", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e3e1c55e27b00", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.checker2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eee7dc5eaa354() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("COLORS", "Color Lines", RGBA(1.0, 0.30196078431372547, 0.30196078431372547, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("COLORS2", "BG Lines", RGBA(0.09803921568627451, 0.30196078431372547, 0.6, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 19, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 22, choiceValues: [0, 3, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("GRADMAP", "GradientMap Color", false), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 25))
+        return ReferenceFragmentDefinition(id: "awi.amref.eee7dc5eaa354", name: "Glow Fibers", summary: "Flowing luminous strands with editable evolution, color and gradient mapping.",
+            category: .generate, function: "refAM35_eee7dc5eaa354", slots: 26,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.fibersglow", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e666962657273676c6f77"], sourcePasses: [:], iterationParameter: "iter")
+    }
+
+    private static func make_ee440d77aa644() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Progress", 0.0, 0.0, 1.0, step: 0.001), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Feather (Edge Softness)", 0.1, 0.0, 0.5, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("noiseScale", "Noise Scale", 0.4, 0.01, 3.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .color("heatColor", "Heat Color", RGBA(1.0, 0.4980392156862745, 0.10196078431372549, 1.0)), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("burnIntensity", "Burn Intensity", 1.6, 0.0, 4.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("useBackground", "Show Background Under Holes", true), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bgScale", "BG UV Scale", 0.1, 0.01, 1.0, step: 0.001), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("time", "BG Time", 0.0, 0.0, 1000.0, step: 0.001), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bgSpeed", "BG Move Speed", 0.01, 0.0, 0.1, step: 0.0001), slot: 19))
+        return ReferenceFragmentDefinition(id: "awi.amref.ee440d77aa644", name: "Burning Texture Fade", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .keying, function: "refAM35_ee440d77aa644", slots: 20,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.burning_texture_fade", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e56dda678d3a3() -> ReferenceFragmentDefinition {
@@ -4369,7 +8668,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("contrast", "Contrast", 0.0, -1.0, 3.0, step: 0.01), slot: 12))
         return ReferenceFragmentDefinition(id: "awi.amref.e56dda678d3a3", name: "Brightness / Contrast", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e56dda678d3a3", slots: 13,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.brightcont2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eb8490e7ab00f() -> ReferenceFragmentDefinition {
@@ -4381,7 +8680,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.eb8490e7ab00f", name: "Drowned", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_eb8490e7ab00f", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.drowned", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_edd3f3773971b() -> ReferenceFragmentDefinition {
@@ -4396,7 +8695,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("alphaMode", "Reveal Layer Below", false), slot: 18))
         return ReferenceFragmentDefinition(id: "awi.amref.edd3f3773971b", name: "Ink Splash", summary: "Procedural splashed ink with adjustable shape and coverage.",
             category: .generate, function: "refAM35_edd3f3773971b", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.ink_splash", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9f4328ecdff1() -> ReferenceFragmentDefinition {
@@ -4424,7 +8723,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("evolution", "Evolution", 0.0, -999.0, 999.0, step: 0.01), slot: 31))
         return ReferenceFragmentDefinition(id: "awi.amref.e9f4328ecdff1", name: "Energy Beam", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e9f4328ecdff1", slots: 32,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.energybeam", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e853b38753337() -> ReferenceFragmentDefinition {
@@ -4436,7 +8735,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e853b38753337", name: "Cosmic Nebula", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e853b38753337", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.cosmicNebula", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9d1fe3cb6559() -> ReferenceFragmentDefinition {
@@ -4448,7 +8747,26 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e9d1fe3cb6559", name: "Hexagon Tile Rotate", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e9d1fe3cb6559", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.hexagonTileRotate", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e4923184f9377() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 0.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(0.0, 1.0, 0.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxa", "Progress", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 50.0, 0.0, 1000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 19, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 22, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e4923184f9377", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e4923184f9377", slots: 23,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e6e6577636f6c6f7267726964", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef0dd00935b91() -> ReferenceFragmentDefinition {
@@ -4462,7 +8780,32 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 17, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
         return ReferenceFragmentDefinition(id: "awi.amref.ef0dd00935b91", name: "Warp Distortion", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_ef0dd00935b91", slots: 18,
-            parameters: parameters, images: ["amref-6a723d16de11defb.png"])
+            parameters: parameters, images: ["amref-6a723d16de11defb.png"], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.warpdist", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e46253edb996c() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("nmode", "Night Mode", false), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("camprog", "Cam Progress", 100.0, -100000.0, 100000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("camx", "Cam Landscape", 0.0, -1000.0, 1000.0, step: 1.0), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("camy", "Cam Potrait", 0.0, -1000.0, 1000.0, step: 1.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Cloud Evolution", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("CLOUD_HEIGHT", "Cloud Height", 50.0, 10.0, 100.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("CLOUD_DENSITY", "Cloud Density", 50.0, 10.0, 200.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("CLOUD_FREQ", "Cloud Freq", 50.0, 10.0, 75.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("CLOUD_BASE", "Base Color", RGBA(0.10980392156862745, 0.18823529411764706, 0.2196078431372549, 1.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .color("CLOUD_COLOR", "Diffuse CloudColor", RGBA(0.5490196078431373, 0.8980392156862745, 0.7019607843137254, 1.0)), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .color("CSKY", "Cloud BlendColor", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("SKYCOLOR", "Sky BlendColor", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("NUM_STEPS", "Octave", 4.0, 1.0, 8.0, step: 1.0), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ITER_FRAGMENT", "Map Detail", 3.0, 1.0, 5.0, step: 1.0), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("progressc", "Angle", 0.0), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 27, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("adaptive", "Adaptive to Layer", true), slot: 28))
+        return ReferenceFragmentDefinition(id: "awi.amref.e46253edb996c", name: "3D Volumetric Clouds", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e46253edb996c", slots: 29,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.clouds3d", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e06e1e8442923() -> ReferenceFragmentDefinition {
@@ -4477,7 +8820,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend", 100.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 18, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e06e1e8442923", name: "Neural Network", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e06e1e8442923", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.neural_network", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e62c9cb20d026() -> ReferenceFragmentDefinition {
@@ -4489,7 +8832,40 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e62c9cb20d026", name: "Wipe Checker", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e62c9cb20d026", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.wipeChecker", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e1a661f41fde7() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("count", "Count", 10.0, 1.0, 200.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smoothness", "Smoothness", 0.5, 0.0, 1.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("speed", "Speed", 1.0, -5.0, 5.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Feather", 0.02, 0.0, 100.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("reverse", "Reverse (0/1)", 0.0, 0.0, 1.0, step: 1.0), slot: 16))
+        return ReferenceFragmentDefinition(id: "awi.amref.e1a661f41fde7", name: "Time Slice Wipe", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e1a661f41fde7", slots: 17,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.effects.time_slice_wipe", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eea433d51ae47() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 17, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("HRD", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 20, choiceValues: [0, 1, 2]))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("GRADMAP", "Custom OneColor", false), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 0.0, 0.0, 1.0)), slot: 23))
+        return ReferenceFragmentDefinition(id: "awi.amref.eea433d51ae47", name: "Glow Tunnels", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_eea433d51ae47", slots: 24,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.glowtunnels", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e676c6f7774756e6e656c73"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e063e6fea36fc() -> ReferenceFragmentDefinition {
@@ -4506,7 +8882,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend with Original", 1.0, 0.0, 1.0, step: 0.01), slot: 20))
         return ReferenceFragmentDefinition(id: "awi.amref.e063e6fea36fc", name: "bcc ripple", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e063e6fea36fc", slots: 21,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.ripplelight", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e33fc7922712c() -> ReferenceFragmentDefinition {
@@ -4518,7 +8894,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e33fc7922712c", name: "HSL Secondary", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e33fc7922712c", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.hslSecondary", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ebad4c68d6739() -> ReferenceFragmentDefinition {
@@ -4530,7 +8906,37 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ebad4c68d6739", name: "Cosine Web (Zozuar)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ebad4c68d6739", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.cosineWeb", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e5938b7aea087() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("skycolour2", "BaseSky Color", RGBA(0.4, 0.7019607843137254, 1.0, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("skycolour1", "TrimSky Color", RGBA(0.2, 0.4, 0.6, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .color("ccolor", "Cloud Color", RGBA(1.0, 1.0, 0.8980392156862745, 1.0)), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 0.5, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 175.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("clouddark", "Dark Cloud", 50.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cloudlight", "Light Cloud", 30.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cloudcover", "Threshold", 20.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cloudalpha", "Alpha Cloud", 800.0, 0.0, 1000.0, step: 10.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("skytint", "Sky Tint", 50.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.5, 1.0)), slot: 23, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 26, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e5938b7aea087", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e5938b7aea087", slots: 27,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e3264636c6f756473", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_eb1510e292581() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.eb1510e292581", name: "Blend/Darken", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_eb1510e292581", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.darken", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ec69cd2450d1e() -> ReferenceFragmentDefinition {
@@ -4546,7 +8952,24 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ec69cd2450d1e", name: "Organic Particles Up", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ec69cd2450d1e", slots: 20,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.organic_particles_up", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e7b6e4b43c51e() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("flatten", "Flatten", false), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("dist", "Distance", 1.0, 0.2, 2.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("w", "Width", 16.0, 1.0, 32.0, step: 1.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("h", "Height", 9.0, 1.0, 32.0, step: 1.0), slot: 16))
+        return ReferenceFragmentDefinition(id: "awi.amref.e7b6e4b43c51e", name: "VR Combined", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .distort, function: "refAM35_e7b6e4b43c51e", slots: 17,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.vrcombined", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e88d742244e73() -> ReferenceFragmentDefinition {
@@ -4576,7 +8999,21 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("ainv", "Invert Angle", false), slot: 33))
         return ReferenceFragmentDefinition(id: "awi.amref.e88d742244e73", name: "Object Evolution", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e88d742244e73", slots: 34,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.objectevo", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e9052edfe9633() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strandCount", "Strands", 8.0, 2.0, 16.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("waveAmplitude", "Wave", 0.18, 0.0, 1.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("waveFrequency", "Frequency", 5.0, 0.1, 15.0, step: 0.1), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("waveSpeed", "Speed", 1.0, -5.0, 5.0, step: 0.01), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lineThickness", "Thickness", 0.008, 0.001, 0.05, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("glowAmount", "Glow", 1.0, 0.0, 5.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("intensity", "Intensity", 1.0, 0.0, 3.0, step: 0.01), slot: 17))
+        return ReferenceFragmentDefinition(id: "awi.amref.e9052edfe9633", name: "Bioscanner 3D", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e9052edfe9633", slots: 18,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.bioscanner", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e04f7ac7054f9() -> ReferenceFragmentDefinition {
@@ -4588,7 +9025,44 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e04f7ac7054f9", name: "Ghost", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e04f7ac7054f9", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.ghost", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e549fd9c36ceb() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("size", "Size", 1.0, 0.01, 10.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("thickness", "Thickness", 0.2, 0.01, 10.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 15, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 100.0, -10000.0, 10000.0, step: 0.01), slot: 15, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 250.0, -10000.0, 10000.0, step: 0.01), slot: 15, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("pointCount", "Points", 5.0, 3.0, 16.0, step: 1.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 18, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(100.0, -75.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 50.0, -100.0, 800.0, step: 0.5), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("texStretch", "Stretch", true), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatX", "Repeat X", 1.0, 0.01, 20.0, step: 0.01), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatY", "Repeat Y", 1.0, 0.01, 20.0, step: 0.01), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texTwirl", "Twirl", 0.0), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 33))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 60.0, 10.0, 200.0, step: 1.0), slot: 34))
+        return ReferenceFragmentDefinition(id: "awi.amref.e549fd9c36ceb", name: "Star Prism", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e549fd9c36ceb", slots: 35,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.starprism", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eb9c690bc1b0a() -> ReferenceFragmentDefinition {
@@ -4600,7 +9074,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("weighted", "Weighted RGB", true), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.eb9c690bc1b0a", name: "Luma Key", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_eb9c690bc1b0a", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.lumakey3", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea9b0eb53c085() -> ReferenceFragmentDefinition {
@@ -4612,7 +9086,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ea9b0eb53c085", name: "StarGlint V2", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_ea9b0eb53c085", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.starGlint", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e656bf85e2a2e() -> ReferenceFragmentDefinition {
@@ -4627,7 +9101,21 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("opacity", "Mask Opacity", 1.0, 0.0, 1.0, step: 0.01), slot: 18))
         return ReferenceFragmentDefinition(id: "awi.amref.e656bf85e2a2e", name: "Rounded Edge Mask", summary: "Mask the image to a rounded rectangular boundary.",
             category: .keying, function: "refAM35_e656bf85e2a2e", slots: 19,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.rounded_edge_mask", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ec0f84c556368() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Diffusion", 0.25, 0.0, 2.0, step: 0.005), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("threshold", "Threshold", 0.7, 0.0, 1.0, step: 0.001), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("intensity", "Intensity", 1.0, 0.0, 5.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color", "Color", RGBA(1.0, 0.3333333333333333, 0.4, 1.0)), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("blend", "Blend", 25.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("halo", "Halo", 0.0, 0.0, 5.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 75.0, 0.0, 100.0, step: 0.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.ec0f84c556368", name: "Light Glow", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .color, function: "refAM35_ec0f84c556368", slots: 18,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "downImg", binding: 1, downsample: 2), ReferenceFragmentBuffer(name: "hblur", binding: 2, downsample: 2), ReferenceFragmentBuffer(name: "vblur", binding: 3, downsample: 2)], passes: ["downImg", "hblur", "vblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.lightglow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e96fdd2c111c7() -> ReferenceFragmentDefinition {
@@ -4637,7 +9125,43 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("invertBlue", "Invert Blue", true), slot: 13))
         return ReferenceFragmentDefinition(id: "awi.amref.e96fdd2c111c7", name: "Invert", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e96fdd2c111c7", slots: 14,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.invert", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e228c81dec835() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("radius", "Radius", 1.0, 0.01, 10.0, step: 0.001), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("height", "Length", 3.0, 0.01, 10.0, step: 0.001), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("smooth", "Smoothing", 0.0, 0.0, 5.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 100.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 600.0, -10000.0, 10000.0, step: 0.01), slot: 16, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("shadingType", "Shading", ["Flat", "Point Light", "Directional Light", "Depth Map", "Normal Map", "Normal & Depth Map"], 1), slot: 18, choiceValues: [0, 1, 2, 3, 4, 5]))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightIntensity", "Intensity", 100.0, 0.0, 200.0, step: 0.1, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("shine", "Shine", 0.8, 0.0, 1.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("spec", "Specularity", 30.0, 1.0, 150.0, step: 0.5), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("ambient", "Ambient", 0.1, 0.0, 1.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .color("lightColor", "Color", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .point("lightDir", "Direction", Vec2(75.0, -75.0)), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("lightDepth", "Elevation", 100.0, -100.0, 800.0, step: 0.5), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("mirror", "Mirror", false), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatX", "Repeat X", 1.0, 0.01, 20.0, step: 0.01), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texRepeatY", "Repeat Y", 1.0, 0.01, 20.0, step: 0.01), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texAngle", "Angle", 0.0), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .number("texCrop", "Crop", 1.0, 0.01, 2.0, step: 0.001), slot: 30))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("texTwirl", "Twirl", 0.0), slot: 31))
+        parameters.append(ReferenceFragmentParameter(definition: .point("texOffset", "Offset", Vec2(0.0, 0.0)), slot: 32))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 60.0, 10.0, 200.0, step: 1.0), slot: 33))
+        return ReferenceFragmentDefinition(id: "awi.amref.e228c81dec835", name: "Cylinder", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e228c81dec835", slots: 34,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.cylinder", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e2e4f2d594baa() -> ReferenceFragmentDefinition {
@@ -4655,7 +9179,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("hardoff", "Hard Offset", 100.0, 10.0, 100.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e2e4f2d594baa", name: "TV Damage + Scanlines", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e2e4f2d594baa", slots: 22,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.tvdamage", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eaf4b83be09ed() -> ReferenceFragmentDefinition {
@@ -4673,7 +9197,32 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.eaf4b83be09ed", name: "Split", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_eaf4b83be09ed", slots: 22,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.eye_split_bend", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e9bbc23eabea4() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_x", "Orientation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_y", "Orientation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("orient_z", "Orientation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 11, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_x", "Rotation X", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_y", "Rotation Y", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rotate_z", "Rotation Z", 0.0, -3600.0, 3600.0, step: 0.01), slot: 12, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_x", "Position X", 0.0, -10000.0, 10000.0, step: 0.01), slot: 13, component: 0))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_y", "Position Y", 100.0, -10000.0, 10000.0, step: 0.01), slot: 13, component: 1))
+        parameters.append(ReferenceFragmentParameter(definition: .number("position_z", "Position Z", 500.0, -10000.0, 10000.0, step: 0.01), slot: 13, component: 2))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 14, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("depth", "Depth", 0.005, 0.0, 10.0, step: 0.001), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 1.0, 0.0, 10.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("MAX_ITER", "Precision", 300.0, 200.0, 400.0, step: 1.0), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("inton", "Interior Color", true), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .color("interiorColor", "Interior Color", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("interiorBlend", "Interior", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("fadeColor", "Fade Color", RGBA(0.2627450980392157, 0.2627450980392157, 0.2627450980392157, 1.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fadeBlend", "Fade", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e9bbc23eabea4", name: "3D Extrude Flat", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .stylize, function: "refAM35_e9bbc23eabea4", slots: 23,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.extrudeflat", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9093183a3660() -> ReferenceFragmentDefinition {
@@ -4684,7 +9233,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e9093183a3660", name: "Directional Blur++", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_e9093183a3660", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.custom.effects.directional_blur_adv", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e66563e1861dc() -> ReferenceFragmentDefinition {
@@ -4698,7 +9247,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("glowColor", "Glow Color", RGBA(0.5411764705882353, 0.13333333333333333, 1.0, 1.0)), slot: 17))
         return ReferenceFragmentDefinition(id: "awi.amref.e66563e1861dc", name: "S_GlowNoise (AE Motion)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e66563e1861dc", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.sapphire.glow-noise", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ec8c8369bd4f7() -> ReferenceFragmentDefinition {
@@ -4709,7 +9258,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("feather", "Feather", 0.0, 0.0, 100.0, step: 0.1), slot: 14))
         return ReferenceFragmentDefinition(id: "awi.amref.ec8c8369bd4f7", name: "Wipe", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_ec8c8369bd4f7", slots: 15,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.wipe2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e227d3c4d2f74() -> ReferenceFragmentDefinition {
@@ -4725,7 +9274,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alphab", "Alpha Blend", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e227d3c4d2f74", name: "Gradient Shadow+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e227d3c4d2f74", slots: 20,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.gradshadow", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9a676789bdc9() -> ReferenceFragmentDefinition {
@@ -4736,7 +9285,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("progressc", "Offset", 20.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e9a676789bdc9", name: "Glitch RGB", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e9a676789bdc9", slots: 15,
-            parameters: parameters, images: ["amref-334a66740ff27398.png"])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.rgbglitch", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e26dde3c2724a() -> ReferenceFragmentDefinition {
@@ -4750,7 +9299,59 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alphab", "Alpha Blend", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e26dde3c2724a", name: "Old ColorBalance", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e26dde3c2724a", slots: 18,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.colorbalanceold", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e66a98a028d06() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(0.0, 1.0, 1.0, 1.0)), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("newpath", "Sinus Pattern", false), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed", 40.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Position", Vec2(0.0, 0.0)), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxj", "Sharpen", 250.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxg", "Thickness V1", 12.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxi", "Thicknes V2", 12.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxe", "Amount Grid", 5.0, 0.0, 50.0, step: 0.5), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxc", "Circular Grid", 25.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxd", "Rotate Grid", 120.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("xxb", "Grid Z", 0.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("xxx", "Factor", Vec2(4.0, 4.0)), slot: 25, pointMinimum: Vec2(-10.0, -10.0), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 26, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 28, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 29, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 30, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 31, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e66a98a028d06", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e66a98a028d06", slots: 32,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e324474756e6e656c7632", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_ecc34859ed935() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("OFFSIDE", "Anti Offside", false), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("SPEED", "Speed AutoProg", 200.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("glitchAmplitude", "Amplitude", 20.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("AMOUNT", "Amount", 800.0, 0.0, 10000.0, step: 2.5, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 18, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("DISTORT", "Distort", 120.0, 100.0, 10000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("STEP", "Step", 20.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("glitchNarrowness", "Narrowness", 500.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("glitchBlockiness", "Blockiness", 400.0, 0.0, 10000.0, step: 10.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("glitchMinimizer", "Minimizer", 200.0, 0.0, 10000.0, step: 10.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("rcolor", "Red Offset", false), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("gcolor", "Green Offset", false), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("bcolor", "Blue Offset", false), slot: 27))
+        return ReferenceFragmentDefinition(id: "awi.amref.ecc34859ed935", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ecc34859ed935", slots: 28,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e6e65776f6666736574676c69746368", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e68dc1acb0c4e() -> ReferenceFragmentDefinition {
@@ -4762,7 +9363,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 1.0, 0.0, 1.0, step: 0.01), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e68dc1acb0c4e", name: "S_DuoTone (AE Motion)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e68dc1acb0c4e", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.sapphire.duotone", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ed1142f9e5fc6() -> ReferenceFragmentDefinition {
@@ -4774,7 +9375,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.ed1142f9e5fc6", name: "Brightness H-Blur Add", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_ed1142f9e5fc6", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.brightnessHBlurAdd", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e4cca71a4fa76() -> ReferenceFragmentDefinition {
@@ -4786,7 +9387,16 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e4cca71a4fa76", name: "Polar Displacement Map", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e4cca71a4fa76", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.polarDisplacement", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e5fd9ac31193b() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.15, 0.0, 1.0, step: 0.005), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("iter", "Iterations", 2.0, 1.0, 6.0, step: 1.0), slot: 12))
+        return ReferenceFragmentDefinition(id: "awi.amref.e5fd9ac31193b", name: "Inner Blur", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .blur, function: "refAM35_e5fd9ac31193b", slots: 13,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "hblur", binding: 1, downsample: 1)], passes: ["hblur", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.innerblur", externalPasses: [0: "com.alightcreative.effects.boxblur2"], sourcePasses: [:], iterationParameter: "iter")
     }
 
     private static func make_e056a7f11c36f() -> ReferenceFragmentDefinition {
@@ -4802,7 +9412,35 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 5.0, step: 0.01), slot: 19))
         return ReferenceFragmentDefinition(id: "awi.amref.e056a7f11c36f", name: "Block Noise", summary: "A discrete block-based noise generator with editable pattern controls.",
             category: .stylize, function: "refAM35_e056a7f11c36f", slots: 20,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.blocknoise2", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e667ffd209ce2() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autoMove", "Auto Move", true), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Progress", 0.0, -100.0, 100.0, step: 0.01), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("speed", "Speed", 0.48, -5.0, 5.0, step: 0.01), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 1000.0, step: 1.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cameraX", "Camera X", 0.0, -3.0, 3.0, step: 0.01), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cameraHeight", "Camera Height", 0.72, 0.15, 2.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .number("yaw", "Yaw", 0.0, -45.0, 45.0, step: 0.1), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("horizon", "Horizon", 0.08, -0.4, 0.5, step: 0.01), slot: 18))
+        parameters.append(ReferenceFragmentParameter(definition: .number("buildingCount", "Buildings", 40.0, 12.0, 56.0, step: 1.0), slot: 19))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cityWidth", "City Width", 2.5, 0.8, 6.0, step: 0.01), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .number("cityDepth", "City Depth", 8.0, 2.0, 16.0, step: 0.01), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .number("heightScale", "Building Height", 1.2, 0.2, 3.0, step: 0.01), slot: 22))
+        parameters.append(ReferenceFragmentParameter(definition: .number("widthScale", "Building Width", 1.0, 0.3, 2.5, step: 0.01), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .number("windowGlow", "Window Glow", 1.2, 0.0, 4.0, step: 0.01), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("fog", "Distance Fog", 0.55, 0.0, 2.0, step: 0.01), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .color("skyTop", "Sky Top", RGBA(0.03137254901960784, 0.07058823529411765, 0.1450980392156863, 1.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .color("skyBottom", "Sky Horizon", RGBA(0.1450980392156863, 0.2901960784313726, 0.4392156862745098, 1.0)), slot: 27))
+        parameters.append(ReferenceFragmentParameter(definition: .color("buildingColor", "Buildings", RGBA(0.09019607843137255, 0.1411764705882353, 0.23529411764705882, 1.0)), slot: 28))
+        parameters.append(ReferenceFragmentParameter(definition: .color("windowColor", "Windows", RGBA(1.0, 0.7764705882352941, 0.42745098039215684, 1.0)), slot: 29))
+        parameters.append(ReferenceFragmentParameter(definition: .number("sourceMix", "Source Mix", 8.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 30, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("opacity", "Opacity", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 31, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e667ffd209ce2", name: "3D City", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e667ffd209ce2", slots: 32,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.city_sdf", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e3817a19bd21a() -> ReferenceFragmentDefinition {
@@ -4814,7 +9452,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("mixAmount", "Mix", 1.0, 0.0, 1.0, step: 0.01), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e3817a19bd21a", name: "S_Hotspots (AE Motion)", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e3817a19bd21a", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.sapphire.hotspots", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea60f3ed290c4() -> ReferenceFragmentDefinition {
@@ -4834,7 +9472,21 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("brightness", "Brightness", 1.0, 0.0, 3.0, step: 0.01), slot: 23))
         return ReferenceFragmentDefinition(id: "awi.amref.ea60f3ed290c4", name: "BCC LED", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ea60f3ed290c4", slots: 24,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.bcc_led", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e88e324e915a2() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e88e324e915a2", name: "Blend/Soft Light", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e88e324e915a2", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.softlight", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e742ebb30f871() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        return ReferenceFragmentDefinition(id: "awi.amref.e742ebb30f871", name: "Blend/Diff", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e742ebb30f871", slots: 11,
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: 1, sourceID: "com.alightcreative.blend.diff", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e0b36f4e17fc1() -> ReferenceFragmentDefinition {
@@ -4846,7 +9498,16 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e0b36f4e17fc1", name: "Smooth Edges", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e0b36f4e17fc1", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.smoothEdges", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e6bbee04d6850() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("RADIUSS", "Strength", 10.0, 0.0, 15.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.e6bbee04d6850", name: "", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e6bbee04d6850", slots: 13,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 2)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "636f6d2e616c6967687463726561746976652e656666656374732e6272757368736b65746368", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e3f20da3f4268() -> ReferenceFragmentDefinition {
@@ -4865,7 +9526,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("offs", "Bias", 0.0, -1.0, 1.0, step: 0.001), slot: 22))
         return ReferenceFragmentDefinition(id: "awi.amref.e3f20da3f4268", name: "Turbulent Displace", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e3f20da3f4268", slots: 23,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.turbulentdisplace3", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eb44607c6a5bb() -> ReferenceFragmentDefinition {
@@ -4880,7 +9541,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 18, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.eb44607c6a5bb", name: "Smoke Noise", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_eb44607c6a5bb", slots: 19,
-            parameters: parameters, images: ["amref-334a66740ff27398.png"])
+            parameters: parameters, images: ["amref-334a66740ff27398.png"], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.alightcreative.effects.smokenoise", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e977de7038c0d() -> ReferenceFragmentDefinition {
@@ -4892,6 +9553,74 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("colorB", "Secondary Color", RGBA(0.2235294117647059, 0.7764705882352941, 1.0, 1.0)), slot: 15))
         return ReferenceFragmentDefinition(id: "awi.amref.e977de7038c0d", name: "Burn Texture", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e977de7038c0d", slots: 16,
-            parameters: parameters, images: [])
+            parameters: parameters, images: [], buffers: [], passes: [], referenceBinding: nil, sourceID: "com.aemotion.native.burnTexture", externalPasses: [:], sourcePasses: [:], iterationParameter: nil)
+    }
+
+    private static func make_e6e6f1350a372() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("numIterations", "Amount", 4.0, 0.0, 5.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("PROGRESS", "Progress", 100.0, -10000.0, 10000.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("rainSpeed", "Rain Speed", 15.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("sharpnessx", "Sharpness", 450.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("expansionSpeed", "Expand Speed", 400.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 16, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("numRings", "Num Rings", 300.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 17, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 30.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 100.0, 10.0, 5000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 22, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("hardness", "Hard/Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 25, choiceValues: [0, 3, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.e6e6f1350a372", name: "Rings Water", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_e6e6f1350a372", slots: 26,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.smallringswater", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e736d616c6c72696e67737761746572"], sourcePasses: [:], iterationParameter: "iter")
+    }
+
+    private static func make_efe1e52957db3() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .number("ITER", "Iteration", 8.0, 0.0, 20.0, step: 1.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autop", "Auto Progress", true), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autob", "Auto Blink", true), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressb", "Progress", 200.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressc", "Blink", 100.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 15, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autor", "Auto Rotation", false), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("autos", "Auto Zoom", false), slot: 17))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progressa", "Evolution", 400.0, 0.0, 10000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scale", "Scale", 50.0, 20.0, 1000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 20))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 21))
+        parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 22, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("bright", "Brightness", 100.0, 100.0, 300.0, step: 1.0, unit: "%"), slot: 23, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 24, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color1", "Color BG", RGBA(0.0, 0.0, 0.0, 1.0)), slot: 25))
+        parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 26))
+        parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 2), slot: 27, choiceValues: [0, 1, 2]))
+        return ReferenceFragmentDefinition(id: "awi.amref.efe1e52957db3", name: "Plexus Particle+", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_efe1e52957db3", slots: 28,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.plexusparticle", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e706c657875737061727469636c65"], sourcePasses: [:], iterationParameter: "iter")
+    }
+
+    private static func make_ea55a014f7a51() -> ReferenceFragmentDefinition {
+        var parameters: [ReferenceFragmentParameter] = []
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("xnxx", "New Pattern", false), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .number("progress", "Evolution", 500.0, 500.0, 100000.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scaleuv", "Scale Comp", 150.0, 10.0, 500.0, step: 1.0, unit: "%"), slot: 13, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha Comp", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Rotate", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .point("position", "Position", Vec2(0.0, 0.0)), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .point("space", "Distance", Vec2(6.0, 10.0)), slot: 17, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(50.0, 50.0)))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scalex", "Scale Static", 100.0, -1000.0, 1000.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scaley", "Scale Mid", 100.0, -1000.0, 1000.0, step: 1.0, unit: "%"), slot: 19, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("scalez", "Scale Base", 185.0, -1000.0, 1000.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpx", "Alpha Static", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 21, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .number("alpy", "Alpha Base", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 22, scalarScale: 0.01))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("xxx", "Specularity", false), slot: 23))
+        parameters.append(ReferenceFragmentParameter(definition: .toggle("lightfx", "Lighting", false), slot: 24))
+        parameters.append(ReferenceFragmentParameter(definition: .number("aai", "Lighting Temp", 50.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
+        return ReferenceFragmentDefinition(id: "awi.amref.ea55a014f7a51", name: "Rainy Dew", summary: "Internal reference shader for comparison and adapter validation.",
+            category: .generate, function: "refAM35_ea55a014f7a51", slots: 26,
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.rainydew", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7261696e79646577"], sourcePasses: [:], iterationParameter: "iter")
     }
 }

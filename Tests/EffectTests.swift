@@ -19,7 +19,7 @@ final class EffectTests: XCTestCase {
     }
 
     /// Effects that work from the layer's alpha shape (no visible change on an opaque adjustment layer, like in AE).
-    static let alphaShaped: Set<String> = ["awi.amref.e656bf85e2a2e", "ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow", "awi11.featherEdges", "awi11.matteChoker", "awi11.alphaLevels", "awi11.edgeRefine", "awi10.bevelAlpha", "awi10.smoothBevel", "awi10.glass", "awi10.edgeAO", "awi10.innerShadow", "awi10.fresnel", "awi16.tornEdges", "awi17.extrudeFlat"]
+    static let alphaShaped: Set<String> = ["awi.amref.e7b0d60717ad7", "awi.amref.e656bf85e2a2e", "ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow", "awi11.featherEdges", "awi11.matteChoker", "awi11.alphaLevels", "awi11.edgeRefine", "awi10.bevelAlpha", "awi10.smoothBevel", "awi10.glass", "awi10.edgeAO", "awi10.innerShadow", "awi10.fresnel", "awi16.tornEdges", "awi17.extrudeFlat"]
 
     private func renderer() throws -> Renderer {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU: no Metal device available; effect tests not run") }
@@ -78,6 +78,9 @@ final class EffectTests: XCTestCase {
         case "awi.amref.eeab7e403ece5": n("progress", 65)
         // Custom palette mode activates Shades; fixed retro palettes do not use it.
         case "awi.amref.ea4ee3a4adc94": e.params["palette"] = .choice(7)
+        // A channel router starts neutral; exercise an explicit HSV swap.
+        case "awi.amref.ec2cdadc6c8df": e.params["hue"] = .choice(2); e.params["sat"] = .choice(0)
+        case "awi.ref.liquidLensWipe", "awi.ref.voronoiPeel": n("progress", 55)
         case "ae.gaussianBlur": n("blurriness", 12)
         case "ae.directionalBlur": n("length", 20); n("direction", 90)
         case "ae.radialBlur": n("amount", 40)
@@ -246,6 +249,17 @@ final class EffectTests: XCTestCase {
                 // intentionally leaves all tiles at their fixed Rotation.
                 if d.id == "awi.amref.e8404b5764d4f", pd.id == "seed" {
                     a.params["strength"] = .number(Animated(0.35)); b.params["strength"] = .number(Animated(0.35))
+                }
+                if d.id == "awi.amref.ec88108d754e8" {
+                    // Density is the glitch-block grid; RGB fields are the
+                    // single-color dot mode, not the source-color mode.
+                    if pd.id == "density" { a.params["preset"] = .choice(5); b.params["preset"] = .choice(5) }
+                    if ["colorR", "colorG", "colorB"].contains(pd.id) { a.params["colorMode"] = .choice(1); b.params["colorMode"] = .choice(1) }
+                }
+                if d.id == "awi.amref.e7b0d60717ad7", pd.id == "quality" {
+                    // Accuracy affects accumulated soft shadow coverage. A
+                    // fully solid maximum-alpha shadow can converge earlier.
+                    a.params["solidity"] = .number(Animated(0.35)); b.params["solidity"] = .number(Animated(0.35))
                 }
                 if d.id == "awi18.waveGlitch", pd.id == "steps" {
                     a.params["holdFrames"] = .toggle(true); b.params["holdFrames"] = .toggle(true)

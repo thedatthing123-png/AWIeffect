@@ -287,7 +287,9 @@ final class EditorState: ObservableObject {
     // MARK: Selection
 
     private var lastTimelineTap:(id:UUID,time:TimeInterval)?
-    private var lastTimelineWindowTap:(point:Vec2,time:TimeInterval)?
+    private var lastTimelineWindowTap:(point:Vec2,time:TimeInterval,container:UUID?)?
+    // Geometry cache does not publish state or rebuild property-lane contents.
+    var timelineContainerFrames: [UUID: CGRect] = [:]
 
     /// Resolve a single tap immediately. Competing single/double recognizers
     /// otherwise hold every clip tap until the double-tap timeout has elapsed.
@@ -307,15 +309,20 @@ final class EditorState: ObservableObject {
     /// Single-touch observations survive a recognizer being recreated during
     /// panel reflow. Only a nearby second touch belonging to the recorded
     /// container tap may complete the open; unrelated window taps do nothing.
-    func observeTimelineWindowTap(point: Vec2, timestamp: TimeInterval) {
+    func observeTimelineWindowTap(point: Vec2, timestamp: TimeInterval, container: UUID? = nil) {
         let previous = lastTimelineWindowTap
-        lastTimelineWindowTap = (point, timestamp)
-        guard let previous, let candidate = lastTimelineTap,
-              timestamp - previous.time >= 0.06, timestamp - previous.time <= 0.4,
-              abs(candidate.time - previous.time) <= 0.06,
+        lastTimelineWindowTap = (point, timestamp, container)
+        guard let previous, let id = previous.container,
+              container == nil || container == id,
+              timestamp - previous.time >= 0.02, timestamp - previous.time <= 0.4,
               hypot(point.x - previous.point.x, point.y - previous.point.y) <= 44 else { return }
-        finishTimelineContainerDoubleTap(timestamp: max(timestamp, candidate.time))
+        guard !isMultiSelecting, !linkPicking, let layer = project.layers.first(where: { $0.id == id }) else { return }
+        if !layer.isGroup { guard case .precomp = layer.content else { return } }
+        lastTimelineWindowTap = nil; lastTimelineTap = nil
+        selectedLayerID = id
+        if layer.isGroup { openGroup() } else { openPrecomp() }
     }
+    func cancelTimelineWindowTap() { lastTimelineWindowTap=nil;lastTimelineTap=nil }
 
     /// Opening the panel changes the row's screen position after the first tap.
     /// The editor's stationary simultaneous double-tap recognizer can finish the

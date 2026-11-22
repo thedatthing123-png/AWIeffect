@@ -20,7 +20,8 @@ final class ReviewedReferenceEffectsTests: XCTestCase {
     func testColorEffectsKeepTranslucentArtworkCoverage() throws {
         let baseline = try render(nil)
         let alpha = stride(from: 3, to: baseline.count, by: 4).map { baseline[$0] }
-        for id in ["awi.amref.e75f2a17f4488", "awi.amref.e51de8cc7d47d", "awi.amref.ea3452b1fb102"] {
+        for id in ["awi.amref.e75f2a17f4488", "awi.amref.e51de8cc7d47d", "awi.amref.ea3452b1fb102",
+                   "awi.amref.efa58da681936", "awi.amref.e27453a82d053", "awi.amref.ec88108d754e8"] {
             let definition = try XCTUnwrap(EffectRegistry.definition(id))
             let output = try render(definition.makeInstance())
             XCTAssertEqual(stride(from: 3, to: output.count, by: 4).map { output[$0] }, alpha, definition.name)
@@ -68,6 +69,42 @@ final class ReviewedReferenceEffectsTests: XCTestCase {
         let randomized = try render(effect)
         effect.params["seed"] = .number(Animated(0))
         XCTAssertNotEqual(try render(effect), randomized)
+    }
+    func testNativeLightHandleRoundTripsWhileAbstractVectorsHaveNoCrosshair() {
+        let value=Vec2(-120,-160)
+        let shown=ReferenceFragmentControls.canvasPoint("awi.amref.e7b0d60717ad7","light",value)
+        XCTAssertEqual(shown,Vec2(0.38,0.66))
+        let restored=shown.flatMap { ReferenceFragmentControls.canvasPoint("awi.amref.e7b0d60717ad7","light",$0,inverse:true) }
+        XCTAssertEqual(restored?.x ?? 0,value.x,accuracy:0.000001)
+        XCTAssertEqual(restored?.y ?? 0,value.y,accuracy:0.000001)
+        XCTAssertNil(ReferenceFragmentControls.canvasPoint("awi.amref.e9e78f72e74ef","position",.zero))
+        XCTAssertEqual(ReferenceFragmentControls.canvasPoint("ae.bulge","center",Vec2(0.4,0.6)),Vec2(0.4,0.6))
+    }
+    func testDotPatternControlsFollowTheirActualModes() {
+        var effect=ReferenceFragmentCatalog.ec88108d754e8.definition.makeInstance()
+        XCTAssertFalse(ReferenceFragmentControls.isVisible("density",effect:effect))
+        XCTAssertFalse(ReferenceFragmentControls.isVisible("colorR",effect:effect))
+        effect.params["preset"] = .choice(5)
+        effect.params["colorMode"] = .choice(1)
+        XCTAssertTrue(ReferenceFragmentControls.isVisible("density",effect:effect))
+        XCTAssertTrue(ReferenceFragmentControls.isVisible("colorR",effect:effect))
+        XCTAssertFalse(ReferenceFragmentControls.isVisible("frequency",effect:effect))
+    }
+    func testInkMatteDoesNotLeaveColoredPixelsOutsideItsAlpha() throws {
+        var effect=ReferenceFragmentCatalog.edd3f3773971b.definition.makeInstance()
+        effect.params["alphaMode"] = .toggle(true)
+        effect.params["expansion"] = .number(Animated(0.8))
+        let image=try render(effect)
+        XCTAssertTrue(stride(from:3,to:image.count,by:4).contains { image[$0]==0 })
+        XCTAssertTrue(stride(from:3,to:image.count,by:4).contains { image[$0]>0 })
+        for index in stride(from:0,to:image.count,by:4) where image[index+3]==0 {
+            XCTAssertEqual(image[index],0);XCTAssertEqual(image[index+1],0);XCTAssertEqual(image[index+2],0)
+        }
+    }
+    func testTransparentGlassTintIsAnExactSourceBypass() throws {
+        var effect=ReferenceFragmentCatalog.e4dc1ec616108.definition.makeInstance()
+        effect.params["ballColor"] = .color(Animated(RGBA(0.2,0.5,0.8,0)))
+        XCTAssertEqual(try render(effect),try render(nil))
     }
 
 }

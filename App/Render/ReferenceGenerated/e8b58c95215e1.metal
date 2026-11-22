@@ -54,7 +54,7 @@ static inline __attribute__((always_inline))
 void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread float4& gl_FragCoord, constant ReferenceUniformse8b58c95215e1& _70, thread float4& referenceColor)
 {
     float2 uv = gl_FragCoord.xy / _70.refScreen.xy;
-    float2 param = _70.refScreen.xy;
+    float2 param = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 texel = float2(1.0) / getTexSize(param);
     float r = _70.wideRadius;
     if (r <= 0.0)
@@ -63,16 +63,16 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
         referenceColor = s(param_1, refInput, refInputSmplr);
         return;
     }
-    float _111;
+    float _113;
     if (_70.quality == 0)
     {
-        _111 = 2.0;
+        _113 = 2.0;
     }
     else
     {
-        _111 = (_70.quality == 1) ? 3.0 : 4.0;
+        _113 = (_70.quality == 1) ? 3.0 : 4.0;
     }
-    int taps = int(r * _111);
+    int taps = int(r * _113);
     float sigma = fast::max(9.9999997473787516355514526367188e-05, r * 0.60000002384185791015625);
     float4 acc = float4(0.0);
     float wsum = 0.0;
@@ -101,17 +101,17 @@ fragment refAM35_e8b58c95215e1_out refAM35_e8b58c95215e1(constant ReferenceUnifo
     refAM35_e8b58c95215e1_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(refInput, refInputSmplr, gl_FragCoord, _70, referenceColor);
-    bool _195 = any(isnan(referenceColor));
-    bool _202;
-    if (!_195)
+    bool _197 = any(isnan(referenceColor));
+    bool _204;
+    if (!_197)
     {
-        _202 = any(isinf(referenceColor));
+        _204 = any(isinf(referenceColor));
     }
     else
     {
-        _202 = _195;
+        _204 = _197;
     }
-    if (_202)
+    if (_204)
     {
         referenceColor = float4(0.0);
     }
@@ -120,6 +120,11 @@ fragment refAM35_e8b58c95215e1_out refAM35_e8b58c95215e1(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _219 = referenceColor;
+    float3 _225 = fast::clamp(_219.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _225.x;
+    referenceColor.y = _225.y;
+    referenceColor.z = _225.z;
     out.finalColor = referenceColor;
     return out;
 }

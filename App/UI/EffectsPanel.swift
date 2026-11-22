@@ -164,6 +164,8 @@ final class EffectThumbnails {
         var inst = def.makeInstance()
         // Make subtle defaults visible in a thumbnail.
         switch def.id {
+        case "awi.ref.liquidLensWipe", "awi.ref.voronoiPeel": inst.params["progress"] = .number(Animated(55))
+        case "awi.amref.ec2cdadc6c8df": inst.params["hue"] = .choice(2); inst.params["sat"] = .choice(0)
         case "awi23.drawProgress":
             var end = Animated(0.0)
             end.insertKeyframe(Keyframe(time: 0, value: 0)); end.insertKeyframe(Keyframe(time: 1.2, value: 100))
@@ -574,16 +576,20 @@ struct ParamRow: View {
                           onChange: { setNumber(turns * 360 + $0) }, onEnd: { state.endEdit() })
                 .accessibilityIdentifier("effect-param-\(effect.typeID)-\(def.id)")
         case .point:
-            // Scrub or type X / Y (%); the crosshair on the canvas drags the same point.
-            let v = effect.point(def.id, t)
-            ValueScrubber(value: v.x * 100, range: -100...200, step: 0.1, unit: "%",
+            let v = effect.params[def.id]?.point(at: t) ?? def.defaultValue.point(at: t)
+            let native = ReferenceFragmentControls.pointParameter(effect.typeID, def.id)
+            let scale = native == nil ? 100.0 : 1.0
+            let low = native?.pointMinimum ?? Vec2(native == nil ? -1 : -10000, native == nil ? -1 : -10000)
+            let high = native?.pointMaximum ?? Vec2(native == nil ? 2 : 10000, native == nil ? 2 : 10000)
+            let unit = native == nil ? "%" : ""
+            ValueScrubber(value: v.x * scale, range: (low.x*scale)...max(low.x*scale+0.001,high.x*scale), step: native == nil ? 0.1 : 0.01, unit: unit,
                           onBegin: { state.beginEdit("Edit \(def.name)") },
-                          onChange: { nv in setPointLive(Vec2(nv / 100, effect.point(def.id, state.currentTime).y), axis: 0, nv / 100) },
+                          onChange: { nv in setPointLive(Vec2(nv / scale, effect.params[def.id]?.point(at: state.currentTime).y ?? def.defaultValue.point(at: state.currentTime).y), axis: 0, nv / scale) },
                           onEnd: { state.endEdit() })
                 .accessibilityLabel("\(def.name) X")
-            ValueScrubber(value: v.y * 100, range: -100...200, step: 0.1, unit: "%",
+            ValueScrubber(value: v.y * scale, range: (low.y*scale)...max(low.y*scale+0.001,high.y*scale), step: native == nil ? 0.1 : 0.01, unit: unit,
                           onBegin: { state.beginEdit("Edit \(def.name)") },
-                          onChange: { nv in setPointLive(Vec2(effect.point(def.id, state.currentTime).x, nv / 100), axis: 1, nv / 100) },
+                          onChange: { nv in setPointLive(Vec2(effect.params[def.id]?.point(at: state.currentTime).x ?? def.defaultValue.point(at: state.currentTime).x, nv / scale), axis: 1, nv / scale) },
                           onEnd: { state.endEdit() })
                 .accessibilityLabel("\(def.name) Y")
         case .color:

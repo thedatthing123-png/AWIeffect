@@ -138,7 +138,7 @@ void referenceMain(constant ReferenceUniformseb8f8ae278481& _84, texture2d<float
     float2 param = gl_FragCoord.xy / _84.refScreen.xy;
     float4 texColor = texture2DCv(refInput, refInputSmplr, param);
     float4 texColorX = float4(0.0, 0.0, 0.0, 1.0) * texColor.w;
-    float2 param_1 = _84.refScreen.xy;
+    float2 param_1 = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 image_size = getTexSize(param_1);
     float2 iRes = float2(_84.refScreen.x, _84.refScreen.y);
     float maxF = fast::max(_84.refScreen.x, _84.refScreen.y);
@@ -163,27 +163,27 @@ void referenceMain(constant ReferenceUniformseb8f8ae278481& _84, texture2d<float
     {
         syamjaidtz.y = 1.0 - syamjaidtz.y;
     }
-    float _454;
+    float _456;
     if (_84.autop != 0u)
     {
-        _454 = _84.PROGRESS + (_84.refScreen.z * 0.5);
+        _456 = _84.PROGRESS + (_84.refScreen.z * 0.5);
     }
     else
     {
-        _454 = _84.PROGRESS / 10.0;
+        _456 = _84.PROGRESS / 10.0;
     }
-    float time = _454;
+    float time = _456;
     float2 resolution = xnxx;
-    float _474;
+    float _476;
     if (_84.autop != 0u)
     {
-        _474 = sin(_84.PROGRESS + ((_84.refScreen.z * 0.5) * 64564.80078125));
+        _476 = sin(_84.PROGRESS + ((_84.refScreen.z * 0.5) * 64564.80078125));
     }
     else
     {
-        _474 = sin(_84.PROGRESS * 64564.80078125);
+        _476 = sin(_84.PROGRESS * 64564.80078125);
     }
-    float an = _474;
+    float an = _476;
     float3 ro = float3(16.0 * cos(an), 0.0, 16.0 * sin(an));
     float3 ta = float3(0.0);
     float3 ww = fast::normalize(ta - ro);
@@ -192,8 +192,8 @@ void referenceMain(constant ReferenceUniformseb8f8ae278481& _84, texture2d<float
     float3 tot = float3(0.0);
     float2 ppp = syamjaidtz;
     float2 param_3 = ppp;
-    float3 _524 = spunk(param_3, _84);
-    float3 bbk = _524;
+    float3 _526 = spunk(param_3, _84);
+    float3 bbk = _526;
     float2 p = nxnn;
     float3 rd = fast::normalize(((uu * p.x) + (vv * p.y)) + (ww * 1.5));
     float v = 1.0 - abs(p.y);
@@ -234,17 +234,17 @@ fragment refAM35_eb8f8ae278481_out refAM35_eb8f8ae278481(constant ReferenceUnifo
     refAM35_eb8f8ae278481_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(_84, refInput, refInputSmplr, gl_FragCoord, referenceColor);
-    bool _674 = any(isnan(referenceColor));
-    bool _681;
-    if (!_674)
+    bool _676 = any(isnan(referenceColor));
+    bool _683;
+    if (!_676)
     {
-        _681 = any(isinf(referenceColor));
+        _683 = any(isinf(referenceColor));
     }
     else
     {
-        _681 = _674;
+        _683 = _676;
     }
-    if (_681)
+    if (_683)
     {
         referenceColor = float4(0.0);
     }
@@ -253,6 +253,11 @@ fragment refAM35_eb8f8ae278481_out refAM35_eb8f8ae278481(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _696 = referenceColor;
+    float3 _702 = fast::clamp(_696.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _702.x;
+    referenceColor.y = _702.y;
+    referenceColor.z = _702.z;
     out.finalColor = referenceColor;
     return out;
 }

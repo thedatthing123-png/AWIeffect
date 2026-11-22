@@ -150,7 +150,7 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformseee914
     float2 posPx = (dir * _165.ampPos) * env;
     float rotDeg = _165.ampRot * env;
     float scl = 1.0 + (_165.ampScale * env);
-    float2 param_8 = _165.refScreen.xy;
+    float2 param_8 = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 texSize = getTexSize(param_8);
     float2 posUV = posPx / fast::max(texSize, float2(1.0));
     float2 pivot = float2(_165.pivotX, _165.pivotY);
@@ -171,17 +171,17 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformseee914
     }
     else
     {
-        bool _319 = any(srcUV < float2(0.0));
-        bool _326;
-        if (!_319)
+        bool _321 = any(srcUV < float2(0.0));
+        bool _328;
+        if (!_321)
         {
-            _326 = any(srcUV > float2(1.0));
+            _328 = any(srcUV > float2(1.0));
         }
         else
         {
-            _326 = _319;
+            _328 = _321;
         }
-        if (_326)
+        if (_328)
         {
             col = float4(0.0);
         }
@@ -199,17 +199,17 @@ fragment refAM35_eee91489e4221_out refAM35_eee91489e4221(constant ReferenceUnifo
     refAM35_eee91489e4221_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(gl_FragCoord, _165, refInput, refInputSmplr, referenceColor);
-    bool _341 = any(isnan(referenceColor));
-    bool _348;
-    if (!_341)
+    bool _343 = any(isnan(referenceColor));
+    bool _350;
+    if (!_343)
     {
-        _348 = any(isinf(referenceColor));
+        _350 = any(isinf(referenceColor));
     }
     else
     {
-        _348 = _341;
+        _350 = _343;
     }
-    if (_348)
+    if (_350)
     {
         referenceColor = float4(0.0);
     }
@@ -218,6 +218,11 @@ fragment refAM35_eee91489e4221_out refAM35_eee91489e4221(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _365 = referenceColor;
+    float3 _371 = fast::clamp(_365.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _371.x;
+    referenceColor.y = _371.y;
+    referenceColor.z = _371.z;
     out.finalColor = referenceColor;
     return out;
 }

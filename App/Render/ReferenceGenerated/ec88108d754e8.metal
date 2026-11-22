@@ -317,7 +317,8 @@ void referenceMain(constant ReferenceUniformsec88108d754e8& _140, thread float4&
     float2 dotCenter = (((dotIdx + float2(0.5)) + waveDisp) * cellSize) / _140.refScreen.xy;
     dotCenter = fast::clamp(dotCenter, float2(0.0), float2(1.0));
     float2 param_3 = dotCenter;
-    float3 srcCol = texture2DCv(refInput, refInputSmplr, param_3).xyz;
+    float4 dotSource = texture2DCv(refInput, refInputSmplr, param_3);
+    float3 srcCol = dotSource.xyz / float3(fast::max(dotSource.w, 9.9999997473787516355514526367188e-06));
     float luma = dot(srcCol, float3(0.2989999949932098388671875, 0.58700001239776611328125, 0.114000000059604644775390625));
     float lumaAdj = (luma - _140.cutoff) / fast::max(_140.range, 0.001000000047497451305389404296875);
     lumaAdj = fast::clamp(lumaAdj, 0.0, 1.0);
@@ -346,8 +347,8 @@ void referenceMain(constant ReferenceUniformsec88108d754e8& _140, thread float4&
         {
             float rainbowT = (dotIdx.x + (dotIdx.y * 0.300000011920928955078125)) / (_140.refScreen.x / cellSize);
             float param_4 = rainbowT + ((t * _140.animSpeed) * 0.100000001490116119384765625);
-            float3 _837 = rainbow(param_4);
-            dotColor = _837;
+            float3 _846 = rainbow(param_4);
+            dotColor = _846;
         }
     }
     float glowRadius = dotRadius + ((_140.glow / cellSize) * 0.300000011920928955078125);
@@ -358,7 +359,7 @@ void referenceMain(constant ReferenceUniformsec88108d754e8& _140, thread float4&
     result += ((((dotColor * glowFalloff) * lumaAdj) * _140.glow) * 0.1500000059604644775390625);
     result += ((dotColor * dotMask) * lumaAdj);
     result = fast::clamp(result, float3(0.0), float3(1.0));
-    referenceColor = float4(mix(src.xyz, result, float3(_140.blend)), src.w);
+    referenceColor = float4(mix(src.xyz, result * src.w, float3(_140.blend)), src.w);
 }
 
 fragment refAM35_ec88108d754e8_out refAM35_ec88108d754e8(constant ReferenceUniformsec88108d754e8& _140 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
@@ -366,17 +367,17 @@ fragment refAM35_ec88108d754e8_out refAM35_ec88108d754e8(constant ReferenceUnifo
     refAM35_ec88108d754e8_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(_140, gl_FragCoord, refInput, refInputSmplr, referenceColor);
-    bool _906 = any(isnan(referenceColor));
-    bool _913;
-    if (!_906)
+    bool _917 = any(isnan(referenceColor));
+    bool _924;
+    if (!_917)
     {
-        _913 = any(isinf(referenceColor));
+        _924 = any(isinf(referenceColor));
     }
     else
     {
-        _913 = _906;
+        _924 = _917;
     }
-    if (_913)
+    if (_924)
     {
         referenceColor = float4(0.0);
     }
@@ -385,6 +386,11 @@ fragment refAM35_ec88108d754e8_out refAM35_ec88108d754e8(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _937 = referenceColor;
+    float3 _943 = fast::clamp(_937.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _943.x;
+    referenceColor.y = _943.y;
+    referenceColor.z = _943.z;
     out.finalColor = referenceColor;
     return out;
 }

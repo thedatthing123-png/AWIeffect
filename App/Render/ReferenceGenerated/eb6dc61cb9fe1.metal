@@ -175,7 +175,7 @@ void referenceMain(constant ReferenceUniformseb6dc61cb9fe1& _91, thread float4& 
     float2 posPx = float2(_91.ampPosX * nX, _91.ampPosY * nY) * _91.strength;
     float rotDeg = (_91.ampRot * nR) * _91.strength;
     float scl = 1.0 + ((_91.ampScale * nS) * _91.strength);
-    float2 param_12 = _91.refScreen.xy;
+    float2 param_12 = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 texSize = getTexSize(param_12);
     float2 posUV = posPx / fast::max(texSize, float2(1.0));
     float2 pivot = float2(_91.pivotX, _91.pivotY);
@@ -196,17 +196,17 @@ void referenceMain(constant ReferenceUniformseb6dc61cb9fe1& _91, thread float4& 
     }
     else
     {
-        bool _382 = any(srcUV < float2(0.0));
-        bool _389;
-        if (!_382)
+        bool _384 = any(srcUV < float2(0.0));
+        bool _391;
+        if (!_384)
         {
-            _389 = any(srcUV > float2(1.0));
+            _391 = any(srcUV > float2(1.0));
         }
         else
         {
-            _389 = _382;
+            _391 = _384;
         }
-        if (_389)
+        if (_391)
         {
             col = float4(0.0);
         }
@@ -224,17 +224,17 @@ fragment refAM35_eb6dc61cb9fe1_out refAM35_eb6dc61cb9fe1(constant ReferenceUnifo
     refAM35_eb6dc61cb9fe1_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(_91, gl_FragCoord, refInput, refInputSmplr, referenceColor);
-    bool _404 = any(isnan(referenceColor));
-    bool _411;
-    if (!_404)
+    bool _406 = any(isnan(referenceColor));
+    bool _413;
+    if (!_406)
     {
-        _411 = any(isinf(referenceColor));
+        _413 = any(isinf(referenceColor));
     }
     else
     {
-        _411 = _404;
+        _413 = _406;
     }
-    if (_411)
+    if (_413)
     {
         referenceColor = float4(0.0);
     }
@@ -243,6 +243,11 @@ fragment refAM35_eb6dc61cb9fe1_out refAM35_eb6dc61cb9fe1(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _428 = referenceColor;
+    float3 _434 = fast::clamp(_428.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _434.x;
+    referenceColor.y = _434.y;
+    referenceColor.z = _434.z;
     out.finalColor = referenceColor;
     return out;
 }

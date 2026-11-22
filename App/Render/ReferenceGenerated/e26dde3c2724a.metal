@@ -78,7 +78,7 @@ void referenceMain(thread float3x3& rgb2yuv, thread float3x3& yuv2rgb, texture2d
     float2 param = gl_FragCoord.xy / _225.refScreen.xy;
     float4 texColor = texture2DCv(refInput, refInputSmplr, param);
     float4 texColorX = float4(0.0, 0.0, 0.0, 1.0) * texColor.w;
-    float2 param_1 = _225.refScreen.xy;
+    float2 param_1 = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 image_size = getTexSize(param_1);
     float2 iResolution = float2(_225.refScreen.x, _225.refScreen.y);
     float2 iMouse = float2(0.5);
@@ -108,11 +108,11 @@ void referenceMain(thread float3x3& rgb2yuv, thread float3x3& yuv2rgb, texture2d
     float2 param_2 = gl_FragCoord.xy / _225.refScreen.xy;
     float4 inputColor = texture2DCv(refInput, refInputSmplr, param_2);
     inputColor *= myMatrix;
-    float3 _352 = fast::min(inputColor.xyz, float3(inputColor.w));
+    float3 _354 = fast::min(inputColor.xyz, float3(inputColor.w));
     float4 dst;
-    dst.x = _352.x;
-    dst.y = _352.y;
-    dst.z = _352.z;
+    dst.x = _354.x;
+    dst.y = _354.y;
+    dst.z = _354.z;
     dst.w = inputColor.w;
     float4 fragColor = dst;
     float4 factor = mix(texColorX, fragColor, float4(1.0));
@@ -207,16 +207,16 @@ void referenceMain(thread float3x3& rgb2yuv, thread float3x3& yuv2rgb, texture2d
                                                     if (_225.blendMode == 12)
                                                     {
                                                         factor *= _225.bright;
-                                                        float3 _716;
+                                                        float3 _718;
                                                         if (length(float3(0.2125999927520751953125, 0.715200006961822509765625, 0.072200000286102294921875) * factor.xyz) > length(float3(0.2125999927520751953125, 0.715200006961822509765625, 0.072200000286102294921875) * texColor.xyz))
                                                         {
-                                                            _716 = texColor.xyz;
+                                                            _718 = texColor.xyz;
                                                         }
                                                         else
                                                         {
-                                                            _716 = factor.xyz;
+                                                            _718 = factor.xyz;
                                                         }
-                                                        float3 darkenColor = _716;
+                                                        float3 darkenColor = _718;
                                                         resultfinal = float4(darkenColor, texColor.w) * texColor.w;
                                                     }
                                                     else
@@ -224,16 +224,16 @@ void referenceMain(thread float3x3& rgb2yuv, thread float3x3& yuv2rgb, texture2d
                                                         if (_225.blendMode == 13)
                                                         {
                                                             factor *= _225.bright;
-                                                            float3 _756;
+                                                            float3 _758;
                                                             if (length(float3(0.2125999927520751953125, 0.715200006961822509765625, 0.072200000286102294921875) * factor.xyz) > length(float3(0.2125999927520751953125, 0.715200006961822509765625, 0.072200000286102294921875) * texColor.xyz))
                                                             {
-                                                                _756 = factor.xyz;
+                                                                _758 = factor.xyz;
                                                             }
                                                             else
                                                             {
-                                                                _756 = texColor.xyz;
+                                                                _758 = texColor.xyz;
                                                             }
-                                                            float3 lightenColor = _756;
+                                                            float3 lightenColor = _758;
                                                             resultfinal = float4(lightenColor, texColor.w) * texColor.w;
                                                         }
                                                         else
@@ -378,17 +378,17 @@ fragment refAM35_e26dde3c2724a_out refAM35_e26dde3c2724a(constant ReferenceUnifo
     float3x3 yuv2rgb = float3x3(float3(1.0, 0.0, 1.13982999324798583984375), float3(1.0, -0.3946500122547149658203125, -0.5806000232696533203125), float3(1.0, 2.0321099758148193359375, 0.0));
     float4 referenceColor = float4(0.0);
     referenceMain(rgb2yuv, yuv2rgb, refInput, refInputSmplr, gl_FragCoord, _225, referenceColor);
-    bool _1259 = any(isnan(referenceColor));
-    bool _1266;
-    if (!_1259)
+    bool _1261 = any(isnan(referenceColor));
+    bool _1268;
+    if (!_1261)
     {
-        _1266 = any(isinf(referenceColor));
+        _1268 = any(isinf(referenceColor));
     }
     else
     {
-        _1266 = _1259;
+        _1268 = _1261;
     }
-    if (_1266)
+    if (_1268)
     {
         referenceColor = float4(0.0);
     }
@@ -397,6 +397,11 @@ fragment refAM35_e26dde3c2724a_out refAM35_e26dde3c2724a(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _1281 = referenceColor;
+    float3 _1287 = fast::clamp(_1281.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _1287.x;
+    referenceColor.y = _1287.y;
+    referenceColor.z = _1287.z;
     out.finalColor = referenceColor;
     return out;
 }

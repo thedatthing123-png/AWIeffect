@@ -366,7 +366,7 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformse46a11
     float2 uv = gl_FragCoord.xy / _810.refScreen.xy;
     float em = float(_810.edgeMode);
     float wm = float(_810.warpMode);
-    float2 param = _810.refScreen.xy;
+    float2 param = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 imgSize = getTexSize(param);
     float aspect = imgSize.x / fast::max(imgSize.y, 1.0);
     float2 param_1 = uv;
@@ -506,26 +506,26 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformse46a11
             }
         }
     }
-    bool _1122 = abs(_810.bendX) > 0.5;
-    bool _1131;
-    if (!_1122)
+    bool _1124 = abs(_810.bendX) > 0.5;
+    bool _1133;
+    if (!_1124)
     {
-        _1131 = abs(_810.bendY) > 0.5;
+        _1133 = abs(_810.bendY) > 0.5;
     }
     else
     {
-        _1131 = _1122;
+        _1133 = _1124;
     }
-    bool _1140;
-    if (!_1131)
+    bool _1142;
+    if (!_1133)
     {
-        _1140 = abs(_810.bendUniform) > 0.5;
+        _1142 = abs(_810.bendUniform) > 0.5;
     }
     else
     {
-        _1140 = _1131;
+        _1142 = _1133;
     }
-    if (_1140)
+    if (_1142)
     {
         float bx = (_810.bendX + _810.bendUniform) / 100.0;
         float by = (_810.bendY + _810.bendUniform) / 100.0;
@@ -534,26 +534,26 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformse46a11
     }
     if ((wm > 3.5) || (wm < 2.5))
     {
-        bool _1189 = abs(_810.k1) > 9.9999997473787516355514526367188e-06;
-        bool _1197;
-        if (!_1189)
+        bool _1191 = abs(_810.k1) > 9.9999997473787516355514526367188e-06;
+        bool _1199;
+        if (!_1191)
         {
-            _1197 = abs(_810.k2) > 9.9999997473787516355514526367188e-06;
+            _1199 = abs(_810.k2) > 9.9999997473787516355514526367188e-06;
         }
         else
         {
-            _1197 = _1189;
+            _1199 = _1191;
         }
-        bool _1205;
-        if (!_1197)
+        bool _1207;
+        if (!_1199)
         {
-            _1205 = abs(_810.k3) > 9.9999997473787516355514526367188e-06;
+            _1207 = abs(_810.k3) > 9.9999997473787516355514526367188e-06;
         }
         else
         {
-            _1205 = _1197;
+            _1207 = _1199;
         }
-        if (_1205)
+        if (_1207)
         {
             float r2 = dot(warped, warped);
             float r4 = r2 * r2;
@@ -643,26 +643,26 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformse46a11
                 }
             }
         }
-        bool _1411 = abs(_810.bendX) > 0.5;
-        bool _1419;
-        if (!_1411)
+        bool _1413 = abs(_810.bendX) > 0.5;
+        bool _1421;
+        if (!_1413)
         {
-            _1419 = abs(_810.bendY) > 0.5;
+            _1421 = abs(_810.bendY) > 0.5;
         }
         else
         {
-            _1419 = _1411;
+            _1421 = _1413;
         }
-        bool _1427;
-        if (!_1419)
+        bool _1429;
+        if (!_1421)
         {
-            _1427 = abs(_810.bendUniform) > 0.5;
+            _1429 = abs(_810.bendUniform) > 0.5;
         }
         else
         {
-            _1427 = _1419;
+            _1429 = _1421;
         }
-        if (_1427)
+        if (_1429)
         {
             float bx_1 = (_810.bendX + _810.bendUniform) / 100.0;
             float by_1 = (_810.bendY + _810.bendUniform) / 100.0;
@@ -677,39 +677,39 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformse46a11
         warpedB.y /= _810.aspectY;
         float2 uvR = warpedR + center;
         float2 uvB = warpedB + center;
-        float _1527;
+        float _1529;
         if (em < 1.5)
         {
             float2 param_81 = uvR;
-            _1527 = isInBounds(param_81);
+            _1529 = isInBounds(param_81);
         }
         else
         {
-            _1527 = 1.0;
+            _1529 = 1.0;
         }
-        float inR = _1527;
-        float _1538;
+        float inR = _1529;
+        float _1540;
         if (em < 1.5)
         {
             float2 param_82 = warpedUV;
-            _1538 = isInBounds(param_82);
+            _1540 = isInBounds(param_82);
         }
         else
         {
-            _1538 = 1.0;
+            _1540 = 1.0;
         }
-        float inG = _1538;
-        float _1549;
+        float inG = _1540;
+        float _1551;
         if (em < 1.5)
         {
             float2 param_83 = uvB;
-            _1549 = isInBounds(param_83);
+            _1551 = isInBounds(param_83);
         }
         else
         {
-            _1549 = 1.0;
+            _1551 = 1.0;
         }
-        float inB = _1549;
+        float inB = _1551;
         float2 param_84 = uvR;
         float param_85 = em;
         uvR = applyEdge(param_84, param_85);
@@ -731,17 +731,17 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformse46a11
     }
     else
     {
-        float _1611;
+        float _1613;
         if (em < 1.5)
         {
             float2 param_93 = warpedUV;
-            _1611 = isInBounds(param_93);
+            _1613 = isInBounds(param_93);
         }
         else
         {
-            _1611 = 1.0;
+            _1613 = 1.0;
         }
-        float inBounds = _1611;
+        float inBounds = _1613;
         float2 param_94 = warpedUV;
         float param_95 = em;
         warpedUV = applyEdge(param_94, param_95);
@@ -759,17 +759,17 @@ fragment refAM35_e46a11ff71be9_out refAM35_e46a11ff71be9(constant ReferenceUnifo
     refAM35_e46a11ff71be9_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(gl_FragCoord, _810, refInput, refInputSmplr, referenceColor);
-    bool _1660 = any(isnan(referenceColor));
-    bool _1667;
-    if (!_1660)
+    bool _1662 = any(isnan(referenceColor));
+    bool _1669;
+    if (!_1662)
     {
-        _1667 = any(isinf(referenceColor));
+        _1669 = any(isinf(referenceColor));
     }
     else
     {
-        _1667 = _1660;
+        _1669 = _1662;
     }
-    if (_1667)
+    if (_1669)
     {
         referenceColor = float4(0.0);
     }
@@ -778,6 +778,11 @@ fragment refAM35_e46a11ff71be9_out refAM35_e46a11ff71be9(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _1682 = referenceColor;
+    float3 _1688 = fast::clamp(_1682.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _1688.x;
+    referenceColor.y = _1688.y;
+    referenceColor.z = _1688.z;
     out.finalColor = referenceColor;
     return out;
 }

@@ -102,12 +102,12 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, constant Re
     m *= f;
     float2 param_2 = uv;
     float4 base = src(param_2, refInput, refInputSmplr);
-    float3 dotRGB = (_52.dotColor.xyz * _52.opacity) * m;
+    float3 dotRGB = ((_52.dotColor.xyz * _52.opacity) * m) * base.w;
     int bm = _52.blendMode;
     float3 outRGB;
     if (bm == 1)
     {
-        float3 mixed = mix(base.xyz, dotRGB, float3(fast::clamp(_52.mixAmount, 0.0, 1.0)));
+        float3 mixed = mix(base.xyz, _52.dotColor.xyz * base.w, float3(fast::clamp((_52.mixAmount * _52.opacity) * m, 0.0, 1.0)));
         outRGB = mixed;
     }
     else
@@ -138,17 +138,17 @@ fragment refAM35_e3418485b643b_out refAM35_e3418485b643b(constant ReferenceUnifo
     refAM35_e3418485b643b_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(refInput, refInputSmplr, _52, gl_FragCoord, referenceColor);
-    bool _332 = any(isnan(referenceColor));
-    bool _339;
-    if (!_332)
+    bool _345 = any(isnan(referenceColor));
+    bool _352;
+    if (!_345)
     {
-        _339 = any(isinf(referenceColor));
+        _352 = any(isinf(referenceColor));
     }
     else
     {
-        _339 = _332;
+        _352 = _345;
     }
-    if (_339)
+    if (_352)
     {
         referenceColor = float4(0.0);
     }
@@ -157,6 +157,11 @@ fragment refAM35_e3418485b643b_out refAM35_e3418485b643b(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _365 = referenceColor;
+    float3 _371 = fast::clamp(_365.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _371.x;
+    referenceColor.y = _371.y;
+    referenceColor.z = _371.z;
     out.finalColor = referenceColor;
     return out;
 }

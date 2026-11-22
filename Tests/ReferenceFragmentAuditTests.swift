@@ -33,11 +33,21 @@ final class ReferenceFragmentAuditTests: XCTestCase {
         fixture.withUnsafeBytes { bytes in
             input.replace(region: MTLRegionMake2D(0, 0, size, size), mipmapLevel: 0, withBytes: bytes.baseAddress!, bytesPerRow: size * 8)
         }
-        func render(_ definition: ReferenceFragmentDefinition, missing: Bool = false, time: Double = 0.4, animate: Bool = false) throws -> [Float16] {
+        // A second, differently colored layer exercises real reference-texture
+        // bindings (color transfer, displacement and background-reading passes).
+        let reference = try XCTUnwrap(device.makeTexture(descriptor: descriptor))
+        var referencePixels=fixture
+        for index in stride(from:0,to:fixture.count,by:4) {
+            referencePixels[index]=fixture[index+2];referencePixels[index+1]=fixture[index];referencePixels[index+2]=fixture[index+1]
+        }
+        referencePixels.withUnsafeBytes { reference.replace(region:MTLRegionMake2D(0,0,size,size),mipmapLevel:0,withBytes:$0.baseAddress!,bytesPerRow:size*8) }
+        func render(_ definition: ReferenceFragmentDefinition, missing: Bool = false, time: Double = 0.4, animate: Bool = false,
+                    overrides: [String:ParamValue] = [:]) throws -> [Float16] {
             let pool = TexturePool(device: device)
             let buffer = try XCTUnwrap(queue.makeCommandBuffer())
             var effect = definition.definition.makeInstance()
             if missing { effect.params.removeAll() }
+            effect.params.merge(overrides,uniquingKeysWith: { _,new in new })
             if animate, let parameter = definition.parameters.first(where: {
                 let key = $0.definition.id.lowercased()
                 return key.contains("phase") || key.contains("evolution") || key.hasPrefix("progress")
@@ -53,7 +63,7 @@ final class ReferenceFragmentAuditTests: XCTestCase {
                 }
             }
             let context = EffectContext(gpu: gpu, cb: buffer, input: input, effect: effect, time: time,
-                unit: 1, pool: pool, layerPixels: SIMD2(Double(size), Double(size)), compositionPixels: SIMD2(Double(size), Double(size)))
+                unit: 1, pool: pool, reference:reference, layerPixels: SIMD2(Double(size), Double(size)), compositionPixels: SIMD2(Double(size), Double(size)))
             let output = gpu.referenceFragments.render(definition, context)
             let readback = try XCTUnwrap(device.makeBuffer(length: size * size * 8, options: .storageModeShared))
             let blit = try XCTUnwrap(buffer.makeBlitCommandEncoder())
@@ -96,16 +106,47 @@ final class ReferenceFragmentAuditTests: XCTestCase {
                 }
                 try UIImage(cgImage: image(output)).pngData()?.write(to: folder.appendingPathComponent(definition.id + ".png"))
                 if ReferenceFragmentCatalog.publicCandidates.contains(where: { $0.id == definition.id }) {
+                    var preview: [String:ParamValue] = [:]
+                    // Neutral utilities need an intentional setting in review
+                    // images, while missing-default checks above stay untouched.
+                    if definition.id == "awi.amref.ec2cdadc6c8df" { preview["hue"] = .choice(2);preview["sat"] = .choice(0) }
+                    if definition.id == "awi.amref.e5ad5e1e9a0fb" { preview["flickerThreshold"] = .number(Animated(0)) }
+                    var instance=definition.definition.makeInstance();instance.params.merge(preview,uniquingKeysWith:{_,new in new})
+                    try JSONEncoder().encode(instance).write(to:folder.appendingPathComponent(definition.id+"-review-settings.json"))
+                    let configured=try render(definition,overrides:preview)
+                    try UIImage(cgImage:image(configured)).pngData()?.write(to:folder.appendingPathComponent(definition.id+"-configured.png"))
                     let destination = try XCTUnwrap(CGImageDestinationCreateWithURL(
                         folder.appendingPathComponent(definition.id + "-motion.gif") as CFURL,
                         UTType.gif.identifier as CFString, 8, nil))
                     CGImageDestinationSetProperties(destination, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
                     for frame in 0..<8 {
-                        let pixels = try render(definition, time: Double(frame) / 4, animate: true)
+                        let pixels = try render(definition, time: Double(frame) / 4, animate: true, overrides:preview)
                         CGImageDestinationAddImage(destination, try image(pixels),
                             [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 0.25]] as CFDictionary)
                     }
                     XCTAssertTrue(CGImageDestinationFinalize(destination), definition.name)
+                    var controlReport: [[String:Any]] = []
+                    for parameter in definition.parameters {
+                        guard case .number(let low,let high,_,_) = parameter.definition.kind else { continue }
+                        let key=parameter.definition.id
+                        var configured=preview
+                        if definition.id == "awi.amref.e8404b5764d4f", key == "seed" { configured["strength"] = .number(Animated(0.35)) }
+                        if definition.id == "awi.amref.ec88108d754e8" {
+                            if key == "density" { configured["preset"] = .choice(5) }
+                            if ["colorR","colorG","colorB"].contains(key) { configured["colorMode"] = .choice(1) }
+                        }
+                        if definition.id == "awi.amref.e7b0d60717ad7", key == "quality" { configured["solidity"] = .number(Animated(0.35)) }
+                        let base=try render(definition,overrides:configured)
+                        var difference=0.0
+                        for fraction in [0.02,0.6] {
+                            var variant=configured;variant[key] = .number(Animated(low+(high-low)*fraction))
+                            let changed=try render(definition,overrides:variant)
+                            difference=max(difference,zip(base,changed).reduce(0.0){ $0+abs(Double($1.0)-Double($1.1)) }/Double(base.count))
+                        }
+                        controlReport.append(["parameter":key,"observedDifference":difference,"requiresModeReview":difference<0.00001])
+                    }
+                    try JSONSerialization.data(withJSONObject:controlReport,options:[.prettyPrinted,.sortedKeys])
+                        .write(to:folder.appendingPathComponent(definition.id+"-controls.json"))
                 }
             }
         }

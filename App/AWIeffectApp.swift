@@ -55,7 +55,11 @@ struct RootView: View {
             var p = Project.new(name: "Reviewed Effect Controls", width: 320, height: 240, fps: 30, duration: 3)
             var layer = p.makeLayer(name: "Artwork", content: .shape(.star), size: Vec2(180, 160))
             layer.fill = Animated(RGBA(0.8, 0.5, 0.2))
-            if ProcessInfo.processInfo.arguments.contains("-uiTesting-referencePalette") {
+            let arguments=ProcessInfo.processInfo.arguments
+            if let index=arguments.firstIndex(of:"-uiTesting-referenceID"), arguments.indices.contains(index+1),
+               let definition=EffectRegistry.definition(arguments[index+1]) {
+                layer.effects=[definition.makeInstance()]
+            } else if ProcessInfo.processInfo.arguments.contains("-uiTesting-referencePalette") {
                 var effect = ReferenceFragmentCatalog.e658cad5dcbff.definition.makeInstance()
                 effect.params["palette"] = .choice(10)
                 layer.effects = [effect]

@@ -80,7 +80,22 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     float highy = fast::max(y1, y2);
     float b = _36.smoothing / 20.0;
     float p = fast::min(smoothstep(lowy - (b / 2.0), lowy + (b / 2.0), st.y), 1.0 - smoothstep(highy - (b / 2.0), highy + (b / 2.0), st.y));
-    float4 mixedColor = mix(_36.color, _36.tintColor, float4(smoothstep(y1, y2, st.y) * _36.tint));
+    float _315;
+    if (abs(y2 - y1) > 9.9999999747524270787835121154785e-07)
+    {
+        _315 = y2 - y1;
+    }
+    else
+    {
+        _315 = 9.9999999747524270787835121154785e-07;
+    }
+    float4 mixedColor = mix(_36.color, _36.tintColor, float4(fast::clamp((st.y - y1) / _315, 0.0, 1.0) * _36.tint));
+    float _333 = mixedColor.w;
+    float4 _335 = mixedColor;
+    float3 _337 = _335.xyz * _333;
+    mixedColor.x = _337.x;
+    mixedColor.y = _337.y;
+    mixedColor.z = _337.z;
     float4 c = mixedColor * p;
     if (_36.punchout != 0u)
     {
@@ -88,8 +103,7 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     }
     else
     {
-        c *= texColor.w;
-        referenceColor = c + (texColor * (1.0 - c.w));
+        referenceColor = float4((c.xyz * texColor.w) + (texColor.xyz * (1.0 - c.w)), texColor.w);
     }
 }
 
@@ -98,17 +112,17 @@ fragment refAM35_efa58da681936_out refAM35_efa58da681936(constant ReferenceUnifo
     refAM35_efa58da681936_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(refInput, refInputSmplr, gl_FragCoord, _36, referenceColor);
-    bool _351 = any(isnan(referenceColor));
-    bool _358;
-    if (!_351)
+    bool _386 = any(isnan(referenceColor));
+    bool _393;
+    if (!_386)
     {
-        _358 = any(isinf(referenceColor));
+        _393 = any(isinf(referenceColor));
     }
     else
     {
-        _358 = _351;
+        _393 = _386;
     }
-    if (_358)
+    if (_393)
     {
         referenceColor = float4(0.0);
     }
@@ -117,6 +131,11 @@ fragment refAM35_efa58da681936_out refAM35_efa58da681936(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _406 = referenceColor;
+    float3 _412 = fast::clamp(_406.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _412.x;
+    referenceColor.y = _412.y;
+    referenceColor.z = _412.z;
     out.finalColor = referenceColor;
     return out;
 }

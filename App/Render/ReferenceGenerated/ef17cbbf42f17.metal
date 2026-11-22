@@ -38,21 +38,21 @@ float4 texture2DCv(texture2d<float> source, sampler sourceSmplr, thread const fl
 }
 
 static inline __attribute__((always_inline))
-void referenceMain(constant ReferenceUniformsef17cbbf42f17& _37, texture2d<float> refInput, sampler refInputSmplr, thread float4& gl_FragCoord, thread float4& referenceColor)
+void referenceMain(texture2d<float> refInput, sampler refInputSmplr, constant ReferenceUniformsef17cbbf42f17& _51, thread float4& gl_FragCoord, thread float4& referenceColor)
 {
-    float2 param = _37.refScreen.xy;
+    float2 param = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 texelSize = float2(1.0) / getTexSize(param);
-    float rad = _37.angle * 0.01745329983532428741455078125;
-    float2 velocity = float2(cos(rad) * _37.strength, (-sin(rad)) * _37.strength);
-    velocity.x *= (_37.refScreen.y / _37.refScreen.x);
+    float rad = _51.angle * 0.01745329983532428741455078125;
+    float2 velocity = float2(cos(rad) * _51.strength, (-sin(rad)) * _51.strength);
+    velocity.x *= (_51.refScreen.y / _51.refScreen.x);
     float speed = length(velocity / texelSize);
     int nSamples = int(fast::clamp(speed, 1.0099999904632568359375, 100.01000213623046875));
-    float2 param_1 = gl_FragCoord.xy / _37.refScreen.xy;
+    float2 param_1 = gl_FragCoord.xy / _51.refScreen.xy;
     float4 outColor = texture2DCv(refInput, refInputSmplr, param_1);
     for (int i = 1; i < nSamples; i++)
     {
         float2 offset = velocity * ((float(i) / float(nSamples - 1)) - 0.5);
-        float2 sampleCoord = (gl_FragCoord.xy / _37.refScreen.xy) - offset;
+        float2 sampleCoord = (gl_FragCoord.xy / _51.refScreen.xy) - offset;
         float insideTexture = ((step(0.0, sampleCoord.x) * step(sampleCoord.x, 1.0)) * step(0.0, sampleCoord.y)) * step(sampleCoord.y, 1.0);
         float2 param_2 = sampleCoord;
         outColor += (texture2DCv(refInput, refInputSmplr, param_2) * insideTexture);
@@ -60,22 +60,22 @@ void referenceMain(constant ReferenceUniformsef17cbbf42f17& _37, texture2d<float
     referenceColor = outColor / float4(float(nSamples));
 }
 
-fragment refAM35_ef17cbbf42f17_out refAM35_ef17cbbf42f17(constant ReferenceUniformsef17cbbf42f17& _37 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
+fragment refAM35_ef17cbbf42f17_out refAM35_ef17cbbf42f17(constant ReferenceUniformsef17cbbf42f17& _51 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
 {
     refAM35_ef17cbbf42f17_out out = {};
     float4 referenceColor = float4(0.0);
-    referenceMain(_37, refInput, refInputSmplr, gl_FragCoord, referenceColor);
-    bool _176 = any(isnan(referenceColor));
-    bool _183;
-    if (!_176)
+    referenceMain(refInput, refInputSmplr, _51, gl_FragCoord, referenceColor);
+    bool _178 = any(isnan(referenceColor));
+    bool _185;
+    if (!_178)
     {
-        _183 = any(isinf(referenceColor));
+        _185 = any(isinf(referenceColor));
     }
     else
     {
-        _183 = _176;
+        _185 = _178;
     }
-    if (_183)
+    if (_185)
     {
         referenceColor = float4(0.0);
     }
@@ -84,6 +84,11 @@ fragment refAM35_ef17cbbf42f17_out refAM35_ef17cbbf42f17(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _200 = referenceColor;
+    float3 _206 = fast::clamp(_200.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _206.x;
+    referenceColor.y = _206.y;
+    referenceColor.z = _206.z;
     out.finalColor = referenceColor;
     return out;
 }

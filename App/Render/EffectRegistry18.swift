@@ -240,7 +240,7 @@ extension EffectRegistry {
         stage: .transform { e, t in (e.number("x", t), e.number("y", t), e.number("rotation", t), max(0, e.number("scale", t)) / 100) })
 
     /// Effects that read another layer (chosen in the effect card; stored as text["layer"]).
-    static let layerRefIDs: Set<String> = ["awi18.displacementMap", "awi18.setMatte"]
+    static let layerRefIDs: Set<String> = Set(["awi18.displacementMap", "awi18.setMatte"] + ReferenceFragmentCatalog.promoted.filter { $0.referenceBinding != nil }.map(\.id))
     /// Effects that can use another layer's picture as their sprite (the layer itself, uncropped by position).
     static let spriteRefIDs: Set<String> = ["awi18.particles"]
 

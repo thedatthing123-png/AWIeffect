@@ -52,7 +52,7 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     float2 param = gl_FragCoord.xy / _42.refScreen.xy;
     float4 texColor = texture2DCv(refInput, refInputSmplr, param);
     float4 texColorX = float4(0.0, 0.0, 0.0, 1.0) * texColor.w;
-    float2 param_1 = _42.refScreen.xy;
+    float2 param_1 = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 image_size = getTexSize(param_1);
     float2 iResolution = float2(_42.refScreen.x, _42.refScreen.y);
     float2 iMouse = float2(0.5);
@@ -65,14 +65,14 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     lightValues.y = lum;
     lightValues.z = 1.0 - lum;
     lightValues.w = 1.0 - lum;
-    float4 _119 = lightValues;
-    float2 _125 = (_119.xz - float2(0.25)) * 1.33333337306976318359375;
-    lightValues.x = _125.x;
-    lightValues.z = _125.y;
-    float4 _131 = lightValues;
-    float2 _135 = (_131.yw - float2(0.5)) * 2.0;
-    lightValues.y = _135.x;
-    lightValues.w = _135.y;
+    float4 _121 = lightValues;
+    float2 _127 = (_121.xz - float2(0.25)) * 1.33333337306976318359375;
+    lightValues.x = _127.x;
+    lightValues.z = _127.y;
+    float4 _133 = lightValues;
+    float2 _137 = (_133.yw - float2(0.5)) * 2.0;
+    lightValues.y = _137.x;
+    lightValues.w = _137.y;
     lightValues = fast::max(lightValues, float4(0.0)) * 1.5;
     lightValues = ((float4(3.0) - (lightValues * 2.0)) * lightValues) * lightValues;
     float4 paramWeights;
@@ -81,16 +81,16 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     paramWeights.z = (_42.shadows * _42.shadows) * sign(_42.shadows);
     paramWeights.w = (_42.darks * _42.darks) * sign(_42.darks);
     float sum = (((abs(paramWeights.x) + abs(paramWeights.y)) + abs(paramWeights.z)) + abs(paramWeights.w)) + 1.0;
-    float4 _221 = col;
-    float3 _224 = _221.xyz + float3(dot(lightValues, paramWeights) / sum);
-    col.x = _224.x;
-    col.y = _224.y;
-    col.z = _224.z;
-    float3 _237 = fast::min(col.xyz, float3(col.w));
+    float4 _223 = col;
+    float3 _226 = _223.xyz + float3(dot(lightValues, paramWeights) / sum);
+    col.x = _226.x;
+    col.y = _226.y;
+    col.z = _226.z;
+    float3 _239 = fast::min(col.xyz, float3(col.w));
     float4 fragColor;
-    fragColor.x = _237.x;
-    fragColor.y = _237.y;
-    fragColor.z = _237.z;
+    fragColor.x = _239.x;
+    fragColor.y = _239.y;
+    fragColor.z = _239.z;
     fragColor.w = col.w;
     float4 factor = mix(texColorX, fragColor, float4(1.0));
     float4 resultfinal = factor * texColor.w;
@@ -102,17 +102,17 @@ fragment refAM35_e98c76d49aae0_out refAM35_e98c76d49aae0(constant ReferenceUnifo
     refAM35_e98c76d49aae0_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(refInput, refInputSmplr, gl_FragCoord, _42, referenceColor);
-    bool _275 = any(isnan(referenceColor));
-    bool _282;
-    if (!_275)
+    bool _277 = any(isnan(referenceColor));
+    bool _284;
+    if (!_277)
     {
-        _282 = any(isinf(referenceColor));
+        _284 = any(isinf(referenceColor));
     }
     else
     {
-        _282 = _275;
+        _284 = _277;
     }
-    if (_282)
+    if (_284)
     {
         referenceColor = float4(0.0);
     }
@@ -121,6 +121,11 @@ fragment refAM35_e98c76d49aae0_out refAM35_e98c76d49aae0(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _297 = referenceColor;
+    float3 _303 = fast::clamp(_297.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _303.x;
+    referenceColor.y = _303.y;
+    referenceColor.z = _303.z;
     out.finalColor = referenceColor;
     return out;
 }

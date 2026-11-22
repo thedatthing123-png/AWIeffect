@@ -65,6 +65,7 @@ extension EffectRegistry {
                  .number("magnitude", "Magnitude", 0.2, -5, 5, step: 0.005),
                  .number("detail", "Detail", 1, 0.1, 4, step: 0.01), .number("lacunarity", "Lacunarity", 0.5, 0.25, 0.75, step: 0.01),
                  .number("octaves", "Octaves", 6, 1, 9, step: 1),
+                 .choice("axis", "Displacement", ["XY", "X", "Y"], 0),
                  .toggle("screenSpace", "Screen Space", false),
                  .choice("pinning", "Pinning", ["None", "All Edges", "Top Edge", "Bottom Edge", "Left Edge", "Right Edge"], 0),
                  .number("pinSoft", "Pin Falloff", 60, 1, 100, unit: "%")],
@@ -77,7 +78,7 @@ extension EffectRegistry {
             p.b = layerRect(ctx)
             p.c = SIMD4(f(ctx.num("magnitude")), f(ctx.num("detail")), f(ctx.num("lacunarity")), f(ctx.num("octaves")))
             p.d = SIMD4(f(ctx.num("pinSoft") / 100), 0, 0, 0)
-            p.i = SIMD4(ctx.effect.bool("screenSpace") ? 1 : 0, UInt32(ctx.effect.choice("pinning")), 0, 0)
+            p.i = SIMD4(ctx.effect.bool("screenSpace") ? 1 : 0, UInt32(ctx.effect.choice("pinning")), UInt32(clamping: ctx.effect.choice("axis")), 0)
             ctx.gpu.run("fx20AMFractal", ctx.cb, textures: [ctx.input, out], params: p, grid: out)
             return out
         })

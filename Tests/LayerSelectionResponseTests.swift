@@ -71,7 +71,7 @@ import XCTest
         state.select(nil)
         let point = Vec2(230, 500)
         // The UIKit observation may arrive before the SwiftUI row action.
-        state.observeTimelineWindowTap(point: point, timestamp: 1)
+        state.observeTimelineWindowTap(point: point, timestamp: 1, container: group.id)
         state.tapTimelineLayer(group.id, timestamp: 1.01)
         XCTAssertEqual(state.project.id, root, "One tap must select immediately without opening")
         // Reflow loses the second row event, but not window-touch history.
@@ -87,10 +87,33 @@ import XCTest
             let group = try XCTUnwrap(state.project.layers.first(where: { $0.isGroup }))
             let root = state.project.id
             state.select(nil); state.tapTimelineLayer(group.id, timestamp: 1)
-            state.observeTimelineWindowTap(point: Vec2(100, 100), timestamp: 1.001)
+            state.observeTimelineWindowTap(point: Vec2(100, 100), timestamp: 1.001, container: group.id)
             state.observeTimelineWindowTap(point: distant ? Vec2(200, 100) : Vec2(100, 100), timestamp: distant ? 1.2 : 2)
             XCTAssertEqual(state.project.id, root)
         }
+    }
+
+    func testRawContainerTouchDoesNotDependOnDelayedRowCallback() throws {
+        let state = editor()
+        state.select(state.project.layers[0].id); state.groupSelected()
+        let group = try XCTUnwrap(state.project.layers.first(where: { $0.isGroup }))
+        state.select(nil)
+        state.observeTimelineWindowTap(point: Vec2(200, 400), timestamp: 1, container: group.id)
+        state.observeTimelineWindowTap(point: Vec2(200, 400), timestamp: 1.05)
+        XCTAssertEqual(state.project.id, group.id)
+    }
+    func testStartingADragCancelsPendingContainerTaps() throws {
+        let state=editor()
+        state.select(state.project.layers[0].id);state.groupSelected()
+        let group=try XCTUnwrap(state.project.layers.first(where:{$0.isGroup})),root=state.project.id
+        state.select(nil)
+        state.tapTimelineLayer(group.id,timestamp:1)
+        state.observeTimelineWindowTap(point:Vec2(200,400),timestamp:1,container:group.id)
+        state.cancelTimelineWindowTap()
+        state.observeTimelineWindowTap(point:Vec2(200,400),timestamp:1.15)
+        XCTAssertEqual(state.project.id,root)
+        state.tapTimelineLayer(group.id,timestamp:1.2)
+        XCTAssertEqual(state.project.id,root)
     }
 
 }

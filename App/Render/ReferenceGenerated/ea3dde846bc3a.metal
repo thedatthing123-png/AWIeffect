@@ -83,7 +83,7 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     float4 texColor = texture2DCv(refInput, refInputSmplr, param);
     float4 texColorX = float4(0.0, 0.0, 0.0, 1.0) * texColor.w;
     float2 iRes = float2(_68.refScreen.x, _68.refScreen.y);
-    float2 param_1 = _68.refScreen.xy;
+    float2 param_1 = float2(int2(refInput.get_width(), refInput.get_height()));
     float2 image_size = getTexSize(param_1);
     float maxF = fast::max(_68.refScreen.x, _68.refScreen.y);
     float2 texelSize = float2(1.0) / float2(maxF);
@@ -97,16 +97,16 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, thread floa
     syamjaidtz /= scaleVec;
     float2 MOUSE = float2(0.0);
     float2 uv = syamjaidtz;
-    float _223;
+    float _225;
     if (_68.autop != 0u)
     {
-        _223 = _68.EVO * (_68.refScreen.z * 0.100000001490116119384765625);
+        _225 = _68.EVO * (_68.refScreen.z * 0.100000001490116119384765625);
     }
     else
     {
-        _223 = _68.EVO;
+        _225 = _68.EVO;
     }
-    float PROGRESS = _223;
+    float PROGRESS = _225;
     float3 acc = float3(0.0);
     float dof = 5.0 * sin(PROGRESS * 0.100000001490116119384765625);
     for (float i = 0.0; i < _68.LAYERS; i += 1.0)
@@ -157,17 +157,17 @@ fragment refAM35_ea3dde846bc3a_out refAM35_ea3dde846bc3a(constant ReferenceUnifo
     refAM35_ea3dde846bc3a_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(refInput, refInputSmplr, gl_FragCoord, _68, referenceColor);
-    bool _532 = any(isnan(referenceColor));
-    bool _539;
-    if (!_532)
+    bool _534 = any(isnan(referenceColor));
+    bool _541;
+    if (!_534)
     {
-        _539 = any(isinf(referenceColor));
+        _541 = any(isinf(referenceColor));
     }
     else
     {
-        _539 = _532;
+        _541 = _534;
     }
-    if (_539)
+    if (_541)
     {
         referenceColor = float4(0.0);
     }
@@ -176,6 +176,11 @@ fragment refAM35_ea3dde846bc3a_out refAM35_ea3dde846bc3a(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
+    float4 _554 = referenceColor;
+    float3 _560 = fast::clamp(_554.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _560.x;
+    referenceColor.y = _560.y;
+    referenceColor.z = _560.z;
     out.finalColor = referenceColor;
     return out;
 }
