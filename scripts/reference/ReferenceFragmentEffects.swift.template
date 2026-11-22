@@ -181,8 +181,11 @@ extension EffectRegistry {
 enum ReferenceFragmentControls {
     private static let reviewed = Dictionary(uniqueKeysWithValues: ReferenceFragmentCatalog.promoted.map { ($0.id, $0) })
 
-    static func isVisible(_ parameterID: String, effect: EffectInstance) -> Bool {
+    static func isVisible(_ parameterID: String, effect: EffectInstance, time: Double = 0) -> Bool {
         guard let definition = reviewed[effect.typeID] else { return true }
+        if effect.typeID == "awi.amref.e8404b5764d4f", parameterID == "seed" {
+            return (effect.params["strength"]?.number(at: time) ?? 0) > 0
+        }
         for controller in definition.parameters where !controller.choiceTargets.isEmpty {
             guard controller.choiceTargets.joined().contains(parameterID) else { continue }
             let value = effect.params[controller.definition.id] ?? controller.definition.defaultValue

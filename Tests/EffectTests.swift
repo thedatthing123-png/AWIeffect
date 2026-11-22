@@ -242,6 +242,11 @@ final class EffectTests: XCTestCase {
                       // Hue-vs curves and their qualifiers (softness, sat/luma range) only move pixels of their own hue (checked on a color wheel in the R4 grade tests).
                       !(d.id == "awi18.grade" && (pd.id.hasPrefix("hue") || pd.id.hasPrefix("q"))) else { continue }
                 var a = visible(d), b = visible(d)
+                // Seed selects a random rotation field; a zero random strength
+                // intentionally leaves all tiles at their fixed Rotation.
+                if d.id == "awi.amref.e8404b5764d4f", pd.id == "seed" {
+                    a.params["strength"] = .number(Animated(0.35)); b.params["strength"] = .number(Animated(0.35))
+                }
                 if d.id == "awi18.waveGlitch", pd.id == "steps" {
                     a.params["holdFrames"] = .toggle(true); b.params["holdFrames"] = .toggle(true)
                 }

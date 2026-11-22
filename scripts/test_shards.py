@@ -20,6 +20,7 @@ RENDERS = {'ReferenceFragmentAuditTests', 'ExpansionRenderTests', 'ContactSheetT
 TEXT = {'CraftPresets33Tests', 'TextPresetLibraryTests', 'TextStudioTests',
         'TextStudioEngineTests', 'Text3DTests', 'TextTests'}
 SCOPES = {
+    'reference-repairs': ['EffectTests', 'ReviewedReferenceEffectsTests', 'ContainerInteractionTests', 'LayerSelectionResponseTests', 'ContainerInteractionUITests', 'EditorPolishUITests', 'ReviewedReferenceEffectsUITests'],
     'motion-blur': ['EditorPolishUITests', 'MotionBlurTests'],
     'segmentation': ['CutoutStudioTests', 'ArtStudioRenewTests'],
     'audit': ['AuditRegressionTests', 'AuditRenderRegressionTests', 'PrecompMaskImportTests',

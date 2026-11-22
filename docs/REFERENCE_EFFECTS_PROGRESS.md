@@ -75,3 +75,11 @@ ReferenceFragmentControls honors the reference selectors' enableTargets. Fixed p
 ReviewedReferenceEffectsTests cover unique browser names/IDs, translucent coverage, exact zero-mix bypass, animated Tile Break endpoints and palette visibility. A dedicated UI fixture writes Tile Break and custom Error Diffusion panel screenshots. The global numeric-control test uses a custom Palette Map fixture to activate Shades, and a progressed Tile Break fixture. Rounded Edge Mask is correctly tested as an alpha-shaped effect. Full validation and updated contact/motion artifacts must pass before packaging.
 
 Other candidates remain internal: neutral utility defaults need configured fixtures; several source labels overlap accepted features; small/sparse defaults need tuning; generator descriptions must reflect actual shader behavior. The remaining native/multipass adapters and the separately authorized original transition expansion are still unfinished. This is not a completed full expansion.
+
+## Promotion validation repairs
+
+Run 44691530406 compiled successfully and passed core, rendering and text checks. Two failures blocked release: Tile Rotate's Seed fixture left Random Rotation at zero, and opening an unselected group by double tap failed after the first tap reflowed the timeline.
+
+Tile Rotate now labels random strength explicitly, hides Seed while that field is disabled, and tests Seed with random rotation enabled. Regression coverage also checks that changing Seed with random rotation off leaves the image unchanged. The timeline observer records individual window taps in editor state so a recreated view cannot lose the first tap; nearby second taps can complete only a matching recorded container action. The unselected-group UI test remains unchanged, and unit tests reject distant/expired observations.
+
+The reference-repairs scope runs numeric controls, reviewed effects, container/selection logic and related UI workflows. Local Swift parsing, shard coverage and whitespace checks passed; actual iOS behavior and GPU checks remain pending CI. No additional effects were promoted by this repair.

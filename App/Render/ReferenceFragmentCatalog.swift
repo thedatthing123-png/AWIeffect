@@ -1962,12 +1962,12 @@ enum ReferenceFragmentCatalog {
 
     private static func make_e8404b5764d4f() -> ReferenceFragmentDefinition {
         var parameters: [ReferenceFragmentParameter] = []
-        parameters.append(ReferenceFragmentParameter(definition: .angle("rotation", "Rotation", 45.0), slot: 11))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("rotation", "Tile Rotation", 45.0), slot: 11))
         parameters.append(ReferenceFragmentParameter(definition: .point("position", "Offset", Vec2(0.0, 0.0)), slot: 12))
-        parameters.append(ReferenceFragmentParameter(definition: .number("amount", "Count", 10.0, 0.5, 200.0, step: 0.1), slot: 13))
+        parameters.append(ReferenceFragmentParameter(definition: .number("amount", "Tile Count", 10.0, 0.5, 200.0, step: 0.1), slot: 13))
         parameters.append(ReferenceFragmentParameter(definition: .point("stretch", "Stretch", Vec2(1.0, 1.0)), slot: 14, pointMinimum: Vec2(0.01, 0.01), pointMaximum: Vec2(10.0, 10.0)))
-        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Angle", 0.0), slot: 15))
-        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Strength", 0.0, 0.0, 10.0, step: 0.01), slot: 16))
+        parameters.append(ReferenceFragmentParameter(definition: .angle("angle", "Grid Angle", 0.0), slot: 15))
+        parameters.append(ReferenceFragmentParameter(definition: .number("strength", "Random Rotation", 0.0, 0.0, 10.0, step: 0.01), slot: 16))
         parameters.append(ReferenceFragmentParameter(definition: .number("seed", "Seed", 0.0, 0.0, 5.0, step: 0.01), slot: 17))
         parameters.append(ReferenceFragmentParameter(definition: .toggle("screenSpace", "Screen Space", false), slot: 18))
         return ReferenceFragmentDefinition(id: "awi.amref.e8404b5764d4f", name: "Tile Rotate", summary: "Rotate repeating tiles around their individual centers.",

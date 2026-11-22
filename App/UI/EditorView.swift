@@ -119,8 +119,8 @@ struct EditorView: View {
             }
         }
         .background(Theme.background.ignoresSafeArea())
-        .background(TimelineContainerTapObserver {
-            state.finishTimelineContainerDoubleTap()
+        .background(TimelineContainerTapObserver { point, timestamp in
+            state.observeTimelineWindowTap(point: Vec2(Double(point.x), Double(point.y)), timestamp: timestamp)
         }.allowsHitTesting(false))
         .environmentObject(drawLauncher)
         .environmentObject(cutoutSession)

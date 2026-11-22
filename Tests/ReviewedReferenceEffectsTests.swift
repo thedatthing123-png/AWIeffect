@@ -57,4 +57,17 @@ final class ReviewedReferenceEffectsTests: XCTestCase {
         XCTAssertTrue(ReferenceFragmentControls.isVisible("color2", effect: diffusion))
         XCTAssertFalse(ReferenceFragmentControls.isVisible("color3", effect: diffusion))
     }
+    func testTileRotateSeedChangesOnlyAnEnabledRandomField() throws {
+        var effect = ReferenceFragmentCatalog.e8404b5764d4f.definition.makeInstance()
+        XCTAssertFalse(ReferenceFragmentControls.isVisible("seed", effect: effect))
+        let fixed = try render(effect)
+        effect.params["seed"] = .number(Animated(2))
+        XCTAssertEqual(try render(effect), fixed)
+        effect.params["strength"] = .number(Animated(0.35))
+        XCTAssertTrue(ReferenceFragmentControls.isVisible("seed", effect: effect))
+        let randomized = try render(effect)
+        effect.params["seed"] = .number(Animated(0))
+        XCTAssertNotEqual(try render(effect), randomized)
+    }
+
 }

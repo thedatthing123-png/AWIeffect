@@ -58,6 +58,7 @@ DEFAULTS = {
     'psykostripes.xml': {'stripeMag': '12', 'phaseGreen': '2.094', 'phaseBlue': '4.189', 'edgeAmt': '0.45'},
 }
 LABELS = {
+    'tilerotate2.xml': {'strength': 'Random Rotation', 'rotation': 'Tile Rotation', 'angle': 'Grid Angle', 'amount': 'Tile Count'},
     'colorama.xml': {'blend': 'Effect Mix', 'alpha': 'Opacity', 'timeSpeed': 'Evolution Speed', 'hueScale': 'Color Bands', 'value': 'Brightness'},
     'psykostripes.xml': {'stripeMag': 'Stripe Density', 'freqColors': 'Color Frequency', 'offset': 'Phase Offset'},
 }

@@ -63,4 +63,34 @@ import XCTest
         state.finishTimelineContainerDoubleTap(timestamp:3)
         XCTAssertEqual(state.project.id,root)
     }
+    func testWindowTapHistorySurvivesRowReflowAndCallbackOrdering() throws {
+        let state = editor()
+        state.select(state.project.layers[0].id); state.groupSelected()
+        let group = try XCTUnwrap(state.project.layers.first(where: { $0.isGroup }))
+        let root = state.project.id
+        state.select(nil)
+        let point = Vec2(230, 500)
+        // The UIKit observation may arrive before the SwiftUI row action.
+        state.observeTimelineWindowTap(point: point, timestamp: 1)
+        state.tapTimelineLayer(group.id, timestamp: 1.01)
+        XCTAssertEqual(state.project.id, root, "One tap must select immediately without opening")
+        // Reflow loses the second row event, but not window-touch history.
+        state.observeTimelineWindowTap(point: point, timestamp: 1.18)
+        XCTAssertEqual(state.project.id, group.id)
+        state.observeTimelineWindowTap(point: point, timestamp: 1.181)
+        XCTAssertEqual(state.project.id, group.id, "Duplicate observations must not open another level")
+    }
+    func testUnrelatedAndExpiredWindowTapsCannotOpenAContainer() throws {
+        for distant in [false, true] {
+            let state = editor()
+            state.select(state.project.layers[0].id); state.groupSelected()
+            let group = try XCTUnwrap(state.project.layers.first(where: { $0.isGroup }))
+            let root = state.project.id
+            state.select(nil); state.tapTimelineLayer(group.id, timestamp: 1)
+            state.observeTimelineWindowTap(point: Vec2(100, 100), timestamp: 1.001)
+            state.observeTimelineWindowTap(point: distant ? Vec2(200, 100) : Vec2(100, 100), timestamp: distant ? 1.2 : 2)
+            XCTAssertEqual(state.project.id, root)
+        }
+    }
+
 }
