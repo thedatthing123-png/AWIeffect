@@ -368,18 +368,18 @@ void referenceMain(texture2d<float> refInput, sampler refInputSmplr, constant Re
     float3 inten = float3(dot(pixel.xyz, float3(0.2125999927520751953125, 0.715200006961822509765625, 0.072200000286102294921875)));
     pixel = float4(mix(inten, pixel.xyz, float3(_378.saturation)), 1.0);
     float3 st = _378.shadowTint.xyz;
-    float powr = 1.5;
+    float ref_powr = 1.5;
     if (st.x > 0.0)
     {
-        pixel.x = mix(pixel.x, 1.0 - powr(abs(pixel.x - 1.0), powr), st.x);
+        pixel.x = mix(pixel.x, 1.0 - powr(abs(pixel.x - 1.0), ref_powr), st.x);
     }
     if (st.y > 0.0)
     {
-        pixel.y = mix(pixel.y, 1.0 - powr(abs(pixel.y - 1.0), powr), st.y);
+        pixel.y = mix(pixel.y, 1.0 - powr(abs(pixel.y - 1.0), ref_powr), st.y);
     }
     if (st.z > 0.0)
     {
-        pixel.z = mix(pixel.z, 1.0 - powr(abs(pixel.z - 1.0), powr), st.z);
+        pixel.z = mix(pixel.z, 1.0 - powr(abs(pixel.z - 1.0), ref_powr), st.z);
     }
     float fps = _378.sourceFps;
     bool updateOdd = mod(floor(fract(_378.refScreen.z) * fps), 2.0) < 1.0;

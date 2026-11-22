@@ -82,6 +82,12 @@ class TranslationTests(unittest.TestCase):
         self.assertIn('referenceVertexInit();', source)
         self.assertNotIn('vertShaderInit();', source)
 
+    def test_source_powr_does_not_shadow_metal_power_intrinsic(self):
+        root = effect('', 'void main(){float powr=1.5;gl_FragColor=vec4(pow(0.5,powr));}')
+        source, *_ = translate(root, 'fixture')
+        self.assertIn('float ref_powr=1.5', source)
+        self.assertIn('pow(0.5,ref_powr)', source)
+
     def test_geometry_vertex_program_is_not_mistaken_for_uniform_setup(self):
         root = effect('', 'void main(){gl_FragColor=vec4(1);}',
                       '<shader type="vertex"><![CDATA[void main(){gl_Position=vec4(1);}]]></shader>')

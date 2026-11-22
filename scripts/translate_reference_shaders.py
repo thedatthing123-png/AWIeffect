@@ -297,7 +297,9 @@ def translate(root, slug, images=None, filename='', external_ids=None):
     source = HEADER.replace('SLUG', slug).replace('FIELDS', '\n'.join(fields)).replace('IMAGEDECLS', '\n'.join(image_declarations)) + '\n'.join(aliases) + '\n' + code
     # ES permits identifiers that became reserved in Vulkan GLSL. Rename full
     # tokens, including uniform declarations, while retaining serialized IDs.
-    for reserved in ('sample', 'active', 'filter', 'smooth'):
+    # SPIRV-Cross lowers GLSL pow() to Metal powr(). A source variable
+    # named powr would otherwise shadow those generated function calls.
+    for reserved in ('sample', 'active', 'filter', 'smooth', 'powr'):
         source = re.sub(r'\b' + reserved + r'\b', 'ref_' + reserved, source)
     source = re.sub(r'\btexture2D\s*\(', 'texture(', source)
     source = re.sub(r'\(void\)\s*\w+\s*;', '', source)
