@@ -1,5 +1,9 @@
 # Reference-led effect expansion — November 19
 
+## Motion-blur switch sizing follow-up
+
+Full run 45113982649 passed compilation, core (including the anchor regression), effects, renders and both text shards. UI failed only the single-tap motion-blur switch assertion. The screenshot shows the current iOS native switch wider than its forced 51-point wrapper and extending beyond panel padding. The bridge now reports UISwitch.intrinsicContentSize through sizeThatFits, with horizontal compression resistance/hugging, rather than imposing legacy dimensions. The UI test retains its original right-side single tap and state assertions and additionally requires the control to fit within the panel padding. Run the motion-blur scope; previous unrelated effect/render checks do not need repeating for this layout-only repair. Native verification is pending.
+
 ## Hit mapping and switch follow-up
 
 Run 45107522602 passed the dot control check, but group opening still failed; a one-tap motion-blur UI check also failed. The captured group touches were at x=167, before the offset colored clip, inside the row's actual full-track single-tap hit area. Container frame reporting now covers that same track row rather than only the colored rectangle. Test-only tracing also records reported row frames. The motion-blur toggles keep their native visual design and independent settings, using a UISwitch bridge with its own exact accessibility/touch bounds and tappable label. Assertions remain unchanged; focused CI verification is pending.

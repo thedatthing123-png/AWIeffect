@@ -11,9 +11,10 @@ final class EditorPolishUITests: XCTestCase {
             XCTAssertTrue(toggle.waitForExistence(timeout: 15))
             let every = app.switches["blur-every-layer"].firstMatch
             XCTAssertEqual(every.value as? String, "0")
-            // SwiftUI exposes the label and control as one wide accessibility
-            // frame. Hit the actual switch once, then wait for its published state.
+            // The native switch owns its exact bounds and must fit inside the
+            // panel's horizontal padding on every supported iOS version.
             XCTAssertTrue(toggle.isHittable)
+            XCTAssertLessThanOrEqual(toggle.frame.maxX,app.frame.maxX-12+0.5)
             toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
             let changed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "1"), object: toggle)
             let result = XCTWaiter.wait(for: [changed], timeout: 3)

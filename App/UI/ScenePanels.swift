@@ -352,7 +352,7 @@ private struct MotionBlurSwitchStyle: ToggleStyle {
             configuration.label.frame(maxWidth:.infinity,alignment:.leading)
                 .contentShape(Rectangle()).onTapGesture { configuration.isOn.toggle() }
             MotionBlurNativeSwitch(isOn:configuration.$isOn,identifier:identifier,label:label)
-                .frame(width:51,height:31)
+                .fixedSize()
         }.frame(minHeight:44)
     }
 }
@@ -366,8 +366,15 @@ private struct MotionBlurNativeSwitch: UIViewRepresentable {
         view.onTintColor=UIColor(Theme.accent)
         view.accessibilityIdentifier=identifier
         view.accessibilityLabel=label
+        view.setContentHuggingPriority(.required,for:.horizontal)
+        view.setContentCompressionResistancePriority(.required,for:.horizontal)
         view.addTarget(context.coordinator,action:#selector(Coordinator.changed(_:)),for:.valueChanged)
         return view
+    }
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: UISwitch, context: Context) -> CGSize? {
+        // UISwitch dimensions can change between iOS versions. A legacy 51pt
+        // frame lets a wider control overflow into the ScrollView's clipped edge.
+        uiView.intrinsicContentSize
     }
     func updateUIView(_ view: UISwitch, context: Context) {
         context.coordinator.value=$isOn
