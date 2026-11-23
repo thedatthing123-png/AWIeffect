@@ -80,6 +80,10 @@ final class EffectTests: XCTestCase {
         case "awi.amref.ea4ee3a4adc94": e.params["palette"] = .choice(7)
         // A channel router starts neutral; exercise an explicit HSV swap.
         case "awi.amref.ec2cdadc6c8df": e.params["hue"] = .choice(2); e.params["sat"] = .choice(0)
+        case "awi.amref.e6b65a73fb112": n("orient_y",35)
+        case "awi.amref.e8e0a6f88c6f1": n("wipePercent",55)
+        case "awi.amref.ee440d77aa644": n("progress",0.5)
+        case "awi.amref.e5ad5e1e9a0fb": n("flickerThreshold",0)
         case "awi.ref.liquidLensWipe", "awi.ref.voronoiPeel": n("progress", 55)
         case "ae.gaussianBlur": n("blurriness", 12)
         case "ae.directionalBlur": n("length", 20); n("direction", 90)
@@ -302,7 +306,31 @@ final class EffectTests: XCTestCase {
                 // Adjustment layer = effect sees the whole varied scene, not just one flat shape.
                 let adj = !d.isTransformEffect && !Self.alphaShaped.contains(d.id)
                 let ra = try render(r, scene(effect: a, onAdjustment: adj)), rb = try render(r, scene(effect: b, onAdjustment: adj))
-                XCTAssertGreaterThan(diff(ra, rb), 0.05, "\(d.name) › \(pd.name) does nothing")
+                var response=diff(ra,rb)
+                // Reference shaders expose mode-specific controls (lighting,
+                // noise families, blend modes). Exercise those modes rather
+                // than treating a neutral/inactive default as a dead control.
+                if response <= 0.05, d.id.hasPrefix("awi.amref.") {
+                    var modes: [(String,ParamValue)] = []
+                    for controller in d.params where controller.id != pd.id {
+                        switch controller.kind {
+                        case .choice(let labels):
+                            modes += labels.indices.map { (controller.id,.choice($0)) }
+                        case .toggle:
+                            modes.append((controller.id,.toggle(true)))
+                            modes.append((controller.id,.toggle(false)))
+                        default: break
+                        }
+                    }
+                    for (key,value) in modes {
+                        var aa=a,bb=b;aa.params[key]=value;bb.params[key]=value
+                        let x=try render(r,scene(effect:aa,onAdjustment:adj))
+                        let y=try render(r,scene(effect:bb,onAdjustment:adj))
+                        response=max(response,diff(x,y))
+                        if response>0.05 { break }
+                    }
+                }
+                XCTAssertGreaterThan(response, 0.05, "\(d.name) › \(pd.name) does nothing in the tested modes")
             }
         }
     }

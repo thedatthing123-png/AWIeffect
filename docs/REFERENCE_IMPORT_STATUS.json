@@ -28,11 +28,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/warpblur.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.eb9d2e1133709",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Warp Blur",
     "existing_name_matches": []
   },
@@ -151,11 +151,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/hexshift.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e4f4cabb4ff42",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Hexagon Tile Shift",
     "existing_name_matches": []
   },
@@ -344,11 +344,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxisolinev2.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.ecd33a51c7cb3",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Fractal Isoline",
     "existing_name_matches": []
   },
@@ -493,21 +493,21 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/s_warp_waves2.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e44c3753736ad",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Warp Waves 2",
     "existing_name_matches": []
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxinstantgrass.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.eef0730511250",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "2D Grass",
     "existing_name_matches": []
   },
@@ -558,11 +558,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxlightsaber.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.efc580f636abc",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Random LightSaber",
     "existing_name_matches": []
   },
@@ -768,11 +768,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/3polygontun.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.eaf9be5de3d0e",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Polygon Tunnel Arrow",
     "existing_name_matches": []
   },
@@ -872,11 +872,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/360-reorient-sphere.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e6b65a73fb112",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "360\u00ba Reorient Sphere",
     "existing_name_matches": []
   },
@@ -926,11 +926,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxwingsline.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.ead6e335ee83d",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Wings Line",
     "existing_name_matches": []
   },
@@ -966,11 +966,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/grunge.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e616b758142ef",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Grunge",
     "existing_name_matches": []
   },
@@ -1448,11 +1448,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/mystery_book.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.eb128ccb140e5",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Mystery Book",
     "existing_name_matches": []
   },
@@ -1607,11 +1607,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/contourstrips.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e255ba2d47539",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Contour Strips",
     "existing_name_matches": []
   },
@@ -1669,11 +1669,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/fbm_time_displace_fade.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.ecef0c8a880bd",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "FBM Time Displace Fade",
     "existing_name_matches": []
   },
@@ -1699,11 +1699,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/omino-glass.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.ec8c20b043809",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Omino Glass",
     "existing_name_matches": []
   },
@@ -1764,11 +1764,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/3wipeplasma.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e2365a45909ce",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Wipe Plasma",
     "existing_name_matches": []
   },
@@ -1784,11 +1784,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/hand_drawn.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e8f2ea0f3dea9",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Hand Drawn",
     "existing_name_matches": []
   },
@@ -1826,11 +1826,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/s_wipepixelate.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e8e0a6f88c6f1",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "S_WipePixelate",
     "existing_name_matches": []
   },
@@ -1916,11 +1916,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/cosuv.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e4390d04fc4d7",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "texture",
     "existing_name_matches": []
   },
@@ -2053,11 +2053,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-plus.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e3dc893f46bd6",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Three-axis Cross",
     "existing_name_matches": []
   },
@@ -2085,11 +2085,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-extrude.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.eead7fb687e24",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Raster Extrude",
     "existing_name_matches": []
   },
@@ -2139,11 +2139,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/colorhot.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.ea8e0a421faa8",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Hot Color",
     "existing_name_matches": []
   },
@@ -2184,11 +2184,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-starpoly.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.ede5369a89427",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Star Polyhedron",
     "existing_name_matches": []
   },
@@ -2300,11 +2300,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxplexustriangle.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e772b68314f0d",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Plexus Triangle",
     "existing_name_matches": []
   },
@@ -2350,11 +2350,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/hexrotate.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e3cedc1a9644b",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Hexagon Tile Rotate",
     "existing_name_matches": []
   },
@@ -2432,11 +2432,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/firey_border.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e40d45d33b0da",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Firey Border",
     "existing_name_matches": []
   },
@@ -2474,11 +2474,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/glitch_pro.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e5ad5e1e9a0fb",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Precision Glitch",
     "existing_name_matches": []
   },
@@ -2524,11 +2524,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxdotsloader.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e2236f1691530",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Dots Spinner",
     "existing_name_matches": []
   },
@@ -2927,11 +2927,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/vr-player.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.ecb9c2e3a4604",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "360\u00ba Viewer",
     "existing_name_matches": []
   },
@@ -2979,11 +2979,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/warped_noise_field.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e093cdee083c0",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Warped Noise Field",
     "existing_name_matches": []
   },
@@ -2999,11 +2999,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxhexagonlens.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.ea162bb012e3b",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Hexagon Lens",
     "existing_name_matches": []
   },
@@ -3049,11 +3049,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxfencingwire.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.edd9730a273e2",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Fencing Wire+",
     "existing_name_matches": []
   },
@@ -3143,11 +3143,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxhardglitch.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e49936984c33e",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Glitch Offset",
     "existing_name_matches": []
   },
@@ -3411,11 +3411,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/spot_exposure.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e8a43530c7123",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Spot Exposure",
     "existing_name_matches": []
   },
@@ -3470,11 +3470,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/streakstrips.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e150bc7e80a57",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Streak Strips",
     "existing_name_matches": []
   },
@@ -3693,11 +3693,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/holomatrix2.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e77bf324369ab",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Holomatrix II",
     "existing_name_matches": []
   },
@@ -3733,11 +3733,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/colormatch.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.ea9431f1f103e",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Color Transfer (Steal CC)",
     "existing_name_matches": []
   },
@@ -4046,11 +4046,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/chromatic-vortexblur.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.ef9366504bfe5",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Chromatic VortexBlur",
     "existing_name_matches": []
   },
@@ -4118,21 +4118,21 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxparticle3d.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.efc60eccebd05",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "3D Particles",
     "existing_name_matches": []
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxnewtrails.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e0549745d4c9d",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "New Startrails",
     "existing_name_matches": []
   },
@@ -4192,11 +4192,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/newdisshake.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e821e62f4d00a",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Dissolve Shake Pro",
     "existing_name_matches": []
   },
@@ -4379,11 +4379,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxbrushsketch.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e93b2f3664b11",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Brush Sketch",
     "existing_name_matches": []
   },
@@ -4488,11 +4488,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-hexprism.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.ecda745583188",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Hexagonal Prism",
     "existing_name_matches": []
   },
@@ -4572,11 +4572,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/s3d-triprism2.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e22830a1895e5",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Triangular Prism",
     "existing_name_matches": []
   },
@@ -4743,11 +4743,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/displacemap-radial.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.eeff3703c0a9f",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Polar Displacement Map",
     "existing_name_matches": []
   },
@@ -5114,31 +5114,31 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/monitor_on_table.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e52053df16be1",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Monitor Scene",
     "existing_name_matches": []
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxnewcolorgrid.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.e12a0fb215dc9",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "ColorGrid V2",
     "existing_name_matches": []
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxmultigradmap.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.edf4550c7d022",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "MultiGradient Map+",
     "existing_name_matches": []
   },
@@ -5258,21 +5258,21 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/skexnxxfibersglow.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.eee7dc5eaa354",
     "dependency_only": false,
     "public_candidate": true,
-    "promoted": false,
+    "promoted": true,
     "source_name": "Glow Fibers",
     "existing_name_matches": []
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/burning_texture_fade2.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.ee440d77aa644",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Burning Texture Fade",
     "existing_name_matches": []
   },
@@ -5473,11 +5473,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/organic_particles_up.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.ec69cd2450d1e",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Organic Particles Up",
     "existing_name_matches": []
   },
@@ -5612,11 +5612,11 @@
   },
   {
     "file": "Payload/AlightMotion.app/BuiltinEffects/eye_split_bend.xml",
-    "status": "internal-audit",
+    "status": "promoted-pending-validation",
     "id": "awi.amref.eaf4b83be09ed",
     "dependency_only": false,
-    "public_candidate": false,
-    "promoted": false,
+    "public_candidate": true,
+    "promoted": true,
     "source_name": "Split",
     "existing_name_matches": []
   },

@@ -81,8 +81,8 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformseaf4b8
     float2 uv = gl_FragCoord.xy / _49.refScreen.xy;
     float2 param = uv;
     float4 src = texture2DCv(refInput, refInputSmplr, param);
-    float2 Auv = _49.pointA / _49.refScreen.xy;
-    float2 Buv = _49.pointB / _49.refScreen.xy;
+    float2 Auv = (_49.pointA * _49.refScreen.xy) / _49.refScreen.xy;
+    float2 Buv = (_49.pointB * _49.refScreen.xy) / _49.refScreen.xy;
     float2 Muv = (Auv + Buv) * 0.5;
     float2 dir = fast::normalize(Buv - Auv);
     float2 param_1 = dir;
@@ -100,28 +100,28 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformseaf4b8
     float bottomBoundary = (splitUV * _49.lowerScale) * base;
     float vertical_bend = _49.bendFactor * (0.25 - (xN * xN));
     float yRel = y - vertical_bend;
-    bool _185 = yRel <= topBoundary;
-    bool _192;
-    if (_185)
+    bool _193 = yRel <= topBoundary;
+    bool _200;
+    if (_193)
     {
-        _192 = yRel >= (-bottomBoundary);
+        _200 = yRel >= (-bottomBoundary);
     }
     else
     {
-        _192 = _185;
+        _200 = _193;
     }
-    bool inside = _192;
+    bool inside = _200;
     float4 transparent = float4(0.0);
-    float4 _201;
+    float4 _209;
     if (_49.invertInside != 0u)
     {
-        _201 = select(transparent, src, bool4(inside));
+        _209 = select(transparent, src, bool4(inside));
     }
     else
     {
-        _201 = select(src, transparent, bool4(inside));
+        _209 = select(src, transparent, bool4(inside));
     }
-    float4 outCol = _201;
+    float4 outCol = _209;
     float aSrc = src.w * _49.alpha;
     referenceColor = outCol * aSrc;
 }
@@ -131,17 +131,17 @@ fragment refAM35_eaf4b83be09ed_out refAM35_eaf4b83be09ed(constant ReferenceUnifo
     refAM35_eaf4b83be09ed_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(gl_FragCoord, _49, refInput, refInputSmplr, referenceColor);
-    bool _233 = any(isnan(referenceColor));
-    bool _240;
-    if (!_233)
+    bool _241 = any(isnan(referenceColor));
+    bool _248;
+    if (!_241)
     {
-        _240 = any(isinf(referenceColor));
+        _248 = any(isinf(referenceColor));
     }
     else
     {
-        _240 = _233;
+        _248 = _241;
     }
-    if (_240)
+    if (_248)
     {
         referenceColor = float4(0.0);
     }
@@ -150,11 +150,11 @@ fragment refAM35_eaf4b83be09ed_out refAM35_eaf4b83be09ed(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
-    float4 _254 = referenceColor;
-    float3 _260 = fast::clamp(_254.xyz, float3(-65504.0), float3(65504.0));
-    referenceColor.x = _260.x;
-    referenceColor.y = _260.y;
-    referenceColor.z = _260.z;
+    float4 _262 = referenceColor;
+    float3 _268 = fast::clamp(_262.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _268.x;
+    referenceColor.y = _268.y;
+    referenceColor.z = _268.z;
     out.finalColor = referenceColor;
     return out;
 }

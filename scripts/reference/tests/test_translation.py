@@ -2,8 +2,8 @@
 import unittest
 from pathlib import Path
 import xml.etree.ElementTree as ET
-from scripts.translate_reference_shaders import translate, dependency_files
-from scripts.prepare_reference_import import parameter
+from scripts.translate_reference_shaders import translate, dependency_files, shader_header, Y_UP_SCENES
+from scripts.prepare_reference_import import parameter, PUBLIC, APPROVED
 
 
 def effect(params, shader, extra=''):
@@ -12,6 +12,26 @@ def effect(params, shader, extra=''):
 
 
 class TranslationTests(unittest.TestCase):
+    def test_scene_coordinate_and_cv_sampling_flips_are_paired(self):
+        for filename in Y_UP_SCENES:
+            header = shader_header(filename)
+            self.assertIn('refScreen.y-gl_FragCoord.y', header)
+            self.assertIn('1.-(gl_FragCoord.y-refLayer.y)/refLayer.w', header)
+            self.assertIn('texture(source,vec2(uv.x,1.-uv.y))', header)
+            # A CV identity read must still fetch the same Metal pixel at
+            # asymmetric rows, rather than mirroring its source image.
+            for metal_y in (0.125, 0.375, 0.875):
+                shader_y = 1.0-metal_y
+                self.assertAlmostEqual(1.0-shader_y, metal_y)
+        self.assertNotIn('refScreen.y-gl_FragCoord.y', shader_header('existing.xml'))
+
+    def test_public_references_exclude_private_and_generic_template_entries(self):
+        self.assertTrue(APPROVED.issubset(PUBLIC))
+        names=[name.casefold() for name,_ in PUBLIC.values()]
+        self.assertEqual(len(names),len(set(names)))
+        for filename in PUBLIC:
+            self.assertFalse(filename.startswith(('internal-','blend-','aemotion_native_','aemotion_s_')),filename)
+
     def test_bundled_reference_pngs_have_png_payloads(self):
         assets=Path(__file__).resolve().parents[3] / 'Resources' / 'ReferenceTextures'
         files=list(assets.glob('*.png'))
@@ -95,6 +115,20 @@ class TranslationTests(unittest.TestCase):
         source, *_ = translate(root, 'fixture')
         self.assertIn('float ref_powr=1.5', source)
         self.assertIn('pow(0.5,ref_powr)', source)
+
+    def test_aperture_points_are_resolution_independent(self):
+        root=effect('<point id="pointA" default="200,540"/><point id="pointB" default="1720,540"/>',
+                    'void main(){gl_FragColor=vec4(pointA+pointB,0,1);}')
+        source, controls, *_=translate(root,'fixture',filename='eye_split_bend.xml')
+        self.assertEqual(controls[0]['default'],'0.15,0.5')
+        self.assertEqual(controls[1]['default'],'0.85,0.5')
+        self.assertIn('(pointA*acScreenSize)',source)
+        self.assertEqual(controls[0]['max'],'1,1')
+
+    def test_fractal_fade_removes_alpha_instead_of_flattening_black(self):
+        root=effect('', 'void main(){vec4 tex=vec4(1);float mask=0.5;vec3 outRGB=vec3(0);gl_FragColor = vec4(outRGB, 1.0);}')
+        source, *_=translate(root,'fixture',filename='fbm_time_displace_fade.xml')
+        self.assertIn('referenceColor = tex * mask;',source)
 
     def test_geometry_vertex_program_is_not_mistaken_for_uniform_setup(self):
         root = effect('', 'void main(){gl_FragColor=vec4(1);}',

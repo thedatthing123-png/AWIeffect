@@ -69,6 +69,49 @@ APPROVED = {
     'radial_rays.xml', 'metalballs.xml', 'highlight-shadow.xml', 'Adamagedots.xml',
     'channelmaphsv.xml', 'ink_splash.xml',
 }
+
+# Reference-led remainder. Each entry exposes an existing complete shader graph;
+# native helpers, generic template wrappers and covered operators stay private.
+REMAINDER = {
+    'hexshift.xml': ('Hexagon Tile Shift', 'Displace individual hexagonal cells with seeded offsets, stretch, screen-space placement and optional layer masking.'),
+    'hexrotate.xml': ('Hexagon Tile Rotate', 'Rotate individual hexagonal cells with seeded variation, independent grid placement and editable cell proportions.'),
+    's3d-extrude.xml': ('Raster Extrude', 'Raymarch the source into a textured relief volume with depth, orientation, interior color, lighting and material shading.'),
+    's3d-plus.xml': ('Cross 3D', 'Map the source onto a three-axis cross with editable arm proportions, orientation, texture placement and lighting.'),
+    's3d-starpoly.xml': ('Star Polyhedron', 'A textured, lit star polyhedron with editable point count, point length, height and orientation.'),
+    's3d-hexprism.xml': ('Hexagonal Prism', 'Wrap the source around a raymarched hexagonal prism with editable dimensions, lighting and texture coordinates.'),
+    's3d-triprism2.xml': ('Triangular Prism', 'Wrap the source around a lit triangular prism with independent orientation, depth and texture transforms.'),
+    '360-reorient-sphere.xml': ('360 Reorient', 'Rotate an equirectangular panorama in three axes while keeping an equirectangular output.'),
+    'vr-player.xml': ('360 Viewport', 'Look into an equirectangular panorama with editable orientation, view scale and aspect ratio.'),
+    'skexnxxlightsaber.xml': ('Beam Field', 'Generate a field of luminous line segments with editable count, spread, evolution and colors.'),
+    'skexnxxwingsline.xml': ('Wing Lines', 'Generate curved, intersecting feather-like light lines with editable travel, placement, stretch and compositing.'),
+    'skexnxxfencingwire.xml': ('Wire Mesh', 'A patterned wire field with editable scale, rotation, placement, brightness and compositing.'),
+    'skexnxxdotsloader.xml': ('Dot Spinner', 'Generate a rotating sequence of luminous dots with editable count, dot shape and falloff.'),
+    'skexnxxnewcolorgrid.xml': ('Color Grid', 'Animate a procedural grid field with editable evolution, color mapping, placement and compositing.'),
+    'cosuv.xml': ('Cosine Flow', 'Generate flowing cosine filaments with independent horizontal and vertical frequencies, animation speed and opacity.'),
+    '3polygontun.xml': ('Arrow Tunnel', 'Travel through a twisting polygon-arrow tunnel with separate arrow geometry, prewarp, grid phase and tonal controls.'),
+    'displacemap-radial.xml': ('Polar Displacement Map', 'Use a reference layer to displace source pixels in angular and radial directions around an editable center.'),
+    'omino-glass.xml': ('Relief Glass', 'Build a smoothed height surface and refract the source through it with chromatic dispersion, roughness, tint and lighting.'),
+    'fbm_time_displace_fade.xml': ('Fractal Displace Fade', 'Animate Travel through a cyclical fractal displacement and fading matte. This displaces pixels, not source video time.'),
+    'newdisshake.xml': ('Dissolve Shake', 'Combine an animated dissolve with independent random and wave motion for translation, zoom, tilt and color separation.'),
+    's_wipepixelate.xml': ('Pixel Wipe', 'Reveal or remove the source through an angled, pixelated boundary with editable cell frequency, chunkiness and edge width.'),
+    '3wipeplasma.xml': ('Plasma Wipe', 'A flowing plasma-shaped wipe boundary with editable completion, softness, frequency, seed and fill color.'),
+    'burning_texture_fade2.xml': ('Textured Burn', 'Remove the source through a noisy heated edge with adjustable feather, heat intensity and an optional moving background texture.'),
+    'organic_particles_up.xml': ('Rising Trails', 'Generate rising organic particles with independent size, speed, trailing motion, tint and intensity.'),
+    'eye_split_bend.xml': ('Aperture Split', 'Open a two-ended, curved aperture with editable endpoints, bend, upper and lower shape, tip sharpness and inside inversion.'),
+    'spot_exposure.xml': ('Spot Exposure', 'Adjust exposure inside a movable circular region with independent radius, boost and falloff.'),
+    'skexnxxisolinev2.xml': ('Fractal Contours', 'Generate evolving nested fractal contours with editable scale, stretch, color mapping and compositing.'),
+    'skexnxxnewtrails.xml': ('Star Trails', 'Generate accumulating stellar trails with independent sample count, evolution, star shape and color controls.'),
+    'skexnxxbrushsketch.xml': ('Brush Sketch', 'Reconstruct source detail through an editable brush-like field with placement, evolution and compositing controls.'),
+    'skexnxxparticle3d.xml': ('3D Particle Field', 'Generate particles through a projected depth field with editable motion, distribution, scale and colors.'),
+    'chromatic-vortexblur.xml': ('Chromatic Vortex Blur', 'Accumulate rotational blur with independent color-channel sampling and an editable vortex center.'),
+    'firey_border.xml': ('Flame Border', 'Generate an animated flame frame with independent border width, flame detail, tint and source distortion.'),
+    'skexnxxmultigradmap.xml': ('Four-Stop Gradient Map', 'Remap source luminance through four editable colors with a movable tonal range, brightness and compositing controls.'),
+    'warped_noise_field.xml': ('Derivative Noise', 'Warp a simplex noise field by its spatial derivatives, with editable sampling interval, warp distance, travel, scale and color.'),
+}
+PUBLIC.update(REMAINDER)
+# These are public candidates pending the next full audit, not release approvals.
+APPROVED.update(PUBLIC)
+
 DEFAULTS = {
     'square_break_3d.xml': {'progress': '0.35'},
     'rounded_edge_mask.xml': {'scaleX': '0.8', 'scaleY': '0.8'},
@@ -80,6 +123,15 @@ DEFAULTS = {
     'Adamagedots.xml': {'density': '400', 'dotSize': '5'},
     'waveloq-3.xml': {'thickness': '3.5', 'glow': '2', 'pitch': '7'},
     'mystery_book.xml': {'openProgress': '0.65'},
+    'skexnxxinstantgrass.xml': {'blendMode': '0'},
+    'skexnxxnewtrails.xml': {'XXA': '0.003', 'XXB': '0.9', 'hardness': '2', 'scale': '1'},
+    's3d-plus.xml': {'scale': '3', 'orient': '20,25,0'},
+    's3d-hexprism.xml': {'height': '1.4', 'orient': '15,30,0'},
+    's3d-triprism2.xml': {'zdist': '4', 'orient': '0,25,0'},
+    's3d-extrude.xml': {'depth': '0.4', 'orient': '15,25,0'},
+    'fbm_time_displace_fade.xml': {'time': '1', 'fadeBias': '1.5'},
+    'warped_noise_field.xml': {'time': '0.5', 'warpAmount': '0.2'},
+
 }
 LABELS = {
     'tilerotate2.xml': {'strength': 'Random Rotation', 'rotation': 'Tile Rotation', 'angle': 'Grid Angle', 'amount': 'Tile Count'},
@@ -92,6 +144,13 @@ LABELS = {
     'radial_rays.xml': {'pointCount': 'Wedges', 'bendStrength': 'Bend', 'bendFrequency': 'Bend Frequency', 'bendPhase': 'Bend Phase', 'feather': 'Angular Edge', 'radialFeather': 'Radial Edge'},
     'metalballs.xml': {'ballColor': 'Glass Tint', 'progress': 'Travel', 'posX': 'Offset X', 'posY': 'Offset Y', 'posZ': 'Depth Offset'},
     'mystery_book.xml': {'openProgress': 'Opening', 'camRot': 'Camera Orbit', 'zoom': 'Camera Zoom'},
+    'fbm_time_displace_fade.xml': {'time': 'Travel', 'timeDiv': 'Cycle Length', 'timeScale': 'Time Scale', 'fbmScale': 'Noise Scale', 'dispClamp': 'Displacement Divisor', 'fadeBias': 'Matte Gain'},
+    'skexnxxdotsloader.xml': {'AMOUNT': 'Dots', 'xxa': 'Travel', 'xxb': 'Dot Radius', 'xxc': 'Dot Size', 'xxd': 'Fade', 'xxe': 'Tail'},
+    'skexnxxnewtrails.xml': {'ITER': 'Trail Samples', 'PROGRESS': 'Travel', 'XXA': 'Star Width', 'XXB': 'Star Falloff'},
+    'skexnxxinstantgrass.xml': {'AMOUNT': 'Depth Layers', 'PROGRESS': 'Travel', 'SPEED': 'Wind Speed', 'autop': 'Auto Wind'},
+    'skexnxxnewcolorgrid.xml': {'xxa': 'Evolution', 'SPEED': 'Evolution Speed', 'autop': 'Auto Evolution'},
+    '3polygontun.xml': {'SPEED': 'Travel Speed', 'TWIST_K': 'Twist', 'TWIST_FREQ': 'Twist Frequency', 'PHASE': 'Phase', 'GRID_SCALE': 'Grid Density', 'GRID_PHASE': 'Grid Phase', 'PREWARP_AMP': 'Prewarp', 'PREWARP_FREQ': 'Prewarp Frequency', 'ROT': 'Rotation', 'RECT_SIZE': 'Arrow Shaft', 'TRI_SIZE': 'Arrow Head', 'RECT_OFF_Y': 'Shaft Offset', 'TRI_OFFSET': 'Head Offset', 'COLOR_GAIN': 'Brightness', 'OUTER_BIAS': 'Outer Bias', 'GAMMA': 'Gamma'},
+
 }
 
 
@@ -216,7 +275,10 @@ def prepare(args):
         for p in reference['params']:
             labels.update({p.get('id', '') + '/' + str(i): c.get('label', '') for i, c in enumerate(p.get('choices', []))})
         try:
-            controls = [parameter({**c, **({'default': DEFAULTS[Path(row['file']).name][c['id']]} if c['id'] in DEFAULTS.get(Path(row['file']).name, {}) else {})}, labels) for c in row['controls']]
+            controls = [parameter({**c, **({'default': DEFAULTS[Path(row['file']).name][c['id']]} if c['id'] in DEFAULTS.get(Path(row['file']).name, {}) else {})}, labels) for c in row['controls']
+                        # The source computes timeB and explicitly discards it.
+                        # Retain its uniform slot internally without a dead UI knob.
+                        if not (Path(row['file']).name == 'fbm_time_displace_fade.xml' and c['id'] == 'timeScale')]
         except (ValueError, IndexError, KeyError) as error:
             report.append({'file': row['file'], 'status': 'needs-parameter-adapter', 'reason': str(error)})
             continue
@@ -225,7 +287,11 @@ def prepare(args):
         image_names = [v['file'] for v in row.get('images', {}).values()]
         body = [f'    private static func make_{symbol}() -> ReferenceFragmentDefinition {{', '        var parameters: [ReferenceFragmentParameter] = []']
         body += ['        parameters.append(' + c + ')' for group in controls for c in group.splitlines()]
-        selected_category = {'square_break_3d.xml': 'transition', 'colorama.xml': 'generate', 'omino-diffusion.xml': 'stylize', 'blocknoise2.xml': 'stylize'}.get(Path(row['file']).name, category[reference['category']])
+        selected_category = {'square_break_3d.xml': 'transition', 's_wipepixelate.xml': 'transition',
+            'newdisshake.xml': 'transition', '3wipeplasma.xml': 'transition',
+            'burning_texture_fade2.xml': 'transition', 'fbm_time_displace_fade.xml': 'transition',
+            'eye_split_bend.xml': 'transition', 'colorama.xml': 'generate',
+            'omino-diffusion.xml': 'stylize', 'blocknoise2.xml': 'stylize'}.get(Path(row['file']).name, category[reference['category']])
         buffers = ', '.join(f'ReferenceFragmentBuffer(name: {string(b["name"])}, binding: {b["binding"]}, downsample: {b["downsample"]})' for b in row.get('buffers', []))
         passes = ', '.join(string(p) for p in row.get('passes', []))
         binding = row.get('reference_binding')

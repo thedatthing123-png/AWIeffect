@@ -127,3 +127,8 @@ New original effects are Liquid Lens Wipe and Voronoi Peel, in one registry/Meta
 Existing Fractal Warp gains X/Y restriction with XY as the unchanged default. Native point fields now display actual offset/stretch units; radial light handles convert between canvas and native coordinates. Abstract vectors do not receive misleading normalized-position crosshairs. No working transport controls, panels, projects, AI data/settings or Motion Sketch behavior were replaced.
 
 Local checks: Swift parsing, ten host-side translation contracts, complete XCTest shard inventory and graph dependency/binding checks. Only macOS CI can establish Metal compilation, actual rendering, workflow/UI results and screenshots. Pending native workflows are described separately rather than counted as imported effects.
+
+
+### Remainder batch (November 23; native validation pending)
+
+51 additional distinct public candidates are integrated (533 total browser entries, including the accepted recovery catalog). See REFERENCE_REMAINDER_BATCH.md for the inclusion decisions and native-host exclusions. The 547 internal fragment programs are not 547 new effects. Seven raymarch/camera scenes now pair Y-up coordinates with inverse CV sampling; ordinary programs retain their prior contract. The audit uses an asymmetric F marker and exports signed quarter-turn images for orient controls, plus still/moving renders and per-control reports. Sixteen host contract checks, Swift syntax parsing and complete shard inventory passed locally. Native Metal compilation, behavior, orientation review and release approval remain pending on the full CI run. No IPA is packaged by that run.

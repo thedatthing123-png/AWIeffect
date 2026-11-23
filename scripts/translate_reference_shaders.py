@@ -56,6 +56,31 @@ vec4 referenceColor;
 '''
 
 
+# These camera/raymarch shaders use the reference Y-up wrapper. Keep its
+# coordinate flip paired with CV texture sampling; flipping only the output
+# reverses camera angles and puts artwork upside down on projected surfaces.
+# Other reference programs retain their existing coordinate contract.
+Y_UP_SCENES = frozenset({
+    'monitor_on_table.xml', 'mystery_book.xml', 's3d-extrude.xml',
+    's3d-plus.xml', 's3d-starpoly.xml', 's3d-hexprism.xml', 's3d-triprism2.xml',
+})
+
+
+def shader_header(filename):
+    header = HEADER
+    if Path(filename).name in Y_UP_SCENES:
+        header = header.replace(
+            '#define acScreenNorm (gl_FragCoord.xy / refScreen.xy)',
+            '#define acScreenNorm (vec2(gl_FragCoord.x,refScreen.y-gl_FragCoord.y) / refScreen.xy)')
+        header = header.replace(
+            '#define acLayerNorm ((gl_FragCoord.xy-refLayer.xy)/refLayer.zw)',
+            '#define acLayerNorm (vec2((gl_FragCoord.x-refLayer.x)/refLayer.z,1.-(gl_FragCoord.y-refLayer.y)/refLayer.w))')
+        header = header.replace(
+            'return texture(source,uv);',
+            'return texture(source,vec2(uv.x,1.-uv.y));')
+    return header
+
+
 def pass_graph(root, available_ids=None):
     passes = root.findall('passes/pass')
     if not passes:
@@ -137,6 +162,18 @@ def translate(root, slug, images=None, filename='', external_ids=None):
     # executable text only: patching commented examples can introduce live code.
     code = re.sub(r'/\*.*?\*/|//[^\n]*', '', code, flags=re.S)
     basename = Path(filename).name
+    if basename == 'eye_split_bend.xml':
+        # Source endpoints were hardcoded for a 1920x1080 composition.
+        # Store normalized points so handles and defaults work at any size.
+        for point in root.findall('params/point'):
+            if point.get('id') in {'pointA', 'pointB'}:
+                point.set('default', '0.15,0.5' if point.get('id') == 'pointA' else '0.85,0.5')
+                point.set('min', '0,0'); point.set('max', '1,1')
+        code = re.sub(r'\b(pointA|pointB)\b', r'(\1*acScreenSize)', code)
+    if basename == 'fbm_time_displace_fade.xml':
+        code = code.replace('tex.a * (1.0 - (abs(modifiedTime) * 2.0 + fbm(uv * 3.0)))',
+                            '(1.0 - (abs(modifiedTime) * 2.0 + fbm(uv * 3.0)))')
+        code = code.replace('gl_FragColor = vec4(outRGB, 1.0);', 'gl_FragColor = tex * mask;')
     if basename == 'jpegquality.xml':
         code = 'const float split = 0.0;\n' + code
     if 'AC_ImageInfo' in code:
@@ -298,7 +335,7 @@ def translate(root, slug, images=None, filename='', external_ids=None):
     code, count = re.subn(r'\bvoid\s+main\s*\(\s*(?:void)?\s*\)', 'void referenceMain()', code)
     if count != 1:
         raise ValueError('missing or ambiguous main')
-    source = HEADER.replace('SLUG', slug).replace('FIELDS', '\n'.join(fields)).replace('IMAGEDECLS', '\n'.join(image_declarations)) + '\n'.join(aliases) + '\n' + code
+    source = shader_header(filename).replace('SLUG', slug).replace('FIELDS', '\n'.join(fields)).replace('IMAGEDECLS', '\n'.join(image_declarations)) + '\n'.join(aliases) + '\n' + code
     # ES permits identifiers that became reserved in Vulkan GLSL. Rename full
     # tokens, including uniform declarations, while retaining serialized IDs.
     # SPIRV-Cross lowers GLSL pow() to Metal powr(). A source variable

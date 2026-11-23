@@ -30,6 +30,20 @@ final class ReferenceFragmentAuditTests: XCTestCase {
             fixture[offset + 2] = Float16((1 - u * v) * alpha)
             fixture[offset + 3] = Float16(alpha)
         } }
+        // Asymmetric F-shaped marker: red top, green left, blue lower right.
+        // Perspective surfaces must preserve its handedness and uprightness.
+        for y in 20..<108 { for x in 24..<100 {
+            let vertical = x < 34
+            let top = y < 30
+            let middle = (54..<64).contains(y) && x < 78
+            if vertical || top || middle {
+                let offset=(y*size+x)*4
+                fixture[offset]=Float16(top ? 1.0 : 0.05)
+                fixture[offset+1]=Float16(vertical && !top ? 1.0 : 0.05)
+                fixture[offset+2]=Float16(middle && !vertical ? 1.0 : 0.05)
+                fixture[offset+3]=1
+            }
+        } }
         fixture.withUnsafeBytes { bytes in
             input.replace(region: MTLRegionMake2D(0, 0, size, size), mipmapLevel: 0, withBytes: bytes.baseAddress!, bytesPerRow: size * 8)
         }
@@ -125,6 +139,17 @@ final class ReferenceFragmentAuditTests: XCTestCase {
                             [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 0.25]] as CFDictionary)
                     }
                     XCTAssertTrue(CGImageDestinationFinalize(destination), definition.name)
+                    // Quarter turns expose sign/order and projected-texture
+                    // mirroring errors that a symmetric checkerboard hides.
+                    if definition.parameters.contains(where: { $0.definition.id == "orient_x" }) {
+                        try UIImage(cgImage:image(fixture)).pngData()?.write(to:folder.appendingPathComponent("orientation-source.png"))
+                        for axis in ["x","y","z"] { for angle in [-90.0,0.0,90.0] {
+                            var angles=preview
+                            for component in ["x","y","z"] { angles["orient_"+component] = .number(Animated(component == axis ? angle : 0)) }
+                            let pixels=try render(definition,overrides:angles)
+                            try UIImage(cgImage:image(pixels)).pngData()?.write(to:folder.appendingPathComponent(definition.id+"-"+axis+"-"+String(Int(angle))+".png"))
+                        } }
+                    }
                     var controlReport: [[String:Any]] = []
                     for parameter in definition.parameters {
                         guard case .number(let low,let high,_,_) = parameter.definition.kind else { continue }

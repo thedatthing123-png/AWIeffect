@@ -112,22 +112,22 @@ float4x4 referenceEuler(thread const float3& _degrees, thread const bool& invert
     float4x4 ry = float4x4(float4(c.y, 0.0, s.y, 0.0), float4(0.0, 1.0, 0.0, 0.0), float4(-s.y, 0.0, c.y, 0.0), float4(0.0, 0.0, 0.0, 1.0));
     float4x4 rz = float4x4(float4(c.z, -s.z, 0.0, 0.0), float4(s.z, c.z, 0.0, 0.0), float4(0.0, 0.0, 1.0, 0.0), float4(0.0, 0.0, 0.0, 1.0));
     float4x4 m = (rz * rx) * ry;
-    float4x4 _154;
+    float4x4 _159;
     if (inverted)
     {
-        _154 = transpose(m);
+        _159 = transpose(m);
     }
     else
     {
-        _154 = m;
+        _159 = m;
     }
-    return _154;
+    return _159;
 }
 
 static inline __attribute__((always_inline))
-void referenceVertexInit(constant ReferenceUniformse3dc893f46bd6& _283, thread float4x4& invOrient)
+void referenceVertexInit(constant ReferenceUniformse3dc893f46bd6& _288, thread float4x4& invOrient)
 {
-    float3 r = _283.rotate * 0.01745329983532428741455078125;
+    float3 r = _288.rotate * 0.01745329983532428741455078125;
     float3 param = float3(1.0, 0.0, 0.0);
     float param_1 = r.x;
     float4x4 rx = referenceVertex_rotationAxisAngle(param, param_1);
@@ -137,7 +137,7 @@ void referenceVertexInit(constant ReferenceUniformse3dc893f46bd6& _283, thread f
     float3 param_4 = float3(0.0, 0.0, 1.0);
     float param_5 = r.z;
     float4x4 rz = referenceVertex_rotationAxisAngle(param_4, param_5);
-    float3 param_6 = _283.orient_euler;
+    float3 param_6 = _288.orient_euler;
     bool param_7 = true;
     invOrient = ((referenceEuler(param_6, param_7) * rz) * rx) * ry;
 }
@@ -157,40 +157,40 @@ float opSmoothUnion(thread const float& d1, thread const float& d2, thread const
 }
 
 static inline __attribute__((always_inline))
-float dist(thread float3& p, constant ReferenceUniformse3dc893f46bd6& _283, thread float4x4& invOrient)
+float dist(thread float3& p, constant ReferenceUniformse3dc893f46bd6& _288, thread float4x4& invOrient)
 {
     float d = 100000000.0;
-    p -= (_283.position / float3(100.0));
+    p -= (_288.position / float3(100.0));
     p = (float4(p, 1.0) * invOrient).xyz;
-    float2 e = float2(_283.size - _283.ref_smooth, (_283.size * _283.ratio) - _283.ref_smooth);
+    float2 e = float2(_288.size - _288.ref_smooth, (_288.size * _288.ratio) - _288.ref_smooth);
     float3 param = p;
     float3 param_1 = e.xyy;
-    d = fast::min(d, sdBox(param, param_1) - _283.ref_smooth);
+    d = fast::min(d, sdBox(param, param_1) - _288.ref_smooth);
     float3 param_2 = p;
     float3 param_3 = e.yxy;
     float param_4 = d;
-    float param_5 = sdBox(param_2, param_3) - _283.ref_smooth;
-    float param_6 = _283.ref_smooth;
+    float param_5 = sdBox(param_2, param_3) - _288.ref_smooth;
+    float param_6 = _288.ref_smooth;
     d = opSmoothUnion(param_4, param_5, param_6);
     float3 param_7 = p;
     float3 param_8 = e.yyx;
     float param_9 = d;
-    float param_10 = sdBox(param_7, param_8) - _283.ref_smooth;
-    float param_11 = _283.ref_smooth;
+    float param_10 = sdBox(param_7, param_8) - _288.ref_smooth;
+    float param_11 = _288.ref_smooth;
     d = opSmoothUnion(param_9, param_10, param_11);
     return d;
 }
 
 static inline __attribute__((always_inline))
-float march(thread const float3& ro, thread const float3& rd, constant ReferenceUniformse3dc893f46bd6& _283, thread float4x4& invOrient)
+float march(thread const float3& ro, thread const float3& rd, constant ReferenceUniformse3dc893f46bd6& _288, thread float4x4& invOrient)
 {
     float d = 0.0;
-    for (int i = 0; i < int(_283.MAX_ITER); i++)
+    for (int i = 0; i < int(_288.MAX_ITER); i++)
     {
         float3 p = ro + (rd * d);
         float3 param = p;
-        float _477 = dist(param, _283, invOrient);
-        float dd = _477;
+        float _482 = dist(param, _288, invOrient);
+        float dd = _482;
         d += dd;
         if ((dd < 9.9999997473787516355514526367188e-06) || (d > 1000.0))
         {
@@ -201,45 +201,45 @@ float march(thread const float3& ro, thread const float3& rd, constant Reference
 }
 
 static inline __attribute__((always_inline))
-float3 calcNormal(thread const float3& p, constant ReferenceUniformse3dc893f46bd6& _283, thread float4x4& invOrient)
+float3 calcNormal(thread const float3& p, constant ReferenceUniformse3dc893f46bd6& _288, thread float4x4& invOrient)
 {
     float3 param = p;
-    float _500 = dist(param, _283, invOrient);
-    float d = _500;
+    float _505 = dist(param, _288, invOrient);
+    float d = _505;
     float2 e = float2(0.00999999977648258209228515625, 0.0);
     float3 param_1 = p - e.xyy;
-    float _510 = dist(param_1, _283, invOrient);
+    float _515 = dist(param_1, _288, invOrient);
     float3 param_2 = p - e.yxy;
-    float _516 = dist(param_2, _283, invOrient);
+    float _521 = dist(param_2, _288, invOrient);
     float3 param_3 = p - e.yyx;
-    float _522 = dist(param_3, _283, invOrient);
-    return fast::normalize(float3(d) - float3(_510, _516, _522));
+    float _527 = dist(param_3, _288, invOrient);
+    return fast::normalize(float3(d) - float3(_515, _521, _527));
 }
 
 static inline __attribute__((always_inline))
-float lighting(thread const float3& p, thread const float3& n, constant ReferenceUniformse3dc893f46bd6& _283)
+float lighting(thread const float3& p, thread const float3& n, constant ReferenceUniformse3dc893f46bd6& _288)
 {
-    float3 lightPos = float3(_283.lightDir.x / 2.0, (-_283.lightDir.y) / 2.0, (-_283.lightDepth) * 2.0);
+    float3 lightPos = float3(_288.lightDir.x / 2.0, (-_288.lightDir.y) / 2.0, (-_288.lightDepth) * 2.0);
     float3 l = fast::normalize(lightPos - p);
     return dot(n, l);
 }
 
 static inline __attribute__((always_inline))
-float2 mapTexture(thread float2& texCoord, constant ReferenceUniformse3dc893f46bd6& _283)
+float2 mapTexture(thread float2& texCoord, constant ReferenceUniformse3dc893f46bd6& _288)
 {
-    float texRad = _283.texAngle * 0.01745329983532428741455078125;
+    float texRad = _288.texAngle * 0.01745329983532428741455078125;
     float texCos = cos(texRad);
     float texSin = sin(texRad);
     float2x2 texRot = float2x2(float2(texCos, -texSin), float2(texSin, texCos));
-    float texTwirlRad = _283.texTwirl * 0.01745329983532428741455078125;
+    float texTwirlRad = _288.texTwirl * 0.01745329983532428741455078125;
     float texTwirlCos = cos(texTwirlRad);
     float texTwirlSin = sin(texTwirlRad);
     float2x2 texTwirlRot = float2x2(float2(texTwirlCos, -texTwirlSin), float2(texTwirlSin, texTwirlCos));
-    float2 texScaleVec = float2(1.0 / _283.texRepeatX, 1.0 / _283.texRepeatY);
+    float2 texScaleVec = float2(1.0 / _288.texRepeatX, 1.0 / _288.texRepeatY);
     texCoord *= texRot;
-    texCoord += (_283.texOffset / float2(1000.0));
+    texCoord += (_288.texOffset / float2(1000.0));
     texCoord /= texScaleVec;
-    if (_283.mirror != 0u)
+    if (_288.mirror != 0u)
     {
         texCoord = abs(mod(texCoord, float2(2.0)) - float2(1.0));
     }
@@ -248,8 +248,8 @@ float2 mapTexture(thread float2& texCoord, constant ReferenceUniformse3dc893f46b
         texCoord = mod(texCoord, float2(1.0));
     }
     texCoord -= float2(0.5);
-    texCoord *= (float2(1.0) - (float2(5.0) / _283.refScreen.xy));
-    texCoord *= _283.texCrop;
+    texCoord *= (float2(1.0) - (float2(5.0) / _288.refScreen.xy));
+    texCoord *= _288.texCrop;
     texCoord *= texTwirlRot;
     texCoord += float2(0.5);
     return texCoord;
@@ -258,75 +258,75 @@ float2 mapTexture(thread float2& texCoord, constant ReferenceUniformse3dc893f46b
 static inline __attribute__((always_inline))
 float4 texture2DCv(texture2d<float> source, sampler sourceSmplr, thread const float2& uv)
 {
-    return source.sample(sourceSmplr, uv);
+    return source.sample(sourceSmplr, float2(uv.x, 1.0 - uv.y));
 }
 
 static inline __attribute__((always_inline))
-float directionalLighting(thread const float3& p, thread const float3& n, constant ReferenceUniformse3dc893f46bd6& _283)
+float directionalLighting(thread const float3& p, thread const float3& n, constant ReferenceUniformse3dc893f46bd6& _288)
 {
-    float3 lightPos = float3(_283.lightDir.x / 2.0, (-_283.lightDir.y) / 2.0, (-_283.lightDepth) * 2.0);
+    float3 lightPos = float3(_288.lightDir.x / 2.0, (-_288.lightDir.y) / 2.0, (-_288.lightDepth) * 2.0);
     float3 l = fast::normalize(lightPos);
     return dot(n, l);
 }
 
 static inline __attribute__((always_inline))
-float4 applyShading(thread const float4& texColor, thread const float3& p, thread const float3& n, thread const float& d, constant ReferenceUniformse3dc893f46bd6& _283)
+float4 applyShading(thread const float4& texColor, thread const float3& p, thread const float3& n, thread const float& d, constant ReferenceUniformse3dc893f46bd6& _288)
 {
     float4 result = float4(0.0);
     float a = smoothstep(30.0, 9.0, d);
     a *= smoothstep(0.300000011920928955078125, 0.20000000298023223876953125, n.z);
-    if (_283.shadingType == 0)
+    if (_288.shadingType == 0)
     {
         result = texColor * a;
     }
     else
     {
-        if (_283.shadingType == 1)
+        if (_288.shadingType == 1)
         {
             float3 param = p;
             float3 param_1 = n;
-            float l = lighting(param, param_1, _283);
+            float l = lighting(param, param_1, _288);
             float3 tc = texColor.xyz;
-            float3 surface = (tc * _283.ambient) + (((tc * _283.lightColor.xyz) * l) * (1.0 - _283.ambient));
-            surface *= _283.lightIntensity;
-            float s = powr(l, _283.spec);
-            surface = mix(surface * (1.0 - (_283.shine * 0.100000001490116119384765625)), float3(1.0), float3(_283.shine * s));
+            float3 surface = (tc * _288.ambient) + (((tc * _288.lightColor.xyz) * l) * (1.0 - _288.ambient));
+            surface *= _288.lightIntensity;
+            float s = powr(l, _288.spec);
+            surface = mix(surface * (1.0 - (_288.shine * 0.100000001490116119384765625)), float3(1.0), float3(_288.shine * s));
             result = float4(surface, texColor.w) * a;
         }
         else
         {
-            if (_283.shadingType == 2)
+            if (_288.shadingType == 2)
             {
                 float3 param_2 = p;
                 float3 param_3 = n;
-                float l_1 = directionalLighting(param_2, param_3, _283);
+                float l_1 = directionalLighting(param_2, param_3, _288);
                 float3 tc_1 = texColor.xyz;
-                float3 surface_1 = (tc_1 * _283.ambient) + (((tc_1 * _283.lightColor.xyz) * l_1) * (1.0 - _283.ambient));
-                surface_1 *= _283.lightIntensity;
-                float s_1 = powr(l_1, _283.spec);
-                surface_1 = mix(surface_1 * (1.0 - (_283.shine * 0.100000001490116119384765625)), float3(1.0), float3(_283.shine * s_1));
+                float3 surface_1 = (tc_1 * _288.ambient) + (((tc_1 * _288.lightColor.xyz) * l_1) * (1.0 - _288.ambient));
+                surface_1 *= _288.lightIntensity;
+                float s_1 = powr(l_1, _288.spec);
+                surface_1 = mix(surface_1 * (1.0 - (_288.shine * 0.100000001490116119384765625)), float3(1.0), float3(_288.shine * s_1));
                 result = float4(surface_1, texColor.w) * a;
             }
             else
             {
-                if (_283.shadingType == 3)
+                if (_288.shadingType == 3)
                 {
-                    float ds = _283.size * 2.5;
-                    float dd = 1.0 - (((d - (_283.position / float3(100.0)).z) + (ds / 2.0)) / ds);
+                    float ds = _288.size * 2.5;
+                    float dd = 1.0 - (((d - (_288.position / float3(100.0)).z) + (ds / 2.0)) / ds);
                     result = float4(dd, dd, dd, 1.0) * a;
                 }
                 else
                 {
-                    if (_283.shadingType == 4)
+                    if (_288.shadingType == 4)
                     {
                         result = float4((n / float3(2.0)) + float3(0.5), 1.0) * a;
                     }
                     else
                     {
-                        if (_283.shadingType == 5)
+                        if (_288.shadingType == 5)
                         {
-                            float ds_1 = _283.size * 2.5;
-                            float dd_1 = 1.0 - (((d - (_283.position / float3(100.0)).z) + (ds_1 / 2.0)) / ds_1);
+                            float ds_1 = _288.size * 2.5;
+                            float dd_1 = 1.0 - (((d - (_288.position / float3(100.0)).z) + (ds_1 / 2.0)) / ds_1);
                             result = float4(((n / float3(2.0)) + float3(0.5)) * dd_1, 1.0) * a;
                         }
                     }
@@ -338,32 +338,32 @@ float4 applyShading(thread const float4& texColor, thread const float3& p, threa
 }
 
 static inline __attribute__((always_inline))
-void referenceMain(constant ReferenceUniformse3dc893f46bd6& _283, thread float4x4& invOrient, thread float4& gl_FragCoord, texture2d<float> refInput, sampler refInputSmplr, thread float4& referenceColor)
+void referenceMain(constant ReferenceUniformse3dc893f46bd6& _288, thread float4x4& invOrient, thread float4& gl_FragCoord, texture2d<float> refInput, sampler refInputSmplr, thread float4& referenceColor)
 {
-    referenceVertexInit(_283, invOrient);
-    float2 st = (gl_FragCoord.xy - _283.refLayer.xy) / _283.refLayer.zw;
+    referenceVertexInit(_288, invOrient);
+    float2 st = float2((gl_FragCoord.x - _288.refLayer.x) / _288.refLayer.z, 1.0 - ((gl_FragCoord.y - _288.refLayer.y) / _288.refLayer.w));
     st -= float2(0.5);
-    st.x *= (_283.refLayer.z / _283.refLayer.w);
-    st /= float2(_283.scale);
+    st.x *= (_288.refLayer.z / _288.refLayer.w);
+    st /= float2(_288.scale);
     float3 ro = float3(0.0, 1.0, -1.0);
     float3 rd = fast::normalize(float3(st, 1.0));
     float3 param = ro;
     float3 param_1 = rd;
-    float d = march(param, param_1, _283, invOrient);
+    float d = march(param, param_1, _288, invOrient);
     float3 p = ro + (rd * d);
     float3 param_2 = p;
-    float3 n = calcNormal(param_2, _283, invOrient);
+    float3 n = calcNormal(param_2, _288, invOrient);
     float3 nn = n;
     float3 param_3 = p;
     float3 param_4 = n;
-    float l = lighting(param_3, param_4, _283);
-    float4 localCoord = float4(p - (_283.position / float3(100.0)), 1.0);
+    float l = lighting(param_3, param_4, _288);
+    float4 localCoord = float4(p - (_288.position / float3(100.0)), 1.0);
     n = (float4(n, 1.0) * invOrient).xyz;
     localCoord *= invOrient;
     float4 pp = localCoord;
-    if (_283.texStretch != 0u)
+    if (_288.texStretch != 0u)
     {
-        pp /= float4(_283.size, _283.size, _283.size, 1.0);
+        pp /= float4(_288.size, _288.size, _288.size, 1.0);
     }
     float2 texCoord;
     if (n.x > 0.5)
@@ -413,34 +413,34 @@ void referenceMain(constant ReferenceUniformse3dc893f46bd6& _283, thread float4x
         }
     }
     float2 param_5 = texCoord;
-    float2 _1127 = mapTexture(param_5, _283);
-    texCoord = _1127;
-    float2 param_6 = (float4(texCoord, 0.0, 1.0) * _283.refLayerToScreen).xy;
+    float2 _1141 = mapTexture(param_5, _288);
+    texCoord = _1141;
+    float2 param_6 = (float4(texCoord, 0.0, 1.0) * _288.refLayerToScreen).xy;
     float4 texColor = texture2DCv(refInput, refInputSmplr, param_6);
     float4 param_7 = texColor;
     float3 param_8 = p;
     float3 param_9 = nn;
     float param_10 = d;
-    referenceColor = applyShading(param_7, param_8, param_9, param_10, _283);
+    referenceColor = applyShading(param_7, param_8, param_9, param_10, _288);
 }
 
-fragment refAM35_e3dc893f46bd6_out refAM35_e3dc893f46bd6(constant ReferenceUniformse3dc893f46bd6& _283 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
+fragment refAM35_e3dc893f46bd6_out refAM35_e3dc893f46bd6(constant ReferenceUniformse3dc893f46bd6& _288 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
 {
     refAM35_e3dc893f46bd6_out out = {};
     float4 referenceColor = float4(0.0);
     float4x4 invOrient;
-    referenceMain(_283, invOrient, gl_FragCoord, refInput, refInputSmplr, referenceColor);
-    bool _1156 = any(isnan(referenceColor));
-    bool _1163;
-    if (!_1156)
+    referenceMain(_288, invOrient, gl_FragCoord, refInput, refInputSmplr, referenceColor);
+    bool _1170 = any(isnan(referenceColor));
+    bool _1177;
+    if (!_1170)
     {
-        _1163 = any(isinf(referenceColor));
+        _1177 = any(isinf(referenceColor));
     }
     else
     {
-        _1163 = _1156;
+        _1177 = _1170;
     }
-    if (_1163)
+    if (_1177)
     {
         referenceColor = float4(0.0);
     }
@@ -449,11 +449,11 @@ fragment refAM35_e3dc893f46bd6_out refAM35_e3dc893f46bd6(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
-    float4 _1176 = referenceColor;
-    float3 _1182 = fast::clamp(_1176.xyz, float3(-65504.0), float3(65504.0));
-    referenceColor.x = _1182.x;
-    referenceColor.y = _1182.y;
-    referenceColor.z = _1182.z;
+    float4 _1190 = referenceColor;
+    float3 _1196 = fast::clamp(_1190.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _1196.x;
+    referenceColor.y = _1196.y;
+    referenceColor.z = _1196.z;
     out.finalColor = referenceColor;
     return out;
 }

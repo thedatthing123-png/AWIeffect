@@ -188,18 +188,18 @@ float getShadow(thread const float3& p, thread const float3& l, thread const flo
 }
 
 static inline __attribute__((always_inline))
-void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformse52053df16be1& _406, texture2d<float> refInput, sampler refInputSmplr, thread float4& referenceColor)
+void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformse52053df16be1& _407, texture2d<float> refInput, sampler refInputSmplr, thread float4& referenceColor)
 {
-    float2 uv = (gl_FragCoord.xy / _406.refScreen.xy) - float2(0.5);
-    uv.x *= (_406.refLayer.z / _406.refLayer.w);
-    float d = 4.0 / _406.zoom;
+    float2 uv = (float2(gl_FragCoord.x, _407.refScreen.y - gl_FragCoord.y) / _407.refScreen.xy) - float2(0.5);
+    uv.x *= (_407.refLayer.z / _407.refLayer.w);
+    float d = 4.0 / _407.zoom;
     float3 pivot = float3(0.0, 1.25, 0.0);
     float3 camPos = float3(0.0, 0.5, -d);
-    float param = _406.rotation;
-    float3 _442 = camPos;
-    float2 _444 = _442.xz * Rot(param);
-    camPos.x = _444.x;
-    camPos.z = _444.y;
+    float param = _407.rotation;
+    float3 _449 = camPos;
+    float2 _451 = _449.xz * Rot(param);
+    camPos.x = _451.x;
+    camPos.z = _451.y;
     camPos += pivot;
     float3 lookAt = pivot;
     float3 f = fast::normalize(lookAt - camPos);
@@ -281,22 +281,22 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformse52053
     referenceColor = float4(col, 1.0);
 }
 
-fragment refAM35_e52053df16be1_out refAM35_e52053df16be1(constant ReferenceUniformse52053df16be1& _406 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
+fragment refAM35_e52053df16be1_out refAM35_e52053df16be1(constant ReferenceUniformse52053df16be1& _407 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
 {
     refAM35_e52053df16be1_out out = {};
     float4 referenceColor = float4(0.0);
-    referenceMain(gl_FragCoord, _406, refInput, refInputSmplr, referenceColor);
-    bool _668 = any(isnan(referenceColor));
-    bool _675;
-    if (!_668)
+    referenceMain(gl_FragCoord, _407, refInput, refInputSmplr, referenceColor);
+    bool _675 = any(isnan(referenceColor));
+    bool _682;
+    if (!_675)
     {
-        _675 = any(isinf(referenceColor));
+        _682 = any(isinf(referenceColor));
     }
     else
     {
-        _675 = _668;
+        _682 = _675;
     }
-    if (_675)
+    if (_682)
     {
         referenceColor = float4(0.0);
     }
@@ -305,11 +305,11 @@ fragment refAM35_e52053df16be1_out refAM35_e52053df16be1(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
-    float4 _688 = referenceColor;
-    float3 _694 = fast::clamp(_688.xyz, float3(-65504.0), float3(65504.0));
-    referenceColor.x = _694.x;
-    referenceColor.y = _694.y;
-    referenceColor.z = _694.z;
+    float4 _695 = referenceColor;
+    float3 _701 = fast::clamp(_695.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _701.x;
+    referenceColor.y = _701.y;
+    referenceColor.z = _701.z;
     out.finalColor = referenceColor;
     return out;
 }
