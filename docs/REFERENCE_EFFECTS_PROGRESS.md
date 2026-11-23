@@ -1,5 +1,9 @@
 # Reference-led effect expansion — November 19
 
+## Hit mapping and switch follow-up
+
+Run 45107522602 passed the dot control check, but group opening still failed; a one-tap motion-blur UI check also failed. The captured group touches were at x=167, before the offset colored clip, inside the row's actual full-track single-tap hit area. Container frame reporting now covers that same track row rather than only the colored rectangle. Test-only tracing also records reported row frames. The motion-blur toggles keep their native visual design and independent settings, using a UISwitch bridge with its own exact accessibility/touch bounds and tappable label. Assertions remain unchanged; focused CI verification is pending.
+
 ## Second focused follow-up
 
 Run 45103689579 still failed the same two assertions. Its screenshot confirms that the group is selected but remains unopened. The window observer now explicitly cannot be prevented by (or prevent) the immediate row/hold recognizers; test-only `/tmp/awi-ui/container-touch-trace.txt` records attachment, hit resolution and recognition for the next run. Threshold Softness now changes the actual luminance transition width from zero to the Fade value, preserving midtones and giving the full control range a useful response. The existing numeric threshold and group UI test remain unchanged. Native verification is pending.

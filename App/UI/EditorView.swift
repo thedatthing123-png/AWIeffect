@@ -126,7 +126,10 @@ struct EditorView: View {
             }, open: { id in state.openTimelineContainer(id) })
         }
         .onDisappear { containerTapMonitor.detach() }
-        .onPreferenceChange(TimelineContainerFramesKey.self) { state.timelineContainerFrames = $0 }
+        .onPreferenceChange(TimelineContainerFramesKey.self) {
+            state.timelineContainerFrames = $0
+            containerTapMonitor.recordFrames($0)
+        }
         .environmentObject(drawLauncher)
         .environmentObject(cutoutSession)
         // Every slider in the editor keeps its edits live while dragging (smooth, no full-editor rebuilds).

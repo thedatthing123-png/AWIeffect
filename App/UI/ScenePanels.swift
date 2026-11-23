@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - Scene (project) settings
 
@@ -196,7 +197,7 @@ struct MotionBlurPanel: View {
                         }, set: { b in
                             state.setSelectedMotionBlur(b)
                         }))
-                        .accessibilityIdentifier("selected-layer-motion-blur")
+                        .toggleStyle(MotionBlurSwitchStyle(identifier:"selected-layer-motion-blur",label:l.content == .camera ? "Camera Motion Blur" : "Motion Blur"))
                         .font(.system(size: 15, weight: .bold)).tint(Theme.accent).foregroundStyle(Theme.text)
                         Text(l.content == .camera
                              ? "Blur layers seen through this camera. Layers marked Keep Sharp remain sharp."
@@ -205,7 +206,7 @@ struct MotionBlurPanel: View {
                         Toggle("Every layer", isOn: Binding(get: { p.blurAllLayers }, set: { b in
                             state.mutate("Blur Every Layer") { $0.blurAllLayers = b; if b { $0.motionBlurEnabled = true } }
                         }))
-                        .accessibilityIdentifier("blur-every-layer")
+                        .toggleStyle(MotionBlurSwitchStyle(identifier:"blur-every-layer",label:"Every layer"))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
                         if l.content != .camera, p.blurAllLayers { layerRow(l, p) }
                         if !p.motionBlurEnabled {
@@ -338,5 +339,44 @@ struct TimePanel: View {
             Text(t).font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 70, alignment: .leading)
             ValueScrubber(value: v, range: r, step: fmt.contains(".2f") ? 0.01 : 1, unit: fmt.hasSuffix("s") ? "s" : (fmt.contains("%%") ? "%" : ""), onChange: set)
         }
+    }
+}
+
+/// Keep the touch/accessibility frame on the actual switch, rather than the
+/// full-width SwiftUI label/control wrapper. The label remains tappable too.
+private struct MotionBlurSwitchStyle: ToggleStyle {
+    let identifier: String
+    let label: String
+    func makeBody(configuration: Configuration) -> some View {
+        HStack {
+            configuration.label.frame(maxWidth:.infinity,alignment:.leading)
+                .contentShape(Rectangle()).onTapGesture { configuration.isOn.toggle() }
+            MotionBlurNativeSwitch(isOn:configuration.$isOn,identifier:identifier,label:label)
+                .frame(width:51,height:31)
+        }.frame(minHeight:44)
+    }
+}
+private struct MotionBlurNativeSwitch: UIViewRepresentable {
+    @Binding var isOn: Bool
+    let identifier: String
+    let label: String
+    func makeCoordinator() -> Coordinator { Coordinator(value:$isOn) }
+    func makeUIView(context: Context) -> UISwitch {
+        let view=UISwitch()
+        view.onTintColor=UIColor(Theme.accent)
+        view.accessibilityIdentifier=identifier
+        view.accessibilityLabel=label
+        view.addTarget(context.coordinator,action:#selector(Coordinator.changed(_:)),for:.valueChanged)
+        return view
+    }
+    func updateUIView(_ view: UISwitch, context: Context) {
+        context.coordinator.value=$isOn
+        view.setOn(isOn,animated:false)
+        view.accessibilityIdentifier=identifier
+    }
+    final class Coordinator: NSObject {
+        var value: Binding<Bool>
+        init(value: Binding<Bool>) { self.value=value }
+        @objc func changed(_ sender: UISwitch) { value.wrappedValue=sender.isOn }
     }
 }

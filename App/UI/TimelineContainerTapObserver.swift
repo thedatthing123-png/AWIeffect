@@ -55,6 +55,7 @@ final class TimelineContainerTapMonitor: NSObject, ObservableObject, UIGestureRe
         removeRecognizer()
         resolve={ _ in nil }; open={ _ in }
     }
+    func recordFrames(_ frames: [UUID: CGRect]) { trace("row frames \(frames)") }
     private func trace(_ message: String) {
         #if DEBUG
         guard ProcessInfo.processInfo.arguments.contains("-uiTesting-containerInteractions") else { return }

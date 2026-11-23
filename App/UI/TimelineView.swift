@@ -484,14 +484,6 @@ struct TimelineView: View, Equatable {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(layer.name)
                 .accessibilityIdentifier("timeline-clip-\(layer.name)")
-                .background {
-                    if layer.isGroup || { if case .precomp = layer.content { return true }; return false }() {
-                        GeometryReader { geometry in
-                            Color.clear.preference(key: TimelineContainerFramesKey.self,
-                                                   value: [layer.id: geometry.frame(in: .global).intersection(viewport)])
-                        }
-                    }
-                }
                 // Hold a clip to lift it: up / down reorders, sideways moves it in time (snaps to frames, beats, playhead).
 
                 .offset(x: x0, y: 4)
@@ -545,6 +537,16 @@ struct TimelineView: View, Equatable {
                     ForEach(state.propertyLaneCache.markers(layer, effect: effect), id: \.id) { marker in
                         keyMarker(layer, marker.time, offset: offset, color: EditorState.focusColors[k % EditorState.focusColors.count], effect: effect)
                     }
+                }
+            }
+        }
+        .background {
+            if layer.isGroup || { if case .precomp = layer.content { return true }; return false }() {
+                GeometryReader { geometry in
+                    // Match the row's actual single-tap target, including the
+                    // track before/after its offset clip; exclude the header.
+                    Color.clear.preference(key: TimelineContainerFramesKey.self,
+                                           value: [layer.id: geometry.frame(in: .global).intersection(viewport)])
                 }
             }
         }
