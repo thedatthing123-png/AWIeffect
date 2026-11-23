@@ -121,9 +121,7 @@ struct EditorView: View {
         .background(Theme.background.ignoresSafeArea())
         .background(TimelineContainerTapObserver(resolve: { point in
             state.timelineContainerFrames.first(where: { $0.value.contains(point) })?.key
-        }, complete: { point, timestamp, container in
-            state.observeTimelineWindowTap(point: Vec2(Double(point.x), Double(point.y)), timestamp: timestamp, container: container)
-        },cancel:{ state.cancelTimelineWindowTap() }).allowsHitTesting(false))
+        }, open: { id in state.openTimelineContainer(id) }).allowsHitTesting(false))
         .onPreferenceChange(TimelineContainerFramesKey.self) { state.timelineContainerFrames = $0 }
         .environmentObject(drawLauncher)
         .environmentObject(cutoutSession)

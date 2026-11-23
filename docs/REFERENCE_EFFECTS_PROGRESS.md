@@ -1,5 +1,11 @@
 # Reference-led effect expansion — November 19
 
+## Validation repair — November 22
+
+Run 45070426688 passed native compilation and both text shards, but failed core/effects/render/UI checks. Repairs normalize WebP-as-PNG texture payloads, omit nonexistent source iteration controls (single-pass fallback), provide an exact zero-tint Glass Spheres bypass, and clear RGB when exported alpha quantizes to zero. Wave Dot Display retains continuous midtones before Decay; Film Damage Dots defaults are visibly sized and its Flicker fixture uses a dense dust field. Liquid Lens dispersion has a wider optical separation. Existing numeric-control thresholds and original group UI assertions are retained.
+
+The group opener uses a simultaneous window-level UIKit double-tap recognizer that captures the first container before row/panel reflow. Local parsing, 12 host contract tests and test-shard coverage pass. Native rendering and group interaction remain pending the next full CI run; do not mark them fixed in a release until that run proves it.
+
 ## Current checkpoint — November 22
 
 The complete available pixel-shader import is implemented on `feat/reference-effects`, pending native validation. It contains **547 internal programs: 513 active definitions plus 34 required legacy dependency stages**. Legacy stages remain private. The other **47 definitions need native animation/vector/text or host-selected multi-shader mapping**; see `REFERENCE_NATIVE_WORKFLOWS.md`. These counts are not counts of new browser effects.

@@ -45,6 +45,9 @@ struct ReferenceFragmentDefinition {
         var result=EffectDefinition(id: id, name: name, category: category, aeMatchNames: [], summary: summary,
             params: parameters.map(\.definition), stage: .pixels { context in
                 if self.referenceBinding != nil && context.reference == nil { return context.input }
+                if self.id == "awi.amref.e4dc1ec616108",
+                   let tint = context.effect.params["ballColor"] ?? self.parameters.first(where: { $0.definition.id == "ballColor" })?.definition.defaultValue,
+                   tint.color(at:context.time).a <= 0 { return context.input }
                 return context.gpu.referenceFragments.render(self, context)
             })
         if id == "awi.amref.e7b0d60717ad7" {

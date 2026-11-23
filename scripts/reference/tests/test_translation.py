@@ -1,5 +1,6 @@
 """Host-side contract checks; native Metal/render checks remain in XCTest."""
 import unittest
+from pathlib import Path
 import xml.etree.ElementTree as ET
 from scripts.translate_reference_shaders import translate, dependency_files
 from scripts.prepare_reference_import import parameter
@@ -11,6 +12,13 @@ def effect(params, shader, extra=''):
 
 
 class TranslationTests(unittest.TestCase):
+    def test_bundled_reference_pngs_have_png_payloads(self):
+        assets=Path(__file__).resolve().parents[3] / 'Resources' / 'ReferenceTextures'
+        files=list(assets.glob('*.png'))
+        self.assertTrue(files)
+        for path in files:
+            self.assertEqual(path.read_bytes()[:8], b'\x89PNG\r\n\x1a\n', path.name)
+
     def test_legacy_render_dependencies_are_resolved_transitively(self):
         roots={
             'a.xml':ET.fromstring('<effect id="a"><passes><pass effect="b"/></passes></effect>'),

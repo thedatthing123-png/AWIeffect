@@ -254,7 +254,21 @@ final class EffectTests: XCTestCase {
                     // Density is the glitch-block grid; RGB fields are the
                     // single-color dot mode, not the source-color mode.
                     if pd.id == "density" { a.params["preset"] = .choice(5); b.params["preset"] = .choice(5) }
+                    if ["range", "decay"].contains(pd.id) {
+                        a.params["cutoff"] = .number(Animated(0.15)); b.params["cutoff"] = .number(Animated(0.15))
+                        a.params["range"] = .number(Animated(1)); b.params["range"] = .number(Animated(1))
+                    }
+                    if pd.id == "generators" {
+                        a.params["distortion"] = .number(Animated(4)); b.params["distortion"] = .number(Animated(4))
+                        a.params["compress"] = .number(Animated(3)); b.params["compress"] = .number(Animated(3))
+                    }
                     if ["colorR", "colorG", "colorB"].contains(pd.id) { a.params["colorMode"] = .choice(1); b.params["colorMode"] = .choice(1) }
+                }
+                if d.id == "awi.amref.e3418485b643b", pd.id == "flicker" {
+                    // A large, dense dust field exercises flicker rather than
+                    // depending on one tiny mark in the 128px test scene.
+                    a.params["density"] = .number(Animated(800)); b.params["density"] = .number(Animated(800))
+                    a.params["dotSize"] = .number(Animated(10)); b.params["dotSize"] = .number(Animated(10))
                 }
                 if d.id == "awi.amref.e7b0d60717ad7", pd.id == "quality" {
                     // Accuracy affects accumulated soft shadow coverage. A

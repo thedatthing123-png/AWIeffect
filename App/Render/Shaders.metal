@@ -228,7 +228,9 @@ kernel void compToBGRA(texture2d<half, access::read> comp [[texture(0)]],
     float n1 = fract(sin(dot(g, float2(12.9898, 78.233))) * 43758.5453);
     float n2 = fract(sin(dot(g, float2(39.3468, 11.1351))) * 24634.6345);
     rgb = clamp(rgb + (dither != 0u ? (n1 + n2 - 1.0) / 255.0 : 0.0), 0.0, 1.0);
-    if (preserveAlpha != 0u && alpha == 0.0) rgb = float3(0.0);
+    // An alpha smaller than half an 8-bit step rounds to zero in the target.
+    // Clear its straight RGB too, so exported invisible pixels carry no fringe.
+    if (preserveAlpha != 0u && alpha < 0.5 / 255.0) rgb = float3(0.0);
     outTex.write(half4(half3(rgb), half(preserveAlpha != 0u ? alpha : 1.0)), gid);
 }
 

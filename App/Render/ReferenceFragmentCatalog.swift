@@ -1319,7 +1319,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 23, choiceValues: [0, 3, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.eef0730511250", name: "2D Grass", summary: "Wind-driven procedural grass blades with editable density, growth, stretch and colors, using the complete inherited shader stage.",
             category: .generate, function: "refAM35_eef0730511250", slots: 24,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.instantgrass", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e696e7374616e746772617373"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.instantgrass", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e696e7374616e746772617373"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eaeaf49f44c73() -> ReferenceFragmentDefinition {
@@ -1384,7 +1384,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 0), slot: 23, choiceValues: [0, 3, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.efc580f636abc", name: "Random LightSaber", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_efc580f636abc", slots: 24,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.lightsaber", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6c696768747361626572"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.lightsaber", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6c696768747361626572"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef17257e3434e() -> ReferenceFragmentDefinition {
@@ -1423,7 +1423,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("adaptive", "Adaptive to Layer", true), slot: 29))
         return ReferenceFragmentDefinition(id: "awi.amref.e9fb4203c1389", name: "3D Seascape", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e9fb4203c1389", slots: 30,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.seascape", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7365617363617065"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.seascape", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7365617363617065"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e6e18bbe3f759() -> ReferenceFragmentDefinition {
@@ -1938,7 +1938,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 0), slot: 20, choiceValues: [0, 3, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.ead6e335ee83d", name: "Wings Line", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ead6e335ee83d", slots: 21,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.wingsline", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e77696e67736c696e65"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.wingsline", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e77696e67736c696e65"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e31cec718c9c3() -> ReferenceFragmentDefinition {
@@ -2466,7 +2466,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .toggle("bcolor", "Blue Offset", false), slot: 27))
         return ReferenceFragmentDefinition(id: "awi.amref.eb54b9b7ba7f0", name: "Glitch Blocks", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_eb54b9b7ba7f0", slots: 28,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.newoffsetglitch", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6e65776f6666736574676c69746368"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.newoffsetglitch", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6e65776f6666736574676c69746368"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e7517f325885d() -> ReferenceFragmentDefinition {
@@ -2829,7 +2829,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 30, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.eff35e38bd9ec", name: "Retro Grid and Sun", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_eff35e38bd9ec", slots: 31,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.fuji", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e66756a69"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.fuji", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e66756a69"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e3ba2e31e4cc1() -> ReferenceFragmentDefinition {
@@ -3184,7 +3184,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 14, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ecb1990cb8e5f", name: "Sharpen V3", summary: "Internal reference shader for comparison and adapter validation.",
             category: .blur, function: "refAM35_ecb1990cb8e5f", slots: 15,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.sharpenv3", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7368617270656e7633"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.sharpenv3", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7368617270656e7633"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9e78f72e74ef() -> ReferenceFragmentDefinition {
@@ -4311,7 +4311,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("XXC", "Scale Animation", 100.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 28, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e772b68314f0d", name: "Plexus Faces", summary: "An evolving triangular plexus field with separate motion, rotation and color controls.",
             category: .generate, function: "refAM35_e772b68314f0d", slots: 29,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.plexustriangle", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e706c65787573747269616e676c65"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.plexustriangle", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e706c65787573747269616e676c65"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef17fae31f9b4() -> ReferenceFragmentDefinition {
@@ -4389,7 +4389,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 20, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e6b5bf0e6539d", name: "Surface Waterwave", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e6b5bf0e6539d", slots: 21,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.waterwave", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e776174657277617665"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.waterwave", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e776174657277617665"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ef2888d105ad3() -> ReferenceFragmentDefinition {
@@ -4635,7 +4635,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 24, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e2236f1691530", name: "Dots Spinner", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e2236f1691530", slots: 25,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.dotsloader", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e646f74736c6f61646572"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.dotsloader", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e646f74736c6f61646572"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9ce9204922a1() -> ReferenceFragmentDefinition {
@@ -4738,7 +4738,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 37, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e4f0ab48c1424", name: "Mixer HSL", summary: "Internal reference shader for comparison and adapter validation.",
             category: .color, function: "refAM35_e4f0ab48c1424", slots: 38,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.hsl", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e68736c"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.hsl", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e68736c"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e9493bb625413() -> ReferenceFragmentDefinition {
@@ -4857,7 +4857,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "SCREEN"], 1), slot: 26, choiceValues: [0, 1]))
         return ReferenceFragmentDefinition(id: "awi.amref.e38a4c9012d33", name: "Bubble", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e38a4c9012d33", slots: 27,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.bubble", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e627562626c65"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.bubble", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e627562626c65"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e590db1c1e3be() -> ReferenceFragmentDefinition {
@@ -4923,7 +4923,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 23, choiceValues: [0, 3, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.ead4fd5807e6b", name: "Bonfire", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ead4fd5807e6b", slots: 24,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.bonfire", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e626f6e66697265"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.bonfire", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e626f6e66697265"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea601aa767c60() -> ReferenceFragmentDefinition {
@@ -5098,7 +5098,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 26, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.eb739822f4bca", name: "Point Tunnel", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_eb739822f4bca", slots: 27,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.pointunnel", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e706f696e74756e6e656c"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.pointunnel", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e706f696e74756e6e656c"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eab6572d7c425() -> ReferenceFragmentDefinition {
@@ -5304,7 +5304,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "MULTIPLY", "SCREEN", "LAYER"], 3), slot: 32, choiceValues: [0, 1, 2, 3]))
         return ReferenceFragmentDefinition(id: "awi.amref.ea162bb012e3b", name: "Hex Lens", summary: "A raymarched hexagonal lens field with orientation, reflection highlights and flare controls.",
             category: .generate, function: "refAM35_ea162bb012e3b", slots: 33,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.hexagonlens", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e68657861676f6e6c656e73"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.hexagonlens", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e68657861676f6e6c656e73"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e6098f47050c7() -> ReferenceFragmentDefinition {
@@ -5319,7 +5319,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 18, choiceValues: [0, 3, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e6098f47050c7", name: "Fade Noise", summary: "Internal reference shader for comparison and adapter validation.",
             category: .keying, function: "refAM35_e6098f47050c7", slots: 19,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.noisefade", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6e6f69736566616465"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.noisefade", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6e6f69736566616465"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e23c60d3376d8() -> ReferenceFragmentDefinition {
@@ -5389,7 +5389,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 0), slot: 30, choiceValues: [0, 3, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e4ec48e14972e", name: "Cosmic Starfield", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e4ec48e14972e", slots: 31,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.cosmicycles", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e636f736d696379636c6573"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.cosmicycles", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e636f736d696379636c6573"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_edd9730a273e2() -> ReferenceFragmentDefinition {
@@ -5457,7 +5457,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e0f1ffcd1d80c", name: "Rainy Screen", summary: "Internal reference shader for comparison and adapter validation.",
             category: .distort, function: "refAM35_e0f1ffcd1d80c", slots: 19,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.rainyfalls", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7261696e7966616c6c73"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.rainyfalls", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7261696e7966616c6c73"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eb060c3395f8c() -> ReferenceFragmentDefinition {
@@ -5859,7 +5859,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 26, choiceValues: [0, 3, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e21ccdcaf0ae5", name: "Sky Clouds", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e21ccdcaf0ae5", slots: 27,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.2dclouds", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e3264636c6f756473"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.2dclouds", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e3264636c6f756473"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eeb60ef76554d() -> ReferenceFragmentDefinition {
@@ -7023,7 +7023,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blend Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 0), slot: 25, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e0549745d4c9d", name: "New Startrails", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e0549745d4c9d", slots: 26,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.newtrails", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6e6577747261696c73"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.newtrails", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6e6577747261696c73"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_eccd079f37be9() -> ReferenceFragmentDefinition {
@@ -7083,9 +7083,9 @@ enum ReferenceFragmentCatalog {
     private static func make_e3418485b643b() -> ReferenceFragmentDefinition {
         var parameters: [ReferenceFragmentParameter] = []
         parameters.append(ReferenceFragmentParameter(definition: .color("dotColor", "Dot Color", RGBA(0.8156862745098039, 0.7803921568627451, 0.6901960784313725, 1.0)), slot: 11))
-        parameters.append(ReferenceFragmentParameter(definition: .number("dotSize", "Dot Size (px)", 3.0, 0.5, 100.0, step: 0.1), slot: 12))
+        parameters.append(ReferenceFragmentParameter(definition: .number("dotSize", "Dot Size (px)", 5.0, 0.5, 100.0, step: 0.1), slot: 12))
         parameters.append(ReferenceFragmentParameter(definition: .number("softness", "Softness", 0.0, 0.0, 1.0, step: 0.01), slot: 13))
-        parameters.append(ReferenceFragmentParameter(definition: .number("density", "Density (per 1000x1000)", 120.0, 0.0, 800.0, step: 1.0), slot: 14))
+        parameters.append(ReferenceFragmentParameter(definition: .number("density", "Density (per 1000x1000)", 400.0, 0.0, 800.0, step: 1.0), slot: 14))
         parameters.append(ReferenceFragmentParameter(definition: .number("opacity", "Dot Opacity", 0.8, 0.0, 1.0, step: 0.01), slot: 15))
         parameters.append(ReferenceFragmentParameter(definition: .number("speed", "Drift Speed", 0.2, 0.0, 5.0, step: 0.01), slot: 16))
         parameters.append(ReferenceFragmentParameter(definition: .number("flicker", "Flicker", 0.0, 0.0, 1.0, step: 0.01), slot: 17))
@@ -7291,7 +7291,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 35.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 18, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e89a1eb7a5666", name: "Raindrops Floor", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e89a1eb7a5666", slots: 19,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.raindropsfloor", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7261696e64726f7073666c6f6f72"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.raindropsfloor", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7261696e64726f7073666c6f6f72"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ebbe5a37d5059() -> ReferenceFragmentDefinition {
@@ -7388,7 +7388,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 31, choiceValues: [0, 3, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e4881aa2b86ec", name: "2DTunnel V2", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e4881aa2b86ec", slots: 32,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.2Dtunnelv2", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e324474756e6e656c7632"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.2Dtunnelv2", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e324474756e6e656c7632"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e25b952116050() -> ReferenceFragmentDefinition {
@@ -7409,7 +7409,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("alpha", "Alpha", 100.0, 0.0, 100.0, step: 1.0, unit: "%"), slot: 12, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.e93b2f3664b11", name: "Brush Sketch", summary: "Internal reference shader for comparison and adapter validation.",
             category: .stylize, function: "refAM35_e93b2f3664b11", slots: 13,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.brushsketch", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6272757368736b65746368"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.brushsketch", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6272757368736b65746368"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea3dde846bc3a() -> ReferenceFragmentDefinition {
@@ -7766,7 +7766,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 25, choiceValues: [0, 3, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.ecca4f087003b", name: "Vortex Dust", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ecca4f087003b", slots: 26,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.vortextdust", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e766f727465787464757374"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.vortextdust", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e766f727465787464757374"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e748e5aade0a7() -> ReferenceFragmentDefinition {
@@ -8331,7 +8331,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 26, choiceValues: [0, 3, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.ecbe59eeb6875", name: "StarGlow Particle V2", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ecbe59eeb6875", slots: 27,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.particlev2", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7061727469636c657632"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.particlev2", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7061727469636c657632"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e76d3ec759f5a() -> ReferenceFragmentDefinition {
@@ -8454,7 +8454,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 22, choiceValues: [0, 3, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e12a0fb215dc9", name: "ColorGrid V2", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e12a0fb215dc9", slots: 23,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.newcolorgrid", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6e6577636f6c6f7267726964"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.newcolorgrid", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e6e6577636f6c6f7267726964"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_edf4550c7d022() -> ReferenceFragmentDefinition {
@@ -8643,7 +8643,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 1.0, 1.0, 1.0)), slot: 25))
         return ReferenceFragmentDefinition(id: "awi.amref.eee7dc5eaa354", name: "Glow Fibers", summary: "Flowing luminous strands with editable evolution, color and gradient mapping.",
             category: .generate, function: "refAM35_eee7dc5eaa354", slots: 26,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.fibersglow", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e666962657273676c6f77"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.fibersglow", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e666962657273676c6f77"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ee440d77aa644() -> ReferenceFragmentDefinition {
@@ -8865,7 +8865,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .color("color2", "Color FG", RGBA(1.0, 0.0, 0.0, 1.0)), slot: 23))
         return ReferenceFragmentDefinition(id: "awi.amref.eea433d51ae47", name: "Glow Tunnels", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_eea433d51ae47", slots: 24,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.glowtunnels", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e676c6f7774756e6e656c73"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.glowtunnels", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e676c6f7774756e6e656c73"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_e063e6fea36fc() -> ReferenceFragmentDefinition {
@@ -9575,7 +9575,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "blendMode", ["NORMAL", "LAYER", "MULTIPLY", "SCREEN"], 1), slot: 25, choiceValues: [0, 3, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.e6e6f1350a372", name: "Rings Water", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_e6e6f1350a372", slots: 26,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.smallringswater", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e736d616c6c72696e67737761746572"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.smallringswater", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e736d616c6c72696e67737761746572"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_efe1e52957db3() -> ReferenceFragmentDefinition {
@@ -9599,7 +9599,7 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .choice("blendMode", "Blending Mode", ["NORMAL", "MULTIPLY", "SCREEN"], 2), slot: 27, choiceValues: [0, 1, 2]))
         return ReferenceFragmentDefinition(id: "awi.amref.efe1e52957db3", name: "Plexus Particle+", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_efe1e52957db3", slots: 28,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.plexusparticle", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e706c657875737061727469636c65"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.plexusparticle", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e706c657875737061727469636c65"], sourcePasses: [:], iterationParameter: nil)
     }
 
     private static func make_ea55a014f7a51() -> ReferenceFragmentDefinition {
@@ -9621,6 +9621,6 @@ enum ReferenceFragmentCatalog {
         parameters.append(ReferenceFragmentParameter(definition: .number("aai", "Lighting Temp", 50.0, -1000.0, 10000.0, step: 1.0, unit: "%"), slot: 25, scalarScale: 0.01))
         return ReferenceFragmentDefinition(id: "awi.amref.ea55a014f7a51", name: "Rainy Dew", summary: "Internal reference shader for comparison and adapter validation.",
             category: .generate, function: "refAM35_ea55a014f7a51", slots: 26,
-            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.rainydew", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7261696e79646577"], sourcePasses: [:], iterationParameter: "iter")
+            parameters: parameters, images: [], buffers: [ReferenceFragmentBuffer(name: "xcipher", binding: 1, downsample: 1)], passes: ["xcipher", ""], referenceBinding: nil, sourceID: "com.alightcreative.effects.rainydew", externalPasses: [0: "636f6d2e616c6967687463726561746976652e656666656374732e7261696e79646577"], sourcePasses: [:], iterationParameter: nil)
     }
 }

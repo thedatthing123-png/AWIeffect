@@ -77,7 +77,7 @@ DEFAULTS = {
     'radial_rays.xml': {'bendStrength': '0.45', 'bendFrequency': '18', 'pointCount': '9'},
     'radialshadow2.xml': {'alpha': '0.65', 'light': '-120,-160', 'quality': '96'},
     'highlight-shadow.xml': {'highlights': '0.85', 'shadows': '1.15'},
-    'Adamagedots.xml': {'density': '120', 'dotSize': '3'},
+    'Adamagedots.xml': {'density': '400', 'dotSize': '5'},
     'waveloq-3.xml': {'thickness': '3.5', 'glow': '2', 'pitch': '7'},
     'mystery_book.xml': {'openProgress': '0.65'},
 }
@@ -234,7 +234,10 @@ def prepare(args):
         external = '[' + external + ']' if external else '[:]'
         sources = ', '.join(str(k) + ': ' + string(v) for k,v in row.get('source_passes', {}).items())
         sources = '[' + sources + ']' if sources else '[:]'
-        iteration=string(row['iteration_parameter']) if row.get('iteration_parameter') else 'nil'
+        # Several source files name an absent "iter" parameter. They have
+        # no repeat control and run once, just like a missing iterations tag.
+        iteration_key=row.get('iteration_parameter')
+        iteration=string(iteration_key) if any(c.get('id') == iteration_key for c in row.get('controls', [])) else 'nil'
         body += [f'        return ReferenceFragmentDefinition(id: "awi.amref.{symbol}", name: {string(name)}, summary: {string(summary)},', f'            category: .{selected_category}, function: "refAM35_{symbol}", slots: {row["slots"]},', '            parameters: parameters, images: [' + ', '.join(string(n) for n in image_names) + f'], buffers: [{buffers}], passes: [{passes}], referenceBinding: {binding}, sourceID: {string(row.get("id", ""))}, externalPasses: {external}, sourcePasses: {sources}, iterationParameter: {iteration})', '    }']
         functions.append('\n'.join(body))
         symbols.append(symbol)

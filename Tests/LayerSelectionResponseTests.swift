@@ -42,6 +42,17 @@ import XCTest
         XCTAssertEqual(state.project.id,group.id)
         XCTAssertNil(state.selectedLayerID)
     }
+    func testWindowDoubleTapOpensCapturedContainerAfterSelectionChanges() {
+        let state=editor()
+        state.beginMultiSelect(state.project.layers[0].id)
+        state.toggleInMulti(state.project.layers[1].id)
+        state.groupSelected()
+        guard let group=state.project.layers.first(where:{$0.isGroup}) else { return XCTFail("Group fixture failed") }
+        state.select(nil)
+        state.openTimelineContainer(group.id)
+        XCTAssertEqual(state.project.id,group.id)
+        XCTAssertNil(state.selectedLayerID)
+    }
     func testStableSurfaceCompletesContainerDoubleTapAfterTheRowMoves() {
         let state=editor()
         state.select(state.project.layers[0].id);state.groupSelected()

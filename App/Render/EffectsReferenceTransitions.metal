@@ -37,8 +37,8 @@ kernel void fxLiquidLensReference(texture2d<half, access::sample> source [[textu
     float2 displacement = direction*p.b.x*band + tangent*(field-.5)*p.b.x*.2*band;
     float2 samplePoint = pixel+displacement;
     float4 mid = float4(source.sample(referenceTransitionSampler,samplePoint));
-    float4 red = float4(source.sample(referenceTransitionSampler,samplePoint+displacement*p.b.z*.25));
-    float4 blue = float4(source.sample(referenceTransitionSampler,samplePoint-displacement*p.b.z*.25));
+    float4 red = float4(source.sample(referenceTransitionSampler,samplePoint+displacement*p.b.z));
+    float4 blue = float4(source.sample(referenceTransitionSampler,samplePoint-displacement*p.b.z));
     float feather = max(.5,p.b.w);
     float coverage = smoothstep(-feather,feather,distance);
     float alpha = max(mid.a,max(red.a,blue.a));

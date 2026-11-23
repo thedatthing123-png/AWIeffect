@@ -322,6 +322,14 @@ final class EditorState: ObservableObject {
         selectedLayerID = id
         if layer.isGroup { openGroup() } else { openPrecomp() }
     }
+    func openTimelineContainer(_ id: UUID) {
+        guard !isMultiSelecting, !linkPicking,
+              let layer=project.layers.first(where: { $0.id == id }) else { return }
+        guard layer.isGroup || { if case .precomp=layer.content { return true }; return false }() else { return }
+        lastTimelineWindowTap=nil; lastTimelineTap=nil
+        selectedLayerID=id
+        if layer.isGroup { openGroup() } else { openPrecomp() }
+    }
     func cancelTimelineWindowTap() { lastTimelineWindowTap=nil;lastTimelineTap=nil }
 
     /// Opening the panel changes the row's screen position after the first tap.

@@ -171,6 +171,10 @@ def translate(root, slug, images=None, filename='', external_ids=None):
         code = code.replace('result = adjColor*texColor.a;\n                result = texColor*(1.-result.a) + result;',
                             'result = vec4(adjColor.rgb*texColor.a + texColor.rgb*(1.-adjColor.a),texColor.a);')
     if basename == 'waveloq-3.xml':
+        # Keep midtones continuous. The original smoothstep saturated nearly
+        # every visible dot before Decay could operate on its luminance.
+        code = code.replace('lumaAdj = smoothstep(fade * 0.3, fade * 0.3 + 0.2, lumaAdj);',
+                            'lumaAdj *= smoothstep(fade * 0.3, fade * 0.3 + 0.2, lumaAdj);')
         code = code.replace('vec3 srcCol  = texture2DCv(inputImg.texture, dotCenter).rgb;',
                             'vec4 dotSource = texture2DCv(inputImg.texture,dotCenter);\n            vec3 srcCol = dotSource.rgb/max(dotSource.a,0.00001);')
         code = code.replace('mix(src.rgb, result, blend)', 'mix(src.rgb, result*src.a, blend)')
@@ -367,8 +371,10 @@ def run(args):
                         continue
                     raw = archive.read(asset)
                     image = Image.open(BytesIO(raw))
-                    asset_name = 'amref-' + __import__('hashlib').sha256(raw).hexdigest()[:16] + Path(src).suffix
-                    (args.output / asset_name).write_bytes(raw)
+                    asset_name = 'amref-' + __import__('hashlib').sha256(raw).hexdigest()[:16] + '.png'
+                    # Some archive assets have .png names but WebP payloads.
+                    # Xcode's copypng rejects those and omits the resource.
+                    image.convert('RGBA').save(args.output / asset_name, format='PNG')
                     images[texture.get('id')] = {'file': asset_name, 'source': asset, 'width': image.width, 'height': image.height}
                 source, controls, slots, buffers, passes, reference_binding = translate(root, slug, images, filename,
                     external_ids={r.get('id') for p,r in roots.items() if r.tag == 'effect' and (r.get('deprecated') != 'true' or p in dependencies)})
