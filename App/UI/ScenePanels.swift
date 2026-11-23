@@ -191,22 +191,20 @@ struct MotionBlurPanel: View {
                 let p = state.project
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
-                        Toggle(l.content == .camera ? "Camera Motion Blur" : "Motion Blur", isOn: Binding(get: {
+                        MotionBlurToggle(label:l.content == .camera ? "Camera Motion Blur" : "Motion Blur", identifier:"selected-layer-motion-blur", isOn: Binding(get: {
                             guard let selected = state.selectedLayer else { return false }
                             return selected.content == .camera ? selected.motionBlur : state.project.blurs(selected, at: state.currentTime)
                         }, set: { b in
                             state.setSelectedMotionBlur(b)
                         }))
-                        .toggleStyle(MotionBlurSwitchStyle(identifier:"selected-layer-motion-blur",label:l.content == .camera ? "Camera Motion Blur" : "Motion Blur"))
                         .font(.system(size: 15, weight: .bold)).tint(Theme.accent).foregroundStyle(Theme.text)
                         Text(l.content == .camera
                              ? "Blur layers seen through this camera. Layers marked Keep Sharp remain sharp."
                              : "Blur this layer's movement, including camera moves, parents and transform effects.")
                             .font(.caption).foregroundStyle(Theme.textDim)
-                        Toggle("Every layer", isOn: Binding(get: { p.blurAllLayers }, set: { b in
+                        MotionBlurToggle(label:"Every layer",identifier:"blur-every-layer", isOn: Binding(get: { state.project.blurAllLayers }, set: { b in
                             state.mutate("Blur Every Layer") { $0.blurAllLayers = b; if b { $0.motionBlurEnabled = true } }
                         }))
-                        .toggleStyle(MotionBlurSwitchStyle(identifier:"blur-every-layer",label:"Every layer"))
                         .tint(Theme.accent).foregroundStyle(Theme.text)
                         if l.content != .camera, p.blurAllLayers { layerRow(l, p) }
                         if !p.motionBlurEnabled {
@@ -344,15 +342,15 @@ struct TimePanel: View {
 
 /// Keep the touch/accessibility frame on the actual switch, rather than the
 /// full-width SwiftUI label/control wrapper. The label remains tappable too.
-private struct MotionBlurSwitchStyle: ToggleStyle {
-    let identifier: String
+private struct MotionBlurToggle: View {
     let label: String
-    func makeBody(configuration: Configuration) -> some View {
+    let identifier: String
+    @Binding var isOn: Bool
+    var body: some View {
         HStack {
-            configuration.label.frame(maxWidth:.infinity,alignment:.leading)
-                .contentShape(Rectangle()).onTapGesture { configuration.isOn.toggle() }
-            MotionBlurNativeSwitch(isOn:configuration.$isOn,identifier:identifier,label:label)
-                .fixedSize()
+            Text(label).frame(maxWidth:.infinity,alignment:.leading)
+                .contentShape(Rectangle()).onTapGesture { isOn.toggle() }
+            MotionBlurNativeSwitch(isOn:$isOn,identifier:identifier,label:label).fixedSize()
         }.frame(minHeight:44)
     }
 }
@@ -362,7 +360,7 @@ private struct MotionBlurNativeSwitch: UIViewRepresentable {
     let label: String
     func makeCoordinator() -> Coordinator { Coordinator(value:$isOn) }
     func makeUIView(context: Context) -> UISwitch {
-        let view=UISwitch()
+        let view=MotionBlurTrackedSwitch()
         view.onTintColor=UIColor(Theme.accent)
         view.accessibilityIdentifier=identifier
         view.accessibilityLabel=label
@@ -378,12 +376,42 @@ private struct MotionBlurNativeSwitch: UIViewRepresentable {
     }
     func updateUIView(_ view: UISwitch, context: Context) {
         context.coordinator.value=$isOn
-        view.setOn(isOn,animated:false)
+        // Preview updates must not reset UIKit's in-flight switch tracking.
+        if !view.isTracking && view.isOn != isOn { view.setOn(isOn,animated:false) }
         view.accessibilityIdentifier=identifier
     }
     final class Coordinator: NSObject {
         var value: Binding<Bool>
         init(value: Binding<Bool>) { self.value=value }
-        @objc func changed(_ sender: UISwitch) { value.wrappedValue=sender.isOn }
+        @objc func changed(_ sender: UISwitch) {
+            motionBlurTouchTrace("valueChanged \(sender.accessibilityIdentifier ?? "") native=\(sender.isOn) modelBefore=\(value.wrappedValue)")
+            value.wrappedValue=sender.isOn
+            motionBlurTouchTrace("modelAfter \(value.wrappedValue)")
+        }
     }
+}
+
+private final class MotionBlurTrackedSwitch: UISwitch {
+    override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
+        motionBlurTouchTrace("down \(accessibilityIdentifier ?? "") at=\(touch.location(in:window)) frame=\(convert(bounds,to:window)) on=\(isOn)")
+        return super.beginTracking(touch,with:event)
+    }
+    override func endTracking(_ touch: UITouch?, with event: UIEvent?) {
+        super.endTracking(touch,with:event)
+        motionBlurTouchTrace("up \(accessibilityIdentifier ?? "") on=\(isOn)")
+    }
+}
+private func motionBlurTouchTrace(_ message: String) {
+    #if DEBUG
+    guard ProcessInfo.processInfo.arguments.contains("-uiTesting-motionBlur") else { return }
+    let directory=URL(fileURLWithPath:"/tmp/awi-ui",isDirectory:true)
+    try? FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
+    let file=directory.appendingPathComponent("motion-blur-touch-trace.txt")
+    let data=Data(("\(ProcessInfo.processInfo.systemUptime) \(message)\n").utf8)
+    if !FileManager.default.fileExists(atPath:file.path) { try? data.write(to:file) }
+    else if let handle=try? FileHandle(forWritingTo:file) {
+        defer { try? handle.close() }
+        _ = try? handle.seekToEnd(); try? handle.write(contentsOf:data)
+    }
+    #endif
 }
