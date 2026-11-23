@@ -75,6 +75,28 @@ final class BugBatchBTests: XCTestCase {
         XCTAssertEqual(before.x, after.x, accuracy: 1e-6); XCTAssertEqual(before.y, after.y, accuracy: 1e-6); XCTAssertEqual(before.z, after.z, accuracy: 1e-6)
     }
 
+    func testPanelPivotEditsKeepArtworkFixedThroughRepeatedMoves() {
+        for is3D in [false,true] {
+            var tr=LayerTransform(position:Animated(Vec2(400,300)))
+            tr.rotation=Animated(35);tr.scale=Animated(Vec2(-120,75))
+            tr.rotationX=Animated(is3D ? -20 : 0);tr.rotationY=Animated(is3D ? 40 : 0);tr.positionZ=Animated(50)
+            var layer=Layer(name:"Pivot",content:.solid,tag:.amber,outPoint:4,transform:tr,size:Animated(Vec2(100,100)))
+            layer.is3D=is3D
+            let original=Renderer.layerWorld(layer,time:0)
+            for anchor in [Vec2(30,-20),Vec2(-45,60),Vec2.zero] {
+                CanvasHandles.setPivot(&layer,to:anchor,time:0)
+                XCTAssertEqual(layer.transform.anchor.value(at:0),anchor)
+                let current=Renderer.layerWorld(layer,time:0)
+                for point in [SIMD4<Double>(-50,-50,0,1),SIMD4<Double>(50,40,0,1)] {
+                    let a=original*point,b=current*point
+                    XCTAssertEqual(a.x,b.x,accuracy:1e-6)
+                    XCTAssertEqual(a.y,b.y,accuracy:1e-6)
+                    XCTAssertEqual(a.z,b.z,accuracy:1e-6)
+                }
+            }
+        }
+    }
+
     func testScaleAndRotateTurnAroundTheDrawnAnchorOfAParentedLayer() throws {
         let (p, _, child) = parentedProject()
         let s = state(p)

@@ -279,12 +279,12 @@ struct TransformToolBody: View {
                 Spacer(minLength: 0)
             case .anchor:
                 let a = layer.transform.anchor.value(at: t)
-                valueRow([("X", a.x, { v in edit("Anchor") { $0.transform.anchor.set(Vec2(v, a.y), at: t) } }),
-                          ("Y", a.y, { v in edit("Anchor") { $0.transform.anchor.set(Vec2(a.x, v), at: t) } })])
+                valueRow([("X", a.x, { v in edit("Anchor") { CanvasHandles.setPivot(&$0,to:Vec2(v,a.y),time:t) } }),
+                          ("Y", a.y, { v in edit("Anchor") { CanvasHandles.setPivot(&$0,to:Vec2(a.x,v),time:t) } })])
                 SwipePad(hint: "Swipe to move the pivot (or drag it on the canvas)", gain: compW * 0.6) { d in
                     state.mutateLayer { l in
                         let q = l.transform.anchor.value(at: t)
-                        l.transform.anchor.set(Vec2(((q.x + d.width) * 10).rounded() / 10, ((q.y + d.height) * 10).rounded() / 10), at: t)
+                        CanvasHandles.setPivot(&l,to:Vec2(((q.x + d.width) * 10).rounded() / 10, ((q.y + d.height) * 10).rounded() / 10),time:t)
                     }
                 } begin: { state.beginPanelGesture("Move Pivot") } end: { state.endPanelGesture() }
             case .link:

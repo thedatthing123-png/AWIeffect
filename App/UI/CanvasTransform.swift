@@ -65,6 +65,15 @@ enum CanvasHandles {
         let w = R * S * d
         return (Vec2(p.x + w.x, p.y + w.y), tr.positionZ.value(at: time) + (is3D ? w.z : 0))
     }
+
+    /// Panel fields and the swipe pad use the same Pan Behind semantics as
+    /// the canvas pivot handle. Anchor and compensation form one edit.
+    static func setPivot(_ layer: inout Layer, to anchor: Vec2, time: Double) {
+        let moved=pivotCompensated(layer.transform,is3D:layer.is3D,newAnchor:anchor,time:time)
+        layer.transform.anchor.set(anchor,at:time)
+        layer.transform.position.set(moved.position,at:time)
+        if layer.is3D { layer.transform.positionZ.set(moved.z,at:time) }
+    }
 }
 
 extension EditorState {
