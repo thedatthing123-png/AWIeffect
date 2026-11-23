@@ -1,5 +1,9 @@
 # Reference-led effect expansion — November 19
 
+## Focused follow-up
+
+Run 45095227745 passed compilation, render audit, core, and both text shards. Only Wave Dot Display / Threshold Softness numeric response and the original group-opening UI test remain failing. The numeric fixture now includes Softness in the same midtone/cutoff scene as Range/Decay without weakening its threshold. A StateObject owned by EditorView retains the window double-tap recognizer independently of background representable lifecycle. The original unselected-group double-tap test remains unchanged. Validate these changes using `validation=reference-repairs`; native verification is pending.
+
 ## Validation repair — November 22
 
 Run 45070426688 passed native compilation and both text shards, but failed core/effects/render/UI checks. Repairs normalize WebP-as-PNG texture payloads, omit nonexistent source iteration controls (single-pass fallback), provide an exact zero-tint Glass Spheres bypass, and clear RGB when exported alpha quantizes to zero. Wave Dot Display retains continuous midtones before Decay; Film Damage Dots defaults are visibly sized and its Flicker fixture uses a dense dust field. Liquid Lens dispersion has a wider optical separation. Existing numeric-control thresholds and original group UI assertions are retained.

@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 
 struct EditorView: View {
     @StateObject var state: EditorState
+    @StateObject private var containerTapMonitor = TimelineContainerTapMonitor()
     let close: () -> Void
     @ObservedObject private var canvasPicker = CanvasColorPicker.shared
     @State private var showExport = false
@@ -119,9 +120,12 @@ struct EditorView: View {
             }
         }
         .background(Theme.background.ignoresSafeArea())
-        .background(TimelineContainerTapObserver(resolve: { point in
-            state.timelineContainerFrames.first(where: { $0.value.contains(point) })?.key
-        }, open: { id in state.openTimelineContainer(id) }).allowsHitTesting(false))
+        .onAppear {
+            containerTapMonitor.attach(resolve: { point in
+                state.timelineContainerFrames.first(where: { $0.value.contains(point) })?.key
+            }, open: { id in state.openTimelineContainer(id) })
+        }
+        .onDisappear { containerTapMonitor.detach() }
         .onPreferenceChange(TimelineContainerFramesKey.self) { state.timelineContainerFrames = $0 }
         .environmentObject(drawLauncher)
         .environmentObject(cutoutSession)

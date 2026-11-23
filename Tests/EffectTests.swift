@@ -254,7 +254,7 @@ final class EffectTests: XCTestCase {
                     // Density is the glitch-block grid; RGB fields are the
                     // single-color dot mode, not the source-color mode.
                     if pd.id == "density" { a.params["preset"] = .choice(5); b.params["preset"] = .choice(5) }
-                    if ["range", "decay"].contains(pd.id) {
+                    if ["range", "decay", "fade"].contains(pd.id) {
                         a.params["cutoff"] = .number(Animated(0.15)); b.params["cutoff"] = .number(Animated(0.15))
                         a.params["range"] = .number(Animated(1)); b.params["range"] = .number(Animated(1))
                     }
