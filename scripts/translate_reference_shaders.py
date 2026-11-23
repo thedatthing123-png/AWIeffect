@@ -174,7 +174,7 @@ def translate(root, slug, images=None, filename='', external_ids=None):
         # Keep midtones continuous. The original smoothstep saturated nearly
         # every visible dot before Decay could operate on its luminance.
         code = code.replace('lumaAdj = smoothstep(fade * 0.3, fade * 0.3 + 0.2, lumaAdj);',
-                            'lumaAdj *= smoothstep(fade * 0.3, fade * 0.3 + 0.2, lumaAdj);')
+                            'lumaAdj *= smoothstep(0.0, max(fade, 0.001), lumaAdj);')
         code = code.replace('vec3 srcCol  = texture2DCv(inputImg.texture, dotCenter).rgb;',
                             'vec4 dotSource = texture2DCv(inputImg.texture,dotCenter);\n            vec3 srcCol = dotSource.rgb/max(dotSource.a,0.00001);')
         code = code.replace('mix(src.rgb, result, blend)', 'mix(src.rgb, result*src.a, blend)')

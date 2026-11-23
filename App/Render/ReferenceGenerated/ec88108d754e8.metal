@@ -322,7 +322,7 @@ void referenceMain(constant ReferenceUniformsec88108d754e8& _140, thread float4&
     float luma = dot(srcCol, float3(0.2989999949932098388671875, 0.58700001239776611328125, 0.114000000059604644775390625));
     float lumaAdj = (luma - _140.cutoff) / fast::max(_140.range, 0.001000000047497451305389404296875);
     lumaAdj = fast::clamp(lumaAdj, 0.0, 1.0);
-    lumaAdj *= smoothstep(_140.fade * 0.300000011920928955078125, (_140.fade * 0.300000011920928955078125) + 0.20000000298023223876953125, lumaAdj);
+    lumaAdj *= smoothstep(0.0, fast::max(_140.fade, 0.001000000047497451305389404296875), lumaAdj);
     lumaAdj = powr(lumaAdj, 1.0 + (_140.decay * 0.300000011920928955078125));
     float baseRad = (_140.thickness / cellSize) * 0.449999988079071044921875;
     baseRad = fast::clamp(baseRad, 0.00999999977648258209228515625, 0.4799999892711639404296875);
@@ -347,8 +347,8 @@ void referenceMain(constant ReferenceUniformsec88108d754e8& _140, thread float4&
         {
             float rainbowT = (dotIdx.x + (dotIdx.y * 0.300000011920928955078125)) / (_140.refScreen.x / cellSize);
             float param_4 = rainbowT + ((t * _140.animSpeed) * 0.100000001490116119384765625);
-            float3 _848 = rainbow(param_4);
-            dotColor = _848;
+            float3 _844 = rainbow(param_4);
+            dotColor = _844;
         }
     }
     float glowRadius = dotRadius + ((_140.glow / cellSize) * 0.300000011920928955078125);
@@ -367,17 +367,17 @@ fragment refAM35_ec88108d754e8_out refAM35_ec88108d754e8(constant ReferenceUnifo
     refAM35_ec88108d754e8_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(_140, gl_FragCoord, refInput, refInputSmplr, referenceColor);
-    bool _919 = any(isnan(referenceColor));
-    bool _926;
-    if (!_919)
+    bool _915 = any(isnan(referenceColor));
+    bool _922;
+    if (!_915)
     {
-        _926 = any(isinf(referenceColor));
+        _922 = any(isinf(referenceColor));
     }
     else
     {
-        _926 = _919;
+        _922 = _915;
     }
-    if (_926)
+    if (_922)
     {
         referenceColor = float4(0.0);
     }
@@ -386,11 +386,11 @@ fragment refAM35_ec88108d754e8_out refAM35_ec88108d754e8(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
-    float4 _939 = referenceColor;
-    float3 _945 = fast::clamp(_939.xyz, float3(-65504.0), float3(65504.0));
-    referenceColor.x = _945.x;
-    referenceColor.y = _945.y;
-    referenceColor.z = _945.z;
+    float4 _935 = referenceColor;
+    float3 _941 = fast::clamp(_935.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _941.x;
+    referenceColor.y = _941.y;
+    referenceColor.z = _941.z;
     out.finalColor = referenceColor;
     return out;
 }

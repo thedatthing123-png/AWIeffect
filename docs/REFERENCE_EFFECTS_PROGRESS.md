@@ -1,5 +1,9 @@
 # Reference-led effect expansion — November 19
 
+## Second focused follow-up
+
+Run 45103689579 still failed the same two assertions. Its screenshot confirms that the group is selected but remains unopened. The window observer now explicitly cannot be prevented by (or prevent) the immediate row/hold recognizers; test-only `/tmp/awi-ui/container-touch-trace.txt` records attachment, hit resolution and recognition for the next run. Threshold Softness now changes the actual luminance transition width from zero to the Fade value, preserving midtones and giving the full control range a useful response. The existing numeric threshold and group UI test remain unchanged. Native verification is pending.
+
 ## Focused follow-up
 
 Run 45095227745 passed compilation, render audit, core, and both text shards. Only Wave Dot Display / Threshold Softness numeric response and the original group-opening UI test remain failing. The numeric fixture now includes Softness in the same midtone/cutoff scene as Range/Decay without weakening its threshold. A StateObject owned by EditorView retains the window double-tap recognizer independently of background representable lifecycle. The original unselected-group double-tap test remains unchanged. Validate these changes using `validation=reference-repairs`; native verification is pending.
