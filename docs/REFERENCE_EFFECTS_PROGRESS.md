@@ -144,3 +144,8 @@ Visual review of the asymmetric scene marker caught a remaining inverted monitor
 ### Two remaining fixture domains
 
 Focused run 45296849936 passed 35/37 tests, including all eight reference shader audits; only Dissolve Shake X Phase and Precision Glitch Scanline Frequency failed. Source inspection confirms X Phase offsets sine-wave time (the broad-range sample phases nearly coincide), and scanlines execute exclusively inside a randomly gated colored-band branch. Compare opposite sine peaks with isolated wave motion, and explicitly activate the colored-band path for scanline frequency. No production control, threshold or assertion is removed. Native rerun pending.
+
+
+### Final scanline amplitude fixture repair
+
+Run 45301097386 passed 36/37 focused tests. Scanline Frequency now passes after activating the colored-band path; Scanline Amplitude needs that same path because both controls feed the same branch. Apply the shared branch setup to both controls, preserving distinct amplitude samples (0.02 and 0.6), the 0.05 response assertion, and all production shader behavior. Focused native rerun pending.

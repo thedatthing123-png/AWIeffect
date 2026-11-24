@@ -353,7 +353,7 @@ final class EffectTests: XCTestCase {
                    ["tearHeightMin","tearScanFreq","tearScanAmp","bandMix"].contains(pd.id) {
                     both("tearHeightMin",0.6); both("tearHeightRand",0.3)
                     both("tearScanAmp",0.35)
-                    if pd.id == "tearScanFreq" {
+                    if ["tearScanFreq","tearScanAmp"].contains(pd.id) {
                         // Scanlines live inside the colored-band branch;
                         // force that branch instead of relying on its seed.
                         both("bandProbThr",0); both("blockAffectThr",1)
