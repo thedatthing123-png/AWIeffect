@@ -139,3 +139,8 @@ Local checks: Swift parsing, ten host-side translation contracts, complete XCTes
 Full run 45135528042 passed native compilation, UI, core, text and render tests, but failed numeric-control response checks. Repair: particle opacity now scales premultiplied RGB together with alpha. Numeric fixtures now activate dependent amplitudes/spread/random strength, isolate the edited Grunge stage on an alpha-shaped layer, exercise displacement with nonzero offsets, avoid equal periodic phases, and keep 3D position comparisons inside the camera frustum. The 0.05 assertion remains unchanged; no controls/tests are skipped. A focused reference-controls scope reruns effect wiring, reference regressions and native fragment/render audits without repeating unrelated UI/text suites. Native results and visual approval remain pending.
 
 Visual review of the asymmetric scene marker caught a remaining inverted monitor image: Monitor Scene and Opening Book sample content through plain texture2D rather than texture2DCv. Their content reads now use the Y-up image adapter too; resource texture reads remain raw. Corrected native output still needs review on the focused rerun.
+
+
+### Two remaining fixture domains
+
+Focused run 45296849936 passed 35/37 tests, including all eight reference shader audits; only Dissolve Shake X Phase and Precision Glitch Scanline Frequency failed. Source inspection confirms X Phase offsets sine-wave time (the broad-range sample phases nearly coincide), and scanlines execute exclusively inside a randomly gated colored-band branch. Compare opposite sine peaks with isolated wave motion, and explicitly activate the colored-band path for scanline frequency. No production control, threshold or assertion is removed. Native rerun pending.

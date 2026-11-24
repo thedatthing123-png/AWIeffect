@@ -337,6 +337,13 @@ final class EffectTests: XCTestCase {
                             both(axis+"WaveAmp",axis == "tilt" ? 6 : 0.3)
                         }
                     }
+                    if pd.id == "xPhase" {
+                        // Isolate a sine wave and compare opposite peaks at
+                        // t=0.4, f=0.5. Broad range fractions nearly coincide.
+                        both("amplitude",12); both("xRandAmp",0)
+                        both("xWaveAmp",0.8); both("xWaveFreq",0.5)
+                        compare(0.1,1.1)
+                    }
                     if ["rgbRandomness","rgbFrequency"].contains(pd.id) {
                         both("rgbRandomness",0.8); both("zRandAmp",0.3); both("tiltRandAmp",4)
                         if pd.id == "rgbRandomness" { compare(0.02,0.6) }
@@ -346,6 +353,13 @@ final class EffectTests: XCTestCase {
                    ["tearHeightMin","tearScanFreq","tearScanAmp","bandMix"].contains(pd.id) {
                     both("tearHeightMin",0.6); both("tearHeightRand",0.3)
                     both("tearScanAmp",0.35)
+                    if pd.id == "tearScanFreq" {
+                        // Scanlines live inside the colored-band branch;
+                        // force that branch instead of relying on its seed.
+                        both("bandProbThr",0); both("blockAffectThr",1)
+                        a.params["enableColorBands"] = .toggle(true)
+                        b.params["enableColorBands"] = .toggle(true)
+                    }
                     if pd.id == "tearHeightMin" { compare(0.02,0.6) }
                     if pd.id == "tearScanAmp" { compare(0.02,0.6) }
                 }
