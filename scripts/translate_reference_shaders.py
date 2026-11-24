@@ -174,6 +174,17 @@ def translate(root, slug, images=None, filename='', external_ids=None):
         code = code.replace('tex.a * (1.0 - (abs(modifiedTime) * 2.0 + fbm(uv * 3.0)))',
                             '(1.0 - (abs(modifiedTime) * 2.0 + fbm(uv * 3.0)))')
         code = code.replace('gl_FragColor = vec4(outRGB, 1.0);', 'gl_FragColor = tex * mask;')
+    if basename in {'monitor_on_table.xml', 'mystery_book.xml'}:
+        # These scenes use plain GL sampling for their content texture, unlike
+        # the CV reads in the native s3d effects. It still holds a Metal
+        # top-left image here, so route content through the same Y-up adapter.
+        # Do not flip plain reads of procedural/packed resource textures.
+        code = code.replace('texture2D(iChannel0.texture,', 'texture2DCv(iChannel0.texture,')
+    if basename == 'skexnxxparticle3d.xml':
+        # AWI composites premultiplied pixels. Source faded only coverage,
+        # leaving visible RGB behind even when particle Opacity was zero.
+        code = code.replace('gl_FragColor=vec4(rgb,clamp(max(aa,src.a*sourceMix)*opacity,0.,1.));',
+                            'gl_FragColor=vec4(rgb*opacity,clamp(max(aa,src.a*sourceMix)*opacity,0.,1.));')
     if basename == 'jpegquality.xml':
         code = 'const float split = 0.0;\n' + code
     if 'AC_ImageInfo' in code:

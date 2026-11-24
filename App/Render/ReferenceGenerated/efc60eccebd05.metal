@@ -202,7 +202,7 @@ void referenceMain(thread float4& gl_FragCoord, constant ReferenceUniformsefc60e
     }
     sum /= (float3(1.0) + sum);
     float3 rgb = mix(sum, src.xyz + sum, float3(_168.sourceMix));
-    referenceColor = float4(rgb, fast::clamp(fast::max(aa, src.w * _168.sourceMix) * _168.opacity, 0.0, 1.0));
+    referenceColor = float4(rgb * _168.opacity, fast::clamp(fast::max(aa, src.w * _168.sourceMix) * _168.opacity, 0.0, 1.0));
 }
 
 fragment refAM35_efc60eccebd05_out refAM35_efc60eccebd05(constant ReferenceUniformsefc60eccebd05& _168 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
@@ -210,17 +210,17 @@ fragment refAM35_efc60eccebd05_out refAM35_efc60eccebd05(constant ReferenceUnifo
     refAM35_efc60eccebd05_out out = {};
     float4 referenceColor = float4(0.0);
     referenceMain(gl_FragCoord, _168, refInput, refInputSmplr, referenceColor);
-    bool _695 = any(isnan(referenceColor));
-    bool _702;
-    if (!_695)
+    bool _698 = any(isnan(referenceColor));
+    bool _705;
+    if (!_698)
     {
-        _702 = any(isinf(referenceColor));
+        _705 = any(isinf(referenceColor));
     }
     else
     {
-        _702 = _695;
+        _705 = _698;
     }
-    if (_702)
+    if (_705)
     {
         referenceColor = float4(0.0);
     }
@@ -229,11 +229,11 @@ fragment refAM35_efc60eccebd05_out refAM35_efc60eccebd05(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
-    float4 _715 = referenceColor;
-    float3 _721 = fast::clamp(_715.xyz, float3(-65504.0), float3(65504.0));
-    referenceColor.x = _721.x;
-    referenceColor.y = _721.y;
-    referenceColor.z = _721.z;
+    float4 _718 = referenceColor;
+    float3 _724 = fast::clamp(_718.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _724.x;
+    referenceColor.y = _724.y;
+    referenceColor.z = _724.z;
     out.finalColor = referenceColor;
     return out;
 }

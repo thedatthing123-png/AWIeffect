@@ -132,3 +132,10 @@ Local checks: Swift parsing, ten host-side translation contracts, complete XCTes
 ### Remainder batch (November 23; native validation pending)
 
 51 additional distinct public candidates are integrated (533 total browser entries, including the accepted recovery catalog). See REFERENCE_REMAINDER_BATCH.md for the inclusion decisions and native-host exclusions. The 547 internal fragment programs are not 547 new effects. Seven raymarch/camera scenes now pair Y-up coordinates with inverse CV sampling; ordinary programs retain their prior contract. The audit uses an asymmetric F marker and exports signed quarter-turn images for orient controls, plus still/moving renders and per-control reports. Sixteen host contract checks, Swift syntax parsing and complete shard inventory passed locally. Native Metal compilation, behavior, orientation review and release approval remain pending on the full CI run. No IPA is packaged by that run.
+
+
+### Remainder control repairs (November 23)
+
+Full run 45135528042 passed native compilation, UI, core, text and render tests, but failed numeric-control response checks. Repair: particle opacity now scales premultiplied RGB together with alpha. Numeric fixtures now activate dependent amplitudes/spread/random strength, isolate the edited Grunge stage on an alpha-shaped layer, exercise displacement with nonzero offsets, avoid equal periodic phases, and keep 3D position comparisons inside the camera frustum. The 0.05 assertion remains unchanged; no controls/tests are skipped. A focused reference-controls scope reruns effect wiring, reference regressions and native fragment/render audits without repeating unrelated UI/text suites. Native results and visual approval remain pending.
+
+Visual review of the asymmetric scene marker caught a remaining inverted monitor image: Monitor Scene and Opening Book sample content through plain texture2D rather than texture2DCv. Their content reads now use the Y-up image adapter too; resource texture reads remain raw. Corrected native output still needs review on the focused rerun.

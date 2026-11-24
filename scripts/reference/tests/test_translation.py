@@ -12,6 +12,18 @@ def effect(params, shader, extra=''):
 
 
 class TranslationTests(unittest.TestCase):
+    def test_scene_content_reads_use_y_up_adapter_but_resources_stay_raw(self):
+        root=effect('<texture id="iChannel0" srcType="content"/>',
+                    'void main(){gl_FragColor=texture2D(iChannel0.texture,acScreenNorm);}')
+        source,*_=translate(root,'fixture',filename='monitor_on_table.xml')
+        self.assertIn('texture2DCv(refInput,acScreenNorm)',source)
+        self.assertIn('texture(source,vec2(uv.x,1.-uv.y))',source)
+
+    def test_particle_opacity_fades_rgb_as_well_as_coverage(self):
+        root=effect('', 'void main(){ vec3 rgb=vec3(1.);float aa=1.;vec4 src=vec4(1.);float sourceMix=0.;float opacity=.25;gl_FragColor=vec4(rgb,clamp(max(aa,src.a*sourceMix)*opacity,0.,1.));}')
+        source,*_=translate(root,'fixture',filename='skexnxxparticle3d.xml')
+        self.assertIn('vec4(rgb*opacity,clamp(',source)
+
     def test_scene_coordinate_and_cv_sampling_flips_are_paired(self):
         for filename in Y_UP_SCENES:
             header = shader_header(filename)

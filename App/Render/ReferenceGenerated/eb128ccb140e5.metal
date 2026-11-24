@@ -64,7 +64,7 @@ float sdBox(thread const float3& p, thread const float3& b)
 }
 
 static inline __attribute__((always_inline))
-float2 map(thread const float3& p, constant ReferenceUniformseb128ccb140e5& _274)
+float2 map(thread const float3& p, constant ReferenceUniformseb128ccb140e5& _292)
 {
     float2 res = float2(100.0, 0.0);
     float dTable = p.y + 0.0500000007450580596923828125;
@@ -101,13 +101,13 @@ float2 map(thread const float3& p, constant ReferenceUniformseb128ccb140e5& _274
     {
         res = float2(dRPages, 4.0);
     }
-    float rotAng = (1.0 - _274.openProgress) * 3.1415927410125732421875;
+    float rotAng = (1.0 - _292.openProgress) * 3.1415927410125732421875;
     float3 pL_rot = pb;
     float param_7 = rotAng;
-    float3 _288 = pL_rot;
-    float2 _290 = _288.xy * rot(param_7);
-    pL_rot.x = _290.x;
-    pL_rot.y = _290.y;
+    float3 _306 = pL_rot;
+    float2 _308 = _306.xy * rot(param_7);
+    pL_rot.x = _308.x;
+    pL_rot.y = _308.y;
     float3 localL = pL_rot - float3((-dim.x) - 0.0199999995529651641845703125, 0.0, 0.0);
     float3 param_8 = localL - float3(0.0, (-dim.y) * 0.5, 0.0);
     float3 param_9 = float3(dim.x, coverThick, dim.z);
@@ -127,7 +127,7 @@ float2 map(thread const float3& p, constant ReferenceUniformseb128ccb140e5& _274
 }
 
 static inline __attribute__((always_inline))
-float rayMarch(thread const float3& ro, thread const float3& rd, thread float& m, constant ReferenceUniformseb128ccb140e5& _274)
+float rayMarch(thread const float3& ro, thread const float3& rd, thread float& m, constant ReferenceUniformseb128ccb140e5& _292)
 {
     float dO = 0.0;
     m = 0.0;
@@ -135,20 +135,20 @@ float rayMarch(thread const float3& ro, thread const float3& rd, thread float& m
     {
         float3 p = ro + (rd * dO);
         float3 param = p;
-        float2 dS = map(param, _274);
+        float2 dS = map(param, _292);
         dO += dS.x;
         m = dS.y;
-        bool _390 = dO > 50.0;
-        bool _399;
-        if (!_390)
+        bool _408 = dO > 50.0;
+        bool _417;
+        if (!_408)
         {
-            _399 = abs(dS.x) < 0.001000000047497451305389404296875;
+            _417 = abs(dS.x) < 0.001000000047497451305389404296875;
         }
         else
         {
-            _399 = _390;
+            _417 = _408;
         }
-        if (_399)
+        if (_417)
         {
             break;
         }
@@ -157,15 +157,15 @@ float rayMarch(thread const float3& ro, thread const float3& rd, thread float& m
 }
 
 static inline __attribute__((always_inline))
-float3 getNormal(thread const float3& p, constant ReferenceUniformseb128ccb140e5& _274)
+float3 getNormal(thread const float3& p, constant ReferenceUniformseb128ccb140e5& _292)
 {
     float3 param = p;
-    float d = map(param, _274).x;
+    float d = map(param, _292).x;
     float2 e = float2(0.001000000047497451305389404296875, 0.0);
     float3 param_1 = p - e.xyy;
     float3 param_2 = p - e.yxy;
     float3 param_3 = p - e.yyx;
-    float3 n = float3(d) - float3(map(param_1, _274).x, map(param_2, _274).x, map(param_3, _274).x);
+    float3 n = float3(d) - float3(map(param_1, _292).x, map(param_2, _292).x, map(param_3, _292).x);
     return fast::normalize(n);
 }
 
@@ -185,16 +185,22 @@ float hash21(thread const float2& p)
 }
 
 static inline __attribute__((always_inline))
-void referenceMain(constant ReferenceUniformseb128ccb140e5& _274, thread float4& gl_FragCoord, texture2d<float> refInput, sampler refInputSmplr, thread float4& referenceColor)
+float4 texture2DCv(texture2d<float> source, sampler sourceSmplr, thread const float2& uv)
 {
-    float2 uv = (float2(gl_FragCoord.x, _274.refScreen.y - gl_FragCoord.y) / _274.refScreen.xy) - float2(0.5);
-    uv.x *= (_274.refLayer.z / _274.refLayer.w);
-    float3 ro = float3(0.0, 3.5, -4.0) * _274.zoom;
-    float param = _274.camRot;
-    float3 _510 = ro;
-    float2 _512 = _510.xz * rot(param);
-    ro.x = _512.x;
-    ro.z = _512.y;
+    return source.sample(sourceSmplr, float2(uv.x, 1.0 - uv.y));
+}
+
+static inline __attribute__((always_inline))
+void referenceMain(constant ReferenceUniformseb128ccb140e5& _292, thread float4& gl_FragCoord, texture2d<float> refInput, sampler refInputSmplr, thread float4& referenceColor)
+{
+    float2 uv = (float2(gl_FragCoord.x, _292.refScreen.y - gl_FragCoord.y) / _292.refScreen.xy) - float2(0.5);
+    uv.x *= (_292.refLayer.z / _292.refLayer.w);
+    float3 ro = float3(0.0, 3.5, -4.0) * _292.zoom;
+    float param = _292.camRot;
+    float3 _528 = ro;
+    float2 _530 = _528.xz * rot(param);
+    ro.x = _530.x;
+    ro.z = _530.y;
     float3 lookAt = float3(0.0);
     float3 f = fast::normalize(lookAt - ro);
     float3 r = fast::normalize(cross(float3(0.0, 1.0, 0.0), f));
@@ -204,15 +210,15 @@ void referenceMain(constant ReferenceUniformseb128ccb140e5& _274, thread float4&
     float3 param_1 = ro;
     float3 param_2 = rd;
     float param_3;
-    float _553 = rayMarch(param_1, param_2, param_3, _274);
+    float _571 = rayMarch(param_1, param_2, param_3, _292);
     m = param_3;
-    float d = _553;
+    float d = _571;
     float3 col = float3(0.00999999977648258209228515625, 0.0, 0.0199999995529651641845703125);
     if (d < 50.0)
     {
         float3 p = ro + (rd * d);
         float3 param_4 = p;
-        float3 n = getNormal(param_4, _274);
+        float3 n = getNormal(param_4, _292);
         float3 lightPos = float3(1.0, 3.0, -1.0);
         float3 l = fast::normalize(lightPos - p);
         float dif = fast::clamp(dot(n, l), 0.0, 1.0);
@@ -256,13 +262,13 @@ void referenceMain(constant ReferenceUniformseb128ccb140e5& _274, thread float4&
                     else
                     {
                         float3 pb = p - float3(0.0, 0.0500000007450580596923828125, 0.0);
-                        float rotAng = (1.0 - _274.openProgress) * 3.1415927410125732421875;
+                        float rotAng = (1.0 - _292.openProgress) * 3.1415927410125732421875;
                         float3 pL_rot = pb;
                         float param_7 = rotAng;
-                        float3 _720 = pL_rot;
-                        float2 _722 = _720.xy * rot(param_7);
-                        pL_rot.x = _722.x;
-                        pL_rot.y = _722.y;
+                        float3 _738 = pL_rot;
+                        float2 _740 = _738.xy * rot(param_7);
+                        pL_rot.x = _740.x;
+                        pL_rot.y = _740.y;
                         float3 local_1 = pL_rot - float3((-dim.x) - 0.0199999995529651641845703125, 0.0, 0.0);
                         if (n.y > (-0.5))
                         {
@@ -274,9 +280,10 @@ void referenceMain(constant ReferenceUniformseb128ccb140e5& _274, thread float4&
                     }
                     if (isTopFace)
                     {
-                        float3 tex = refInput.sample(refInputSmplr, pageUV).xyz;
-                        float2 param_8 = p.xz * 50.0;
-                        tex *= (0.89999997615814208984375 + (0.100000001490116119384765625 * hash21(param_8)));
+                        float2 param_8 = pageUV;
+                        float3 tex = texture2DCv(refInput, refInputSmplr, param_8).xyz;
+                        float2 param_9 = p.xz * 50.0;
+                        tex *= (0.89999997615814208984375 + (0.100000001490116119384765625 * hash21(param_9)));
                         float vig = smoothstep(0.4900000095367431640625, 0.449999988079071044921875, abs(pageUV.x - 0.5)) * smoothstep(0.4900000095367431640625, 0.449999988079071044921875, abs(pageUV.y - 0.5));
                         albedo = mix(albedo * 0.5, tex, float3(vig));
                     }
@@ -294,8 +301,8 @@ void referenceMain(constant ReferenceUniformseb128ccb140e5& _274, thread float4&
         float shadowVal = 1.0;
         for (int i = 0; i < 20; i++)
         {
-            float3 param_9 = p + (l * dS);
-            float h = map(param_9, _274).x;
+            float3 param_10 = p + (l * dS);
+            float h = map(param_10, _292).x;
             if (h < 0.001000000047497451305389404296875)
             {
                 shadowVal = 0.100000001490116119384765625;
@@ -317,22 +324,22 @@ void referenceMain(constant ReferenceUniformseb128ccb140e5& _274, thread float4&
     referenceColor = float4(col, 1.0);
 }
 
-fragment refAM35_eb128ccb140e5_out refAM35_eb128ccb140e5(constant ReferenceUniformseb128ccb140e5& _274 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
+fragment refAM35_eb128ccb140e5_out refAM35_eb128ccb140e5(constant ReferenceUniformseb128ccb140e5& _292 [[buffer(0)]], texture2d<float> refInput [[texture(0)]], sampler refInputSmplr [[sampler(0)]], float4 gl_FragCoord [[position]])
 {
     refAM35_eb128ccb140e5_out out = {};
     float4 referenceColor = float4(0.0);
-    referenceMain(_274, gl_FragCoord, refInput, refInputSmplr, referenceColor);
-    bool _901 = any(isnan(referenceColor));
-    bool _908;
-    if (!_901)
+    referenceMain(_292, gl_FragCoord, refInput, refInputSmplr, referenceColor);
+    bool _916 = any(isnan(referenceColor));
+    bool _923;
+    if (!_916)
     {
-        _908 = any(isinf(referenceColor));
+        _923 = any(isinf(referenceColor));
     }
     else
     {
-        _908 = _901;
+        _923 = _916;
     }
-    if (_908)
+    if (_923)
     {
         referenceColor = float4(0.0);
     }
@@ -341,11 +348,11 @@ fragment refAM35_eb128ccb140e5_out refAM35_eb128ccb140e5(constant ReferenceUnifo
     {
         referenceColor = float4(0.0);
     }
-    float4 _921 = referenceColor;
-    float3 _927 = fast::clamp(_921.xyz, float3(-65504.0), float3(65504.0));
-    referenceColor.x = _927.x;
-    referenceColor.y = _927.y;
-    referenceColor.z = _927.z;
+    float4 _936 = referenceColor;
+    float3 _942 = fast::clamp(_936.xyz, float3(-65504.0), float3(65504.0));
+    referenceColor.x = _942.x;
+    referenceColor.y = _942.y;
+    referenceColor.z = _942.z;
     out.finalColor = referenceColor;
     return out;
 }

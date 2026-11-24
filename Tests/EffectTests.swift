@@ -19,7 +19,7 @@ final class EffectTests: XCTestCase {
     }
 
     /// Effects that work from the layer's alpha shape (no visible change on an opaque adjustment layer, like in AE).
-    static let alphaShaped: Set<String> = ["awi.amref.e7b0d60717ad7", "awi.amref.e656bf85e2a2e", "ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow", "awi11.featherEdges", "awi11.matteChoker", "awi11.alphaLevels", "awi11.edgeRefine", "awi10.bevelAlpha", "awi10.smoothBevel", "awi10.glass", "awi10.edgeAO", "awi10.innerShadow", "awi10.fresnel", "awi16.tornEdges", "awi17.extrudeFlat"]
+    static let alphaShaped: Set<String> = ["awi.amref.e616b758142ef", "awi.amref.e7b0d60717ad7", "awi.amref.e656bf85e2a2e", "ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow", "awi11.featherEdges", "awi11.matteChoker", "awi11.alphaLevels", "awi11.edgeRefine", "awi10.bevelAlpha", "awi10.smoothBevel", "awi10.glass", "awi10.edgeAO", "awi10.innerShadow", "awi10.fresnel", "awi16.tornEdges", "awi17.extrudeFlat"]
 
     private func renderer() throws -> Renderer {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU: no Metal device available; effect tests not run") }
@@ -302,6 +302,70 @@ final class EffectTests: XCTestCase {
                     let start = pd.id == "head" ? 85.0 : 15.0
                     a.params["start"] = .number(Animated(start)); b.params["start"] = .number(Animated(start))
                     a.params["before"] = .choice(1); b.params["before"] = .choice(1)
+                }
+                // Reference controls must be sampled inside their active domain:
+                // periodic endpoints can be identical, and frequency controls
+                // intentionally do nothing while their amplitude is zero.
+                func both(_ key: String, _ value: Double) {
+                    a.params[key] = .number(Animated(value)); b.params[key] = .number(Animated(value))
+                }
+                func compare(_ low: Double, _ high: Double) {
+                    a.params[pd.id] = .number(Animated(low)); b.params[pd.id] = .number(Animated(high))
+                }
+                if d.id == "awi.amref.efc580f636abc", pd.id == "EVO2" { both("SPREAD",3) }
+                if ["awi.amref.e150bc7e80a57","awi.amref.e255ba2d47539"].contains(d.id), pd.id == "phase" {
+                    compare(0.13,0.67)
+                }
+                if d.id == "awi.amref.ecef0c8a880bd" {
+                    // Travel=1 is the identity point of the two-second cycle.
+                    if pd.id == "time" { compare(0.7,1.35) }
+                    else if ["fbmScale","dispClamp"].contains(pd.id) { both("time",0.7) }
+                }
+                if ["Cross 3D","Hexagonal Prism","Raster Extrude","Star Polyhedron"].contains(d.name),
+                   ["position_x","position_y"].contains(pd.id) {
+                    // Source position units are hundredths of world space;
+                    // +/-10000 sends both samples out of the camera frustum.
+                    let center: Double = pd.id == "position_y" ? 55 : 0
+                    compare(center-35,center+35)
+                }
+                if d.name == "Hexagon Tile Rotate", pd.id == "seed" { both("twirl",135) }
+                if d.id == "awi.amref.e821e62f4d00a" {
+                    if ["dissolveSpeed","dissolveCurve"].contains(pd.id) { both("dissolveAmt",0.42) }
+                    for axis in ["x","y","z","tilt"] {
+                        if pd.id.hasPrefix(axis), pd.id.contains("Freq") || pd.id.hasSuffix("Phase") {
+                            both(axis+"RandAmp",axis == "tilt" ? 4 : 0.3)
+                            both(axis+"WaveAmp",axis == "tilt" ? 6 : 0.3)
+                        }
+                    }
+                    if ["rgbRandomness","rgbFrequency"].contains(pd.id) {
+                        both("rgbRandomness",0.8); both("zRandAmp",0.3); both("tiltRandAmp",4)
+                        if pd.id == "rgbRandomness" { compare(0.02,0.6) }
+                    }
+                }
+                if d.id == "awi.amref.e5ad5e1e9a0fb",
+                   ["tearHeightMin","tearScanFreq","tearScanAmp","bandMix"].contains(pd.id) {
+                    both("tearHeightMin",0.6); both("tearHeightRand",0.3)
+                    both("tearScanAmp",0.35)
+                    if pd.id == "tearHeightMin" { compare(0.02,0.6) }
+                    if pd.id == "tearScanAmp" { compare(0.02,0.6) }
+                }
+                if d.id == "awi.amref.ee440d77aa644", pd.id == "bgSpeed" { both("time",13.7) }
+                if d.id == "awi.amref.e616b758142ef" {
+                    // Isolate the edited texture/displacement so another
+                    // opaque Grunge stage cannot cover its result.
+                    let prefix=String(pd.id.prefix(2))
+                    if prefix.first == "t", let index=Int(prefix.suffix(1)) {
+                        for other in 1...8 { a.params["t\(other)active"] = .toggle(other == index); b.params["t\(other)active"] = .toggle(other == index) }
+                        a.params[prefix+"region"] = .choice(0); b.params[prefix+"region"] = .choice(0)
+                        if pd.id != prefix+"alpha" { both(prefix+"alpha",100) }
+                        if pd.id != prefix+"grain" { both(prefix+"grain",15) }
+                        if pd.id.hasSuffix("scale") { compare(0.6,1.6) }
+                    } else if prefix == "d1" || prefix == "d2" {
+                        a.params[prefix+"offset"] = .point(Animated(Vec2(250,160))); b.params[prefix+"offset"] = .point(Animated(Vec2(250,160)))
+                        a.params[prefix+"region"] = .choice(2); b.params[prefix+"region"] = .choice(2)
+                        if !pd.id.hasSuffix("grain") { both(prefix+"grain",15) }
+                        if pd.id.hasSuffix("scale") { compare(0.6,1.6) }
+                    }
                 }
                 // Adjustment layer = effect sees the whole varied scene, not just one flat shape.
                 let adj = !d.isTransformEffect && !Self.alphaShaped.contains(d.id)
