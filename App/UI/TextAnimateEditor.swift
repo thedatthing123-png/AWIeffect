@@ -46,7 +46,15 @@ struct TextAnimateTab: View {
                 state.editText("Animate Letters") { td in made = TextStudioLogic.animateSelection(&td, ids: ids, add: .position) }
                 openID = made
             }
+            TSColorRow(title: "Selected Color", color: text.resolvedCharIDs.first(where: { ids.contains($0) })
+                .flatMap { text.charStyles?[$0]?.fill } ?? text.fill.value(at: t)) { color in
+                state.editText("Selected Letter Color") { $0.setCharStyle(ids: ids) { $0.fill = color } }
+            }
             TSSegmented(options: [(false, "Move Letters"), (true, "Move Anchor")], selection: anchorMode, label: "Swipe") { session.dragMovesAnchor = $0 }
+            HStack(spacing: 6) {
+                selectionCoordinate("X", value: current.x, ids: ids, anchor: anchorMode, axis: \.x)
+                selectionCoordinate("Y", value: current.y, ids: ids, anchor: anchorMode, axis: \.y)
+            }
             SwipePad(hint: anchorMode ? "Swipe to move the letters' pivot" : "Swipe to move the selected letters (writes their animator)",
                      gain: 400, onDelta: { d in
                 let tt = state.currentTime
@@ -62,6 +70,23 @@ struct TextAnimateTab: View {
                 TSButton(title: "Edit “\(a.name)”", icon: "slider.horizontal.3") { openID = a.id }
             }
         }
+    }
+
+    private func selectionCoordinate(_ label: String, value: Double, ids: [UInt32], anchor: Bool,
+                                     axis: WritableKeyPath<Vec2, Double>) -> some View {
+        let title = anchor ? "Move Letter Anchor" : "Move Letters"
+        return NumberField(value: value, label: label, step: 0.1, controlHeight: 44,
+                           onDragBegin: { state.beginEdit(title) }, onDragEnd: { state.endEdit() }) { number in
+            let time = state.currentTime
+            state.editText(title) { text in
+                var point = anchor ? TextStudioLogic.selectionAnchor(text, ids: ids, at: time)
+                                   : TextStudioLogic.selectionOffset(text, ids: ids, at: time)
+                point[keyPath: axis] = number
+                if anchor { TextStudioLogic.setSelectionAnchor(&text, ids: ids, to: point, at: time) }
+                else { TextStudioLogic.setSelectionOffset(&text, ids: ids, to: point, at: time) }
+            }
+        }
+        .accessibilityIdentifier("text-selection-\(label)")
     }
 
     // MARK: Add

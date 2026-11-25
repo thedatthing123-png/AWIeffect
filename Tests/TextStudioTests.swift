@@ -10,6 +10,15 @@ final class TextStudioTests: XCTestCase {
         return t
     }
 
+    func testSelectedLetterColorLeavesUnselectedLettersUntouched() {
+        var title = text("ABC")
+        let ids = title.resolvedCharIDs
+        title.setCharStyle(ids: [ids[0], ids[2]]) { $0.fill = .black }
+        XCTAssertEqual(title.charStyle(at: 0)?.fill, .black)
+        XCTAssertNil(title.charStyle(at: 1))
+        XCTAssertEqual(title.charStyle(at: 2)?.fill, .black)
+    }
+
     func testSelectionAnimatorTargetsSelectedCharIDs() {
         var t = text("HELLO")
         let ids = TextStudioLogic.ids(t, range: 1..<3)

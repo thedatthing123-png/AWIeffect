@@ -122,6 +122,21 @@ final class RigAuthoringUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Make IK"].firstMatch.exists, "Rest editing remains in Rig, not in a separate studio")
     }
 
+    func testSelectedTextHasColorAndCoordinatesInAnimate() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-letterAuthoring"]
+        app.launch()
+        let animate = app.buttons["Text Studio Tab Animate"]
+        XCTAssertTrue(animate.waitForExistence(timeout: 15))
+        animate.tap()
+        XCTAssertTrue(app.staticTexts["Selected Color"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["text-selection-X"].firstMatch.exists)
+        XCTAssertTrue(app.descendants(matching: .any)["text-selection-Y"].firstMatch.exists)
+        let output = URL(fileURLWithPath: "/tmp/awi-ui")
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("text-studio-selection.png"))
+    }
+
     func testLettersRotateDirectlyWithoutOpeningAnotherPanel() {
         continueAfterFailure = false
         let app = XCUIApplication()
