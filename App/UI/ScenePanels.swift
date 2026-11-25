@@ -346,72 +346,27 @@ private struct MotionBlurToggle: View {
     let label: String
     let identifier: String
     @Binding var isOn: Bool
+
     var body: some View {
-        HStack {
-            Text(label).frame(maxWidth:.infinity,alignment:.leading)
-                .contentShape(Rectangle()).onTapGesture { isOn.toggle() }
-            MotionBlurNativeSwitch(isOn:$isOn,identifier:identifier,label:label).fixedSize()
-        }.frame(minHeight:44)
-    }
-}
-private struct MotionBlurNativeSwitch: UIViewRepresentable {
-    @Binding var isOn: Bool
-    let identifier: String
-    let label: String
-    func makeCoordinator() -> Coordinator { Coordinator(value:$isOn) }
-    func makeUIView(context: Context) -> UISwitch {
-        let view=MotionBlurTrackedSwitch()
-        view.onTintColor=UIColor(Theme.accent)
-        view.accessibilityIdentifier=identifier
-        view.accessibilityLabel=label
-        view.setContentHuggingPriority(.required,for:.horizontal)
-        view.setContentCompressionResistancePriority(.required,for:.horizontal)
-        view.addTarget(context.coordinator,action:#selector(Coordinator.changed(_:)),for:.valueChanged)
-        return view
-    }
-    func sizeThatFits(_ proposal: ProposedViewSize, uiView: UISwitch, context: Context) -> CGSize? {
-        // UISwitch dimensions can change between iOS versions. A legacy 51pt
-        // frame lets a wider control overflow into the ScrollView's clipped edge.
-        uiView.intrinsicContentSize
-    }
-    func updateUIView(_ view: UISwitch, context: Context) {
-        context.coordinator.value=$isOn
-        // Preview updates must not reset UIKit's in-flight switch tracking.
-        if !view.isTracking && view.isOn != isOn { view.setOn(isOn,animated:false) }
-        view.accessibilityIdentifier=identifier
-    }
-    final class Coordinator: NSObject {
-        var value: Binding<Bool>
-        init(value: Binding<Bool>) { self.value=value }
-        @objc func changed(_ sender: UISwitch) {
-            motionBlurTouchTrace("valueChanged \(sender.accessibilityIdentifier ?? "") native=\(sender.isOn) modelBefore=\(value.wrappedValue)")
-            value.wrappedValue=sender.isOn
-            motionBlurTouchTrace("modelAfter \(value.wrappedValue)")
+        Button { isOn.toggle() } label: {
+            HStack {
+                Text(label).frame(maxWidth: .infinity, alignment: .leading)
+                Capsule()
+                    .fill(isOn ? Theme.accent : Theme.raised)
+                    .overlay(alignment: isOn ? .trailing : .leading) {
+                        Circle().fill(.white).padding(3)
+                    }
+                    .frame(width: 50, height: 30)
+                    .accessibilityHidden(true)
+            }
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityRepresentation {
+            Toggle(label, isOn: $isOn)
+                .toggleStyle(.switch)
+                .accessibilityIdentifier(identifier)
         }
     }
-}
-
-private final class MotionBlurTrackedSwitch: UISwitch {
-    override func beginTracking(_ touch: UITouch, with event: UIEvent?) -> Bool {
-        motionBlurTouchTrace("down \(accessibilityIdentifier ?? "") at=\(touch.location(in:window)) frame=\(convert(bounds,to:window)) on=\(isOn)")
-        return super.beginTracking(touch,with:event)
-    }
-    override func endTracking(_ touch: UITouch?, with event: UIEvent?) {
-        super.endTracking(touch,with:event)
-        motionBlurTouchTrace("up \(accessibilityIdentifier ?? "") on=\(isOn)")
-    }
-}
-private func motionBlurTouchTrace(_ message: String) {
-    #if DEBUG
-    guard ProcessInfo.processInfo.arguments.contains("-uiTesting-motionBlur") else { return }
-    let directory=URL(fileURLWithPath:"/tmp/awi-ui",isDirectory:true)
-    try? FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
-    let file=directory.appendingPathComponent("motion-blur-touch-trace.txt")
-    let data=Data(("\(ProcessInfo.processInfo.systemUptime) \(message)\n").utf8)
-    if !FileManager.default.fileExists(atPath:file.path) { try? data.write(to:file) }
-    else if let handle=try? FileHandle(forWritingTo:file) {
-        defer { try? handle.close() }
-        _ = try? handle.seekToEnd(); try? handle.write(contentsOf:data)
-    }
-    #endif
 }

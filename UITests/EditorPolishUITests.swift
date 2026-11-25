@@ -31,8 +31,8 @@ final class EditorPolishUITests: XCTestCase {
             XCTAssertTrue(toggle.waitForExistence(timeout: 15))
             let every = app.switches["blur-every-layer"].firstMatch
             XCTAssertEqual(every.value as? String, "0")
-            // The native switch owns its exact bounds and must fit inside the
-            // panel's horizontal padding on every supported iOS version.
+            // The switch row must fit inside the panel padding, including
+            // the trailing area where the user taps the switch.
             XCTAssertTrue(toggle.isHittable)
             XCTAssertLessThanOrEqual(toggle.frame.maxX,app.frame.maxX-12+0.5)
             toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
