@@ -5,6 +5,7 @@ import SwiftUI
 struct TextAnimateTab: View {
     @ObservedObject var state: EditorState
     @ObservedObject var session = TextStudioSession.shared
+    var focusAnimator: (UUID) -> Void
     @State private var openID: UUID?
     @State private var splitUnit: TextUnit = .words
 
@@ -22,9 +23,13 @@ struct TextAnimateTab: View {
                     AnimatorRow(state: state, animator: a, index: k, count: text.animators.count, open: openID == a.id) {
                         openID = openID == a.id ? nil : a.id
                     }
+                    .id(a.id)
                     if openID == a.id { AnimatorEditor(state: state, animatorID: a.id) }
                 }
                 split(text)
+            }
+            .onChange(of: openID) { _, id in
+                if let id { focusAnimator(id) }
             }
         }
     }
@@ -240,6 +245,7 @@ struct AnimatorEditor: View {
     @ObservedObject var session = TextStudioSession.shared
     let animatorID: UUID
     @State private var showEffects = false
+    @State private var showAnimatorGraph = false
 
     private var text: TextData? { state.selectedLayer?.text }
     private var animator: TextAnimator? { text.flatMap { t in TextStudioLogic.index(t, animatorID).map { t.animators[$0] } } }
@@ -248,6 +254,7 @@ struct AnimatorEditor: View {
         if let text, let a = animator {
             VStack(alignment: .leading, spacing: 8) {
                 nameRow(a)
+                timingActions(a)
                 staggerControls(a)
                 TSSection(title: "Selectors")
                 ForEach(Array(a.allSelectors.enumerated()), id: \.offset) { k, s in
@@ -274,6 +281,30 @@ struct AnimatorEditor: View {
                         if let i = TextStudioLogic.index(t, animatorID) { t.animators[i].letterEffects = (t.animators[i].letterEffects ?? []) + [def.makeInstance()] }
                     }
                 }
+            }
+        }
+    }
+
+    @ViewBuilder private func timingActions(_ animator: TextAnimator) -> some View {
+        let keys = TextPropKey.present(in: animator.properties)
+        let graphKeys = keys.filter { $0.isAnimated(animator.properties) }
+        if !keys.isEmpty {
+            HStack(spacing: 6) {
+                TSButton(title: "Key All", icon: "diamond.fill") {
+                    let time = state.currentTime
+                    state.editText("Key Animator Properties") { text in
+                        guard let index = TextStudioLogic.index(text, animatorID) else { return }
+                        for key in keys { key.addKeyframe(at: time, to: &text.animators[index].properties) }
+                    }
+                }
+                TSButton(title: "Animator Graph", icon: "point.topleft.down.curvedto.point.bottomright.up") {
+                    showAnimatorGraph = true
+                }
+                .disabled(graphKeys.isEmpty)
+            }
+            .sheet(isPresented: $showAnimatorGraph) {
+                TextGraphEditorSheet(state: state, animatorID: animatorID, targets: graphKeys.map { .property($0) })
+                    .presentationDetents([.medium, .large])
             }
         }
     }

@@ -137,6 +137,27 @@ final class RigAuthoringUITests: XCTestCase {
         try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("text-studio-selection.png"))
     }
 
+    func testSelectionOpensAnimatorWithKeyAllControl() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-letterAuthoring"]
+        app.launch()
+        let animate = app.buttons["Text Studio Tab Animate"]
+        XCTAssertTrue(animate.waitForExistence(timeout: 15))
+        animate.tap()
+        let add = app.buttons["Animate Selected Letters"].firstMatch
+        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        add.tap()
+        let keyAll = app.buttons["Key All"].firstMatch
+        XCTAssertTrue(keyAll.waitForExistence(timeout: 5))
+        XCTAssertTrue(keyAll.isHittable)
+        keyAll.tap()
+        let graph = app.buttons["Animator Graph"].firstMatch
+        XCTAssertTrue(graph.isEnabled)
+        let output = URL(fileURLWithPath: "/tmp/awi-ui")
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("text-studio-animator.png"))
+    }
+
     func testLettersRotateDirectlyWithoutOpeningAnotherPanel() {
         continueAfterFailure = false
         let app = XCUIApplication()

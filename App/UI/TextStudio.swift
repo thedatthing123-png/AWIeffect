@@ -138,7 +138,7 @@ struct FontPicker: View {
                         }
                         ForEach(favorites.filter(matches), id: \.self) { f in row(f) }
                     case 1:
-                        ForEach(TextEngine.availableFonts().filter(matches), id: \.self) { f in row(f) }
+                        ForEach(TextEngine.availableFonts().filter { matches($0) || matches(FontLibrary.displayName($0)) }, id: \.self) { f in row(f) }
                     default:
                         ForEach(FontLibrary.catalog.filter { matches($0.name) || matches($0.style) }) { fam in catalogRow(fam) }
                     }
