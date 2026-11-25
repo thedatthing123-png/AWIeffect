@@ -341,8 +341,8 @@ extension EditorState {
         let p = tr.position.value(at: t)
         guard let a = Aim.angles(from: SIMD3(p.x, p.y, tr.positionZ.value(at: t)), to: SIMD3(c.x, c.y, 0), rotationZ: tr.rotation.value(at: t)) else { return }
         mutateLayer { layer in
-            layer.transform.rotationX.set((a.x * 10).rounded() / 10, at: t)
-            layer.transform.rotationY.set((a.y * 10).rounded() / 10, at: t)
+            layer.transform.rotationX.set(a.x, at: t)
+            layer.transform.rotationY.set(a.y, at: t)
         }
     }
 

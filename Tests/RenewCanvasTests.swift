@@ -329,7 +329,7 @@ final class RenewCanvasTests: XCTestCase {
         s.select(light.id)
         s.beginEdit("Aim"); s.aimSelected(atComp: Vec2(700, 300)); s.endEdit()
         let hit = Aim.planeHit(s.selectedLayer!, time: 0)!
-        XCTAssertEqual(hit.x, 700, accuracy: 1); XCTAssertEqual(hit.y, 300, accuracy: 1)
+        XCTAssertEqual(hit.x, 700, accuracy: 1e-6); XCTAssertEqual(hit.y, 300, accuracy: 1e-6)
     }
 
     func testLayerPickHandsTheTappedLayerToTheTool() {

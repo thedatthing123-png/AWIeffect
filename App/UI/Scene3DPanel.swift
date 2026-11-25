@@ -64,9 +64,9 @@ struct Scene3DPanel: View {
                         ForEach(targets) { l in
                             HStack {
                                 Text(l.name).font(.system(size: 12)).foregroundStyle(Theme.text).lineLimit(1).frame(width: 110, alignment: .leading)
-                                ValueScrubber(value: l.transform.positionZ.value(at: state.currentTime), range: -2000...6000, step: 1, unit: " z",
+                                ValueScrubber(value: l.transform.positionZ.value(at: state.currentTime), range: -6000...6000, step: 0.1, unit: " px",
                                               onBegin: { state.beginEdit("Layer Depth") },
-                                              onChange: { v in setZ(l.id, v) }, onEnd: { state.endEdit() }, allowBeyond: true)
+                                              onChange: { v in setZ(l.id, v) }, onEnd: { state.endEdit() }, allowBeyond: true, precisionTravel: 240)
                             }
                         }
                     }
@@ -80,8 +80,11 @@ struct Scene3DPanel: View {
         let t = state.currentTime
         state.mutate("Layer Depth") { p in
             guard let i = p.layers.firstIndex(where: { $0.id == id }) else { return }
+            let before = p.layers[i].transform
+            guard !p.layers[i].isLocked else { return }
             p.layers[i].is3D = true
             p.layers[i].transform.positionZ.set(v, at: t)
+            p.layers[i].transform.pairPositionKeys(previous: before, at: t)
         }
     }
 

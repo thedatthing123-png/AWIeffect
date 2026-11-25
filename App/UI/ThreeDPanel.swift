@@ -117,9 +117,9 @@ struct ThreeDPanel: View {
                                 keyed: { state.mutateLayer { $0.extrude.toggleKeyframe(at: t) } })
                         }
                         if l.is3D || l.content == .camera || l.content == .light {
-                            row("Position Z", l.transform.positionZ.value(at: t), -6000...6000, anim: l.transform.positionZ,
+                            row("Position Z", l.transform.positionZ.value(at: t), -6000...6000, anim: l.transform.positionZ, precisionTravel: 240,
                                 set: { v in state.mutateLayer { $0.transform.positionZ.set(v, at: t) } },
-                                keyed: { state.mutateLayer { $0.transform.positionZ.toggleKeyframe(at: t) } })
+                                keyed: { state.toggleKeyframe(.positionZ) })
                             row("X Rotation", l.transform.rotationX.value(at: t), -360...360, anim: l.transform.rotationX,
                                 set: { v in state.mutateLayer { $0.transform.rotationX.set(v, at: t) } },
                                 keyed: { state.mutateLayer { $0.transform.rotationX.toggleKeyframe(at: t) } })
@@ -201,7 +201,7 @@ struct ThreeDPanel: View {
         }
     }
 
-    private func row(_ title: String, _ v: Double, _ r: ClosedRange<Double>, anim: Animated<Double>? = nil, set: @escaping (Double) -> Void,
+    private func row(_ title: String, _ v: Double, _ r: ClosedRange<Double>, anim: Animated<Double>? = nil, precisionTravel: Double? = nil, set: @escaping (Double) -> Void,
                      keyed: @escaping () -> Void) -> some View {
         HStack(spacing: 6) {
             let t = state.currentTime
@@ -209,7 +209,7 @@ struct ThreeDPanel: View {
                 state.beginEdit("Keyframe \(title)"); keyed(); state.endEdit()
             }
             Text(title).font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 92, alignment: .leading)
-            ValueScrubber(value: v, range: r, onBegin: { state.beginEdit(title) }, onChange: set, onEnd: { state.endEdit() }, allowBeyond: true)
+            ValueScrubber(value: v, range: r, step: precisionTravel == nil ? 0 : 0.1, onBegin: { state.beginEdit(title) }, onChange: set, onEnd: { state.endEdit() }, allowBeyond: true, precisionTravel: precisionTravel)
         }
     }
 }

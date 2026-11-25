@@ -28,6 +28,8 @@ struct ValueScrubber: View {
     /// Typed numbers may go past the bar's ends (positions, rotations). Effect settings stay inside their range,
     /// since some effects loop by their values and far-out numbers could stall the GPU.
     var allowBeyond = false
+    /// Fixed units per bar width for precision transform controls.
+    var precisionTravel: Double? = nil
 
     @State private var dragBase: Double?
     @State private var lastX: CGFloat = 0
@@ -38,7 +40,7 @@ struct ValueScrubber: View {
     /// True only while a finger is down. iOS cancels a drag without calling onEnded when a scroll view takes the
     /// touch over; this resets anyway, so the drag is always finished (otherwise edits stayed in the live copy).
     @GestureState private var touching = false
-    /// Value shown: the dragged one while the finger is down (the project only updates when it lifts).
+    /// Display the gesture value while the live preview updates.
     private var shown: Double { dragBase.map(quantize) ?? value }
 
     private var span: Double { max(range.upperBound - range.lowerBound, 1e-9) }
@@ -85,7 +87,7 @@ struct ValueScrubber: View {
             .contentShape(Rectangle())
             .onTapGesture {
                 guard !editing else { return }
-                text = Self.format(value, step: step, span: span)
+                text = precisionTravel == nil ? Self.format(value, step: step, span: span) : String(value)
                 editing = true
                 focused = true
             }
@@ -93,7 +95,7 @@ struct ValueScrubber: View {
                 .updating($touching) { _, s, _ in s = true }
                 .onChanged { g in
                     if dragBase == nil {
-                        dragBase = value; lastX = g.translation.width
+                        dragBase = value; lastX = precisionTravel == nil ? g.translation.width : 0
                         session.begin()
                         onBegin()
                         UISelectionFeedbackGenerator().selectionChanged()
@@ -106,8 +108,9 @@ struct ValueScrubber: View {
                     let current = dragBase ?? value
                     let travel = min(span, max(min(span, 150), abs(current) * 1.5))
                     let gain = abs(dx) < 2 ? 0.4 : 0.8
-                    let next = current + Double(dx) / Double(max(geo.size.width, 1)) * travel * gain
-                    dragBase = min(max(next, range.lowerBound), range.upperBound)
+                    let next = current + Double(dx) / Double(max(geo.size.width, 1)) * (precisionTravel ?? (travel * gain))
+                    let bounds = precisionTravel == nil ? range : hardRange
+                    dragBase = min(max(next, bounds.lowerBound), bounds.upperBound)
                     onChange(quantize(dragBase ?? value))
                 }
                 .onEnded { _ in finishDrag() }, including: editing ? .none : .all)
@@ -133,6 +136,8 @@ struct ValueScrubber: View {
         editing = false
         let cleaned = text.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespaces)
         guard let v = Double(cleaned), v.isFinite else { return }
-        onBegin(); onChange(quantize(v)); onEnd()
+        let accepted = precisionTravel == nil ? quantize(v) : min(max(v, hardRange.lowerBound), hardRange.upperBound)
+        guard accepted != value else { return }
+        onBegin(); onChange(accepted); onEnd()
     }
 }

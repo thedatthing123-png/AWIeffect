@@ -158,16 +158,21 @@ struct LightingStudio: View {
                 position[keyPath: axis] = value
                 $0.transform.position.set(position, at: time)
             }
-        }, toggle: { state.mutateLayer { $0.transform.position.toggleKeyframe(at: time) } })
+        }, toggle: { state.toggleKeyframe(.position) })
     }
 
     private func transformRow(_ title: String, _ key: WritableKeyPath<LayerTransform, Animated<Double>>,
                               _ range: ClosedRange<Double>, _ unit: String) -> some View {
         let anim = layer.transform[keyPath: key]
-        return numberRow(title, anim.value(at: time), range, unit, animated: anim.isAnimated,
+        let isDepth = key == \.positionZ
+        return numberRow(title, anim.value(at: time), range, unit, precisionTravel: isDepth ? 240 : 90,
+                         allowBeyond: isDepth, animated: anim.isAnimated,
                          keyed: anim.keyframes.contains { abs($0.time - time) < 1e-4 },
                          set: { value in state.mutateLayer { $0.transform[keyPath: key].set(value, at: time) } },
-                         toggle: { state.mutateLayer { $0.transform[keyPath: key].toggleKeyframe(at: time) } })
+                         toggle: {
+                             if isDepth { state.toggleKeyframe(.positionZ) }
+                             else { state.mutateLayer { $0.transform[keyPath: key].toggleKeyframe(at: time) } }
+                         })
     }
 
     private func lightRow(_ title: String, _ key: WritableKeyPath<LightOptions, Animated<Double>>,
@@ -195,6 +200,7 @@ struct LightingStudio: View {
     }
 
     private func numberRow(_ title: String, _ value: Double, _ range: ClosedRange<Double>, _ unit: String,
+                           precisionTravel: Double? = nil, allowBeyond: Bool = false,
                            animated: Bool, keyed: Bool, set: @escaping (Double) -> Void,
                            toggle: @escaping () -> Void) -> some View {
         HStack(spacing: 8) {
@@ -205,8 +211,9 @@ struct LightingStudio: View {
             }
             .accessibilityLabel("Keyframe \(title)")
             Text(title).font(.subheadline).frame(width: 104, alignment: .leading)
-            ValueScrubber(value: value, range: range, step: 1, unit: unit,
-                          onBegin: { state.beginEdit(title) }, onChange: set, onEnd: { state.endEdit() })
+            ValueScrubber(value: value, range: range, step: precisionTravel == nil ? 1 : 0.1, unit: unit,
+                          onBegin: { state.beginEdit(title) }, onChange: set, onEnd: { state.endEdit() },
+                          allowBeyond: allowBeyond, precisionTravel: precisionTravel)
         }
     }
 }

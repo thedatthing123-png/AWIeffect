@@ -150,7 +150,7 @@ struct TransformToolBody: View {
                           ("Y", p.y, { v in edit("Move") { $0.transform.position.set(Vec2(p.x, v), at: t) } }),
                           ("Z", layer.transform.positionZ.value(at: t), { v in edit("Depth") { $0.transform.positionZ.set(v, at: t) } })])
                 if positionAxisZ {
-                    SwipePad(hint: "Swipe to adjust Z position", gain: compW * 2, vertical: true) { delta in
+                    SwipePad(hint: "Swipe to adjust Z position", gain: compW * 2, vertical: true, steady: true) { delta in
                         state.mutateLayer { l in l.transform.positionZ.set(l.transform.positionZ.value(at: t) + delta.height, at: t) }
                     } begin: { state.beginPanelGesture("Position Z") } end: { state.endPanelGesture() }
                 } else {
@@ -227,10 +227,10 @@ struct TransformToolBody: View {
                 }
             case .depth:
                 valueRow([("Z", layer.transform.positionZ.value(at: t), { v in edit("Depth") { $0.transform.positionZ.set(v, at: t) } })])
-                SwipePad(hint: "Swipe up to bring it closer (−Z), down to push it back", gain: compW * 2, vertical: true) { d in
+                SwipePad(hint: "Swipe up to bring it closer (−Z), down to push it back", gain: compW * 2, vertical: true, steady: true) { d in
                     state.mutateLayer { l in
                         let z = l.transform.positionZ.value(at: t)
-                        l.transform.positionZ.set(((z + d.height) * 10).rounded() / 10, at: t)
+                        l.transform.positionZ.set(z + d.height, at: t)
                     }
                 } begin: { state.beginPanelGesture("Depth") } end: { state.endPanelGesture() }
             case .rotation:
