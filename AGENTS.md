@@ -1,5 +1,7 @@
 # AWIeffect working rules
 
+- Read [the AWIeffect end plan](docs/END_PLAN.md) for the current roadmap before planning a new studio, engine, or import workstream. Follow the owner’s latest steering and the relevant implementation handoff.
+
 - Owner update November 19: reference-led expansion is now authorized on `feat/reference-effects`. Compare against the supplied AE Motion 2.5 IPA, add genuinely missing effects, improve existing definitions without duplicate IDs or catalog entries, and validate still/moving renders. Do not restore the discarded count-driven expansion or presets. Build 34 remains the recovery baseline.
 
 - Owner update November 18: this is the stable editor recovery branch. Read `docs/RECOVERY_BUILD34.md` first. Keep performance/responsiveness fixes, original premades/effects and older cutout behavior. Do not reintroduce the discarded expansion, new preset catalogs or experimental AI selection from older plans. Preserve the archived AI data and all user projects/settings.
