@@ -91,7 +91,12 @@ struct BottomPanel: View {
                 case .scene3D: Scene3DPanel(state: state)
                 case .puppet: PuppetPanel(state: state)
                 case .ccStudio: CCStudioPanel(state: state)
-                case .rig: RigPanel(state: state)
+                case .rig:
+                    if state.showArtworkRig, let layer = state.selectedLayer, layer.isImage {
+                        ArtworkRigStudio(state: state, layer: layer).id(layer.id)
+                    } else {
+                        RigPanel(state: state)
+                    }
                 case .boneWeight: BoneWeightPanel(state: state)
                 case .layerHome: LayerHomePanel(state: state)
                 case .graph: FlowGraphPanel(state: state)

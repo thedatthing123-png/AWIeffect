@@ -109,6 +109,8 @@ final class EditorState: ObservableObject {
     @Published var boneParentPicking: UUID?
     @Published var boneRestEditing = false { didSet { if boneRestEditing && !oldValue { boneRestDirty = false } } }
     var boneRestDirty = false
+    @Published var showArtworkRig = false
+    @Published var rigCursor = Vec2.zero
     @Published var boneMeshDetail = 32.0
     @Published var boneWeightArtworkID: UUID? { didSet { redrawToken &+= 1 } }
     @Published var boneWeightBoneID: UUID? { didSet { redrawToken &+= 1 } }

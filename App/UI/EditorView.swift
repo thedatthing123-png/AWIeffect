@@ -503,7 +503,9 @@ struct EditorView: View {
                     ClockReader(clock: state.clock) { _ in
                         LiveReader(live: state.live) { _ in
                             ZStack {
-                                if state.boneWeightArtworkID != nil {
+                                if state.panel == .rig && state.showArtworkRig, let layer = state.selectedLayer, layer.isImage {
+                                    ArtworkRigOverlay(state: state, layer: layer, fit: fit)
+                                } else if state.boneWeightArtworkID != nil {
                                     BoneWeightCanvasOverlay(state: state,fit: fit)
                                 } else {
                                 BoneOverlay(state: state, fit: fit)

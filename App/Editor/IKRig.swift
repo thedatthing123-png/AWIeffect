@@ -999,6 +999,13 @@ struct RigPanel: View {
                 LiveReader(live: state.live) { _ in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
+                        if l.isImage {
+                            Button { state.showArtworkRig = true } label: {
+                                Label("Rig Studio", systemImage: "point.3.connected.trianglepath.dotted")
+                                    .frame(maxWidth: .infinity, minHeight: 44)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                        }
                         RigPositionControls(state: state)
                         DisclosureGroup("Physics",isExpanded: $physicsOpen) {
                         if !l.isNull {

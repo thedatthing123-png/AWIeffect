@@ -343,6 +343,7 @@ struct Layer: Codable, Equatable, Identifiable {
     var bone: BoneSettings? = nil
     /// Optional GPU-driven deformation; the same engine works on cutout pieces and one continuous image.
     var boneSkin: BoneSkinSettings? = nil
+    var artworkRig: ArtworkRig? = nil
     var boneMesh: BoneMeshBinding? = nil
     /// IK tips and physics bodies can't pass through this layer.
     var isCollider = false
@@ -419,6 +420,7 @@ struct Layer: Codable, Equatable, Identifiable {
         ik = try c.decodeIfPresent(IKRig.self, forKey: .ik)
         bone = try c.decodeIfPresent(BoneSettings.self, forKey: .bone)
         boneSkin = try c.decodeIfPresent(BoneSkinSettings.self, forKey: .boneSkin)
+        artworkRig = try c.decodeIfPresent(ArtworkRig.self, forKey: .artworkRig)
         boneMesh = try c.decodeIfPresent(BoneMeshBinding.self, forKey: .boneMesh)
         isCollider = try c.decodeIfPresent(Bool.self, forKey: .isCollider) ?? false
         castsShadows = try c.decodeIfPresent(Bool.self, forKey: .castsShadows) ?? false
