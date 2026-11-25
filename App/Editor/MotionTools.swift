@@ -126,21 +126,32 @@ extension EditorState {
 }
 
 extension EditorState {
+    static func isSceneArtwork(_ layer: Layer) -> Bool {
+        !layer.isAudioOnly && !layer.isNull && layer.content != .camera
+            && layer.content != .adjustment && layer.content != .light
+    }
+
     /// Manga 3D panel push (the parallax camera move manga editors build in AE): the selected layers (or every
     /// visual layer) become 3D planes stacked in depth — top layers closest — resized so the first frame looks
     /// unchanged, and a new camera dollies in through them with a smooth ease.
     func mangaPanelPush(depth: Double = 600, push: Double = 0.3, duration: Double = 2.5, drift: Double = 0.03, turn: Double = 2, addCamera: Bool = true) {
-        let ids = multiSelection ?? Set(project.layers.filter { !$0.isAudioOnly && $0.content != .camera && $0.content != .adjustment && $0.content != .light }.map(\.id))
+        let selection = multiSelection
+        let ids = Set(project.layers.filter {
+            Self.isSceneArtwork($0) && !$0.isLocked && (selection?.contains($0.id) ?? true)
+        }.map(\.id))
         guard !ids.isEmpty else { return }
         let t0 = currentTime
         mutate("Manga 3D Panel Push") { p in
             let zoom = CameraState.defaultZoom(p)
+            let projectsFlatDepth = Renderer.activeCamera(p, time: t0).projects2DDepth
             var rank = 0.0
             for i in p.layers.indices where ids.contains(p.layers[i].id) {
                 let z = rank * depth
-                let oldZ = p.layers[i].is3D ? p.layers[i].transform.positionZ.value(at: t0) : 0
+                let tracks = p.layers[i].transform
+                let authoredZ = tracks.positionZ.value(at: t0)
+                let oldZ = p.layers[i].is3D || projectsFlatDepth ? authoredZ : 0
                 p.layers[i].is3D = true
-                p.layers[i].transform.positionZ = Animated(z)
+                p.layers[i].transform.positionZ = tracks.positionZ.mapped { $0 + z - authoredZ }
                 // Further away looks smaller in perspective: scale relative to the old depth, so the start frame keeps
                 // looking the same (also when the scene is rebuilt with a new spacing).
                 let k = (zoom + z) / max(1, zoom + oldZ)
@@ -154,6 +165,8 @@ extension EditorState {
             var cam = p.makeLayer(name: "Panel Push Camera", content: .camera, size: Vec2(1, 1))
             cam.camera = CameraOptions(zoom: Animated(zoom), focusDistance: Animated(zoom))
             cam.tag = .amber
+            cam.inPoint = t0
+            cam.outPoint = max(cam.outPoint, t0 + duration + 1 / max(1, p.fps))
             let c = p.center
             cam.transform.position.insertKeyframe(Keyframe(time: t0, value: c, interpolation: .bezier, easeOut: .easyOut, easeIn: .easyIn))
             cam.transform.position.insertKeyframe(Keyframe(time: t0 + duration, value: c + Vec2(Double(p.width) * drift, -Double(p.height) * drift * 0.66),
@@ -165,6 +178,9 @@ extension EditorState {
             p.layers.insert(cam, at: 0)
             selectedLayerID = cam.id
         }
-        multiSelection = nil
+        if addCamera {
+            cameraView = true
+            multiSelection = nil
+        }
     }
 }

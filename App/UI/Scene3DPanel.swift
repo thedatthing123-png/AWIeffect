@@ -1,97 +1,230 @@
 import SwiftUI
 
-/// 3D Scene: turn flat panels, cut-out characters and backgrounds into a real 3D scene in one step —
-/// each layer gets its own depth (no more faking it with Z + a 2D camera) — then optionally add a camera
-/// move through it. Everything stays normal Z positions and camera keyframes you can keep tweaking.
+/// A scene inspector below the composition, with setup separate from placement and camera motion.
 struct Scene3DPanel: View {
     @ObservedObject var state: EditorState
+    @State private var tab: Tab = .scene
     @State private var depth = 600.0
     @State private var push = 30.0
     @State private var duration = 2.5
     @State private var drift = 3.0
     @State private var turn = 2.0
 
-    private var targets: [Layer] {
-        let ids = state.multiSelection
-        return state.project.layers.filter { l in
-            (ids?.contains(l.id) ?? true) && !l.isAudioOnly && l.content != .camera && l.content != .adjustment && l.content != .light
-        }
+    private enum Tab: String, CaseIterable { case scene = "Scene", layers = "Layers", move = "Camera Move" }
+
+    private var artwork: [Layer] { state.project.layers.filter(EditorState.isSceneArtwork) }
+    private var subjects: [Layer] {
+        state.project.layers.filter { $0.content == .camera || $0.content == .light }
+    }
+    private var targetCount: Int {
+        artwork.filter { !$0.isLocked && (state.multiSelection?.contains($0.id) ?? true) }.count
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 6) {
             PanelHeader(state: state, title: "3D Scene", showKeyNav: false)
+            TSSegmented(options: Tab.allCases.map { ($0, $0.rawValue) }, selection: tab, label: "3D Scene") { tab = $0 }
+                .padding(.horizontal, 12)
             ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("ADD TO THE SCENE").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.accentGlow)
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
-                        tile("Camera", "video.fill") { state.addCamera() }
-                        tile("Spot Light", "light.cylindrical.ceiling") { state.addLight(.spot) }
-                        tile("Point Light", "lightbulb.fill") { state.addLight(.point) }
-                        tile("Sun Light", "sun.max.fill") { state.addLight(.parallel) }
-                        tile("Ambient", "circle.hexagongrid.fill") { state.addLight(.ambient) }
-                        tile("+ More Lights", "plus.circle.fill") { state.showLightBrowser = true }
-                        tile("All Layers 3D", "cube.fill") {
-                            state.mutate("All 3D") { p in
-                                for i in p.layers.indices where !p.layers[i].isAudioOnly && p.layers[i].content != .camera
-                                    && p.layers[i].content != .light && p.layers[i].content != .adjustment { p.layers[i].is3D = true }
-                            }
-                        }
-                    }
-                    Text("LAYOUT").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.accentGlow).padding(.top, 4)
-                    Text(state.isMultiSelecting ? "Uses the \(targets.count) selected layers (top layer = closest)." : "Uses every visual layer (top layer = closest). Select layers first to pick only some.")
-                        .font(.caption).foregroundStyle(Theme.textDim)
-                    row("Depth Between Layers", depth, 0...3000, "px") { depth = $0 }
-                    Button { state.mangaPanelPush(depth: depth, push: 0, duration: 0, drift: 0, turn: 0, addCamera: false) } label: {
-                        Label("Make 3D Scene", systemImage: "square.3.layers.3d").frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(PrimaryButtonStyle())
-                    Divider().overlay(Theme.stroke)
-                    Text("CAMERA MOVE").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
-                    row("Push In", push, -80...80, "%") { push = $0 }
-                    row("Length", duration, 0.3...10, "s") { duration = $0 }
-                    row("Drift", drift, -20...20, "%") { drift = $0 }
-                    row("Turn", turn, -30...30, "°") { turn = $0 }
-                    Button { state.mangaPanelPush(depth: depth, push: push / 100, duration: duration, drift: drift / 100, turn: turn, addCamera: true) } label: {
-                        Label("Make 3D Scene + Camera Move", systemImage: "camera.viewfinder").frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(PrimaryButtonStyle())
-                    Text("Starts at the playhead. Positions and sizes are adjusted so the first frame looks exactly like your flat layout; then the camera moves through real depth (parallax). Fine-tune any layer's Depth (Z) in Transform.")
-                        .font(.caption).foregroundStyle(Theme.textDim)
-                    if !targets.isEmpty {
-                        Divider().overlay(Theme.stroke)
-                        Text("LAYER DEPTHS").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
-                        ForEach(targets) { l in
-                            HStack {
-                                Text(l.name).font(.system(size: 12)).foregroundStyle(Theme.text).lineLimit(1).frame(width: 110, alignment: .leading)
-                                ValueScrubber(value: l.transform.positionZ.value(at: state.currentTime), range: -6000...6000, step: 0.1, unit: " px",
-                                              onBegin: { state.beginEdit("Layer Depth") },
-                                              onChange: { v in setZ(l.id, v) }, onEnd: { state.endEdit() }, allowBeyond: true, precisionTravel: 240)
-                            }
-                        }
+                VStack(alignment: .leading, spacing: 12) {
+                    switch tab {
+                    case .scene: scene
+                    case .layers: layers
+                    case .move: movement
                     }
                 }
-                .padding(.horizontal, 12).padding(.bottom, 14)
+                .padding(.horizontal, 12).padding(.bottom, 16)
+                .foregroundStyle(Theme.text)
+            }
+            .id(tab)
+        }
+    }
+
+    private var scene: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Label(state.activeCameraLayer?.name ?? "Default Camera", systemImage: "viewfinder")
+                    .font(.subheadline.weight(.semibold)).lineLimit(1)
+                Spacer()
+                Toggle("Camera View", isOn: $state.cameraView)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .font(.caption).tint(Theme.accent)
+            }
+            .padding(.horizontal, 10).frame(minHeight: 44)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 10))
+
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
+                tile("Camera", "video.fill") { state.addCamera(spatial: true); state.panel = .scene3D }
+                    .accessibilityIdentifier("scene-add-camera")
+                tile("Spot Light", "light.cylindrical.ceiling") { addLight(.spot) }
+                tile("Point Light", "lightbulb.fill") { addLight(.point) }
+                tile("Sun Light", "sun.max.fill") { addLight(.parallel) }
+                tile("Ambient", "circle.hexagongrid.fill") { addLight(.ambient) }
+                tile("More Lights", "plus.circle.fill") { state.showLightBrowser = true }
+            }
+
+            ForEach(subjects) { layer in
+                HStack(spacing: 8) {
+                    selectionRow(layer, detail: subjectDetail(layer))
+                    Button {
+                        state.select(layer.id)
+                        state.panel = .threeD
+                    } label: {
+                        Image(systemName: "slider.horizontal.3").frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain).foregroundStyle(Theme.accentGlow)
+                    .accessibilityLabel("Edit \\(layer.name)")
+                }
             }
         }
     }
 
-    private func setZ(_ id: UUID, _ v: Double) {
-        let t = state.currentTime
-        state.mutate("Layer Depth") { p in
-            guard let i = p.layers.firstIndex(where: { $0.id == id }) else { return }
-            let before = p.layers[i].transform
-            guard !p.layers[i].isLocked else { return }
-            p.layers[i].is3D = true
-            p.layers[i].transform.positionZ.set(v, at: t)
-            p.layers[i].transform.pairPositionKeys(previous: before, at: t)
+    private var layers: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if artwork.isEmpty {
+                Text("Add artwork to place it in the scene.").font(.caption).foregroundStyle(Theme.textDim)
+            }
+            ForEach(artwork) { layer in
+                VStack(alignment: .leading, spacing: 6) {
+                    let chosen = state.selectedLayerID == layer.id
+                    let depth = layer.transform.positionZ.value(at: state.currentTime)
+                    selectionRow(layer, detail: layer.is3D ? String(format: "Z %.1f", depth) : "Flat")
+                    if chosen {
+                        placement(layer)
+                    }
+                }
+                .padding(8)
+                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 10))
+            }
         }
     }
 
-    private func row(_ title: String, _ v: Double, _ r: ClosedRange<Double>, _ unit: String, _ set: @escaping (Double) -> Void) -> some View {
+    private func placement(_ layer: Layer) -> some View {
+        let time = state.currentTime
+        let pos = layer.transform.position.value(at: time)
+        let tr = layer.transform
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                NumberField(value: pos.x, label: "X", step: 0.1, controlHeight: 44,
+                            onDragBegin: { state.beginPanelGesture("Scene X") },
+                            onDragEnd: { state.endPanelGesture() }) { x in
+                    setXY(layer.id, x: x, y: nil)
+                }
+                NumberField(value: pos.y, label: "Y", step: 0.1, controlHeight: 44,
+                            onDragBegin: { state.beginPanelGesture("Scene Y") },
+                            onDragEnd: { state.endPanelGesture() }) { y in
+                    setXY(layer.id, x: nil, y: y)
+                }
+            }
+            HStack(spacing: 8) {
+                KeyframeDiamond(filled: tr.position.hasKeyframe(at: time) || tr.positionZ.hasKeyframe(at: time),
+                                animated: tr.position.isAnimated || tr.positionZ.isAnimated) {
+                    state.toggleKeyframe(.positionZ)
+                }
+                .frame(width: 44, height: 44)
+                .accessibilityLabel("Keyframe Scene Position")
+                Text("Depth Z").font(.subheadline)
+                ValueScrubber(value: tr.positionZ.value(at: time), range: -6000...6000, step: 0.1, unit: " px",
+                              onBegin: { state.beginEdit("Layer Depth") }, onChange: { setZ(layer.id, $0) },
+                              onEnd: { state.endEdit() }, allowBeyond: true, precisionTravel: 240)
+                    .frame(minHeight: 44)
+                    .accessibilityLabel("Layer Depth Z")
+            }
+            Toggle("3D Layer", isOn: Binding(get: { layer.is3D }, set: { enabled in
+                state.mutate("3D Layer") { project in
+                    guard let index = project.layers.firstIndex(where: { $0.id == layer.id }), !project.layers[index].isLocked else { return }
+                    project.layers[index].is3D = enabled
+                }
+            })).tint(Theme.accent)
+        }
+        .disabled(layer.isLocked)
+    }
+
+    private var movement: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(state.isMultiSelecting ? "\\(targetCount) selected layers" : "\\(targetCount) scene layers")
+                .font(.subheadline.weight(.semibold))
+            row("Layer Spacing", depth, 0...3000, " px") { depth = $0 }
+            TSButton(title: "Make 3D Scene", icon: "square.3.layers.3d") {
+                state.mangaPanelPush(depth: depth, addCamera: false)
+            }.disabled(targetCount == 0)
+            TSButton(title: "All Layers 3D", icon: "cube.fill") {
+                state.mutate("All 3D") { project in
+                    for i in project.layers.indices where EditorState.isSceneArtwork(project.layers[i]) && !project.layers[i].isLocked {
+                        project.layers[i].is3D = true
+                    }
+                }
+            }
+            Divider()
+            row("Push In", push, -80...80, "%") { push = $0 }
+            row("Length", duration, 0.3...10, " s") { duration = $0 }
+            row("Drift", drift, -20...20, "%") { drift = $0 }
+            row("Roll", turn, -30...30, " deg") { turn = $0 }
+            TSButton(title: "Make 3D Scene + Camera Move", icon: "camera.viewfinder", filled: true) {
+                state.mangaPanelPush(depth: depth, push: push / 100, duration: duration, drift: drift / 100, turn: turn)
+                tab = .scene
+            }.disabled(targetCount == 0)
+        }
+    }
+
+    private func addLight(_ type: LightType) {
+        state.addLight(type)
+        state.panel = .scene3D
+    }
+
+    private func subjectDetail(_ layer: Layer) -> String {
+        if state.activeCameraLayer?.id == layer.id { return "Active" }
+        if layer.content == .camera { return EditorState.cameraIs3D(layer) ? "3D Camera" : "2D Camera" }
+        return layer.light?.type.title ?? "Light"
+    }
+
+    private func selectionRow(_ layer: Layer, detail: String) -> some View {
+        Button { state.select(layer.id) } label: {
+            HStack(spacing: 8) {
+                Image(systemName: layer.content.symbol).frame(width: 22)
+                Text(layer.name).lineLimit(1)
+                Spacer(minLength: 4)
+                Text(detail).font(.caption).lineLimit(1).foregroundStyle(Theme.textDim)
+                if state.selectedLayerID == layer.id { Image(systemName: "checkmark").foregroundStyle(Theme.accentGlow) }
+            }
+            .font(.subheadline)
+            .padding(.horizontal, 8)
+            .frame(minHeight: 44).contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Select \\(layer.name)")
+    }
+
+    private func setXY(_ id: UUID, x: Double?, y: Double?) {
+        updatePlacement(id, label: "Layer Position") { layer, time in
+            let pos = layer.transform.position.value(at: time)
+            layer.transform.position.set(Vec2(x ?? pos.x, y ?? pos.y), at: time)
+        }
+    }
+
+    private func setZ(_ id: UUID, _ z: Double) {
+        updatePlacement(id, label: "Layer Depth") { layer, time in
+            layer.is3D = true
+            layer.transform.positionZ.set(z, at: time)
+        }
+    }
+
+    private func updatePlacement(_ id: UUID, label: String, _ change: (inout Layer, Double) -> Void) {
+        let t = state.currentTime
+        state.mutate(label) { project in
+            guard let i = project.layers.firstIndex(where: { $0.id == id }), !project.layers[i].isLocked else { return }
+            let previous = project.layers[i].transform
+            change(&project.layers[i], t)
+            project.layers[i].transform.pairPositionKeys(previous: previous, at: t)
+        }
+    }
+
+    private func row(_ title: String, _ value: Double, _ range: ClosedRange<Double>, _ unit: String,
+                     _ set: @escaping (Double) -> Void) -> some View {
         HStack {
-            Text(title).font(.system(size: 13)).foregroundStyle(Theme.text).frame(width: 110, alignment: .leading)
-            ValueScrubber(value: v, range: r, unit: unit, onChange: set)
+            Text(title).font(.subheadline).frame(width: 112, alignment: .leading)
+            ValueScrubber(value: value, range: range, unit: unit, onChange: set)
+                .frame(minHeight: 44)
         }
     }
 
@@ -99,11 +232,10 @@ struct Scene3DPanel: View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Image(systemName: icon).font(.system(size: 17, weight: .semibold))
-                Text(title).font(.system(size: 10.5, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
+                Text(title).font(.system(size: 11, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity, minHeight: 54)
-            .background(RoundedRectangle(cornerRadius: 11).fill(Theme.raised))
-            .foregroundStyle(Theme.text)
+            .background(Theme.raised, in: RoundedRectangle(cornerRadius: 11))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(title)

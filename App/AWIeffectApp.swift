@@ -66,6 +66,15 @@ struct RootView: View {
             } else { layer.effects = [ReferenceFragmentCatalog.eeab7e403ece5.definition.makeInstance()] }
             p.layers = [layer]; _openProject = State(initialValue: p)
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-sceneWorkspace") {
+            var p = Project.new(name: "Scene Workspace", width: 360, height: 240, fps: 30, duration: 3)
+            var foreground = p.makeLayer(name: "Foreground", content: .solid, size: Vec2(100, 140))
+            foreground.fill = Animated(RGBA(0.8, 0.35, 0.2))
+            var background = p.makeLayer(name: "Background", content: .solid, size: Vec2(360, 240))
+            background.fill = Animated(RGBA(0.28, 0.33, 0.45))
+            p.layers = [foreground, background]
+            _openProject = State(initialValue: p)
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-lightingStudio") {
             var p = Project.new(name: "Lighting Studio Preview", width: 360, height: 240, fps: 30, duration: 3)
             var light = p.makeLayer(name: "Spot Light", content: .light, size: Vec2(1, 1))

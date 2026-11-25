@@ -1,6 +1,23 @@
 import XCTest
 
 final class EditorPolishUITests: XCTestCase {
+    func testSceneWorkspaceAddsCameraAndKeepsLayerPlacementAccessible() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-sceneWorkspace"]
+        app.launch()
+        let camera = app.buttons["scene-add-camera"].firstMatch
+        XCTAssertTrue(camera.waitForExistence(timeout: 15))
+        camera.tap()
+        XCTAssertTrue(app.staticTexts["Active"].firstMatch.waitForExistence(timeout: 5))
+        let output = URL(fileURLWithPath: "/tmp/awi-ui")
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("3d-scene-camera.png"))
+        app.buttons["3D Scene Layers"].tap()
+        app.buttons["Select Foreground"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["Layer Depth Z"].firstMatch.isHittable)
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("3d-scene-placement.png"))
+    }
+
     func testLightingStudioKeepsLayerLightingAccessible() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTesting", "-uiTesting-lightingStudio"]
