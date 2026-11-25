@@ -248,6 +248,7 @@ struct AnimatorEditor: View {
         if let text, let a = animator {
             VStack(alignment: .leading, spacing: 8) {
                 nameRow(a)
+                staggerControls(a)
                 TSSection(title: "Selectors")
                 ForEach(Array(a.allSelectors.enumerated()), id: \.offset) { k, s in
                     SelectorEditor(state: state, animatorID: animatorID, index: k, count: a.allSelectors.count, selector: s, text: text)
@@ -274,6 +275,43 @@ struct AnimatorEditor: View {
                     }
                 }
             }
+        }
+    }
+
+    private func staggerControls(_ animator: TextAnimator) -> some View {
+        let timing = animator.stagger ?? TextStagger()
+        return VStack(alignment: .leading, spacing: 6) {
+            TSToggleRow(title: "Stagger Keyframes", isOn: animator.stagger != nil) { enabled in
+                state.editText("Stagger Keyframes") { text in
+                    guard let index = TextStudioLogic.index(text, animatorID) else { return }
+                    text.animators[index].stagger = enabled ? timing : nil
+                }
+            }
+            if animator.stagger != nil {
+                TSSegmented(options: [(TextUnit.charactersExcludingSpaces, "Letters"), (.words, "Words"), (.lines, "Lines")],
+                            selection: timing.unit, label: "Stagger by") { unit in
+                    editStagger("Stagger Unit") { $0.unit = unit }
+                }
+                HStack(spacing: 8) {
+                    Text("Delay per Unit").font(.subheadline).foregroundStyle(Theme.text)
+                    ValueScrubber(value: timing.secondsPerUnit, range: 0...2, step: 0.01, unit: " s",
+                                  onBegin: { state.beginEdit("Stagger Delay") },
+                                  onChange: { delay in editStagger("Stagger Delay") { $0.delay = delay } },
+                                  onEnd: { state.endEdit() })
+                }
+                TSToggleRow(title: "Reverse Order", isOn: timing.reversed) { reversed in
+                    editStagger("Stagger Order") { $0.reversed = reversed }
+                }
+            }
+        }
+    }
+
+    private func editStagger(_ label: String, _ change: (inout TextStagger) -> Void) {
+        state.editText(label) { text in
+            guard let index = TextStudioLogic.index(text, animatorID),
+                  var value = text.animators[index].stagger else { return }
+            change(&value)
+            text.animators[index].stagger = value
         }
     }
 
