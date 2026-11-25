@@ -149,3 +149,8 @@ Focused run 45296849936 passed 35/37 tests, including all eight reference shader
 ### Final scanline amplitude fixture repair
 
 Run 45301097386 passed 36/37 focused tests. Scanline Frequency now passes after activating the colored-band path; Scanline Amplitude needs that same path because both controls feed the same branch. Apply the shared branch setup to both controls, preserving distinct amplitude samples (0.02 and 0.6), the 0.05 response assertion, and all production shader behavior. Focused native rerun pending.
+
+
+### Deferred Band Mix check (November 24)
+
+The owner authorized packaging d13039f with this known check failure, then resumed the fix. Source inspection confirms Band Mix uses the same randomly gated colored-band branch as both scanline controls. Extend the existing deterministic branch fixture to Band Mix; retain its original comparison values and the 0.05 response assertion. This repairs test coverage, not production shader behavior. Focused native validation remains pending. No further effect additions are included in this fix.
