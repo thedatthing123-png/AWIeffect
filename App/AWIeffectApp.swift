@@ -66,6 +66,18 @@ struct RootView: View {
             } else { layer.effects = [ReferenceFragmentCatalog.eeab7e403ece5.definition.makeInstance()] }
             p.layers = [layer]; _openProject = State(initialValue: p)
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-lightingStudio") {
+            var p = Project.new(name: "Lighting Studio Preview", width: 360, height: 240, fps: 30, duration: 3)
+            var light = p.makeLayer(name: "Spot Light", content: .light, size: Vec2(1, 1))
+            light.transform.positionZ = Animated(-320)
+            light.light = LightOptions(type: .spot)
+            light.light?.castsShadows = true
+            var artwork = p.makeLayer(name: "Artwork", content: .solid, size: Vec2(360, 240))
+            artwork.fill = Animated(RGBA(0.58, 0.66, 0.76))
+            artwork.receivesLightOverride = true
+            p.layers = [light, artwork]
+            _openProject = State(initialValue: p)
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-motionBlur") {
             var p = Project.new(name: "Motion Blur Controls", width: 160, height: 120, fps: 30, duration: 2)
             var camera = p.makeLayer(name: "Camera", content: .camera, size: Vec2(160,120))

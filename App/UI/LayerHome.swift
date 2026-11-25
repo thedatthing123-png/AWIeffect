@@ -100,7 +100,7 @@ struct LayerHomePanel: View {
         if visual || c == .camera { fx.append(Tile(id: "Motion Blur", icon: "wind", panel: .motionBlur)) }
         move.append(Tile(id: "Graph", icon: "point.topleft.down.to.point.bottomright.curvepath", panel: .graph))
         if !l.isAudioOnly {
-            move.append(Tile(id: c == .camera ? "Lens & 3D" : (c == .light ? "Light" : "3D"),
+            move.append(Tile(id: c == .camera ? "Lens & 3D" : (c == .light ? "Lighting Studio" : "3D"),
                              icon: c == .camera ? "camera.aperture" : (c == .light ? "lightbulb.fill" : "cube"), panel: .threeD))
         }
         if visual && c != .text { move.append(Tile(id: "Puppet", icon: "hand.point.up.braille", panel: .puppet)) }

@@ -6,7 +6,7 @@ struct LightGPU {
     float4 posType;      // xyz world position, w type (0 point, 1 spot, 2 parallel, 3 ambient)
     float4 dirCone;      // xyz direction the light points (spot/parallel), w cos(cone half-angle)
     float4 color;        // rgb * intensity, w cone feather (0-1)
-    float4 falloff;      // x radius (0 = none), y shadow darkness unused, zw unused
+    float4 falloff;      // x radius (0 = none), y shadow darkness, z edge blur in caster pixels
 };
 
 struct LightPass {
@@ -73,15 +73,32 @@ kernel void applyLights(texture2d<half, access::read> src [[texture(0)]],
                 if (t <= 1.0 || t >= maxT) continue;
                 float4 X = float4(P + Ld * t, 1.0);
                 float2 q = float2(dot(C.inv0, X), dot(C.inv1, X));
-                float2 uv = q / (2.0 * max(C.halfSize.xy, float2(1e-3))) + 0.5;
-                if (any(uv < 0.0) || any(uv > 1.0)) continue;
+                float2 size = 2.0 * max(C.halfSize.xy, float2(1e-3));
+                float2 uv = q / size + 0.5;
+                float2 radius = L.falloff.z / size;
+                if (any(uv < -radius) || any(uv > 1.0 + radius)) continue;
                 constexpr sampler ss(address::clamp_to_zero, filter::linear);
-                occ = max(occ, float(casterTex[k].sample(ss, uv).a));
+                float coverage = float(casterTex[k].sample(ss, uv).a);
+                if (L.falloff.z > 0.0) {
+                    // Two rings filter the projected cutout edge. The zero-blur path stays a single read.
+                    coverage *= 4.0;
+                    for (int y = -1; y <= 1; y++) {
+                        for (int x = -1; x <= 1; x++) {
+                            if (x == 0 && y == 0) continue;
+                            float2 offset = float2(x, y) * radius * 0.7071068;
+                            coverage += float(casterTex[k].sample(ss, uv + offset * 0.5).a);
+                            coverage += float(casterTex[k].sample(ss, uv + offset).a);
+                        }
+                    }
+                    coverage /= 20.0;
+                }
+                occ = max(occ, coverage);
             }
             atten *= 1.0 - occ * L.falloff.y;
         }
         float ndl = abs(dot(N, Ld));           // planes are lit from either side (AE accepts lights two-sided)
-        float3 H = normalize(Ld + V);
+        float3 halfVector = Ld + V;
+        float3 H = halfVector / max(length(halfVector), 1e-5);
         float spec = pow(max(abs(dot(N, H)), 0.0), 40.0) * 0.25;
         light += L.color.rgb * atten * (ndl + spec);
     }

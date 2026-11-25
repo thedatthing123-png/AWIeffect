@@ -1,6 +1,26 @@
 import XCTest
 
 final class EditorPolishUITests: XCTestCase {
+    func testLightingStudioKeepsLayerLightingAccessible() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-lightingStudio"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Lighting Studio"].waitForExistence(timeout: 15))
+        let output = URL(fileURLWithPath: "/tmp/awi-ui")
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        for title in ["Light", "Placement", "Layers"] {
+            let tab = app.segmentedControls.buttons[title].firstMatch
+            XCTAssertTrue(tab.isHittable, title)
+            tab.tap()
+            try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("lighting-studio-\(title).png"))
+        }
+        let response = app.switches["Receive Light"].firstMatch
+        XCTAssertTrue(response.isHittable)
+        XCTAssertEqual(response.value as? String, "1")
+        response.tap()
+        XCTAssertEqual(response.value as? String, "0")
+    }
+
     func testIndividualAndCameraBlurDoNotEnableEveryLayer() {
         continueAfterFailure = false
         for camera in [false, true] {

@@ -39,6 +39,10 @@ struct EditorView: View {
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-referenceEffect") {
             state.select(state.project.layers.first?.id); state.panel = .effects
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-lightingStudio") {
+            state.select(state.project.layers.first?.id)
+            state.panel = .threeD
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-motionBlur") {
             let camera = ProcessInfo.processInfo.arguments.contains("-uiTesting-motionBlurCamera")
             state.select(state.project.layers.first(where: { camera ? $0.content == .camera : $0.content != .camera })?.id)

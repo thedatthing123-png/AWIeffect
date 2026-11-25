@@ -107,6 +107,26 @@ final class MotionBlurSceneTests: XCTestCase {
         XCTAssertEqual(a, b)
     }
 
+    func testFlatLayerLightingOptInDoesNotRequireDepthConversion() throws {
+        guard let renderer = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
+        var project = Project.new(name: "Flat Lighting", width: 100, height: 100, fps: 30, duration: 2, background: .black)
+        var card = project.makeLayer(name: "Flat card", content: .solid, size: Vec2(100, 100))
+        card.fill = Animated(.white)
+        var light = project.makeLayer(name: "Fill", content: .light, size: Vec2(1, 1))
+        light.light = LightOptions(type: .ambient, intensity: Animated(30))
+        project.layers = [light, card]
+        func center() throws -> UInt8 {
+            let pixels = try XCTUnwrap(renderer.renderPixels(project: project, time: 0, mediaURL: { URL(fileURLWithPath: $0) }))
+            return pixels.rgba[(50 * 100 + 50) * 4]
+        }
+        let original = try center()
+        project.layers[1].receivesLightOverride = true
+        XCTAssertFalse(project.layers[1].is3D)
+        XCTAssertLessThan(try center(), original)
+        project.layers[1].receivesLightOverride = false
+        XCTAssertEqual(try center(), original)
+    }
+
     func testLightsShade3DLayers() throws {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
         var p = Project.new(name: "l", width: 200, height: 200, fps: 30, duration: 2, background: .black)

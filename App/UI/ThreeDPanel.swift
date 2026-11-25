@@ -20,21 +20,25 @@ extension EditorState {
 }
 
 extension EditorState {
-    /// Adds an AE-style light above the comp, aimed into the scene, and makes visual layers 3D so it lights them.
+    static func isLightingArtwork(_ layer: Layer) -> Bool {
+        !layer.isAudioOnly && layer.content != .camera && layer.content != .light
+            && layer.content != .adjustment && layer.content != .model
+    }
+
+    /// Adds a light without changing the composition geometry.
     func addLight(_ type: LightType = .spot) {
         mutate("Add Light") { p in
             var l = p.makeLayer(name: "\(type.title) Light", content: .light, size: Vec2(1, 1))
-            l.transform.position = Animated(Vec2(Double(p.width) * 0.35, Double(p.height) * 0.3))
+            l.transform.position = Animated(Vec2(Double(p.width) * 0.5, Double(p.height) * 0.5))
             l.transform.positionZ = Animated(-CameraState.defaultZoom(p) * 0.6)
-            l.transform.rotationX = Animated(-15)
-            l.transform.rotationY = Animated(15)
             l.light = LightOptions(type: type)
             l.tag = .amber
             p.layers.insert(l, at: 0)
             selectedLayerID = l.id
-            for i in p.layers.indices where p.layers[i].content != .camera && p.layers[i].content != .light && p.layers[i].content != .adjustment {
-                if case .audio = p.layers[i].content { continue }
-                p.layers[i].is3D = true
+            for i in p.layers.indices where Self.isLightingArtwork(p.layers[i]) {
+                if !p.layers[i].is3D && p.layers[i].receivesLightOverride == nil {
+                    p.layers[i].receivesLightOverride = true
+                }
             }
         }
         panel = .threeD
@@ -66,8 +70,16 @@ struct ThreeDPanel: View {
     @ObservedObject var state: EditorState
 
     var body: some View {
+        if let layer = state.selectedLayer, layer.content == .light, let light = layer.light {
+            LightingStudio(state: state, layer: layer, light: light).id(layer.id)
+        } else {
+            geometryPanel
+        }
+    }
+
+    private var geometryPanel: some View {
         VStack(spacing: 0) {
-            PanelHeader(state: state, title: state.selectedLayer?.content == .camera ? "Camera" : (state.selectedLayer?.content == .light ? "Light" : "3D"))
+            PanelHeader(state: state, title: state.selectedLayer?.content == .camera ? "Camera" : "3D")
             if let l = state.selectedLayer {
                 let t = state.currentTime
                 ScrollView {
@@ -114,48 +126,6 @@ struct ThreeDPanel: View {
                             row("Y Rotation", l.transform.rotationY.value(at: t), -360...360, anim: l.transform.rotationY,
                                 set: { v in state.mutateLayer { $0.transform.rotationY.set(v, at: t) } },
                                 keyed: { state.mutateLayer { $0.transform.rotationY.toggleKeyframe(at: t) } })
-                        }
-                        if l.content == .light, let o = l.light {
-                            Picker("Type", selection: Binding(get: { o.type }, set: { v in
-                                state.mutate("Light Type") { p in if let i = state.selectedIndex { p.layers[i].light?.type = v } }
-                            })) { ForEach(LightType.allCases) { Text($0.title).tag($0) } }
-                            .pickerStyle(.segmented)
-                            AWIColorWell("Color", selection: Binding(get: { Color(o.color.value(at: t)) }, set: { c in
-                                state.coalescedEdit("Light Color") { $0.light?.color.set(c.rgba, at: t) }
-                            })).foregroundStyle(Theme.text)
-                            row("Intensity", o.intensity.value(at: t), 0...400, anim: o.intensity,
-                                set: { v in state.mutateLayer { $0.light?.intensity.set(v, at: t) } },
-                                keyed: { state.mutateLayer { $0.light?.intensity.toggleKeyframe(at: t) } })
-                            if o.type == .spot {
-                                row("Cone Angle", o.coneAngle.value(at: t), 1...180, anim: o.coneAngle,
-                                    set: { v in state.mutateLayer { $0.light?.coneAngle.set(v, at: t) } },
-                                    keyed: { state.mutateLayer { $0.light?.coneAngle.toggleKeyframe(at: t) } })
-                                row("Cone Feather", o.coneFeather.value(at: t), 0...100, anim: o.coneFeather,
-                                    set: { v in state.mutateLayer { $0.light?.coneFeather.set(v, at: t) } },
-                                    keyed: { state.mutateLayer { $0.light?.coneFeather.toggleKeyframe(at: t) } })
-                            }
-                            if o.type == .point || o.type == .spot {
-                                row("Falloff Radius", o.falloffRadius.value(at: t), 0...6000, anim: o.falloffRadius,
-                                    set: { v in state.mutateLayer { $0.light?.falloffRadius.set(v, at: t) } },
-                                    keyed: { state.mutateLayer { $0.light?.falloffRadius.toggleKeyframe(at: t) } })
-                            }
-                            if o.type != .ambient {
-                                Toggle("Cast Shadows (off = clean 3D, no shadows)", isOn: Binding(get: { o.castsShadows }, set: { b in
-                                    state.mutate("Light Shadows") { p in if let i = state.selectedIndex { p.layers[i].light?.castsShadows = b } }
-                                }))
-                                .tint(Theme.accent).foregroundStyle(Theme.text)
-                                if o.castsShadows {
-                                    HStack {
-                                        Text("Shadow Darkness").font(.system(size: 12)).foregroundStyle(Theme.text).frame(width: 110, alignment: .leading)
-                                        ValueScrubber(value: o.shadowDarkness, range: 0...100, step: 1, unit: "%",
-                                                      onBegin: { state.beginEdit("Shadow Darkness") },
-                                                      onChange: { v in state.mutateLayer { $0.light?.shadowDarkness = v } }, onEnd: { state.endEdit() })
-                                    }
-                                    Text("Only 3D layers with Casts Shadows on throw shadows (set it in each layer's 3D panel).").font(.caption).foregroundStyle(Theme.textDim)
-                                }
-                            }
-                            Text("Move the light with Position + Position Z; aim spot/parallel lights with X/Y Rotation. Every 3D layer is lit once a comp has a light.")
-                                .font(.caption).foregroundStyle(Theme.textDim)
                         }
                         if l.content == .camera, let c = l.camera {
                             CameraModeSwitch(state: state, layer: l)

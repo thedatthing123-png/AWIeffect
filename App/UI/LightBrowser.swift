@@ -9,7 +9,7 @@ struct LightBrowser: View {
 
     private struct SceneLight: Identifiable { let id: String; let title: String; let icon: String; let note: String; let type: LightType }
     private let sceneLights: [SceneLight] = [
-        .init(id: "spot", title: "Spot Light", icon: "light.cylindrical.ceiling.fill", note: "Cone of light with soft edge and shadows (3D layers)", type: .spot),
+        .init(id: "spot", title: "Spot Light", icon: "light.cylindrical.ceiling.fill", note: "Aim a cone of light with a controllable edge", type: .spot),
         .init(id: "point", title: "Point Light", icon: "lightbulb.fill", note: "Bulb shining in every direction", type: .point),
         .init(id: "sun", title: "Sun / Parallel Light", icon: "sun.max.fill", note: "Sunlight from one direction, even across the scene", type: .parallel),
         .init(id: "ambient", title: "Ambient Light", icon: "circle.hexagongrid.fill", note: "Fills shadows evenly", type: .ambient),
@@ -33,7 +33,7 @@ struct LightBrowser: View {
             List {
                 let lights = sceneLights.filter { matches($0.title) || matches($0.note) }
                 if !lights.isEmpty {
-                    Section("Scene lights (light 3D layers)") {
+                    Section("Scene lights") {
                         ForEach(lights) { l in
                             Button { state.addLight(l.type); dismiss() } label: { row(l.title, l.note, l.icon) }
                         }

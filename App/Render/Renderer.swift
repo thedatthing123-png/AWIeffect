@@ -325,13 +325,19 @@ final class Renderer {
             return LightGPU(posType: SIMD4(Float(pos.x), Float(pos.y), Float(t.positionZ.value(at: time)), type),
                             dirCone: SIMD4(Float(dir.x), Float(dir.y), Float(dir.z), Float(cos(o.coneAngle.value(at: time) / 2 * .pi / 180))),
                             color: SIMD4(Float(c.r * k), Float(c.g * k), Float(c.b * k), Float(o.coneFeather.value(at: time) / 100)),
-                            falloff: SIMD4(Float(o.falloffRadius.value(at: time)), o.castsShadows ? Float(o.shadowDarkness / 100) : 0, 0, 0))
+                            falloff: SIMD4(Float(o.falloffRadius.value(at: time)), o.castsShadows ? Float(o.shadowDarkness / 100) : 0, Float(o.shadowBlur), 0))
         }
     }
 
     private func encodeLights(cb: MTLCommandBuffer, src: MTLTexture, dst: MTLTexture, layer: Layer, time: Double, camera: CameraState,
                               lights: [LightGPU], density: Double, ext: Vec2) {
-        let W = Self.layerWorld(layer, time: time)
+        var surface = layer
+        if !surface.is3D {
+            surface.transform.positionZ = Animated(0)
+            surface.transform.rotationX = Animated(0)
+            surface.transform.rotationY = Animated(0)
+        }
+        let W = Self.layerWorld(surface, time: time)
         let camPos = camera.world * SIMD4(0, 0, 0, 1)
         var n = W * SIMD4(0, 0, -1, 0)
         let len = max(simd_length(SIMD3(n.x, n.y, n.z)), 1e-9)
@@ -832,7 +838,7 @@ final class Renderer {
                     }
                 }
             }
-            let lit = layer.is3D && !lights.isEmpty && layer.content != .model
+            let lit = layer.receivesLight && !lights.isEmpty && layer.content != .model
             let needsLocal = layer.boneMesh != nil || !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil || dof > 0.5 || extrude > 0.5 || !blurMatrices.isEmpty || lit
             if !needsLocal, let path = Self.shapePath(layer, time: time) {
                 drawShapePath(cb: cb, target: comp, matrix: M, layer: layer, path: path, time: time,

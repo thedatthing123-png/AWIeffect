@@ -230,6 +230,11 @@ struct LightOptions: Codable, Equatable {
     /// Shadows are off unless turned on (AE).
     var castsShadowsStore: Bool? = nil
     var castsShadows: Bool { get { castsShadowsStore ?? false } set { castsShadowsStore = newValue ? true : nil } }
+    var shadowBlurStore: Double? = nil
+    var shadowBlur: Double {
+        get { shadowBlurStore ?? 0 }
+        set { shadowBlurStore = min(60, max(0, newValue)) }
+    }
     var shadowDarknessStore: Double? = nil
     var shadowDarkness: Double { get { shadowDarknessStore ?? 70 } set { shadowDarknessStore = newValue } }
 }
@@ -344,6 +349,9 @@ struct Layer: Codable, Equatable, Identifiable {
     /// 3D shadows (AE defaults: layers don't cast, do accept).
     var castsShadows = false
     var acceptsShadows = true
+    // Nil preserves the original lighting behavior of saved projects.
+    var receivesLightOverride: Bool?
+    var receivesLight: Bool { receivesLightOverride ?? is3D }
     /// Named, colored layer markers (times relative to the layer's in point, so they travel with the clip).
     var layerMarkers: [TimelineMarker]? = nil
     /// Audio effects (EQ, compressor, pitch, ducking); nil = untouched sound.
@@ -415,6 +423,7 @@ struct Layer: Codable, Equatable, Identifiable {
         isCollider = try c.decodeIfPresent(Bool.self, forKey: .isCollider) ?? false
         castsShadows = try c.decodeIfPresent(Bool.self, forKey: .castsShadows) ?? false
         acceptsShadows = try c.decodeIfPresent(Bool.self, forKey: .acceptsShadows) ?? true
+        receivesLightOverride = try c.decodeIfPresent(Bool.self, forKey: .receivesLightOverride)
         layerMarkers = try c.decodeIfPresent([TimelineMarker].self, forKey: .layerMarkers)
         audioFX = try c.decodeIfPresent(LayerAudioFX.self, forKey: .audioFX)
     }
