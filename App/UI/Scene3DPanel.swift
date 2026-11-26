@@ -73,7 +73,7 @@ struct Scene3DPanel: View {
                         Image(systemName: "slider.horizontal.3").frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain).foregroundStyle(Theme.accentGlow)
-                    .accessibilityLabel("Edit \\(layer.name)")
+                    .accessibilityLabel("Edit \(layer.name)")
                 }
             }
         }
@@ -142,7 +142,7 @@ struct Scene3DPanel: View {
 
     private var movement: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(state.isMultiSelecting ? "\\(targetCount) selected layers" : "\\(targetCount) scene layers")
+            Text(state.isMultiSelecting ? "\(targetCount) selected layers" : "\(targetCount) scene layers")
                 .font(.subheadline.weight(.semibold))
             row("Layer Spacing", depth, 0...3000, " px") { depth = $0 }
             TSButton(title: "Make 3D Scene", icon: "square.3.layers.3d") {
@@ -192,7 +192,7 @@ struct Scene3DPanel: View {
             .frame(minHeight: 44).contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Select \\(layer.name)")
+        .accessibilityLabel("Select \(layer.name)")
     }
 
     private func setXY(_ id: UUID, x: Double?, y: Double?) {
