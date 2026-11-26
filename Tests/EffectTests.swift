@@ -20,7 +20,7 @@ final class EffectTests: XCTestCase {
     }
 
     /// Effects that work from the layer's alpha shape (no visible change on an opaque adjustment layer, like in AE).
-    static let alphaShaped: Set<String> = ["awi.amref.e616b758142ef", "awi.amref.e7b0d60717ad7", "awi.amref.e656bf85e2a2e", "ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow", "awi11.featherEdges", "awi11.matteChoker", "awi11.alphaLevels", "awi11.edgeRefine", "awi10.bevelAlpha", "awi10.smoothBevel", "awi10.glass", "awi10.edgeAO", "awi10.innerShadow", "awi10.fresnel", "awi16.tornEdges", "awi17.extrudeFlat"]
+    static let alphaShaped: Set<String> = ["awi.edgeCurrent", "awi.amref.e616b758142ef", "awi.amref.e7b0d60717ad7", "awi.amref.e656bf85e2a2e", "ae.dropShadow", "ae.simpleChoker", "ae.roughenEdges", "awi.outlineGlow", "awi.energyAura", "awi.rimLight", "awi.outerGlow", "awi.innerGlow", "awi.neonStroke", "awi.border", "awi8.longShadow", "awi11.featherEdges", "awi11.matteChoker", "awi11.alphaLevels", "awi11.edgeRefine", "awi10.bevelAlpha", "awi10.smoothBevel", "awi10.glass", "awi10.edgeAO", "awi10.innerShadow", "awi10.fresnel", "awi16.tornEdges", "awi17.extrudeFlat"]
 
     private func renderer() throws -> Renderer {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU: no Metal device available; effect tests not run") }
@@ -170,7 +170,36 @@ final class EffectTests: XCTestCase {
         XCTAssertEqual(EffectSection.of(EffectRegistry.motionTile), .repeaters)
         XCTAssertEqual(EffectSection.of(EffectRegistry.turbulentDisplace), .distort)
         XCTAssertEqual(EffectSection.of(EffectRegistry.waveGlitch18), .glitch)
-        XCTAssertTrue(EffectsPresentation.browseable.contains { $0.id == "awi.deepGlow" && $0.name == "Multiscale Glow" })
+        XCTAssertTrue(EffectsPresentation.browseable.contains { $0.id == "awi.deepGlow" && $0.name == "Deep Glow" })
+    }
+
+    @MainActor
+    func testEdgeCurrentAndSyncRollRenderMotionAndHoldAtZeroSpeed() async throws {
+        let renderer = try renderer()
+        let output = URL(fileURLWithPath: "/tmp/awi-authoring/effect-remakes", isDirectory: true)
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        let media: (String) -> URL = { URL(fileURLWithPath: $0) }
+
+        for definition in [EffectRegistry.edgeCurrent, EffectRegistry.syncRoll] {
+            let isRoll = definition.id == EffectRegistry.syncRoll.id
+            let effect = definition.makeInstance()
+            let project = scene(effect: effect, onAdjustment: isRoll)
+            let earlier = try render(renderer, project, t: 0.2)
+            let later = try render(renderer, project, t: 0.55)
+            XCTAssertGreaterThan(diff(earlier, later), 0.2, definition.name)
+
+            var stopped = effect
+            stopped.params["speed"] = .number(Animated(0))
+            let still = scene(effect: stopped, onAdjustment: isRoll)
+            XCTAssertEqual(diff(try render(renderer, still, t: 0.2), try render(renderer, still, t: 0.55)), 0, definition.name)
+
+            let fileName = isRoll ? "sync-roll" : "edge-current"
+            let frame = try XCTUnwrap(renderer.renderImage(project: project, time: 0.55, maxDimension: 160, mediaURL: media))
+            try XCTUnwrap(frame.pngData()).write(to: output.appendingPathComponent(fileName + ".png"))
+            let video = try await Exporter().export(project: project, settings: ExportSettings(format: .mp4), mediaURL: media) { _ in }
+            defer { try? FileManager.default.removeItem(at: video) }
+            try Data(contentsOf: video).write(to: output.appendingPathComponent(fileName + ".mp4"), options: .atomic)
+        }
     }
 
     func testLightIrisWipeEndpointsAndGhostBlend() throws {

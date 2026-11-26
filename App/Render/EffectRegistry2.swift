@@ -308,7 +308,7 @@ extension EffectRegistry {
     // MARK: AWI plugins
 
     static let deepGlow = EffectDefinition(
-        id: "awi.deepGlow", name: "Multiscale Glow", category: .color, aeMatchNames: ["PEDeepGlow", "PEDG2"],
+        id: "awi.deepGlow", name: "Deep Glow", category: .color, aeMatchNames: ["PEDeepGlow", "PEDG2"],
         summary: "Long-tailed multiscale light falloff with soft thresholding, gamma correction and bounded-resolution processing. No random flicker or noise.",
         params: [.number("radius", "Radius", 120, 0.1, 8000, unit: "px"), .number("exposure", "Exposure", 0, -10, 10, step: 0.01),
                  .number("threshold", "Threshold", 0, 0, 100, unit: "%"), .number("softness", "Threshold Softness", 8, 0.1, 100, unit: "%"),

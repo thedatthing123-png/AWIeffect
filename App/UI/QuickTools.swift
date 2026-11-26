@@ -58,11 +58,11 @@ enum EffectSection: String, CaseIterable, Identifiable {
             (.glow, [
                 "ae.glow", "ae.lensFlare", "awi.deepGlow", "awi.godRays", "awi.shapedLightSweep",
                 "awi10.lightSweep", "awi10.organicLightSweep", "awi10.volumetricBeam", "awi10.pointLight",
-                "awi10.filmBloom", "awi15.prismGlow", "awi15.softGlow", "awi15.darkGlow", "awi15.hueGlow",
+                "awi.edgeCurrent", "awi10.filmBloom", "awi15.prismGlow", "awi15.softGlow", "awi15.darkGlow", "awi15.hueGlow",
                 "awi15.lightWrap", "awi.outlineGlow", "awi.outerGlow", "awi.innerGlow", "awi16.glowScan", "awi7.energyBeam"
             ]),
             (.glitch, [
-                "awi.rgbSplit", "awi18.twitch", "awi18.scanTear", "awi18.waveGlitch", "awi18.blockShuffle",
+                "awi.syncRoll", "awi.rgbSplit", "awi18.twitch", "awi18.scanTear", "awi18.waveGlitch", "awi18.blockShuffle",
                 "awi18.channelSmear", "awi18.warpChroma", "awi6.glitchBlocks", "awi6.glitchLines", "awi6.digitalNoise",
                 "awi16.glitchColorBands", "awi6.datamosh"
             ]),
