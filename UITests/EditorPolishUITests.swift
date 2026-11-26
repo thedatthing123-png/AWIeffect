@@ -12,7 +12,10 @@ final class EditorPolishUITests: XCTestCase {
         XCTAssertTrue(firstRow[0].waitForExistence(timeout: 7))
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "Preview ready"), object: firstRow[2])
         XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 15), .completed)
-        for tile in firstRow { XCTAssertTrue(tile.isHittable) }
+        for tile in firstRow {
+            let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: tile)
+            XCTAssertEqual(XCTWaiter.wait(for: [hittable], timeout: 4), .completed, tile.identifier)
+        }
         XCTAssertEqual(firstRow[0].frame.minY, firstRow[2].frame.minY, accuracy: 1)
         XCTAssertLessThan(firstRow[0].frame.midX, firstRow[1].frame.midX)
         XCTAssertLessThan(firstRow[1].frame.midX, firstRow[2].frame.midX)
@@ -21,6 +24,8 @@ final class EditorPolishUITests: XCTestCase {
         let output = URL(fileURLWithPath: "/tmp/awi-ui")
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
         try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("cc-lut-grid.png"))
+        firstRow[0].tap()
+        XCTAssertTrue(firstRow[0].isSelected)
     }
 
     func testSceneWorkspaceAddsCameraAndKeepsLayerPlacementAccessible() throws {

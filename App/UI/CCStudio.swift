@@ -288,11 +288,16 @@ struct CCStudioPanel: View {
         let frameTime = state.project.snapToFrame(state.currentTime)
         let key = "\(state.project.id)|\(g.id)|\(state.project.modifiedAt.timeIntervalSince1970)|\(frameTime)|\(lutLibraryRevision)|\(state.isPlaying)"
         return VStack(alignment: .leading, spacing: 8) {
-            Button { importLUT = true } label: {
-                Label("Import LUT", systemImage: "square.and.arrow.down")
-                    .font(.subheadline.weight(.semibold)).frame(minHeight: 44).contentShape(Rectangle())
-            }.buttonStyle(.plain).foregroundStyle(Theme.accentGlow)
-            row(g, "lutStrength")
+            HStack(spacing: 8) {
+                row(g, "lutStrength")
+                Button { importLUT = true } label: {
+                    Image(systemName: "square.and.arrow.down")
+                        .font(.system(size: 16, weight: .semibold))
+                        .frame(width: 44, height: 44).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain).foregroundStyle(Theme.accentGlow)
+                .accessibilityLabel("Import LUT")
+            }
             let current = g.text?["lut"]
             if let current, !luts.contains(current), !LUTLibrary.builtInFiles.contains(current) {
                 // The grade names a LUT that isn't on this device (moved project / deleted file): it renders without it.
@@ -313,8 +318,8 @@ struct CCStudioPanel: View {
         }
     }
 
-    private func lutButton(_ g: EffectInstance, _ name: String?, selected: Bool) -> some View {
-        Button {
+    @ViewBuilder private func lutButton(_ g: EffectInstance, _ name: String?, selected: Bool) -> some View {
+        let tile = Button {
             state.mutate("LUT") { p in
                 guard let i = state.selectedIndex, let j = p.layers[i].effects.firstIndex(where: { $0.id == g.id }) else { return }
                 var t = p.layers[i].effects[j].text ?? [:]
@@ -346,14 +351,16 @@ struct CCStudioPanel: View {
         .accessibilityAddTraits(selected ? .isSelected : [])
         .accessibilityIdentifier("cc-lut-\(name ?? "none")")
         .accessibilityValue(lutPreviews[name ?? ""] == nil ? "Preview loading" : "Preview ready")
-        .contextMenu {
-            if let name, !LUTLibrary.builtInFiles.contains(name) {
+        if let name, !LUTLibrary.builtInFiles.contains(name) {
+            tile.contextMenu {
                 Button(role: .destructive) {
                     LUTLibrary.shared.remove(name)
                     luts = LUTLibrary.shared.names()
                     lutLibraryRevision += 1
                 } label: { Label("Remove LUT", systemImage: "trash") }
             }
+        } else {
+            tile
         }
     }
 
