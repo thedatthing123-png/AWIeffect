@@ -62,7 +62,7 @@ enum EffectSection: String, CaseIterable, Identifiable {
                 "awi15.lightWrap", "awi.outlineGlow", "awi.outerGlow", "awi.innerGlow", "awi16.glowScan", "awi7.energyBeam"
             ]),
             (.glitch, [
-                "awi.syncRoll", "awi.rgbSplit", "awi18.twitch", "awi18.scanTear", "awi18.waveGlitch", "awi18.blockShuffle",
+                "awi.syncRoll", "awi.lineHold", "awi.sortBands", "awi.rgbSplit", "awi18.twitch", "awi18.scanTear", "awi18.waveGlitch", "awi18.blockShuffle",
                 "awi18.channelSmear", "awi18.warpChroma", "awi6.glitchBlocks", "awi6.glitchLines", "awi6.digitalNoise",
                 "awi16.glitchColorBands", "awi6.datamosh"
             ]),
@@ -177,13 +177,13 @@ struct QuickMenu: View {
                         Button { state.panel = .cutout } label: { Label("Remove Background (AI)", systemImage: "person.crop.rectangle.badge.plus") }
                     }
                     Button { state.applyPlugin(EffectRegistry.deepGlow) } label: { Label("Deep Glow", systemImage: "sun.max.fill") }
-                    Button { state.applyPlugin(EffectRegistry.saber) } label: { Label("Saber", systemImage: "wand.and.rays") }
+                    Button { state.applyPlugin(EffectRegistry.edgeCurrent) } label: { Label("Edge Current", systemImage: "wand.and.rays") }
                     Button { state.applyPlugin(EffectRegistry.outlineGlow) } label: { Label("Outline Glow", systemImage: "person.fill.viewfinder") }
                     Button { state.applyPlugin(EffectRegistry.shake) } label: { Label("S_Shake", systemImage: "waveform.path") }
                     Button { state.applyPlugin(EffectRegistry.jitter, params: ["rate": .number(Animated(24))]) } label: { Label("Twitch", systemImage: "bolt") }
                     Button { state.applyPlugin(EffectRegistry.lensFlare) } label: { Label("Optical Flare", systemImage: "camera.aperture") }
-                    Button { state.applyPlugin(EffectRegistry.godRays) } label: { Label("Shine (Light Rays)", systemImage: "sun.haze.fill") }
-                    Button { state.applyPlugin(EffectRegistry.glitch) } label: { Label("Universe Glitch", systemImage: "bolt.horizontal.fill") }
+                    Button { state.applyPlugin(EffectRegistry.godRays) } label: { Label("God Rays", systemImage: "sun.haze.fill") }
+                    Button { state.applyPlugin(EffectRegistry.lineHold) } label: { Label("Line Hold", systemImage: "bolt.horizontal.fill") }
                     Button { state.applyPlugin(EffectRegistry.chromaticAberration) } label: { Label("Chromatic Aberration", systemImage: "circle.hexagongrid") }
                     Button {
                         state.panel = .motionBlur

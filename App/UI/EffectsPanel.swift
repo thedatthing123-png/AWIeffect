@@ -139,6 +139,12 @@ final class EffectThumbnails {
         var p = Project.new(name: "thumb", width: 360, height: 360, fps: 30, duration: 2, background: RGBA(0.05, 0.04, 0.08))
         var l = p.makeLayer(name: "img", content: .image(fileName: "preview", pixelWidth: 720, pixelHeight: 720), size: Vec2(720, 720))
         l.transform.scale = Animated(Vec2(50, 50))
+        if effect?.typeID == "awi.edgeCurrent" {
+            l.content = .shape(.star)
+            l.size = Animated(Vec2(220, 220))
+            l.transform.scale = Animated(Vec2(100, 100))
+            l.fill = Animated(RGBA(0.24, 0.19, 0.40))
+        }
         if effect?.typeID == "awi23.drawProgress" {
             l.content = .shape(.path); l.size = Animated(Vec2(300, 250)); l.transform.scale = Animated(Vec2(100, 100))
             l.path = Animated(BezierPath.smoothed([Vec2(-130, 80), Vec2(-80, -90), Vec2(0, 60), Vec2(80, -90), Vec2(130, 80)], closed: false, tolerance: 1))

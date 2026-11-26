@@ -43,9 +43,28 @@ final class EffectTests: XCTestCase {
         layer.effects = effect.map { [$0] } ?? []; p.layers = [layer]; return p
     }
 
+    private func sortBandsScene(effect: EffectInstance?) -> Project {
+        var project = Project.new(name: "Sorting fixture", width: 160, height: 160, fps: 30, duration: 2, background: .black)
+        let colors = [RGBA(0.94, 0.72, 0.28), RGBA(0.14, 0.46, 0.8),
+                      RGBA(0.8, 0.28, 0.5), RGBA(0.04, 0.02, 0.03), RGBA(0.24, 0.8, 0.58), RGBA(0.21, 0.42, 0.72)]
+        if let effect {
+            var adjustment = project.makeLayer(name: "Sort", content: .adjustment, size: Vec2(160, 160))
+            adjustment.effects = [effect]
+            project.layers.append(adjustment)
+        }
+        for index in 0..<32 {
+            var stripe = project.makeLayer(name: "Stripe", content: .solid, size: Vec2(5, 160))
+            stripe.fill = Animated(colors[index % colors.count])
+            stripe.transform.position = Animated(Vec2(2.5 + Double(index * 5), 80))
+            project.layers.append(stripe)
+        }
+        return project
+    }
+
     /// Colorful test scene with hard edges, brights, darks and a green "screen" area.
     private func scene(effect: EffectInstance?, onAdjustment: Bool = false) -> Project {
         if effect?.typeID == "awi23.drawProgress" { return drawingScene(effect: effect) }
+        if effect?.typeID == "awi.sortBands" { return sortBandsScene(effect: effect) }
         if let effect, EffectRegistry.definition(effect.typeID)?.category == .text { return textScene(effect: effect) }
         var p = Project.new(name: "fx", width: 160, height: 160, fps: 30, duration: 2, background: RGBA(0.08, 0.06, 0.12))
         var bg = p.makeLayer(name: "green", content: .solid, size: Vec2(160, 60))
@@ -202,6 +221,60 @@ final class EffectTests: XCTestCase {
         }
     }
 
+    @MainActor
+    func testRemadeEffectsRenderAndExportAnimatedControls() async throws {
+        let renderer = try renderer()
+        let output = URL(fileURLWithPath: "/tmp/awi-authoring/effect-remakes", isDirectory: true)
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        let media: (String) -> URL = { URL(fileURLWithPath: $0) }
+        let cases: [(EffectDefinition, String, String, Double, Double)] = [
+            (EffectRegistry.lineHold, "line-hold", "source", 25, 85),
+            (EffectRegistry.inkOverprint, "ink-overprint", "offsetX", -6, 14),
+            (EffectRegistry.sortBands, "sort-bands", "mix", 0, 100),
+            (EffectRegistry.panelFlash, "panel-flash", "width", 5, 130)
+        ]
+        for (definition, fileName, control, first, last) in cases {
+            var effect = definition.makeInstance()
+            var motion = Animated(first)
+            motion.insertKeyframe(Keyframe(time: 0, value: first))
+            motion.insertKeyframe(Keyframe(time: 1.2, value: last))
+            effect.params[control] = .number(motion)
+            let project = scene(effect: effect, onAdjustment: true)
+            let earlier = try render(renderer, project, t: 0)
+            let later = try render(renderer, project, t: 1.2)
+            XCTAssertGreaterThan(diff(earlier, later), 0.06, definition.name)
+
+            let frame = try XCTUnwrap(renderer.renderImage(project: project, time: 0.9, maxDimension: 160, mediaURL: media))
+            try XCTUnwrap(frame.pngData()).write(to: output.appendingPathComponent(fileName + ".png"))
+            let video = try await Exporter().export(project: project, settings: ExportSettings(format: .mp4), mediaURL: media) { _ in }
+            defer { try? FileManager.default.removeItem(at: video) }
+            try Data(contentsOf: video).write(to: output.appendingPathComponent(fileName + ".mp4"), options: .atomic)
+        }
+    }
+
+    func testSortBandsReordersABrightRunAndPreservesBlackGap() throws {
+        let renderer = try renderer()
+        var project = Project.new(name: "Sort by luminance", width: 64, height: 64, fps: 30, duration: 1, background: .black)
+        var adjustment = project.makeLayer(name: "Sort", content: .adjustment, size: Vec2(64, 64))
+        var effect = EffectRegistry.sortBands.makeInstance()
+        effect.params["length"] = .number(Animated(32))
+        adjustment.effects = [effect]
+        for (index, level) in [0.9, 0.4, 0.0, 0.8].enumerated() {
+            var stripe = project.makeLayer(name: "Stripe", content: .solid, size: Vec2(8, 64))
+            stripe.fill = Animated(RGBA(level, level, level))
+            stripe.transform.position = Animated(Vec2(Double(4 + index * 8), 32))
+            project.layers.append(stripe)
+        }
+        let original = try render(renderer, project)
+        project.layers.insert(adjustment, at: 0)
+        let sorted = try render(renderer, project)
+        func red(_ x: Int) -> UInt8 { sorted[(32 * 64 + x) * 4] }
+        XCTAssertLessThan(red(4), red(12))
+        XCTAssertGreaterThan(original[(32 * 64 + 4) * 4], original[(32 * 64 + 12) * 4])
+        XCTAssertEqual(red(20), 0)
+        XCTAssertEqual(red(28), original[(32 * 64 + 28) * 4])
+    }
+
     func testLightIrisWipeEndpointsAndGhostBlend() throws {
         let r = try renderer()
         var iris = try XCTUnwrap(EffectRegistry.definition("awi.lightIris")).makeInstance()
@@ -341,7 +414,8 @@ final class EffectTests: XCTestCase {
         for d in EffectRegistry.all where !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
             let out = try render(r, scene(effect: visible(d), onAdjustment: !d.isTransformEffect && !Self.alphaShaped.contains(d.id)))
             let comparison = d.id == "awi23.drawProgress" ? try render(r, drawingScene(effect: nil)) : (d.category == .text ? try render(r, textScene(effect: nil)) : base)
-            XCTAssertGreaterThan(diff(comparison, out), 0.5, "\(d.name) did not visibly change the image")
+            let expected = d.id == "awi.sortBands" ? try render(r, sortBandsScene(effect: nil)) : comparison
+            XCTAssertGreaterThan(diff(expected, out), 0.5, "\(d.name) did not visibly change the image")
             XCTAssertTrue(out.contains { $0 > 10 }, "\(d.name) rendered black")
         }
     }
@@ -351,7 +425,8 @@ final class EffectTests: XCTestCase {
         let base = try render(r, scene(effect: nil))
         for d in EffectRegistry.all where !d.isTransformEffect && !Self.alphaShaped.contains(d.id) && !EffectRegistry.layerRefIDs.contains(d.id) && d.id != "awi20.softBody" && d.id != "awi11.unmultiply" {
             let out = try render(r, scene(effect: visible(d), onAdjustment: true))
-            XCTAssertGreaterThan(diff(base, out), 0.5, "\(d.name) did nothing on an adjustment layer")
+            let expected = d.id == "awi.sortBands" ? try render(r, sortBandsScene(effect: nil)) : base
+            XCTAssertGreaterThan(diff(expected, out), 0.5, "\(d.name) did nothing on an adjustment layer")
         }
     }
 
@@ -362,7 +437,8 @@ final class EffectTests: XCTestCase {
             var e = visible(d)
             e.isEnabled = false
             let comparison = d.id == "awi23.drawProgress" ? try render(r, drawingScene(effect: nil)) : (d.category == .text ? try render(r, textScene(effect: nil)) : base)
-            XCTAssertLessThan(diff(comparison, try render(r, scene(effect: e))), 0.01, "disabled \(d.name) still changes output")
+            let expected = d.id == "awi.sortBands" ? try render(r, sortBandsScene(effect: nil)) : comparison
+            XCTAssertLessThan(diff(expected, try render(r, scene(effect: e))), 0.01, "disabled \(d.name) still changes output")
         }
     }
 
@@ -444,6 +520,11 @@ final class EffectTests: XCTestCase {
                 if d.id == "awi.halftone" {
                     if pd.id == "size" { a.params["version"] = .choice(1); b.params["version"] = .choice(1) }
                     if pd.id == "phase" { a.params["phase"] = .number(Animated(-0.2)); b.params["phase"] = .number(Animated(0.35)) }
+                }
+                if d.id == "awi.inkOverprint" && ["offsetX", "offsetY"].contains(pd.id) {
+                    // Compare offsets that keep both plates on the subject in this small fixture.
+                    a.params[pd.id] = .number(Animated(-6))
+                    b.params[pd.id] = .number(Animated(12))
                 }
                 if d.id == "awi.deepGlow" && pd.id == "softness" {
                     a.params["threshold"] = .number(Animated(50)); b.params["threshold"] = .number(Animated(50))
