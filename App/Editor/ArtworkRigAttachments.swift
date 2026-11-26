@@ -75,15 +75,17 @@ extension EditorState {
         guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
               let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
         let width = image.width, height = image.height
-        var alpha = Array(repeating: UInt8(0), count: width * height)
-        let rendered = alpha.withUnsafeMutableBytes { bytes -> Bool in
+        var rgba = Array(repeating: UInt8(0), count: width * height * 4)
+        let rendered = rgba.withUnsafeMutableBytes { bytes -> Bool in
             guard let context = CGContext(data: bytes.baseAddress, width: width, height: height,
-                                          bitsPerComponent: 8, bytesPerRow: width, space: nil,
-                                          bitmapInfo: CGImageAlphaInfo.alphaOnly.rawValue) else { return false }
+                                          bitsPerComponent: 8, bytesPerRow: width * 4,
+                                          space: CGColorSpaceCreateDeviceRGB(),
+                                          bitmapInfo: CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue) else { return false }
             context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
             return true
         }
-        return rendered ? (alpha, width, height) : nil
+        guard rendered else { return nil }
+        return (stride(from: 3, to: rgba.count, by: 4).map { rgba[$0] }, width, height)
     }
 
     func moveArtworkIK(_ id: UUID, bone: UUID, x: Double?, y: Double?) {
