@@ -287,7 +287,7 @@ struct CCStudioPanel: View {
         let imported = luts.filter { !builtIn.contains($0) }
         let frameTime = state.project.snapToFrame(state.currentTime)
         let key = "\(state.project.id)|\(g.id)|\(state.project.modifiedAt.timeIntervalSince1970)|\(frameTime)|\(lutLibraryRevision)|\(state.isPlaying)"
-        VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: 8) {
             Button { importLUT = true } label: {
                 Label("Import LUT", systemImage: "square.and.arrow.down")
                     .font(.subheadline.weight(.semibold)).frame(minHeight: 44).contentShape(Rectangle())
