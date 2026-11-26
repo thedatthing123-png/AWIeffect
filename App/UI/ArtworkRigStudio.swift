@@ -24,7 +24,7 @@ struct ArtworkRigStudio: View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: "Rig Studio", showKeyNav: false)
             ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 7) {
                     TSSegmented(options: Mode.allCases.map { ($0, $0.rawValue) }, selection: mode, label: "Rig Studio") { mode = $0 }
                     switch mode {
                     case .setup: setupControls
@@ -44,7 +44,7 @@ struct ArtworkRigStudio: View {
                     }
                     Button("Existing Rig Tools") { state.showArtworkRig = false }
                         .font(.caption).frame(minHeight: 44)
-                }.padding(12)
+                }.padding(.horizontal, 12).padding(.vertical, 6)
             }
         }
         .onAppear {

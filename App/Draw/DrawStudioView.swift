@@ -739,12 +739,14 @@ struct DrawStudioView: View {
             } label: {
                 Label("Send", systemImage: "arrow.down.to.line")
                     .font(.system(size: 13, weight: .bold)).lineLimit(1).fixedSize()
-                    .padding(.horizontal, 12).padding(.vertical, 8)
-                    .background(Capsule().fill(Theme.accent)).foregroundStyle(.white)
+                    .padding(.horizontal, 10).padding(.vertical, 6)
+                    .background(Theme.accent, in: RoundedRectangle(cornerRadius: 8))
+                    .foregroundStyle(.white)
+                    .frame(minHeight: 44).contentShape(Rectangle())
             }
             .accessibilityLabel("Send")
         }
-        .padding(.horizontal, 6).frame(height: 50)
+        .padding(.horizontal, 6).frame(height: 44)
     }
 
     private var moreMenu: some View {
@@ -795,7 +797,7 @@ struct DrawStudioView: View {
             if engine.hasSelection || engine.isSelectingSubject || session.tool.isSelection { selectionBar }
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 4)
         .frame(maxWidth: .infinity)
         .background(Theme.background)
     }

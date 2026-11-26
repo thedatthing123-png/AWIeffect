@@ -10,20 +10,26 @@ shard=os.environ['TEST_SHARD']
 flags=selectors(scope,shard)
 Path('test-inventory.json').write_text(json.dumps({'scope':scope,'shard':shard,'selectors':flags},indent=2))
 devices=json.loads(subprocess.check_output(['xcrun','simctl','list','devices','available','-j']))['devices']
-phones=[device['udid'] for runtime,items in devices.items() if 'iOS' in runtime for device in items if device['name'].startswith('iPhone')]
+phones=[device for runtime,items in devices.items() if 'iOS' in runtime for device in items if device['name'].startswith('iPhone')]
 if not phones: raise RuntimeError('No available iPhone simulator')
-state=subprocess.run(['xcrun','simctl','boot',phones[-1]],capture_output=True,text=True)
+simulator=phones[-1]
+if shard == 'ui':
+    simulator=next((phone for phone in reversed(phones) if phone['name'] == 'iPhone 16 Pro Max'), None)
+    if simulator is None:
+        simulator=next((phone for phone in reversed(phones) if 'Pro Max' in phone['name']), phones[-1])
+udid=simulator['udid']
+subprocess.run(['xcrun','simctl','boot',udid],capture_output=True,text=True)
 # A reused runner may already have it booted. bootstatus waits for SpringBoard
 # before XCUITest asks Accessibility to initialize, instead of racing first boot.
-subprocess.run(['xcrun','simctl','bootstatus',phones[-1],'-b'],check=True,timeout=240)
+subprocess.run(['xcrun','simctl','bootstatus',udid,'-b'],check=True,timeout=240)
 products=Path('build/TestBuild/Build/Products')
 runs=list(products.glob('*.xctestrun'))
 if len(runs)!=1: raise RuntimeError(f'Expected one relocatable xctestrun, got {runs}')
-command=['xcodebuild','test-without-building','-xctestrun',str(runs[0]),'-destination','id='+phones[-1],
+command=['xcodebuild','test-without-building','-xctestrun',str(runs[0]),'-destination','id='+udid,
          '-resultBundlePath','TestResults.xcresult','-parallel-testing-enabled','NO',
          '-test-timeouts-enabled','YES','-default-test-execution-time-allowance','240',
          '-maximum-test-execution-time-allowance','600']+flags
-print(f'Running {shard}: {len(flags)} tests on {phones[-1]}',flush=True)
+print(f'Running {shard}: {len(flags)} tests on {simulator["name"]} ({udid})',flush=True)
 with open('test.log','w',buffering=1) as log:
     process=subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,bufsize=1)
     for line in process.stdout:

@@ -31,20 +31,20 @@ struct TrimStrip: View {
                     button("arrow.left.and.line.vertical.and.arrow.right", "Extend End Here") { trim(start: false) }
                 }
             }
-            .padding(.horizontal, 10).padding(.vertical, 4)
+            .padding(.horizontal, 8)
             .background(Theme.surface)
         }
     }
 
     private func move(start: Bool) {
-        guard let layer = state.selectedLayer else { return }
+        guard let layer = state.selectedLayer, !layer.isLocked else { return }
         state.beginEdit(start ? "Move Start to Playhead" : "Move End to Playhead")
         state.moveClip(layer, by: state.project.snapToFrame(clock.time) - (start ? layer.inPoint : layer.outPoint))
         state.endEdit()
     }
 
     private func trim(start: Bool) {
-        guard let l = state.selectedLayer else { return }
+        guard let l = state.selectedLayer, !l.isLocked else { return }
         let t = state.project.snapToFrame(clock.time)
         state.beginEdit(start ? "Trim Start" : "Trim End")
         state.trimClip(l, start: start, by: t - (start ? l.inPoint : l.outPoint))
@@ -58,8 +58,10 @@ struct TrimStrip: View {
                 Image(systemName: icon).font(.system(size: 13, weight: .semibold))
                 Text(title).font(.system(size: 12, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
             }
-            .frame(maxWidth: .infinity, minHeight: 34)
-            .background(RoundedRectangle(cornerRadius: 9).fill(Theme.raised))
+            .frame(maxWidth: .infinity, minHeight: 30)
+            .background(RoundedRectangle(cornerRadius: 7).fill(Theme.raised))
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
             .foregroundStyle(Theme.text)
         }
         .buttonStyle(.plain)

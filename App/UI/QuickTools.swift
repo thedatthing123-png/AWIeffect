@@ -2,6 +2,20 @@ import SwiftUI
 import PhotosUI
 import AVFoundation
 
+enum EffectsPresentation {
+    static let studioIDs: Set<String> = ["awi18.grade", "awi18.puppet"]
+    static let retiredIDs: Set<String> = [
+        "awi.manga", "awi.impactFrame", "awi.looks", "awi.deepGlow", "awi.saber",
+        "awi.shine", "awi.glitch", "awi.vhs", "awi.pixelSort", "awi.particles",
+        "awi8.crossProcess", "awi8.bleachBypass", "awi8.infrared", "awi13.cyberpunk", "awi13.lomo", "awi13.dayForNight"
+    ]
+    static let browseable = EffectRegistry.all.filter { canBrowse($0) }
+
+    static func canBrowse(_ definition: EffectDefinition) -> Bool {
+        !studioIDs.contains(definition.id) && !retiredIDs.contains(definition.id)
+    }
+}
+
 // MARK: - Effect sections (Alight Motion-style browsing)
 
 /// Browsing sections for the effect picker. Each effect lands in the first section whose keywords match its id, name
@@ -82,7 +96,7 @@ enum EffectSection: String, CaseIterable, Identifiable {
         }
     }
 
-    static let counts: [EffectSection: Int] = Dictionary(grouping: EffectRegistry.all, by: { of($0) }).mapValues(\.count)
+    static let counts: [EffectSection: Int] = Dictionary(grouping: EffectsPresentation.browseable, by: { of($0) }).mapValues(\.count)
 }
 
 // MARK: - Preview quality

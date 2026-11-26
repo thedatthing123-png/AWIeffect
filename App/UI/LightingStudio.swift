@@ -14,7 +14,7 @@ struct LightingStudio: View {
     private var time: Double { state.currentTime }
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 4) {
             PanelHeader(state: state, title: "Lighting Studio", showKeyNav: false)
             Picker("Lighting controls", selection: $tab) {
                 ForEach(Tab.allCases, id: \.self) { Text($0.rawValue).tag($0) }
@@ -22,14 +22,14 @@ struct LightingStudio: View {
             .pickerStyle(.segmented)
             .padding(.horizontal, 12)
             ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 8) {
                     switch tab {
                     case .light: lightControls
                     case .placement: placementControls
                     case .layers: layerControls
                     }
                 }
-                .padding(12)
+                .padding(.horizontal, 12).padding(.vertical, 6)
                 .foregroundStyle(Theme.text)
             }
             .defaultScrollAnchor(.top)

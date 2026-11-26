@@ -149,18 +149,15 @@ struct PuppetPanel: View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: "Puppet Pins")
             ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Tap the layer to drop pins (e.g. hair root, hair tip, shoulder, hand). Drag a pin to bend the image around it. Pins you don't move hold their area still.")
-                        .font(.caption).foregroundStyle(Theme.textDim)
+                VStack(alignment: .leading, spacing: 7) {
                     Picker("", selection: $state.puppetPlace) {
                         Label("Place Pins", systemImage: "pin.fill").tag(true)
                         Label("Move Pins", systemImage: "hand.draw.fill").tag(false)
                     }
                     .pickerStyle(.segmented)
-                    Text(state.puppetPlace ? "Tap the layer to drop pins. Switch to Move when you're done so you can drag them without adding new ones."
-                         : "Pins stay where they are: drag any pin to bend the layer. Taps never add pins here.")
+                    Text(state.puppetPlace ? "Tap the canvas to place a pin." : "Drag a pin to pose the layer.")
                         .font(.caption2).foregroundStyle(Theme.textDim)
-                    Toggle("Animate (each drag sets a keyframe at the playhead)", isOn: $state.puppetAnimate)
+                    Toggle("Keyframe Pin Moves", isOn: $state.puppetAnimate)
                         .tint(Theme.accent).foregroundStyle(Theme.text)
                     if let j = state.puppetEffectIndex, let e = state.selectedLayer?.effects[j] {
                         HStack {

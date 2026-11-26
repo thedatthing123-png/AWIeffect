@@ -233,14 +233,15 @@ struct EffectsPanel: View {
                             .background(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.accent.opacity(0.7), style: StrokeStyle(lineWidth: 1.2, dash: [5, 4])))
                             .foregroundStyle(Theme.accentGlow)
                     }
-                    if let layer = state.selectedLayer, !layer.effects.isEmpty {
+                    let effects = state.selectedLayer?.effects.filter { !EffectsPresentation.studioIDs.contains($0.typeID) } ?? []
+                    if !effects.isEmpty {
                         // Stack tools: one row, two controls (the AE preset import lives in the menu).
                         HStack(spacing: 8) {
                             Button {
-                                let ids = Set(layer.effects.map(\.id))
+                                let ids = Set(effects.map(\.id))
                                 if ids.isSubset(of: expanded) { expanded.subtract(ids) } else { expanded.formUnion(ids) }
                             } label: {
-                                let allOpen = Set(layer.effects.map(\.id)).isSubset(of: expanded)
+                                let allOpen = Set(effects.map(\.id)).isSubset(of: expanded)
                                 Label(allOpen ? "Collapse All" : "Expand All", systemImage: allOpen ? "rectangle.compress.vertical" : "rectangle.expand.vertical")
                                     .font(.system(size: 13, weight: .semibold))
                                     .frame(maxWidth: .infinity, minHeight: 44).glass(radius: 12)
@@ -253,14 +254,14 @@ struct EffectsPanel: View {
                     }
                     if let m = ffxMessage { Text(m).font(.caption).foregroundStyle(Theme.textDim) }
                     if let layer = state.selectedLayer {
-                        if layer.effects.isEmpty {
+                        if effects.isEmpty {
                             Text(layer.content == .adjustment ? "Effects on an adjustment layer apply to every layer below it."
                                                                : "No effects yet.")
                                 .font(.caption).foregroundStyle(Theme.textDim).padding(.top, 6)
                         }
-                        ForEach(Array(layer.effects.enumerated()), id: \.element.id) { idx, e in
+                        ForEach(Array(effects.enumerated()), id: \.element.id) { idx, e in
                             // An applied preset shows once above its effects, with one button to remove them all.
-                            if let tag = e.text?["stack"], idx == 0 || layer.effects[idx - 1].text?["stack"] != tag {
+                            if let tag = e.text?["stack"], idx == 0 || effects[idx - 1].text?["stack"] != tag {
                                 presetHeader(tag)
                             }
                             SwipeToDelete(content: { effectCard(e) }, isEnabled: !expanded.contains(e.id), onDelete: { state.removeEffect(e.id) })
@@ -679,10 +680,10 @@ struct EffectBrowser: View {
     private var filtered: [EffectDefinition] {
         let base: [EffectDefinition]
         switch tab {
-        case .all: base = EffectRegistry.all
-        case .favorites: base = favorites.compactMap { EffectRegistry.definition($0) }
-        case .recent: base = recents.compactMap { EffectRegistry.definition($0) }
-        case .section(let sec): base = EffectRegistry.all.filter { EffectSection.of($0) == sec }
+        case .all: base = EffectsPresentation.browseable
+        case .favorites: base = favorites.compactMap { EffectRegistry.definition($0) }.filter(EffectsPresentation.canBrowse)
+        case .recent: base = recents.compactMap { EffectRegistry.definition($0) }.filter(EffectsPresentation.canBrowse)
+        case .section(let sec): base = EffectsPresentation.browseable.filter { EffectSection.of($0) == sec }
         }
         guard !query.isEmpty else { return base }
         return base.filter { $0.name.localizedCaseInsensitiveContains(query) || $0.summary.localizedCaseInsensitiveContains(query) }
@@ -754,7 +755,7 @@ struct EffectBrowser: View {
                 .padding(16)
             }
             .background(Theme.background)
-            .searchable(text: $query, prompt: "Search \(EffectRegistry.all.count) effects")
+            .searchable(text: $query, prompt: "Search \(EffectsPresentation.browseable.count) effects")
             .navigationTitle("Add Effect")
             .toolbarBackground(Theme.background, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)

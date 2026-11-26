@@ -51,6 +51,15 @@ struct RootView: View {
 
     init() {
         #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-ccLUTGrid") {
+            var p = Project.new(name: "LUT Preview", width: 480, height: 320, fps: 30, duration: 3, background: RGBA(0.23, 0.32, 0.45))
+            var grade = p.makeLayer(name: "Grade", content: .adjustment, size: Vec2(480, 320))
+            grade.effects = [EffectRegistry.grade.makeInstance()]
+            var shape = p.makeLayer(name: "Artwork", content: .shape(.star), size: Vec2(235, 225))
+            shape.fill = Animated(RGBA(0.84, 0.37, 0.19))
+            p.layers = [grade, shape]
+            _openProject = State(initialValue: p)
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-referenceEffect") {
             var p = Project.new(name: "Reviewed Effect Controls", width: 320, height: 240, fps: 30, duration: 3)
             var layer = p.makeLayer(name: "Artwork", content: .shape(.star), size: Vec2(180, 160))

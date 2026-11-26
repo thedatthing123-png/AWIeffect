@@ -36,6 +36,9 @@ struct EditorView: View {
 
     init(state: EditorState, close: @escaping () -> Void) {
         #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-ccLUTGrid") {
+            state.select(state.project.layers.first?.id); state.panel = .ccStudio
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-referenceEffect") {
             state.select(state.project.layers.first?.id); state.panel = .effects
         }
@@ -122,7 +125,7 @@ struct EditorView: View {
                 // A panel open on a layer: the timeline shows just that layer's row, so the canvas stays big.
                 let compact = state.panel != .none && state.panel != .add && state.selectedLayerID != nil && !state.isMultiSelecting
                 TimelineView(state: state, compact: compact).equatable()
-                    .frame(height: compact ? 92 : timelineHeight)
+                    .frame(height: compact ? 88 : timelineHeight)
                 TrimStrip(state: state, clock: state.clock)
                 if let pen {
                     PenOverlay(state: state, target: pen.target, style: pen.style, fit: penSession.fit,
@@ -303,9 +306,10 @@ struct EditorView: View {
     }
 
     private func layerBar(_ l: Layer) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 4) {
             Button { state.select(nil) } label: {
-                Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold)).frame(width: 36, height: 36)
+                Image(systemName: "chevron.left").font(.system(size: 16, weight: .semibold))
+                    .frame(width: 38, height: 44).contentShape(Rectangle())
             }
             .accessibilityLabel("Deselect Layer")
             Button { renameText = l.name; showLayerRename = true } label: {
@@ -379,7 +383,7 @@ struct EditorView: View {
         }
         .foregroundStyle(Theme.text)
         .padding(.horizontal, 10)
-        .frame(height: 50)
+        .frame(height: 44)
         .alert("Rename Layer", isPresented: $showLayerRename) {
             TextField("Name", text: $renameText)
             Button("Rename") {

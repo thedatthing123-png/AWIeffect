@@ -3,10 +3,41 @@ import SwiftUI
 
 /// Direct timeline editing: move clips, trim their ends, reorder layers, drag / copy / paste keyframes.
 extension EditorState {
+    /// Returns the shift and the matched composition edge, if any.
+    func snapClipShift(_ shift: Double, clips: [Layer], tolerance: Double, trimStart: Bool? = nil) -> (shift: Double, guide: Double?) {
+        guard let first = clips.min(by: { $0.inPoint < $1.inPoint }) else { return (shift, nil) }
+        let primaryEdge = trimStart == false ? first.outPoint : first.inPoint
+        var result = (shift: project.snapToFrame(primaryEdge + shift) - primaryEdge, guide: Optional<Double>.none)
+        guard tolerance > 0 else { return result }
+        let excluded = clips.reduce(into: Set(clips.map(\.id))) { ids, clip in
+            if clip.isGroup { ids.formUnion(Self.descendantIDs(of: clip.id, in: project)) }
+        }
+        let edges = project.timelineLayers.filter { !excluded.contains($0.id) }.flatMap { [$0.inPoint, $0.outPoint] }
+        let targets = edges + project.markers + namedMarkerTimes + [currentTime, 0, project.duration]
+        let movingEdges = clips.flatMap { clip -> [Double] in
+            guard let trimStart else { return [clip.inPoint, clip.outPoint] }
+            return [trimStart ? clip.inPoint : clip.outPoint]
+        }
+        var closest = tolerance
+        for edge in movingEdges {
+            for target in targets {
+                let candidate = project.snapToFrame(target)
+                let distance = abs(candidate - edge - shift)
+                guard distance < closest else { continue }
+                if trimStart == nil && first.inPoint + candidate - edge < -1e-8 { continue }
+                closest = distance
+                result = (candidate - edge, candidate)
+            }
+        }
+        return result
+    }
+
     /// Snaps a time to frames, beat markers and the playhead.
-    func snapTime(_ t: Double, tolerance: Double) -> Double {
+    func snapTime(_ t: Double, tolerance: Double, includeClipEdges: Bool = false, includePlayhead: Bool = true) -> Double {
         var best = t, dist = tolerance
-        for c in project.markers + namedMarkerTimes + [currentTime, 0, project.duration] where abs(c - t) < dist { best = c; dist = abs(c - t) }
+        let edges = includeClipEdges ? project.timelineLayers.flatMap { [$0.inPoint, $0.outPoint] } : []
+        let targets = edges + project.markers + namedMarkerTimes + [0, project.duration] + (includePlayhead ? [currentTime] : [])
+        for c in targets where abs(c - t) < dist { best = c; dist = abs(c - t) }
         return project.snapToFrame(best)
     }
 

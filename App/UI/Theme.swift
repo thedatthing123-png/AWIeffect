@@ -68,17 +68,16 @@ extension View {
 struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 16, weight: .semibold))
+            .font(.system(size: 14, weight: .semibold))
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 15)
+            .padding(.vertical, 8)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(LinearGradient(colors: [Theme.accentGlow, Theme.accent], startPoint: .top, endPoint: .bottom))
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fill(Theme.accent.opacity(configuration.isPressed ? 0.78 : 1))
             )
-            .shadow(color: Theme.accent.opacity(configuration.isPressed ? 0.2 : 0.5), radius: 14, y: 4)
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
     }
 }
 
@@ -93,14 +92,15 @@ struct ToolTile: View {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             action()
         }) {
-            VStack(spacing: 6) {
-                Image(systemName: icon).font(.system(size: 19, weight: .medium))
+            VStack(spacing: 4) {
+                Image(systemName: icon).font(.system(size: 17, weight: .medium))
                 Text(title).font(.system(size: 10, weight: .medium)).lineLimit(1).minimumScaleFactor(0.7)
             }
             .foregroundStyle(active ? Theme.accentGlow : Theme.text)
-            .frame(minWidth: 66, maxWidth: .infinity, minHeight: 58)
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(active ? Theme.accent.opacity(0.18) : Theme.surface))
+            .frame(minWidth: 58, maxWidth: .infinity, minHeight: 44)
+            .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(active ? Theme.accent.opacity(0.18) : Color.clear))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

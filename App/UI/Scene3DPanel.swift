@@ -22,12 +22,12 @@ struct Scene3DPanel: View {
     }
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 4) {
             PanelHeader(state: state, title: "3D Scene", showKeyNav: false)
             TSSegmented(options: Tab.allCases.map { ($0, $0.rawValue) }, selection: tab, label: "3D Scene") { tab = $0 }
                 .padding(.horizontal, 12)
             ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 8) {
                     switch tab {
                     case .scene: scene
                     case .layers: layers
@@ -242,8 +242,9 @@ struct Scene3DPanel: View {
                 Image(systemName: icon).font(.system(size: 17, weight: .semibold))
                 Text(title).font(.system(size: 11, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
             }
-            .frame(maxWidth: .infinity, minHeight: 54)
-            .background(Theme.raised, in: RoundedRectangle(cornerRadius: 11))
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background(Theme.raised, in: RoundedRectangle(cornerRadius: 8))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(title)

@@ -1,5 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import CoreImage
 
 /// CC Studio: color grading workspace for the selected layer (or an adjustment layer over everything).
 /// Every control is a value (drag or type) on the layer's CC Studio Grade effect, so it can be keyframed.
@@ -17,6 +18,9 @@ struct CCStudioPanel: View {
     @State private var scopeKind = GradeScopes.Kind.histogram
     @State private var scopeToken = ""
     @State private var scopeQueue = ScopeRenderQueueOf<GradeScopes>()
+    @State private var lutPreviewQueue = ScopeRenderQueueOf<[String: CGImage]>()
+    @State private var lutPreviews: [String: CGImage] = [:]
+    @State private var lutLibraryRevision = 0
     @State private var confirmLook: String?
     @State private var picking = false
     @State private var showWheelNumbers = false
@@ -50,7 +54,7 @@ struct CCStudioPanel: View {
                     VStack(alignment: .leading, spacing: 8) {
                         toolsRow(g)
                         if picking { pickerFrame(g) }
-                        CCScopeView(scopes: scopes, kind: $scopeKind)
+                        if section != 4 { CCScopeView(scopes: scopes, kind: $scopeKind) }
                         switch section {
                         case 0:
                             group(g, ["exposure", "contrast", "highlights", "shadows", "temp", "tint", "vibrance", "saturation"])
@@ -63,6 +67,7 @@ struct CCStudioPanel: View {
                             qualifierSection(g)
                         case 4:
                             lutSection(g)
+                            CCScopeView(scopes: scopes, kind: $scopeKind)
                         default:
                             looksSection(g)
                         }
@@ -74,6 +79,7 @@ struct CCStudioPanel: View {
         .fileImporter(isPresented: $importLUT, allowedContentTypes: [UTType(filenameExtension: "cube") ?? .data, .data], allowsMultipleSelection: true) { r in
             if case .success(let urls) = r { for u in urls { _ = try? LUTLibrary.shared.importFile(u) } }
             luts = LUTLibrary.shared.names()
+            lutLibraryRevision += 1
         }
         .onAppear(perform: refreshScopes)
         .onChange(of: state.project.modifiedAt) { _, _ in refreshScopes() }
@@ -91,9 +97,10 @@ struct CCStudioPanel: View {
                 ForEach(titles.indices, id: \.self) { i in
                     Button { selection.wrappedValue = i } label: {
                         Text(titles[i]).font(.system(size: 13, weight: .semibold)).lineLimit(1).fixedSize()
-                            .padding(.horizontal, 14).frame(minHeight: 44)
-                            .background(Capsule().fill(selection.wrappedValue == i ? Theme.accent.opacity(0.85) : Theme.surface))
+                            .padding(.horizontal, 11).frame(minHeight: 30)
+                            .background(RoundedRectangle(cornerRadius: 7).fill(selection.wrappedValue == i ? Theme.accent.opacity(0.85) : Theme.surface))
                             .foregroundStyle(selection.wrappedValue == i ? Color.white : Theme.text)
+                            .frame(minHeight: 44).contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
@@ -276,8 +283,15 @@ struct CCStudioPanel: View {
     }
 
     private func lutSection(_ g: EffectInstance) -> some View {
+        let builtIn = LUTLibrary.builtInFiles
+        let imported = luts.filter { !builtIn.contains($0) }
+        let frameTime = state.project.snapToFrame(state.currentTime)
+        let key = "\(state.project.id)|\(g.id)|\(state.project.modifiedAt.timeIntervalSince1970)|\(frameTime)|\(lutLibraryRevision)|\(state.isPlaying)"
         VStack(alignment: .leading, spacing: 8) {
-            Button { importLUT = true } label: { Label("Import .cube LUT", systemImage: "square.and.arrow.down") }.buttonStyle(PrimaryButtonStyle())
+            Button { importLUT = true } label: {
+                Label("Import LUT", systemImage: "square.and.arrow.down")
+                    .font(.subheadline.weight(.semibold)).frame(minHeight: 44).contentShape(Rectangle())
+            }.buttonStyle(.plain).foregroundStyle(Theme.accentGlow)
             row(g, "lutStrength")
             let current = g.text?["lut"]
             if let current, !luts.contains(current), !LUTLibrary.builtInFiles.contains(current) {
@@ -285,13 +299,17 @@ struct CCStudioPanel: View {
                 Label("Missing LUT \"\((current as NSString).deletingPathExtension)\" — import it to restore the look.", systemImage: "exclamationmark.triangle.fill")
                     .font(.caption).foregroundStyle(Theme.warning)
             }
-            lutButton(g, nil, selected: current == nil)
-            Text("BUILT-IN LOOKS").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim).padding(.top, 4)
-            ForEach(LUTLibrary.builtInFiles, id: \.self) { name in lutButton(g, name, selected: current == name) }
-            let own = luts.filter { !LUTLibrary.builtInFiles.contains($0) }
-            Text("YOUR LUTS").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim).padding(.top, 4)
-            ForEach(own, id: \.self) { name in lutButton(g, name, selected: current == name) }
-            if own.isEmpty { Text("LUTs you import stay here for every project.").font(.caption).foregroundStyle(Theme.textDim) }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 8) {
+                lutButton(g, nil, selected: current == nil)
+                ForEach(builtIn + imported, id: \.self) { name in
+                    lutButton(g, name, selected: current == name)
+                }
+            }
+        }
+        .task(id: key) {
+            do { try await Task.sleep(for: .milliseconds(150)) } catch { return }
+            guard !Task.isCancelled, !state.isPlaying, !state.isLiveGesture else { return }
+            refreshLUTPreviews(grade: g, names: builtIn + imported, time: frameTime, key: key)
         }
     }
 
@@ -304,15 +322,55 @@ struct CCStudioPanel: View {
                 p.layers[i].effects[j].text = t.isEmpty ? nil : t
             }
         } label: {
-            HStack {
-                Image(systemName: selected ? "checkmark.circle.fill" : "circle").foregroundStyle(selected ? Theme.accentGlow : Theme.textDim)
-                Text(name.map { ($0 as NSString).deletingPathExtension } ?? "No LUT").foregroundStyle(Theme.text)
-                Spacer()
+            VStack(alignment: .leading, spacing: 4) {
+                Color.black
+                    .overlay {
+                        if let preview = lutPreviews[name ?? ""] {
+                            Image(decorative: preview, scale: 1).resizable().scaledToFit()
+                        }
+                    }
+                    .aspectRatio(1.55, contentMode: .fit)
+                    .clipShape(.rect(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(selected ? Theme.accentGlow : Theme.stroke, lineWidth: selected ? 2 : 1))
+                Text(name.map { name in
+                    let stem = (name as NSString).deletingPathExtension
+                    return LUTLibrary.builtInFiles.contains(name) ? String(stem.dropFirst(4)) : stem
+                } ?? "None")
+                    .font(.caption.weight(selected ? .semibold : .regular))
+                    .foregroundStyle(selected ? Theme.accentGlow : Theme.text)
+                    .lineLimit(1)
             }
-            .frame(minHeight: 44).contentShape(Rectangle())
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .contextMenu { if let name { Button(role: .destructive) { LUTLibrary.shared.remove(name); luts = LUTLibrary.shared.names() } label: { Label("Remove LUT", systemImage: "trash") } } }
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityIdentifier("cc-lut-\(name ?? "none")")
+        .accessibilityValue(lutPreviews[name ?? ""] == nil ? "Preview loading" : "Preview ready")
+        .contextMenu {
+            if let name, !LUTLibrary.builtInFiles.contains(name) {
+                Button(role: .destructive) {
+                    LUTLibrary.shared.remove(name)
+                    luts = LUTLibrary.shared.names()
+                    lutLibraryRevision += 1
+                } label: { Label("Remove LUT", systemImage: "trash") }
+            }
+        }
+    }
+
+    private func refreshLUTPreviews(grade: EffectInstance, names: [String], time: Double, key: String) {
+        guard let index = state.selectedIndex else { return }
+        var project = state.project
+        guard let effectIndex = project.layers[index].effects.firstIndex(where: { $0.id == grade.id }) else { return }
+        project.layers[index].effects[effectIndex].text?["lut"] = nil
+        let previewProject = project
+        let store = state.store
+        let strength = min(1, max(0, GradeR4.num(grade, "lutStrength", time) / 100))
+        lutPreviewQueue.submit(token: key) {
+            guard let renderer = Renderer.shared,
+                  let image = renderer.renderImage(project: previewProject, time: time, maxDimension: 176,
+                                                   mediaURL: { store.mediaURL($0, projectID: previewProject.id) })?.cgImage else { return nil }
+            return LUTPreviewImages.make(base: image, names: names, strength: Float(strength))
+        } apply: { lutPreviews = $0 }
     }
 
     private func looksSection(_ g: EffectInstance) -> some View {
@@ -393,6 +451,37 @@ struct CCStudioPanel: View {
                                           mediaURL: { store.mediaURL($0, projectID: pid) }) else { return nil }
             return GradeScopes.analyze(width: px.width, height: px.height, rgba: px.rgba)
         } apply: { s in scopes = s }
+    }
+}
+
+private enum LUTPreviewImages {
+    private static let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
+    private static let context = CIContext(options: [.workingColorSpace: colorSpace, .outputColorSpace: colorSpace])
+
+    static func make(base: CGImage, names: [String], strength: Float) -> [String: CGImage] {
+        let input = CIImage(cgImage: base)
+        var previews = ["": base]
+        for name in names {
+            if strength == 0 { previews[name] = base; continue }
+            guard let (sourceSide, rgb) = LUTLibrary.shared.cube(named: name) else { continue }
+            let side = sourceSide > 64 ? 33 : sourceSide
+            let stride = Float(side - 1)
+            var rgba: [Float] = []
+            rgba.reserveCapacity(side * side * side * 4)
+            for index in 0..<(rgb.count / 3) {
+                let original = SIMD3(Float(index % side), Float(index / side % side), Float(index / (side * side))) / stride
+                let sample = original * Float(sourceSide - 1)
+                let r = Int(sample.x.rounded()), g = Int(sample.y.rounded()), b = Int(sample.z.rounded())
+                let source = ((b * sourceSide + g) * sourceSide + r) * 3
+                let mapped = SIMD3(rgb[source], rgb[source + 1], rgb[source + 2])
+                let mixed = original + (mapped - original) * strength
+                rgba.append(contentsOf: [mixed.x, mixed.y, mixed.z, 1])
+            }
+            let cube = rgba.withUnsafeBufferPointer { Data(buffer: $0) }
+            let output = input.applyingFilter("CIColorCube", parameters: ["inputCubeDimension": side, "inputCubeData": cube])
+            previews[name] = context.createCGImage(output, from: input.extent)
+        }
+        return previews
     }
 }
 

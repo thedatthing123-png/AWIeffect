@@ -50,9 +50,11 @@ struct TimelineView: View, Equatable {
     @State private var graphTarget: GraphTarget?
     @State private var showMarkers = false
     @State private var slipOriginal: Layer?
+    @State private var snapGuide: Double?
     @AppStorage("awi.rulerFrames") private var rulerFrames = false
+    @AppStorage("awi.timelineMagnet") private var magneticEdges = true
 
-    private let rowHeight: CGFloat = 46
+    private let rowHeight: CGFloat = 44
     private let laneHeight: CGFloat = 44
     private let headerWidth: CGFloat = 132
     private let rulerHeight: CGFloat = 44
@@ -73,6 +75,7 @@ struct TimelineView: View, Equatable {
                             }
                             Button { showMarkers = true } label: { Label("Markers…", systemImage: "list.bullet") }
                             Toggle("Frame Numbers", isOn: $rulerFrames)
+                            Toggle("Snap to Timeline Edges", isOn: $magneticEdges)
                         } label: {
                             ClockReader(clock: clock) { time in
                             HStack(spacing: 4) {
@@ -138,6 +141,17 @@ struct TimelineView: View, Equatable {
                     .frame(maxHeight: .infinity)
                     .accessibilityIdentifier("layer-timeline-scroll")
                     .scrollDisabled(multiDragStart != nil || dragOriginal != nil || marquee != nil || selDragOriginal != nil)
+                }
+                if let snapGuide {
+                    ClockReader(clock: clock) { time in
+                        let x = offset + CGFloat(snapGuide - time) * zoom
+                        if x >= 0, x <= trackWidth {
+                            Rectangle().fill(Theme.accentGlow).frame(width: 1.5)
+                                .offset(x: headerWidth + x)
+                        }
+                    }
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
                 }
                 // Playhead.
                 Rectangle().fill(.white).frame(width: 1.5)
@@ -378,7 +392,7 @@ struct TimelineView: View, Equatable {
         if scrubStart == nil { state.pause(); scrubStart = state.currentTime }
         let t = (scrubStart ?? 0) - Double(translation / zoom)
         let clamped = min(max(t, 0), state.project.duration)
-        let snapped = state.project.snapToFrame(state.snapToMarker(clamped, tolerance: Double(6 / zoom)))
+        let snapped = state.snapTime(clamped, tolerance: Double(6 / zoom), includeClipEdges: magneticEdges, includePlayhead: false)
         if snapped != state.currentTime {
             state.currentTime = snapped
             if state.selectedLayer?.keyframeTimes.contains(where: { abs($0 - snapped) < 1e-4 }) == true {
@@ -562,8 +576,9 @@ struct TimelineView: View, Equatable {
                             liftLayer = layer.id; state.pause(); state.beginEdit("Move Clips")
                             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         }
-                        let start = multiOriginals.map(\.inPoint).min() ?? 0
-                        state.moveClips(multiOriginals, by: state.snapTime(start + Double(delta.x / zoom), tolerance: Double(8 / zoom)) - start)
+                        let snap = state.snapClipShift(Double(delta.x / zoom), clips: multiOriginals, tolerance: magneticEdges ? Double(8 / zoom) : 0)
+                        state.moveClips(multiOriginals, by: snap.shift)
+                        snapGuide = snap.guide
                         return
                     }
                     guard !layer.isLocked else { return }
@@ -573,9 +588,11 @@ struct TimelineView: View, Equatable {
                     }
                     guard let original = dragOriginal else { return }
                     liftOffset = delta.y
-                    let time = original.inPoint + Double(delta.x / zoom)
-                    state.moveClip(original, by: state.snapTime(time, tolerance: Double(8 / zoom)) - original.inPoint)
+                    let snap = state.snapClipShift(Double(delta.x / zoom), clips: [original], tolerance: magneticEdges ? Double(8 / zoom) : 0)
+                    state.moveClip(original, by: snap.shift)
+                    snapGuide = snap.guide
                 }, onEnd: { delta in
+                    snapGuide = nil
                     if !multiOriginals.isEmpty { multiOriginals = []; liftLayer = nil; state.endEdit(); return }
                     guard dragOriginal != nil else { return }
                     defer { liftLayer = nil; liftOffset = 0; dragOriginal = nil; state.endEdit() }
@@ -623,7 +640,7 @@ struct TimelineView: View, Equatable {
     /// GestureState resets even when a scroll view or system gesture cancels the drag without onEnded.
     private func finishDirectDrag() {
         let editing = dragOriginal != nil || selDragOriginal != nil || slipOriginal != nil || !multiOriginals.isEmpty
-        dragOriginal = nil; keyDragTime = nil; selDragOriginal = nil; selDragBase = nil; slipOriginal = nil
+        dragOriginal = nil; keyDragTime = nil; selDragOriginal = nil; selDragBase = nil; slipOriginal = nil; snapGuide = nil
         if editing { state.endEdit() }
     }
 
@@ -659,13 +676,21 @@ struct TimelineView: View, Equatable {
             .highPriorityGesture(DragGesture(minimumDistance: 2, coordinateSpace: .named("timeline"))
                 .updating($directDragActive) { _, active, _ in active = true }
                 .onChanged { g in
+                    guard !layer.isLocked else { return }
                     if dragOriginal == nil { dragOriginal = layer; state.pause(); state.beginEdit("Trim Clip") }
                     guard let o = dragOriginal else { return }
-                    let edge = start ? o.inPoint : o.outPoint
-                    let snapped = state.snapTime(edge + Double(g.translation.width / zoom), tolerance: Double(8 / zoom))
-                    state.trimClip(o, start: start, by: snapped - edge)
+                    let snap = state.snapClipShift(Double(g.translation.width / zoom), clips: [o],
+                                                   tolerance: magneticEdges ? Double(8 / zoom) : 0, trimStart: start)
+                    state.trimClip(o, start: start, by: snap.shift)
+                    let live = (state.live.project ?? state.project).layers.first { $0.id == o.id }
+                    let edge = start ? live?.inPoint : live?.outPoint
+                    if let edge, let guide = snap.guide, abs(edge - guide) < 1e-8 { snapGuide = guide }
+                    else { snapGuide = nil }
                 }
-                .onEnded { _ in dragOriginal = nil; state.endEdit() })
+                .onEnded { _ in
+                    guard dragOriginal != nil else { return }
+                    dragOriginal = nil; snapGuide = nil; state.endEdit()
+                })
             .accessibilityLabel(start ? "Trim start" : "Trim end")
     }
 }

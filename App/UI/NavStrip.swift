@@ -29,12 +29,14 @@ struct NavStrip: View {
                         it.action?()
                     } label: {
                         VStack(spacing: 4) {
-                            Image(systemName: it.icon).font(.system(size: 18, weight: .medium))
-                            Text(it.id).font(.system(size: 9.5, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.75)
+                            Image(systemName: it.icon).font(.system(size: 16, weight: .medium))
+                            Text(it.id).font(.system(size: 10, weight: .semibold)).lineLimit(1)
                         }
                         .foregroundStyle(active ? Theme.accentGlow : Theme.text)
-                        .frame(width: 66, height: 54)
-                        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(active ? Theme.accent.opacity(0.22) : .clear))
+                        .padding(.horizontal, 6)
+                        .frame(minWidth: 53, minHeight: 44)
+                        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(active ? Theme.accent.opacity(0.18) : .clear))
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(it.id)
@@ -42,7 +44,7 @@ struct NavStrip: View {
             }
             .padding(.horizontal, 6)
         }
-        .frame(height: 60)
+        .frame(height: 48)
         .background(Theme.surface)
         .awiSheet(isPresented: $showGraph) { GraphEditorSheet(state: state).presentationDetents([.large]) }
     }

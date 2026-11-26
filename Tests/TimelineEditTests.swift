@@ -48,6 +48,36 @@ final class TimelineEditTests: XCTestCase {
         XCTAssertGreaterThan(s.project.layers[0].outPoint, s.project.layers[0].inPoint)
     }
 
+    func testMoveTrimAndSplitMatchAnotherClipEdge() throws {
+        let s = state()
+        s.mutate("Place reference") { $0.layers[1].outPoint = 2 }
+        let original = s.project.layers[0]
+
+        let move = s.snapClipShift(0.98, clips: [original], tolerance: 0.09)
+        XCTAssertEqual(move.guide, 2)
+        s.beginEdit("Move Clip")
+        s.moveClip(original, by: move.shift)
+        s.endEdit()
+        XCTAssertEqual(s.project.layers[0].inPoint, 2, accuracy: 1e-10)
+        XCTAssertEqual(s.project.layers[0].outPoint - s.project.layers[0].inPoint, 2, accuracy: 1e-10)
+        s.undo()
+
+        let trim = s.snapClipShift(-0.98, clips: [original], tolerance: 0.09, trimStart: false)
+        XCTAssertEqual(trim.guide, 2)
+        s.beginEdit("Trim Clip")
+        s.trimClip(original, start: false, by: trim.shift)
+        s.endEdit()
+        XCTAssertEqual(s.project.layers[0].outPoint, 2, accuracy: 1e-10)
+        s.undo()
+
+        let time = s.snapTime(2.03, tolerance: 0.09, includeClipEdges: true, includePlayhead: false)
+        s.seek(time)
+        s.splitSelected()
+        XCTAssertEqual(s.project.layers[0].inPoint, 2, accuracy: 1e-10)
+        XCTAssertEqual(s.project.layers[1].outPoint, 2, accuracy: 1e-10)
+        XCTAssertNil(s.snapClipShift(0.98, clips: [original], tolerance: 0).guide)
+    }
+
     func testReorder() {
         let s = state()
         s.reorderLayer(from: 0, to: 1)

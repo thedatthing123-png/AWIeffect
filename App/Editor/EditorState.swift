@@ -605,9 +605,9 @@ final class EditorState: ObservableObject {
 
     func splitSelected() {
         guard let i = selectedIndex else { return }
-        let t = currentTime
+        let t = project.snapToFrame(currentTime)
         let l = project.layers[i]
-        guard t > l.inPoint + project.frameDuration / 2, t < l.outPoint - project.frameDuration / 2 else { return }
+        guard !l.isLocked, t > l.inPoint + project.frameDuration / 2, t < l.outPoint - project.frameDuration / 2 else { return }
         if l.isGroup {
             mutate("Split Group") { p in
                 if let id = Self.splitGroup(l.id, at: t, in: &p) { selectedLayerID = id }

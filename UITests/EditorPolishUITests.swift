@@ -1,6 +1,28 @@
 import XCTest
 
 final class EditorPolishUITests: XCTestCase {
+    func testLUTThumbnailsUseThreeColumnsAndApplyInOneTap() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-ccLUTGrid"]
+        app.launch()
+        let tab = app.buttons["LUT"].firstMatch
+        XCTAssertTrue(tab.waitForExistence(timeout: 15))
+        tab.tap()
+        let firstRow = ["none", "AWI Teal & Orange.cube", "AWI Bleach Bypass.cube"].map { app.buttons["cc-lut-\($0)"] }
+        XCTAssertTrue(firstRow[0].waitForExistence(timeout: 7))
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "Preview ready"), object: firstRow[2])
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 15), .completed)
+        for tile in firstRow { XCTAssertTrue(tile.isHittable) }
+        XCTAssertEqual(firstRow[0].frame.minY, firstRow[2].frame.minY, accuracy: 1)
+        XCTAssertLessThan(firstRow[0].frame.midX, firstRow[1].frame.midX)
+        XCTAssertLessThan(firstRow[1].frame.midX, firstRow[2].frame.midX)
+        firstRow[1].tap()
+        XCTAssertTrue(firstRow[1].isSelected)
+        let output = URL(fileURLWithPath: "/tmp/awi-ui")
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("cc-lut-grid.png"))
+    }
+
     func testSceneWorkspaceAddsCameraAndKeepsLayerPlacementAccessible() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTesting", "-uiTesting-sceneWorkspace"]

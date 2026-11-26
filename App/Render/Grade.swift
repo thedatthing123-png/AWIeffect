@@ -37,7 +37,7 @@ extension EffectRegistry {
     ] + gradeR4Params
 
     static let grade = EffectDefinition(
-        id: "awi18.grade", name: "CC Studio Grade", category: .color,
+        id: "awi18.grade", name: "AWI CC", category: .color,
         aeMatchNames: [],
         summary: "Full color grade: exposure, contrast, highlights/shadows, white balance, vibrance, lift/gamma/gain, curves, HSL secondary and .cube LUTs. Edit it in CC Studio.",
         params: gradeParams,
@@ -260,13 +260,18 @@ final class LUTLibrary {
         lock.lock()
         if let t = cache[name] { lock.unlock(); return t }
         lock.unlock()
-        var text = try? String(contentsOf: Self.folder.appendingPathComponent(name), encoding: .utf8)
-        // A built-in look is rebuilt from its formula when its file is gone (moved project, cleared library).
-        if text == nil, restoreBuiltIn(name) { text = try? String(contentsOf: Self.folder.appendingPathComponent(name), encoding: .utf8) }
-        guard let text, let (n, v) = try? Self.parse(text) else { return nil }
+        guard let (n, v) = cube(named: name) else { return nil }
         let tex = make3D(n, v, device: device)
         lock.lock(); cache[name] = tex; lock.unlock()
         return tex
+    }
+
+    func cube(named name: String) -> (Int, [Float])? {
+        guard name == (name as NSString).lastPathComponent else { return nil }
+        let url = Self.folder.appendingPathComponent(name)
+        if !FileManager.default.fileExists(atPath: url.path) { _ = restoreBuiltIn(name) }
+        guard let text = try? String(contentsOf: url, encoding: .utf8) else { return nil }
+        return try? Self.parse(text)
     }
 
     /// 2x2x2 pass-through LUT bound when none is chosen.

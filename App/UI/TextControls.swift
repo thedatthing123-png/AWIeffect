@@ -241,9 +241,10 @@ struct TSSegmented<V: Hashable>: View {
             ForEach(Array(options.enumerated()), id: \.offset) { _, o in
                 Button { set(o.0) } label: {
                     Text(o.1).font(.system(size: 13, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.75)
-                        .frame(maxWidth: .infinity, minHeight: TS.tap)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(o.0 == selection ? Theme.accent.opacity(0.85) : Theme.surface))
+                        .frame(maxWidth: .infinity, minHeight: 32)
+                        .background(RoundedRectangle(cornerRadius: 7).fill(o.0 == selection ? Theme.accent.opacity(0.85) : Theme.surface))
                         .foregroundStyle(o.0 == selection ? Color.white : Theme.text)
+                        .frame(minHeight: TS.tap)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
