@@ -5,6 +5,7 @@ import SwiftUI
 struct TextAnimateTab: View {
     @ObservedObject var state: EditorState
     @ObservedObject var session = TextStudioSession.shared
+    var focusAnimator: (UUID) -> Void
     @State private var openID: UUID?
     @State private var splitUnit: TextUnit = .words
 
@@ -22,9 +23,13 @@ struct TextAnimateTab: View {
                     AnimatorRow(state: state, animator: a, index: k, count: text.animators.count, open: openID == a.id) {
                         openID = openID == a.id ? nil : a.id
                     }
+                    .id(a.id)
                     if openID == a.id { AnimatorEditor(state: state, animatorID: a.id) }
                 }
                 split(text)
+            }
+            .onChange(of: openID) { _, id in
+                if let id { focusAnimator(id) }
             }
         }
     }
@@ -46,7 +51,15 @@ struct TextAnimateTab: View {
                 state.editText("Animate Letters") { td in made = TextStudioLogic.animateSelection(&td, ids: ids, add: .position) }
                 openID = made
             }
+            TSColorRow(title: "Selected Color", color: text.resolvedCharIDs.first(where: { ids.contains($0) })
+                .flatMap { text.charStyles?[$0]?.fill } ?? text.fill.value(at: t)) { color in
+                state.editText("Selected Letter Color") { $0.setCharStyle(ids: ids) { $0.fill = color } }
+            }
             TSSegmented(options: [(false, "Move Letters"), (true, "Move Anchor")], selection: anchorMode, label: "Swipe") { session.dragMovesAnchor = $0 }
+            HStack(spacing: 6) {
+                selectionCoordinate("X", value: current.x, ids: ids, anchor: anchorMode, axis: \.x)
+                selectionCoordinate("Y", value: current.y, ids: ids, anchor: anchorMode, axis: \.y)
+            }
             SwipePad(hint: anchorMode ? "Swipe to move the letters' pivot" : "Swipe to move the selected letters (writes their animator)",
                      gain: 400, onDelta: { d in
                 let tt = state.currentTime
@@ -62,6 +75,23 @@ struct TextAnimateTab: View {
                 TSButton(title: "Edit “\(a.name)”", icon: "slider.horizontal.3") { openID = a.id }
             }
         }
+    }
+
+    private func selectionCoordinate(_ label: String, value: Double, ids: [UInt32], anchor: Bool,
+                                     axis: WritableKeyPath<Vec2, Double>) -> some View {
+        let title = anchor ? "Move Letter Anchor" : "Move Letters"
+        return NumberField(value: value, label: label, step: 0.1, controlHeight: 44,
+                           onDragBegin: { state.beginEdit(title) }, onDragEnd: { state.endEdit() }) { number in
+            let time = state.currentTime
+            state.editText(title) { text in
+                var point = anchor ? TextStudioLogic.selectionAnchor(text, ids: ids, at: time)
+                                   : TextStudioLogic.selectionOffset(text, ids: ids, at: time)
+                point[keyPath: axis] = number
+                if anchor { TextStudioLogic.setSelectionAnchor(&text, ids: ids, to: point, at: time) }
+                else { TextStudioLogic.setSelectionOffset(&text, ids: ids, to: point, at: time) }
+            }
+        }
+        .accessibilityIdentifier("text-selection-\(label)")
     }
 
     // MARK: Add
@@ -215,6 +245,7 @@ struct AnimatorEditor: View {
     @ObservedObject var session = TextStudioSession.shared
     let animatorID: UUID
     @State private var showEffects = false
+    @State private var showAnimatorGraph = false
 
     private var text: TextData? { state.selectedLayer?.text }
     private var animator: TextAnimator? { text.flatMap { t in TextStudioLogic.index(t, animatorID).map { t.animators[$0] } } }
@@ -223,6 +254,8 @@ struct AnimatorEditor: View {
         if let text, let a = animator {
             VStack(alignment: .leading, spacing: 8) {
                 nameRow(a)
+                timingActions(a)
+                staggerControls(a)
                 TSSection(title: "Selectors")
                 ForEach(Array(a.allSelectors.enumerated()), id: \.offset) { k, s in
                     SelectorEditor(state: state, animatorID: animatorID, index: k, count: a.allSelectors.count, selector: s, text: text)
@@ -249,6 +282,69 @@ struct AnimatorEditor: View {
                     }
                 }
             }
+        }
+    }
+
+    @ViewBuilder private func timingActions(_ animator: TextAnimator) -> some View {
+        let keys = TextPropKey.present(in: animator.properties)
+        let graphKeys = keys.filter { $0.isAnimated(animator.properties) }
+        if !keys.isEmpty {
+            HStack(spacing: 6) {
+                TSButton(title: "Key All", icon: "diamond.fill") {
+                    let time = state.currentTime
+                    state.editText("Key Animator Properties") { text in
+                        guard let index = TextStudioLogic.index(text, animatorID) else { return }
+                        for key in keys { key.addKeyframe(at: time, to: &text.animators[index].properties) }
+                    }
+                }
+                .accessibilityIdentifier("text-animator-key-all")
+                TSButton(title: "Animator Graph", icon: "point.topleft.down.curvedto.point.bottomright.up") {
+                    showAnimatorGraph = true
+                }
+                .disabled(graphKeys.isEmpty)
+                .accessibilityIdentifier("text-animator-graph")
+            }
+            .sheet(isPresented: $showAnimatorGraph) {
+                TextGraphEditorSheet(state: state, animatorID: animatorID, targets: graphKeys.map { .property($0) })
+                    .presentationDetents([.medium, .large])
+            }
+        }
+    }
+
+    private func staggerControls(_ animator: TextAnimator) -> some View {
+        let timing = animator.stagger ?? TextStagger()
+        return VStack(alignment: .leading, spacing: 6) {
+            TSToggleRow(title: "Stagger Keyframes", isOn: animator.stagger != nil) { enabled in
+                state.editText("Stagger Keyframes") { text in
+                    guard let index = TextStudioLogic.index(text, animatorID) else { return }
+                    text.animators[index].stagger = enabled ? timing : nil
+                }
+            }
+            if animator.stagger != nil {
+                TSSegmented(options: [(TextUnit.charactersExcludingSpaces, "Letters"), (.words, "Words"), (.lines, "Lines")],
+                            selection: timing.unit, label: "Stagger by") { unit in
+                    editStagger("Stagger Unit") { $0.unit = unit }
+                }
+                HStack(spacing: 8) {
+                    Text("Delay per Unit").font(.subheadline).foregroundStyle(Theme.text)
+                    ValueScrubber(value: timing.secondsPerUnit, range: 0...2, step: 0.01, unit: " s",
+                                  onBegin: { state.beginEdit("Stagger Delay") },
+                                  onChange: { delay in editStagger("Stagger Delay") { $0.delay = delay } },
+                                  onEnd: { state.endEdit() })
+                }
+                TSToggleRow(title: "Reverse Order", isOn: timing.reversed) { reversed in
+                    editStagger("Stagger Order") { $0.reversed = reversed }
+                }
+            }
+        }
+    }
+
+    private func editStagger(_ label: String, _ change: (inout TextStagger) -> Void) {
+        state.editText(label) { text in
+            guard let index = TextStudioLogic.index(text, animatorID),
+                  var value = text.animators[index].stagger else { return }
+            change(&value)
+            text.animators[index].stagger = value
         }
     }
 

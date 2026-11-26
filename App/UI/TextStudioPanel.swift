@@ -105,20 +105,25 @@ struct TextPanel: View {
             header
             if state.selectedLayer?.text != nil {
                 tabBar
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 10) {
-                        switch tab {
-                        case .style: TextStyleTab(state: state)
-                        case .animate: TextAnimateTab(state: state)
-                        case .presets: TextPresetBrowser(state: state, scrolls: false)
-                        case .threeD: Text3DTab(state: state)
+                ScrollViewReader { scroll in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 10) {
+                            switch tab {
+                            case .style: TextStyleTab(state: state)
+                            case .animate:
+                                TextAnimateTab(state: state) { id in
+                                    withAnimation(.easeOut(duration: 0.2)) { scroll.scrollTo(id, anchor: .top) }
+                                }
+                            case .presets: TextPresetBrowser(state: state, scrolls: false)
+                            case .threeD: Text3DTab(state: state)
+                            }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 12).padding(.top, 6).padding(.bottom, 24)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 12).padding(.top, 6).padding(.bottom, 24)
+                    .id(tabRaw)                       // each tab starts at its top
+                    .transaction { $0.animation = nil }
                 }
-                .id(tabRaw)                       // each tab starts at its top
-                .transaction { $0.animation = nil }
             }
         }
         .onAppear { session.follow(state.selectedLayerID) }
@@ -187,6 +192,22 @@ struct TypeBar: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Font")
                 Spacer()
+                if let range = session.caret, !range.isEmpty {
+                    Button {
+                        guard let text = state.selectedLayer?.text else { return }
+                        let ids = TextStudioLogic.ids(text, range: range)
+                        state.endTyping()
+                        session.selectedIDs = ids
+                    } label: {
+                        Label("Select", systemImage: "character.cursor.ibeam")
+                            .font(.system(size: 13, weight: .semibold))
+                            .padding(.horizontal, 10).frame(minHeight: TS.tap)
+                            .background(RoundedRectangle(cornerRadius: 9).fill(Theme.surface))
+                            .foregroundStyle(Theme.text)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Edit Selected Text")
+                }
                 Button { state.endTyping() } label: {
                     Image(systemName: "checkmark").font(.system(size: 16, weight: .bold))
                         .frame(width: 52, height: TS.tap).background(RoundedRectangle(cornerRadius: 9).fill(Theme.accent))

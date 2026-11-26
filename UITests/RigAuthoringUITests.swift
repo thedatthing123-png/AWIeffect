@@ -122,6 +122,45 @@ final class RigAuthoringUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Make IK"].firstMatch.exists, "Rest editing remains in Rig, not in a separate studio")
     }
 
+    func testSelectedTextHasColorAndCoordinatesInAnimate() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-letterAuthoring"]
+        app.launch()
+        let animate = app.buttons["Text Studio Tab Animate"]
+        XCTAssertTrue(animate.waitForExistence(timeout: 15))
+        animate.tap()
+        XCTAssertTrue(app.staticTexts["Selected Color"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["text-selection-X"].firstMatch.exists)
+        XCTAssertTrue(app.descendants(matching: .any)["text-selection-Y"].firstMatch.exists)
+        let output = URL(fileURLWithPath: "/tmp/awi-ui")
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("text-studio-selection.png"))
+    }
+
+    func testSelectionOpensAnimatorWithKeyAllControl() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-letterAuthoring"]
+        app.launch()
+        let animate = app.buttons["Text Studio Tab Animate"]
+        XCTAssertTrue(animate.waitForExistence(timeout: 15))
+        animate.tap()
+        let add = app.buttons["Animate Selected Letters"].firstMatch
+        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        add.tap()
+        let keyAll = app.buttons["text-animator-key-all"]
+        XCTAssertTrue(keyAll.waitForExistence(timeout: 5))
+        XCTAssertTrue(keyAll.isHittable)
+        keyAll.tap()
+        let graph = app.buttons["text-animator-graph"]
+        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: graph)
+        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 5), .completed)
+        graph.tap()
+        XCTAssertTrue(app.staticTexts["Needs two keyframes"].waitForExistence(timeout: 5))
+        let output = URL(fileURLWithPath: "/tmp/awi-ui")
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("text-studio-animator.png"))
+    }
+
     func testLettersRotateDirectlyWithoutOpeningAnotherPanel() {
         continueAfterFailure = false
         let app = XCUIApplication()

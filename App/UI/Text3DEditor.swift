@@ -22,9 +22,38 @@ struct Text3DTab: View {
                     }
                     state.endEdit()
                 }
-                if let o = l.text?.text3D { realControls(o) } else { legacy(l) }
+                if let o = l.text?.text3D {
+                    poseControls(l)
+                    realControls(o)
+                } else { legacy(l) }
             }
         }
+    }
+
+    private func poseControls(_ layer: Layer) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            TSSection(title: "Orientation & Depth")
+            poseRow("Tilt X", layer.transform, \.rotationX, -360...360, "deg")
+            poseRow("Turn Y", layer.transform, \.rotationY, -360...360, "deg")
+            poseRow("Depth Z", layer.transform, \.positionZ, -6000...6000, "px")
+        }
+    }
+
+    private func poseRow(_ label: String, _ transform: LayerTransform, _ key: WritableKeyPath<LayerTransform, Animated<Double>>,
+                         _ range: ClosedRange<Double>, _ unit: String) -> some View {
+        let time = state.currentTime
+        let track = transform[keyPath: key]
+        return TSNumberRow(title: label, value: track.value(at: time), range: range, step: 0.1, unit: unit,
+                           allowBeyond: true, key: (track.hasKeyframe(at: time), track.isAnimated, {
+            if key == \.positionZ { state.toggleKeyframe(.positionZ) }
+            else {
+                state.beginEdit("Keyframe \(label)")
+                state.mutateLayer { $0.transform[keyPath: key].toggleKeyframe(at: time) }
+                state.endEdit()
+            }
+        }), onBegin: { state.beginEdit(label) },
+            onChange: { value in state.mutateLayer { $0.transform[keyPath: key].set(value, at: time) } },
+            onEnd: { state.endEdit() })
     }
 
     // MARK: Real 3D

@@ -1,7 +1,7 @@
 import SwiftUI
 
 extension EditorState {
-    func addCamera() {
+    func addCamera(spatial: Bool = false) {
         mutate("Add Camera") { p in
             var l = p.makeLayer(name: "Camera \(p.layers.filter { $0.content == .camera }.count + 1)", content: .camera, size: Vec2(1, 1))
             let zoom = CameraState.defaultZoom(p)
@@ -9,7 +9,7 @@ extension EditorState {
             l.camera = CameraOptions(zoom: Animated(zoom), focusDistance: Animated(zoom))
             // Alight Motion-style: a new camera is a 2D camera that films the whole scene. In a 3D scene it can be
             // switched to a 3D camera (Lens & 3D).
-            l.camera?.affects2D = !p.layers.contains { $0.is3D }
+            l.camera?.affects2D = !spatial && !p.layers.contains { $0.is3D }
             l.tag = .amber
             p.layers.insert(l, at: 0)
             selectedLayerID = l.id

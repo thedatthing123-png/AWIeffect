@@ -106,8 +106,14 @@ struct TextGraphEditorSheet: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 12) {
-                if targets.count > 1 {
-                    Picker("Value", selection: Binding(get: { key }, set: { picked = $0; segment = 0 })) {
+                if targets.count > 3 {
+                    Picker("Property", selection: Binding(get: { key }, set: { picked = $0; segment = 0 })) {
+                        ForEach(targets, id: \.self) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(minHeight: 44)
+                } else if targets.count > 1 {
+                    Picker("Property", selection: Binding(get: { key }, set: { picked = $0; segment = 0 })) {
                         ForEach(targets, id: \.self) { Text($0.title).tag($0) }
                     }
                     .pickerStyle(.segmented)

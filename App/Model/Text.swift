@@ -281,12 +281,21 @@ struct TextAnimatorProperties: Codable, Equatable {
     var motionBlur: Bool? = nil
 }
 
+struct TextStagger: Codable, Equatable {
+    var unit: TextUnit = .charactersExcludingSpaces
+    var delay = 0.08
+    var reversed = false
+
+    var secondsPerUnit: Double { delay.isFinite ? min(2, max(0, delay)) : 0 }
+}
+
 struct TextAnimator: Codable, Equatable, Identifiable {
     var id = UUID()
     var name: String
     var isEnabled = true
     var selector = TextSelector()
     var properties = TextAnimatorProperties()
+    var stagger: TextStagger? = nil
     /// Additional selectors stacked under `selector` (each combines by its `mode`).
     var selectors: [TextSelector]? = nil
     /// Pixel effects applied only to the letters this animator selects (selection amount = mix).

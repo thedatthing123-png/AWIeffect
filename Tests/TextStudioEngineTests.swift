@@ -8,6 +8,27 @@ final class TextStudioEngineTests: XCTestCase {
 
     // MARK: Stable ids
 
+    func testWordStaggerDelaysExistingKeysWithoutChangingEasing() {
+        var text = TextData(string: "AB CD")
+        var animator = TextAnimator(name: "Word fade")
+        var opacity = Animated(0.0)
+        opacity.insertKeyframe(Keyframe(time: 0, value: 0, interpolation: .linear))
+        opacity.insertKeyframe(Keyframe(time: 1, value: 100, interpolation: .linear))
+        animator.properties.opacity = opacity
+        animator.stagger = TextStagger(unit: .words, delay: 0.25)
+        text.animators = [animator]
+        let layout = TextEngine.shared.layout(text, time: 0.5)
+        func opacities() -> [Double] {
+            let states = TextEngine.glyphStates(text, layout: layout, time: 0.5)
+            return layout.glyphs.indices.filter { !layout.glyphs[$0].isSpace }.map { states[$0].opacity }
+        }
+        XCTAssertEqual(opacities(), [0.5, 0.5, 0.25, 0.25])
+        text.animators[0].stagger?.reversed = true
+        XCTAssertEqual(opacities(), [0.25, 0.25, 0.5, 0.5])
+        text.animators[0].stagger = nil
+        XCTAssertEqual(opacities(), [0.5, 0.5, 0.5, 0.5])
+    }
+
     func testSpanStaysOnItsLettersAfterEdits() {
         var t = TextData(string: "Hello World", fontSize: 40)
         t.colorSpans = [TextColorSpan(start: 6, end: 11, color: green)]

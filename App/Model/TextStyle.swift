@@ -293,13 +293,21 @@ extension TextData {
 
     /// Sets (or clears with nil) overrides for characters in `range`.
     mutating func setCharStyle(_ range: Range<Int>, _ change: (inout TextCharStyle) -> Void) {
+        let all = resolvedCharIDs
+        let selection = range.compactMap { all.indices.contains($0) ? all[$0] : nil }
+        setCharStyle(ids: selection, change)
+    }
+
+    mutating func setCharStyle(ids: [UInt32], _ change: (inout TextCharStyle) -> Void) {
+        let valid = Set(resolvedCharIDs)
+        let selected = Set(ids).intersection(valid)
+        guard !selected.isEmpty else { return }
         migrateToCharIDs()
-        let ids = charIDs ?? []
         var cs = charStyles ?? [:]
-        for i in range where i >= 0 && i < ids.count {
-            var s = cs[ids[i]] ?? TextCharStyle()
-            change(&s)
-            cs[ids[i]] = s.isEmpty ? nil : s
+        for id in selected {
+            var style = cs[id] ?? TextCharStyle()
+            change(&style)
+            cs[id] = style.isEmpty ? nil : style
         }
         charStyles = cs.isEmpty ? nil : cs
     }

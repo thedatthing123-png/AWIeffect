@@ -79,9 +79,9 @@ struct TextStyleTab: View {
     var body: some View {
         if let text = state.selectedLayer?.text {
             VStack(alignment: .leading, spacing: 8) {
+                if session.hasSelection, let r = TextStudioLogic.range(text, ids: session.selectedIDs) { selectionCard(text, r) }
                 fontButton(text)
                 basics(text)
-                if session.hasSelection, let r = TextStudioLogic.range(text, ids: session.selectedIDs) { selectionCard(text, r) }
                 styleStack(text)
                 paragraph(text)
                 CounterEditor(state: state, text: text)
@@ -93,7 +93,7 @@ struct TextStyleTab: View {
                         let ids = session.selectedIDs
                         state.editText("Letter Font") { td in
                             let base = td.fontName
-                            if let r = TextStudioLogic.range(td, ids: ids) { td.setCharStyle(r) { $0.fontName = name == base ? nil : name } }
+                            td.setCharStyle(ids: ids) { $0.fontName = name == base ? nil : name }
                         }
                     }
                 }
@@ -169,13 +169,13 @@ struct TextStyleTab: View {
     }
 
     private func setLetters(_ ids: [UInt32], _ label: String, _ change: @escaping (inout TextCharStyle) -> Void) {
-        state.editText(label) { td in if let rr = TextStudioLogic.range(td, ids: ids) { td.setCharStyle(rr, change) } }
+        state.editText(label) { $0.setCharStyle(ids: ids, change) }
     }
 
     private func letterScrub(_ ids: [UInt32], _ title: String, _ v: Double, _ range: ClosedRange<Double>, unit: String,
                              _ change: @escaping (inout TextCharStyle, Double) -> Void) -> some View {
         rows.plain(title, v, range, unit: unit, beyond: true) { td, x in
-            if let rr = TextStudioLogic.range(td, ids: ids) { td.setCharStyle(rr) { change(&$0, x) } }
+            td.setCharStyle(ids: ids) { change(&$0, x) }
         }
     }
 

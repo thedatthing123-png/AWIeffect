@@ -39,6 +39,9 @@ struct EditorView: View {
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-referenceEffect") {
             state.select(state.project.layers.first?.id); state.panel = .effects
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-sceneWorkspace") {
+            state.panel = .scene3D
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-lightingStudio") {
             state.select(state.project.layers.first?.id)
             state.panel = .threeD
@@ -496,7 +499,7 @@ struct EditorView: View {
                 if state.showMotionPath, state.canvasMode == .comp, state.panel == .transform || state.panel == .layerHome {
                     MotionPathOverlay(state: state, fit: fit)
                 }
-                if state.canvasMode == .comp, pen == nil, state.panel == .transform || state.panel == .threeD || state.panel == .layerHome {
+                if state.canvasMode == .comp, pen == nil, state.panel == .transform || state.panel == .threeD || state.panel == .layerHome || state.panel == .scene3D {
                     ClockReader(clock: state.clock) { _ in AimGizmoOverlay(state: state, fit: fit) }
                 }
                 if state.panel == .rig || state.panel == .boneWeight, state.canvasMode == .comp {

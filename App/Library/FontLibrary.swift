@@ -40,7 +40,7 @@ final class FontLibrary: ObservableObject {
     func registerAll() {
         let files = (try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
         var map: [String: [String]] = [:]
-        for f in files where ["ttf", "otf"].contains(f.pathExtension.lowercased()) {
+        for f in files.sorted(by: { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }) where ["ttf", "otf"].contains(f.pathExtension.lowercased()) {
             let names = register(f)
             let family = f.deletingPathExtension().lastPathComponent.components(separatedBy: "__").first ?? f.lastPathComponent
             map[family, default: []] += names
@@ -57,37 +57,66 @@ final class FontLibrary: ObservableObject {
 
     /// Downloads a family (regular + bold when available) from Google Fonts and registers it.
     func download(_ family: String, completion: ((Bool) -> Void)? = nil) {
-        guard !downloading.contains(family) else { return }
+        if installed[family]?.isEmpty == false { completion?(true); return }
+        guard !downloading.contains(family) else { completion?(false); return }
         downloading.insert(family)
-        let q = family.replacingOccurrences(of: " ", with: "+")
-        guard let css = URL(string: "https://fonts.googleapis.com/css2?family=\(q):wght@400;700&display=swap") else { return }
-        var req = URLRequest(url: css)
-        // An old Android user agent makes the API answer with TrueType files (an old IE agent gets EOT, which iOS can't load).
-        req.setValue("Mozilla/5.0 (Linux; U; Android 4.0.3; en-us) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30",
-                     forHTTPHeaderField: "User-Agent")
-        URLSession.shared.dataTask(with: req) { data, _, _ in
-            let text = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
-            let urls = Self.fontURLs(inCSS: text)
+        fetchFontURLs(family, includeBold: true) { urls in
             guard !urls.isEmpty else { self.finish(family, ok: false, completion); return }
             let group = DispatchGroup()
-            var names: [String] = []
             let lock = NSLock()
-            for (i, u) in urls.enumerated() {
+            var namesByIndex: [Int: [String]] = [:]
+            for (index, url) in urls.enumerated() {
                 group.enter()
-                URLSession.shared.downloadTask(with: u) { tmp, _, _ in
+                URLSession.shared.downloadTask(with: url) { temp, response, _ in
                     defer { group.leave() }
-                    guard let tmp else { return }
-                    let ext = u.pathExtension.isEmpty ? "ttf" : u.pathExtension
-                    let dst = self.folder.appendingPathComponent("\(family)__\(i).\(ext)")
-                    try? FileManager.default.removeItem(at: dst)
-                    guard (try? FileManager.default.moveItem(at: tmp, to: dst)) != nil else { return }
-                    let n = self.register(dst)
-                    lock.lock(); names += n; lock.unlock()
+                    guard let temp, (response as? HTTPURLResponse)?.statusCode == 200 else { return }
+                    let destination = self.folder.appendingPathComponent("\(family)__\(index).\(url.pathExtension)")
+                    do {
+                        try FileManager.default.moveItem(at: temp, to: destination)
+                    } catch {
+                        if !FileManager.default.fileExists(atPath: destination.path) { return }
+                    }
+                    let names = self.register(destination)
+                    if names.isEmpty { try? FileManager.default.removeItem(at: destination) }
+                    lock.lock()
+                    namesByIndex[index] = names
+                    lock.unlock()
                 }.resume()
             }
             group.notify(queue: .main) {
-                if !names.isEmpty { self.installed[family] = names }
+                let names = namesByIndex.keys.sorted().flatMap { namesByIndex[$0] ?? [] }
+                var seen = Set<String>()
+                if !names.isEmpty { self.installed[family] = names.filter { seen.insert($0).inserted } }
                 self.finish(family, ok: !names.isEmpty, completion)
+            }
+        }
+    }
+
+    private func fetchFontURLs(_ family: String, includeBold: Bool, completion: @escaping ([URL]) -> Void) {
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "fonts.googleapis.com"
+        components.path = "/css2"
+        components.queryItems = [
+            URLQueryItem(name: "family", value: includeBold ? family + ":wght@400;700" : family),
+            URLQueryItem(name: "display", value: "swap"),
+        ]
+        guard let url = components.url else { completion([]); return }
+        var request = URLRequest(url: url, timeoutInterval: 20)
+        // This client profile requests TrueType files that Core Text can register.
+        request.setValue("Mozilla/5.0 (Linux; U; Android 4.0.3; en-us) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30",
+                         forHTTPHeaderField: "User-Agent")
+        URLSession.shared.dataTask(with: request) { data, response, _ in
+            let text = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
+            let status = (response as? HTTPURLResponse)?.statusCode
+            let urls = status == 200 ? Self.fontURLs(inCSS: text).filter {
+                $0.scheme == "https" && $0.host == "fonts.gstatic.com" && ["ttf", "otf"].contains($0.pathExtension.lowercased())
+            } : []
+            if urls.isEmpty && includeBold {
+                // Some families only publish a default face.
+                self.fetchFontURLs(family, includeBold: false, completion: completion)
+            } else {
+                completion(urls)
             }
         }.resume()
     }
