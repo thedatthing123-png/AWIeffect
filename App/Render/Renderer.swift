@@ -343,7 +343,8 @@ final class Renderer {
             switch sourceTexture(layer, sourceTime: sourceTime, time: time, density: 0.5, cb: cb, mediaURL: mediaURL) {
             case .image(let source)?, .model(let source)?: return (source, half)
             case nil: return nil
-            default: return (whiteTexture, half)
+            case .solid?: return (whiteTexture, half)
+            case .shape?: break
             }
         }
         let extent: Vec2
@@ -655,6 +656,8 @@ final class Renderer {
         shadowCasters = []
         if lights.contains(where: { $0.falloff.y > 0 }) {
             for l in project.layers where l.is3D && l.castsShadows && l.isActive(at: time) && l.isVisible {
+                // A receiver reads at most four casters and can skip itself.
+                if shadowCasters.count == 5 { break }
                 let W = Self.layerWorld(l, time: time)
                 let inv = W.inverse
                 var n = W * SIMD4(0, 0, 1, 0)
