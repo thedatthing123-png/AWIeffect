@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 @testable import AWIeffect
 
 /// Anti-stub tests: every registered effect must visibly change the image, and every control must do something.
@@ -161,6 +162,68 @@ final class EffectTests: XCTestCase {
             XCTAssertNotNil(EffectRegistry.definition(d.id))
             for m in d.aeMatchNames { XCTAssertEqual(EffectRegistry.definition(aeMatchName: m)?.id, d.id) }
         }
+    }
+
+    func testGhostKeepsTheOriginalAndRendersOutsideTheCutout() throws {
+        let r = try renderer()
+        var p = Project.new(name: "Ghost alpha", width: 64, height: 64, fps: 30, duration: 1, background: .black)
+        var layer = p.makeLayer(name: "Red", content: .solid, size: Vec2(16, 16))
+        layer.fill = Animated(RGBA(1, 0, 0))
+        p.layers = [layer]
+        let original = try render(r, p)
+
+        var ghost = try XCTUnwrap(EffectRegistry.definition("awi.ghost")).makeInstance()
+        ghost.params["opacity"] = .number(Animated(0))
+        p.layers[0].effects = [ghost]
+        XCTAssertEqual(try render(r, p), original)
+
+        ghost.params["opacity"] = .number(Animated(30))
+        ghost.params["scale"] = .number(Animated(200))
+        p.layers[0].effects = [ghost]
+        let result = try render(r, p)
+        let center = (32 * 64 + 32) * 4
+        let outsideOriginal = (32 * 64 + 43) * 4
+        let outsideGhost = (32 * 64 + 55) * 4
+        XCTAssertGreaterThan(result[center], result[center + 1])
+        XCTAssertGreaterThan(result[outsideOriginal + 1], 50)
+        XCTAssertLessThan(result[outsideOriginal], 5)
+        XCTAssertEqual(result[outsideGhost + 1], original[outsideGhost + 1])
+    }
+
+    @MainActor
+    func testGhostImpactPreviewRendersAndExports() async throws {
+        let r = try renderer()
+        var ghost = try XCTUnwrap(EffectRegistry.definition("awi.ghost")).makeInstance()
+        var opacity = Animated(0.0)
+        opacity.keyframes = [
+            Keyframe(time: 0, value: 0, interpolation: .hold),
+            Keyframe(time: 0.4, value: 36, interpolation: .bezier),
+            Keyframe(time: 0.67, value: 0)
+        ]
+        var scale = Animated(100.0)
+        scale.keyframes = [
+            Keyframe(time: 0, value: 100),
+            Keyframe(time: 0.4, value: 109, interpolation: .bezier),
+            Keyframe(time: 0.67, value: 139)
+        ]
+        ghost.params["opacity"] = .number(opacity)
+        ghost.params["scale"] = .number(scale)
+        let project = scene(effect: ghost, onAdjustment: true)
+        let original = scene(effect: nil)
+        XCTAssertEqual(try render(r, project, t: 0.1), try render(r, original, t: 0.1))
+        XCTAssertGreaterThan(diff(try render(r, project, t: 0.43), try render(r, original, t: 0.43)), 1)
+        XCTAssertEqual(try render(r, project, t: 0.8), try render(r, original, t: 0.8))
+
+        let output = URL(fileURLWithPath: "/tmp/awi-authoring/ghost", isDirectory: true)
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        let media: (String) -> URL = { URL(fileURLWithPath: $0) }
+        for (index, time) in [0.1, 0.4, 0.48, 0.56, 0.8].enumerated() {
+            let frame = try XCTUnwrap(r.renderImage(project: project, time: time, maxDimension: 160, mediaURL: media))
+            try XCTUnwrap(frame.pngData()).write(to: output.appendingPathComponent("impact-\(index).png"))
+        }
+        let exported = try await Exporter().export(project: project, settings: ExportSettings(format: .mp4), mediaURL: media) { _ in }
+        try Data(contentsOf: exported).write(to: output.appendingPathComponent("ghost-impact.mp4"), options: .atomic)
+        try FileManager.default.removeItem(at: exported)
     }
 
     /// Unmult keeps premultiplied color, so it only shows over a background that isn't black.
