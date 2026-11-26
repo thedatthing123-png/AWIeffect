@@ -26,7 +26,10 @@ struct BoneSkinControls: View {
                         Button { state.bindBoneMesh() } label: {
                             Label(art.boneSkin == nil ? "Bind Mesh" : "Upgrade to Mesh",systemImage: "square.grid.3x3")
                                 .frame(maxWidth: .infinity,minHeight: 44)
-                        }.buttonStyle(.bordered)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(PrimaryButtonStyle())
+                        .accessibilityIdentifier("bone-weight-bind-mesh")
                         if let legacy = art.boneSkin {
                             Text("Existing Puppet-based deformation is preserved until you rebind.").font(.caption2).foregroundStyle(Theme.textDim)
                             HStack {

@@ -1238,14 +1238,14 @@ final class DrawEngine: ObservableObject {
 
     /// Color adjustments / filters on the active layer (Core Image), baked in one undo step.
     private static let filterContext:CIContext = {
-        #if targetEnvironment(simulator) && arch(x86_64)
+        #if targetEnvironment(simulator)
         return CIContext(options:[.useSoftwareRenderer:true])
         #else
         return CIContext()
         #endif
     }()
     private let filterQueue = DispatchQueue(label: "awi.draw.filter", qos: .userInteractive)
-    private var filterBase: (layer: DrawLayer, bytes: [UInt8], mask: [UInt8]?, image: CGImage)?
+    private var filterBase: (id: UUID, layer: DrawLayer, bytes: [UInt8], mask: [UInt8]?, image: CGImage)?
     private var filterPending: DrawFilter?
     private var filterBusy = false
     var isFiltering: Bool { filterBase != nil }
@@ -1257,7 +1257,7 @@ final class DrawEngine: ObservableObject {
         let b = bytes(of: l)
         guard let cg = cgImage(b) else { return }
         pushUndo(l)
-        filterBase = (l, b, hasSelection ? selectionBytes() : nil, cg)
+        filterBase = (UUID(), l, b, hasSelection ? selectionBytes() : nil, cg)
     }
 
     /// Only the newest slider value is rendered, so dragging never queues up work.
@@ -1275,7 +1275,10 @@ final class DrawEngine: ObservableObject {
             let out = Self.filtered(base.image, base.bytes, mask: base.mask, f, w, h)
             DispatchQueue.main.async {
                 guard let self else { return }
-                if self.filterBase != nil { self.setBytes(out, of: base.layer) }
+                if self.filterBase?.id == base.id, self.filterPending == nil {
+                    self.setBytes(out, of: base.layer)
+                    self.revision += 1
+                }
                 self.renderNextFilter()
             }
         }
@@ -1293,10 +1296,9 @@ final class DrawEngine: ObservableObject {
     func cancelFilter() {
         guard let base = filterBase else { return }
         filterPending = nil
-        filterQueue.sync {}
+        filterBase = nil
         setBytes(base.bytes, of: base.layer)
         dropLastUndo()
-        filterBase = nil
         revision += 1
     }
 

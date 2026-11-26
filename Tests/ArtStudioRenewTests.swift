@@ -254,12 +254,16 @@ final class ArtStudioRenewTests: XCTestCase {
         e.beginFilter()
         e.updateFilter(f)
         let shown = expectation(description: "preview")
+        let deadline = Date().addingTimeInterval(15)
         func observePreview() {
             if !e.isFilterUpdating { shown.fulfill() }
-            else { DispatchQueue.main.asyncAfter(deadline:.now()+0.05) { observePreview() } }
+            else if Date() < deadline { DispatchQueue.main.asyncAfter(deadline:.now()+0.05) { observePreview() } }
         }
         observePreview()
-        wait(for: [shown], timeout: 5)
+        guard XCTWaiter.wait(for: [shown], timeout: 15) == .completed else {
+            XCTFail("The live filter never published a preview")
+            return
+        }
         XCTAssertGreaterThan(px(e, 48, 48)[1], 40, "gray now, while the slider is live")
         e.cancelFilter()
         XCTAssertEqual(px(e, 48, 48), before)

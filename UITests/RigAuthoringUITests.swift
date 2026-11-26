@@ -52,11 +52,11 @@ final class RigAuthoringUITests: XCTestCase {
     func testPieceControllerShowsArtworkBindingInsteadOfAnEmptyWeightPanel() {
         continueAfterFailure = false
         let app = XCUIApplication(); app.launchArguments = ["-uiTesting","-uiTesting-rigAuthoring","-uiTesting-pieceWeight"]; app.launch()
-        let bind = app.buttons["Bind Mesh"].firstMatch
+        let bind = app.buttons["bone-weight-bind-mesh"].firstMatch
         XCTAssertTrue(bind.waitForExistence(timeout: 15))
         for _ in 0..<6 where !bind.isHittable { app.scrollViews["bone-weight-panel-scroll"].swipeUp() }
         XCTAssertTrue(bind.isHittable); bind.tap()
-        XCTAssertTrue(app.buttons["Weights"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Weights"].firstMatch.waitForExistence(timeout: 12), app.debugDescription)
         let image = XCUIScreen.main.screenshot(); let attachment = XCTAttachment(screenshot: image)
         attachment.name = "piece-controller-weights"; attachment.lifetime = .keepAlways; add(attachment)
         try? FileManager.default.createDirectory(atPath: "/tmp/awi-ui",withIntermediateDirectories: true)

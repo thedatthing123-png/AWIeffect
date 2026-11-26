@@ -52,9 +52,11 @@ struct CCStudioPanel: View {
                 chips(Self.sections, selection: $section)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
-                        toolsRow(g)
-                        if picking { pickerFrame(g) }
-                        if section != 4 { CCScopeView(scopes: scopes, kind: $scopeKind) }
+                        if section != 4 {
+                            toolsRow(g)
+                            if picking { pickerFrame(g) }
+                            CCScopeView(scopes: scopes, kind: $scopeKind)
+                        }
                         switch section {
                         case 0:
                             group(g, ["exposure", "contrast", "highlights", "shadows", "temp", "tint", "vibrance", "saturation"])
@@ -284,10 +286,18 @@ struct CCStudioPanel: View {
 
     private func lutSection(_ g: EffectInstance) -> some View {
         let builtIn = LUTLibrary.builtInFiles
-        let imported = luts.filter { !builtIn.contains($0) }
+        let names = builtIn + luts.filter { !builtIn.contains($0) }
         let frameTime = state.project.snapToFrame(state.currentTime)
         let key = "\(state.project.id)|\(g.id)|\(state.project.modifiedAt.timeIntervalSince1970)|\(frameTime)|\(lutLibraryRevision)|\(state.isPlaying)"
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 3)
+        let current = g.text?["lut"]
         return VStack(alignment: .leading, spacing: 8) {
+            LazyVGrid(columns: columns, spacing: 8) {
+                lutButton(g, nil, selected: current == nil)
+                ForEach(names.prefix(2), id: \.self) { name in
+                    lutButton(g, name, selected: current == name)
+                }
+            }
             HStack(spacing: 8) {
                 row(g, "lutStrength")
                 Button { importLUT = true } label: {
@@ -298,15 +308,15 @@ struct CCStudioPanel: View {
                 .buttonStyle(.plain).foregroundStyle(Theme.accentGlow)
                 .accessibilityLabel("Import LUT")
             }
-            let current = g.text?["lut"]
             if let current, !luts.contains(current), !LUTLibrary.builtInFiles.contains(current) {
                 // The grade names a LUT that isn't on this device (moved project / deleted file): it renders without it.
                 Label("Missing LUT \"\((current as NSString).deletingPathExtension)\" — import it to restore the look.", systemImage: "exclamationmark.triangle.fill")
                     .font(.caption).foregroundStyle(Theme.warning)
             }
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 8) {
-                lutButton(g, nil, selected: current == nil)
-                ForEach(builtIn + imported, id: \.self) { name in
+            toolsRow(g)
+            if picking { pickerFrame(g) }
+            LazyVGrid(columns: columns, spacing: 8) {
+                ForEach(names.dropFirst(2), id: \.self) { name in
                     lutButton(g, name, selected: current == name)
                 }
             }
@@ -314,7 +324,7 @@ struct CCStudioPanel: View {
         .task(id: key) {
             do { try await Task.sleep(for: .milliseconds(150)) } catch { return }
             guard !Task.isCancelled, !state.isPlaying, !state.isLiveGesture else { return }
-            refreshLUTPreviews(grade: g, names: builtIn + imported, time: frameTime, key: key)
+            refreshLUTPreviews(grade: g, names: names, time: frameTime, key: key)
         }
     }
 
@@ -332,11 +342,16 @@ struct CCStudioPanel: View {
                     .overlay {
                         if let preview = lutPreviews[name ?? ""] {
                             Image(decorative: preview, scale: 1).resizable().scaledToFit()
+                                .allowsHitTesting(false)
                         }
                     }
                     .aspectRatio(1.55, contentMode: .fit)
                     .clipShape(.rect(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(selected ? Theme.accentGlow : Theme.stroke, lineWidth: selected ? 2 : 1))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 6)
+                            .strokeBorder(selected ? Theme.accentGlow : Theme.stroke, lineWidth: selected ? 2 : 1)
+                            .allowsHitTesting(false)
+                    }
                 Text(name.map { name in
                     let stem = (name as NSString).deletingPathExtension
                     return LUTLibrary.builtInFiles.contains(name) ? String(stem.dropFirst(4)) : stem
