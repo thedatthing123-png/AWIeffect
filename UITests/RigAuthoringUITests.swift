@@ -147,12 +147,15 @@ final class RigAuthoringUITests: XCTestCase {
         let add = app.buttons["Animate Selected Letters"].firstMatch
         XCTAssertTrue(add.waitForExistence(timeout: 5))
         add.tap()
-        let keyAll = app.buttons["Key All"].firstMatch
+        let keyAll = app.buttons["text-animator-key-all"]
         XCTAssertTrue(keyAll.waitForExistence(timeout: 5))
         XCTAssertTrue(keyAll.isHittable)
         keyAll.tap()
-        let graph = app.buttons["Animator Graph"].firstMatch
-        XCTAssertTrue(graph.isEnabled)
+        let graph = app.buttons["text-animator-graph"]
+        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: graph)
+        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 5), .completed)
+        graph.tap()
+        XCTAssertTrue(app.staticTexts["Needs two keyframes"].waitForExistence(timeout: 5))
         let output = URL(fileURLWithPath: "/tmp/awi-ui")
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
         try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("text-studio-animator.png"))

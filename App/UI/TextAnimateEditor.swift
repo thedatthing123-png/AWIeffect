@@ -297,10 +297,12 @@ struct AnimatorEditor: View {
                         for key in keys { key.addKeyframe(at: time, to: &text.animators[index].properties) }
                     }
                 }
+                .accessibilityIdentifier("text-animator-key-all")
                 TSButton(title: "Animator Graph", icon: "point.topleft.down.curvedto.point.bottomright.up") {
                     showAnimatorGraph = true
                 }
                 .disabled(graphKeys.isEmpty)
+                .accessibilityIdentifier("text-animator-graph")
             }
             .sheet(isPresented: $showAnimatorGraph) {
                 TextGraphEditorSheet(state: state, animatorID: animatorID, targets: graphKeys.map { .property($0) })
