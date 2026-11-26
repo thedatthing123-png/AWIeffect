@@ -17,6 +17,40 @@ final class EditorPolishRegressionTests: XCTestCase {
     private func point(_ matrix: simd_double3x3, _ x: Double, _ y: Double) -> SIMD2<Double> {
         let q = matrix * SIMD3(x, y, 1); return SIMD2(q.x, q.y) / q.z
     }
+    @MainActor
+    func testSceneSpacingKeepsFramingAndDepthKeysForCameraMove() throws {
+        var p = scene()
+        p.layers.removeFirst()
+        let foreground = p.layers[0]
+        var background = p.makeLayer(name: "background", content: .solid, size: Vec2(120, 100))
+        background.transform.positionZ.insertKeyframe(Keyframe(time: 0, value: 0))
+        background.transform.positionZ.insertKeyframe(Keyframe(time: 1, value: 20))
+        var locked = p.makeLayer(name: "locked", content: .solid, size: Vec2(24, 24))
+        locked.isLocked = true
+        p.layers += [background, locked]
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let state = EditorState(project: p, store: ProjectStore(root: root))
+        state.currentTime = 0.5
+        state.mangaPanelPush(depth: 100, push: 0.25, duration: 1, drift: 0.1, turn: 0)
+        let updated = state.project
+        let camera = try XCTUnwrap(updated.layers.first { $0.content == .camera })
+        XCTAssertEqual(camera.inPoint, 0.5)
+        XCTAssertTrue(state.cameraView)
+        XCTAssertEqual(updated.layers.first { $0.id == locked.id }?.is3D, false)
+        let back = try XCTUnwrap(updated.layers.first { $0.id == background.id })
+        XCTAssertEqual(back.transform.positionZ.keyframeTimes, [0, 1])
+        XCTAssertEqual(back.transform.positionZ.value(at: 0.5), 100, accuracy: 1e-6)
+        for original in [foreground, background] {
+            let adjusted = try XCTUnwrap(updated.layers.first { $0.id == original.id })
+            let initial = Renderer.placementMatrix(original, camera: Renderer.activeCamera(p, time: 0.5), time: 0.5, renderScale: 1)
+            let start = Renderer.placementMatrix(adjusted, camera: Renderer.activeCamera(updated, time: 0.5), time: 0.5, renderScale: 1)
+            XCTAssertLessThan(simd_length(point(initial, 8, 12) - point(start, 8, 12)), 1e-6)
+            let end = Renderer.placementMatrix(adjusted, camera: Renderer.activeCamera(updated, time: 1.5), time: 1.5, renderScale: 1)
+            XCTAssertGreaterThan(simd_length(point(end, 8, 12) - point(start, 8, 12)), 1)
+        }
+    }
+
     func test2DDepthChangesProjectedSizeAndCameraParallax() {
         var p = scene()
         let zoom = CameraState.defaultZoom(p)
