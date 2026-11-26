@@ -3,6 +3,28 @@ import XCTest
 
 /// Batch 26: remade shakes (Shake Pro engine) and blurs (fxBlur26).
 final class ShakeBlurRemakeTests: XCTestCase {
+    func testIntegratedFrequencyRampsAndHoldsWithoutPhaseJumps() {
+        var effect = EffectRegistry.shake.makeInstance()
+        var frequency = Animated(4.0)
+        frequency.keyframes = [
+            Keyframe(time: 0, value: 4),
+            Keyframe(time: 1, value: 2, interpolation: .hold),
+            Keyframe(time: 2, value: 0)
+        ]
+        effect.params["frequency"] = .number(frequency)
+        func phase(_ t: Double) -> Double { EffectRate.phase(effect, key: "frequency", time: t, range: 0...60) }
+        XCTAssertEqual(phase(1), 3, accuracy: 1e-8)
+        XCTAssertEqual(phase(2), 5, accuracy: 1e-8)
+        XCTAssertEqual(phase(4), phase(2), accuracy: 1e-8)
+        guard case .transform(let evaluate) = EffectRegistry.shake.stage else { return XCTFail("Shake must drive transforms") }
+        let before = evaluate(effect, 1.99999), after = evaluate(effect, 2.00001)
+        XCTAssertLessThan(hypot(before.0 - after.0, before.1 - after.1), 0.01)
+        let stopped = evaluate(effect, 4)
+        XCTAssertEqual(after.0, stopped.0, accuracy: 1e-9)
+        effect.params["smoothness"] = nil
+        XCTAssertGreaterThan(abs(evaluate(effect, 1.99999).0 - evaluate(effect, 2.00001).0), 1e-5)
+    }
+
     private func renderer() throws -> Renderer {
         guard let r = Renderer.shared else { throw XCTSkip("SKIP-GPU: no Metal device available; effect tests not run") }
         return r

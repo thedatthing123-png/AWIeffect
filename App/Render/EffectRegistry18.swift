@@ -23,13 +23,14 @@ extension EffectRegistry {
     static let shakePro18 = EffectDefinition(
         id: "awi18.shakePro", name: "Shake Pro", category: .motion,
         aeMatchNames: [],
-        summary: "Every kind of edit shake in one: smooth wiggle for tension, twitchy snap-and-hold jumps, handheld camera, earthquake rumble with surges, impact hits that ring out like a spring and settle, and vibration. Choppy hold frames for anime shakes, direction lock and fade-out. Motion blur turns on by itself.",
+        summary: "Smooth wiggle, snap-and-hold Twitch, handheld drift, heavy rumble, impact, and vibration. Hold Frames, fade, and direction are independently adjustable.",
         params: [
             .choice("mode", "Shake Type", ["Smooth (Wiggle)", "Twitch (Jumps)", "Handheld Camera", "Earthquake", "Impact Hits", "Vibrate"], 0),
             .number("amount", "Position Amount", 40, 0, 600, unit: "px"),
             .number("rotation", "Rotation Amount", 4, 0, 90, unit: "°"),
             .number("zoom", "Zoom Amount", 0, 0, 60, unit: "%"),
             .number("speed", "Speed", 10, 0.5, 40, step: 0.1, unit: "/s"),
+            .toggle("continuousSpeed", "Continuous Speed", true),
             .number("hold", "Hold Frames (choppy)", 0, 0, 12, step: 1),
             .choice("direction", "Direction", ["Both", "Horizontal Only", "Vertical Only"], 0),
             .number("fade", "Fade Out", 0, 0, 10, step: 0.1, unit: "/s"),
@@ -39,8 +40,11 @@ extension EffectRegistry {
         stage: .transform { e, raw in
             let t = held(raw, e.number("hold", raw))
             let f = e.number("speed", raw), seed = e.number("seed", raw)
+            let mode = e.choice("mode")
+            let continuous = e.bool("continuousSpeed") && mode != 4
+            let phase = continuous ? EffectRate.phase(e, key: "speed", time: t, range: 0.5...40) : t
             let env = exp(-max(0, e.number("fade", raw)) * max(0, raw)) * easeIn26(raw, e.number("fadeIn", raw))
-            var (x, y, r, z) = shake26(mode: e.choice("mode"), t: t, f: f, seed: seed)
+            var (x, y, r, z) = shake26(mode: mode, t: phase, f: continuous ? 1 : f, seed: seed)
             switch e.choice("direction") {
             case 1: y = 0
             case 2: x = 0
@@ -152,6 +156,7 @@ extension EffectRegistry {
             .number("amount", "Wave Amount", 24, 0, 300, unit: "px"),
             .number("waves", "Waves", 4, 0.2, 40, step: 0.1),
             .number("speed", "Speed", 1.5, 0, 10, step: 0.05),
+            .toggle("continuousSpeed", "Continuous Speed", true),
             .toggle("holdFrames", "Hold Frames", false),
             .number("steps", "Steps Per Second", 12, 1, 120, step: 1),
         ],
@@ -159,6 +164,12 @@ extension EffectRegistry {
         stage: .pixels { ctx in run18(ctx, 4) { p in
             p.a = SIMD4(Float(ctx.num("amount") * ctx.unit), Float(ctx.num("waves")), Float(ctx.num("speed")), Float(ctx.num("steps")))
             p.i.y = ctx.effect.bool("holdFrames") ? 1 : 0
+            if ctx.effect.bool("continuousSpeed") {
+                let steps = max(ctx.num("steps"), 0.5)
+                let time = p.i.y == 1 ? floor(ctx.time * steps) / steps : ctx.time
+                p.b.x = Float(EffectRate.phase(ctx.effect, key: "speed", time: time, range: 0...10).truncatingRemainder(dividingBy: 1))
+                p.i.z = 1
+            }
         } })
 
     static let blockShuffle18 = EffectDefinition(
@@ -169,6 +180,7 @@ extension EffectRegistry {
             .number("block", "Block Size", 24, 4, 200, unit: "px"),
             .number("chance", "Amount", 25, 0, 100, unit: "%"),
             .number("rate", "Changes Per Second", 12, 1, 30, step: 1),
+            continuousGlitchRate,
             .number("seed", "Random Seed", 1, 0, 1000, step: 1),
         ],
         stage: .pixels { ctx in gx(ctx, 8, rate: ctx.num("rate"), seed: ctx.num("seed")) { p in

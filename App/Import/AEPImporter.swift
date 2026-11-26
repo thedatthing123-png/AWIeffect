@@ -523,6 +523,9 @@ enum AEPImporter {
     /// Builds an AWIeffect effect from an AE effect group, mapping params by their `-000N` index.
     static func effectInstance(_ def: EffectDefinition, from e: AEProp, timebase: Double, layerStart: Double) -> EffectInstance {
         var inst = def.makeInstance()
+        // The native motion pass is opt-in for effects reconstructed from an
+        // AE project. Keep the existing source playback rule until parity is verified.
+        inst.params["continuousSpeed"] = nil
         for pd in def.params {
             guard let idx = pd.aeIndex else { continue }
             let pname = "\(e.matchName)-\(String(format: "%04d", idx))"

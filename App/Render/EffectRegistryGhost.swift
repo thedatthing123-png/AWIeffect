@@ -11,7 +11,8 @@ extension EffectRegistry {
             .number("scale", "Scale", 114, 20, 200, unit: "%"),
             .point("position", "Ghost Position", Vec2(0.5, 0.5)),
             .angle("rotation", "Rotation", 0),
-            .number("invert", "Invert", 100, 0, 100, unit: "%")
+            .number("invert", "Invert", 100, 0, 100, unit: "%"),
+            .choice("blend", "Blend", ["Normal", "Screen", "Difference"], 0)
         ],
         expandedMargin: { effect, time, size in
             let ghost = GhostOverlaySettings(effect, at: time)
@@ -34,6 +35,7 @@ extension EffectRegistry {
             params.a = SIMD4(Float(ghost.opacity), Float(ghost.inversion), Float(1 / ghost.scale), 0)
             params.b = SIMD4(Float(cos(ghost.rotation)), Float(sin(ghost.rotation)),
                              Float(ghost.offset.x * layerSize.x), Float(ghost.offset.y * layerSize.y))
+            params.i.x = UInt32(clamping: context.effect.choice("blend"))
             context.gpu.run("fxGhostOverlay", context.cb, textures: [context.input, output], params: params, grid: output)
             return output
         })

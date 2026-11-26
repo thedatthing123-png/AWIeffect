@@ -686,7 +686,11 @@ struct EffectBrowser: View {
         case .section(let sec): base = EffectsPresentation.browseable.filter { EffectSection.of($0) == sec }
         }
         guard !query.isEmpty else { return base }
-        return base.filter { $0.name.localizedCaseInsensitiveContains(query) || $0.summary.localizedCaseInsensitiveContains(query) }
+        return base.filter {
+            $0.name.localizedCaseInsensitiveContains(query) ||
+            $0.summary.localizedCaseInsensitiveContains(query) ||
+            EffectSection.of($0).rawValue.localizedCaseInsensitiveContains(query)
+        }
     }
 
     var body: some View {

@@ -164,6 +164,61 @@ final class EffectTests: XCTestCase {
         }
     }
 
+    func testEffectFamiliesRespectThePrimaryJob() {
+        XCTAssertEqual(EffectSection.of(EffectRegistry.rmStarPrism17), .threeD)
+        XCTAssertEqual(EffectSection.of(EffectRegistry.shakePro18), .shake)
+        XCTAssertEqual(EffectSection.of(EffectRegistry.motionTile), .repeaters)
+        XCTAssertEqual(EffectSection.of(EffectRegistry.turbulentDisplace), .distort)
+        XCTAssertEqual(EffectSection.of(EffectRegistry.waveGlitch18), .glitch)
+        XCTAssertTrue(EffectsPresentation.browseable.contains { $0.id == "awi.deepGlow" && $0.name == "Multiscale Glow" })
+    }
+
+    func testLightIrisWipeEndpointsAndGhostBlend() throws {
+        let r = try renderer()
+        var iris = try XCTUnwrap(EffectRegistry.definition("awi.lightIris")).makeInstance()
+        iris.params["progress"] = .number(Animated(0))
+        let base = try render(r, scene(effect: nil))
+        XCTAssertEqual(try render(r, scene(effect: iris)), base)
+        iris.params["progress"] = .number(Animated(100))
+        var covered = scene(effect: nil)
+        covered.layers.remove(at: 1)
+        XCTAssertEqual(try render(r, scene(effect: iris)), try render(r, covered))
+
+        var ghost = try XCTUnwrap(EffectRegistry.definition("awi.ghost")).makeInstance()
+        let normal = try render(r, scene(effect: ghost, onAdjustment: true))
+        ghost.params["blend"] = .choice(1)
+        let screen = try render(r, scene(effect: ghost, onAdjustment: true))
+        ghost.params["blend"] = .choice(2)
+        let difference = try render(r, scene(effect: ghost, onAdjustment: true))
+        XCTAssertGreaterThan(diff(normal, screen), 1)
+        XCTAssertGreaterThan(diff(screen, difference), 1)
+    }
+
+    @MainActor
+    func testShapedLightSweepMovesAcrossTheFrameAndExports() async throws {
+        let r = try renderer()
+        var sweep = try XCTUnwrap(EffectRegistry.definition("awi.shapedLightSweep")).makeInstance()
+        var center = Animated(Vec2(0.0, 0.5))
+        center.keyframes = [
+            Keyframe(time: 0, value: Vec2(0.0, 0.5), interpolation: .bezier),
+            Keyframe(time: 1.0, value: Vec2(1.0, 0.5))
+        ]
+        sweep.params["center"] = .point(center)
+        let project = scene(effect: sweep, onAdjustment: true)
+        let early = try render(r, project, t: 0.15)
+        XCTAssertGreaterThan(diff(early, try render(r, project, t: 0.75)), 1)
+        let output = URL(fileURLWithPath: "/tmp/awi-authoring/shaped-light-sweep", isDirectory: true)
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        let media: (String) -> URL = { URL(fileURLWithPath: $0) }
+        for (index, time) in [0.15, 0.4, 0.6, 0.85].enumerated() {
+            let frame = try XCTUnwrap(r.renderImage(project: project, time: time, maxDimension: 160, mediaURL: media))
+            try XCTUnwrap(frame.pngData()).write(to: output.appendingPathComponent("sweep-\(index).png"))
+        }
+        let encoded = try await Exporter().export(project: project, settings: ExportSettings(format: .mp4), mediaURL: media) { _ in }
+        try Data(contentsOf: encoded).write(to: output.appendingPathComponent("sweep.mp4"), options: .atomic)
+        try FileManager.default.removeItem(at: encoded)
+    }
+
     func testGhostKeepsTheOriginalAndRendersOutsideTheCutout() throws {
         let r = try renderer()
         var p = Project.new(name: "Ghost alpha", width: 64, height: 64, fps: 30, duration: 1, background: .black)

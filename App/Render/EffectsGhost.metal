@@ -22,5 +22,12 @@ kernel void fxGhostOverlay(texture2d<half, access::sample> input [[texture(0)]],
     const float3 negative = clamp(float3(ghost.a) - ghost.rgb, float3(0), float3(ghost.a));
     ghost.rgb = mix(ghost.rgb, negative, params.a.y);
     ghost *= params.a.x;
-    output.write(half4(ghost + original * (1 - ghost.a)), gid);
+    float4 result = ghost + original * (1 - ghost.a);
+    if (params.i.x != 0 && ghost.a > 0.00001 && original.a > 0.00001) {
+        const float3 base = original.rgb / original.a;
+        const float3 top = ghost.rgb / ghost.a;
+        const float3 blended = params.i.x == 1 ? 1 - (1 - base) * (1 - top) : abs(base - top);
+        result.rgb += (blended - top) * (original.a * ghost.a);
+    }
+    output.write(half4(result), gid);
 }

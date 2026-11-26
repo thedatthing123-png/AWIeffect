@@ -5,7 +5,7 @@ import AVFoundation
 enum EffectsPresentation {
     static let studioIDs: Set<String> = ["awi18.grade", "awi18.puppet"]
     static let retiredIDs: Set<String> = [
-        "awi.manga", "awi.impactFrame", "awi.looks", "awi.deepGlow", "awi.saber",
+        "awi.manga", "awi.impactFrame", "awi.looks", "awi.saber",
         "awi.shine", "awi.glitch", "awi.vhs", "awi.pixelSort", "awi.particles",
         "awi8.crossProcess", "awi8.bleachBypass", "awi8.infrared", "awi13.cyberpunk", "awi13.lomo", "awi13.dayForNight"
     ]
@@ -18,12 +18,11 @@ enum EffectsPresentation {
 
 // MARK: - Effect sections (Alight Motion-style browsing)
 
-/// Browsing sections for the effect picker. Each effect lands in the first section whose keywords match its id, name
-/// or summary, so 400 effects split into short, findable lists ("Shake", "Glow", "Glitch"…).
+/// Primary effect families. Descriptions and tags are used for search, not filing.
 enum EffectSection: String, CaseIterable, Identifiable {
     case text = "Text", shake = "Shake & Motion", glow = "Glow & Light", blur = "Blur", glitch = "Glitch", distort = "Distort & Warp",
          transition = "Transitions", particles = "Particles", backgrounds = "Backgrounds", threeD = "3D",
-         stylize = "Stylize & Draw", retro = "Retro & Film", color = "Color & Grade", keying = "Key & Matte", other = "More"
+         repeaters = "Repeat & Tile", stylize = "Stylize & Draw", retro = "Retro & Film", color = "Color & Grade", keying = "Key & Matte", other = "More"
     var id: String { rawValue }
 
     var symbol: String {
@@ -38,6 +37,7 @@ enum EffectSection: String, CaseIterable, Identifiable {
         case .particles: return "sparkles"
         case .backgrounds: return "square.grid.3x3.fill"
         case .threeD: return "cube.fill"
+        case .repeaters: return "square.grid.2x2"
         case .stylize: return "pencil.and.scribble"
         case .retro: return "film"
         case .color: return "paintpalette.fill"
@@ -46,42 +46,43 @@ enum EffectSection: String, CaseIterable, Identifiable {
         }
     }
 
-    private var keywords: [String] {
-        switch self {
-        case .text: return ["letter spacing", "text spacing", "tracking"]
-        case .shake: return ["shake", "wiggle", "jitter", "swing", "oscillate", "pulse", "spin", "bounce", "twitch", "earthquake", "wobble", "elastic", "punch"]
-        case .glow: return ["glow", "light", "ray", "bloom", "glint", "shine", "flare", "aura", "saber", "neon", "halation", "rim", "sweep", "spot", "beam", "leak", "sparkle"]
-        case .blur: return ["blur", "bokeh", "smear", "sharpen", "clarity", "structure", "diffusion", "frosted", "tilt-shift", "minimax", "smooth"]
-        case .glitch: return ["glitch", "datamosh", "pixel sort", "interference", "digital", "rgb split", "chromatic aberration", "signal", "scan", "negative flash", "shuffle", "tear", "channel smear", "twitch"]
-        case .distort: return ["warp", "distort", "twirl", "swirl", "bulge", "pinch", "ripple", "wave", "lens", "fisheye", "kaleid", "mirror", "polar", "spherize",
-                               "magnif", "liquid", "glass", "refract", "displace", "shatter", "slice", "tile", "fold", "skew", "tunnel", "vortex", "black hole", "droste", "mirage", "heat"]
-        case .transition: return ["wipe", "dissolve", "reveal", "iris", "barn", "blinds", "push", "zoom through", "split reveal", "burn away", "ink bleed", "completion", "flip"]
-        case .particles: return ["particle", "snow", "rain", "ember", "spark", "dust", "firefl", "confetti", "bubble", "firework", "star", "plexus", "constellation"]
-        case .backgrounds: return ["gradient", "plasma", "aurora", "cloud", "smoke", "fire", "nebula", "grid", "noise", "checker", "cell", "voronoi", "pattern",
-                                   "mandala", "galaxy", "code rain", "equalizer", "sunburst", "isoline", "metaball", "heartbeat", "lightning", "arc"]
-        case .threeD: return ["3d", "raymarch", "cube", "sphere", "torus", "cylinder", "pyramid", "skybox", "extrude", "bevel", "chrome", "gold", "card tilt", "city", "seascape"]
-        case .stylize: return ["sketch", "ink", "cartoon", "cel", "manga", "anime", "halftone", "hatch", "outline", "edge", "paint", "watercolor", "pencil", "mosaic",
-                               "crystal", "point", "emboss", "stroke", "border", "shadow", "posterize", "threshold", "stained", "ascii", "low poly", "charcoal", "woodcut", "graffiti", "pixel art"]
-        case .retro: return ["vhs", "crt", "film", "retro", "8-bit", "dither", "super 8", "instant", "jpeg", "bit crush", "led", "lcd", "tv", "teletext", "risograph",
-                             "thermal", "print", "lomo", "vintage", "grain", "scratch", "old"]
-        case .color: return ["color", "colour", "tint", "hue", "saturation", "exposure", "brightness", "contrast", "levels", "curves", "grade", "tone", "temperature",
-                             "mixer", "invert", "sepia", "bleach", "cross process", "infrared", "thermal", "night", "duotone", "gradient map", "looks", "vibrance",
-                             "black & white", "photo filter", "flicker", "fill", "cyberpunk", "day for night", "split toning", "selective"]
-        case .keying: return ["key", "matte", "alpha", "choke", "spill", "unmult", "feather", "luma", "opacity", "blink", "vignette"]
-        case .other: return []
+    private static let primary: [String: EffectSection] = {
+        var result: [String: EffectSection] = [:]
+        let families: [(EffectSection, [String])] = [
+            (.threeD, EffectRegistry.batch17.map(\.id) + [
+                "awi20.flip", "awi10.cardTilt", "awi.amref.e3dc893f46bd6", "awi.amref.e52053df16be1",
+                "awi.amref.ef1f2a785b8af", "awi.amref.efc60eccebd05", "awi.amref.e77bf324369ab",
+                "awi.amref.e54bb2887bbf3", "awi.amref.e81d6711ee96b", "awi.amref.e228c81dec835",
+                "awi.amref.e0fb0e4c76b45", "awi.amref.ec2da1b62e988", "awi.amref.e4cc43ae57f09"
+            ]),
+            (.glow, [
+                "ae.glow", "ae.lensFlare", "awi.deepGlow", "awi.godRays", "awi.shapedLightSweep",
+                "awi10.lightSweep", "awi10.organicLightSweep", "awi10.volumetricBeam", "awi10.pointLight",
+                "awi10.filmBloom", "awi15.prismGlow", "awi15.softGlow", "awi15.darkGlow", "awi15.hueGlow",
+                "awi15.lightWrap", "awi.outlineGlow", "awi.outerGlow", "awi.innerGlow", "awi16.glowScan", "awi7.energyBeam"
+            ]),
+            (.glitch, [
+                "awi.rgbSplit", "awi18.twitch", "awi18.scanTear", "awi18.waveGlitch", "awi18.blockShuffle",
+                "awi18.channelSmear", "awi18.warpChroma", "awi6.glitchBlocks", "awi6.glitchLines", "awi6.digitalNoise",
+                "awi16.glitchColorBands", "awi6.datamosh"
+            ]),
+            (.repeaters, [
+                "ae.motionTile", "awi6.hexTiles", "awi8.mosaicTiles", "awi11.repeatGrid",
+                "awi11.repeatLine", "awi11.repeatRadial", "awi11.mirrorTile"
+            ]),
+            (.particles, ["awi18.particles", "awi7.bokehParticles"]),
+            (.retro, EffectRegistry.batch13.map(\.id)),
+            (.stylize, ["awi23.drawProgress", "awi.ghost"])
+        ]
+        for (family, ids) in families {
+            for id in ids { result[id] = family }
         }
-    }
+        return result
+    }()
 
-    /// Section an effect is filed under.
+    /// Give authored assignments priority over the renderer's broad category.
     static func of(_ d: EffectDefinition) -> EffectSection {
-        if d.category == .transition { return .transition }
-        if d.category == .text { return .text }
-        if d.id == "awi23.drawProgress" { return .stylize }
-        if d.isTransformEffect { return .shake }
-        let hay = (d.name + " " + d.id + " " + d.summary).lowercased()
-        for s in allCases where s != .other && s != .transition {
-            if s.keywords.contains(where: { hay.contains($0) }) { return s }
-        }
+        if let section = primary[d.id] { return section }
         switch d.category {
         case .text: return .text
         case .blur: return .blur

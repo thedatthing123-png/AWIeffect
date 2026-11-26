@@ -47,6 +47,35 @@ final class DistortTransitionRemakeTests: XCTestCase {
         XCTAssertEqual(try instance("ae.magnify").number("opacity", 0), 100)
     }
 
+    func testStoppedWarpKeepsItsPhaseWhileHeightCanAnimate() throws {
+        let r = try renderer()
+        var effect = EffectRegistry.waveWarp.makeInstance()
+        var speed = Animated(0.75)
+        speed.keyframes = [
+            Keyframe(time: 0, value: 0.75, interpolation: .hold),
+            Keyframe(time: 1, value: 0)
+        ]
+        effect.params["speed"] = .number(speed)
+        let p = scene(effect)
+        let held = try render(r, p, t: 1.03)
+        XCTAssertEqual(held, try render(r, p, t: 1.6))
+        XCTAssertGreaterThan(diff(held, try render(r, p, t: 0.65)), 0.5)
+        var height = Animated(10.0)
+        height.keyframes = [Keyframe(time: 1, value: 10), Keyframe(time: 1.6, value: 25)]
+        effect.params["height"] = .number(height)
+        XCTAssertGreaterThan(diff(held, try render(r, scene(effect), t: 1.6)), 0.5)
+    }
+
+    func testTurbulenceAutomaticMotionIsOptional() throws {
+        let r = try renderer()
+        var effect = EffectRegistry.turbulentDisplace.makeInstance()
+        let held = scene(effect)
+        XCTAssertEqual(try render(r, held, t: 0.1), try render(r, held, t: 0.8))
+        num(&effect, "evolutionSpeed", -0.75)
+        let flowing = scene(effect)
+        XCTAssertGreaterThan(diff(try render(r, flowing, t: 0.1), try render(r, flowing, t: 0.8)), 0.5)
+    }
+
     func testTurbulentDisplaceTypesAllWarpDifferently() throws {
         let r = try renderer()
         let base = try render(r, scene(nil))

@@ -172,7 +172,7 @@ final class EffectGPU {
         for name in ["fxCopy", "fxClear", "fxGaussian", "fxDirectional", "fxRadial", "fxColor", "fxGlowThreshold",
                      "fxGlowCombine", "fxFractalNoise", "fxChromaKey", "fxRGBSplit", "fxAdjustMix", "fxBackdropMix", "fxBackdropMask", "fxBackdropTransform",
                      "fxWarp", "fxStylize", "fxGlitch", "fxColor2", "fxSaberCore", "fxShine", "fxParticles", "fxPixelSort",
-                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet", "fxGrade", "maskMix", "fxLayerRef", "flowEstimate", "flowBlur", "fxAccumulate", "fx19", "fx19GlowKeep", "fx19KeyInvert", "fx19AlphaOf", "fx19ColorSelect", "fx19Bend", "fx20Flip", "fx20AMWave", "fx20AMFractal", "fx21", "fx22", "fx23", "fxGX", "fxInnerGlow24", "fxArt24", "fxLightPrep25", "fxLightSum25", "fxLightComp25", "fxStreak25", "fxLightGen25", "fxBlur26", "fxPrint27", "fxInk27", "fxFilm27", "fxGlitch27", "fxTurbulent28", "fxWaveWarp28", "fxPolar28", "fxRipple28", "fxMagnify28", "fxTrans28", "fxWarp14AA28", "fxDistort6AA28", "fxFractalNoise29", "fxGen29", "fxKey29", "fxColor29", "fxDeepSource", "fxDeepAccumulate", "fxDeepComposite", "fxProxyPremultiply", "fxGradeR4", "fxMixR4", "fxGradientR4", "fxFractalRidgesAM35", "fxPsykoBlobsAM35", "fxSpectralMapAM35", "fxLiquidLensReference", "fxVoronoiPeelReference", "fxGhostOverlay"] {
+                     "fxGenerate", "fxStylize2", "fxDistort2", "fxTransition", "fxColor3", "fxMatte", "fxGlow4", "fxLook5", "fxResample", "fxDistort6", "fxGen7", "fxStyle8", "fxTrans9", "fxLight10", "fxRepeat11", "fxAbstract12", "fxRetro13", "fxWarp14", "fxBlur15", "fxDraw16", "fx3D17", "fx18", "frameMix", "fxPuppet", "fxGrade", "maskMix", "fxLayerRef", "flowEstimate", "flowBlur", "fxAccumulate", "fx19", "fx19GlowKeep", "fx19KeyInvert", "fx19AlphaOf", "fx19ColorSelect", "fx19Bend", "fx20Flip", "fx20AMWave", "fx20AMFractal", "fx21", "fx22", "fx23", "fxGX", "fxInnerGlow24", "fxArt24", "fxLightPrep25", "fxLightSum25", "fxLightComp25", "fxStreak25", "fxLightGen25", "fxBlur26", "fxPrint27", "fxInk27", "fxFilm27", "fxGlitch27", "fxTurbulent28", "fxWaveWarp28", "fxPolar28", "fxRipple28", "fxMagnify28", "fxTrans28", "fxWarp14AA28", "fxDistort6AA28", "fxFractalNoise29", "fxGen29", "fxKey29", "fxColor29", "fxDeepSource", "fxDeepAccumulate", "fxDeepComposite", "fxProxyPremultiply", "fxGradeR4", "fxMixR4", "fxGradientR4", "fxFractalRidgesAM35", "fxPsykoBlobsAM35", "fxSpectralMapAM35", "fxLiquidLensReference", "fxVoronoiPeelReference", "fxGhostOverlay", "fxShapedLightSweep", "fxLightIrisWipe"] {
             guard let f = library.makeFunction(name: name) else { throw RenderError.pipeline(name) }
             psos[name] = try device.makeComputePipelineState(function: f)
         }
@@ -259,7 +259,7 @@ enum EffectRegistry {
         gaussianBlur, directionalBlur, radialBlur,
         exposure, brightnessContrast, hueSaturation, tint, levels, invert, fill, vignette,
         glow, rgbSplit, fractalNoise, chromaKey, shake,
-    ] + [letterSpacing] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22 + batch23 + batchR4 + batchAM35 + referenceTransitions + reviewedReferenceEffects + ghostEffects
+    ] + [letterSpacing] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22 + batch23 + batchR4 + batchAM35 + referenceTransitions + reviewedReferenceEffects + ghostEffects + motionFinishEffects
 
     private static let byID: [String: EffectDefinition] = Dictionary(uniqueKeysWithValues: all.map { ($0.id, EffectStackR4.wrap($0)) })
     private static let byMatchName: [String: EffectDefinition] = {
@@ -584,9 +584,10 @@ enum EffectRegistry {
     static let shake = EffectDefinition(
         id: "awi.shake", name: "Shake", category: .motion,
         aeMatchNames: [],
-        summary: "Wiggle-style camera/layer shake (position, rotation, zoom).",
+        summary: "Continuous position, roll and zoom. Use Smoothness to soften fine jitter without reducing the main movement.",
         params: [
             .number("frequency", "Frequency", 8, 0, 60, step: 0.1, unit: "/s"),
+            .number("smoothness", "Smoothness", 65, 0, 100, unit: "%"),
             .number("amplitude", "Position Amount", 30, 0, 1000, unit: "px"),
             .number("rotation", "Rotation Amount", 2, 0, 180, unit: "Â°"),
             .number("zoom", "Zoom Amount", 0, 0, 100, unit: "%"),
@@ -594,11 +595,19 @@ enum EffectRegistry {
             .number("seed", "Random Seed", 1, 0, 1000, step: 1),
         ],
         stage: .transform { e, t in
-            let f = e.number("frequency", t), oct = Int(e.number("octaves", t)), seed = e.number("seed", t)
-            let dx = Wiggle.value(t: t, freq: f, octaves: oct, seed: seed * 13 + 1) * e.number("amplitude", t)
-            let dy = Wiggle.value(t: t, freq: f, octaves: oct, seed: seed * 13 + 2) * e.number("amplitude", t)
-            let dr = Wiggle.value(t: t, freq: f, octaves: oct, seed: seed * 13 + 3) * e.number("rotation", t)
-            let ds = 1 + Wiggle.value(t: t, freq: f, octaves: oct, seed: seed * 13 + 4) * e.number("zoom", t) / 100
+            let modern = e.value("smoothness") != nil
+            let phase = modern ? EffectRate.phase(e, key: "frequency", time: t, range: 0...60) : t
+            let rate = modern ? 1 : e.number("frequency", t)
+            let detail = min(6, max(1, Int(e.number("octaves", t))))
+            let fineMotion = modern ? 0.5 * (1 - min(100, max(0, e.number("smoothness", t))) / 100) : 0.5
+            let seed = e.number("seed", t) * 13
+            func axis(_ index: Double) -> Double {
+                Wiggle.value(t: phase, freq: rate, octaves: detail, ampMult: fineMotion, seed: seed + index)
+            }
+            let dx = axis(1) * e.number("amplitude", t)
+            let dy = axis(2) * e.number("amplitude", t)
+            let dr = axis(3) * e.number("rotation", t)
+            let ds = 1 + axis(4) * e.number("zoom", t) / 100
             return (dx, dy, dr, ds)
         })
 }

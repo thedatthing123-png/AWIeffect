@@ -62,8 +62,9 @@ extension EffectRegistry {
     static func turbulent28(_ ctx: EffectContext) -> MTLTexture {
         run28("fxTurbulent28", ctx) { p in
             func value(_ key: String, _ fallback: Double) -> Double { ctx.effect.params[key] == nil ? fallback : ctx.num(key) }
+            let drift = EffectRate.phase(ctx.effect, key: "evolutionSpeed", time: ctx.time, range: -4...4)
             p.a = SIMD4(Float(ctx.num("amount") * ctx.unit), Float(ctx.num("size") * ctx.unit),
-                        Float(ctx.num("complexity")), Float(ctx.num("evolution") / 360))
+                        Float(ctx.num("complexity")), Float(ctx.num("evolution") / 360 + drift))
             p.b = SIMD4(Float(value("stretchX", 100) / 100), Float(value("stretchY", 100) / 100),
                         Float(value("offsetX", 0) * ctx.unit), Float(value("offsetY", 0) * ctx.unit))
             let cycle = ctx.effect.bool("cycle") ? max(1, ctx.num("cycleLen")) : 0
@@ -79,7 +80,7 @@ extension EffectRegistry {
     static func waveWarp28(_ ctx: EffectContext) -> MTLTexture {
         run28("fxWaveWarp28", ctx) { p in
             p.a = SIMD4(Float(ctx.num("height") * ctx.unit), Float(ctx.num("width") * ctx.unit), Float(ctx.num("direction")),
-                        Float(ctx.time * ctx.num("speed") * 2 * .pi + ctx.num("phase") * .pi / 180))
+                        phase28(ctx, range: -20...20))
             p.b = layerRect(ctx)
             p.c = SIMD4(Float(ctx.num("pinSoft") / 100), 0, 0, 0)
             p.i = SIMD4(UInt32(max(0, ctx.effect.choice("type"))), UInt32(max(0, ctx.effect.choice("pinning"))),
@@ -104,10 +105,18 @@ extension EffectRegistry {
             p.a = SIMD4(Float(v.x * Double(ctx.width)), Float(v.y * Double(ctx.height)),
                         Float(ctx.num("radius") / 100 * Double(max(ctx.width, ctx.height))), Float(ctx.num("width") * ctx.unit))
             p.b = SIMD4(Float(ctx.num("height") * ctx.unit),
-                        Float(ctx.time * ctx.num("speed") * 2 * .pi + ctx.num("phase") * .pi / 180),
+                        phase28(ctx, range: -10...10),
                         choice28(ctx, "conversion", 1) == 1 ? 1 : 0, Float(aaGrid28(ctx)))
             p.i = SIMD4(edgeCode28(ctx), 0, 0, 0)
         }
+    }
+
+    private static func phase28(_ ctx: EffectContext, range: ClosedRange<Double>) -> Float {
+        guard ctx.effect.bool("continuousSpeed") else {
+            return Float(ctx.time * ctx.num("speed") * 2 * .pi + ctx.num("phase") * .pi / 180)
+        }
+        let travel = EffectRate.phase(ctx.effect, key: "speed", time: ctx.time, range: range)
+        return Float((travel + ctx.num("phase") / 360).truncatingRemainder(dividingBy: 1) * 2 * .pi)
     }
 
     // MARK: Magnify

@@ -206,7 +206,7 @@ extension EffectRegistry {
                  .number("width", "Wave Width", 40, 2, 500, unit: "px", ae: 5), .number("height", "Wave Height", 12, 0, 200, unit: "px", ae: 6),
                  .number("speed", "Wave Speed", 1, -10, 10, step: 0.1, ae: 4),
                  .choice("conversion", "Type of Conversion", ["Asymmetric", "Symmetric"], 1),
-                 .angle("phase", "Ripple Phase", 0),
+                 .angle("phase", "Ripple Phase", 0), .toggle("continuousSpeed", "Continuous Speed", true),
                  .choice("aa", "Antialiasing", aaOptions28, 1),
                  .choice("edge", "Edge Behavior", edgeOptions28, 0)],
         stage: .pixels { ctx in ripple28(ctx) })

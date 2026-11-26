@@ -69,7 +69,9 @@ kernel void fx18(texture2d<half, access::sample> src [[texture(0)]],
     } else if (p.i.x == 4) {
         // Wave Glitch: a = (amount px, waves, speed, steps/s)
         float tq = p.i.y == 1 ? floor(t * max(p.a.w, 0.5)) / max(p.a.w, 0.5) : t;
-        float sh = p.a.x * sin(c.y / size.y * p.a.y * 6.2831853 + tq * p.a.z * 6.2831853);
+        float angle = c.y / size.y * p.a.y * 6.2831853;
+        float motion = p.i.z == 1 ? p.b.x * 6.2831853 : tq * p.a.z * 6.2831853;
+        float sh = p.a.x * sin(angle + motion);
         o = float4(src.sample(sm18, c + float2(sh, 0.0)));
     } else if (p.i.x == 5) {
         // Block Shuffle: a = (block px, chance 0-1, rate fps, seed)

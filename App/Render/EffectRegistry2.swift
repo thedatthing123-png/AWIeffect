@@ -23,9 +23,11 @@ extension EffectRegistry {
 
     static let turbulentDisplace = EffectDefinition(
         id: "ae.turbulentDisplace", name: "Turbulent Displace", category: .distort, aeMatchNames: ["ADBE Turbulent Displace"],
-        summary: "Organic, smoky warping driven by smooth fractal noise. AE displacement types (Turbulent, Smoother, Bulge, Twist, Cross), looping evolution, pinning, edge behavior and antialiasing.",
+        summary: "Organic fractal warping. Keyframe Evolution or use Evolution Speed for continuous movement. Set speed to zero to hold the pattern while Amount changes.",
         params: [.number("amount", "Amount", 50, 0, 1000, ae: 2), .number("size", "Size", 100, 2, 1000, ae: 3),
-                 .number("complexity", "Complexity", 1, 1, 8, step: 1, ae: 5), .number("evolution", "Evolution", 0, -3600, 3600, unit: "°", ae: 6),
+                 .number("evolution", "Evolution", 0, -3600, 3600, unit: "°", ae: 6),
+                 .number("evolutionSpeed", "Evolution Speed", 0, -4, 4, step: 0.01, unit: " rev/s"),
+                 .number("complexity", "Complexity", 1, 1, 8, step: 1, ae: 5),
                  .choice("axis", "Displacement", ["XY", "X", "Y"], 0),
                  .number("stretchX", "Horizontal Scale", 100, 1, 1000, unit: "%"),
                  .number("stretchY", "Vertical Scale", 100, 1, 1000, unit: "%"),
@@ -43,12 +45,12 @@ extension EffectRegistry {
 
     static let waveWarp = EffectDefinition(
         id: "ae.waveWarp", name: "Wave Warp", category: .distort, aeMatchNames: ["ADBE Wave Warp"],
-        summary: "Rolling waves across the layer.",
+        summary: "Rolling waves across the layer. Set Wave Speed to zero and animate Height or Phase for a controlled reveal.",
         params: [.choice("type", "Wave Type", ["Sine", "Square", "Triangle", "Sawtooth", "Circle", "Semicircle", "Smooth Noise"], 0, ae: 1),
                  .number("height", "Wave Height", 10, -500, 500, ae: 2), .number("width", "Wave Width", 20, 0.1, 1000, step: 0.1, ae: 3),
                  .angle("direction", "Direction", 90, ae: 4), .number("speed", "Wave Speed", 1, -20, 20, step: 0.1, ae: 5),
                  .choice("pinning", "Pinning", ["None", "All Edges", "Top Edge", "Bottom Edge", "Left Edge", "Right Edge", "Top & Bottom", "Left & Right"], 0, ae: 6),
-                 .angle("phase", "Phase", 0, ae: 7),
+                 .angle("phase", "Phase", 0, ae: 7), .toggle("continuousSpeed", "Continuous Speed", true),
                  .number("pinSoft", "Pin Falloff", 60, 1, 100, unit: "%"),
                  .choice("aa", "Antialiasing", aaOptions28, 0),
                  .choice("edge", "Edge Behavior", edgeOptions28, 0)],
@@ -60,8 +62,9 @@ extension EffectRegistry {
     /// Alight Motion-style Fractal Warp: organic noise displacement (hair, smoke, cloth, liquid wobble).
     static let fractalWarp = EffectDefinition(
         id: "awi20.fractalWarp", name: "Fractal Warp", category: .distort, aeMatchNames: [],
-        summary: "Alight Motion's Fractal Warp: organic noise displacement. Animate Parallax (flow) or Position (drift) for hair, smoke and cloth. Pinning keeps roots still.",
+        summary: "Organic noise displacement. Keyframe Parallax or Position, or set Flow Speed for continuous motion. Pinning keeps roots still.",
         params: [.point("position", "Position", Vec2(0, 0)), .point("parallax", "Parallax", Vec2(0, 0)),
+                 .number("flowSpeed", "Flow Speed", 0, -800, 800, step: 1, unit: " px/s"),
                  .number("magnitude", "Magnitude", 0.2, -5, 5, step: 0.005),
                  .number("detail", "Detail", 1, 0.1, 4, step: 0.01), .number("lacunarity", "Lacunarity", 0.5, 0.25, 0.75, step: 0.01),
                  .number("octaves", "Octaves", 6, 1, 9, step: 1),
@@ -73,8 +76,9 @@ extension EffectRegistry {
         stage: .pixels { ctx in
             let out = ctx.temp()
             let pos = ctx.effect.point("position", ctx.time), par = ctx.effect.point("parallax", ctx.time)
+            let flow = EffectRate.phase(ctx.effect, key: "flowSpeed", time: ctx.time, range: -800...800)
             var p = EffectParams()
-            p.a = SIMD4(f(pos.x), f(pos.y), f(par.x), f(par.y))
+            p.a = SIMD4(f(pos.x), f(pos.y), f(par.x), f(par.y + flow))
             p.b = layerRect(ctx)
             p.c = SIMD4(f(ctx.num("magnitude")), f(ctx.num("detail")), f(ctx.num("lacunarity")), f(ctx.num("octaves")))
             p.d = SIMD4(f(ctx.num("pinSoft") / 100), 0, 0, 0)
@@ -304,7 +308,7 @@ extension EffectRegistry {
     // MARK: AWI plugins
 
     static let deepGlow = EffectDefinition(
-        id: "awi.deepGlow", name: "AWI Deep Glow", category: .color, aeMatchNames: ["PEDeepGlow", "PEDG2"],
+        id: "awi.deepGlow", name: "Multiscale Glow", category: .color, aeMatchNames: ["PEDeepGlow", "PEDG2"],
         summary: "Long-tailed multiscale light falloff with soft thresholding, gamma correction and bounded-resolution processing. No random flicker or noise.",
         params: [.number("radius", "Radius", 120, 0.1, 8000, unit: "px"), .number("exposure", "Exposure", 0, -10, 10, step: 0.01),
                  .number("threshold", "Threshold", 0, 0, 100, unit: "%"), .number("softness", "Threshold Softness", 8, 0.1, 100, unit: "%"),
