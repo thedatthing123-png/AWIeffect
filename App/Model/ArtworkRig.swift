@@ -15,6 +15,7 @@ struct ArtworkBone: Identifiable, Codable, Equatable {
 
 struct ArtworkIK: Codable, Equatable {
     var tipBoneID: UUID
+    var rootBoneID: UUID? = nil
     var target: Animated<Vec2>
     var flipped = false
     var mix = Animated(100.0)
@@ -61,6 +62,9 @@ struct ArtworkRig: Codable, Equatable {
         let rotation = atan2(local[0].y, local[0].x) * 180 / .pi
         bones[index].parentID = parentID
         constraints?.removeAll { $0.tipBoneID == boneID }
+        constraints = constraints?.filter { item in
+            item.rootBoneID == nil || !chain(for: item).isEmpty
+        }
         if bones[index].offset != nil { bones[index].offset?.set(position, at: time) }
         else if hypot(position.x, position.y) > 1e-8 { bones[index].offset = Animated(position) }
         if bones[index].rotation != nil { bones[index].rotation?.set(rotation, at: time) }
@@ -106,24 +110,48 @@ struct ArtworkRig: Codable, Equatable {
         self.mesh = mesh
     }
 
-    mutating func enableIK(on lowerID: UUID, time: Double) -> Bool {
-        guard constraint(on: lowerID) == nil,
-              let lower = bones.first(where: { $0.id == lowerID }),
-              let upper = bones.first(where: { $0.id == lower.parentID }),
-              hypot(upper.end.x - lower.start.x, upper.end.y - lower.start.y) < 1,
-              upper.length >= 0.1, lower.length >= 0.1 else { return false }
-        let occupied = (constraints ?? []).contains { constraint in
-            let otherParent = bones.first { $0.id == constraint.tipBoneID }?.parentID
-            return constraint.tipBoneID == upper.id || otherParent == lower.id || otherParent == upper.id
+    func validIKRoots(for tip: UUID) -> [ArtworkBone] {
+        var options: [ArtworkBone] = []
+        let occupied = Set((constraints ?? []).flatMap { chain(for: $0).map(\.id) })
+        guard var current = bones.first(where: { $0.id == tip }), !occupied.contains(tip) else { return [] }
+        var seen = Set([tip])
+        while let id = current.parentID, seen.insert(id).inserted,
+              let parent = bones.first(where: { $0.id == id }),
+              !occupied.contains(id), current.length >= 0.1, parent.length >= 0.1,
+              hypot(parent.end.x - current.start.x, parent.end.y - current.start.y) < 1 {
+            options.append(parent)
+            current = parent
         }
-        guard !occupied else { return false }
+        return options
+    }
+
+    private func chain(for ik: ArtworkIK) -> [ArtworkBone] {
+        let index = Dictionary(bones.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        guard var current = index[ik.tipBoneID], let root = ik.rootBoneID ?? current.parentID else { return [] }
+        var members = [current], seen = Set([current.id])
+        while let id = current.parentID, seen.insert(id).inserted, let parent = index[id],
+              hypot(parent.end.x - current.start.x, parent.end.y - current.start.y) < 1 {
+            members.append(parent)
+            if id == root { return Array(members.reversed()) }
+            current = parent
+        }
+        return []
+    }
+
+    mutating func enableIK(on lowerID: UUID, root rootID: UUID? = nil, time: Double) -> Bool {
+        let roots = validIKRoots(for: lowerID)
+        guard let upper = rootID.flatMap({ id in roots.first { $0.id == id } }) ?? (rootID == nil ? roots.first : nil),
+              let lower = bones.first(where: { $0.id == lowerID }) else { return false }
+        var item = ArtworkIK(tipBoneID: lowerID, rootBoneID: upper.id, target: Animated(Vec2.zero))
+        let members = chain(for: item)
+        guard members.count >= 2 else { return false }
         let frames = pose(at: time)
         let target = (frames[lowerID] ?? .identity).apply(lower.end)
         let origin = (frames[upper.id] ?? .identity).apply(upper.start)
-        let elbow = (frames[lowerID] ?? .identity).apply(lower.start) - origin
+        let elbow = (frames[members[1].id] ?? .identity).apply(members[1].start) - origin
         let direction = target - origin
-        let item = ArtworkIK(tipBoneID: lowerID, target: Animated(target),
-                             flipped: direction.x * elbow.y - direction.y * elbow.x < 0)
+        item.target = Animated(target)
+        item.flipped = direction.x * elbow.y - direction.y * elbow.x < 0
         constraints = (constraints ?? []) + [item]
         return true
     }
@@ -177,17 +205,85 @@ struct ArtworkRig: Codable, Equatable {
             return count
         }
         var turns: [UUID: Double] = [:], stretch: [UUID: Double] = [:]
-        for ik in constraints.sorted(by: { depth($0.tipBoneID) < depth($1.tipBoneID) }) {
-            guard let lower = nodes[ik.tipBoneID], let upperID = lower.parentID,
-                  let upper = nodes[upperID], let upperFrame = frames[upperID], let lowerFrame = frames[lower.id],
-                  let solution = Self.solve(ik, at: time, upper: upper, lower: lower,
-                                            upperFrame: upperFrame, lowerFrame: lowerFrame) else { continue }
-            turns[upperID] = solution.upper
-            turns[lower.id] = solution.lower
-            stretch[upperID] = solution.stretch
+        let chains = constraints.map { ($0, chain(for: $0)) }.sorted {
+            depth($0.1.first?.id ?? $0.0.tipBoneID) < depth($1.1.first?.id ?? $1.0.tipBoneID)
+        }
+        for (ik, members) in chains {
+            guard let upper = members.first, let lower = members.last, members.count >= 2,
+                  let upperFrame = frames[upper.id], let lowerFrame = frames[lower.id] else { continue }
+            if members.count == 2 {
+                guard let solution = Self.solve(ik, at: time, upper: upper, lower: lower,
+                                                upperFrame: upperFrame, lowerFrame: lowerFrame) else { continue }
+                turns[upper.id] = solution.upper
+                turns[lower.id] = solution.lower
+                stretch[upper.id] = solution.stretch
+            } else if let solution = Self.solveChain(ik, at: time, members: members, frames: frames) {
+                for (bone, turn) in zip(members, solution.turns) { turns[bone.id] = turn }
+                stretch[upper.id] = solution.stretch
+            }
             frames = evaluate(turns, stretch: stretch)
         }
         return frames
+    }
+
+    /// Forward and backward reaching, seeded from FK so existing bends guide the solution.
+    private static func solveChain(_ ik: ArtworkIK, at time: Double, members: [ArtworkBone],
+                                   frames: [UUID: RigAffine]) -> (turns: [Double], stretch: Double)? {
+        guard let tip = members.last else { return nil }
+        let rest = members.map { (frames[$0.id] ?? .identity).apply($0.start) }
+            + [(frames[tip.id] ?? .identity).apply(tip.end)]
+        let origin = rest[0], end = rest.count - 1, target = ik.target.value(at: time)
+        func length(_ p: Vec2) -> Double { hypot(p.x, p.y) }
+        func unit(_ p: Vec2, fallback: Vec2) -> Vec2 {
+            let distance = length(p)
+            return distance > 1e-8 ? p * (1 / distance) : fallback
+        }
+        let mix = min(1, max(0, ik.mix.value(at: time) / 100))
+        let distance = length(target - origin)
+        let vectors = (0..<end).map { rest[$0 + 1] - rest[$0] }
+        let sizes = vectors.map(length)
+        let total = sizes.reduce(0, +)
+        guard distance.isFinite, mix.isFinite, mix > 0, sizes.allSatisfy({ $0.isFinite && $0 >= 0.1 }),
+              length(rest[end] - target) > 1e-7 else { return nil }
+        let limit = ik.stretchLimit.isFinite ? min(2, max(1, ik.stretchLimit)) : 1
+        let scale = min(limit, max(1, distance / total))
+        let axis = unit(target - origin, fallback: unit(rest[end] - origin, fallback: Vec2(1, 0)))
+        let normal = Vec2(-axis.y, axis.x)
+        let sign = ik.flipped ? -1.0 : 1.0
+        var points = rest
+        if distance >= total * scale {
+            for i in 0..<end { points[i + 1] = points[i] + axis * (sizes[i] * scale) }
+        } else {
+            for i in 1..<end {
+                let p = rest[i] - origin
+                let along = p.x * axis.x + p.y * axis.y
+                let off = p.x * normal.x + p.y * normal.y
+                // Seed straight chains off-axis so a shorter target can bend them.
+                let seed = max(abs(off), total * 0.02 * sin(.pi * Double(i) / Double(end)))
+                points[i] = origin + axis * along + normal * (sign * seed)
+            }
+            for _ in 0..<24 {
+                points[end] = target
+                for i in (0..<end).reversed() {
+                    points[i] = points[i + 1] + unit(points[i] - points[i + 1], fallback: axis * -1) * (sizes[i] * scale)
+                }
+                points[0] = origin
+                for i in 0..<end {
+                    points[i + 1] = points[i] + unit(points[i + 1] - points[i], fallback: axis) * (sizes[i] * scale)
+                }
+                if length(points[end] - target) < 0.05 { break }
+            }
+        }
+        var previous = 0.0
+        var turns: [Double] = []
+        for i in 0..<end {
+            let vector = points[i + 1] - points[i]
+            let turn = atan2(vector.y, vector.x) - atan2(vectors[i].y, vectors[i].x)
+            let local = turn - previous
+            turns.append(atan2(sin(local), cos(local)) * 180 / .pi * mix)
+            previous = turn
+        }
+        return (turns, 1 + (scale - 1) * mix)
     }
 
     private static func solve(_ ik: ArtworkIK, at time: Double, upper: ArtworkBone, lower: ArtworkBone,

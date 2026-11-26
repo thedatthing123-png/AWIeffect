@@ -28,6 +28,24 @@ final class ArtworkRigTests: XCTestCase {
         assertPoint(try XCTUnwrap(rig.pose(at: 0)[elbow.id]).apply(elbow.end), elbow.end)
     }
 
+    func testLongIKChainKeepsAllSegmentsConnected() throws {
+        let first = ArtworkBone(name: "Root", start: .zero, end: Vec2(30, 0))
+        let second = ArtworkBone(name: "Middle", start: first.end, end: Vec2(60, 0), parentID: first.id)
+        let third = ArtworkBone(name: "Tip", start: second.end, end: Vec2(90, 0), parentID: second.id)
+        var rig = ArtworkRig(bones: [first, second, third])
+        XCTAssertTrue(rig.enableIK(on: third.id, root: first.id, time: 0))
+        let target = Vec2(53, 22)
+        rig.editIK(on: third.id) { $0.target = Animated(target) }
+        let frames = rig.pose(at: 0)
+        let end = try XCTUnwrap(frames[third.id]).apply(third.end)
+        XCTAssertLessThan(hypot(end.x - target.x, end.y - target.y), 0.1)
+        for (parent, child) in [(first, second), (second, third)] {
+            let joint = try XCTUnwrap(frames[parent.id]).apply(parent.end)
+            let start = try XCTUnwrap(frames[child.id]).apply(child.start)
+            assertPoint(joint, start)
+        }
+    }
+
     func testLocalBindKeepsFarArtworkStationaryAndWeightsSurviveSave() throws {
         let bone = ArtworkBone(name: "Wrist", start: .zero, end: Vec2(20, 0), rotation: Animated(45))
         var rig = ArtworkRig(bones: [bone])

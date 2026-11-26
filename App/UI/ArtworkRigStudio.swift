@@ -191,13 +191,7 @@ struct ArtworkRigStudio: View {
                 }
                 .accessibilityLabel("Key Bone Position")
             }
-            if bone.parentID != nil && rig.constraint(on: bone.id) == nil {
-                TSButton(title: "Add IK Target", icon: "scope") {
-                    var added = false
-                    update("Add IK Target") { added = $0.enableIK(on: bone.id, time: time) }
-                    if !added { report("Connect the bone to its parent's endpoint and choose a pair that has no IK target yet.") }
-                }
-            }
+            if bone.parentID != nil && rig.constraint(on: bone.id) == nil { addIKControl(bone, at: time) }
         }
         if let id = selectedID, let ik = rig.constraint(on: id) {
             let target = ik.target.value(at: time)
@@ -225,6 +219,27 @@ struct ArtworkRigStudio: View {
             Button("Remove IK") { update("Remove IK") { $0.constraints?.removeAll { $0.tipBoneID == id } } }.frame(minHeight: 44)
         }
         if let bone = selected { poseKeys(for: bone) }
+    }
+
+    @ViewBuilder private func addIKControl(_ bone: ArtworkBone, at time: Double) -> some View {
+        let roots = rig.validIKRoots(for: bone.id)
+        if roots.count > 1 {
+            Menu {
+                ForEach(roots) { root in
+                    Button("From " + root.name) { addIK(bone, root: root.id, at: time) }
+                }
+            } label: {
+                Label("Add IK Target", systemImage: "scope").frame(minHeight: 44)
+            }
+        } else {
+            TSButton(title: "Add IK Target", icon: "scope") { addIK(bone, root: roots.first?.id, at: time) }
+        }
+    }
+
+    private func addIK(_ bone: ArtworkBone, root: UUID?, at time: Double) {
+        var added = false
+        update("Add IK Target") { added = $0.enableIK(on: bone.id, root: root, time: time) }
+        if !added { report("Use a connected chain with endpoints touching and choose bones free of other IK targets.") }
     }
 
     @ViewBuilder private func poseKeys(for bone: ArtworkBone) -> some View {
