@@ -149,6 +149,14 @@ struct Scene3DPanel: View {
 
     private var movement: some View {
         VStack(alignment: .leading, spacing: 10) {
+            if let camera = state.activeCameraLayer, EditorState.cameraIs3D(camera) {
+                let end = state.project.snapToFrame(state.currentTime + duration)
+                TSButton(title: "Key Move on \(camera.name)", icon: "video.badge.waveform") {
+                    state.keySceneCameraMove(push: push / 100, duration: duration, drift: drift / 100, roll: turn)
+                }
+                .accessibilityIdentifier("scene-key-camera-move")
+                .disabled(camera.isLocked || end > camera.outPoint - state.project.frameDuration + 1e-6)
+            }
             Text(state.isMultiSelecting ? "\(targetCount) selected layers" : "\(targetCount) scene layers")
                 .font(.subheadline.weight(.semibold))
             row("Layer Spacing", depth, 0...3000, " px") { depth = $0 }
@@ -167,13 +175,6 @@ struct Scene3DPanel: View {
             row("Length", duration, 0.3...10, " s") { duration = $0 }
             row("Drift", drift, -20...20, "%") { drift = $0 }
             row("Roll", turn, -30...30, " deg") { turn = $0 }
-            if let camera = state.activeCameraLayer, EditorState.cameraIs3D(camera) {
-                let end = state.project.snapToFrame(state.currentTime + duration)
-                TSButton(title: "Key Move on \(camera.name)", icon: "video.badge.waveform") {
-                    state.keySceneCameraMove(push: push / 100, duration: duration, drift: drift / 100, roll: turn)
-                }
-                .disabled(camera.isLocked || end > camera.outPoint - state.project.frameDuration + 1e-6)
-            }
             TSButton(title: "Make 3D Scene + Camera Move", icon: "camera.viewfinder", filled: true) {
                 state.mangaPanelPush(depth: depth, push: push / 100, duration: duration, drift: drift / 100, turn: turn)
                 tab = .scene

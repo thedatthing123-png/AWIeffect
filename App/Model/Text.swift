@@ -88,11 +88,10 @@ struct TextData: Codable, Equatable {
     var text3D: Text3DOptions? = nil
     /// Preset group (Look id) that set `text3D`; nil = set by the user.
     var text3DGroup: String? = nil
-    var text3DBeforeLook: Text3DOptions? = nil
 
     enum CodingKeys: String, CodingKey {
         case string, fontName, fontSize, fill, tracking, lineSpacing, alignment, colorSpans, animators, onPath, pathOffset
-        case counter, outline, spacingAnchor, style, charIDs, nextCharID, charStyles, boxWidth, autoFit, vertical, baselineShift, text3D, text3DGroup, text3DBeforeLook
+        case counter, outline, spacingAnchor, style, charIDs, nextCharID, charStyles, boxWidth, autoFit, vertical, baselineShift, text3D, text3DGroup
     }
 
     /// The text as drawn at `time` (the counter's value when counting).
@@ -146,7 +145,6 @@ extension TextData {
         baselineShift = try c.decodeIfPresent(Animated<Double>.self, forKey: .baselineShift)
         text3D = try c.decodeIfPresent(Text3DOptions.self, forKey: .text3D)
         text3DGroup = try c.decodeIfPresent(String.self, forKey: .text3DGroup)
-        text3DBeforeLook = try c.decodeIfPresent(Text3DOptions.self, forKey: .text3DBeforeLook)
         // Older saves: give letters ids and move index / percent targets onto them. Counter text changes every
         // frame, so it keeps index targeting.
         if counter == nil { migrateToCharIDs() }

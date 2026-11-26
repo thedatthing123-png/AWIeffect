@@ -90,7 +90,8 @@ struct LightingStudio: View {
                         $0.shadowBlur = $1
                     }
                     let spread = light.shadowSpread ?? Animated(0.0)
-                    numberRow("Distance Spread", spread.value(at: time), 0...100, "%", animated: spread.isAnimated,
+                    numberRow("Distance Spread", spread.value(at: time), 0...100, "%",
+                              identifier: "shadow-distance-spread", animated: spread.isAnimated,
                               keyed: spread.hasKeyframe(at: time), set: { value in
                         setShadowSpread { $0.set(value, at: time) }
                     }, toggle: {
@@ -224,6 +225,7 @@ struct LightingStudio: View {
 
     private func numberRow(_ title: String, _ value: Double, _ range: ClosedRange<Double>, _ unit: String,
                            precisionTravel: Double? = nil, allowBeyond: Bool = false,
+                           identifier: String? = nil,
                            animated: Bool, keyed: Bool, set: @escaping (Double) -> Void,
                            toggle: @escaping () -> Void) -> some View {
         HStack(spacing: 8) {
@@ -237,6 +239,7 @@ struct LightingStudio: View {
             ValueScrubber(value: value, range: range, step: precisionTravel == nil ? 1 : 0.1, unit: unit,
                           onBegin: { state.beginEdit(title) }, onChange: set, onEnd: { state.endEdit() },
                           allowBeyond: allowBeyond, precisionTravel: precisionTravel)
+                .accessibilityIdentifier(identifier ?? title)
         }
     }
 }

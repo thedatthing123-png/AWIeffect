@@ -24,10 +24,11 @@ final class EditorPolishUITests: XCTestCase {
         XCTAssertEqual(framing.value as? String, "1")
         try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("3d-scene-framing.png"))
         app.buttons["3D Scene Camera Move"].tap()
-        let keyMove = app.buttons["Key Move on Camera 1"].firstMatch
-        for _ in 0..<5 where !keyMove.isHittable { panel.swipeUp() }
+        let keyMove = app.buttons["scene-key-camera-move"].firstMatch
+        XCTAssertTrue(keyMove.waitForExistence(timeout: 5))
         XCTAssertTrue(keyMove.isHittable)
         XCTAssertTrue(keyMove.isEnabled)
+        keyMove.tap()
         try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("3d-scene-key-move.png"))
     }
 
@@ -51,9 +52,12 @@ final class EditorPolishUITests: XCTestCase {
         response.tap()
         XCTAssertEqual(response.value as? String, "0")
         app.segmentedControls.buttons["Light"].firstMatch.tap()
-        let spread = app.descendants(matching: .any)["Distance Spread"].firstMatch
+        let spread = app.descendants(matching: .any).matching(identifier: "shadow-distance-spread").firstMatch
         let panel = app.scrollViews["lighting-studio-scroll"].firstMatch
-        for _ in 0..<5 where !spread.isHittable { panel.swipeUp() }
+        // Start in the scroll gutter so the swipe doesn't land on a horizontal numeric scrubber.
+        let bottom = panel.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.88))
+        let top = panel.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.18))
+        for _ in 0..<5 where !spread.isHittable { bottom.press(forDuration: 0.05, thenDragTo: top) }
         XCTAssertTrue(spread.isHittable)
         try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("lighting-shadow-spread.png"))
     }

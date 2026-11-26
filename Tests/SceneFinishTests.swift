@@ -67,44 +67,6 @@ final class SceneFinishTests: XCTestCase {
         try FileManager.default.moveItem(at: exported, to: output.appendingPathComponent("manga-scene.mp4"))
     }
 
-    @MainActor
-    func testTitlesRenderWithShortWordsAndMultiLineText() async throws {
-        let renderer = try XCTUnwrap(Renderer.shared)
-        let output = try reviewDirectory()
-        let media: (String) -> URL = { output.appendingPathComponent($0) }
-        var reel = Project.new(name: "Titles", width: 480, height: 272, fps: 24, duration: 7.2,
-                               background: RGBA(hex: 0x151721))
-        let samples = ["Beneath\nthe city", "RUN", "Keep moving.", "NIGHT SHIFT"]
-        let colors: [UInt32] = [0x3C2E38, 0x45202D, 0x263342, 0x151A26]
-        for (index, preset) in TextTitleCollection.animations.enumerated() {
-            let start = Double(index) * 1.8
-            var card = reel.makeLayer(name: "Card", content: .solid, size: Vec2(480, 272))
-            card.inPoint = start
-            card.outPoint = start + 1.8
-            card.fill = Animated(RGBA(hex: colors[index]))
-            let look = index == 3 ? TextTitleCollection.looks[2] : TextTitleCollection.looks[index == 1 ? 0 : 1]
-            var title = reel.makeLayer(name: preset.name, content: .text, size: Vec2(360, 160))
-            title.inPoint = start
-            title.outPoint = start + 1.8
-            title.text = TextData(string: samples[index], fontSize: index == 1 ? 115 : 60)
-            title.text?.fontName = index == 0 || index == 2 ? "Georgia-Bold" : "HelveticaNeue-CondensedBlack"
-            title.text?.autoFit = true
-            title.text?.boxWidth = 430
-            TextPresetLibrary.applyLook(look, to: &title)
-            TextPresetLibrary.applyPreset(preset, to: &title, start: start, duration: 1.05)
-            reel.layers += [title, card]
-            let a = try XCTUnwrap(renderer.renderPixels(project: reel, time: start + 0.01, mediaURL: media))
-            let b = try XCTUnwrap(renderer.renderPixels(project: reel, time: start + 1.55, mediaURL: media))
-            XCTAssertGreaterThan(zip(a.rgba, b.rgba).filter { abs(Int($0.0) - Int($0.1)) > 8 }.count, 300, preset.name)
-            let still = try XCTUnwrap(renderer.renderImage(project: reel, time: start + 1.55, maxDimension: 640, mediaURL: media))
-            try XCTUnwrap(still.pngData()).write(to: output.appendingPathComponent("title-\(index).png"))
-            XCTAssertEqual(title.text?.string, samples[index])
-            XCTAssertTrue(TextPresetLibrary.groups(in: title).contains(preset.id))
-        }
-        let exported = try await Exporter().export(project: reel, settings: ExportSettings(format: .mp4), mediaURL: media) { _ in }
-        try FileManager.default.moveItem(at: exported, to: output.appendingPathComponent("titles.mp4"))
-    }
-
     private func reviewDirectory() throws -> URL {
         let url = URL(fileURLWithPath: "/tmp/awi-authoring/scene-finish", isDirectory: true)
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
@@ -154,8 +116,12 @@ final class SceneFinishTests: XCTestCase {
         var title = scene.makeLayer(name: "Chapter title", content: .text, size: Vec2(300, 80))
         title.text = TextData(string: "THE LAST TRAIN", fontSize: 37)
         title.transform.position = Animated(Vec2(239, 268))
-        TextPresetLibrary.applyLook(TextTitleCollection.looks[0], to: &title)
-        TextPresetLibrary.applyPreset(TextTitleCollection.animations[0], to: &title, start: 0.65, duration: 1.3)
+        title.text?.style = TextStyleStack(
+            fills: [TextFillLayer(colors: [RGBA(hex: 0xF4E8CD)])],
+            strokes: [TextStrokeLayer(color: RGBA(hex: 0x17141B), width: 3.5)],
+            shadows: [TextShadowLayer(color: RGBA(hex: 0x5C2530), distance: 7, blur: 1)])
+        let reveal = try XCTUnwrap(TextPresetLibrary.animation("studio.lineRise"))
+        TextPresetLibrary.applyPreset(reveal, to: &title, start: 0.65, duration: 1.3)
         let foreground = card(&scene, "Door frame", Vec2(52, 485), Vec2(32, 160), -95, 0x182032)
         let foregroundEdge = card(&scene, "Door edge", Vec2(4, 485), Vec2(61, 160), -92, 0x697F93)
         let platforms = [

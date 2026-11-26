@@ -28,6 +28,7 @@ struct TextPresetBrowser: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Looks come back with the post-expansion preset pass; until then only animations show.
             if !TextPresetLibrary.looks.isEmpty {
                 Picker("Kind", selection: $kind) {
                     ForEach(TextPresetKind.allCases) { k in Text(k.title).tag(k) }

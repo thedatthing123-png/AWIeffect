@@ -952,13 +952,27 @@ final class EditorState: ObservableObject {
         lastThumbnailSave=Date()
         let time=Self.thumbnailTime(current:rootTime(currentTime),project:project),store=self.store
         let work=DispatchWorkItem { [weak self] in
-            guard let image=Renderer.shared?.renderImage(project:project,time:time,maxDimension:360,
-                mediaURL:{store.mediaURL($0,projectID:project.id)}) else { return }
-            DispatchQueue.main.async {
-                guard let self else { return }
-                guard self.saveGeneration==generation else { self.lastThumbnailSave = .distantPast;return }
-                Self.saveQueue.async { store.saveThumbnail(image,for:project.id) }
+            let done = DispatchSemaphore(value: 0)
+            // A group/precomp recursively encodes its child composition. The default GCD worker stack
+            // can overflow on the second encode in a debug build, even at thumbnail resolution.
+            let renderer = Thread {
+                defer { done.signal() }
+                autoreleasepool {
+                    guard let image = Renderer.shared?.renderImage(project: project, time: time, maxDimension: 360,
+                            mediaURL: { store.mediaURL($0, projectID: project.id) }) else { return }
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self else { return }
+                        guard self.saveGeneration == generation else { self.lastThumbnailSave = .distantPast; return }
+                        Self.saveQueue.async { store.saveThumbnail(image, for: project.id) }
+                    }
+                }
             }
+            renderer.name = "AWIeffect Thumbnail Renderer"
+            renderer.qualityOfService = .utility
+            renderer.stackSize = 8 * 1024 * 1024
+            renderer.start()
+            // Keep thumbnail rendering serialized without blocking the editor or the save queue.
+            done.wait()
         }
         thumbnailWork=work
         Self.thumbnailQueue.async(execute:work)
