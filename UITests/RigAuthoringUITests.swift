@@ -1,6 +1,33 @@
 import XCTest
 
 final class RigAuthoringUITests: XCTestCase {
+    func testRecordArtworkRigMotion() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-artworkRigStudio"]
+        app.launch()
+        let animate = app.buttons["Rig Studio Animate"]
+        XCTAssertTrue(animate.waitForExistence(timeout: 15))
+        animate.tap()
+        let target = app.descendants(matching: .any)["Artwork IK Target"].firstMatch
+        XCTAssertTrue(target.waitForExistence(timeout: 5))
+        let reference = target.frame.midX
+        let output = URL(fileURLWithPath: "/tmp/awi-ui")
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("rig-motion-preview.png"))
+        try Data().write(to: URL(fileURLWithPath: "/tmp/awi-record-rig"))
+        // Give the host recorder time to show the initial pose before starting playback.
+        Thread.sleep(forTimeInterval: 1.5)
+        app.buttons["Play"].firstMatch.tap()
+        let moved = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            abs(target.frame.midX - reference) > 7
+        }, object: target)
+        XCTAssertEqual(XCTWaiter.wait(for: [moved], timeout: 4), .completed)
+        Thread.sleep(forTimeInterval: 3.4)
+        if app.buttons["Pause"].firstMatch.exists { app.buttons["Pause"].firstMatch.tap() }
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("rig-motion-end.png"))
+    }
+
     func testArtworkRigUsesOneLayerAndKeepsIKAndWeightsOnCanvas() throws {
         continueAfterFailure = false
         let app = XCUIApplication()

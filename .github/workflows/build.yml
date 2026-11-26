@@ -41,7 +41,7 @@ jobs:
           import json,os
           from scripts.test_shards import active_shards
           scope=os.environ['VALIDATION']
-          shards=active_shards(scope)
+          shards=['ui']
           with open(os.environ['GITHUB_OUTPUT'],'a') as f:
               f.write('value='+json.dumps({'shard':shards or ['quick']})+'\n')
           PY

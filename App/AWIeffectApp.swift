@@ -104,11 +104,18 @@ struct RootView: View {
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-artworkRigStudio") {
             var p = Project.new(name: "Artwork Rig Test", width: 256, height: 256, fps: 30, duration: 3)
             var artwork = p.makeLayer(name: "Artwork", content: .image(fileName: "rig-fixture.png", pixelWidth: 256, pixelHeight: 256), size: Vec2(220, 220))
-            let shoulder = ArtworkBone(name: "Upper Arm", start: Vec2(-70, -52), end: Vec2(-10, -4))
-            let wrist = ArtworkBone(name: "Forearm", start: shoulder.end, end: Vec2(56, -4), parentID: shoulder.id)
+            let shoulder = ArtworkBone(name: "Upper Arm", start: Vec2(-83, 8), end: Vec2(-15, 12))
+            let wrist = ArtworkBone(name: "Forearm", start: shoulder.end, end: Vec2(55, 12), parentID: shoulder.id)
             var rig = ArtworkRig(bones: [wrist, shoulder])
-            rig.bind(halfSize: Vec2(110, 110), artworkID: artwork.id, detail: 32, radius: 55, amount: 1)
+            rig.bind(halfSize: Vec2(110, 110), artworkID: artwork.id, detail: 48, radius: nil, amount: 1)
             _ = rig.enableIK(on: wrist.id, time: 0)
+            rig.editIK(on: wrist.id) { constraint in
+                constraint.flipped = false
+                for (time, point) in [(0.0, wrist.end), (0.85, Vec2(13, -66)), (1.65, Vec2(42, -27)),
+                                      (2.25, Vec2(-6, -62)), (2.85, wrist.end)] {
+                    constraint.target.insertKeyframe(Keyframe(time: time, value: point, interpolation: .bezier))
+                }
+            }
             artwork.artworkRig = rig
             p.layers = [artwork]
             _openProject = State(initialValue: p)
