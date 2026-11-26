@@ -57,6 +57,22 @@ final class ArtworkRigTests: XCTestCase {
         XCTAssertEqual(trimmed.vertices, full.vertices)
     }
 
+    func testArtworkBoneRotationUsesNormalTimelineGraphLane() throws {
+        var project = Project.new(name: "Rig", width: 100, height: 100, fps: 30, duration: 2)
+        var artwork = project.makeLayer(name: "Artwork", content: .solid, size: Vec2(100, 100))
+        var rotation = Animated(0.0)
+        rotation.insertKeyframe(Keyframe(time: 0, value: 0))
+        rotation.insertKeyframe(Keyframe(time: 1, value: 45))
+        let bone = ArtworkBone(name: "Wrist", start: .zero, end: Vec2(20, 0), rotation: rotation)
+        artwork.artworkRig = ArtworkRig(bones: [bone])
+        let lane = try XCTUnwrap(artwork.propertyLanes().first { $0.id == "artworkRig.\(bone.id).rotation" })
+        XCTAssertEqual(lane.times, [0, 1])
+        guard case .scalar(let get, let set) = lane.values else { return XCTFail("Expected a rotation graph") }
+        rotation.keyframes[1].value = 90
+        set(&artwork, rotation)
+        XCTAssertEqual(get(artwork)?.value(at: 1), 90)
+    }
+
     private func assertPoint(_ point: Vec2, _ expected: Vec2, file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertEqual(point.x, expected.x, accuracy: 1e-6, file: file, line: line)
         XCTAssertEqual(point.y, expected.y, accuracy: 1e-6, file: file, line: line)

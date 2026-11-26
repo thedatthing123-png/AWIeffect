@@ -23,7 +23,12 @@ enum LayerPlacement {
         let resolved = Renderer.resolveParenting(project, time: time)
         let world = resolved.layers.first(where: { $0.id == layer.id }) ?? layer
         let camera = Renderer.activeCamera(resolved, time: time)
-        let parent = layer.parentID.flatMap { Renderer.parentAffine($0, in: project, time: time)?.m } ?? matrix_identity_double3x3
+        var parent = layer.parentID.flatMap { Renderer.parentAffine($0, in: project, time: time)?.m } ?? matrix_identity_double3x3
+        if let bone = layer.artworkRigBoneID, let owner = project.layers.first(where: { $0.id == layer.parentID }),
+           let pose = owner.artworkRig?.pose(at: time)[bone] {
+            let frame = ArtworkRigAttachments.inParentSpace(pose, anchor: owner.transform.anchor.value(at: time))
+            parent = parent * frame.matrix
+        }
         let artworkID = layer.bone?.artworkID ?? project.layers.first(where: { $0.ik?.controllerID == layer.id })?.ik?.spaceID
         if let artworkID, let art = resolved.layers.first(where: { $0.id == artworkID }) {
             let posed = IKSolver.apply(project, time: time)

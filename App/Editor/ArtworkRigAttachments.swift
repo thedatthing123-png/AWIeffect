@@ -4,16 +4,21 @@ import ImageIO
 import simd
 
 enum ArtworkRigAttachments {
+    static func inParentSpace(_ frame: RigAffine, anchor: Vec2) -> RigAffine {
+        RigAffine(ArtworkRig.translation(anchor * -1) * frame.matrix * ArtworkRig.translation(anchor))
+    }
+
     static func apply(to project: inout Project, time: Double) {
         let rigs = Dictionary(project.layers.compactMap { layer in
-            layer.artworkRig.map { (layer.id, $0) }
+            layer.artworkRig.map { (layer.id, (rig: $0, anchor: layer.transform.anchor.value(at: time))) }
         }, uniquingKeysWith: { first, _ in first })
         var frames: [UUID: [UUID: RigAffine]] = [:]
         for i in project.layers.indices {
             guard let bone = project.layers[i].artworkRigBoneID, let owner = project.layers[i].parentID,
-                  let rig = rigs[owner] else { continue }
-            if frames[owner] == nil { frames[owner] = rig.pose(at: time) }
-            guard let frame = frames[owner]?[bone] else { continue }
+                  let ownerRig = rigs[owner] else { continue }
+            if frames[owner] == nil { frames[owner] = ownerRig.rig.pose(at: time) }
+            guard let pose = frames[owner]?[bone] else { continue }
+            let frame = inParentSpace(pose, anchor: ownerRig.anchor)
             let transform = project.layers[i].transform
             let rotation = atan2(frame.b, frame.a) * 180 / .pi
             let scale = hypot(frame.a, frame.b)
@@ -128,9 +133,10 @@ extension EditorState {
 
     func attachArtworkLayer(_ child: UUID, owner: UUID, bone: UUID) {
         guard let layer = project.layers.first(where: { $0.id == child }), canAttachToArtworkRig(layer, owner: owner),
-              let rig = project.layers.first(where: { $0.id == owner })?.artworkRig,
-              let frame = rig.pose(at: currentTime)[bone] else { return }
+              let artwork = project.layers.first(where: { $0.id == owner }),
+              let pose = artwork.artworkRig?.pose(at: currentTime)[bone] else { return }
         let time = currentTime
+        let frame = ArtworkRigAttachments.inParentSpace(pose, anchor: artwork.transform.anchor.value(at: time))
         let keepID = selectedLayerID
         beginEdit("Attach Layer to Bone")
         selectedLayerID = child

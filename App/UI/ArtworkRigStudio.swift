@@ -13,6 +13,7 @@ struct ArtworkRigStudio: View {
     @State private var showMessage = false
     @State private var message = ""
     @State private var editingStart = false
+    @State private var graphTarget: GraphTarget?
 
     private var rig: ArtworkRig { layer.artworkRig ?? ArtworkRig() }
     private var start: Vec2? { state.artworkRigDraftStart }
@@ -66,6 +67,7 @@ struct ArtworkRigStudio: View {
             state.artworkRigSettingUp = true
         }
         .alert("Rig Studio", isPresented: $showMessage) { Button("OK", role: .cancel) {} } message: { Text(message) }
+        .sheet(item: $graphTarget) { target in TimelineGraphSheet(state: state, target: target) }
     }
 
     private var setupControls: some View {
@@ -241,6 +243,19 @@ struct ArtworkRigStudio: View {
                 }
             }
             .accessibilityLabel("Bone Keyframes")
+            let graphs = [("rotation", "Rotation"), ("position", "Position"), ("target", "IK Target"), ("mix", "IK Mix")]
+            ScrollView(.horizontal) {
+                HStack(spacing: 12) {
+                    ForEach(Array(graphs.enumerated()), id: \.offset) { index, graph in
+                        if tracks[index]?.isEmpty == false {
+                            Button { graphTarget = GraphTarget(layerID: layer.id, laneID: "artworkRig.\(bone.id).\(graph.0)") } label: {
+                                Label(graph.1, systemImage: "chart.xyaxis.line").frame(minHeight: 44)
+                            }
+                        }
+                    }
+                }
+            }
+            .accessibilityLabel("Bone Graphs")
         }
     }
 

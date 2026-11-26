@@ -72,6 +72,40 @@ extension Layer {
                 if l.ik != nil { v.apply(&l.ik!.mix) }
             }
         }
+        for bone in artworkRig?.bones ?? [] {
+            let id = bone.id
+            func boneIndex(_ layer: Layer) -> Int? { layer.artworkRig?.bones.firstIndex { $0.id == id } }
+            if bone.rotation?.isAnimated == true {
+                let values = LaneValues.scalar(get: { l in boneIndex(l).flatMap { l.artworkRig?.bones[$0].rotation } },
+                                               set: { l, a in if let i = boneIndex(l) { l.artworkRig?.bones[i].rotation = a } })
+                add("artworkRig.\(id).rotation", "\(bone.name) Rotation", "Rig Studio", values) { l, v in
+                    if let i = boneIndex(l) { v.apply(&l.artworkRig!.bones[i].rotation) }
+                }
+            }
+            if bone.offset?.isAnimated == true {
+                let values = LaneValues.vector(get: { l in boneIndex(l).flatMap { l.artworkRig?.bones[$0].offset } },
+                                               set: { l, a in if let i = boneIndex(l) { l.artworkRig?.bones[i].offset = a } })
+                add("artworkRig.\(id).position", "\(bone.name) Position", "Rig Studio", values) { l, v in
+                    if let i = boneIndex(l) { v.apply(&l.artworkRig!.bones[i].offset) }
+                }
+            }
+            if let ik = artworkRig?.constraint(on: id) {
+                if ik.target.isAnimated {
+                    let values = LaneValues.vector(get: { $0.artworkRig?.constraint(on: id)?.target },
+                                                   set: { l, a in l.artworkRig?.editIK(on: id) { $0.target = a } })
+                    add("artworkRig.\(id).target", "\(bone.name) IK Target", "Rig Studio", values) { l, v in
+                        l.artworkRig?.editIK(on: id) { v.apply(&$0.target) }
+                    }
+                }
+                if ik.mix.isAnimated {
+                    let values = LaneValues.scalar(get: { $0.artworkRig?.constraint(on: id)?.mix },
+                                                   set: { l, a in l.artworkRig?.editIK(on: id) { $0.mix = a } })
+                    add("artworkRig.\(id).mix", "\(bone.name) IK Mix", "Rig Studio", values) { l, v in
+                        l.artworkRig?.editIK(on: id) { v.apply(&$0.mix) }
+                    }
+                }
+            }
+        }
         if shapeContents == nil { add("c.path", "Path", "Shape") { l, v in v.apply(&l.path) } }
 
         for item in shapeContents ?? [] where item.component != nil {
