@@ -101,6 +101,18 @@ struct RootView: View {
             p.layers = [p.makeLayer(name: "Picture", content: .image(fileName: "cutout-fixture.png", pixelWidth: 256, pixelHeight: 256), size: Vec2(256,256))]
             _openProject = State(initialValue: p)
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-artworkRigStudio") {
+            var p = Project.new(name: "Artwork Rig Test", width: 256, height: 256, fps: 30, duration: 3)
+            var artwork = p.makeLayer(name: "Artwork", content: .image(fileName: "rig-fixture.png", pixelWidth: 256, pixelHeight: 256), size: Vec2(220, 220))
+            let shoulder = ArtworkBone(name: "Upper Arm", start: Vec2(-70, -52), end: Vec2(-10, -4))
+            let wrist = ArtworkBone(name: "Forearm", start: shoulder.end, end: Vec2(56, -4), parentID: shoulder.id)
+            var rig = ArtworkRig(bones: [wrist, shoulder])
+            rig.bind(halfSize: Vec2(110, 110), artworkID: artwork.id, detail: 32, radius: 55, amount: 1)
+            _ = rig.enableIK(on: wrist.id, time: 0)
+            artwork.artworkRig = rig
+            p.layers = [artwork]
+            _openProject = State(initialValue: p)
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-shapeContents") {
             var p = Project.new(name: "Shape Contents Test", width: 256, height: 256, fps: 30, duration: 3)
             var l = p.makeLayer(name: "Logo", content: .shape(.ellipse), size: Vec2(160,160))

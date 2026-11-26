@@ -1,6 +1,32 @@
 import XCTest
 
 final class RigAuthoringUITests: XCTestCase {
+    func testArtworkRigUsesOneLayerAndKeepsIKAndWeightsOnCanvas() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-artworkRigStudio"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Rig Studio"].firstMatch.waitForExistence(timeout: 15))
+        let output = URL(fileURLWithPath: "/tmp/awi-ui")
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        for mode in ["Setup", "Weights", "Animate"] {
+            let tab = app.segmentedControls.buttons[mode].firstMatch
+            XCTAssertTrue(tab.isHittable, mode)
+            tab.tap()
+            try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("artwork-rig-\(mode).png"))
+            if mode == "Weights" {
+                XCTAssertTrue(app.descendants(matching: .any)["Paint Rig Weights"].firstMatch.exists)
+            }
+        }
+        let target = app.descendants(matching: .any)["Artwork IK Target"].firstMatch
+        XCTAssertTrue(target.isHittable)
+        let before = target.frame.midX
+        let handle = target.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        handle.press(forDuration: 0.1, thenDragTo: handle.withOffset(CGVector(dx: -24, dy: 14)))
+        XCTAssertLessThan(target.frame.midX, before - 5)
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("artwork-rig-posed.png"))
+    }
+
     func testPoseOriginDragMovesTheJointWithoutEnteringRestMode() {
         continueAfterFailure = false
         let app = XCUIApplication(); app.launchArguments = ["-uiTesting","-uiTesting-rigAuthoring","-uiTesting-boneAuthoring"]; app.launch()

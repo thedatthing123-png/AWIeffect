@@ -86,6 +86,7 @@ extension Renderer {
         // Pose all bones before generating skin deformation from their evaluated joints.
         // The skin lives only in this render snapshot; original animation keys stay untouched.
         var p = BoneSkinRuntime.apply(to: AutoOrient.apply(IKSolver.apply(raw, time: time), time: time), at: time)
+        ArtworkRigAttachments.apply(to: &p, time: time)
         BoneMeshEvaluation.prepare(&p,source: meshSource ?? raw,time: time)
         // This is a frame snapshot. Nested groups/mattes encode it again; retaining live IK constraints would
         // solve already-world-space rotations as local FK values a second time. The editable raw project stays intact.

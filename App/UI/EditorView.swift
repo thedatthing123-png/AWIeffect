@@ -57,6 +57,16 @@ struct EditorView: View {
             try? FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
             if !FileManager.default.fileExists(atPath: destination.path) { try? FileManager.default.copyItem(at: PreviewImage.url(), to: destination) }
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-artworkRigStudio") {
+            state.select(state.project.layers.first?.id)
+            state.panel = .rig
+            state.showArtworkRig = true
+            let destination = state.mediaURL("rig-fixture.png")
+            try? FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+            if !FileManager.default.fileExists(atPath: destination.path) {
+                try? FileManager.default.copyItem(at: PreviewImage.url(), to: destination)
+            }
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-shapeContents") {
             state.select(state.project.layers.first?.id); state.panel = .shape
         }

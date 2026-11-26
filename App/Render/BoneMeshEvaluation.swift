@@ -36,12 +36,21 @@ enum BoneMeshEvaluation {
     }
 
     static func prepare(_ project: inout Project, source: Project, time: Double) {
-        let bound = project.layers.indices.filter { project.layers[$0].boneMesh != nil }
+        let bound = project.layers.indices.filter { project.layers[$0].boneMesh != nil || project.layers[$0].artworkRig?.mesh != nil }
         guard !bound.isEmpty else { return }
         var sharedSource: BoneMeshFrameSource?
         // This immutable pre-bake value is shared by all palette evaluations in this frame.
         let current = project
         for i in bound {
+            if let rig = current.layers[i].artworkRig, var internalBinding = rig.mesh {
+                if project.layers[i].boneMesh?.frameTime == time { continue }
+                if sharedSource == nil { sharedSource = BoneMeshFrameSource(source) }
+                internalBinding.frameMatrices = rig.palette(for: internalBinding, at: time)
+                internalBinding.frameTime = time
+                internalBinding.frameSource = current.layers[i].boneMesh?.frameSource ?? sharedSource
+                project.layers[i].boneMesh = internalBinding
+                continue
+            }
             guard var binding = project.layers[i].boneMesh else { continue }
             if binding.frameTime == time, binding.frameMatrices?.count == binding.boneIDs.count { continue }
             let posed: Project

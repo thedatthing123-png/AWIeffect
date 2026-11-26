@@ -109,8 +109,15 @@ final class EditorState: ObservableObject {
     @Published var boneParentPicking: UUID?
     @Published var boneRestEditing = false { didSet { if boneRestEditing && !oldValue { boneRestDirty = false } } }
     var boneRestDirty = false
-    @Published var showArtworkRig = false
+    @Published var showArtworkRig = true
     @Published var rigCursor = Vec2.zero
+    @Published var artworkRigDraftStart: Vec2?
+    @Published var artworkRigWeightBone: UUID?
+    @Published var artworkRigSelectedBone: UUID?
+    var artworkRigBrush = BoneWeightBrush.paint
+    var artworkRigBrushRadius = 40.0
+    @Published var artworkRigAnimating = false
+    @Published var artworkRigSettingUp = true
     @Published var boneMeshDetail = 32.0
     @Published var boneWeightArtworkID: UUID? { didSet { redrawToken &+= 1 } }
     @Published var boneWeightBoneID: UUID? { didSet { redrawToken &+= 1 } }
@@ -184,6 +191,19 @@ final class EditorState: ObservableObject {
     var rigRestArtworkID: UUID? { boneWeightArtworkID ?? (boneRestEditing ? rigArtworkID : nil) }
     func boneMeshDisplayProject(_ original: Project) -> Project {
         var shown = original
+        if panel == .rig, showArtworkRig, !artworkRigAnimating, let id = selectedLayerID,
+           let i = shown.layers.firstIndex(where: { $0.id == id }), let rig = shown.layers[i].artworkRig {
+            if var mesh = rig.mesh {
+                mesh.frameMatrices = Array(repeating: .identity, count: mesh.boneIDs.count)
+                mesh.frameTime = currentTime
+                mesh.previewWeightIndex = artworkRigWeightBone.flatMap { mesh.boneIDs.firstIndex(of: $0) }
+                shown.layers[i].boneMesh = mesh
+            }
+            // Setup shows the rest pose. Imported project data stays untouched.
+            for j in shown.layers.indices where shown.layers[j].parentID == id {
+                shown.layers[j].artworkRigBoneID = nil
+            }
+        }
         if let artwork = rigRestArtworkID {
             for i in shown.layers.indices where shown.layers[i].bone?.artworkID == artwork { shown.layers[i].ik = nil }
             for i in shown.layers.indices where shown.layers[i].id == artwork { if let count = shown.layers[i].boneMesh?.boneIDs.count {

@@ -73,7 +73,8 @@ struct BoneMeshBinding: Codable, Equatable {
     var isValid: Bool {
         guard halfSize.x.isFinite, halfSize.y.isFinite, halfSize.x > 0, halfSize.y > 0,
               (1...128).contains(columns), (1...128).contains(rows),
-              vertices.count == (columns+1)*(rows+1), indices.count == columns*rows*6,
+              vertices.count == (columns+1)*(rows+1), !indices.isEmpty,
+              indices.count <= columns*rows*6, indices.count.isMultiple(of: 3),
               !boneIDs.isEmpty, boneIDs.count <= 512, Set(boneIDs).count == boneIDs.count,
               inverseBinds.count == boneIDs.count, inverseBinds.allSatisfy({ $0.isFinite }),
               indices.allSatisfy({ Int($0) < vertices.count }) else { return false }

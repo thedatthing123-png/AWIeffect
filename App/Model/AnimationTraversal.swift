@@ -75,6 +75,7 @@ extension Layer {
         visit.apply(&extrude)
         visit.apply(&timeRemap)
         if ik != nil { visit.apply(&ik!.mix) }
+        artworkRig?.traverse(&visit)
         if shapeContents != nil {
             for i in shapeContents!.indices { shapeContents![i].component?.traverse(&visit) }
         }
