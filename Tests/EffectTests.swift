@@ -178,7 +178,13 @@ final class EffectTests: XCTestCase {
         var iris = try XCTUnwrap(EffectRegistry.definition("awi.lightIris")).makeInstance()
         iris.params["progress"] = .number(Animated(0))
         let base = try render(r, scene(effect: nil))
-        XCTAssertEqual(try render(r, scene(effect: iris)), base)
+        XCTAssertEqual(try render(r, scene(effect: iris, onAdjustment: true)), base, "Zero progress passes the backdrop through")
+        let neutralShape = try render(r, scene(effect: iris))
+        XCTAssertEqual(neutralShape.count, base.count)
+        // An effect on a vector shape uses an intermediate texture instead of
+        // the direct path renderer. Its edge can round by one RGBA8 level.
+        let largestChange = zip(neutralShape, base).map { abs(Int($0.0) - Int($0.1)) }.max() ?? 0
+        XCTAssertLessThanOrEqual(largestChange, 1, "Zero progress preserves the shape within render-path precision")
         iris.params["progress"] = .number(Animated(100))
         var covered = scene(effect: nil)
         covered.layers.remove(at: 1)
