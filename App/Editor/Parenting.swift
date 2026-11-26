@@ -137,25 +137,29 @@ extension EditorState {
     /// Links (or unlinks with nil) the selected layer to a parent, converting its transform so it doesn't jump.
     func setParent(_ parent: UUID?) {
         guard let i = selectedIndex else { return }
-        let child = project.layers[i]
-        guard parent != child.id, parent == nil || project.layers.contains(where: { $0.id == parent }) else { return }
+        let original = project.layers[i]
+        guard parent != original.id, parent == nil || project.layers.contains(where: { $0.id == parent }) else { return }
+        let hasBone = original.artworkRigBoneID != nil && original.parentID != nil
+        if hasBone && parent == original.parentID { return }
         // No cycles.
         var walk = parent
         var guardCount = 0
         while let w = walk, guardCount < 32 {
-            if w == child.id { return }
+            if w == original.id { return }
             walk = project.layers.first { $0.id == w }?.parentID
             guardCount += 1
         }
         guard walk == nil else { return }
-        if parent == nil, Renderer.parentChainMoves(child, in: project) {
-            let detached = Renderer.detachedMotion(child, in: project)
+        let child = hasBone ? Renderer.detachedMotion(original, in: project) : original
+        if parent == nil, hasBone || Renderer.parentChainMoves(child, in: project) {
+            var detached = hasBone ? child : Renderer.detachedMotion(child, in: project)
+            detached.artworkRigBoneID = nil
             mutate("Unparent") { $0.layers[i] = detached }
             return
         }
         let now = currentTime
         mutate(parent == nil ? "Unparent" : "Parent Layer") { p in
-            var tr = p.layers[i].transform
+            var tr = child.transform
             func convert<V: Interpolatable>(_ a: Animated<V>, _ f: (V, Double) -> V) -> Animated<V> {
                 var out = a
                 out.staticValue = f(a.staticValue, now)
@@ -190,6 +194,7 @@ extension EditorState {
             }
             p.layers[i].transform = tr
             p.layers[i].parentID = parent
+            p.layers[i].artworkRigBoneID = nil
         }
     }
 

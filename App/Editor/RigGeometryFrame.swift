@@ -21,6 +21,7 @@ import simd
         var source = state.canvasViewProject(state.live.project ?? state.project)
         for i in source.layers.indices {
             source.layers[i].boneMesh = nil; source.layers[i].boneSkin = nil
+            source.layers[i].artworkRig?.mesh = nil
             source.layers[i].effects.removeAll { !(EffectRegistry.definition($0.typeID)?.isTransformEffect ?? false) }
             if let artwork = restArtworkID,source.layers[i].bone?.artworkID == artwork { source.layers[i].ik = nil }
         }

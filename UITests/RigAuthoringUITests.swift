@@ -10,7 +10,7 @@ final class RigAuthoringUITests: XCTestCase {
         let output = URL(fileURLWithPath: "/tmp/awi-ui")
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
         for mode in ["Setup", "Weights", "Animate"] {
-            let tab = app.segmentedControls.buttons[mode].firstMatch
+            let tab = app.buttons["Rig Studio " + mode].firstMatch
             XCTAssertTrue(tab.isHittable, mode)
             tab.tap()
             try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("artwork-rig-\(mode).png"))
@@ -19,6 +19,7 @@ final class RigAuthoringUITests: XCTestCase {
             }
         }
         let target = app.descendants(matching: .any)["Artwork IK Target"].firstMatch
+        XCTAssertTrue(target.waitForExistence(timeout: 5))
         XCTAssertTrue(target.isHittable)
         let before = target.frame.midX
         let handle = target.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))

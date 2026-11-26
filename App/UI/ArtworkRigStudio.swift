@@ -76,7 +76,7 @@ struct ArtworkRigStudio: View {
                     }
                     SwipePad(hint: "Position crosshair on the artwork",
                              gain: max(1, layer.size.value(at: state.currentTime).x), steady: true) { delta in
-                        setCursor(state.rigCursor + Vec2(delta.width, delta.height))
+                        setCursor(nudgedCursor(delta))
                     } begin: { if selectedID != nil { state.beginEdit("Place Bone Endpoint") } }
                       end: { state.endEdit() }
                     HStack {
@@ -137,7 +137,7 @@ struct ArtworkRigStudio: View {
                     ValueScrubber(value: weightRadius, range: 4...300, step: 1, unit: " px", onChange: { weightRadius = $0 })
                         .accessibilityLabel("Weight Brush Radius")
                     SwipePad(hint: "Move weight brush", gain: max(1, layer.size.value(at: state.currentTime).x), steady: true) {
-                        state.rigCursor = state.rigCursor + Vec2($0.width, $0.height)
+                        state.rigCursor = nudgedCursor($0)
                     }
                     TSButton(title: "\(brush.rawValue) Weights Here", icon: "paintbrush.pointed") {
                         update("Brush Bone Weights") { rig in
@@ -289,6 +289,16 @@ struct ArtworkRigStudio: View {
         state.rigCursor = point
     }
 
+    private func nudgedCursor(_ delta: CGSize) -> Vec2 {
+        let cursor = state.rigCursor
+        let step = Vec2(Double(delta.width), Double(delta.height))
+        guard let projection = state.displayPlacement(of: layer.id), abs(projection.determinant) > 1e-10,
+              let point = LayerPlacement.projected(cursor, by: projection),
+              let sample = LayerPlacement.projected(cursor + Vec2(1, 0), by: projection) else { return cursor + step }
+        let unit = hypot(sample.x - point.x, sample.y - point.y)
+        return LayerPlacement.projected(point + step * unit, by: projection.inverse) ?? cursor
+    }
+
     private func place() {
         guard let start else {
             guard rig.bones.count < 128 else { return }
@@ -322,7 +332,7 @@ struct ArtworkRigOverlay: View {
     @State private var editingIK = false
     @GestureState private var painting = false
     @State private var lastDab: Vec2?
-    @GestureState private var sketch: Vec2?
+    @GestureState private var sketch: Vec2? = nil
 
     var body: some View {
         if let placement = state.displayPlacement(of: layer.id), fit.width > 0 {
