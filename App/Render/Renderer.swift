@@ -331,7 +331,7 @@ final class Renderer {
     }
 
     private func shadowCoverage(for layer: Layer, time: Double, cb: MTLCommandBuffer, pool: TexturePool,
-                                mediaURL: @escaping (String) -> URL) -> (MTLTexture, Vec2)? {
+                                mediaURL: (String) -> URL) -> (MTLTexture, Vec2)? {
         let half = Self.layerHalfSize(layer, time: time)
         guard half.x.isFinite, half.y.isFinite, min(half.x, half.y) > 0 else { return nil }
         let sourceTime = layer.sourceTime(at: time)
