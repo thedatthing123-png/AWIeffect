@@ -46,12 +46,14 @@ struct TextLookPreset: Identifiable {
 
 enum TextPresetLibrary {
     /// Animation categories, in browser order.
-    static let allCategories = ["In", "Out", "Loop", "Emphasis", "Glitch", "Typewriter", "Kinetic", "Manga/AMV", "Lyric",
+    static let allCategories = ["Titles", "In", "Out", "Loop", "Emphasis", "Glitch", "Typewriter", "Kinetic", "Manga/AMV", "Lyric",
                                 "Impact", "3D In", "3D Out", "3D Loop"]
     /// Categories that hold presets right now (the full designed library arrives with the post-expansion preset pass).
     static let categories: [String] = allCategories.filter { c in animations.contains { $0.category == c } }
     /// Look categories, in browser order.
-    static let lookCategories = ["Manga/AMV", "Impact", "Sticker", "Neon", "Glitch", "Lyric", "Speed", "Cinematic", "Minimal", "3D"]
+    static let lookCategories = ["Manga/AMV", "Cinematic", "3D"].filter { category in
+        looks.contains { $0.category == category }
+    }
 
     /// Key in `EffectInstance.text` naming the look that added the effect.
     static let effectGroupKey = "presetGroup"
@@ -63,7 +65,7 @@ enum TextPresetLibrary {
     /// Every animation preset: studio set, classic built-ins, the pack and the new library. Names are unique and
     /// every id that older projects / AI Link may reference still resolves.
     static let animations: [TextPreset] = {
-        let sources: [TextPreset] = TextPresetStudio.all + TextPresets.all + TextPresetPack.all
+        let sources: [TextPreset] = TextTitleCollection.animations + TextPresetStudio.all + TextPresets.all + TextPresetPack.all
         var seenIDs = Set<String>()
         var seenNames = Set<String>()
         var out: [TextPreset] = []
@@ -87,8 +89,7 @@ enum TextPresetLibrary {
         var seen = Set<String>()
         var names = Set<String>()
         var out: [TextLookPreset] = []
-        // Looks return with the post-expansion preset pass (designed together with the new effects).
-        let source: [TextLookPreset] = []
+        let source = TextTitleCollection.looks
         for l in source where !seen.contains(l.id) {
             seen.insert(l.id)
             var name = l.name
@@ -227,7 +228,11 @@ enum TextPresetLibrary {
             st.glow = glow
         }
         t.style = st.isEmpty ? nil : st
-        if let o = look.text3D { t.text3D = o; t.text3DGroup = g }
+        if let o = look.text3D {
+            t.text3DBeforeLook = t.text3D
+            t.text3D = o
+            t.text3DGroup = g
+        }
         layer.text = t
         layer.effects += look.makeEffects()
     }
@@ -253,7 +258,11 @@ enum TextPresetLibrary {
             if let g = st.glow?.group, match(g) { st.glow = nil }
             t.style = st.isEmpty ? nil : st
         }
-        if let g = t.text3DGroup, match(g) { t.text3D = nil; t.text3DGroup = nil }
+        if let g = t.text3DGroup, match(g) {
+            t.text3D = t.text3DBeforeLook
+            t.text3DGroup = nil
+            t.text3DBeforeLook = nil
+        }
         layer.text = t
     }
 

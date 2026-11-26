@@ -9,6 +9,7 @@ struct Scene3DPanel: View {
     @State private var duration = 2.5
     @State private var drift = 3.0
     @State private var turn = 2.0
+    @State private var keepFraming = false
 
     private enum Tab: String, CaseIterable { case scene = "Scene", layers = "Layers", move = "Camera Move" }
 
@@ -37,6 +38,7 @@ struct Scene3DPanel: View {
                 .foregroundStyle(Theme.text)
             }
             .id(tab)
+            .accessibilityIdentifier("scene-workspace-scroll")
         }
     }
 
@@ -73,7 +75,7 @@ struct Scene3DPanel: View {
                         Image(systemName: "slider.horizontal.3").frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain).foregroundStyle(Theme.accentGlow)
-                    .accessibilityLabel("Edit \(layer.name)")
+                    .accessibilityLabel(layer.content == .light ? "Open Lighting Studio for \(layer.name)" : "Edit \(layer.name)")
                 }
             }
         }
@@ -125,11 +127,16 @@ struct Scene3DPanel: View {
                 .accessibilityLabel("Keyframe Scene Position")
                 Text("Depth Z").font(.subheadline)
                 ValueScrubber(value: tr.positionZ.value(at: time), range: -6000...6000, step: 0.1, unit: " px",
-                              onBegin: { state.beginEdit("Layer Depth") }, onChange: { setZ(layer.id, $0) },
+                              onBegin: { state.beginEdit("Layer Depth") },
+                              onChange: { state.setSceneDepth($0, for: layer.id, keepFraming: keepFraming) },
                               onEnd: { state.endEdit() }, allowBeyond: true, precisionTravel: 240)
                     .frame(minHeight: 44)
                     .accessibilityLabel("Layer Depth Z")
             }
+            Toggle("Keep Framing", isOn: $keepFraming)
+                .font(.subheadline)
+                .tint(Theme.accent)
+                .frame(minHeight: 44)
             Toggle("3D Layer", isOn: Binding(get: { layer.is3D }, set: { enabled in
                 state.mutate("3D Layer") { project in
                     guard let index = project.layers.firstIndex(where: { $0.id == layer.id }), !project.layers[index].isLocked else { return }
@@ -160,6 +167,13 @@ struct Scene3DPanel: View {
             row("Length", duration, 0.3...10, " s") { duration = $0 }
             row("Drift", drift, -20...20, "%") { drift = $0 }
             row("Roll", turn, -30...30, " deg") { turn = $0 }
+            if let camera = state.activeCameraLayer, EditorState.cameraIs3D(camera) {
+                let end = state.project.snapToFrame(state.currentTime + duration)
+                TSButton(title: "Key Move on \(camera.name)", icon: "video.badge.waveform") {
+                    state.keySceneCameraMove(push: push / 100, duration: duration, drift: drift / 100, roll: turn)
+                }
+                .disabled(camera.isLocked || end > camera.outPoint - state.project.frameDuration + 1e-6)
+            }
             TSButton(title: "Make 3D Scene + Camera Move", icon: "camera.viewfinder", filled: true) {
                 state.mangaPanelPush(depth: depth, push: push / 100, duration: duration, drift: drift / 100, turn: turn)
                 tab = .scene
@@ -199,13 +213,6 @@ struct Scene3DPanel: View {
         updatePlacement(id, label: "Layer Position") { layer, time in
             let pos = layer.transform.position.value(at: time)
             layer.transform.position.set(Vec2(x ?? pos.x, y ?? pos.y), at: time)
-        }
-    }
-
-    private func setZ(_ id: UUID, _ z: Double) {
-        updatePlacement(id, label: "Layer Depth") { layer, time in
-            layer.is3D = true
-            layer.transform.positionZ.set(z, at: time)
         }
     }
 

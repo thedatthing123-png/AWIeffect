@@ -106,7 +106,7 @@ extension Renderer {
         let height = max(1, camera.center.y * 2)
         return ModelScenePlacement(modelToCamera: float(view * layerWorld(layer, time: time) * local * flip),
                                    fieldOfView: 2 * atan(height / 2 / max(1, abs(camera.zoom))) * 180 / .pi,
-                                   lights: lightsGPU(project, time: time), worldToCamera: float(view))
+                                   lights: layer.receivesLight ? lightsGPU(project, time: time) : [], worldToCamera: float(view))
     }
 
     /// Homography mapping the layer plane (local x, y) to comp pixels at `renderScale`.

@@ -16,6 +16,19 @@ final class EditorPolishUITests: XCTestCase {
         app.buttons["Select Foreground"].tap()
         XCTAssertTrue(app.descendants(matching: .any)["Layer Depth Z"].firstMatch.isHittable)
         try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("3d-scene-placement.png"))
+        let framing = app.switches["Keep Framing"].firstMatch
+        let panel = app.scrollViews["scene-workspace-scroll"].firstMatch
+        for _ in 0..<4 where !framing.isHittable { panel.swipeUp() }
+        XCTAssertTrue(framing.isHittable)
+        framing.tap()
+        XCTAssertEqual(framing.value as? String, "1")
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("3d-scene-framing.png"))
+        app.buttons["3D Scene Camera Move"].tap()
+        let keyMove = app.buttons["Key Move on Camera 1"].firstMatch
+        for _ in 0..<5 where !keyMove.isHittable { panel.swipeUp() }
+        XCTAssertTrue(keyMove.isHittable)
+        XCTAssertTrue(keyMove.isEnabled)
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("3d-scene-key-move.png"))
     }
 
     func testLightingStudioKeepsLayerLightingAccessible() throws {
@@ -34,8 +47,15 @@ final class EditorPolishUITests: XCTestCase {
         let response = app.switches["Receive Light"].firstMatch
         XCTAssertTrue(response.isHittable)
         XCTAssertEqual(response.value as? String, "1")
+        XCTAssertTrue(app.switches["Receive Shadows"].firstMatch.isHittable)
         response.tap()
         XCTAssertEqual(response.value as? String, "0")
+        app.segmentedControls.buttons["Light"].firstMatch.tap()
+        let spread = app.descendants(matching: .any)["Distance Spread"].firstMatch
+        let panel = app.scrollViews["lighting-studio-scroll"].firstMatch
+        for _ in 0..<5 where !spread.isHittable { panel.swipeUp() }
+        XCTAssertTrue(spread.isHittable)
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("lighting-shadow-spread.png"))
     }
 
     func testIndividualAndCameraBlurDoNotEnableEveryLayer() {

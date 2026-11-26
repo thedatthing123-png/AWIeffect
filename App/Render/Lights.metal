@@ -6,7 +6,7 @@ struct LightGPU {
     float4 posType;      // xyz world position, w type (0 point, 1 spot, 2 parallel, 3 ambient)
     float4 dirCone;      // xyz direction the light points (spot/parallel), w cos(cone half-angle)
     float4 color;        // rgb * intensity, w cone feather (0-1)
-    float4 falloff;      // x radius (0 = none), y shadow darkness, z edge blur in caster pixels
+    float4 falloff;      // x radius (0 = none), y shadow darkness, z edge blur, w distance spread (%)
 };
 
 struct LightPass {
@@ -62,7 +62,7 @@ kernel void applyLights(texture2d<half, access::read> src [[texture(0)]],
             }
         }
         // Shadows: is a casting layer between this point and the light? (its real alpha, so cut-outs cast their shape)
-        if (L.falloff.y > 0.0 && lp.count.z == 1u) {
+        if (atten > 0.0 && L.falloff.y > 0.0 && lp.count.z == 1u) {
             float occ = 0.0;
             float maxT = type == 2u ? 1e7 : length(L.posType.xyz - P);
             for (uint k = 0; k < min(lp.count.y, 4u); k++) {
@@ -75,11 +75,14 @@ kernel void applyLights(texture2d<half, access::read> src [[texture(0)]],
                 float2 q = float2(dot(C.inv0, X), dot(C.inv1, X));
                 float2 size = 2.0 * max(C.halfSize.xy, float2(1e-3));
                 float2 uv = q / size + 0.5;
-                float2 radius = L.falloff.z / size;
+                // The penumbra grows away from contact. Finite lights also narrow it as the caster nears the receiver.
+                float separation = type == 2u ? t : t * clamp(1.0 - t / maxT, 0.0, 1.0);
+                float blur = L.falloff.z + min(100.0, separation * L.falloff.w * 0.001);
+                float2 radius = blur / size;
                 if (any(uv < -radius) || any(uv > 1.0 + radius)) continue;
                 constexpr sampler ss(address::clamp_to_zero, filter::linear);
                 float coverage = float(casterTex[k].sample(ss, uv).a);
-                if (L.falloff.z > 0.0) {
+                if (blur > 0.0) {
                     // Two rings filter the projected cutout edge. The zero-blur path stays a single read.
                     coverage *= 4.0;
                     for (int y = -1; y <= 1; y++) {

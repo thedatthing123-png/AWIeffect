@@ -16,7 +16,7 @@ EFFECT_B = {'DataEffectTests', 'DCTEffectTests', 'DistanceEffectTests', 'Expansi
             'FlowEffectTests', 'PoissonEffectTests', 'ProjectionEffectTests',
             'SegmentPixelSortTests', 'SurfaceEffectTests', 'SurfaceFinishTests',
             'TemporalAnalysisTests', 'TemporalEffectTests', 'TextGeometryEffectTests'}
-RENDERS = {'ReferenceFragmentAuditTests', 'ReferenceTransitionTests', 'ExpansionRenderTests', 'ContactSheetTests', 'BackgroundExpansionTests'}
+RENDERS = {'ReferenceFragmentAuditTests', 'ReferenceTransitionTests', 'ExpansionRenderTests', 'ContactSheetTests', 'BackgroundExpansionTests', 'SceneFinishTests'}
 TEXT = {'CraftPresets33Tests', 'TextPresetLibraryTests', 'TextStudioTests',
         'TextStudioEngineTests', 'Text3DTests', 'TextTests'}
 SCOPES = {

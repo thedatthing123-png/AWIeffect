@@ -136,6 +136,7 @@ extension Layer {
                 guard l.light != nil else { return }
                 v.apply(&l.light!.color); v.apply(&l.light!.intensity); v.apply(&l.light!.coneAngle)
                 v.apply(&l.light!.coneFeather); v.apply(&l.light!.falloffRadius)
+                v.apply(&l.light!.shadowSpread)
             }
         }
         if model3D != nil {

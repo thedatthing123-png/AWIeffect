@@ -96,6 +96,7 @@ extension Layer {
             visit.apply(&light!.intensity)
             visit.apply(&light!.coneAngle)
             visit.apply(&light!.coneFeather)
+            visit.apply(&light!.shadowSpread)
             visit.apply(&light!.falloffRadius)
         }
         if model3D != nil {

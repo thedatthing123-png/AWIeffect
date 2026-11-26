@@ -21,8 +21,8 @@ extension EditorState {
 
 extension EditorState {
     static func isLightingArtwork(_ layer: Layer) -> Bool {
-        !layer.isAudioOnly && layer.content != .camera && layer.content != .light
-            && layer.content != .adjustment && layer.content != .model
+        !layer.isAudioOnly && !layer.isNull && layer.content != .camera && layer.content != .light
+            && layer.content != .adjustment
     }
 
     /// Adds a light without changing the composition geometry.

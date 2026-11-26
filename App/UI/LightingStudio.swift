@@ -33,6 +33,7 @@ struct LightingStudio: View {
                 .foregroundStyle(Theme.text)
             }
             .defaultScrollAnchor(.top)
+            .accessibilityIdentifier("lighting-studio-scroll")
         }
     }
 
@@ -88,6 +89,13 @@ struct LightingStudio: View {
                     shadowRow("Edge Blur", value: light.shadowBlur, range: 0...60, unit: " px") {
                         $0.shadowBlur = $1
                     }
+                    let spread = light.shadowSpread ?? Animated(0.0)
+                    numberRow("Distance Spread", spread.value(at: time), 0...100, "%", animated: spread.isAnimated,
+                              keyed: spread.hasKeyframe(at: time), set: { value in
+                        setShadowSpread { $0.set(value, at: time) }
+                    }, toggle: {
+                        setShadowSpread { $0.toggleKeyframe(at: time) }
+                    })
                 }
             }
         }
@@ -103,6 +111,7 @@ struct LightingStudio: View {
             if light.type == .spot || light.type == .parallel {
                 transformRow("Aim X", \.rotationX, -360...360, "°")
                 transformRow("Aim Y", \.rotationY, -360...360, "°")
+                TSButton(title: "Aim at Layer", icon: "scope") { state.pickLightAim() }
             }
             if light.type == .ambient {
                 Text("Ambient light fills the scene evenly. Set its color and intensity under Light.")
@@ -128,11 +137,25 @@ struct LightingStudio: View {
                         $0.castsShadows = $1
                     })
                 }
+                if artwork.receivesLight && artwork.content != .model && artwork.text?.text3D == nil {
+                    Toggle("Receive Shadows", isOn: artworkToggle(artwork, "Receive Shadows", get: { $0.acceptsShadows }) {
+                        $0.acceptsShadows = $1
+                    })
+                }
             }
             .font(.subheadline)
             .tint(Theme.accent)
             .padding(12)
             .background(Theme.raised, in: RoundedRectangle(cornerRadius: 10))
+            .disabled(artwork.isLocked)
+        }
+    }
+
+    private func setShadowSpread(_ change: (inout Animated<Double>) -> Void) {
+        state.mutateLayer { layer in
+            var value = layer.light?.shadowSpread ?? Animated(0.0)
+            change(&value)
+            layer.light?.shadowSpread = value
         }
     }
 

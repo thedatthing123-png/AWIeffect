@@ -325,8 +325,66 @@ final class Renderer {
             return LightGPU(posType: SIMD4(Float(pos.x), Float(pos.y), Float(t.positionZ.value(at: time)), type),
                             dirCone: SIMD4(Float(dir.x), Float(dir.y), Float(dir.z), Float(cos(o.coneAngle.value(at: time) / 2 * .pi / 180))),
                             color: SIMD4(Float(c.r * k), Float(c.g * k), Float(c.b * k), Float(o.coneFeather.value(at: time) / 100)),
-                            falloff: SIMD4(Float(o.falloffRadius.value(at: time)), o.castsShadows ? Float(o.shadowDarkness / 100) : 0, Float(o.shadowBlur), 0))
+                            falloff: SIMD4(Float(o.falloffRadius.value(at: time)), o.castsShadows ? Float(o.shadowDarkness / 100) : 0,
+                                           Float(o.shadowBlur), Float(min(100, max(0, o.shadowSpread?.value(at: time) ?? 0)))))
         }
+    }
+
+    private func shadowCoverage(for layer: Layer, time: Double, cb: MTLCommandBuffer, pool: TexturePool,
+                                mediaURL: @escaping (String) -> URL) -> (MTLTexture, Vec2)? {
+        let half = Self.layerHalfSize(layer, time: time)
+        guard half.x.isFinite, half.y.isFinite, min(half.x, half.y) > 0 else { return nil }
+        let sourceTime = layer.sourceTime(at: time)
+        let maskPath = layer.text?.onPath == true ? layer.masks.first?.id : nil
+        let masks = layer.masks.filter { $0.mode != .none && !$0.effectsOnly && $0.id != maskPath }
+        let shape = Self.shapePath(layer, time: time)
+        let mesh = layer.boneMesh
+        if mesh == nil, masks.isEmpty, layer.cutout == nil, shape == nil, layer.text == nil {
+            switch sourceTexture(layer, sourceTime: sourceTime, time: time, density: 0.5, cb: cb, mediaURL: mediaURL) {
+            case .image(let source)?, .model(let source)?: return (source, half)
+            case nil: return nil
+            default: return (whiteTexture, half)
+            }
+        }
+        let extent: Vec2
+        if let mesh, let palette = mesh.frameMatrices {
+            let reach = mesh.reach(matrices: palette)
+            extent = Vec2(max(half.x, reach.x), max(half.y, reach.y))
+        } else {
+            extent = half
+        }
+        let density = min(0.5, 512 / (2 * max(extent.x, extent.y)))
+        let width = max(1, Int(ceil(extent.x * 2 * density)))
+        let height = max(1, Int(ceil(extent.y * 2 * density)))
+        let bounds = Vec2(Double(width) / (2 * density), Double(height) / (2 * density))
+        let matrix = simd_double3x3(columns: (SIMD3(density, 0, 0), SIMD3(0, density, 0),
+                                             SIMD3(Double(width) / 2, Double(height) / 2, 1)))
+        let coverage = pool.acquire(width: width, height: height)
+        fx.run("fxClear", cb, textures: [coverage], grid: coverage)
+        if let shape {
+            drawShapePath(cb: cb, target: coverage, matrix: matrix, layer: layer, path: shape, time: time,
+                          opacity: 1, blend: .normal, aa: 1 / density)
+        } else if layer.text != nil {
+            drawText(cb: cb, target: coverage, matrix: matrix, density: density, layer: layer, time: time, opacity: 1, blend: .normal)
+        } else {
+            guard let source = sourceTexture(layer, sourceTime: sourceTime, time: time, density: density, cb: cb, mediaURL: mediaURL) else { return nil }
+            drawQuad(cb: cb, target: coverage, matrix: matrix, halfSize: half, aa: 1 / density, opacity: 1,
+                     layer: layer, time: time, source: source, premultipliedImage: false, blendOverride: .normal)
+        }
+        if !masks.isEmpty {
+            PathGPU.shared?.applyMasks(cb: cb, layer: coverage, masks: masks, time: time, matrix: matrix,
+                                       aa: 1 / density, pool: pool)
+        }
+        if layer.cutout != nil {
+            applyCutout(cb: cb, layer: coverage, layerModel: layer, sourceTime: sourceTime,
+                        matrix: matrix, halfSize: half, mediaURL: mediaURL)
+        }
+        if let mesh, let palette = mesh.frameMatrices {
+            let warped = pool.acquire(width: width, height: height)
+            if BoneMeshGPU.encode(mesh, matrices: palette, input: coverage, output: warped, unit: density,
+                                  commandBuffer: cb, device: device) { return (warped, bounds) }
+        }
+        return (coverage, bounds)
     }
 
     private func encodeLights(cb: MTLCommandBuffer, src: MTLTexture, dst: MTLTexture, layer: Layer, time: Double, camera: CameraState,
@@ -602,10 +660,7 @@ final class Renderer {
                 var n = W * SIMD4(0, 0, 1, 0)
                 n /= max(simd_length(SIMD3(n.x, n.y, n.z)), 1e-9)
                 let o = W * SIMD4(0, 0, 0, 1)
-                let hs = Self.layerHalfSize(l, time: time)
-                var tex: MTLTexture = whiteTexture
-                if case .image(let t)? = sourceTexture(l, sourceTime: l.sourceTime(at: time), time: time, density: 0.5, cb: cb, mediaURL: mediaURL) { tex = t }
-                else if case .model(let t)? = sourceTexture(l, sourceTime: l.sourceTime(at: time), time: time, density: 0.5, cb: cb, mediaURL: mediaURL) { tex = t }
+                guard let (tex, hs) = shadowCoverage(for: l, time: time, cb: cb, pool: pool, mediaURL: mediaURL) else { continue }
                 let gpu = ShadowCasterGPU(inv0: SIMD4(Float(inv[0][0]), Float(inv[1][0]), Float(inv[2][0]), Float(inv[3][0])),
                                           inv1: SIMD4(Float(inv[0][1]), Float(inv[1][1]), Float(inv[2][1]), Float(inv[3][1])),
                                           plane: SIMD4(Float(n.x), Float(n.y), Float(n.z), Float(n.x * o.x + n.y * o.y + n.z * o.z)),
@@ -838,7 +893,7 @@ final class Renderer {
                     }
                 }
             }
-            let lit = layer.receivesLight && !lights.isEmpty && layer.content != .model
+            let lit = layer.receivesLight && !lights.isEmpty && layer.content != .model && layer.text?.text3D == nil
             let needsLocal = layer.boneMesh != nil || !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil || dof > 0.5 || extrude > 0.5 || !blurMatrices.isEmpty || lit
             if !needsLocal, let path = Self.shapePath(layer, time: time) {
                 drawShapePath(cb: cb, target: comp, matrix: M, layer: layer, path: path, time: time,

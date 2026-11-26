@@ -231,6 +231,8 @@ struct LightOptions: Codable, Equatable {
     var castsShadowsStore: Bool? = nil
     var castsShadows: Bool { get { castsShadowsStore ?? false } set { castsShadowsStore = newValue ? true : nil } }
     var shadowBlurStore: Double? = nil
+    /// Contact-hardening shadows. Nil preserves the fixed blur of older lights.
+    var shadowSpread: Animated<Double>? = nil
     var shadowBlur: Double {
         get { shadowBlurStore ?? 0 }
         set { shadowBlurStore = min(60, max(0, newValue)) }
@@ -353,7 +355,7 @@ struct Layer: Codable, Equatable, Identifiable {
     var acceptsShadows = true
     // Nil preserves the original lighting behavior of saved projects.
     var receivesLightOverride: Bool?
-    var receivesLight: Bool { receivesLightOverride ?? is3D }
+    var receivesLight: Bool { receivesLightOverride ?? (is3D || content == .model || text?.text3D != nil) }
     /// Named, colored layer markers (times relative to the layer's in point, so they travel with the clip).
     var layerMarkers: [TimelineMarker]? = nil
     /// Audio effects (EQ, compressor, pitch, ducking); nil = untouched sound.
