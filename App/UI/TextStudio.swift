@@ -104,6 +104,8 @@ struct FontPicker: View {
     @State private var query = ""
     @State private var tab = 1
     @State private var showImport = false
+    @State private var pendingFont: String?
+    @State private var failedFont: String?
     @ObservedObject private var library = FontLibrary.shared
     @AppStorage("awi.favFonts") private var favRaw = ""
     @Environment(\.dismiss) private var dismiss
@@ -126,7 +128,7 @@ struct FontPicker: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                TSSegmented(options: [(0, "★ Favorites"), (1, "On Device"), (2, "Download")], selection: tab, label: "Fonts") { tab = $0 }
+                TSSegmented(options: [(0, "★ Favorites"), (1, "On Device"), (2, "Online")], selection: tab, label: "Fonts") { tab = $0 }
                     .padding(12)
                 List {
                     switch tab {
@@ -136,7 +138,7 @@ struct FontPicker: View {
                         }
                         ForEach(favorites.filter(matches), id: \.self) { f in row(f) }
                     case 1:
-                        ForEach(TextEngine.availableFonts().filter(matches), id: \.self) { f in row(f) }
+                        ForEach(TextEngine.availableFonts().filter { matches($0) || matches(FontLibrary.displayName($0)) }, id: \.self) { f in row(f) }
                     default:
                         ForEach(FontLibrary.catalog.filter { matches($0.name) || matches($0.style) }) { fam in catalogRow(fam) }
                     }
@@ -146,6 +148,15 @@ struct FontPicker: View {
             .background(Theme.background)
             .searchable(text: $query, prompt: "Search fonts")
             .navigationTitle("Fonts")
+            .onDisappear { pendingFont = nil }
+            .alert("Font unavailable", isPresented: Binding(
+                get: { failedFont != nil },
+                set: { if !$0 { failedFont = nil } }
+            )) {
+                Button("OK", role: .cancel) { failedFont = nil }
+            } message: {
+                Text("Could not load \(failedFont ?? "this font"). Check your connection and tap the font to try again.")
+            }
             .toolbarBackground(Theme.background, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .navigationBarTitleDisplayMode(.inline)
@@ -187,27 +198,49 @@ struct FontPicker: View {
         .listRowBackground(Theme.surface)
     }
 
-    private func catalogRow(_ fam: FontLibrary.Family) -> some View {
-        let ps = library.installed[fam.name]?.first
-        return HStack(spacing: 6) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(ps == nil ? fam.name : preview).font(ps.map { .custom($0, size: 22) } ?? .system(size: 17, weight: .semibold))
-                    .foregroundStyle(Theme.text).lineLimit(1).minimumScaleFactor(0.5)
-                Text("\(fam.name) · \(fam.style)").font(.caption).foregroundStyle(Theme.textDim)
-            }
-            Spacer(minLength: 4)
-            if let ps {
-                Button("Use") { pick(ps); dismiss() }.buttonStyle(.borderedProminent).tint(Theme.accent).frame(minHeight: TS.tap)
-            } else if library.downloading.contains(fam.name) {
-                ProgressView().frame(width: TS.tap, height: TS.tap)
+    private func catalogRow(_ family: FontLibrary.Family) -> some View {
+        let installed = library.installed[family.name]?.first
+        let busy = library.downloading.contains(family.name)
+        return Button {
+            if let installed {
+                pendingFont = nil
+                pick(installed)
+                dismiss()
             } else {
-                Button { library.download(fam.name) } label: {
-                    Image(systemName: "arrow.down.circle.fill").font(.title3).frame(width: TS.tap, height: TS.tap)
+                pendingFont = family.name
+                library.download(family.name) { ok in
+                    guard pendingFont == family.name else { return }
+                    pendingFont = nil
+                    guard ok, let name = library.installed[family.name]?.first else {
+                        failedFont = family.name
+                        return
+                    }
+                    pick(name)
+                    dismiss()
                 }
-                .foregroundStyle(Theme.accentGlow)
-                .accessibilityLabel("Download \(fam.name)")
             }
+        } label: {
+            HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(installed == nil ? family.name : preview)
+                        .font(installed.map { .custom($0, size: 22) } ?? .system(size: 17, weight: .semibold))
+                        .foregroundStyle(Theme.text).lineLimit(1).minimumScaleFactor(0.5)
+                    Text(family.name + " / " + family.style).font(.caption).foregroundStyle(Theme.textDim)
+                }
+                Spacer(minLength: 4)
+                if busy {
+                    ProgressView().frame(width: TS.tap, height: TS.tap)
+                } else if installed == current {
+                    Image(systemName: "checkmark").foregroundStyle(Theme.accent)
+                } else if installed == nil {
+                    Image(systemName: "arrow.down.circle").foregroundStyle(Theme.accentGlow)
+                }
+            }
+            .frame(minHeight: TS.tap).contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .disabled(busy)
+        .accessibilityLabel("Use font \(family.name)")
         .listRowBackground(Theme.surface)
     }
 }

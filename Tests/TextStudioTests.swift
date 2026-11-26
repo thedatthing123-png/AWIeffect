@@ -10,6 +10,30 @@ final class TextStudioTests: XCTestCase {
         return t
     }
 
+    func testKeyAllCapturesValuesAndKeepsExistingCurve() throws {
+        var properties = TextAnimatorProperties()
+        properties.opacity = Animated(60)
+        properties.position = Animated(Vec2(12, -9))
+        let existing = Keyframe(time: 1.0, value: Vec2(20, -4), interpolation: .bezier)
+        properties.position?.insertKeyframe(existing)
+        for key in TextPropKey.present(in: properties) {
+            key.addKeyframe(at: 1, to: &properties)
+        }
+        XCTAssertEqual(properties.position?.keyframes, [existing])
+        XCTAssertEqual(properties.opacity?.keyframeTimes, [1])
+        XCTAssertEqual(properties.opacity?.value(at: 1), 60)
+        XCTAssertNil(properties.fill)
+    }
+
+    func testSelectedLetterColorLeavesUnselectedLettersUntouched() {
+        var title = text("ABC")
+        let ids = title.resolvedCharIDs
+        title.setCharStyle(ids: [ids[0], ids[2]]) { $0.fill = .black }
+        XCTAssertEqual(title.charStyle(at: 0)?.fill, .black)
+        XCTAssertNil(title.charStyle(at: 1))
+        XCTAssertEqual(title.charStyle(at: 2)?.fill, .black)
+    }
+
     func testSelectionAnimatorTargetsSelectedCharIDs() {
         var t = text("HELLO")
         let ids = TextStudioLogic.ids(t, range: 1..<3)

@@ -155,6 +155,19 @@ enum TextPropKey: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Capture the current value without replacing an existing key or its easing.
+    func addKeyframe(at time: Double, to props: inout TextAnimatorProperties) {
+        func insert<Value: Interpolatable>(_ value: inout Animated<Value>?) {
+            guard value?.hasKeyframe(at: time) == false else { return }
+            value?.toggleKeyframe(at: time)
+        }
+        switch access {
+        case .scalar(let key): insert(&props[keyPath: key])
+        case .vector(let key): insert(&props[keyPath: key])
+        case .color(let key): insert(&props[keyPath: key])
+        }
+    }
+
     /// Sets every keyframe of this property to one interpolation.
     func setInterpolation(_ interp: Interpolation, in p: inout TextAnimatorProperties) {
         switch access {

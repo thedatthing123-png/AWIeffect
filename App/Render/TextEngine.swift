@@ -461,21 +461,67 @@ final class TextEngine {
         }
         let lineMid = Double(max(0, layout.lineCount - 1)) / 2
         for a in text.animators where a.isEnabled {
+            typealias Sample = (pos: Vec2?, sc: Vec2?, rot: Double?, op: Double?, col: RGBA?, tr: Double?, sk: Double?, bl: Double?, co: Double?, rx: Double?, ry: Double?, pz: Double?, ol: Double?, anc: Vec2?, fop: Double?, sw: Double?, scol: RGBA?, bs: Double?, glw: Double?, hue: Double?, db: Double?, dba: Double?, scr: Double?, ls: Double?)
             let p = a.properties
-            let pos = p.position?.value(at: time), sc = p.scale?.value(at: time), rot = p.rotation?.value(at: time)
-            let op = p.opacity?.value(at: time), col = p.fill?.value(at: time), tr = p.tracking?.value(at: time)
-            let sk = p.skew?.value(at: time)
-            let bl = p.blur?.value(at: time), co = p.characterOffset?.value(at: time)
-            let rx = p.rotationX?.value(at: time), ry = p.rotationY?.value(at: time), pz = p.positionZ?.value(at: time)
-            let ol = p.outline?.value(at: time)
-            let anc = p.anchor?.value(at: time), fop = p.fillOpacity?.value(at: time)
-            let sw = p.strokeWidth?.value(at: time), scol = p.strokeColor?.value(at: time)
-            let bs = p.baselineShift?.value(at: time), glw = p.glow?.value(at: time), hue = p.hueShift?.value(at: time)
-            let db = p.directionalBlur?.value(at: time), dba = p.directionalBlurAngle?.value(at: time)
-            let scr = p.scramble?.value(at: time), ls = p.lineSpacing?.value(at: time)
+            func sample(at sampleTime: Double) -> Sample {
+                (pos: p.position?.value(at: sampleTime),
+                sc: p.scale?.value(at: sampleTime),
+                rot: p.rotation?.value(at: sampleTime),
+                op: p.opacity?.value(at: sampleTime),
+                col: p.fill?.value(at: sampleTime),
+                tr: p.tracking?.value(at: sampleTime),
+                sk: p.skew?.value(at: sampleTime),
+                bl: p.blur?.value(at: sampleTime),
+                co: p.characterOffset?.value(at: sampleTime),
+                rx: p.rotationX?.value(at: sampleTime),
+                ry: p.rotationY?.value(at: sampleTime),
+                pz: p.positionZ?.value(at: sampleTime),
+                ol: p.outline?.value(at: sampleTime),
+                anc: p.anchor?.value(at: sampleTime),
+                fop: p.fillOpacity?.value(at: sampleTime),
+                sw: p.strokeWidth?.value(at: sampleTime),
+                scol: p.strokeColor?.value(at: sampleTime),
+                bs: p.baselineShift?.value(at: sampleTime),
+                glw: p.glow?.value(at: sampleTime),
+                hue: p.hueShift?.value(at: sampleTime),
+                db: p.directionalBlur?.value(at: sampleTime),
+                dba: p.directionalBlurAngle?.value(at: sampleTime),
+                scr: p.scramble?.value(at: sampleTime),
+                ls: p.lineSpacing?.value(at: sampleTime))
+            }
+            let initial = sample(at: time)
+            let stagger = a.stagger
+            let delay = stagger?.secondsPerUnit ?? 0
+            func unitIndex(_ glyph: LaidGlyph, _ unit: TextUnit) -> Int {
+                switch unit {
+                case .characters: return glyph.charIndex
+                case .charactersExcludingSpaces: return glyph.charExSpaceIndex
+                case .words: return glyph.wordIndex
+                case .lines: return glyph.lineIndex
+                }
+            }
+            var staggerRanks: [Int: Int] = [:]
+            var samples: [Int: Sample] = [:]
+            if let stagger, delay > 0 {
+                let targets: Set<UInt32>? = a.selectors?.isEmpty != false ? a.selector.targetIDs.map { Set($0) } : nil
+                let units = Set(layout.glyphs.lazy.filter {
+                    !$0.isSpace && (targets?.contains($0.charID) ?? true)
+                }.map { unitIndex($0, stagger.unit) }).sorted()
+                let ordered = stagger.reversed ? Array(units.reversed()) : units
+                staggerRanks = Dictionary(uniqueKeysWithValues: ordered.enumerated().map { ($0.element, $0.offset) })
+            }
             for (gi, g) in layout.glyphs.enumerated() {
                 let amt = selection(a, glyph: g, layout: layout, time: time, beats: beats)
                 if amt == 0 || !amt.isFinite { continue }
+                var values = initial
+                if let stagger, let rank = staggerRanks[unitIndex(g, stagger.unit)], rank > 0 {
+                    if let cached = samples[rank] { values = cached }
+                    else {
+                        values = sample(at: time - Double(rank) * delay)
+                        samples[rank] = values
+                    }
+                }
+                let (pos, sc, rot, op, col, tr, sk, bl, co, rx, ry, pz, ol, anc, fop, sw, scol, bs, glw, hue, db, dba, scr, ls) = values
                 let c01 = min(1, max(0, amt))
                 if let pos { states[gi].offset = states[gi].offset + pos * amt }
                 if let sc { states[gi].scale = Vec2(states[gi].scale.x * (1 + (sc.x / 100 - 1) * amt), states[gi].scale.y * (1 + (sc.y / 100 - 1) * amt)) }
