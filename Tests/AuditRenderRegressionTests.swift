@@ -159,35 +159,54 @@ final class AuditRenderRegressionTests: XCTestCase {
 
     func testLocalPuppetMovesOnePartAndPreservesDistantArtworkAndLegacyWarp() throws {
         let r = try renderer()
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        let image = UIGraphicsImageRenderer(size: CGSize(width: 128, height: 96), format: format).image { context in
-            UIColor.white.setFill()
-            context.fill(CGRect(x: 13, y: 43, width: 10, height: 10))
-            context.fill(CGRect(x: 77, y: 43, width: 10, height: 10))
+        let width = 128, height = 96
+        var bytes = [UInt8](repeating: 0, count: width * height * 4)
+        for y in 43..<53 {
+            for x in 13..<23 {
+                let i = (y * width + x) * 4
+                bytes[i] = 255; bytes[i + 3] = 255
+            }
+            for x in 77..<87 {
+                let i = (y * width + x) * 4
+                bytes[i + 2] = 255; bytes[i + 3] = 255
+            }
         }
+        let provider = try XCTUnwrap(CGDataProvider(data: Data(bytes) as CFData))
+        let image = try XCTUnwrap(CGImage(width: width, height: height, bitsPerComponent: 8, bitsPerPixel: 32,
+                                         bytesPerRow: width * 4, space: CGColorSpaceCreateDeviceRGB(),
+                                         bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+                                         provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent))
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".png")
         defer { try? FileManager.default.removeItem(at: url) }
-        try XCTUnwrap(image.pngData()).write(to: url)
+        try XCTUnwrap(UIImage(cgImage: image).pngData()).write(to: url)
         var p = Project.new(name: "Local Puppet", width: 128, height: 96, fps: 30, duration: 1,
                             background: RGBA(0, 0, 0, 0))
-        var art = p.makeLayer(name: "Artwork", content: .image(fileName: "puppet.png", pixelWidth: 128, pixelHeight: 96),
+        let art = p.makeLayer(name: "Artwork", content: .image(fileName: "puppet.png", pixelWidth: 128, pixelHeight: 96),
                               size: Vec2(128, 96))
         var effect = EffectRegistry.puppet18.makeInstance()
         effect.params["pinR0"] = .point(Animated(Vec2(18, 0)))
         effect.params["pinD0"] = .point(Animated(Vec2(38, 0)))
         effect.params["pinF0"] = .number(Animated(24))
-        art.effects = [effect]
         p.layers = [art]
-        func alpha(_ x: Int) throws -> UInt8 {
-            let pixels = try XCTUnwrap(r.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { _ in url })).rgba
-            return pixels[(48 * 128 + x) * 4 + 3]
+        func render() throws -> [UInt8] {
+            try XCTUnwrap(r.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { _ in url })).rgba
         }
-        XCTAssertGreaterThan(try alpha(38), 240, "Legacy single pin still moves the whole layer")
+        func pixel(_ frame: [UInt8], _ x: Int) -> SIMD4<UInt8> {
+            let i = (48 * width + x) * 4
+            return SIMD4(frame[i], frame[i + 1], frame[i + 2], frame[i + 3])
+        }
+        let rest = try render()
+        XCTAssertEqual(pixel(rest, 18), SIMD4(255, 0, 0, 255), "Fixture stationary mark")
+        XCTAssertEqual(pixel(rest, 82), SIMD4(0, 0, 255, 255), "Fixture moving mark")
+        XCTAssertEqual(pixel(rest, 62), .zero, "Fixture gap must be transparent before warping")
+        p.layers[0].effects = [effect]
+        let legacy = try render()
+        XCTAssertEqual(pixel(legacy, 38), pixel(rest, 18), "Legacy single pin still moves the whole layer")
         p.layers[0].effects[0].params["localDeform"] = .toggle(true)
-        XCTAssertGreaterThan(try alpha(18), 240, "Distant artwork stays exactly where it was")
-        XCTAssertGreaterThan(try alpha(102), 240, "The selected part follows its pin")
-        XCTAssertLessThan(try alpha(82), 8, "The old pin location should no longer show the moved part")
+        let posed = try render()
+        XCTAssertEqual(pixel(posed, 18), pixel(rest, 18), "Distant artwork stays exactly where it was")
+        XCTAssertEqual(pixel(posed, 102), pixel(rest, 82), "The selected part follows its pin")
+        XCTAssertEqual(pixel(posed, 82), .zero, "The old pin location should no longer show the moved part")
     }
 
     func testMotionTileCoversFractionalEdgesAndShakeShutterPoses() throws {
