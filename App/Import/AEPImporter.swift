@@ -538,12 +538,11 @@ enum AEPImporter {
 
     static func importEffect(_ effect: AEProp, timebase: Double, layerStart: Double, layer: String, report: inout ImportReport) -> EffectInstance {
         let match = effect.matchName
-        let definition = EffectRegistry.definition(aeMatchName: match)
-        let isBuiltIn = match.hasPrefix("ADBE ") || match.hasPrefix("CC ")
-        let adapter = isBuiltIn ? definition : nil
-        let displayName = definition?.name ?? PluginSwap.lookup(match)?.plugin ?? match
+        let adapter = ImportedEffectRenderers.afterEffects(match)
+        let displayName = adapter?.name ?? PluginSwap.lookup(match)?.plugin ?? match
         var instance = adapter.map { effectInstance($0, from: effect, timebase: timebase, layerStart: layerStart) }
             ?? EffectInstance(typeID: "source.unavailable", params: [:])
+        if adapter != nil { instance.typeID = ImportedEffectRenderers.afterEffectsTypeID(match) }
         let support: ImportedEffect.Support = adapter == nil ? .unavailable : (match.hasPrefix("CC ") ? .approximation : .nativeAdapter)
         instance.imported = ImportedEffect(format: .afterEffects, matchName: match, displayName: displayName,
                                            support: support, properties: [capture(effect)])

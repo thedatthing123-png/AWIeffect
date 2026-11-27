@@ -1,5 +1,45 @@
 import Foundation
 
+/// Project files carry effect IDs and settings. Look up their installed
+/// implementations within the source format, independently of browser names.
+enum ImportedEffectRenderers {
+    static let xmlFragments: [String: ReferenceFragmentDefinition] = Dictionary(
+        uniqueKeysWithValues: ReferenceFragmentCatalog.all
+            .filter { reference in
+                !reference.sourceID.isEmpty &&
+                !reference.sourceID.hasPrefix("com.alightcreative.internal.") &&
+                !reference.sourceID.hasPrefix("com.alightcreative.blend.") &&
+                reference.referenceBinding == nil
+            }
+            .map { ($0.sourceID, $0) }
+    )
+
+    static let importOnlyDefinitions: [EffectDefinition] = {
+        let browserIDs = Set(ReferenceFragmentCatalog.promoted.map(\.id))
+        return xmlFragments.values.filter { !browserIDs.contains($0.id) }.map(\.definition)
+    }()
+
+    static let importOnlyByID = Dictionary(uniqueKeysWithValues: importOnlyDefinitions.map { ($0.id, $0) })
+
+    private static let afterEffectsPrefix = "source.ae.v1."
+
+    static func afterEffectsTypeID(_ matchName: String) -> String {
+        afterEffectsPrefix + matchName
+    }
+
+    static func adapter(forTypeID id: String) -> EffectDefinition? {
+        guard id.hasPrefix(afterEffectsPrefix) else { return nil }
+        return afterEffects(String(id.dropFirst(afterEffectsPrefix.count)))
+    }
+
+    static func afterEffects(_ matchName: String) -> EffectDefinition? {
+        // Match-name aliases that were added for FFX compatibility do not
+        // establish renderer compatibility for a third-party desktop plugin.
+        guard matchName.hasPrefix("ADBE ") || matchName.hasPrefix("CC ") else { return nil }
+        return EffectRegistry.definition(aeMatchName: matchName)
+    }
+}
+
 extension EffectRegistry {
     /// Documented Alight Motion Oscillate (v3). The layer clock starts at the
     /// source in-point and advances through the integrated frequency track.

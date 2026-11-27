@@ -270,16 +270,19 @@ enum EffectRegistry {
         glow, rgbSplit, fractalNoise, chromaKey, shake,
     ] + [letterSpacing] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22 + batch23 + batchR4 + batchAM35 + referenceTransitions + reviewedReferenceEffects + ghostEffects + motionFinishEffects + remadeEffects
 
-    static let importOnlyReferences: [ReferenceFragmentDefinition] = [ReferenceFragmentCatalog.ebb5b2972b1ff]
     private static let byID: [String: EffectDefinition] = Dictionary(uniqueKeysWithValues:
-        (all + [importedOscillate] + importOnlyReferences.map(\.definition)).map { ($0.id, EffectStackR4.wrap($0)) })
+        (all + [importedOscillate] + ImportedEffectRenderers.importOnlyDefinitions).map { ($0.id, EffectStackR4.wrap($0)) })
     private static let byMatchName: [String: EffectDefinition] = {
         var m: [String: EffectDefinition] = [:]
         for d in all { for n in d.aeMatchNames { m[n] = d } }
         return m
     }()
 
-    static func definition(_ id: String) -> EffectDefinition? { byID[id] }
+    static func definition(_ id: String) -> EffectDefinition? {
+        if let definition = byID[id] { return definition }
+        guard let adapter = ImportedEffectRenderers.adapter(forTypeID: id) else { return nil }
+        return byID[adapter.id]
+    }
     static func definition(aeMatchName: String) -> EffectDefinition? { byMatchName[aeMatchName] }
 
     // MARK: Blur

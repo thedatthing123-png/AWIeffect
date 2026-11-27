@@ -142,7 +142,8 @@ extension EffectRegistry {
     /// The definition without the R4 wrapping (for its parameter list).
     static func rawDefinition(_ id: String) -> EffectDefinition? {
         if id == importedOscillate.id { return importedOscillate }
-        return all.first { $0.id == id } ?? importOnlyReferences.first { $0.id == id }?.definition
+        if let adapter = ImportedEffectRenderers.adapter(forTypeID: id) { return adapter }
+        return all.first { $0.id == id } ?? ImportedEffectRenderers.importOnlyByID[id]
     }
 
     static let batchR4: [EffectDefinition] = [gradientR4]

@@ -947,11 +947,12 @@ final class Renderer {
 
             // Effects path: render the layer in its own (local, unrotated) buffer, run the stack, then place it.
             var rawMargin = pixelFX.reduce(0.0) { acc, e in
-                if e.typeID == "ae.motionTile" && !e.bool("manualOutput") { return acc }
-                return acc + (EffectRegistry.definition(e.typeID).map { $0.expandedMargin?(e, time, hs * 2) ?? $0.margin(e, time) } ?? 0)
+                guard let definition = EffectRegistry.definition(e.typeID),
+                      definition.id != "ae.motionTile" || e.bool("manualOutput") else { return acc }
+                return acc + (definition.expandedMargin?(e, time, hs * 2) ?? definition.margin(e, time))
             }
                 + (dof > 0.5 ? dof * 3 / max(pxPerLocal, 1e-4) : 0)
-            if pixelFX.contains(where: { $0.typeID == "ae.motionTile" && !$0.bool("manualOutput") }) {
+            if pixelFX.contains(where: { EffectRegistry.definition($0.typeID)?.id == "ae.motionTile" && !$0.bool("manualOutput") }) {
                 let width = Double(project.width) * renderScale, height = Double(project.height) * renderScale
                 let corners = [SIMD3(0.0, 0, 1), SIMD3(width, 0, 1), SIMD3(0.0, height, 1), SIMD3(width, height, 1)]
                 let padding = max(2, 2 / max(0.05, pxPerLocal))
@@ -1396,7 +1397,7 @@ final class Renderer {
             guard let def = EffectRegistry.definition(e.typeID) else { continue }
             switch def.stage {
             case .pixels(let run):
-                if e.typeID == "ae.motionTile", !e.bool("manualOutput"), current.width == comp.width, current.height == comp.height,
+                if def.id == "ae.motionTile", !e.bool("manualOutput"), current.width == comp.width, current.height == comp.height,
                    effects.dropFirst(effectIndex + 1).contains(where: { EffectRegistry.definition($0.typeID)?.isTransformEffect == false }) {
                     let size = Vec2(Double(comp.width) / max(renderScale, 1e-6), Double(comp.height) / max(renderScale, 1e-6))
                     let margin = effects.dropFirst(effectIndex + 1).reduce(0.0) { total, effect in
@@ -1418,7 +1419,7 @@ final class Renderer {
                 context.layerPixels = SIMD2(Double(comp.width), Double(comp.height))
                 context.compositionPixels = context.layerPixels
                 current = run(context)
-                if e.typeID == "ae.motionTile", !e.bool("manualOutput") {
+                if def.id == "ae.motionTile", !e.bool("manualOutput") {
                     tiledEdges = e.bool("mirror") ? 2 : 1
                 }
             case .transform:

@@ -58,14 +58,19 @@ enum AMImporter {
 
     /// Keyframes / static value of an AM property node. AM key times are 0…1 across the layer's duration.
     static func animated<V: Interpolatable>(_ node: Node?, inPoint: Double, length: Double, _ convert: ([Double]) -> V?) -> Animated<V>? {
+        animatedProperty(node, inPoint: inPoint, length: length) { convert(nums($0)) }
+    }
+
+    private static func animatedProperty<V: Interpolatable>(_ node: Node?, inPoint: Double, length: Double,
+                                                               _ convert: (String?) -> V?) -> Animated<V>? {
         guard let node else { return nil }
         let kfs = node.all("kf")
         if kfs.isEmpty {
-            guard let v = convert(nums(node["value"])) else { return nil }
+            guard let v = convert(node["value"]) else { return nil }
             return Animated(v)
         }
         let parsed: [(t: Double, v: V, e: String?)] = kfs.compactMap { k in
-            guard let tt = Double(k["t"] ?? ""), let v = convert(nums(k["v"])) else { return nil }
+            guard let tt = Double(k["t"] ?? ""), let v = convert(k["v"]) else { return nil }
             return (inPoint + tt * length, v, k["e"])
         }.sorted { $0.t < $1.t }
         guard let first = parsed.first else { return nil }
@@ -100,12 +105,28 @@ enum AMImporter {
 
     // MARK: Effects
 
-    private static let reviewedSourceRenderers = Dictionary(
-        (ReferenceFragmentCatalog.promoted + EffectRegistry.importOnlyReferences).filter { $0.referenceBinding == nil && !$0.sourceID.isEmpty }
-            .map { ($0.sourceID, $0) }, uniquingKeysWith: { first, _ in first }
-    )
+    /// Older source effects that need a host adapter. Register full IDs and
+    /// versions so an unrelated effect with the same suffix stays independent.
+    private static let legacyEffectIDs: [String: String] = {
+        let effects = [
+            "ripplelight", "time_slice_mask", "halftonedots", "drawing.progress", "shake", "shake2",
+            "oscillate", "oscillate2", "oscillate3", "swing", "pulsate", "spin", "jitter", "randomdisplace",
+            "tile", "circularripple", "circularripple2", "pinchbulge", "pinchbulge2", "zoomblur", "zoomblur3",
+            "gaussianblur", "blur", "exposure", "hueshift", "motionblur", "motionblur4",
+            "softglow", "glow", "edgeglow", "lift", "findedges", "invert", "blink", "blink2", "innerblur",
+            "chromakey", "dblur", "rgbsep", "vhs", "threshold", "sharpen", "pixelate", "pixelate2",
+            "fractalwarp", "fractalwarp4", "brightcont", "brightcont2", "colorize", "colorhot", "unmult", "fade",
+            "textprogress", "textspacing", "texttransform", "solidcolor", "replacecolor", "blackbars",
+            "boxblur", "boxblur3", "stretch", "stretch2", "scaleassist"
+        ]
+        var ids = Dictionary(uniqueKeysWithValues: effects.map { ("com.alightcreative.effects." + $0, $0) })
+        ids["com.alightcreative.solidcolor"] = "solidcolor"
+        ids["com.alightcreative.replacecolor"] = "replacecolor"
+        ids["com.customfx.effects.blackbars"] = "blackbars"
+        return ids
+    }()
 
-    /// Maps one AM effect onto this app's effect (or layer settings). Returns false when there's no equivalent.
+    /// Adds the source effect at its original stack position.
     static func applyEffect(_ fx: Node, to layer: inout Layer, project: inout Project, inPoint: Double, length: Double,
                             report: inout ImportReport) {
         let full = fx["id"] ?? "Unknown Alight Motion effect"
@@ -113,13 +134,15 @@ enum AMImporter {
         let stackStart = layer.effects.count
         let reportStart = report.entries.count
         let original = capture(fx)
+        let legacyID = legacyEffectIDs[full] ?? ""
+        let base = legacyID.trimmingCharacters(in: .decimalDigits)
+        let reference = ImportedEffectRenderers.xmlFragments[full]
         defer {
             // Layer flags and text animators render through their existing editor controls.
             let entry = report.entries.count > reportStart ? report.entries.last : nil
             if layer.effects.count == stackStart {
                 let represented = ["motionblur", "fade", "textprogress", "textspacing", "texttransform", "stretch", "scaleassist"]
-                let id = full.split(separator: ".").last.map(String.init)?.trimmingCharacters(in: .decimalDigits) ?? ""
-                let support: ImportedEffect.Support = represented.contains(id) && entry?.status != .missing ? .layerSettings : .unavailable
+                let support: ImportedEffect.Support = represented.contains(base) && entry?.status != .missing ? .layerSettings : .unavailable
                 var saved = EffectInstance(typeID: "source.unavailable", params: [:])
                 saved.imported = ImportedEffect(format: .alightMotion, matchName: full, displayName: entry?.item ?? full,
                                                 support: support, properties: [original])
@@ -127,16 +150,13 @@ enum AMImporter {
             } else {
                 for i in stackStart..<layer.effects.count {
                     let typeID = layer.effects[i].typeID
-                    let dedicated = typeID == EffectRegistry.importedOscillate.id || typeID.hasPrefix("awi.amref.")
+                    let dedicated = typeID == EffectRegistry.importedOscillate.id || typeID == reference?.id
                     layer.effects[i].imported = ImportedEffect(format: .alightMotion, matchName: full,
-                        displayName: entry?.item ?? full, support: typeID == EffectRegistry.importedOscillate.id ? .nativeAdapter : .approximation,
+                        displayName: entry?.item ?? full, support: dedicated ? .nativeAdapter : .approximation,
                         properties: [original], phaseOrigin: dedicated ? inPoint : nil)
                 }
             }
         }
-        let id = full.replacingOccurrences(of: "com.alightcreative.effects.", with: "").replacingOccurrences(of: "com.alightcreative.internal.", with: "")
-            .replacingOccurrences(of: "com.alightcreative.", with: "").replacingOccurrences(of: "com.customfx.effects.", with: "")
-        let base = id.trimmingCharacters(in: CharacterSet.decimalDigits)
         var props: [String: Node] = [:]
         for p in fx.all("property") { if let n = p["name"] { props[n] = p } }
         func num(_ k: String, scale: Double = 1, offset: Double = 0) -> ParamValue? {
@@ -149,7 +169,7 @@ enum AMImporter {
             layer.effects.append(e)
         }
         let name = layer.name
-        if let reference = reviewedSourceRenderers[full], let definition = EffectRegistry.definition(reference.id) {
+        if let reference, let definition = EffectRegistry.definition(reference.id) {
             var instance = definition.makeInstance()
             for parameter in reference.parameters {
                 let control = parameter.definition
@@ -166,19 +186,28 @@ enum AMImporter {
                         return Vec2(values[0], values[1])
                     }) { instance.params[control.id] = .point(track) }
                 case .color:
-                    if let value = color(property["value"]) { instance.params[control.id] = .color(Animated(value)) }
+                    if let track = animatedProperty(property, inPoint: inPoint, length: length, color) {
+                        instance.params[control.id] = .color(track)
+                    }
                 case .toggle:
-                    if let value = property["value"] { instance.params[control.id] = .toggle(value == "true" || value == "1") }
+                    importDiscrete(property, key: control.id, inPoint: inPoint, length: length, into: &instance,
+                                   value: { $0 == 1 ? .toggle(true) : .toggle(false) }) { raw in
+                        switch raw.lowercased() {
+                        case "true", "1": return 1
+                        case "false", "0": return 0
+                        default: return nil
+                        }
+                    }
                 case .choice(let options):
-                    if let value = property["value"],
-                       let choice = Int(value).flatMap({ parameter.choiceValues.firstIndex(of: $0) })
-                        ?? options.firstIndex(where: { $0.caseInsensitiveCompare(value) == .orderedSame }) {
-                        instance.params[control.id] = .choice(choice)
+                    importDiscrete(property, key: control.id, inPoint: inPoint, length: length, into: &instance,
+                                   value: ParamValue.choice) { raw in
+                        Int(raw).flatMap { parameter.choiceValues.firstIndex(of: $0) }
+                            ?? options.firstIndex { $0.caseInsensitiveCompare(raw) == .orderedSame }
                     }
                 }
             }
             layer.effects.append(instance)
-            report.add(name, definition.name, .approximate, "Matched the original effect ID to a reviewed renderer; source data retained.")
+            report.add(name, definition.name, .native, "Loaded the bundled shader for this source ID.")
             return
         }
         switch base {
@@ -217,7 +246,7 @@ enum AMImporter {
         case "shake":
             make(EffectRegistry.shake, ["amplitude": num("mag"), "frequency": num("freq"), "rotation": .number(Animated(0))])
             report.add(name, "Shake", .approximate, "Source controls saved. Random motion uses a compatibility renderer.")
-        case "oscillate" where id == "oscillate3":
+        case "oscillate" where legacyID == "oscillate3":
             let wave = props["wave"]?["value"]?.lowercased()
             make(EffectRegistry.importedOscillate, ["distance": num("mag"), "frequency": num("freq"), "direction": num("angle"),
                 "phase": num("phase"), "wave": .choice(wave == "triangle" || wave == "1" ? 1 : 0)])
@@ -383,7 +412,24 @@ enum AMImporter {
             layer.transform.scale = Animated(Vec2(sc.x * s, sc.y))
             report.add(name, base == "stretch" ? "Stretch" : "Scale Assist", .approximate, "Applied as a static scale.")
         default:
-            report.add(name, id, .missing, "Source parameters retained. A compatible renderer is unavailable.")
+            report.add(name, full, .missing, "Source parameters retained. A compatible renderer is unavailable.")
+        }
+    }
+
+    private static func importDiscrete(_ property: Node, key: String, inPoint: Double, length: Double,
+                                       into instance: inout EffectInstance, value: (Int) -> ParamValue,
+                                       parse: (String) -> Int?) {
+        if let raw = property["value"], let decoded = parse(raw) { instance.params[key] = value(decoded) }
+        var keys: [EffectStackR4.HoldKey] = []
+        for keyframe in property.all("kf") {
+            guard let normalized = keyframe["t"].flatMap(Double.init), normalized.isFinite,
+                  let raw = keyframe["v"], let decoded = parse(raw) else { continue }
+            keys.append(.init(time: inPoint + normalized * length, value: decoded))
+        }
+        if let encoded = EffectStackR4.encode(keys) {
+            var text = instance.text ?? [:]
+            text[EffectStackR4.holdPrefix + key] = encoded
+            instance.text = text
         }
     }
 

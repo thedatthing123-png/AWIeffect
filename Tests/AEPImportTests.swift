@@ -49,7 +49,8 @@ final class AEPImportTests: XCTestCase {
 
     func testGaussianBlurValuesImport() throws {
         let fx = try load("2_gaussian_20_30").project.layers[0].effects
-        XCTAssertEqual(fx.map(\.typeID), ["ae.gaussianBlur", "ae.gaussianBlur"])
+        XCTAssertEqual(fx.map { EffectRegistry.definition($0.typeID)?.id }, ["ae.gaussianBlur", "ae.gaussianBlur"])
+        XCTAssertTrue(fx.allSatisfy { $0.typeID.hasPrefix("source.ae.v1.ADBE Gaussian Blur") })
         XCTAssertEqual(fx.map { $0.number("blurriness", 0) }, [20, 30])
     }
 

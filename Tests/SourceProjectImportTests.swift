@@ -75,8 +75,81 @@ final class SourceProjectImportTests: XCTestCase {
         let glow = try XCTUnwrap(text.effects.last)
         XCTAssertNotNil(EffectRegistry.definition(glow.typeID))
         XCTAssertEqual(glow.imported?.matchName, "com.alightcreative.effects.deepglow")
-        XCTAssertEqual(glow.params["rrr"]?.number(at: 2), 200)
+        XCTAssertEqual(try XCTUnwrap(glow.params["rrr"]).number(at: 2), 200, accuracy: 0.00001)
         XCTAssertEqual(result.report.missingCount, 0)
+    }
+
+    @MainActor
+    func testSourceShaderSurvivesCopyAndEditsBesideSameNamedEffect() throws {
+        let xml = """
+        <scene title="Source Colors" width="80" height="80" fps="30" totalTime="1000">
+          <shape s="rect" startTime="0" endTime="1000">
+            <effect id="com.alightcreative.effects.tritone">
+              <property name="highlights" type="color">
+                <kf t="0" v="#FFFF0000"/><kf t="1" v="#FF0000FF" e="cubicBezier 0.25 0 0.75 1"/>
+              </property>
+            </effect>
+            <effect id="com.customfx.effects.tritone"/>
+            <effect id="com.customfx.effects.shake2"/>
+          </shape>
+        </scene>
+        """
+        let source = try AMImporter.load(data: Data(xml.utf8), fallbackName: "Imported").project
+        XCTAssertEqual(source.name, "Source Colors")
+        XCTAssertEqual(source.importedFormat, .alightMotion)
+        let layer = try XCTUnwrap(source.layers.first)
+        let original = try XCTUnwrap(layer.effects.first)
+        let reference = try XCTUnwrap(ReferenceFragmentCatalog.bySourceID["com.alightcreative.effects.tritone"])
+        XCTAssertEqual(original.typeID, reference.id)
+        XCTAssertEqual(layer.effects.dropFirst().map { $0.imported?.support }, [.unavailable, .unavailable])
+        let native = EffectRegistry.tritone
+        XCTAssertEqual(EffectRegistry.definition(original.typeID)?.name, native.name)
+        XCTAssertNotEqual(original.typeID, native.id)
+        var report = ImportReport()
+        let ae = AEPImporter.importEffect(AEProp(matchName: "ADBE Tritone", kind: .group([])),
+                                          timebase: 24576, layerStart: 0, layer: "Art", report: &report)
+        XCTAssertEqual(ae.imported?.sourceID, "afterEffects:ADBE Tritone")
+        XCTAssertEqual(ae.typeID, "source.ae.v1.ADBE Tritone")
+        XCTAssertEqual(EffectRegistry.definition(ae.typeID)?.id, native.id)
+        XCTAssertNotEqual(ae.typeID, original.typeID)
+        guard case .color(let colors)? = original.params["highlights"] else { return XCTFail("Missing source color track") }
+        XCTAssertEqual(colors.keyframeTimes, [0, 1])
+        XCTAssertEqual(colors.keyframes.first?.interpolation, .bezier)
+
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("source-shader-\(UUID())", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = ProjectStore(root: root)
+        let sourceEditor = EditorState(project: source, store: store)
+        sourceEditor.select(layer.id)
+        sourceEditor.copyEffects([original.id])
+
+        var project = Project.new(name: "Destination", width: 80, height: 80, fps: 30, duration: 3)
+        var art = project.makeLayer(name: "Art", content: .solid, size: Vec2(80, 80))
+        art.inPoint = 1
+        art.outPoint = 3
+        art.effects = [native.makeInstance()]
+        art.effects[0].isEnabled = false
+        project.layers = [art]
+        let editor = EditorState(project: project, store: store)
+        editor.select(art.id)
+        editor.pasteEffects()
+        let pasted = try XCTUnwrap(editor.selectedLayer?.effects.last)
+        XCTAssertEqual(pasted.typeID, original.typeID)
+        XCTAssertEqual(pasted.imported?.sourceID, original.imported?.sourceID)
+        XCTAssertEqual(pasted.keyframeTimes, [1, 3])
+
+        guard let renderer = Renderer.shared else { return XCTFail("Metal renderer unavailable") }
+        func frame(_ project: Project) throws -> [UInt8] {
+            try XCTUnwrap(renderer.renderPixels(project: project, time: 1.5, mediaURL: { store.mediaURL($0, projectID: project.id) })).rgba
+        }
+        let before = try frame(editor.project)
+        editor.setEffectParam(pasted.id, "highlights") { value, _ in
+            value = .color(Animated(RGBA(0, 1, 0)))
+        }
+        let reopened = try JSONDecoder().decode(Project.self, from: JSONEncoder().encode(editor.project))
+        XCTAssertEqual(reopened.layers.first?.effects.last?.typeID, reference.id)
+        XCTAssertEqual(reopened.layers.first?.effects.last?.imported?.properties, original.imported?.properties)
+        XCTAssertNotEqual(try frame(reopened), before)
     }
 
     @MainActor
