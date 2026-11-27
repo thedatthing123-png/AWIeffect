@@ -1,23 +1,24 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Shows what an After Effects import brought in: native / approximate / missing, plus the effect scanner.
+/// Shows what the selected source project brought in and which items need attention.
 struct ImportReportSheet: View {
     let result: AEPImportResult
     let open: (Project) -> Void
     let reimport: (String) -> Void
     @State private var filter: ImportReport.Status?
+    @State private var showsDetails = false
+    private var format: ImportedProjectFormat { result.project.importedFormat ?? .afterEffects }
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    HStack(spacing: 10) {
-                        stat("Native", result.report.nativeCount, Theme.ok)
-                        stat("Approx.", result.report.approximateCount, Theme.warning)
-                        stat("Missing", result.report.missingCount, Theme.danger)
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(result.project.name).font(.title2.weight(.semibold)).foregroundStyle(Theme.text)
+                        Text("\(format.title) Project").font(.subheadline).foregroundStyle(Theme.accentGlow)
                     }
-                    .listRowBackground(Color.clear)
+                    .accessibilityIdentifier("import-project-name")
                     LabeledContent("Composition", value: result.report.compName)
                     LabeledContent("Size", value: "\(result.project.width)×\(result.project.height) · \(Int(result.project.fps.rounded())) fps")
                     LabeledContent("Layers", value: "\(result.project.layers.count)")
@@ -28,33 +29,31 @@ struct ImportReportSheet: View {
                     }
                 }
                 Section {
-                    Picker("Show", selection: $filter) {
-                        Text("All").tag(ImportReport.Status?.none)
-                        Text("Native").tag(ImportReport.Status?.some(.native))
-                        Text("Approx.").tag(ImportReport.Status?.some(.approximate))
-                        Text("Missing").tag(ImportReport.Status?.some(.missing))
-                    }
-                    .pickerStyle(.segmented)
-                    ForEach(result.report.entries.filter { filter == nil || $0.status == filter }) { e in
-                        HStack(alignment: .top, spacing: 10) {
-                            Circle().fill(color(e.status)).frame(width: 9, height: 9).padding(.top, 5)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(e.item).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.text)
-                                Text(e.layer).font(.caption).foregroundStyle(Theme.textDim)
-                                if !e.detail.isEmpty { Text(e.detail).font(.caption2).foregroundStyle(Theme.textDim) }
-                            }
+                    Button {
+                        showsDetails.toggle()
+                    } label: {
+                        HStack {
+                            Text("Import Details").foregroundStyle(Theme.text)
+                            Spacer()
+                            Image(systemName: showsDetails ? "chevron.down" : "chevron.right")
+                                .foregroundStyle(Theme.textDim)
                         }
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
                     }
-                } header: { Text("Import report") }
-                if !result.report.effectUsage.isEmpty {
+                    .buttonStyle(.plain)
+                }
+                if showsDetails {
+                    importDetails
+                }
+                if showsDetails && !result.report.effectUsage.isEmpty {
                     Section("Effect scanner (whole file)") {
                         ForEach(result.report.effectUsage.sorted { $0.value > $1.value }, id: \.key) { k, v in
                             HStack {
-                                Text(EffectRegistry.definition(aeMatchName: k)?.name ?? k).foregroundStyle(Theme.text)
+                                Text(format == .afterEffects ? (EffectRegistry.definition(aeMatchName: k)?.name ?? k) : k)
+                                    .foregroundStyle(Theme.text)
                                 Spacer()
                                 Text("×\(v)").foregroundStyle(Theme.textDim)
-                                Image(systemName: EffectRegistry.definition(aeMatchName: k) == nil ? "xmark.circle" : "checkmark.circle.fill")
-                                    .foregroundStyle(EffectRegistry.definition(aeMatchName: k) == nil ? Theme.danger : Theme.ok)
                             }
                         }
                     }
@@ -62,13 +61,45 @@ struct ImportReportSheet: View {
             }
             .scrollContentBackground(.hidden)
             .background(Theme.background)
-            .navigationTitle("After Effects Import")
+            .navigationTitle("\(format.title) Import")
             .toolbarBackground(Theme.background, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .navigationBarTitleDisplayMode(.inline)
             .safeAreaInset(edge: .bottom) {
                 Button("Open Project") { open(result.project) }
                     .buttonStyle(PrimaryButtonStyle()).padding(16)
+            }
+        }
+    }
+
+    private var importDetails: some View {
+        Section {
+            HStack(spacing: 10) {
+                stat("Native", result.report.nativeCount, Theme.ok)
+                stat("Compatible", result.report.approximateCount, Theme.warning)
+                stat("Unresolved", result.report.missingCount, Theme.danger)
+            }
+            .listRowBackground(Color.clear)
+            if result.report.missingCount > 0 {
+                Text("Missing footage uses placeholders. Unresolved effects keep their source settings and stack position.")
+                    .font(.caption).foregroundStyle(Theme.textDim)
+            }
+            Picker("Show", selection: $filter) {
+                Text("All").tag(ImportReport.Status?.none)
+                Text("Native").tag(ImportReport.Status?.some(.native))
+                Text("Compatible").tag(ImportReport.Status?.some(.approximate))
+                Text("Unresolved").tag(ImportReport.Status?.some(.missing))
+            }
+            .pickerStyle(.segmented)
+            ForEach(result.report.entries.filter { filter == nil || $0.status == filter }) { e in
+                HStack(alignment: .top, spacing: 10) {
+                    Circle().fill(color(e.status)).frame(width: 9, height: 9).padding(.top, 5)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(e.item).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.text)
+                        Text(e.layer).font(.caption).foregroundStyle(Theme.textDim)
+                        if !e.detail.isEmpty { Text(e.detail).font(.caption2).foregroundStyle(Theme.textDim) }
+                    }
+                }
             }
         }
     }

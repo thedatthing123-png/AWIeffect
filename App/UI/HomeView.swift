@@ -101,9 +101,14 @@ struct HomeView: View {
         .awiSheet(isPresented: Binding(get: { importResult != nil }, set: { if !$0 { importResult = nil } })) {
             if let r = importResult {
                 ImportReportSheet(result: r, open: { p in
-                    try? ProjectStore.shared.save(p)
-                    importResult = nil
-                    open(p)
+                    do {
+                        try ProjectStore.shared.save(p)
+                        importResult = nil
+                        open(p)
+                    } catch {
+                        importResult = nil
+                        importError = error.localizedDescription
+                    }
                 }, reimport: { runImport(compName: $0) })
             }
         }

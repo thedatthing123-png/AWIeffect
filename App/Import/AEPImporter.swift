@@ -88,7 +88,7 @@ enum AEPImporter {
         try importData(try Data(contentsOf: url), compName: compName, projectName: url.deletingPathExtension().lastPathComponent)
     }
 
-    static func importData(_ data: Data, compName: String? = nil, projectName: String = "Imported") throws -> AEPImportResult {
+    static func importData(_ data: Data, compName: String? = nil, projectName: String? = nil) throws -> AEPImportResult {
         let root = try RIFXParser.parse(data)
         var comps: [Comp] = []
         var footage: [UInt32: Footage] = [:]
@@ -103,7 +103,9 @@ enum AEPImporter {
         let comp = comps.first { $0.name == compName } ?? comps.max { $0.chunk.children("Layr").count < $1.chunk.children("Layr").count }!
         report.compName = comp.name
 
-        var project = Project.new(name: comp.name.isEmpty ? projectName : comp.name, width: comp.width, height: comp.height,
+        let fileName = projectName?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = fileName.flatMap { $0.isEmpty ? nil : $0 } ?? (comp.name.isEmpty ? "Imported" : comp.name)
+        var project = Project.new(name: name, width: comp.width, height: comp.height,
                                   fps: comp.fps, duration: max(comp.duration, 1 / comp.fps), background: comp.background)
         project.importedFormat = .afterEffects
         project.autoLength = false

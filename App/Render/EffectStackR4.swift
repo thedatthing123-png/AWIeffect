@@ -140,7 +140,10 @@ enum EffectStackR4 {
 
 extension EffectRegistry {
     /// The definition without the R4 wrapping (for its parameter list).
-    static func rawDefinition(_ id: String) -> EffectDefinition? { id == importedOscillate.id ? importedOscillate : all.first { $0.id == id } }
+    static func rawDefinition(_ id: String) -> EffectDefinition? {
+        if id == importedOscillate.id { return importedOscillate }
+        return all.first { $0.id == id } ?? importOnlyReferences.first { $0.id == id }?.definition
+    }
 
     static let batchR4: [EffectDefinition] = [gradientR4]
 

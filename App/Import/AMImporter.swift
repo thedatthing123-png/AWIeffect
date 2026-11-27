@@ -101,7 +101,7 @@ enum AMImporter {
     // MARK: Effects
 
     private static let reviewedSourceRenderers = Dictionary(
-        ReferenceFragmentCatalog.promoted.filter { $0.referenceBinding == nil && !$0.sourceID.isEmpty }
+        (ReferenceFragmentCatalog.promoted + EffectRegistry.importOnlyReferences).filter { $0.referenceBinding == nil && !$0.sourceID.isEmpty }
             .map { ($0.sourceID, $0) }, uniquingKeysWith: { first, _ in first }
     )
 
@@ -117,7 +117,7 @@ enum AMImporter {
             // Layer flags and text animators render through their existing editor controls.
             let entry = report.entries.count > reportStart ? report.entries.last : nil
             if layer.effects.count == stackStart {
-                let represented = ["motionblur", "fade", "textprogress", "textspacing", "stretch", "scaleassist"]
+                let represented = ["motionblur", "fade", "textprogress", "textspacing", "texttransform", "stretch", "scaleassist"]
                 let id = full.split(separator: ".").last.map(String.init)?.trimmingCharacters(in: .decimalDigits) ?? ""
                 let support: ImportedEffect.Support = represented.contains(id) && entry?.status != .missing ? .layerSettings : .unavailable
                 var saved = EffectInstance(typeID: "source.unavailable", params: [:])
@@ -338,6 +338,34 @@ enum AMImporter {
         case "textspacing":
             if let ls = double(props["letterspacing"], inPoint, length, scale: 20) { layer.text?.tracking = ls }
             report.add(name, "Text Spacing", .native)
+        case "texttransform":
+            guard layer.text != nil else {
+                report.add(name, "Text Transform", .missing, "Requires a text layer. Source settings were kept.")
+                return
+            }
+            var animator = TextAnimator(name: "Text Transform")
+            animator.importedStart = inPoint
+            animator.selector.start = double(props["start"], inPoint, length, scale: 100) ?? Animated(0)
+            animator.selector.end = double(props["end"], inPoint, length, scale: 100) ?? Animated(100)
+            switch (props["basedOn"]?["value"] ?? "").lowercased() {
+            case "word", "words": animator.selector.basedOn = .words
+            case "line", "lines": animator.selector.basedOn = .lines
+            default: break
+            }
+            animator.properties.position = animated(props["offset"], inPoint: inPoint, length: length) {
+                guard $0.count == 2 else { return nil }
+                return Vec2($0[0], $0[1])
+            }
+            animator.properties.rotation = double(props["angle"], inPoint, length)
+            animator.properties.scale = animated(props["stretch"], inPoint: inPoint, length: length) { values in
+                values.first.map { Vec2(max(0, 100 * (1 + $0)), 100) }
+            }
+            guard animator.properties.position != nil || animator.properties.rotation != nil || animator.properties.scale != nil else {
+                report.add(name, "Text Transform", .missing, "This version has no transform controls AWIeffect can render. Source settings were kept.")
+                return
+            }
+            layer.text?.animators.append(animator)
+            report.add(name, "Text Transform", .approximate, "Range, offset, rotation and stretch use an editable text animator. Source overlap and range-easing settings are retained.")
         case "solidcolor":
             make(EffectRegistry.fill, ["color": props["color"]?["value"].flatMap(color).map { .color(Animated($0)) },
                                        "opacity": num("alpha", scale: 100)])
@@ -456,7 +484,10 @@ enum AMImporter {
                 t.alignment = node["align"] == "left" ? .left : (node["align"] == "right" ? .right : .center)
                 l.text = t
                 if node.child("shadow") != nil { l.effects.append(EffectRegistry.dropShadow.makeInstance()) }
-                report.add(label, "Text", .approximate, "Font “\(node["font"]?.replacingOccurrences(of: "imported?name=", with: "") ?? "default")” → this app's default; pick a font in Text Studio.")
+                let sourceFont = node["font"] ?? ""
+                let fontName = URLComponents(string: sourceFont)?.queryItems?.first(where: { $0.name == "name" })?.value
+                    ?? (sourceFont.isEmpty ? "default" : sourceFont)
+                report.add(label, "Text", .approximate, "Source font: \(fontName). Choose the matching font in Text Studio.")
             case "drawing":
                 // Each pen stroke becomes an open path with a stroke.
                 var strokes: [Layer] = []

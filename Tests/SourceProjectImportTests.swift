@@ -17,6 +17,7 @@ final class SourceProjectImportTests: XCTestCase {
 
         let fixture = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "2_gaussian_animated", withExtension: "aep"))
         let project = try AEPImporter.load(url: fixture).project
+        XCTAssertEqual(project.name, fixture.deletingPathExtension().lastPathComponent)
         XCTAssertEqual(project.importedFormat, .afterEffects)
         XCTAssertFalse(project.autoLength)
         let effect = try XCTUnwrap(project.layers.flatMap(\.effects).first { !$0.keyframeTimes.isEmpty })
@@ -46,6 +47,36 @@ final class SourceProjectImportTests: XCTestCase {
         XCTAssertEqual(effects[2].imported?.sourceID, "alightMotion:com.alightcreative.effects.oscillate3")
         let layer = try XCTUnwrap(project.layers.first)
         XCTAssertEqual(Renderer.transformOffsets(layer, time: 0.25).dx, 20, accuracy: 1e-7)
+    }
+
+    func testAMTextTransformAndDeepGlowKeepSourceIdentityAndKeys() throws {
+        let xml = """
+        <scene title="Titles" width="200" height="120" fps="30" totalTime="2000">
+          <text label="Title" startTime="0" endTime="2000">
+            <effect id="com.alightcreative.effects.texttransform">
+              <property name="start" type="float"><kf t="0" v="0"/><kf t="1" v="1"/></property>
+              <property name="offset" type="vec2" value="12,8"/>
+              <property name="overlap" type="float" value="4"/>
+            </effect>
+            <effect id="com.alightcreative.effects.deepglow">
+              <property name="rrr" type="float"><kf t="0" v="1"/><kf t="1" v="2"/></property>
+            </effect>
+            <content>Title</content>
+          </text>
+        </scene>
+        """
+        let result = try AMImporter.load(data: Data(xml.utf8), fallbackName: "Titles")
+        let text = try XCTUnwrap(result.project.layers.first)
+        let animator = try XCTUnwrap(text.text?.animators.first)
+        XCTAssertEqual(animator.selector.start.keyframeTimes, [0, 2])
+        XCTAssertEqual(animator.properties.position?.staticValue, Vec2(12, 8))
+        XCTAssertEqual(text.effects.first?.imported?.support, .layerSettings)
+        XCTAssertEqual(text.effects.first?.imported?.properties.first?.children.last?.attributes?["name"], "overlap")
+        let glow = try XCTUnwrap(text.effects.last)
+        XCTAssertNotNil(EffectRegistry.definition(glow.typeID))
+        XCTAssertEqual(glow.imported?.matchName, "com.alightcreative.effects.deepglow")
+        XCTAssertEqual(glow.params["rrr"]?.number(at: 2), 200)
+        XCTAssertEqual(result.report.missingCount, 0)
     }
 
     @MainActor
