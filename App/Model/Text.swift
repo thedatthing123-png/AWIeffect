@@ -317,8 +317,13 @@ struct TextStagger: Codable, Equatable {
                 return (unit, centerOut ? last / 2 - edgeDistance : edgeDistance)
             })
         case .shuffled:
-            let ordered = units.map { (unit: $0, score: Self.shuffleKey($0, seed: seed ?? 1)) }.sorted {
-                $0.score == $1.score ? $0.unit < $1.unit : $0.score < $1.score
+            let effectiveSeed = seed ?? 1
+            let scored: [(unit: Int, score: UInt64)] = units.map { unit in
+                (unit, Self.shuffleKey(unit, seed: effectiveSeed))
+            }
+            let ordered = scored.sorted { lhs, rhs in
+                if lhs.score == rhs.score { return lhs.unit < rhs.unit }
+                return lhs.score < rhs.score
             }
             return Dictionary(uniqueKeysWithValues: ordered.enumerated().map { ($0.element.unit, $0.offset) })
         }
