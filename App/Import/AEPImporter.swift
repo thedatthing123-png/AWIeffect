@@ -44,11 +44,20 @@ struct ImportReport {
         let status: Status
         let detail: String
     }
+    struct Composition: Identifiable {
+        let id: UInt32
+        let name: String
+        let width: Int
+        let height: Int
+        let fps: Double
+    }
     var compName = ""
     var entries: [Entry] = []
     /// Effect match name -> number of uses across the whole file (effect scanner).
     var effectUsage: [String: Int] = [:]
     var comps: [String] = []
+    var compositions: [Composition] = []
+    var selectedCompositionID: UInt32?
 
     var nativeCount: Int { entries.filter { $0.status == .native }.count }
     var approximateCount: Int { entries.filter { $0.status == .approximate }.count }
@@ -88,7 +97,8 @@ enum AEPImporter {
         try importData(try Data(contentsOf: url), compName: compName, projectName: url.deletingPathExtension().lastPathComponent)
     }
 
-    static func importData(_ data: Data, compName: String? = nil, projectName: String? = nil) throws -> AEPImportResult {
+    static func importData(_ data: Data, compName: String? = nil, projectName: String? = nil,
+                           compositionID: UInt32? = nil) throws -> AEPImportResult {
         let root = try RIFXParser.parse(data)
         var comps: [Comp] = []
         var footage: [UInt32: Footage] = [:]
@@ -97,11 +107,14 @@ enum AEPImporter {
         for c in comps { compByID[c.id] = c }
         var report = ImportReport()
         report.comps = comps.map(\.name)
+        report.compositions = comps.map { ImportReport.Composition(id: $0.id, name: $0.name, width: $0.width, height: $0.height, fps: $0.fps) }
         guard !comps.isEmpty else { throw RIFXError.notAEP }
 
         // Pick the requested comp, else the one with the most layers (usually the main edit).
-        let comp = comps.first { $0.name == compName } ?? comps.max { $0.chunk.children("Layr").count < $1.chunk.children("Layr").count }!
+        let comp = compositionID.flatMap { compByID[$0] } ?? comps.first { $0.name == compName }
+            ?? comps.max { $0.chunk.children("Layr").count < $1.chunk.children("Layr").count }!
         report.compName = comp.name
+        report.selectedCompositionID = comp.id
 
         let fileName = projectName?.trimmingCharacters(in: .whitespacesAndNewlines)
         let name = fileName.flatMap { $0.isEmpty ? nil : $0 } ?? (comp.name.isEmpty ? "Imported" : comp.name)

@@ -96,20 +96,14 @@ struct HomeView: View {
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.aep, .xml, UTType(filenameExtension: "awi") ?? .data, .data]) { result in
             guard case .success(let url) = result else { return }
             importURL = url
-            runImport(compName: nil)
+            runImport()
         }
         .awiSheet(isPresented: Binding(get: { importResult != nil }, set: { if !$0 { importResult = nil } })) {
             if let r = importResult {
-                ImportReportSheet(result: r, open: { p in
-                    do {
-                        try ProjectStore.shared.save(p)
-                        importResult = nil
-                        open(p)
-                    } catch {
-                        importResult = nil
-                        importError = error.localizedDescription
-                    }
-                }, reimport: { runImport(compName: $0) })
+                ImportCompositionSheet(result: r) { id in
+                    if id == r.report.selectedCompositionID { openImportedProject(r.project) }
+                    else { runImport(compositionID: id) }
+                }
             }
         }
         .alert("Rename Project", isPresented: Binding(get: { renameTarget != nil }, set: { if !$0 { renameTarget = nil } })) {
@@ -405,24 +399,43 @@ struct HomeView: View {
         .presentationDetents([.medium, .large])
     }
 
-    private func runImport(compName: String?) {
+    private func runImport(compositionID: UInt32? = nil) {
         guard let url = importURL else { return }
         let access = url.startAccessingSecurityScopedResource()
         defer { if access { url.stopAccessingSecurityScopedResource() } }
         do {
-            if let data = try? Data(contentsOf: url, options: .mappedIfSafe), ProjectPackage.isPackage(data) {
+            let data = try Data(contentsOf: url, options: .mappedIfSafe)
+            if ProjectPackage.isPackage(data) {
                 // A project shared from AWIeffect: opens exactly as it was saved.
                 let p = try ProjectPackage.importPackage(data)
                 reload()
                 open(p)
                 return
             }
-            if let data = try? Data(contentsOf: url), AMImporter.isAMProject(data) {
-                importResult = try AMImporter.load(data: data, fallbackName: url.deletingPathExtension().lastPathComponent)
+            let name = url.deletingPathExtension().lastPathComponent
+            if AMImporter.isAMProject(data) {
+                openImportedProject(try AMImporter.load(data: data, fallbackName: name).project)
             } else {
-                importResult = try AEPImporter.load(url: url, compName: compName)
+                let result = try AEPImporter.importData(data, projectName: name, compositionID: compositionID)
+                if compositionID == nil && result.report.compositions.count > 1 {
+                    importResult = result
+                } else {
+                    openImportedProject(result.project)
+                }
             }
         } catch {
+            importResult = nil
+            importError = error.localizedDescription
+        }
+    }
+
+    private func openImportedProject(_ project: Project) {
+        do {
+            try ProjectStore.shared.save(project)
+            importResult = nil
+            open(project)
+        } catch {
+            importResult = nil
             importError = error.localizedDescription
         }
     }
