@@ -199,4 +199,23 @@ final class RenewMediaTests: XCTestCase {
         XCTAssertEqual(ProjectSort.apply(.name, to: list, search: "").map(\.name), ["Édit Luffy", "naruto edit", "Zoro AMV"].sorted { $0.localizedStandardCompare($1) == .orderedAscending })
         XCTAssertEqual(ProjectSort.apply(.duration, to: list, search: "edit").map(\.name), ["naruto edit", "Édit Luffy"])
     }
+
+    func testHomeSourceFilterComposesAndSurvivesRenameDuplicateReopen() throws {
+        let store = ProjectStore(root: tempRoot())
+        var ae = project(); ae.name = "AE edit"; ae.importedFormat = .afterEffects
+        var am = project(); am.name = "AM edit"; am.importedFormat = .alightMotion
+        var awi = project(); awi.name = "Native edit"
+        for p in [ae, am, awi] { try store.save(p) }
+        var renamed = try store.load(ae.id); renamed.name = "AE renamed"; try store.save(renamed)
+        let copy = try store.duplicate(ae.id)
+        let list = store.list()
+        func names(_ s: ProjectSource, _ q: String = "") -> [String] { ProjectSort.apply(.name, to: list, search: q, source: s).map(\.name) }
+        XCTAssertEqual(names(.all).count, 4)
+        XCTAssertEqual(names(.afterEffects), ["AE renamed", "AE renamed copy"])
+        XCTAssertEqual(names(.alightMotion), ["AM edit"])
+        XCTAssertEqual(names(.awi), ["Native edit"])
+        XCTAssertEqual(names(.afterEffects, "copy"), ["AE renamed copy"])
+        XCTAssertEqual(ProjectSource(try store.load(copy.id).importedFormat), .afterEffects)
+        XCTAssertEqual(ProjectSource(ProjectStore(root: store.root).list().first { $0.id == am.id }?.importedFormat), .alightMotion)
+    }
 }

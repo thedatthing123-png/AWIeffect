@@ -21,6 +21,7 @@ struct HomeView: View {
     @State private var deleted: [DeletedProject] = []
     @State private var showDeleted = false
     @State private var search = ""
+    @State private var source = ProjectSource.all
     @AppStorage("awi.homeSort") private var sortRaw = ProjectSort.modified.rawValue
     @State private var selecting = false
     @State private var selection = Set<UUID>()
@@ -30,39 +31,22 @@ struct HomeView: View {
     @State private var versionsRefresh = 0
 
     private var shown: [ProjectSummary] {
-        ProjectSort(rawValue: sortRaw).map { ProjectSort.apply($0, to: projects, search: search) } ?? projects
+        ProjectSort.apply(ProjectSort(rawValue: sortRaw) ?? .modified, to: projects, search: search, source: source)
     }
 
     var body: some View {
         VStack(spacing: 0) {
             header
             ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    createCard
-                    Button { showImporter = true } label: {
-                        HStack(spacing: 12) {
-                            Text("Ae").font(.system(size: 15, weight: .black, design: .rounded))
-                                .frame(width: 34, height: 34)
-                                .background(RoundedRectangle(cornerRadius: 8).fill(Color(hex: 0x1F0F3D)))
-                                .foregroundStyle(Theme.accentGlow)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Import AE or Alight Motion Project").font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.text)
-                                Text(".aep, .ffx or Alight Motion .xml from Files").font(.caption).foregroundStyle(Theme.textDim)
-                            }
-                            Spacer()
-                        }
-                        .padding(14).glass()
-                    }
-                    .buttonStyle(.plain)
+                VStack(alignment: .leading, spacing: 0) {
+                    listControls
                     if projects.isEmpty {
                         emptyState
-                    } else {
-                        listControls
-                        if shown.isEmpty {
-                            Text("No project matches “\(search)”.").font(.subheadline).foregroundStyle(Theme.textDim).padding(.vertical, 20)
-                        }
-                        ForEach(shown) { p in projectRow(p) }
+                    } else if shown.isEmpty {
+                        Text(search.trimmingCharacters(in: .whitespaces).isEmpty ? "No \(source.title) projects yet." : "No project matches “\(search)”.")
+                            .font(.subheadline).foregroundStyle(Theme.textDim).padding(.vertical, 20)
                     }
+                    ForEach(shown) { p in projectRow(p) }
                     if !deleted.isEmpty {
                         Button { showDeleted = true } label: {
                             HStack(spacing: 12) {
@@ -76,12 +60,14 @@ struct HomeView: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("Recently Deleted")
+                        .padding(.top, 14)
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.bottom, 40)
+                .padding(.bottom, 24)
             }
-            if selecting { selectionBar }
+            .scrollDismissesKeyboard(.immediately)
+            if selecting { selectionBar } else { dock }
         }
         .onAppear(perform: reload)
         .confirmationDialog("Delete \(selection.count) projects?", isPresented: $pendingBulkDelete, titleVisibility: .visible) {
@@ -198,47 +184,78 @@ struct HomeView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
-            Image(uiImage: UIImage(named: "AppIcon") ?? UIImage())
-                .resizable().frame(width: 30, height: 30).clipShape(RoundedRectangle(cornerRadius: 8))
-                .opacity(UIImage(named: "AppIcon") == nil ? 0 : 1)
-            Text("AWIeffect")
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundStyle(LinearGradient(colors: [Theme.text, Theme.accentGlow], startPoint: .leading, endPoint: .trailing))
+        HStack(spacing: 4) {
+            (Text("AWI").foregroundStyle(Theme.text) + Text("effect").italic().foregroundStyle(Theme.accentGlow))
+                .font(.system(size: 26, weight: .heavy))
+                .accessibilityLabel("AWIeffect")
             Spacer()
+            if !projects.isEmpty {
+                Button(selecting ? "Done" : "Select") { selecting.toggle(); selection = [] }
+                    .font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.accentGlow)
+                    .frame(minWidth: 52, minHeight: 44)
+            }
             Button { showSettings = true } label: {
-                Image(systemName: "gearshape").font(.system(size: 18, weight: .semibold)).foregroundStyle(Theme.text)
-                    .frame(width: 36, height: 36)
+                Image(systemName: "gearshape").font(.system(size: 20, weight: .semibold)).foregroundStyle(Theme.text)
+                    .frame(width: 44, height: 44)
             }
             .accessibilityLabel("Settings")
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.top, 8)
         .awiSheet(isPresented: $showSettings) { SettingsSheet() }
     }
 
-    private var createCard: some View {
-        Button { showCreate = true } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "plus").font(.system(size: 18, weight: .bold))
-                    .frame(width: 34, height: 34)
-                    .background(Circle().fill(Theme.accent))
-                    .foregroundStyle(.white)
-                Text("Create New Project").font(.system(size: 16, weight: .semibold)).foregroundStyle(Theme.text)
-                Spacer()
+    /// Projects | New Project | Video Enhance.
+    private var dock: some View {
+        HStack(alignment: .bottom, spacing: 0) {
+            dockItem("Projects", icon: "folder", active: true) {}
+            Button { showCreate = true } label: {
+                VStack(spacing: 4) {
+                    Image(systemName: "plus").font(.system(size: 24, weight: .semibold)).foregroundStyle(.white)
+                        .frame(width: 52, height: 52).background(Circle().fill(Theme.accent).shadow(color: Theme.accent.opacity(0.45), radius: 10, y: 2))
+                    Text("New Project").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.text)
+                }
+                .frame(maxWidth: .infinity).contentShape(Rectangle())
             }
-            .padding(16)
-            .background(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(Theme.accent.opacity(0.6), style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])))
+            .buttonStyle(.plain)
+            .accessibilityLabel("Create New Project")
+            // Video Enhance has no destination yet (END_PLAN), so it stays visibly unavailable.
+            dockItem("Video Enhance", icon: "film", active: false, soon: true) {}
+                .disabled(true)
+        }
+        .padding(.top, 6).padding(.bottom, 2)
+        .background(Theme.background.ignoresSafeArea(edges: .bottom))
+        .overlay(alignment: .top) { Rectangle().fill(Theme.stroke).frame(height: 1) }
+    }
+
+    private func dockItem(_ title: String, icon: String, active: Bool, soon: Bool = false, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 5) {
+                Image(systemName: active ? icon + ".fill" : icon).font(.system(size: 22, weight: .medium))
+                    .frame(height: 28)
+                    .overlay(alignment: .topTrailing) {
+                        if soon {
+                            Text("SOON").font(.system(size: 8, weight: .heavy)).foregroundStyle(Theme.text)
+                                .padding(.horizontal, 4).padding(.vertical, 1)
+                                .background(Capsule().fill(Theme.raised)).overlay(Capsule().stroke(Theme.stroke))
+                                .fixedSize().offset(x: 22, y: -4)
+                        }
+                    }
+                Text(title).font(.system(size: 12, weight: .medium)).lineLimit(1).minimumScaleFactor(0.8)
+            }
+            .foregroundStyle(active ? Theme.accentGlow : Theme.textDim.opacity(soon ? 0.7 : 1))
+            .frame(maxWidth: .infinity, minHeight: 50).contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(soon ? "\(title), coming soon" : title)
     }
 
     private var emptyState: some View {
         VStack(spacing: 10) {
             Image(systemName: "sparkles").font(.system(size: 36)).foregroundStyle(Theme.accentGlow)
             Text("No projects yet").font(.headline).foregroundStyle(Theme.text)
-            Text("Tap Create New Project to start your first edit.").font(.subheadline).foregroundStyle(Theme.textDim)
+            Text("Tap + to start your first edit, or import an AEP / XML.").font(.subheadline).foregroundStyle(Theme.textDim)
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 60)
@@ -250,53 +267,56 @@ struct HomeView: View {
                 if selection.contains(p.id) { selection.remove(p.id) } else { selection.insert(p.id) }
             } else if let proj = try? ProjectStore.shared.load(p.id) { open(proj) }
         } label: {
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 if selecting {
                     Image(systemName: selection.contains(p.id) ? "checkmark.circle.fill" : "circle")
                         .font(.system(size: 22)).foregroundStyle(selection.contains(p.id) ? Theme.accent : Theme.textDim)
                 }
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10).fill(Color.black)
-                    if let t = p.thumbnail {
-                        Image(uiImage: t).resizable().scaledToFit()
+                ProjectThumbnail(image: p.thumbnail)
+                    .frame(width: 156, height: 88)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.stroke))
+                    .overlay(alignment: .bottomTrailing) {
+                        Text(String(format: "%02d:%02d", Int(p.duration) / 60, Int(p.duration) % 60))
+                            .font(.system(size: 11, weight: .semibold).monospacedDigit())
+                            .padding(.horizontal, 5).padding(.vertical, 2)
+                            .background(RoundedRectangle(cornerRadius: 5).fill(.black.opacity(0.72)))
+                            .foregroundStyle(.white).padding(5)
                     }
-                }
-                .frame(width: 72, height: 72)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .overlay(alignment: .bottomLeading) {
-                    Text(formatTimecode(p.duration, fps: p.fps))
-                        .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                        .padding(.horizontal, 4).padding(.vertical, 2)
-                        .background(Capsule().fill(.black.opacity(0.7)))
-                        .foregroundStyle(.white).padding(4)
-                }
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(p.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.text).lineLimit(1)
-                    HStack(spacing: 10) {
-                        Label("\(p.width)×\(p.height)", systemImage: "aspectratio")
-                        Label("\(Int(p.fps))fps", systemImage: "speedometer")
-                    }
-                    .font(.system(size: 11)).foregroundStyle(Theme.textDim)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(p.name).font(.system(size: 16, weight: .semibold)).foregroundStyle(Theme.text)
+                        .lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                    let src = ProjectSource(p.importedFormat)
+                    let frame = "\(p.width) × \(p.height)", rate = "\(Int(p.fps.rounded())) fps"
                     HStack(spacing: 6) {
-                        if let source = p.importedFormat { Text(source.title) }
-                        Text(p.modifiedAt, style: .relative)
+                        SourceBadge(source: src)
+                        // Longest variant that fits: source name only on imported projects, and only with room.
+                        ViewThatFits(in: .horizontal) {
+                            if src != .awi { Text("\(src.title) · \(frame)") }
+                            Text("\(frame) · \(rate)")
+                            Text(frame)
+                        }
+                        .lineLimit(1)
                     }
-                    .font(.system(size: 11)).foregroundStyle(Theme.textDim)
-                    .lineLimit(1)
+                    Text(p.modifiedAt.formatted(date: .abbreviated, time: .shortened)).lineLimit(1)
                 }
-                Spacer()
+                .font(.system(size: 13)).foregroundStyle(Theme.textDim)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 if !selecting {
                     Menu { cardActions(p) } label: {
                         Image(systemName: "ellipsis").font(.system(size: 17, weight: .bold)).foregroundStyle(Theme.text)
-                            .frame(width: 44, height: 44).contentShape(Rectangle())
+                            .frame(width: 36, height: 48).contentShape(Rectangle())
                     }
                     .accessibilityLabel("Actions for \(p.name)")
                 }
             }
-            .padding(12)
-            .glass()
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+            .overlay(alignment: .bottom) { Rectangle().fill(Theme.stroke).frame(height: 1) }
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("project-row")
         .contextMenu { cardActions(p) }
     }
 
@@ -310,35 +330,65 @@ struct HomeView: View {
             Button(role: .destructive) { pendingDelete = p } label: { Label("Delete", systemImage: "trash") }
     }
 
-    /// Search (row 1), then title, sort and select (row 2).
+    /// Title + import, search + sort, then the source rail. Search, sort and source compose.
     private var listControls: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass").foregroundStyle(Theme.textDim)
-                TextField("Search projects", text: $search).foregroundStyle(Theme.text).submitLabel(.search)
-                if !search.isEmpty {
-                    Button { search = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.textDim).frame(width: 44, height: 44) }
-                        .accessibilityLabel("Clear search")
-                }
-            }
-            .padding(.horizontal, 12).frame(minHeight: 44).glass(radius: 12)
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Projects (\(projects.count))").font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.text)
-                Spacer()
+                Text("Projects").font(.system(size: 30, weight: .bold)).foregroundStyle(Theme.text)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                Spacer(minLength: 8)
+                Button { showImporter = true } label: {
+                    Label("Import AEP / XML", systemImage: "square.and.arrow.up")
+                        .font(.system(size: 14, weight: .semibold)).lineLimit(1)
+                        .padding(.horizontal, 12).frame(minHeight: 40)
+                        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.accent.opacity(0.14)))
+                        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(Theme.accent.opacity(0.7)))
+                }
+                .buttonStyle(.plain).foregroundStyle(Theme.text)
+                .accessibilityHint(".aep, .ffx, Alight Motion .xml or .awi from Files")
+            }
+            HStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass").foregroundStyle(Theme.textDim)
+                    TextField("Search projects", text: $search).foregroundStyle(Theme.text).submitLabel(.search)
+                    if !search.isEmpty {
+                        Button { search = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.textDim).frame(width: 32, height: 40) }
+                            .accessibilityLabel("Clear search")
+                    }
+                }
+                .padding(.horizontal, 12).frame(height: 40).glass(radius: 10)
                 Menu {
                     Picker("Sort", selection: $sortRaw) {
                         ForEach(ProjectSort.allCases) { Text($0.title).tag($0.rawValue) }
                     }
                 } label: {
-                    Label(ProjectSort(rawValue: sortRaw)?.title ?? "Sort", systemImage: "arrow.up.arrow.down")
-                        .font(.system(size: 13, weight: .semibold)).frame(minHeight: 44)
+                    HStack(spacing: 6) {
+                        Text("Sort: \(ProjectSort(rawValue: sortRaw)?.title ?? "")").lineLimit(1)
+                        Image(systemName: "chevron.down").font(.system(size: 11, weight: .bold))
+                    }
+                    .font(.system(size: 14, weight: .medium)).foregroundStyle(Theme.text)
+                    .padding(.horizontal, 12).frame(height: 40).glass(radius: 10)
                 }
-                Button(selecting ? "Done" : "Select") { selecting.toggle(); selection = [] }
-                    .font(.system(size: 13, weight: .semibold)).frame(minWidth: 60, minHeight: 44)
+                .fixedSize()
+                .accessibilityLabel("Sort: \(ProjectSort(rawValue: sortRaw)?.title ?? "")")
             }
-            .foregroundStyle(Theme.accentGlow)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(ProjectSource.allCases) { s in
+                        Button { source = s } label: {
+                            Text(s.title).font(.system(size: 14, weight: source == s ? .semibold : .medium))
+                                .foregroundStyle(source == s ? .white : Theme.textDim)
+                                .padding(.horizontal, 14).frame(minHeight: 34)
+                                .background(Capsule().fill(source == s ? Theme.accent : .clear))
+                                .frame(minHeight: 44).contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityAddTraits(source == s ? .isSelected : [])
+                    }
+                }
+            }
         }
-        .padding(.top, 6)
+        .padding(.top, 14).padding(.bottom, 4)
     }
 
     /// Actions for the selected projects (3 buttons).
@@ -599,14 +649,92 @@ enum ProjectSort: String, CaseIterable, Identifiable {
         }
     }
 
-    static func apply(_ sort: ProjectSort, to list: [ProjectSummary], search: String) -> [ProjectSummary] {
+    static func apply(_ sort: ProjectSort, to list: [ProjectSummary], search: String, source: ProjectSource = .all) -> [ProjectSummary] {
         let q = search.trimmingCharacters(in: .whitespaces)
-        let filtered = q.isEmpty ? list : list.filter { $0.name.range(of: q, options: [.caseInsensitive, .diacriticInsensitive]) != nil }
+        let filtered = list.filter { source.matches($0) && (q.isEmpty || $0.name.range(of: q, options: [.caseInsensitive, .diacriticInsensitive]) != nil) }
         switch sort {
         case .modified: return filtered.sorted { $0.modifiedAt > $1.modifiedAt }
         case .name: return filtered.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         case .size: return filtered.sorted { $0.width * $0.height > $1.width * $1.height }
         case .duration: return filtered.sorted { $0.duration > $1.duration }
         }
+    }
+}
+
+/// Home source filter, read from the stored `importedFormat` (nil = native AWI).
+enum ProjectSource: String, CaseIterable, Identifiable {
+    case all, awi, afterEffects, alightMotion
+    var id: String { rawValue }
+
+    init(_ format: ImportedProjectFormat?) {
+        switch format {
+        case nil: self = .awi
+        case .afterEffects?: self = .afterEffects
+        case .alightMotion?: self = .alightMotion
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .all: return "All"
+        case .awi: return "AWI"
+        case .afterEffects: return "After Effects"
+        case .alightMotion: return "Alight Motion"
+        }
+    }
+
+    var badge: String {
+        switch self {
+        case .all: return ""
+        case .awi: return "AWI"
+        case .afterEffects: return "AE"
+        case .alightMotion: return "AM"
+        }
+    }
+
+    func matches(_ p: ProjectSummary) -> Bool { self == .all || self == ProjectSource(p.importedFormat) }
+}
+
+struct SourceBadge: View {
+    let source: ProjectSource
+    var body: some View {
+        Text(source.badge)
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(Theme.accentGlow)
+            .padding(.horizontal, 6).padding(.vertical, 2)
+            .background(RoundedRectangle(cornerRadius: 5).fill(Theme.accent.opacity(0.2)))
+            .overlay(RoundedRectangle(cornerRadius: 5).stroke(Theme.accent.opacity(0.55)))
+            .fixedSize()
+            .accessibilityLabel(source.title)
+    }
+}
+
+/// Wide row thumbnail. Wide renders fill the frame; taller ones (9:16, 4:5, 1:1) fit inside over a
+/// blurred copy, so titles and subjects at the top or bottom of a vertical edit stay visible.
+struct ProjectThumbnail: View {
+    let image: UIImage?
+    #if DEBUG
+    /// UI-test comparison only: crop everything to the frame.
+    static let forceCrop = ProcessInfo.processInfo.arguments.contains("-uiTesting-homeCrop")
+    #else
+    static let forceCrop = false
+    #endif
+
+    var body: some View {
+        Color.black.overlay {
+            if let image {
+                if Self.forceCrop || image.size.width / max(image.size.height, 1) >= 1.6 {
+                    Image(uiImage: image).resizable().scaledToFill()
+                } else {
+                    ZStack {
+                        Image(uiImage: image).resizable().scaledToFill().blur(radius: 14).opacity(0.55)
+                        Image(uiImage: image).resizable().scaledToFit()
+                    }
+                }
+            } else {
+                Image(systemName: "film").font(.system(size: 22)).foregroundStyle(Theme.textDim.opacity(0.6))
+            }
+        }
+        .clipped()
     }
 }

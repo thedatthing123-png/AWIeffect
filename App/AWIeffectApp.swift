@@ -40,6 +40,13 @@ struct AWIeffectApp: App {
     }
 }
 
+#if DEBUG
+/// UI tests lay Home out at the narrowest supported iPhone width (375 pt) on the big simulator.
+private let homeTestWidth: CGFloat? = ProcessInfo.processInfo.arguments.contains("-uiTesting-homeNarrow") ? 375 : nil
+#else
+private let homeTestWidth: CGFloat? = nil
+#endif
+
 /// Marker for text fields that should select everything when focused.
 enum AutoSelectField { static let tag = 7_331 }
 
@@ -51,6 +58,7 @@ struct RootView: View {
 
     init() {
         #if DEBUG
+        HomeLibrarySeed.runIfRequested()
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-ccLUTGrid") {
             var p = Project.new(name: "LUT Preview", width: 480, height: 320, fps: 30, duration: 3, background: RGBA(0.23, 0.32, 0.45))
             var grade = p.makeLayer(name: "Grade", content: .adjustment, size: Vec2(480, 320))
@@ -248,6 +256,7 @@ struct RootView: View {
                     .transition(.move(edge: .trailing))
             } else {
                 HomeView { openProject = $0 }
+                    .frame(maxWidth: homeTestWidth)
                     .transition(.move(edge: .leading))
             }
         }
