@@ -385,6 +385,7 @@ struct EffectsPanel: View {
                         .frame(width: 44, height: 44).contentShape(Rectangle())
                 }
                 .accessibilityIdentifier("effect-expand-\(e.typeID)")
+                .accessibilityLabel(isOpen ? "Collapse Effect" : "Expand Effect")
                 // Long-press the name to drag the card to a new place in the stack.
                 HStack(spacing: 6) {
                     Image(systemName: "line.3.horizontal").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
@@ -479,7 +480,13 @@ struct EffectsPanel: View {
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
         .glass(radius: 12)
-        .onAppear { if Self.shouldAutoOpen(e.id, last: state.selectedLayer?.effects.last?.id, opened: autoOpened) { expanded.insert(e.id) }; autoOpened.insert(e.id) }
+        .onAppear {
+            if e.imported?.support != .unavailable,
+               Self.shouldAutoOpen(e.id, last: state.selectedLayer?.effects.last?.id, opened: autoOpened) {
+                expanded.insert(e.id)
+            }
+            autoOpened.insert(e.id)
+        }
     }
 
     /// Which layer the effect reads.

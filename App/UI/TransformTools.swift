@@ -354,6 +354,7 @@ struct TransformToolBody: View {
                             onDragBegin: { state.beginPanelGesture("Edit \(items[i].0)") },
                             onDragEnd: { state.endPanelGesture() }, followsExternalEdits: true,
                             onCommit: items[i].2)
+                    .accessibilityElement(children: .contain)
                     .accessibilityIdentifier(tool == .position ? "position-field-\(items[i].0)" : "transform-field-\(items[i].0)")
             }
         }
