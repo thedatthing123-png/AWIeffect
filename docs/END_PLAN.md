@@ -130,9 +130,11 @@ Prove the renderer with supplied passes before committing to automatic generatio
 
 Build Relight after the editing-readiness pass and before the AEP/XML import overhaul. [Beeble's relighting workflow](https://beeble.space/features/3d-relight)
 
-### Future home studio — Video Enhance
+### Home screen and Video Enhance
 
-Give Video Enhance a direct entry on the AWIeffect home screen alongside Projects. Finish the edit, then open Video Enhance and choose an AWIeffect export or a video from Photos or Files. Work on the rendered video in a standalone preview and save a new video.
+Redesign the AWIeffect home screen with a persistent bottom bar. Put Projects on the left, a prominent center + for Create Project, and Video Enhance on the right. Keep AEP/XML import visible at the top of Projects, next to the project list it adds to. Keep the rest of that screen focused on browsing and opening projects.
+
+Finish the edit, then open Video Enhance and choose an AWIeffect export or a video from Photos or Files. Work on the rendered video in a standalone preview and save a new video.
 
 - **Keep Resolution** is a full restoration mode. Improve visible compression damage, noise, ringing, aliasing, and fine detail at the exact input dimensions. **Upscale** uses the same restoration workflow with an explicit output resolution. Preserve aspect ratio, FPS, timing, and audio sync in both modes.
 - Offer Auto as a starting point and expose manual restoration controls directly, including detail recovery, compression cleanup, denoise, sharpening, halo removal, and original texture. Let the editor adjust each independently. Compare the same moving range before and after at the same zoom. [Topaz Video Enhancement controls](https://docs.topazlabs.com/topaz-video/filters/enhancement)
@@ -155,5 +157,6 @@ Rework Puppet after the AEP/XML import pass. Keep the dedicated Puppet workspace
 4. Build Relight Studio around imported, aligned passes and verify the moving reference shot in Lighting Studio.
 5. Build AEP and XML import fidelity and cross-project source effect reuse as a dedicated workstream. Extend the animation and render engines where source behavior requires it.
 6. Overhaul Puppet placement and localized deformation.
-7. Finish the curated premades and the cutout model after the editing systems they depend on are stable. Judge premades by what they let editors make. Keep the current auto-cutout available and retain the model and training data for the final cutout phase.
-8. Build the standalone Video Enhance home studio after the editing and import workstreams.
+7. Redesign the home screen and build the standalone Video Enhance studio together.
+8. Finish the curated premades. Judge them by what they let editors make and review them in motion.
+9. Finish the trained cutout model. Keep the current auto-cutout available and retain the model and training data during development.
