@@ -13,7 +13,7 @@ devices=json.loads(subprocess.check_output(['xcrun','simctl','list','devices','a
 phones=[device for runtime,items in devices.items() if 'iOS' in runtime for device in items if device['name'].startswith('iPhone')]
 if not phones: raise RuntimeError('No available iPhone simulator')
 simulator=phones[-1]
-if shard == 'ui':
+if shard == 'ui' or scope == 'text-studio':
     simulator=next((phone for phone in reversed(phones) if phone['name'] == 'iPhone 16 Pro Max'), None)
     if simulator is None:
         simulator=next((phone for phone in reversed(phones) if 'Pro Max' in phone['name']), phones[-1])

@@ -179,9 +179,11 @@ struct TextPanel: View {
             }
             Button { state.beginTyping() } label: {
                 Label("Type", systemImage: "character.cursor.ibeam").font(.system(size: 13, weight: .bold))
-                    .padding(.horizontal, 12).frame(minHeight: TS.tap)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Theme.accent))
+                    .padding(.horizontal, 11).frame(minHeight: 34)
+                    .background(RoundedRectangle(cornerRadius: 8).fill(Theme.accent))
                     .foregroundStyle(.white)
+                    .frame(minHeight: TS.tap)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Type Text")

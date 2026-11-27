@@ -21,7 +21,7 @@ TEXT = {'CraftPresets33Tests', 'TextPresetLibraryTests', 'TextStudioTests',
         'TextStudioEngineTests', 'Text3DTests', 'TextTests'}
 SCOPES = {
     'text-studio': ['TextStudioTests', 'TextStudioEngineTests', 'TextGraphEditorTests', 'TextTests',
-                    'Text3DTests', 'TextPresetLibraryTests', 'TextWorkspaceUITests'],
+                    'Text3DTests', 'TextPresetLibraryTests', 'TextWorkspaceUITests', 'RenewCanvasTests'],
     'source-import': ['AEPImportTests', 'AMImportTests', 'SourceProjectImportTests', 'EffectsPhaseOneTests',
                       'PrecompMaskImportTests', 'RenderSpeedTests'],
     'reference-controls': ['EffectTests', 'ReviewedReferenceEffectsTests', 'ReferenceFragmentAuditTests'],

@@ -249,17 +249,49 @@ final class RenewCanvasTests: XCTestCase {
         XCTAssertEqual(CanvasSnap.gridLines(divisions: 4, length: 1000), [0, 250, 500, 750, 1000])
     }
 
-    func testRotationIsFreeUnlessSnapIsOn() {
+    func testRotationAndPinchScaleRespectSnapOptions() {
         var p = project()
         let l = p.makeLayer(name: "a", content: .shape(.rectangle), size: Vec2(200, 200))
         p.layers = [l]
         let s = state(p)
         s.select(l.id)
+        s.snappingEnabled = false
         s.beginLayerPinch(); s.updateLayerPinch(scale: 1, rotation: 44); s.endLayerPinch(ownsEdit: true)
         XCTAssertEqual(s.selectedLayer!.transform.rotation.value(at: 0), 44, accuracy: 1e-9)
         s.rotationSnap = true
         s.beginLayerPinch(); s.updateLayerPinch(scale: 1, rotation: 4); s.endLayerPinch(ownsEdit: true)
         XCTAssertEqual(s.selectedLayer!.transform.rotation.value(at: 0), 45, accuracy: 1e-9)
+        s.rotationSnap = false
+        s.snappingEnabled = true
+        s.beginLayerPinch(); s.updateLayerPinch(scale: 1.006, rotation: -44.5); s.endLayerPinch(ownsEdit: true)
+        XCTAssertEqual(s.selectedLayer?.transform.rotation.value(at: 0), 0)
+        XCTAssertEqual(s.selectedLayer?.transform.scale.value(at: 0), Vec2(100, 100))
+    }
+
+    func testFitAndStretchCenterTheLayerHitbox() throws {
+        var p = Project.new(name: "Canvas sizing", width: 1600, height: 900, fps: 30)
+        var layer = p.makeLayer(name: "Square", content: .shape(.rectangle), size: Vec2(200, 200))
+        layer.transform.position = Animated(Vec2(150, 220))
+        layer.transform.anchor = Animated(Vec2(30, -10))
+        layer.transform.rotation = Animated(42)
+        p.layers = [layer]
+        let s = state(p)
+        s.select(layer.id)
+
+        s.sizeToComposition(.fit)
+        let fitted = try XCTUnwrap(s.selectedLayer)
+        let fitBounds = try XCTUnwrap(LayerPlacement.bounds(fitted, project: s.project, time: 0))
+        XCTAssertEqual(fitBounds.width, 900, accuracy: 0.001)
+        XCTAssertEqual(fitBounds.height, 900, accuracy: 0.001)
+        XCTAssertEqual(fitBounds.midX, 800, accuracy: 0.001)
+
+        s.sizeToComposition(.stretch)
+        let stretched = try XCTUnwrap(s.selectedLayer)
+        let stretchBounds = try XCTUnwrap(LayerPlacement.bounds(stretched, project: s.project, time: 0))
+        XCTAssertEqual(stretchBounds.minX, 0, accuracy: 0.001)
+        XCTAssertEqual(stretchBounds.minY, 0, accuracy: 0.001)
+        XCTAssertEqual(stretchBounds.width, 1600, accuracy: 0.001)
+        XCTAssertEqual(stretchBounds.height, 900, accuracy: 0.001)
     }
 
     func testTapCycleAndMarquee() {

@@ -135,6 +135,7 @@ struct TransformToolBody: View {
     let layer: Layer
     let tool: TransformPanel.Tool
     @State private var rawPadPosition: Vec2?
+    @State private var rawRulerScale: Vec2?
     @State private var padDepth: Double?
     @Binding var positionAxisZ: Bool
     @AppStorage("awi.simplifyTolerance") private var simplifyTolerance = 6.0
@@ -204,8 +205,9 @@ struct TransformToolBody: View {
                         }
                     } label: { menuLabel("Align", "align.horizontal.center", on: false) }
                     Menu {
-                        Button { state.fitToComp(fill: false) } label: { Label("Fit to Comp", systemImage: "arrow.down.right.and.arrow.up.left") }
-                        Button { state.fitToComp(fill: true) } label: { Label("Fill Comp", systemImage: "arrow.up.left.and.arrow.down.right") }
+                        Button { state.sizeToComposition(.fit) } label: { Label("Fit to Comp", systemImage: "arrow.down.right.and.arrow.up.left") }
+                        Button { state.sizeToComposition(.fill) } label: { Label("Fill Comp", systemImage: "arrow.up.left.and.arrow.down.right") }
+                        Button { state.sizeToComposition(.stretch) } label: { Label("Stretch to Comp", systemImage: "arrow.left.and.right") }
                         Button { state.centerAnchor() } label: { Label("Center Anchor in Layer", systemImage: "scope") }
                         Button(role: .destructive) { state.resetTransform() } label: { Label("Reset Transform", systemImage: "arrow.counterclockwise") }
                     } label: { menuLabel("Layout", "rectangle.dashed", on: false) }
@@ -256,8 +258,9 @@ struct TransformToolBody: View {
                     } begin: { state.beginPanelGesture("Rotate 3D") } end: { state.endPanelGesture() }
                 } else {
                     valueRow([("°", layer.transform.rotation.value(at: t), { v in edit("Rotate") { $0.transform.rotation.set(v, at: t) } })])
-                    RotationDial(angle: layer.transform.rotation.value(at: t)) { a in
-                        state.mutateLayer { $0.transform.rotation.set((a * 10).rounded() / 10, at: t) }
+                    RotationDial(angle: layer.transform.rotation.value(at: t)) { raw in
+                        let angle = CanvasSnap.rotation(raw, magnets: state.snappingEnabled, fixedSteps: state.rotationSnap)
+                        state.mutateLayer { $0.transform.rotation.set((angle * 10).rounded() / 10, at: t) }
                     } begin: { state.beginPanelGesture("Rotate Layer") } end: { state.endPanelGesture() }
                 }
             case .scale:
@@ -266,10 +269,10 @@ struct TransformToolBody: View {
                           ("H%", s.y, { v in edit("Scale") { $0.transform.scale.set(state.scaleLinked ? Vec2(s.y == 0 ? v : v * s.x / s.y, v) : Vec2(s.x, v), at: t) } })])
                 HStack(spacing: 6) {
                     VStack(spacing: 6) {
-                        RulerStrip(label: "Width") { d in scaleBy(dx: d, dy: state.scaleLinked ? d : 0) }
-                            begin: { state.beginPanelGesture("Scale Layer") } end: { state.endPanelGesture() }
-                        RulerStrip(label: "Height") { d in scaleBy(dx: state.scaleLinked ? d : 0, dy: d) }
-                            begin: { state.beginPanelGesture("Scale Layer") } end: { state.endPanelGesture() }
+                        RulerStrip(label: "Width") { delta in scaleBy(delta, width: true) }
+                            begin: { beginScale() } end: { endScale() }
+                        RulerStrip(label: "Height") { delta in scaleBy(delta, width: false) }
+                            begin: { beginScale() } end: { endScale() }
                     }
                     Button { state.scaleLinked.toggle() } label: {
                         Image(systemName: state.scaleLinked ? "link" : "link.badge.plus")
@@ -316,12 +319,28 @@ struct TransformToolBody: View {
             .frame(maxWidth: .infinity, minHeight: 32)
     }
 
-    private func scaleBy(dx: Double, dy: Double) {
+    private func beginScale() {
+        rawRulerScale = layer.transform.scale.value(at: t)
+        state.beginPanelGesture("Scale Layer")
+    }
+
+    private func endScale() {
+        rawRulerScale = nil
+        state.endPanelGesture()
+    }
+
+    private func scaleBy(_ delta: Double, width: Bool) {
+        let previous = rawRulerScale ?? layer.transform.scale.value(at: t)
         let linked = state.scaleLinked
-        state.mutateLayer { l in
-            let s = l.transform.scale.value(at: t)
-            l.transform.scale.set(Self.scaled(s, dx: dx, dy: dy, linked: linked), at: t)
-        }
+        let raw = Self.scaled(previous, dx: width ? delta : 0, dy: width ? 0 : delta, linked: linked)
+        rawRulerScale = raw
+        let axis = width ? raw.x : raw.y
+        let snap = state.snappingEnabled ? CanvasSnap.snapScale(axis) : axis
+        var result = raw
+        if linked, abs(axis) > 1e-6 { result = raw * (snap / axis) }
+        else if width { result.x = snap }
+        else { result.y = snap }
+        state.mutateLayer { $0.transform.scale.set(result, at: t) }
     }
 
     /// Ruler step on scale. Linked keeps the aspect ratio (both sides grow by the same factor, driven by the strip's
@@ -487,11 +506,7 @@ struct RotationDial: View {
                     if d > 180 { d -= 360 } else if d < -180 { d += 360 }
                     lastFinger = f
                     accumulated += d
-                    var v = (startAngle ?? 0) + accumulated
-                    // Gentle snap to 45° steps.
-                    let s = (v / 45).rounded() * 45
-                    if abs(v - s) < 1.5 { v = s }
-                    onChange(v)
+                    onChange((startAngle ?? 0) + accumulated)
                 }
                 .onEnded { _ in startAngle = nil; end() })
         }

@@ -74,6 +74,7 @@ struct TextStyleTab: View {
     @State private var pane: Pane = .type
 
     private enum Pane: String, CaseIterable { case type = "Typography", appearance = "Appearance" }
+    private enum Scope: String, CaseIterable { case layer = "Layer", letter = "Letter", word = "Word" }
     private struct FontTarget: Identifiable {
         let id = UUID()
         let layerID: UUID
@@ -122,14 +123,18 @@ struct TextStyleTab: View {
         let index = TextStudioLogic.range(text, ids: session.selectedIDs)?.lowerBound
         let wholeWord = index.map { TextStudioLogic.wordIDs(text, at: $0) == session.selectedIDs } ?? false
         let hasLetters = text.string.contains { !$0.isWhitespace }
-        return HStack(spacing: 6) {
-            TSButton(title: "Layer", icon: "text.alignleft", filled: selection.isEmpty) { session.selectedIDs = [] }
-            TSButton(title: "Letter", icon: "character", filled: selection.count == 1) { selectUnit(text, .characters) }
-                .disabled(!hasLetters)
-            TSButton(title: "Word", icon: "text.word.spacing", filled: selection.count > 1 && wholeWord) {
-                selectUnit(text, .words)
+        let scope: Scope?
+        if selection.isEmpty { scope = .layer }
+        else if selection.count == 1 { scope = .letter }
+        else { scope = wholeWord ? .word : nil }
+        let options = hasLetters ? Scope.allCases : [.layer]
+        return TSSegmented(options: options.map { (Optional($0), $0.rawValue) }, selection: scope) { choice in
+            switch choice {
+            case .layer: session.selectedIDs = []
+            case .letter: selectUnit(text, .characters)
+            case .word: selectUnit(text, .words)
+            case nil: break
             }
-            .disabled(!hasLetters)
         }
     }
 

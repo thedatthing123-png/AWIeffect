@@ -17,14 +17,29 @@ enum CanvasSnap {
         return (0...n).map { Double($0) * length / Double(n) }
     }
 
-    /// Scale snaps to whole 5 % steps when it is within `grab` % of one (100 %, 150 %…); otherwise free.
+    /// Scale catches 5 % marks within the grab zone, while small scales stay editable.
     static func snapScale(_ s: Double, grab: Double = 1.0) -> Double {
         let r = (s / 5).rounded() * 5
-        return abs(s - r) < grab ? r : s
+        return r != 0 && abs(s - r) <= grab ? r : s
     }
 
     /// Rotation in fixed steps (15 degrees by default) while rotation snapping is on.
-    static func snapRotation(_ r: Double, step: Double = 15) -> Double { (r / step).rounded() * step }
+    static func snapRotation(_ r: Double, step: Double = 15) -> Double {
+        let value = (r / step).rounded() * step
+        return value == 0 ? 0 : value
+    }
+
+    static func rotation(_ raw: Double, magnets: Bool, fixedSteps: Bool) -> Double {
+        guard magnets || fixedSteps else { return raw }
+        let target = snapRotation(raw)
+        return fixedSteps || abs(raw - target) <= 2 ? target : raw
+    }
+
+    static func linkedScale(_ base: Vec2, factor: Double, magnets: Bool) -> Vec2 {
+        let axis = abs(base.x) >= abs(base.y) ? base.x : base.y
+        guard magnets, abs(axis) > 1e-6 else { return base * factor }
+        return base * (snapScale(axis * factor) / axis)
+    }
 }
 
 /// Orient Along Path (AE Auto-Orient): the layer turns with the direction it travels along its position path.
@@ -160,6 +175,18 @@ enum AlignEdge: Int, CaseIterable, Identifiable {
     }
 }
 
+enum CompositionSizing: Equatable {
+    case fit, fill, stretch
+
+    var title: String {
+        switch self {
+        case .fit: return "Fit to Composition"
+        case .fill: return "Fill Composition"
+        case .stretch: return "Stretch to Composition"
+        }
+    }
+}
+
 enum Arrange {
     /// Even spacing of centres between the outermost two (sorted along the axis). Returns screen moves per layer.
     static func distribute(_ items: [(UUID, CGRect)], horizontal: Bool) -> [UUID: Vec2] {
@@ -181,6 +208,15 @@ enum Arrange {
         guard hs.x > 1e-6, hs.y > 1e-6 else { return 100 }
         let kx = comp.x / (hs.x * 2), ky = comp.y / (hs.y * 2)
         return (fill ? max(kx, ky) : min(kx, ky)) * 100
+    }
+
+    static func compositionScale(halfSize: Vec2, comp: Vec2, sizing: CompositionSizing) -> Vec2 {
+        guard halfSize.x > 1e-6, halfSize.y > 1e-6 else { return Vec2(100, 100) }
+        if sizing == .stretch {
+            return Vec2(comp.x / (halfSize.x * 2) * 100, comp.y / (halfSize.y * 2) * 100)
+        }
+        let uniform = fitScale(halfSize: halfSize, comp: comp, fill: sizing == .fill)
+        return Vec2(uniform, uniform)
     }
 }
 
@@ -223,14 +259,20 @@ extension EditorState {
         }
     }
 
-    /// Fit (whole layer visible) or Fill (no empty edges) the comp, centred. One undo step.
-    func fitToComp(fill: Bool) {
-        guard let i = selectedIndex, !project.layers[i].isLocked else { return }
+    var canSizeToComposition: Bool {
+        guard let layer = selectedLayer, !layer.isLocked, !layer.isAudioOnly, !layer.isNull else { return false }
+        return layer.content != .camera && layer.content != .light
+    }
+
+    /// Fit, Fill, or Stretch the selected layer's bounds and center them in the composition.
+    func sizeToComposition(_ sizing: CompositionSizing) {
+        guard canSizeToComposition, let i = selectedIndex else { return }
         let t = currentTime
-        let l = project.layers[i]
-        let k = Arrange.fitScale(halfSize: Renderer.layerHalfSize(l, time: t), comp: Vec2(Double(project.width), Double(project.height)), fill: fill)
+        let layer = project.layers[i]
+        let compSize = Vec2(Double(project.width), Double(project.height))
+        let scale = Arrange.compositionScale(halfSize: Renderer.layerHalfSize(layer, time: t), comp: compSize, sizing: sizing)
         var scaled = project
-        scaled.layers[i].transform.scale.set(Vec2(k, k), at: t)
+        scaled.layers[i].transform.scale.set(scale, at: t)
         scaled.layers[i].transform.rotation.set(0, at: t)
         let comp = CGRect(x: 0, y: 0, width: Double(project.width), height: Double(project.height))
         var position = scaled.layers[i].transform.position.value(at: t)
@@ -238,8 +280,8 @@ extension EditorState {
            let v = LayerPlacement.movedPosition(scaled.layers[i], project: scaled, time: t, screenDelta: Vec2(Double(comp.midX - rect.midX), Double(comp.midY - rect.midY))) {
             position = v
         }
-        mutate(fill ? "Fill Comp" : "Fit to Comp") { p in
-            p.layers[i].transform.scale.set(Vec2(k, k), at: t)
+        mutate(sizing.title) { p in
+            p.layers[i].transform.scale.set(scale, at: t)
             p.layers[i].transform.rotation.set(0, at: t)
             p.layers[i].transform.position.set(position, at: t)
         }

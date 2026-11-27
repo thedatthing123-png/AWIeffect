@@ -218,10 +218,9 @@ extension EditorState {
         case .scale:
             let r0 = hypot(d.startComp.x - d.pivot.x, d.startComp.y - d.pivot.y)
             let r1 = hypot(c.x - d.pivot.x, c.y - d.pivot.y)
-            var k = r0 > 1 ? r1 / r0 : 1
-            // Scale snapping: lands on whole 5 % steps (100 %, 150 %…) when close, free in between.
-            if snappingEnabled, abs(d.scale.x) > 1e-6 { k = CanvasSnap.snapScale(d.scale.x * k) / d.scale.x }
-            mutateLayer { $0.transform.scale.set(Vec2((d.scale.x * k * 10).rounded() / 10, (d.scale.y * k * 10).rounded() / 10), at: t) }
+            let k = r0 > 1 ? r1 / r0 : 1
+            let size = CanvasSnap.linkedScale(d.scale, factor: k, magnets: snappingEnabled)
+            mutateLayer { $0.transform.scale.set(Vec2((size.x * 10).rounded() / 10, (size.y * 10).rounded() / 10), at: t) }
         case .stretch(let ax, let ay):
             // Measure along the layer's own (rotated) axes so stretching follows the layer.
             let rot = -d.rotation * .pi / 180
@@ -229,14 +228,20 @@ extension EditorState {
             let a = local(d.startComp - d.pivot), b = local(c - d.pivot)
             let kx = ax && abs(a.x) > 2 ? b.x / a.x : 1
             let ky = ay && abs(a.y) > 2 ? b.y / a.y : 1
-            mutateLayer { $0.transform.scale.set(Vec2((d.scale.x * kx * 10).rounded() / 10, (d.scale.y * ky * 10).rounded() / 10), at: t) }
+            let rawX = d.scale.x * kx, rawY = d.scale.y * ky
+            let x = ax && snappingEnabled ? CanvasSnap.snapScale(rawX) : rawX
+            let y = ay && snappingEnabled ? CanvasSnap.snapScale(rawY) : rawY
+            let size = Vec2(ax ? (x * 10).rounded() / 10 : d.scale.x, ay ? (y * 10).rounded() / 10 : d.scale.y)
+            mutateLayer { $0.transform.scale.set(size, at: t) }
         case .rotate:
             let a0 = atan2(d.startComp.y - d.pivot.y, d.startComp.x - d.pivot.x)
             let a1 = atan2(c.y - d.pivot.y, c.x - d.pivot.x)
             // Own rotation (a parent's turn is added on top when drawn).
-            var r = (d.raw?.rotation.value(at: t) ?? d.rotation) + (a1 - a0) * 180 / .pi
-            // Free rotation unless Rotation Snap is on (then 15° steps).
-            if rotationSnap { r = CanvasSnap.snapRotation(r) }
+            let delta = ((a1 - a0) * 180 / .pi).remainder(dividingBy: 360)
+            let raw = (d.raw?.rotation.value(at: t) ?? d.rotation) + delta
+            let previous = live.project?.layers.first(where: { $0.id == selectedLayerID })?.transform.rotation.value(at: t) ?? raw
+            let continuousAngle = raw + ((previous - raw) / 360).rounded() * 360
+            let r = CanvasSnap.rotation(continuousAngle, magnets: snappingEnabled, fixedSteps: rotationSnap)
             mutateLayer { $0.transform.rotation.set((r * 10).rounded() / 10, at: t) }
         case .pivot:
             // Move the anchor under the finger and compensate position so the layer stays put (AE Pan Behind).
@@ -273,10 +278,10 @@ extension EditorState {
     func updateLayerPinch(scale k: Double, rotation deg: Double) {
         guard let s = pinchStart, k.isFinite, deg.isFinite else { return }
         let t = currentTime
-        let kk = max(0.01, k)
+        let size = CanvasSnap.linkedScale(s.scale, factor: max(0.01, k), magnets: snappingEnabled && k != 1)
+        let r = CanvasSnap.rotation(s.rotation + deg, magnets: snappingEnabled && deg != 0, fixedSteps: rotationSnap && deg != 0)
         mutateLayer {
-            $0.transform.scale.set(Vec2((s.scale.x * kk * 10).rounded() / 10, (s.scale.y * kk * 10).rounded() / 10), at: t)
-            let r = self.rotationSnap ? CanvasSnap.snapRotation(s.rotation + deg) : s.rotation + deg
+            $0.transform.scale.set(Vec2((size.x * 10).rounded() / 10, (size.y * 10).rounded() / 10), at: t)
             $0.transform.rotation.set((r * 10).rounded() / 10, at: t)
         }
     }

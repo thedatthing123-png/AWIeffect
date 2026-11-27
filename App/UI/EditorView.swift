@@ -377,6 +377,12 @@ struct EditorView: View {
                     VStack(alignment: .leading, spacing: 2) {
 
                 Button { renameText = l.name; showLayerRename = true } label: { Label("Rename", systemImage: "character.cursor.ibeam") }
+                Button { state.sizeToComposition(.fit) } label: {
+                    Label("Fit to Composition", systemImage: "arrow.down.right.and.arrow.up.left")
+                }.disabled(!state.canSizeToComposition)
+                Button { state.sizeToComposition(.stretch) } label: {
+                    Label("Stretch to Composition", systemImage: "arrow.left.and.right")
+                }.disabled(!state.canSizeToComposition)
                 Button(role: .destructive) { state.rippleDeleteSelected() } label: { Label("Ripple Delete", systemImage: "delete.backward") }
                 Button { state.closeGapAtPlayhead() } label: { Label("Close Gap at Playhead", systemImage: "arrow.right.and.line.vertical.and.arrow.left") }.disabled(state.gapAtPlayhead() == nil)
                 Button { state.splitSelected() } label: { Label("Split at Playhead", systemImage: "scissors") }
