@@ -83,7 +83,6 @@ struct EditorView: View {
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-artworkRigStudio") {
             state.select(state.project.layers.first?.id)
             state.panel = .rig
-            state.showArtworkRig = true
             let destination = state.mediaURL("rig-fixture.png")
             try? FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
             if !FileManager.default.fileExists(atPath: destination.path) {
@@ -498,7 +497,8 @@ struct EditorView: View {
                                  viewZoom: state.canvasMode == .comp ? viewZoom : 1, viewPan: state.canvasMode == .comp ? viewPan : .zero,
                                  qualityCap: state.previewQuality.rawValue, isPlaying: state.isPlaying,
                                  // No RAM-cache writes mid-gesture: every frame changes, caching only churned memory.
-                                 cacheEnabled: state.canvasMode == .comp && lp == nil && state.cutoutPreview == nil && state.cutoutPeekOriginal == nil && state.boneWeightArtworkID == nil)
+                                 cacheEnabled: state.canvasMode == .comp && lp == nil && state.cutoutPreview == nil && state.cutoutPeekOriginal == nil && state.boneWeightArtworkID == nil,
+                                 suspended: showExport)
                 }
                 }
                 if state.viewMode == .orbit && !state.looksThroughCamera {
@@ -561,7 +561,7 @@ struct EditorView: View {
                     ClockReader(clock: state.clock) { _ in
                         LiveReader(live: state.live) { _ in
                             ZStack {
-                                if state.panel == .rig && state.showArtworkRig, let layer = state.selectedLayer, layer.isImage {
+                                if state.panel == .rig && state.usesArtworkRigStudio, let layer = state.selectedLayer {
                                     ArtworkRigOverlay(state: state, layer: layer, fit: fit)
                                 } else if state.boneWeightArtworkID != nil {
                                     BoneWeightCanvasOverlay(state: state,fit: fit)

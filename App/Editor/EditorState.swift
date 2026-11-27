@@ -110,7 +110,6 @@ final class EditorState: ObservableObject {
     @Published var boneParentPicking: UUID?
     @Published var boneRestEditing = false { didSet { if boneRestEditing && !oldValue { boneRestDirty = false } } }
     var boneRestDirty = false
-    @Published var showArtworkRig = true
     @Published var rigCursor = Vec2.zero
     @Published var artworkRigDraftStart: Vec2?
     @Published var artworkRigWeightBone: UUID?
@@ -190,9 +189,15 @@ final class EditorState: ObservableObject {
     /// What the canvas should draw right now (the live gesture copy, else the project).
     var canvasProject: Project { boneMeshDisplayProject(live.project ?? project) }
     var rigRestArtworkID: UUID? { boneWeightArtworkID ?? (boneRestEditing ? rigArtworkID : nil) }
+    var usesArtworkRigStudio: Bool {
+        guard let layer = selectedLayer, layer.isImage else { return false }
+        if layer.artworkRig != nil { return true }
+        return layer.boneMesh == nil && selectedIKLayer == nil
+            && !project.layers.contains { $0.bone?.artworkID == layer.id }
+    }
     func boneMeshDisplayProject(_ original: Project) -> Project {
         var shown = original
-        if panel == .rig, showArtworkRig, !artworkRigAnimating, let id = selectedLayerID,
+        if panel == .rig, usesArtworkRigStudio, !artworkRigAnimating, let id = selectedLayerID,
            let i = shown.layers.firstIndex(where: { $0.id == id }), let rig = shown.layers[i].artworkRig {
             if var mesh = rig.mesh {
                 mesh.frameMatrices = Array(repeating: .identity, count: mesh.boneIDs.count)

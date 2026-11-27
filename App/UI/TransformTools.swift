@@ -404,6 +404,7 @@ struct SwipePad: View {
     var end: () -> Void = {}
     @State private var last: CGSize?
     @State private var lastTime: TimeInterval = 0
+    @GestureState private var touching = false
 
     var body: some View {
         GeometryReader { geo in
@@ -418,6 +419,7 @@ struct SwipePad: View {
             }
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0)
+                .updating($touching) { _, active, _ in active = true }
                 .onChanged { g in
                     if last == nil { last = .zero; lastTime = CACurrentMediaTime(); begin() }
                     let now = CACurrentMediaTime()
@@ -430,9 +432,17 @@ struct SwipePad: View {
                     let k = gain / Double(max(geo.size.width, 1)) * accel
                     onDelta(vertical ? CGSize(width: 0, height: Double(dy) * k) : CGSize(width: Double(dx) * k, height: Double(dy) * k))
                 }
-                .onEnded { _ in last = nil; end() })
+                .onEnded { _ in finish() })
+            .onChange(of: touching) { _, active in if !active { finish() } }
+            .onDisappear { finish() }
         }
         .frame(minHeight: 90)
+    }
+
+    private func finish() {
+        guard last != nil else { return }
+        last = nil
+        end()
     }
 }
 

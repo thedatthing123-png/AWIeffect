@@ -32,6 +32,7 @@ struct MetalPreview: UIViewRepresentable {
     var isPlaying = false
     /// Frames rendered at full quality are remembered (RAM preview) until the project changes.
     var cacheEnabled = true
+    var suspended = false
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
@@ -59,6 +60,7 @@ struct MetalPreview: UIViewRepresentable {
         context.coordinator.qualityCap = qualityCap
         context.coordinator.isPlaying = isPlaying
         context.coordinator.cacheEnabled = cacheEnabled
+        context.coordinator.setSuspended(suspended)
         context.coordinator.viewPan = CGSize(width: viewPan.width * v.contentScaleFactor, height: viewPan.height * v.contentScaleFactor)
         v.setNeedsDisplay()
     }
@@ -95,9 +97,10 @@ struct MetalPreview: UIViewRepresentable {
         var qualityCap: Double = 1
         var isPlaying = false
         var cacheEnabled = true
-        private var comp: MTLTexture?
-        /// Triple-buffered scratch pools so frames in flight never share textures.
-        private lazy var pools: [TexturePool] = (0..<3).compactMap { _ in Renderer.shared?.makePool() }
+        private var suspended = false
+        /// The preview retains two scratch sets, matching its maximum number of frames in flight.
+        private lazy var pools: [TexturePool] = (0..<2).compactMap { _ in Renderer.shared?.makePool(spareLimit: 32 * 1024 * 1024) }
+        private var composites: [MTLTexture?] = [nil, nil]
         private var frame = 0
         private let inFlight = DispatchSemaphore(value: 2)
         /// Adaptive preview resolution (AE-style): drops while frames are heavy, sharpens when there's headroom
@@ -118,7 +121,7 @@ struct MetalPreview: UIViewRepresentable {
         private var cacheOrder: [Int] = []
         private var cacheToken = ""
         private var cacheBytes = 0
-        private static let cacheBudget = 140 * 1024 * 1024
+        private static let cacheBudget = 64 * 1024 * 1024
 
         override init() {
             super.init()
@@ -128,6 +131,7 @@ struct MetalPreview: UIViewRepresentable {
                 self.cacheToken = ""; self.prerenderToken = ""
                 self.prerenderWork?.cancel(); self.settleWork?.cancel()
                 self.pools.forEach { $0.purge() }; self.prerenderPool?.purge()
+                self.composites = [nil, nil]
                 self.suppressFullUntil = ProcessInfo.processInfo.systemUptime + 10
                 self.forceFull = false; self.quality = min(self.quality, 0.5)
             }
@@ -135,16 +139,31 @@ struct MetalPreview: UIViewRepresentable {
 
         func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) { view.setNeedsDisplay() }
 
+        func setSuspended(_ value: Bool) {
+            guard value != suspended else { return }
+            suspended = value
+            guard value else { return }
+            cache.removeAll(); cacheOrder.removeAll(); cacheBytes = 0
+            cacheToken = ""; prerenderToken = ""
+            prerenderWork?.cancel(); settleWork?.cancel()
+            forceFull = false
+            pools.forEach { $0.purge() }; prerenderPool?.purge()
+            composites = [nil, nil]
+            publishCache()
+        }
+
         private func token(_ p: Project, _ w: Int, _ h: Int) -> String {
             "\(renderRevision)|\(p.id)|\(p.modifiedAt.timeIntervalSinceReferenceDate)|\(p.layers.count)|\(w)x\(h)"
         }
 
         private func remember(_ tex: MTLTexture, frame idx: Int) {
-            if cache[idx] == nil { cacheOrder.append(idx); cacheBytes += tex.width * tex.height * 8 }
+            if let previous = cache[idx] { cacheBytes -= previous.allocatedSize }
+            else { cacheOrder.append(idx) }
+            cacheBytes += tex.allocatedSize
             cache[idx] = tex
             while cacheBytes > Self.cacheBudget, let old = cacheOrder.first {
                 cacheOrder.removeFirst()
-                if let t = cache.removeValue(forKey: old) { cacheBytes -= t.width * t.height * 8 }
+                if let t = cache.removeValue(forKey: old) { cacheBytes -= t.allocatedSize }
             }
             publishCache()
         }
@@ -166,20 +185,22 @@ struct MetalPreview: UIViewRepresentable {
         // MARK: Background render (AE-style): while paused, render the frames after the playhead at full quality.
         private var prerenderWork: DispatchWorkItem?
         private var prerenderToken = ""
-        private lazy var prerenderPool: TexturePool? = Renderer.shared?.makePool()
+        private lazy var prerenderPool: TexturePool? = Renderer.shared?.makePool(spareLimit: 24 * 1024 * 1024)
 
         private func schedulePrerender(from start: Int, size: (Int, Int), scale: Double) {
             prerenderWork?.cancel()
             guard cacheEnabled, !isPlaying, ProcessInfo.processInfo.systemUptime >= suppressFullUntil, let project else { return }
             // Complex camera/3D work gets the current frame first, without filling a second GPU workload.
-            guard project.layers.count <= 12, !project.layers.contains(where: { $0.is3D || $0.content == .model }) else { return }
+            guard project.layers.count <= 12, !project.layers.contains(where: {
+                $0.is3D || $0.content == .model || $0.content == .light || $0.activeRelight != nil
+            }) else { return }
             let token = cacheToken
             prerenderToken = token
             let last = min(Int((project.duration * max(project.fps, 1)).rounded(.down)) - 1, start + Int(max(project.fps, 1) * 3))
             var next = start + 1
             func step() {
                 // Stop as soon as anything changes (editing, playing, another frame, memory).
-                guard self.prerenderToken == token, self.cacheToken == token, !self.isPlaying, next <= last,
+                guard !self.suspended, self.prerenderToken == token, self.cacheToken == token, self.cacheEnabled, !self.isPlaying, next <= last,
                       let r = Renderer.shared, let p = self.project, let media = self.mediaURL, let pool = self.prerenderPool else { return }
                 if self.prerenderInFlight {
                     let retry = DispatchWorkItem { step() }; self.prerenderWork = retry
@@ -194,11 +215,13 @@ struct MetalPreview: UIViewRepresentable {
                 Renderer.blurSampleCap = 12
                 r.encode(project: p, time: Double(next) / max(p.fps, 1), renderScale: scale, into: tex, commandBuffer: cb, pool: pool, mediaURL: media)
                 let idx = next
-                cb.addCompletedHandler { [weak self] _ in
+                cb.addCompletedHandler { [weak self] buffer in
+                    let completed = buffer.status == .completed
                     DispatchQueue.main.async {
                         guard let self else { return }
                         self.prerenderInFlight = false
-                        guard self.cacheToken == token, self.prerenderToken == token else { return }
+                        guard completed, self.cacheEnabled, !self.isPlaying,
+                              self.cacheToken == token, self.prerenderToken == token else { return }
                         self.remember(tex, frame: idx)
                         // One frame at a time, with a breath between, so the UI never stutters.
                         let w = DispatchWorkItem { step() }
@@ -215,12 +238,14 @@ struct MetalPreview: UIViewRepresentable {
         }
 
         func draw(in view: MTKView) {
-            guard let r = Renderer.shared, let project, let mediaURL else { return }
+            guard !suspended, let r = Renderer.shared, let project, let mediaURL else { return }
             let ds = view.drawableSize
+            guard project.width > 0, project.height > 0, ds.width > 0, ds.height > 0 else { return }
             let base = fitRect(compWidth: project.width, compHeight: project.height, in: ds)
             let fit = CGRect(x: base.midX - base.width * viewZoom / 2 + viewPan.width, y: base.midY - base.height * viewZoom / 2 + viewPan.height,
                              width: base.width * viewZoom, height: base.height * viewZoom)
-            let fullScale = min(1, Double(fit.width) / Double(project.width)) * qualityCap
+            let fullScale = min(1, Double(fit.width) / Double(project.width),
+                                2048 / Double(max(project.width, project.height))) * qualityCap
             let fw = max(1, Int((Double(project.width) * fullScale).rounded()))
             let fh = max(1, Int((Double(project.height) * fullScale).rounded()))
             let frameIdx = Int((time * max(project.fps, 1)).rounded())
@@ -248,6 +273,7 @@ struct MetalPreview: UIViewRepresentable {
             var shown: MTLTexture? = cacheEnabled && !mixesQuality ? cache[frameIdx] : nil
             var renderedFull = false
             var rendered = false
+            var cacheCandidate: MTLTexture?
             let cpuStarted=ProcessInfo.processInfo.systemUptime
             if shown == nil {
                 let steps: [Double] = [1, 0.75, 0.5, 0.35, 0.25]
@@ -266,23 +292,26 @@ struct MetalPreview: UIViewRepresentable {
                 let w = max(1, Int((Double(project.width) * scale).rounded()))
                 let h = max(1, Int((Double(project.height) * scale).rounded()))
                 renderedFull = q >= 0.999
+                guard pools.count == composites.count else { sem.signal(); return }
+                let slot = frame % pools.count
                 let target: MTLTexture
                 if renderedFull && cacheEnabled {
                     guard let t = r.makeCompTexture(width: w, height: h) else { sem.signal(); return }
                     target = t
                 } else {
-                    if comp == nil || comp!.width != w || comp!.height != h { comp = r.makeCompTexture(width: w, height: h) }
-                    guard let c = comp else { sem.signal(); return }
+                    if composites[slot]?.width != w || composites[slot]?.height != h {
+                        composites[slot] = r.makeCompTexture(width: w, height: h)
+                    }
+                    guard let c = composites[slot] else { sem.signal(); return }
                     target = c
                 }
-                guard pools.count == 3 else { sem.signal(); return }
-                let pool = pools[frame % 3]
+                let pool = pools[slot]
                 frame += 1
                 pool.recycle()
                 // Preview: lighter motion blur while playing, finer when paused (export always renders the full count).
                 Renderer.blurSampleCap = isPlaying ? 4 : (renderedFull ? 12 : 6)
                 r.encode(project: project, time: frameTime, renderScale: scale, into: target, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
-                if renderedFull && cacheEnabled { remember(target, frame: frameIdx) }
+                if renderedFull && cacheEnabled { cacheCandidate = target }
                 shown = target
                 rendered = true
             }
@@ -292,12 +321,22 @@ struct MetalPreview: UIViewRepresentable {
             if full && !playing && cacheEnabled { schedulePrerender(from: frameIdx, size: (fw, fh), scale: fullScale) }
             if playing { prerenderWork?.cancel() }
             let cpuTime=ProcessInfo.processInfo.systemUptime-cpuStarted
-            cb.addCompletedHandler { [weak self, weak view] buffer in
+            cb.addCompletedHandler { [weak self, weak view, rendered, cacheCandidate] buffer in
                 sem.signal()
+                let completed = buffer.status == .completed
                 let gpu = buffer.gpuEndTime - buffer.gpuStartTime
                 let frameCost=max(gpu,cpuTime)
                 DispatchQueue.main.async {
-                    guard let self else { return }
+                    guard let self, !self.suspended else { return }
+                    if completed, let cacheCandidate, self.cacheEnabled && self.cacheToken == tk {
+                        self.remember(cacheCandidate, frame: frameIdx)
+                    }
+                    if !completed {
+                        self.pools.forEach { $0.purge() }
+                        self.forceFull = false
+                        self.quality = min(self.quality, 0.5)
+                        self.suppressFullUntil = ProcessInfo.processInfo.systemUptime + 3
+                    }
                     if rendered {
                         // Budget ≈16 ms (60 fps): heavy frames drop resolution (down to 1/4 while playing), light ones recover.
                         let floor = playing ? 0.25 : 0.5

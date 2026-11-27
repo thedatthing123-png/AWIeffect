@@ -162,7 +162,7 @@ final class AWIeffectUITests: XCTestCase {
             snap("new-cc-" + tab.lowercased())
         }
 
-        tap("Rig")
+        tap("Rig Studio")
         sleep(1)
         snap("new-rig")
         tap("Blending")

@@ -121,7 +121,7 @@ struct LayerHomePanel: View {
                              icon: c == .camera ? "camera.aperture" : (c == .light ? "lightbulb.fill" : "cube"), panel: .threeD))
         }
         if visual && c != .text { move.append(Tile(id: "Puppet", icon: "hand.point.up.braille", panel: .puppet)) }
-        if visual { move.append(Tile(id: "Rig", icon: "figure.arms.open", panel: .rig)) }
+        if visual { move.append(Tile(id: "Rig Studio", icon: "figure.arms.open", panel: .rig)) }
         if visual && c != .adjustment { move.append(Tile(id: "Physics", icon: "atom", panel: .physics)) }
         var hasSound = l.isAudioOnly
         if case .video(_, _, _, let a) = c { hasSound = a }

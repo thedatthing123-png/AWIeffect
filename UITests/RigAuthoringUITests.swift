@@ -21,6 +21,14 @@ final class RigAuthoringUITests: XCTestCase {
         let target = app.descendants(matching: .any)["Artwork IK Target"].firstMatch
         XCTAssertTrue(target.waitForExistence(timeout: 5))
         XCTAssertTrue(target.isHittable)
+        XCTAssertFalse(app.buttons["Bone / Weight"].exists)
+        XCTAssertFalse(app.buttons["Existing Rig Tools"].exists)
+        let pad = app.descendants(matching: .any)["artwork-rig-ik-pad"].firstMatch
+        XCTAssertTrue(pad.isHittable)
+        let padStart = pad.coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.35))
+        let beforePad = target.frame.midX
+        padStart.press(forDuration: 0.1, thenDragTo: padStart.withOffset(CGVector(dx: -45, dy: 12)))
+        XCTAssertLessThan(target.frame.midX, beforePad - 1)
         let before = target.frame.midX
         let handle = target.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
         handle.press(forDuration: 0.1, thenDragTo: handle.withOffset(CGVector(dx: -24, dy: 14)))

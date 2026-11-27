@@ -27,11 +27,35 @@ struct ArtworkRigStudio: View {
                 VStack(alignment: .leading, spacing: 7) {
                     TSSegmented(options: Mode.allCases.map { ($0, $0.rawValue) }, selection: mode, label: "Rig Studio") { mode = $0 }
                     switch mode {
-                    case .setup: setupControls
+                    case .setup:
+                        Text("Place a start and end on the artwork, then bind it to the bones.")
+                            .font(.caption).foregroundStyle(Theme.textDim)
+                        setupControls
                     case .weights: weightControls
-                    case .animate: poseControls
+                    case .animate:
+                        if rig.bones.count > 1 {
+                            ScrollView(.horizontal) {
+                                HStack(spacing: 6) {
+                                    ForEach(rig.bones) { bone in
+                                        Button { select(bone, atStart: false) } label: {
+                                            Text(bone.name).font(.caption.weight(.semibold))
+                                                .padding(.horizontal, 12).frame(minHeight: 44)
+                                                .background(bone.id == selectedID ? Theme.accent.opacity(0.24) : Theme.surface,
+                                                            in: RoundedRectangle(cornerRadius: 8))
+                                        }
+                                        .buttonStyle(.plain)
+                                        .accessibilityAddTraits(bone.id == selectedID ? .isSelected : [])
+                                    }
+                                }
+                            }
+                            .scrollIndicators(.hidden)
+                        }
+                        LiveReader(live: state.live) { live in
+                            let poseRig = live?.layers.first(where: { $0.id == layer.id })?.artworkRig ?? rig
+                            poseControls(poseRig)
+                        }
                     }
-                    ForEach(rig.bones) { bone in
+                    ForEach(mode == .animate ? [] : rig.bones) { bone in
                         Button { select(bone, atStart: false) } label: {
                             HStack {
                                 Text(bone.name).foregroundStyle(bone.id == selectedID ? Theme.accentGlow : Theme.text)
@@ -42,8 +66,6 @@ struct ArtworkRigStudio: View {
                             .frame(minHeight: 44).contentShape(Rectangle())
                         }.buttonStyle(.plain)
                     }
-                    Button("Existing Rig Tools") { state.showArtworkRig = false }
-                        .font(.caption).frame(minHeight: 44)
                 }.padding(.horizontal, 12).padding(.vertical, 6)
             }
         }
@@ -160,9 +182,26 @@ struct ArtworkRigStudio: View {
         }
     }
 
-    @ViewBuilder private var poseControls: some View {
+    @ViewBuilder private func poseControls(_ poseRig: ArtworkRig) -> some View {
         let time = state.currentTime
-        if let bone = selected {
+        if let bone = poseRig.bones.first(where: { $0.id == selectedID }) {
+            let ik = poseRig.constraint(on: bone.id)
+            if let ik {
+                let target = ik.target.value(at: time)
+                HStack {
+                    NumberField(value: target.x, label: "IK X", step: 0.1) { state.moveArtworkIK(layer.id, bone: bone.id, x: $0, y: nil) }
+                    NumberField(value: target.y, label: "IK Y", step: 0.1) { state.moveArtworkIK(layer.id, bone: bone.id, x: nil, y: $0) }
+                    KeyframeDiamond(filled: ik.target.hasKeyframe(at: time), animated: ik.target.isAnimated) {
+                        update("Key IK Target") { $0.editIK(on: bone.id) { $0.target.toggleKeyframe(at: time) } }
+                    }
+                    .accessibilityLabel("Key IK Target")
+                }
+                posePad(bone.id, movesIK: true)
+            } else {
+                Text("Bone Position").font(.caption.weight(.semibold)).foregroundStyle(Theme.textDim)
+                posePosition(bone, at: time)
+                posePad(bone.id, movesIK: false)
+            }
             let angle = bone.rotation ?? Animated(0)
             TSNumberRow(title: "Rotation", value: angle.value(at: time), range: -360...360, step: 0.1, unit: "deg",
                         allowBeyond: true, key: (angle.hasKeyframe(at: time), angle.isAnimated, {
@@ -178,31 +217,13 @@ struct ArtworkRigStudio: View {
                     item.rotation = track
                 }
             }, onEnd: { state.endEdit() })
-            let offset = bone.offset ?? Animated(Vec2.zero)
-            HStack {
-                NumberField(value: offset.value(at: time).x, label: "X", step: 0.1) { setOffset(bone.id, x: $0, y: nil) }
-                NumberField(value: offset.value(at: time).y, label: "Y", step: 0.1) { setOffset(bone.id, x: nil, y: $0) }
-                KeyframeDiamond(filled: offset.hasKeyframe(at: time), animated: offset.isAnimated) {
-                    changeBone(bone.id, "Key Bone Position") { item in
-                        var track = item.offset ?? Animated(Vec2.zero)
-                        track.toggleKeyframe(at: time)
-                        item.offset = track
-                    }
-                }
-                .accessibilityLabel("Key Bone Position")
+            if ik == nil {
+                if bone.parentID != nil { addIKControl(bone, at: time) }
+            } else {
+                posePosition(bone, at: time)
             }
-            if bone.parentID != nil && rig.constraint(on: bone.id) == nil { addIKControl(bone, at: time) }
         }
-        if let id = selectedID, let ik = rig.constraint(on: id) {
-            let target = ik.target.value(at: time)
-            HStack {
-                NumberField(value: target.x, label: "IK X", step: 0.1) { state.moveArtworkIK(layer.id, bone: id, x: $0, y: nil) }
-                NumberField(value: target.y, label: "IK Y", step: 0.1) { state.moveArtworkIK(layer.id, bone: id, x: nil, y: $0) }
-                KeyframeDiamond(filled: ik.target.hasKeyframe(at: time), animated: ik.target.isAnimated) {
-                    update("Key IK Target") { $0.editIK(on: id) { $0.target.toggleKeyframe(at: time) } }
-                }
-                .accessibilityLabel("Key IK Target")
-            }
+        if let id = selectedID, let ik = poseRig.constraint(on: id) {
             TSNumberRow(title: "IK Mix", value: ik.mix.value(at: time), range: 0...100, step: 1, unit: "%",
                         key: (ik.mix.hasKeyframe(at: time), ik.mix.isAnimated, {
                 update("Key IK Mix") { $0.editIK(on: id) { $0.mix.toggleKeyframe(at: time) } }
@@ -219,6 +240,50 @@ struct ArtworkRigStudio: View {
             Button("Remove IK") { update("Remove IK") { $0.constraints?.removeAll { $0.tipBoneID == id } } }.frame(minHeight: 44)
         }
         if let bone = selected { poseKeys(for: bone) }
+    }
+
+    private func posePosition(_ bone: ArtworkBone, at time: Double) -> some View {
+        let offset = bone.offset ?? Animated(Vec2.zero)
+        let value = offset.value(at: time)
+        return HStack {
+            NumberField(value: value.x, label: "X", step: 0.1) { setOffset(bone.id, x: $0, y: nil) }
+            NumberField(value: value.y, label: "Y", step: 0.1) { setOffset(bone.id, x: nil, y: $0) }
+            KeyframeDiamond(filled: offset.hasKeyframe(at: time), animated: offset.isAnimated) {
+                changeBone(bone.id, "Key Bone Position") { item in
+                    var track = item.offset ?? Animated(Vec2.zero)
+                    track.toggleKeyframe(at: time)
+                    item.offset = track
+                }
+            }
+            .accessibilityLabel("Key Bone Position")
+        }
+    }
+
+    private func posePad(_ id: UUID, movesIK: Bool) -> some View {
+        let title = movesIK ? "Move IK Target" : "Move Bone"
+        return SwipePad(hint: movesIK ? "Swipe to move the IK target" : "Swipe to move the selected bone",
+                        gain: max(1, layer.size.value(at: state.currentTime).x), steady: true) { delta in
+            let time = state.currentTime
+            guard let projection = state.displayPlacement(of: layer.id),
+                  let current = (state.live.project ?? state.project).layers.first(where: { $0.id == layer.id })?.artworkRig,
+                  let bone = current.bones.first(where: { $0.id == id }) else { return }
+            if movesIK, let ik = current.constraint(on: id) {
+                let point = ik.target.value(at: time)
+                guard let next = nudged(point, by: delta, projection: projection, artworkProjection: projection) else { return }
+                state.moveArtworkIK(layer.id, bone: id, x: next.x, y: next.y)
+            } else if !movesIK {
+                let frames = current.pose(at: time)
+                let parent = bone.parentID.flatMap { frames[$0]?.matrix } ?? matrix_identity_double3x3
+                let origin = bone.start + (bone.offset?.value(at: time) ?? .zero)
+                guard let next = nudged(origin, by: delta, projection: projection * parent, artworkProjection: projection) else { return }
+                let offset = next - bone.start
+                setOffset(id, x: offset.x, y: offset.y)
+            }
+        } begin: { state.beginPanelGesture(title) } end: { state.endPanelGesture() }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityIdentifier(movesIK ? "artwork-rig-ik-pad" : "artwork-rig-bone-pad")
+        .disabled(layer.isLocked)
     }
 
     @ViewBuilder private func addIKControl(_ bone: ArtworkBone, at time: Double) -> some View {
@@ -321,12 +386,19 @@ struct ArtworkRigStudio: View {
 
     private func nudgedCursor(_ delta: CGSize) -> Vec2 {
         let cursor = state.rigCursor
+        guard let projection = state.displayPlacement(of: layer.id) else { return cursor }
+        return nudged(cursor, by: delta, projection: projection, artworkProjection: projection) ?? cursor
+    }
+
+    private func nudged(_ cursor: Vec2, by delta: CGSize, projection: simd_double3x3,
+                        artworkProjection: simd_double3x3) -> Vec2? {
         let step = Vec2(Double(delta.width), Double(delta.height))
-        guard let projection = state.displayPlacement(of: layer.id), abs(projection.determinant) > 1e-10,
+        guard step != .zero, abs(projection.determinant) > 1e-10, abs(artworkProjection.determinant) > 1e-10,
               let point = LayerPlacement.projected(cursor, by: projection),
-              let sample = LayerPlacement.projected(cursor + Vec2(1, 0), by: projection) else { return cursor + step }
+              let artworkPoint = LayerPlacement.projected(point, by: artworkProjection.inverse),
+              let sample = LayerPlacement.projected(artworkPoint + Vec2(1, 0), by: artworkProjection) else { return nil }
         let unit = hypot(sample.x - point.x, sample.y - point.y)
-        return LayerPlacement.projected(point + step * unit, by: projection.inverse) ?? cursor
+        return LayerPlacement.projected(point + step * unit, by: projection.inverse)
     }
 
     private func place() {

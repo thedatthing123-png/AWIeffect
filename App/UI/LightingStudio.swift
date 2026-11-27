@@ -20,6 +20,9 @@ struct LightingStudio: View {
                 ForEach(Tab.allCases, id: \.self) { Text($0.rawValue).tag($0) }
             }
             .pickerStyle(.segmented)
+            Text(lightTypeHint)
+                .font(.caption)
+                .foregroundStyle(Theme.textDim)
             .padding(.horizontal, 12)
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
@@ -72,8 +75,6 @@ struct LightingStudio: View {
             }
             if light.type == .spot || light.type == .point {
                 lightRow("Falloff Radius", \.falloffRadius, 0...6000, " px")
-                Text("A radius of 0 gives the light unlimited reach.")
-                    .font(.caption).foregroundStyle(Theme.textDim)
             }
             if light.type != .ambient {
                 Divider()
@@ -102,6 +103,15 @@ struct LightingStudio: View {
         }
     }
 
+    private var lightTypeHint: String {
+        switch light.type {
+        case .ambient: "Fills the scene evenly."
+        case .point: "Spreads in all directions. Set falloff to 0 for unlimited reach."
+        case .spot: "Lights an aimed cone. Set falloff to 0 for unlimited reach."
+        case .parallel: "Lights the scene from a single direction."
+        }
+    }
+
     private var placementControls: some View {
         VStack(alignment: .leading, spacing: 10) {
             if light.type == .point || light.type == .spot {
@@ -127,7 +137,8 @@ struct LightingStudio: View {
                 HStack {
                     Text(artwork.name).font(.subheadline.weight(.semibold)).lineLimit(1)
                     Spacer()
-                    Text(artwork.is3D ? "DEPTH" : "FLAT").font(.caption2.weight(.semibold))
+                    Text(artwork.activeRelight != nil ? "Relit Surface" : (artwork.is3D ? "Depth Layer" : "Flat Layer"))
+                        .font(.caption2.weight(.semibold))
                         .foregroundStyle(Theme.textDim)
                 }
                 Toggle("Receive Light", isOn: artworkToggle(artwork, "Receive Light", get: { $0.receivesLight }) {

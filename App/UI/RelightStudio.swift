@@ -43,7 +43,11 @@ struct RelightStudio: View {
                 busy = true
                 Task { @MainActor in
                     defer { busy = false }
-                    do { try await state.importRelightPass(pass, from: url, layer: layer); error = nil }
+                    do {
+                        try await state.importRelightPass(pass, from: url, layer: layer)
+                        error = nil
+                        if pass == .depth || pass == .normal { tab = .surface }
+                    }
                     catch { self.error = error.localizedDescription }
                 }
             }
@@ -52,14 +56,16 @@ struct RelightStudio: View {
 
     private var passes: some View {
         VStack(alignment: .leading, spacing: 7) {
+            if material.maps.isEmpty {
+                Text("Give this layer a surface that responds to scene lights.")
+                    .font(.subheadline.weight(.semibold))
+                Text("Start with a Depth or Normals map prepared in another app. Use the same framing and timing as this layer.")
+                    .font(.caption).foregroundStyle(Theme.textDim)
+            }
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 7) {
                 ForEach(RelightPass.allCases) { pass in passTile(pass) }
             }
             if busy { ProgressView("Importing pass…").font(.caption) }
-            if material.maps.isEmpty {
-                Text("Import maps that match the source framing and timing. Start with Depth or Normals.")
-                    .font(.caption).foregroundStyle(Theme.textDim)
-            }
         }
     }
 
@@ -74,7 +80,7 @@ struct RelightStudio: View {
                     Image(systemName: pass.icon).frame(width: 17).foregroundStyle(Theme.accentGlow)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(pass.title).font(.system(size: 12, weight: .semibold))
-                        Text(media?.name ?? "Import").font(.caption2).foregroundStyle(Theme.textDim)
+                        Text(media?.name ?? passPurpose(pass)).font(.caption2).foregroundStyle(Theme.textDim)
                     }
                     .lineLimit(1)
                     Spacer(minLength: 0)
@@ -100,8 +106,23 @@ struct RelightStudio: View {
         .glass(radius: 9)
     }
 
+    private func passPurpose(_ pass: RelightPass) -> String {
+        switch pass {
+        case .depth: "Surface distance"
+        case .normal: "Surface direction"
+        case .alpha: "Cutout mask"
+        case .baseColor: "Unlit color"
+        }
+    }
+
     private var surface: some View {
         VStack(alignment: .leading, spacing: 6) {
+            if material.maps.isEmpty {
+                Text("Add Depth or Normals to shape how the light falls on this layer.")
+                    .font(.caption).foregroundStyle(Theme.textDim)
+                Button("Choose Passes") { tab = .passes }
+                    .frame(minHeight: 44)
+            }
             Toggle("Relight Surface", isOn: Binding(get: { !material.maps.isEmpty && material.enabled }, set: { value in
                 set("Relight Surface") { $0.enabled = value }
             })).frame(minHeight: 44)
@@ -134,7 +155,7 @@ struct RelightStudio: View {
                 Button {
                     state.addLight(.point)
                 } label: {
-                    Label("Add Point Light", systemImage: "plus")
+                    Label("Add Scene Point Light", systemImage: "plus")
                         .frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.plain).glass(radius: 9)

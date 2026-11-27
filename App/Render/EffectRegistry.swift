@@ -75,7 +75,11 @@ final class TexturePool {
     private var generation = 0
     /// Spare-texture budget per pool; beyond it the least recently used sizes are released.
     static var budgetBytes = 96 * 1024 * 1024
-    init(device: MTLDevice) { self.device = device }
+    private let spareLimit: Int?
+    init(device: MTLDevice, spareLimit: Int? = nil) {
+        self.device = device
+        self.spareLimit = spareLimit
+    }
 
     private static func bytes(_ t: MTLTexture) -> Int { max(t.allocatedSize, t.width * t.height * (t.pixelFormat == .rgba16Float ? 8 : 4)) }
 
@@ -144,11 +148,12 @@ final class TexturePool {
             if v.count > 6 { free[k] = Array(v.suffix(6)) }
         }
         var total = free.values.reduce(0) { $0 + $1.reduce(0) { $0 + Self.bytes($1) } }
-        if total > Self.budgetBytes {
+        let limit = spareLimit ?? Self.budgetBytes
+        if total > limit {
             for k in free.keys.sorted(by: { (lastUse[$0] ?? 0) < (lastUse[$1] ?? 0) }) {
                 total -= free[k]?.reduce(0) { $0 + Self.bytes($1) } ?? 0
                 free[k] = nil
-                if total <= Self.budgetBytes { break }
+                if total <= limit { break }
             }
         }
     }

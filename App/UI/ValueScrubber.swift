@@ -110,8 +110,10 @@ struct ValueScrubber: View {
                     let gain = abs(dx) < 2 ? 0.4 : 0.8
                     let next = current + Double(dx) / Double(max(geo.size.width, 1)) * (precisionTravel ?? (travel * gain))
                     let bounds = precisionTravel == nil ? range : hardRange
-                    dragBase = min(max(next, bounds.lowerBound), bounds.upperBound)
-                    onChange(quantize(dragBase ?? value))
+                    let pending = min(max(next, bounds.lowerBound), bounds.upperBound)
+                    dragBase = pending
+                    let accepted = quantize(pending)
+                    if accepted != quantize(current) { onChange(accepted) }
                 }
                 .onEnded { _ in finishDrag() }, including: editing ? .none : .all)
             .onChange(of: touching) { _, down in if !down { finishDrag() } }

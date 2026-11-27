@@ -92,7 +92,7 @@ struct BottomPanel: View {
                 case .puppet: PuppetPanel(state: state)
                 case .ccStudio: CCStudioPanel(state: state)
                 case .rig:
-                    if state.showArtworkRig, let layer = state.selectedLayer, layer.isImage {
+                    if state.usesArtworkRigStudio, let layer = state.selectedLayer {
                         ArtworkRigStudio(state: state, layer: layer).id(layer.id)
                     } else {
                         RigPanel(state: state)

@@ -994,14 +994,14 @@ struct RigPanel: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            PanelHeader(state: state, title: "Rig", showKeyNav: false)
+            PanelHeader(state: state, title: "Rig Studio", showKeyNav: false)
             if let l = state.selectedLayer {
                 LiveReader(live: state.live) { _ in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
-                        if l.isImage {
-                            Button { state.showArtworkRig = true } label: {
-                                Label("Rig Studio", systemImage: "point.3.connected.trianglepath.dotted")
+                        if l.bone != nil || state.rigArtwork?.boneMesh != nil || state.selectedIKLayer != nil {
+                            Button { state.panel = .boneWeight } label: {
+                                Label("Weights", systemImage: "point.3.connected.trianglepath.dotted")
                                     .frame(maxWidth: .infinity, minHeight: 44)
                             }
                             .buttonStyle(PrimaryButtonStyle())

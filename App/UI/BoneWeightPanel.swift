@@ -90,9 +90,13 @@ struct BoneWeightPanel: View {
     @ObservedObject var state: EditorState
     var body: some View {
         VStack(spacing: 0) {
-            PanelHeader(state: state,title: "Bone / Weight",showKeyNav: false)
+            PanelHeader(state: state,title: "Rig Studio",showKeyNav: false)
             ScrollView {
                 VStack(alignment: .leading,spacing: 8) {
+                    Button { state.finishBoneWeights(); state.panel = .rig } label: {
+                        Label("Joint Controls", systemImage: "chevron.left").frame(minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
                     if let owner = state.selectedIKLayer,owner.bone == nil {
                         if state.boneWeightArtworkID == nil {
                             Text("Artwork controlled by this rig").font(.caption.bold()).foregroundStyle(Theme.textDim)

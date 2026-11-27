@@ -476,7 +476,7 @@ final class Renderer {
         self.dummy = dummy
     }
 
-    func makePool() -> TexturePool { TexturePool(device: device) }
+    func makePool(spareLimit: Int? = nil) -> TexturePool { TexturePool(device: device, spareLimit: spareLimit) }
 
     // MARK: Textures
 
