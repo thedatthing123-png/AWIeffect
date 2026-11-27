@@ -94,6 +94,26 @@ final class EditorPolishUITests: XCTestCase {
         try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("lighting-shadow-spread.png"))
     }
 
+    func testSmoothSceneIsDirectlyOnAdjustmentAndCamera() throws {
+        let output = URL(fileURLWithPath: "/tmp/awi-ui", isDirectory: true)
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        for camera in [false, true] {
+            let app = XCUIApplication()
+            app.launchArguments = ["-uiTesting", "-uiTesting-smoothScene"] + (camera ? ["-uiTesting-smoothSceneCamera"] : [])
+            app.launch()
+            let toggle = app.switches["smooth-scene-toggle"].firstMatch
+            XCTAssertTrue(toggle.waitForExistence(timeout: 15))
+            XCTAssertTrue(toggle.isHittable)
+            XCTAssertEqual(toggle.value as? String, "0")
+            toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+            XCTAssertEqual(toggle.value as? String, "1")
+            XCTAssertTrue(app.staticTexts["65%"].firstMatch.exists)
+            let name = camera ? "smooth-scene-camera" : "smooth-scene-adjustment"
+            try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent(name + ".png"))
+            app.terminate()
+        }
+    }
+
     func testIndividualAndCameraBlurDoNotEnableEveryLayer() {
         continueAfterFailure = false
         for camera in [false, true] {

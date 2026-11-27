@@ -222,7 +222,7 @@ final class Renderer {
         sub.precompList = precompLibrary
         sub.precompDepth = currentDepth + 1
         let library = precompLibrary, depth = currentDepth, saved = groupParts, cams = groupCameras
-        encode(project: sub, time: time, renderScale: s, into: tex, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
+        encode(project: sub, time: time, renderScale: s, into: tex, commandBuffer: cb, pool: pool, mediaURL: mediaURL, smoothingPrepared: true)
         precompLibrary = library; currentPool = pool; currentDepth = depth; groupParts = saved; groupCameras = cams
         return tex
     }
@@ -607,7 +607,7 @@ final class Renderer {
     /// `pool` supplies scratch textures; the caller recycles it once the command buffer has finished
     /// (or rotates pools for in-flight frames).
     func encode(project rawProject: Project, time: Double, renderScale: Double, into comp: MTLTexture,
-                commandBuffer cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL) {
+                commandBuffer cb: MTLCommandBuffer, pool: TexturePool, mediaURL: (String) -> URL, smoothingPrepared: Bool = false) {
         // Preview, preset thumbnails, and export share this renderer. Protect per-frame state and
         // restore it after recursive group/precomp renders as well as after top-level renders.
         encodeLock.lock()
@@ -620,9 +620,12 @@ final class Renderer {
             groupSource = savedGroupSource
             encodeLock.unlock()
         }
-        groupSource = rawProject
-        // Expressions are baked into plain values for this frame first.
-        let resolved = ExpressionResolver.resolve(rawProject, time: time)
+        func scopedProject(at sampleTime: Double) -> Project {
+            smoothingPrepared ? rawProject : SmoothScene.applying(to: rawProject, at: sampleTime)
+        }
+        let scoped = scopedProject(at: time)
+        groupSource = scoped
+        let resolved = ExpressionResolver.resolve(scoped, time: time)
         // Echo needs parenting baked over time (costly); everything else bakes just this frame.
         let hasEcho = resolved.layers.contains { ($0.timeFX?.echoCount ?? 0) > 0 }
         let project = hasEcho ? Self.expandEchoes(Self.resolveParentingAnimated(resolved),meshSource: rawProject,time: time) : Self.resolveParenting(resolved, time: time, meshSource: rawProject)
@@ -631,7 +634,7 @@ final class Renderer {
             let sample: Project
             if let cached = shutterProjects[sampleTime] { sample = cached }
             else {
-                sample = Self.resolveParenting(ExpressionResolver.resolve(rawProject, time: sampleTime), time: sampleTime)
+                sample = Self.resolveParenting(ExpressionResolver.resolve(scopedProject(at: sampleTime), time: sampleTime), time: sampleTime)
                 shutterProjects[sampleTime] = sample
             }
             let sampledLayer = sample.layers.first { $0.id == layer.id } ?? layer
@@ -754,7 +757,7 @@ final class Renderer {
                     let n = max(2, min(Renderer.blurSampleCap.map { min($0, 8) } ?? 8, project.blurSamples))
                     let shots: [MTLTexture] = (0..<n).compactMap { k in
                         let t = time + open.start + open.length * Double(k) / Double(n - 1)
-                        let sample = Self.resolveParenting(ExpressionResolver.resolve(rawProject, time: t), time: t)
+                        let sample = Self.resolveParenting(ExpressionResolver.resolve(scopedProject(at: t), time: t), time: t)
                         let at = sample.layers.first { $0.id == layer.id } ?? layer
                         let p = Self.modelPlacement(at, project: sample, camera: Self.activeCamera(sample, time: t), time: t)
                         return ModelRenderer.shared?.render(options, time: t, width: mw, height: mh, cb: cb, pool: pool, placement: p, mediaURL: mediaURL)
@@ -809,7 +812,7 @@ final class Renderer {
                     let n = max(2, min(Renderer.blurSampleCap.map { min($0, 8) } ?? 8, project.blurSamples))
                     let shots: [MTLTexture] = (0..<n).compactMap { k in
                         let t = time + open.start + open.length * Double(k) / Double(n - 1)
-                        let sample = Self.resolveParenting(ExpressionResolver.resolve(rawProject, time: t), time: t)
+                        let sample = Self.resolveParenting(ExpressionResolver.resolve(scopedProject(at: t), time: t), time: t)
                         let at = sample.layers.first { $0.id == layer.id } ?? layer
                         let p = Self.modelPlacement(at, project: sample, camera: Self.activeCamera(sample, time: t), time: t)
                         return text3D.render(glyphs: Self.text3DGlyphs(at, time: t, beats: textBeats), options: at.text?.text3D ?? options3D,

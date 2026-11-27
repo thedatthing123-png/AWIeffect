@@ -232,6 +232,9 @@ struct EffectsPanel: View {
             PanelHeader(state: state, title: "Effects", effectTools: true)
             ScrollView {
                 VStack(spacing: 8) {
+                    if let layer = state.selectedLayer, layer.content == .adjustment {
+                        SmoothSceneControls(state: state, layer: layer)
+                    }
                     Button { showBrowser = true } label: {
                         Label("Add Effect", systemImage: "plus")
                             .font(.system(size: 14, weight: .semibold))

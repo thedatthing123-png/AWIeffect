@@ -96,6 +96,15 @@ struct RootView: View {
             p.layers = [light, artwork]
             _openProject = State(initialValue: p)
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-smoothScene") {
+            var project = Project.new(name: "Smooth Scene", width: 160, height: 120, fps: 30, duration: 2)
+            var camera = project.makeLayer(name: "Camera", content: .camera, size: Vec2(160, 120))
+            camera.camera = CameraOptions()
+            let adjustment = project.makeLayer(name: "Adjustment", content: .adjustment, size: Vec2(160, 120))
+            let artwork = project.makeLayer(name: "Artwork", content: .shape(.star), size: Vec2(48, 48))
+            project.layers = [camera, adjustment, artwork]
+            _openProject = State(initialValue: project)
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-motionBlur") {
             var p = Project.new(name: "Motion Blur Controls", width: 160, height: 120, fps: 30, duration: 2)
             var camera = p.makeLayer(name: "Camera", content: .camera, size: Vec2(160,120))

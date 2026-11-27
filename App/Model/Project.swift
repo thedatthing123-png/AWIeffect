@@ -313,6 +313,8 @@ struct Layer: Codable, Equatable, Identifiable {
     var isSolo = false
     /// AE motion-blur switch (only renders when the scene's motion blur is enabled too).
     var motionBlur = false
+    /// Optional strength (0–100) for the adjustment or camera motion scope.
+    var smoothSceneStrength: Double? = nil
     var trackMatte: TrackMatte = .none
     /// Clipping mask (Alight Motion style): only shows where the layer directly below has pixels; that layer still draws.
     var clipToBelow = false
@@ -406,6 +408,7 @@ struct Layer: Codable, Equatable, Identifiable {
         isLocked = try c.decodeIfPresent(Bool.self, forKey: .isLocked) ?? false
         isSolo = try c.decodeIfPresent(Bool.self, forKey: .isSolo) ?? false
         motionBlur = try c.decodeIfPresent(Bool.self, forKey: .motionBlur) ?? false
+        smoothSceneStrength = try c.decodeIfPresent(Double.self, forKey: .smoothSceneStrength)
         trackMatte = try c.decodeIfPresent(TrackMatte.self, forKey: .trackMatte) ?? .none
         clipToBelow = try c.decodeIfPresent(Bool.self, forKey: .clipToBelow) ?? false
         timeFX = try c.decodeIfPresent(LayerTimeFX.self, forKey: .timeFX)

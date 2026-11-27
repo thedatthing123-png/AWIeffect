@@ -290,6 +290,8 @@ struct Animated<Value: Interpolatable>: Codable, Equatable {
     /// AE-style expression (JavaScript). Evaluated by ExpressionEngine before rendering; nil = none.
     var expression: String? = nil
     var expressionEnabled = true
+    /// Transient render scope. CodingKeys deliberately excludes it.
+    var sceneSmoothing = 0.0
 
     init(_ value: Value) { staticValue = value }
 
@@ -324,11 +326,47 @@ struct Animated<Value: Interpolatable>: Codable, Equatable {
         let x = (time - a.time) / span
         switch a.interpolation {
         case .hold: return a.reversedSegment == true ? b.value : a.value
-        case .linear: return Self.blend(a, b, x)
+        case .linear:
+            guard sceneSmoothing > 0, x > 0, a.reversedSegment != true,
+                  a.spatialOut == nil, b.spatialIn == nil else { return Self.blend(a, b, x) }
+            let ease = sceneSmoothProgress(index: lo, fraction: x)
+            return Self.blend(a, b, Double.lerp(x, ease, sceneSmoothing))
         case .bezier:
             if let c = a.curve { return Self.blend(a, b, (a.reversedSegment == true ? 1 - c.progress(1 - x) : c.progress(x))) }
             return Self.blend(a, b, BezierTiming.progress(x: x, p1: a.easeOut, p2: b.easeIn))
         }
+    }
+
+    /// Hermite pace along the existing segment. Use a common harmonic slope on straight
+    /// runs and come to rest at channel reversals, corners, holds and custom curves.
+    private func sceneSmoothProgress(index: Int, fraction x: Double) -> Double {
+        let a = keyframes[index], b = keyframes[index + 1]
+        let duration = b.time - a.time
+        func matchingSlope(from first: Keyframe<Value>, to last: Keyframe<Value>) -> Double {
+            let span = last.time - first.time
+            guard span > 0, first.interpolation == .linear, first.reversedSegment != true,
+                  first.spatialOut == nil, last.spatialIn == nil else { return 0 }
+            let ratio: Double
+            if let v0 = a.value as? Double, let v1 = b.value as? Double,
+               let u0 = first.value as? Double, let u1 = last.value as? Double, abs(v1 - v0) > 1e-9 {
+                ratio = ((u1 - u0) / (v1 - v0)) * (duration / span)
+            } else if let v0 = a.value as? Vec2, let v1 = b.value as? Vec2,
+                      let u0 = first.value as? Vec2, let u1 = last.value as? Vec2 {
+                let v = v1 - v0, u = u1 - u0
+                let vv = v.x * v.x + v.y * v.y
+                let uu = u.x * u.x + u.y * u.y
+                let dot = v.x * u.x + v.y * u.y
+                guard vv > 1e-12, uu > 1e-12, dot > 0, dot > 0.9999 * sqrt(vv * uu) else { return 0 }
+                ratio = (dot / vv) * (duration / span)
+            } else {
+                return 0
+            }
+            return ratio.isFinite && ratio > 0 ? 2 / (1 + 1 / ratio) : 0
+        }
+        let entry = index > 0 ? matchingSlope(from: keyframes[index - 1], to: a) : 0
+        let exit = index + 2 < keyframes.count ? matchingSlope(from: b, to: keyframes[index + 2]) : 0
+        let u = 1 - x
+        return min(1, max(0, x * x * (3 - 2 * x) + entry * x * u * u - exit * x * x * u))
     }
 
     /// Value between two keys at progress f: along the spatial bezier when the keys have motion path handles.

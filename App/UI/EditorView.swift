@@ -49,6 +49,11 @@ struct EditorView: View {
             state.select(state.project.layers.first?.id)
             state.panel = .threeD
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-smoothScene") {
+            let camera = ProcessInfo.processInfo.arguments.contains("-uiTesting-smoothSceneCamera")
+            state.select(state.project.layers.first(where: { $0.content == (camera ? .camera : .adjustment) })?.id)
+            state.panel = camera ? .threeD : .effects
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-motionBlur") {
             let camera = ProcessInfo.processInfo.arguments.contains("-uiTesting-motionBlurCamera")
             state.select(state.project.layers.first(where: { camera ? $0.content == .camera : $0.content != .camera })?.id)

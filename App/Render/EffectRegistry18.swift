@@ -44,7 +44,7 @@ extension EffectRegistry {
             let continuous = e.bool("continuousSpeed") && mode != 4
             let phase = continuous ? EffectRate.phase(e, key: "speed", time: t, range: 0.5...40) : t
             let env = exp(-max(0, e.number("fade", raw)) * max(0, raw)) * easeIn26(raw, e.number("fadeIn", raw))
-            var (x, y, r, z) = shake26(mode: mode, t: phase, f: continuous ? 1 : f, seed: seed)
+            var (x, y, r, z) = shake26(mode: mode, t: phase, f: continuous ? 1 : f, seed: seed, fineMotion: 0.5 * (1 - e.sceneSmoothing))
             switch e.choice("direction") {
             case 1: y = 0
             case 2: x = 0
@@ -242,7 +242,7 @@ extension EffectRegistry {
     static let transformFX18 = EffectDefinition(
         id: "awi18.transform", name: "Transform (Effect)", category: .motion,
         aeMatchNames: [],
-        summary: "AE's Transform effect: offset, scale and rotate inside the effect stack, on top of the layer's own keyframes (stack velocity hits and shakes without touching them). Gets motion blur from Smooth Motion.",
+        summary: "AE's Transform effect: offset, scale and rotate inside the effect stack, on top of the layer's own keyframes (stack velocity hits and shakes without touching them). Supports the scene’s automatic motion blur setting.",
         params: [
             .number("x", "Position X Offset", 0, -5000, 5000, unit: "px"),
             .number("y", "Position Y Offset", 0, -5000, 5000, unit: "px"),

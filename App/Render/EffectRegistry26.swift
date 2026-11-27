@@ -33,7 +33,7 @@ extension EffectRegistry {
 
     /// Normalized shake offsets (x, y, rotation, zoom), each roughly in [-1, 1], for Shake Pro's types.
     /// - t: time already quantized for hold frames; f: speed (/s); seed: random seed.
-    static func shake26(mode: Int, t: Double, f: Double, seed: Double) -> (Double, Double, Double, Double) {
+    static func shake26(mode: Int, t: Double, f: Double, seed: Double, fineMotion: Double) -> (Double, Double, Double, Double) {
         switch mode {
         case 1:
             // Twitch: snaps to a new random pose every 1/f s with a one-frame ease-out (no linear slide),
@@ -87,10 +87,10 @@ extension EffectRegistry {
             return (x, y, sin(t * f * 5 * .pi + seed * 3) * 0.3, sin(t * f * 4 * .pi) * 0.3)
         default:
             // Smooth wiggle (tension): independent fractal noise per axis.
-            return (Wiggle.value(t: t, freq: f, octaves: 2, seed: seed * 13 + 1),
-                    Wiggle.value(t: t, freq: f, octaves: 2, seed: seed * 13 + 2),
-                    Wiggle.value(t: t, freq: f, octaves: 2, seed: seed * 13 + 3),
-                    Wiggle.value(t: t, freq: f, octaves: 2, seed: seed * 13 + 4))
+            return (Wiggle.value(t: t, freq: f, octaves: 2, ampMult: fineMotion, seed: seed * 13 + 1),
+                    Wiggle.value(t: t, freq: f, octaves: 2, ampMult: fineMotion, seed: seed * 13 + 2),
+                    Wiggle.value(t: t, freq: f, octaves: 2, ampMult: fineMotion, seed: seed * 13 + 3),
+                    Wiggle.value(t: t, freq: f, octaves: 2, ampMult: fineMotion, seed: seed * 13 + 4))
         }
     }
 

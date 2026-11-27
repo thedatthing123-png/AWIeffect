@@ -84,6 +84,9 @@ struct ThreeDPanel: View {
                 let t = state.currentTime
                 ScrollView {
                     VStack(spacing: 8) {
+                        if l.content == .camera {
+                            SmoothSceneControls(state: state, layer: l)
+                        }
                         if l.content == .adjustment {
                             Text("Adjustment layers apply their effects in 2D to everything below them.").font(.caption).foregroundStyle(Theme.textDim)
                         }

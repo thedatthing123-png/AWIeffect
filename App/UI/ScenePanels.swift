@@ -48,7 +48,7 @@ struct ScenePanel: View {
                         state.mutate("Motion Blur") { $0.motionBlurEnabled = b }
                     }))
                     .tint(Theme.accent).foregroundStyle(Theme.text)
-                    Toggle("Smooth Motion (auto blur on shakes & motion effects)", isOn: Binding(get: { state.project.smoothMotion }, set: { b in
+                    Toggle("Auto Motion Blur for shakes and motion effects", isOn: Binding(get: { state.project.smoothMotion }, set: { b in
                         state.mutate("Smooth Motion") { $0.smoothMotion = b }
                     }))
                     .tint(Theme.accent).foregroundStyle(Theme.text)

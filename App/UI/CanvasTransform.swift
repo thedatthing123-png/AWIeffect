@@ -142,7 +142,9 @@ extension EditorState {
     }
 
     /// The project as the canvas shows it: free view hides cameras (you look at the scene itself).
-    func canvasViewProject(_ p: Project) -> Project { cameraView ? p : freeViewProject(p) }
+    func canvasViewProject(_ p: Project) -> Project {
+        SmoothScene.applying(to: cameraView ? p : freeViewProject(p), at: currentTime)
+    }
 
     func updateCanvasDrag(_ d: CanvasDrag, comp c: Vec2) {
         let t = currentTime

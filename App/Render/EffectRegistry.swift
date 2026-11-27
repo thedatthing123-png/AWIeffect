@@ -602,7 +602,7 @@ enum EffectRegistry {
             let fineMotion = modern ? 0.5 * (1 - min(100, max(0, e.number("smoothness", t))) / 100) : 0.5
             let seed = e.number("seed", t) * 13
             func axis(_ index: Double) -> Double {
-                Wiggle.value(t: phase, freq: rate, octaves: detail, ampMult: fineMotion, seed: seed + index)
+                Wiggle.value(t: phase, freq: rate, octaves: detail, ampMult: fineMotion * (1 - e.sceneSmoothing), seed: seed + index)
             }
             let dx = axis(1) * e.number("amplitude", t)
             let dy = axis(2) * e.number("amplitude", t)
