@@ -356,6 +356,7 @@ struct Layer: Codable, Equatable, Identifiable {
     var castsShadows = false
     var acceptsShadows = true
     // Nil preserves the original lighting behavior of saved projects.
+    var importedFootage: ImportedFootage? = nil
     var relight: RelightSurface? = nil
     var receivesLightOverride: Bool?
     var receivesLight: Bool { receivesLightOverride ?? (is3D || content == .model || text?.text3D != nil) }
@@ -433,6 +434,7 @@ struct Layer: Codable, Equatable, Identifiable {
         isCollider = try c.decodeIfPresent(Bool.self, forKey: .isCollider) ?? false
         castsShadows = try c.decodeIfPresent(Bool.self, forKey: .castsShadows) ?? false
         acceptsShadows = try c.decodeIfPresent(Bool.self, forKey: .acceptsShadows) ?? true
+        importedFootage = try c.decodeIfPresent(ImportedFootage.self, forKey: .importedFootage)
         relight = try c.decodeIfPresent(RelightSurface.self, forKey: .relight)
         receivesLightOverride = try c.decodeIfPresent(Bool.self, forKey: .receivesLightOverride)
         layerMarkers = try c.decodeIfPresent([TimelineMarker].self, forKey: .layerMarkers)
@@ -454,6 +456,7 @@ struct Layer: Codable, Equatable, Identifiable {
 }
 
 struct Project: Codable, Equatable, Identifiable {
+    var importedFormat: ImportedProjectFormat? = nil
     var id = UUID()
     var name: String
     var width: Int

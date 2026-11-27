@@ -60,6 +60,7 @@ struct TextData: Codable, Equatable {
     var alignment: TextAlignment = .center
     var colorSpans: [TextColorSpan] = []
     var animators: [TextAnimator] = []
+    var importedAnimationSpeed: Double? = nil
     /// AE text on path: letters follow the text layer's first mask; offset slides them along it (% of length).
     var onPath: Bool? = nil
     var pathOffset: Animated<Double>? = nil
@@ -90,7 +91,7 @@ struct TextData: Codable, Equatable {
     var text3DGroup: String? = nil
 
     enum CodingKeys: String, CodingKey {
-        case string, fontName, fontSize, fill, tracking, lineSpacing, alignment, colorSpans, animators, onPath, pathOffset
+        case string, fontName, fontSize, fill, tracking, lineSpacing, alignment, colorSpans, animators, onPath, pathOffset, importedAnimationSpeed
         case counter, outline, spacingAnchor, style, charIDs, nextCharID, charStyles, boxWidth, autoFit, vertical, baselineShift, text3D, text3DGroup
     }
 
@@ -130,6 +131,7 @@ extension TextData {
         alignment = try c.decodeIfPresent(TextAlignment.self, forKey: .alignment) ?? .center
         colorSpans = try c.decodeIfPresent([TextColorSpan].self, forKey: .colorSpans) ?? []
         animators = try c.decodeIfPresent([TextAnimator].self, forKey: .animators) ?? []
+        importedAnimationSpeed = try c.decodeIfPresent(Double.self, forKey: .importedAnimationSpeed)
         onPath = try c.decodeIfPresent(Bool.self, forKey: .onPath)
         pathOffset = try c.decodeIfPresent(Animated<Double>.self, forKey: .pathOffset)
         counter = try c.decodeIfPresent(TextCounter.self, forKey: .counter)
@@ -299,6 +301,7 @@ struct TextAnimator: Codable, Equatable, Identifiable {
     /// Additional selectors stacked under `selector` (each combines by its `mode`).
     var selectors: [TextSelector]? = nil
     /// Pixel effects applied only to the letters this animator selects (selection amount = mix).
+    var importedStart: Double? = nil
     var letterEffects: [EffectInstance]? = nil
     /// Preset group tag (presets add animators with a group so they can be removed together).
     var group: String? = nil

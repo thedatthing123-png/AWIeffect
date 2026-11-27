@@ -278,7 +278,12 @@ struct HomeView: View {
                         Label("\(Int(p.fps))fps", systemImage: "speedometer")
                     }
                     .font(.system(size: 11)).foregroundStyle(Theme.textDim)
-                    Text(p.modifiedAt, style: .relative).font(.system(size: 11)).foregroundStyle(Theme.textDim)
+                    HStack(spacing: 6) {
+                        if let source = p.importedFormat { Text(source.title) }
+                        Text(p.modifiedAt, style: .relative)
+                    }
+                    .font(.system(size: 11)).foregroundStyle(Theme.textDim)
+                    .lineLimit(1)
                 }
                 Spacer()
                 if !selecting {

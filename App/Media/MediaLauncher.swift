@@ -10,4 +10,5 @@ final class MediaLauncher: ObservableObject {
     @Published var pickModel = false
     /// Layer whose media is being replaced (footage placeholders from .aep imports, or any clip).
     @Published var replaceTarget: UUID?
+    @Published var relinkFileTarget: UUID?
 }

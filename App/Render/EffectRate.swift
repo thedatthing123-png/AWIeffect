@@ -4,15 +4,15 @@ import Foundation
 /// curve and requested time, so seeking and export share the same phase.
 enum EffectRate {
     static func phase(_ effect: EffectInstance, key: String, time: Double,
-                      range: ClosedRange<Double>, fallback: Double = 0) -> Double {
+                      range: ClosedRange<Double>, fallback: Double = 0, origin: Double = 0) -> Double {
         let setting = effect.value(key)
         func rate(_ t: Double) -> Double {
             min(range.upperBound, max(range.lowerBound, setting?.number(at: t) ?? fallback))
         }
-        guard case .number(let animation)? = setting, animation.keyframes.count > 1, time != 0 else {
-            return time * rate(time)
+        guard case .number(let animation)? = setting, animation.keyframes.count > 1, time != origin else {
+            return (time - origin) * rate(time)
         }
-        let start = min(0, time), end = max(0, time)
+        let start = min(origin, time), end = max(origin, time)
         var cursor = start, total = 0.0
         func integrate(to upper: Double) -> Double {
             // Four-point Gauss–Legendre. Interior samples also preserve hold
@@ -29,6 +29,6 @@ enum EffectRate {
             cursor = key.time
         }
         total += integrate(to: end)
-        return time < 0 ? -total : total
+        return time < origin ? -total : total
     }
 }

@@ -94,6 +94,22 @@ final class EditorPolishUITests: XCTestCase {
         try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("lighting-shadow-spread.png"))
     }
 
+    func testUnresolvedSourceEffectKeepsItsVisibleStackSlot() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-sourceImport"]
+        app.launch()
+        let expand = app.buttons["effect-expand-source.unavailable"].firstMatch
+        XCTAssertTrue(expand.waitForExistence(timeout: 15))
+        XCTAssertTrue(expand.isHittable)
+        expand.tap()
+        let source = app.staticTexts["com.customfx.effects.sourceExample"].firstMatch
+        XCTAssertTrue(source.waitForExistence(timeout: 5))
+        XCTAssertTrue(source.isHittable)
+        let output = URL(fileURLWithPath: "/tmp/awi-ui", isDirectory: true)
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("source-effect-slot.png"))
+    }
+
     func testRelightStudioFitsPassesAndSurfaceControls() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-uiTesting", "-uiTesting-relight"]

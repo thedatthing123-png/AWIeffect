@@ -65,7 +65,9 @@ struct ReferenceFragmentDefinition {
         let original = EffectRegistry.layerRect(context)
         let rx = width / Float(context.width), ry = height / Float(context.height)
         let rect = original * SIMD4(rx, ry, rx, ry)
-        data[0] = SIMD4(width, height, Float(context.time), Float(context.height))
+        let source = context.effect.imported
+        let shaderTime = source?.phaseOrigin.map { (context.time - $0) * (source?.rateScale ?? 1) } ?? context.time
+        data[0] = SIMD4(width, height, Float(shaderTime), Float(context.height))
         data[1] = rect
         let composition = context.compositionPixels ?? SIMD2(Double(context.width), Double(context.height))
         data[2] = SIMD4(Float(composition.x), Float(composition.y), Float(bitPattern: UInt32(clamping: pass)), Float(context.width))

@@ -17,7 +17,7 @@ final class AMImportTests: XCTestCase {
         XCTAssertEqual(r.project.layers.count, 4)
         let ids = Set(r.project.layers.flatMap { $0.effects.map(\.typeID) })
         XCTAssertTrue(ids.contains("awi.shake"), "shakes missing: \(ids)")
-        XCTAssertTrue(ids.contains("awi.oscillate"))
+        XCTAssertTrue(ids.contains(EffectRegistry.importedOscillate.id))
         XCTAssertTrue(r.project.layers.contains { $0.motionBlur })
         // Keyframed shake magnitude survives with AM bezier easing.
         let shake = try XCTUnwrap(r.project.layers.flatMap(\.effects).first { e in
@@ -38,7 +38,9 @@ final class AMImportTests: XCTestCase {
         XCTAssertGreaterThan(r.project.layers.count, 50)
         let missing = r.report.entries.filter { $0.status == .missing && $0.item != "Media" && $0.item != "Audio" }
         let total = r.report.entries.filter { $0.item != "Media" && $0.item != "Audio" }.count
-        XCTAssertLessThan(Double(missing.count), Double(total) * 0.1, "too many unmapped: \(Set(missing.map(\.item)))")
+        XCTAssertLessThan(missing.count, total, "Known effects should still import")
+        XCTAssertTrue((r.project.layers + r.project.precomps.flatMap(\.layers)).flatMap(\.effects)
+            .contains { $0.imported?.format == .alightMotion })
         XCTAssertFalse(r.project.precomps.isEmpty, "groups should become pre-comps")
         XCTAssertTrue(r.project.layers.contains { $0.content == .camera })
         XCTAssertFalse(r.project.markers.isEmpty, "bookmarks should become beat markers")

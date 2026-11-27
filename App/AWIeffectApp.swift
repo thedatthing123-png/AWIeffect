@@ -96,6 +96,18 @@ struct RootView: View {
             p.layers = [light, artwork]
             _openProject = State(initialValue: p)
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-sourceImport") {
+            let xml = """
+            <scene title="Source Import" width="320" height="240" fps="30" totalTime="2000">
+              <shape label="Missing footage" fillType="media" fillVideo="placeholder.mov" startTime="0" endTime="2000">
+                <effect id="com.customfx.effects.sourceExample"><property name="amount" value="0.4"/></effect>
+              </shape>
+            </scene>
+            """
+            if let result = try? AMImporter.load(data: Data(xml.utf8), fallbackName: "Source Import") {
+                _openProject = State(initialValue: result.project)
+            }
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-relight") {
             var project = Project.new(name: "Relight UI", width: 320, height: 240, fps: 30, duration: 2)
             var artwork = project.makeLayer(name: "Artwork", content: .image(fileName: "relight-test.png", pixelWidth: 720, pixelHeight: 720),

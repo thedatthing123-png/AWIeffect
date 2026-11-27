@@ -111,6 +111,17 @@ struct TextPanel: View {
                             switch tab {
                             case .style: TextStyleTab(state: state)
                             case .animate:
+                                if let text = state.selectedLayer?.text, text.animators.contains(where: { $0.importedStart != nil }) {
+                                    HStack {
+                                        Text("Imported Motion Speed").font(.caption).foregroundStyle(Theme.textDim)
+                                        ValueScrubber(value: (text.importedAnimationSpeed ?? 1) * 100, range: 10...400, step: 1,
+                                                      unit: "%", onBegin: { state.beginEdit("Imported Text Speed") },
+                                                      onChange: { percent in state.mutateLayer { $0.text?.importedAnimationSpeed = percent / 100 } },
+                                                      onEnd: { state.endEdit() })
+                                            .frame(height: 44)
+                                            .accessibilityLabel("Imported Motion Speed")
+                                    }
+                                }
                                 TextAnimateTab(state: state) { id in
                                     withAnimation(.easeOut(duration: 0.2)) { scroll.scrollTo(id, anchor: .top) }
                                 }

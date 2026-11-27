@@ -13,6 +13,7 @@ struct AEProp {
     }
     let matchName: String
     let kind: Kind
+    var sourceChunk: RIFXChunk? = nil
 
     var children: [AEProp] { if case .group(let c) = kind { return c }; return [] }
     func find(_ name: String) -> AEProp? { children.first { $0.matchName == name } }
@@ -104,6 +105,9 @@ enum AEPImporter {
 
         var project = Project.new(name: comp.name.isEmpty ? projectName : comp.name, width: comp.width, height: comp.height,
                                   fps: comp.fps, duration: max(comp.duration, 1 / comp.fps), background: comp.background)
+        project.importedFormat = .afterEffects
+        project.autoLength = false
+        project.smoothMotion = false
         // Effect scanner over every comp.
         for c in comps {
             for lc in c.chunk.children("Layr") {
@@ -208,7 +212,7 @@ enum AEPImporter {
             case "sspc":
                 // Effect instance: params live in the nested tdgp.
                 if let g = c.child("tdgp") {
-                    out.append(AEProp(matchName: name, kind: .group(walkGroup(g))))
+                    out.append(AEProp(matchName: name, kind: .group(walkGroup(g)), sourceChunk: c))
                 } else {
                     out.append(AEProp(matchName: name, kind: .effect(c)))
                 }
@@ -342,6 +346,7 @@ enum AEPImporter {
         var importedPath: BezierPath?
         var importedStroke: (RGBA, Double)?
         var precompStart: Double?
+        var missingFootage: ImportedFootage?
 
         switch layerType {
         case 3:
@@ -386,6 +391,7 @@ enum AEPImporter {
                     report.add(name, "Solid", .native)
                 } else {
                     fill = RGBA(0.25, 0.2, 0.35)
+                    missingFootage = ImportedFootage(name: f.name, sourceReference: String(sourceID))
                     report.add(name, "Footage “\(f.name)”", .missing, "Media files aren't inside .aep files. Replace this placeholder with your clip.")
                 }
             } else if let c = comps[sourceID] {
@@ -397,6 +403,9 @@ enum AEPImporter {
                     } else {
                         var np = Project.new(name: c.name, width: c.width, height: c.height, fps: c.fps,
                                              duration: max(c.duration, 1 / c.fps), background: RGBA(0, 0, 0, 0))
+                        np.importedFormat = .afterEffects
+                        np.autoLength = false
+                        np.smoothMotion = false
                         cache[sourceID] = np   // placeholder first, guards against cycles
                         np.layers = buildLayers(c, footage: footage, comps: comps, report: &report, cache: &cache, depth: depth + 1)
                         cache[sourceID] = np
@@ -416,6 +425,7 @@ enum AEPImporter {
                           transform: LayerTransform(position: Animated(Vec2(Double(comp.width) / 2, Double(comp.height) / 2))),
                           size: Animated(size))
         layer.inPoint = max(0, inPoint)
+        layer.importedFootage = missingFootage
         if let ps = precompStart { layer.sourceStart = layer.inPoint - ps }   // nested time = comp time - layer start
         if let p = importedPath { layer.path = Animated(p) }
         if let st = importedStroke {
@@ -434,7 +444,11 @@ enum AEPImporter {
             // Use the project's font when iOS has it (Arial, Helvetica, Futura...), else keep the default.
             if let f = textFont, UIFont(name: f, size: 12) != nil { t.fontName = f }
             t.fill = Animated(.white)
-            t.animators = TextAnimatorImport.animators(in: tree, timebase: comp.timebase, layerStart: start)
+            t.animators = TextAnimatorImport.animators(in: tree, timebase: comp.timebase, layerStart: start).map {
+                var animator = $0
+                animator.importedStart = layer.inPoint
+                return animator
+            }
             layer.text = t
         }
 
@@ -473,20 +487,7 @@ enum AEPImporter {
         // Effects.
         if let parade = tree.first(where: { $0.matchName == "ADBE Effect Parade" }) {
             for e in parade.children {
-                if let def = EffectRegistry.definition(aeMatchName: e.matchName) {
-                    let inst = effectInstance(def, from: e, timebase: comp.timebase, layerStart: start)
-                    layer.effects.append(inst)
-                    let approx = def.id.hasPrefix("awi.") || e.matchName.hasPrefix("CC ")
-                    report.add(name, def.name, approx ? .approximate : .native, e.matchName)
-                } else if let sub = PluginSwap.lookup(e.matchName), let def = EffectRegistry.definition(sub.id) {
-                    // Third-party plugin (Twitch, Optical Flares, Sapphire, BCC, Universe…) → this app's built-in version.
-                    var inst = def.makeInstance()
-                    for (k, v) in sub.params { inst.params[k] = v }
-                    layer.effects.append(inst)
-                    report.add(name, def.name, .approximate, "\(sub.plugin) replaced by the built-in \(def.name).")
-                } else {
-                    report.add(name, e.matchName, .missing, "No built-in equivalent yet.")
-                }
+                layer.effects.append(importEffect(e, timebase: comp.timebase, layerStart: start, layer: name, report: &report))
             }
         }
         // Masks (AE "ADBE Mask Parade"): path, mode, inverted, feather, opacity, expansion.
@@ -518,6 +519,34 @@ enum AEPImporter {
             }
         }
         return layer
+    }
+
+    static func importEffect(_ effect: AEProp, timebase: Double, layerStart: Double, layer: String, report: inout ImportReport) -> EffectInstance {
+        let match = effect.matchName
+        let definition = EffectRegistry.definition(aeMatchName: match)
+        let isBuiltIn = match.hasPrefix("ADBE ") || match.hasPrefix("CC ")
+        let adapter = isBuiltIn ? definition : nil
+        let displayName = definition?.name ?? PluginSwap.lookup(match)?.plugin ?? match
+        var instance = adapter.map { effectInstance($0, from: effect, timebase: timebase, layerStart: layerStart) }
+            ?? EffectInstance(typeID: "source.unavailable", params: [:])
+        let support: ImportedEffect.Support = adapter == nil ? .unavailable : (match.hasPrefix("CC ") ? .approximation : .nativeAdapter)
+        instance.imported = ImportedEffect(format: .afterEffects, matchName: match, displayName: displayName,
+                                           support: support, properties: [capture(effect)])
+        report.add(layer, displayName, adapter == nil ? .missing : (support == .approximation ? .approximate : .native),
+                   adapter == nil ? "Source parameters retained. A compatible renderer is unavailable." : match)
+        return instance
+    }
+
+    private static func capture(_ property: AEProp) -> ImportedProperty {
+        if let original = property.sourceChunk {
+            return ImportedProperty(name: property.matchName, attributes: ["chunk": original.key], bytes: original.data)
+        }
+        switch property.kind {
+        case .group(let children):
+            return ImportedProperty(name: property.matchName, children: children.map(capture))
+        case .value(let chunk), .effect(let chunk), .other(let chunk):
+            return ImportedProperty(name: property.matchName, attributes: ["chunk": chunk.key], bytes: chunk.data)
+        }
     }
 
     /// Builds an AWIeffect effect from an AE effect group, mapping params by their `-000N` index.

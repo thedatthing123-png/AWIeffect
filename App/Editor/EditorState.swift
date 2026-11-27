@@ -271,13 +271,16 @@ final class EditorState: ObservableObject {
     var multiAnchor: UUID?
     /// Transform values copied with "Copy Keys".
     @Published var keyClipboard: KeyClipboard?
-    /// Effect stack copied with "Copy Effects" (pasted onto any layer).
-    @Published var effectClipboard: [EffectInstance] = []
-    /// Where the copied effects' layer started, so pasted keyframes keep their place relative to the new layer.
-    var effectClipboardStart = 0.0
-    /// Duration of the copied carrier. Pasted effect animation is fitted to the destination clip instead of
-    /// preserving an unrelated absolute duration (AE/AM-style preset timing).
-    var effectClipboardDuration = 0.0
+    /// The clipboard stays available when the source project is closed.
+    var effectClipboard: [EffectInstance] { Self.copiedEffects?.payload.layers.first?.effects ?? [] }
+    private static var copiedEffects: CopiedEffects?
+    private struct CopiedEffects {
+        let payload: LayerClipboardPayload
+        let projectID: UUID
+        let compositionID: UUID
+        let start: Double
+        let duration: Double
+    }
     @Published var snapGuides = SnapGuides()
     @Published var previewQuality: PreviewQuality = .full
     @Published var orbit = OrbitCamera.home
@@ -692,27 +695,46 @@ final class EditorState: ObservableObject {
     /// Copied effects (one or a whole stack), pasted onto any layer with fresh ids.
     func copyEffects(_ ids: [UUID]? = nil) {
         guard let l = selectedLayer else { return }
-        effectClipboard = ids.map { set in l.effects.filter { set.contains($0.id) } } ?? l.effects
-        effectClipboardStart = l.inPoint
-        effectClipboardDuration = max(project.frameDuration, l.outPoint - l.inPoint)
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        let effects = ids.map { set in l.effects.filter { set.contains($0.id) } } ?? l.effects
+        guard !effects.isEmpty else { return }
+        var carrier = Layer(name: l.name, content: .solid, outPoint: l.outPoint, transform: l.transform, size: l.size)
+        carrier.effects = effects
+        do {
+            let payload = try LayerClipboardFiles.snapshot(layers: [carrier], precomps: [], source: store.mediaFolder(for: rootProject.id))
+            Self.copiedEffects = CopiedEffects(payload: payload, projectID: rootProject.id, compositionID: project.id,
+                                               start: l.inPoint, duration: max(project.frameDuration, l.outPoint - l.inPoint))
+            objectWillChange.send()
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        } catch {
+            recoveryNotice = "Couldn’t copy effects. Check the effect’s linked files."
+        }
     }
 
     func pasteEffects() {
-        guard let i = selectedIndex, !effectClipboard.isEmpty else { return }
-        let items = effectClipboard.map { e -> EffectInstance in var c = e; c.id = UUID(); return c }
+        guard let i = selectedIndex, !project.layers[i].isLocked, let clipboard = Self.copiedEffects else { return }
+        let sameComposition = rootProject.id == clipboard.projectID && project.id == clipboard.compositionID
+        let bindings = sameComposition ? Set(project.layers.map(\.id)) : []
+        let items: [EffectInstance]
+        do {
+            items = try LayerClipboardFiles.imported(clipboard.payload,
+                destination: store.mediaFolder(for: rootProject.id), existingLayerIDs: bindings).layers.first?.effects ?? []
+        } catch {
+            recoveryNotice = "Couldn’t paste the copied effects or their files."
+            return
+        }
+        guard !items.isEmpty else { return }
         // Keyframes keep their normalized place in the clip. A key halfway through the copied carrier lands
         // halfway through the destination, even when the destination is shorter or longer.
         let destinationStart = project.layers[i].inPoint
         let destinationDuration = max(project.frameDuration, project.layers[i].outPoint - destinationStart)
-        let sourceDuration = max(project.frameDuration, effectClipboardDuration)
+        let sourceDuration = clipboard.duration
         let factor = destinationDuration / sourceDuration
         mutate(items.count == 1 ? "Paste Effect" : "Paste \(items.count) Effects") { p in
             var carrier = p.layers[i]
             carrier.effects = items
-            var fit = AnimationTraversal(operation: .scaleTime(effectClipboardStart, factor))
+            var fit = AnimationTraversal(operation: .scaleTime(clipboard.start, factor))
             carrier.traverseAnimations(&fit)
-            var shift = AnimationTraversal(operation: .shift(destinationStart - effectClipboardStart))
+            var shift = AnimationTraversal(operation: .shift(destinationStart - clipboard.start))
             carrier.traverseAnimations(&shift)
             p.layers[i].effects.append(contentsOf: carrier.effects)
         }

@@ -116,6 +116,8 @@ Keep imported AE text editable where the project exposes the underlying text and
 
 For a transform-based shake, compare the imported position, rotation, scale, easing, and shutter against a source render. For a plugin-based shake, verify matching output with a compatible implementation before calling it equivalent. Keep AWI's native effects useful independently of import coverage. Use publicly released fixtures, including [HOUDINI](https://github.com/ShubhamAdelkar/free-adobe-presets/blob/main/HOUDINI.aep) for real transform data and the existing effect fixtures for automated checks. Test a whole imported shot and a single copied effect through save, reopen, and export.
 
+The first source-import build pins source IDs and raw properties independently of the selected renderer, retains unresolved plug-in slots, and keeps the effect clipboard across projects. The existing AEP fixtures include the Yuta edit and the existing Alight Motion fixtures include a real shake edit. Oscillate 3 uses its documented cyclic frequency and clip-local clock. Reviewed Alight Motion renderers are selected by the exact source ID where available. Compare against actual source exports before marking rendering parity. Desktop plug-ins that lack a compatible renderer and unsupported text plug-in internals remain saved as unresolved. [Alight Motion Oscillate](https://guide.alightmotion.com/effects/oscillate)
+
 ### Relight Studio for footage and artwork
 
 Use the supplied Beeble-to-Blender elevator clip as the reference. The creator isolates the moving hand with alpha, generates aligned normal, depth, and base-color passes, then uses depth to displace the surface in Blender and lights it inside the elevator scene.

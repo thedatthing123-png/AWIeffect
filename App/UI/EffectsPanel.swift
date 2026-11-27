@@ -388,9 +388,9 @@ struct EffectsPanel: View {
                 // Long-press the name to drag the card to a new place in the stack.
                 HStack(spacing: 6) {
                     Image(systemName: "line.3.horizontal").font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textDim)
-                    Text(def?.name ?? "Missing effect: \(e.typeID)")
+                    Text(e.imported?.displayName ?? def?.name ?? "Missing effect: \(e.typeID)")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(def == nil ? Theme.danger : (e.isEnabled && !EffectStackR4.isMuted(e) ? Theme.text : Theme.textDim))
+                        .foregroundStyle(def == nil && e.imported?.support != .layerSettings ? Theme.danger : (e.isEnabled && !EffectStackR4.isMuted(e) ? Theme.text : Theme.textDim))
                         .lineLimit(2)
                     if EffectStackR4.isSolo(e) {
                         Text("SOLO").font(.system(size: 9, weight: .heavy)).padding(.horizontal, 5).padding(.vertical, 2)
@@ -419,6 +419,21 @@ struct EffectsPanel: View {
                 } label: { Image(systemName: "ellipsis").frame(width: 44, height: 44).contentShape(Rectangle()) }
             }
             .foregroundStyle(Theme.text)
+            if isOpen, let source = e.imported {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(source.format.title).font(.caption.bold())
+                    Text(source.matchName).font(.caption2).textSelection(.enabled)
+                    if source.support == .unavailable {
+                        Text("Renderer unavailable. Original settings are saved in this effect slot.").font(.caption)
+                    } else if source.support == .layerSettings {
+                        Text("Its supported settings were imported into the layer controls.").font(.caption)
+                    } else if source.support == .approximation {
+                        Text("Compatibility preview. Motion or appearance may differ from the source.").font(.caption)
+                    }
+                }
+                .foregroundStyle(Theme.textDim)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
             if isOpen, let def {
                 if EffectRegistry.layerRefIDs.contains(def.id) || (EffectRegistry.spriteRefIDs.contains(def.id) && e.choice("sprite") == 6) { layerPicker(e) }
                 if def.id == "ae.motionTile" {

@@ -461,6 +461,7 @@ final class TextEngine {
         }
         let lineMid = Double(max(0, layout.lineCount - 1)) / 2
         for a in text.animators where a.isEnabled {
+            let sampleTime = a.importedStart.map { $0 + (time - $0) * (text.importedAnimationSpeed ?? 1) } ?? time
             typealias Sample = (pos: Vec2?, sc: Vec2?, rot: Double?, op: Double?, col: RGBA?, tr: Double?, sk: Double?, bl: Double?, co: Double?, rx: Double?, ry: Double?, pz: Double?, ol: Double?, anc: Vec2?, fop: Double?, sw: Double?, scol: RGBA?, bs: Double?, glw: Double?, hue: Double?, db: Double?, dba: Double?, scr: Double?, ls: Double?)
             let p = a.properties
             func sample(at sampleTime: Double) -> Sample {
@@ -489,7 +490,7 @@ final class TextEngine {
                 scr: p.scramble?.value(at: sampleTime),
                 ls: p.lineSpacing?.value(at: sampleTime))
             }
-            let initial = sample(at: time)
+            let initial = sample(at: sampleTime)
             let stagger = a.stagger
             let delay = stagger?.secondsPerUnit ?? 0
             func unitIndex(_ glyph: LaidGlyph, _ unit: TextUnit) -> Int {
@@ -511,13 +512,13 @@ final class TextEngine {
                 staggerRanks = Dictionary(uniqueKeysWithValues: ordered.enumerated().map { ($0.element, $0.offset) })
             }
             for (gi, g) in layout.glyphs.enumerated() {
-                let amt = selection(a, glyph: g, layout: layout, time: time, beats: beats)
+                let amt = selection(a, glyph: g, layout: layout, time: sampleTime, beats: beats)
                 if amt == 0 || !amt.isFinite { continue }
                 var values = initial
                 if let stagger, let rank = staggerRanks[unitIndex(g, stagger.unit)], rank > 0 {
                     if let cached = samples[rank] { values = cached }
                     else {
-                        values = sample(at: time - Double(rank) * delay)
+                        values = sample(at: sampleTime - Double(rank) * delay)
                         samples[rank] = values
                     }
                 }

@@ -32,6 +32,7 @@ enum AMImporter {
     static func parse(_ data: Data) -> Node? {
         let p = XMLParser(data: data)
         let b = TreeBuilder()
+        p.shouldResolveExternalEntities = false
         p.delegate = b
         guard p.parse() else { return nil }
         return b.stack.first?.children.first
@@ -99,10 +100,40 @@ enum AMImporter {
 
     // MARK: Effects
 
+    private static let reviewedSourceRenderers = Dictionary(
+        ReferenceFragmentCatalog.promoted.filter { $0.referenceBinding == nil && !$0.sourceID.isEmpty }
+            .map { ($0.sourceID, $0) }, uniquingKeysWith: { first, _ in first }
+    )
+
     /// Maps one AM effect onto this app's effect (or layer settings). Returns false when there's no equivalent.
     static func applyEffect(_ fx: Node, to layer: inout Layer, project: inout Project, inPoint: Double, length: Double,
                             report: inout ImportReport) {
-        let full = fx["id"] ?? ""
+        let full = fx["id"] ?? "Unknown Alight Motion effect"
+        report.effectUsage[full, default: 0] += 1
+        let stackStart = layer.effects.count
+        let reportStart = report.entries.count
+        let original = capture(fx)
+        defer {
+            // Layer flags and text animators render through their existing editor controls.
+            let entry = report.entries.count > reportStart ? report.entries.last : nil
+            if layer.effects.count == stackStart {
+                let represented = ["motionblur", "fade", "textprogress", "textspacing", "stretch", "scaleassist"]
+                let id = full.split(separator: ".").last.map(String.init)?.trimmingCharacters(in: .decimalDigits) ?? ""
+                let support: ImportedEffect.Support = represented.contains(id) && entry?.status != .missing ? .layerSettings : .unavailable
+                var saved = EffectInstance(typeID: "source.unavailable", params: [:])
+                saved.imported = ImportedEffect(format: .alightMotion, matchName: full, displayName: entry?.item ?? full,
+                                                support: support, properties: [original])
+                layer.effects.append(saved)
+            } else {
+                for i in stackStart..<layer.effects.count {
+                    let typeID = layer.effects[i].typeID
+                    let dedicated = typeID == EffectRegistry.importedOscillate.id || typeID.hasPrefix("awi.amref.")
+                    layer.effects[i].imported = ImportedEffect(format: .alightMotion, matchName: full,
+                        displayName: entry?.item ?? full, support: typeID == EffectRegistry.importedOscillate.id ? .nativeAdapter : .approximation,
+                        properties: [original], phaseOrigin: dedicated ? inPoint : nil)
+                }
+            }
+        }
         let id = full.replacingOccurrences(of: "com.alightcreative.effects.", with: "").replacingOccurrences(of: "com.alightcreative.internal.", with: "")
             .replacingOccurrences(of: "com.alightcreative.", with: "").replacingOccurrences(of: "com.customfx.effects.", with: "")
         let base = id.trimmingCharacters(in: CharacterSet.decimalDigits)
@@ -118,6 +149,38 @@ enum AMImporter {
             layer.effects.append(e)
         }
         let name = layer.name
+        if let reference = reviewedSourceRenderers[full], let definition = EffectRegistry.definition(reference.id) {
+            var instance = definition.makeInstance()
+            for parameter in reference.parameters {
+                let control = parameter.definition
+                guard let property = props[control.id] else { continue }
+                switch control.kind {
+                case .number:
+                    let scale = parameter.scalarScale == 0 ? 1 : 1 / Double(parameter.scalarScale)
+                    if let track = double(property, inPoint, length, scale: scale) { instance.params[control.id] = .number(track) }
+                case .angle:
+                    if let track = double(property, inPoint, length) { instance.params[control.id] = .number(track) }
+                case .point:
+                    if let track = animated(property, inPoint: inPoint, length: length, { values -> Vec2? in
+                        guard values.count == 2 else { return nil }
+                        return Vec2(values[0], values[1])
+                    }) { instance.params[control.id] = .point(track) }
+                case .color:
+                    if let value = color(property["value"]) { instance.params[control.id] = .color(Animated(value)) }
+                case .toggle:
+                    if let value = property["value"] { instance.params[control.id] = .toggle(value == "true" || value == "1") }
+                case .choice(let options):
+                    if let value = property["value"],
+                       let choice = Int(value).flatMap({ parameter.choiceValues.firstIndex(of: $0) })
+                        ?? options.firstIndex(where: { $0.caseInsensitiveCompare(value) == .orderedSame }) {
+                        instance.params[control.id] = .choice(choice)
+                    }
+                }
+            }
+            layer.effects.append(instance)
+            report.add(name, definition.name, .approximate, "Matched the original effect ID to a reviewed renderer; source data retained.")
+            return
+        }
         switch base {
         case "ripplelight":
             make(EffectRegistry.litRipple23, ["strength": num("strength"), "frequency": num("frequency"), "speed": num("speed"),
@@ -153,10 +216,15 @@ enum AMImporter {
             report.add(name, "Drawing Progress", .native)
         case "shake":
             make(EffectRegistry.shake, ["amplitude": num("mag"), "frequency": num("freq"), "rotation": .number(Animated(0))])
-            report.add(name, "Shake", .native)
+            report.add(name, "Shake", .approximate, "Source controls saved. Random motion uses a compatibility renderer.")
+        case "oscillate" where id == "oscillate3":
+            let wave = props["wave"]?["value"]?.lowercased()
+            make(EffectRegistry.importedOscillate, ["distance": num("mag"), "frequency": num("freq"), "direction": num("angle"),
+                "phase": num("phase"), "wave": .choice(wave == "triangle" || wave == "1" ? 1 : 0)])
+            report.add(name, "Oscillate", .native, "Source frequency is cumulative over the layer clock.")
         case "oscillate":
             make(EffectRegistry.oscillate, ["distance": num("mag"), "frequency": num("freq"), "direction": num("angle"), "phase": num("phase", scale: 360)])
-            report.add(name, "Oscillate", .native)
+            report.add(name, "Oscillate", .approximate, "Legacy Oscillate version.")
         case "swing":
             let a1 = Double(props["a1"]?["value"] ?? "") ?? -30, a2 = Double(props["a2"]?["value"] ?? "") ?? 30
             make(EffectRegistry.swing, ["angle": .number(Animated(abs(a2 - a1) / 2)), "frequency": num("freq"), "phase": num("phase", scale: 180)])
@@ -260,6 +328,7 @@ enum AMImporter {
             // Typewriter: reveal characters by the "end" amount.
             if layer.text != nil, let end = double(props["end"], inPoint, length, scale: 100) {
                 var a = TextAnimator(name: "Typewriter")
+                a.importedStart = inPoint
                 a.selector.start = end
                 a.selector.end = Animated(100)
                 a.properties.opacity = Animated(0)
@@ -286,22 +355,14 @@ enum AMImporter {
             layer.transform.scale = Animated(Vec2(sc.x * s, sc.y))
             report.add(name, base == "stretch" ? "Stretch" : "Scale Assist", .approximate, "Applied as a static scale.")
         default:
-            // Name match against this app's library (e.g. vhs, glitch, chromatic, glow, mirror, kaleidoscope…).
-            if let def = fuzzy(base) {
-                make(def, [:])
-                report.add(name, id, .approximate, "Matched to “\(def.name)” with default settings.")
-            } else {
-                report.add(name, id, .missing, "No equivalent effect yet.")
-            }
+            report.add(name, id, .missing, "Source parameters retained. A compatible renderer is unavailable.")
         }
     }
 
-    static func fuzzy(_ amID: String) -> EffectDefinition? {
-        func norm(_ s: String) -> String { s.lowercased().filter { $0.isLetter } }
-        let k = norm(amID)
-        guard k.count >= 3 else { return nil }
-        return EffectRegistry.all.first { norm($0.name) == k }
-            ?? EffectRegistry.all.first { norm($0.name).contains(k) || (k.count >= 5 && k.contains(norm($0.name)) && norm($0.name).count >= 4) }
+    private static func capture(_ node: Node) -> ImportedProperty {
+        let text = node.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return ImportedProperty(name: node.name, attributes: node.attrs.isEmpty ? nil : node.attrs,
+                                text: text.isEmpty ? nil : text, children: node.children.map(capture))
     }
 
     // MARK: Scene
@@ -437,6 +498,9 @@ enum AMImporter {
                     var comp = Project.new(name: label, width: iw, height: ih, fps: fps,
                                            duration: max(length, (Double(inner["totalTime"] ?? "") ?? length * 1000) / 1000),
                                            background: RGBA(0, 0, 0, 0))
+                    comp.importedFormat = .alightMotion
+                    comp.autoLength = false
+                    comp.smoothMotion = false
                     comp.layers = layers(of: inner, project: &comp, media: media, report: &report, depth: depth + 1)
                     var all = project.precomps; all.append(comp); all += comp.precomps; project.precomps = all
                     comp.precompList = nil
@@ -452,7 +516,7 @@ enum AMImporter {
                 if node["fillType"] == "media", let uri = node["fillVideo"] ?? node["fillImage"] {
                     let m = media[uri]
                     let mw = Double(m?["width"] ?? "") ?? w, mh = Double(m?["height"] ?? "") ?? h
-                    l.name = "\(label) · Replace Media"
+                    l.importedFootage = ImportedFootage(name: m?["name"] ?? label, sourceReference: uri)
                     l.fill = Animated(RGBA(0.25, 0.2, 0.35))
                     l.sourceStart = (Double(node["inTime"] ?? "") ?? 0) / 1000
                     if let sp = Double(node["speed"] ?? "") { l.speed = sp }
@@ -491,6 +555,9 @@ enum AMImporter {
         report.compName = project.name
         var media: [String: Node] = [:]
         for m in scene.all("media") { if let u = m["uri"] { media[u] = m } }
+        project.importedFormat = .alightMotion
+        project.autoLength = false
+        project.smoothMotion = false
         project.layers = layers(of: scene, project: &project, media: media, report: &report)
         project.markers = scene.all("bookmark").compactMap { Double($0["t"] ?? "").map { $0 / 1000 } }
         return AEPImportResult(project: project, report: report)

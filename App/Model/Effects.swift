@@ -100,9 +100,10 @@ struct EffectInstance: Codable, Equatable, Identifiable {
     var params: [String: ParamValue]
     /// Text settings that aren't numbers (e.g. the chosen LUT file of a grade).
     var text: [String: String]? = nil
+    var imported: ImportedEffect? = nil
     var sceneSmoothing = 0.0
 
-    private enum CodingKeys: String, CodingKey { case id, typeID, isEnabled, params, text }
+    private enum CodingKeys: String, CodingKey { case id, typeID, isEnabled, params, text, imported }
 
     func value(_ key: String) -> ParamValue? { params[key] }
     func number(_ key: String, _ t: Double) -> Double { params[key]?.number(at: t) ?? 0 }

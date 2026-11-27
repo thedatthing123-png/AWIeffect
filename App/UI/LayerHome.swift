@@ -6,6 +6,7 @@ struct LayerHomePanel: View {
     @ObservedObject var state: EditorState
     @EnvironmentObject private var drawLauncher: DrawLauncher
     @EnvironmentObject private var trackLauncher: TrackLauncher
+    @EnvironmentObject private var mediaLauncher: MediaLauncher
     @State private var captionsSource: CaptionsSource?
 
     struct CaptionsSource: Identifiable { let id: UUID }
@@ -20,6 +21,21 @@ struct LayerHomePanel: View {
     var body: some View {
         VStack(spacing: 0) {
             PanelHeader(state: state, title: state.selectedLayer?.name ?? "Layer")
+            if let selected = state.selectedLayer, let missing = selected.importedFootage {
+                Button { mediaLauncher.relinkFileTarget = selected.id } label: {
+                    HStack {
+                        Label("Relink Footage", systemImage: "link")
+                        Spacer()
+                        Text(missing.name).lineLimit(1).foregroundStyle(Theme.textDim)
+                    }
+                    .font(.caption.bold()).padding(.horizontal, 10).frame(minHeight: 44).glass(radius: 9)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Theme.text)
+                .disabled(selected.isLocked)
+                .accessibilityIdentifier("relink-imported-footage")
+                .padding(.horizontal, 12)
+            }
             if let selected = state.selectedLayer, case .precomp = selected.content {
                 PrecompRenderControls(state: state).padding(.horizontal, 12)
             }

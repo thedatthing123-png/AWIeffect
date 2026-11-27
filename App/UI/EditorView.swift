@@ -33,6 +33,8 @@ struct EditorView: View {
     @StateObject private var cutoutSession = CutoutSession()
     @State private var videoItem: PhotosPickerItem?
     @State private var replaceItem: PhotosPickerItem?
+    @State private var relinkFilePicker = false
+    @State private var relinkLayerID: UUID?
 
     init(state: EditorState, close: @escaping () -> Void) {
         #if DEBUG
@@ -48,6 +50,10 @@ struct EditorView: View {
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-lightingStudio") {
             state.select(state.project.layers.first?.id)
             state.panel = .threeD
+        }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-sourceImport") {
+            state.select(state.project.layers.first?.id)
+            state.panel = .effects
         }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-relight") {
             state.select(state.project.layers.first?.id)
@@ -225,6 +231,27 @@ struct EditorView: View {
                 await MainActor.run { replaceItem = nil; mediaLauncher.replaceTarget = nil }
             }
         }
+        .onChange(of: mediaLauncher.relinkFileTarget) { _, target in
+            guard let target else { return }
+            relinkLayerID = target
+            relinkFilePicker = true
+            mediaLauncher.relinkFileTarget = nil
+        }
+        .background(Color.clear.fileImporter(isPresented: $relinkFilePicker, allowedContentTypes: [.image, .movie]) { result in
+            guard let target = relinkLayerID else { return }
+            relinkLayerID = nil
+            guard case .success(let url) = result else { return }
+            let opened = url.startAccessingSecurityScopedResource()
+            defer { if opened { url.stopAccessingSecurityScopedResource() } }
+            if UTType(filenameExtension: url.pathExtension)?.conforms(to: .movie) == true {
+                state.replaceMedia(layerID: target, url: url, imageData: nil)
+            } else if let data = try? Data(contentsOf: url) {
+                state.replaceMedia(layerID: target, url: nil, imageData: data)
+            }
+            if state.project.layers.first(where: { $0.id == target })?.importedFootage != nil {
+                state.recoveryNotice = "Couldn’t relink this file. Choose the source image or video."
+            }
+        })
         // Each file importer sits on its own view: SwiftUI only honours one .fileImporter per view.
         .background(Color.clear.fileImporter(isPresented: $mediaLauncher.pickAudioFile, allowedContentTypes: [.audio, .movie]) { r in
             guard case .success(let url) = r else { return }

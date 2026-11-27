@@ -112,6 +112,19 @@ extension Layer {
     }
 
     private mutating func traverseEffect(_ i: Int, _ visit: inout AnimationTraversal) {
+        if var source = effects[i].imported, let start = source.phaseOrigin {
+            switch visit.operation {
+            case .shift(let delta): source.phaseOrigin = start + delta
+            case .scaleTime(let origin, let scale) where scale > 0:
+                source.phaseOrigin = origin + (start - origin) * scale
+                source.rateScale = (source.rateScale ?? 1) / scale
+            case .reverse(let around):
+                source.phaseOrigin = around - start
+                source.rateScale = -(source.rateScale ?? 1)
+            default: break
+            }
+            effects[i].imported = source
+        }
         do {
             for key in effects[i].params.keys.sorted() {
                 guard let value = effects[i].params[key] else { continue }
@@ -147,6 +160,14 @@ extension Layer {
                 text!.text3D = t3
             }
             for i in text!.animators.indices {
+                if let start = text!.animators[i].importedStart {
+                    switch visit.operation {
+                    case .shift(let delta): text!.animators[i].importedStart = start + delta
+                    case .scaleTime(let origin, let scale): text!.animators[i].importedStart = origin + (start - origin) * scale
+                    case .reverse(let sum): text!.animators[i].importedStart = sum - start
+                    default: break
+                    }
+                }
                 var sels = text!.animators[i].allSelectors
                 for k in sels.indices { sels[k].traverse(&visit) }
                 text!.animators[i].allSelectors = sels
