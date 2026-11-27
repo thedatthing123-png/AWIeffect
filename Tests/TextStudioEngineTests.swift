@@ -83,7 +83,9 @@ final class TextStudioEngineTests: XCTestCase {
     func testReversePathMirrorsDistanceAndFlipsTangent() {
         let path = BezierPath(vertices: [PathVertex(point: Vec2(0, 0)), PathVertex(point: Vec2(100, 0))], closed: false)
         let forward = PathTrack(path, offsetPercent: 25)
-        let backward = PathTrack(path, offsetPercent: 25, reversed: true)
+        let backward = PathTrack(path, offsetPercent: 25, reversed: true, alignment: .center, upright: true)
+        XCTAssertEqual(backward.distance(for: 5, textWidth: 30), 65)
+        XCTAssertTrue(backward.upright)
         XCTAssertEqual(forward.length, backward.length)
         XCTAssertEqual(forward.offset, backward.offset)
         XCTAssertEqual(forward.point(at: forward.offset).0, Vec2(25, 0))

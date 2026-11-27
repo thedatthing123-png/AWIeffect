@@ -486,6 +486,13 @@ struct TextLayoutTab: View {
         }
         .accessibilityIdentifier("text-layout-on-path")
         if text.onPath == true {
+            TSSegmented(options: [(TextAlignment.left, "Start"), (.center, "Center"), (.right, "End")],
+                        selection: text.pathAlignment ?? .left, label: "Path Align") { alignment in
+                state.editText("Path Alignment") { $0.pathAlignment = alignment == .left ? nil : alignment }
+            }
+            TSToggleRow(title: "Keep Letters Upright", isOn: text.pathUpright == true) { upright in
+                state.editText("Path Letter Orientation") { $0.pathUpright = upright ? true : nil }
+            }
             TSToggleRow(title: "Reverse Path", isOn: text.pathReversed == true) { reversed in
                 state.editText("Reverse Text Path") { $0.pathReversed = reversed ? true : nil }
             }

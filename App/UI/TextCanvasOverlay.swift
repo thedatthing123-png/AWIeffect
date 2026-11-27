@@ -43,9 +43,7 @@ import simd
         var out: [Glyph] = []
         var shape = Path()
         // Text on a path: letters sit along the layer's first mask (same track the renderer uses).
-        let track: PathTrack? = (text.onPath ?? false) ? layer.masks.first.map {
-            PathTrack($0.path.value(at: time), offsetPercent: text.pathOffset?.value(at: time) ?? 0, reversed: text.pathReversed == true)
-        } : nil
+        let track = PathTrack.forText(text, layer: layer, time: time)
         for (gi, g) in lay.glyphs.enumerated() {
             let st = gi < states.count ? states[gi] : Renderer.GlyphState()
             let off = st.offset.x.isFinite && st.offset.y.isFinite ? st.offset : .zero

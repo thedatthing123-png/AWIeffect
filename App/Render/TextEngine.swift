@@ -593,8 +593,10 @@ final class TextEngine {
         // Characters scale/rotate around their baseline center like AE's default anchor.
         var pivot = (g.baseRotation != 0 ? g.center : Vec2(g.center.x, g.origin.y)) + st.offset + st.anchor
         if let track {
-            let along = track.offset + (g.center.x - Double(layout.bounds.minX)) + st.offset.x
-            let (pt, ang) = track.point(at: along)
+            let local = g.center.x - Double(layout.bounds.minX) + st.offset.x
+            let along = track.distance(for: local, textWidth: Double(layout.bounds.width))
+            let (pt, tangent) = track.point(at: along)
+            let ang = track.upright ? 0 : tangent
             let nrm = Vec2(-sin(ang), cos(ang))
             let lift = g.origin.y - Double(layout.bounds.maxY)
             let base = pt + nrm * (lift + st.offset.y)
@@ -939,9 +941,7 @@ extension Renderer {
         let states = TextEngine.glyphStates(text, layout: lay, time: time, beats: beats)
         let chars = Array(text.string)
         // Path for text-on-path (the layer's first mask), measured once per frame.
-        let pathTrack: PathTrack? = (text.onPath ?? false) ? layer.masks.first.map {
-            PathTrack($0.path.value(at: time), offsetPercent: text.pathOffset?.value(at: time) ?? 0, reversed: text.pathReversed == true)
-        } : nil
+        let pathTrack = PathTrack.forText(text, layer: layer, time: time)
         // Letter effects: per animator, how much each glyph belongs to its effected copy.
         let fxAnimators = text.animators.filter { a in a.isEnabled && (a.letterEffects ?? []).contains { $0.isEnabled } }
         let fxWeights: [[Double]] = fxAnimators.map { a in
@@ -1142,9 +1142,7 @@ extension Renderer {
     static func textRenderBounds(_ layer: Layer, time: Double, beats: [Double] = []) -> CGRect? {
         guard let t = renderTextData(layer, time: time) else { return nil }
         let lay = TextEngine.shared.layout(t, time: time)
-        let track: PathTrack? = (t.onPath ?? false) ? layer.masks.first.map {
-            PathTrack($0.path.value(at: time), offsetPercent: t.pathOffset?.value(at: time) ?? 0, reversed: t.pathReversed == true)
-        } : nil
+        let track = PathTrack.forText(t, layer: layer, time: time)
         return TextEngine.animatedBounds(t, layout: lay, time: time, beats: beats, track: track)
     }
 }
@@ -1155,9 +1153,20 @@ struct PathTrack {
     private var pts: [Vec2] = []
     private var cum: [Double] = [0]
     let offset: Double
+    let alignment: TextAlignment
+    let upright: Bool
     var length: Double { cum.last ?? 0 }
 
-    init(_ path: BezierPath, offsetPercent: Double, reversed: Bool = false) {
+    static func forText(_ text: TextData, layer: Layer, time: Double) -> PathTrack? {
+        guard text.onPath == true, let mask = layer.masks.first else { return nil }
+        return PathTrack(mask.path.value(at: time), offsetPercent: text.pathOffset?.value(at: time) ?? 0,
+                         reversed: text.pathReversed == true, alignment: text.pathAlignment ?? .left,
+                         upright: text.pathUpright == true)
+    }
+
+    init(_ path: BezierPath, offsetPercent: Double, reversed: Bool = false, alignment: TextAlignment = .left, upright: Bool = false) {
+        self.alignment = alignment
+        self.upright = upright
         let forward = path.segments(stepsPerCurve: 24)
         let segs = reversed ? forward.reversed().map { SIMD4($0.z, $0.w, $0.x, $0.y) } : forward
         if let f = segs.first { pts.append(Vec2(Double(f.x), Double(f.y))) }
@@ -1168,6 +1177,17 @@ struct PathTrack {
         }
         let total = cum.last ?? 0
         offset = total * offsetPercent / 100
+    }
+
+    func distance(for glyph: Double, textWidth: Double) -> Double {
+        let remaining = length - textWidth
+        let start: Double
+        switch alignment {
+        case .left: start = 0
+        case .center: start = remaining * 0.5
+        case .right: start = remaining
+        }
+        return start + offset + glyph
     }
 
     /// Point and angle (radians) at `d` px along the path (clamped to the ends, extended along the end tangents).

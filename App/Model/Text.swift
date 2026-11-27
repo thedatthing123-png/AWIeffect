@@ -65,6 +65,8 @@ struct TextData: Codable, Equatable {
     var onPath: Bool? = nil
     var pathOffset: Animated<Double>? = nil
     var pathReversed: Bool? = nil
+    var pathAlignment: TextAlignment? = nil
+    var pathUpright: Bool? = nil
     /// Counter / timer mode: the shown text comes from an animated number (keyframe it, shape it with the graph).
     var counter: TextCounter? = nil
     /// Outline the whole text instead of filling it (stroke width px, 0 = solid).
@@ -92,7 +94,7 @@ struct TextData: Codable, Equatable {
     var text3DGroup: String? = nil
 
     enum CodingKeys: String, CodingKey {
-        case string, fontName, fontSize, fill, tracking, lineSpacing, alignment, colorSpans, animators, onPath, pathOffset, pathReversed, importedAnimationSpeed
+        case string, fontName, fontSize, fill, tracking, lineSpacing, alignment, colorSpans, animators, onPath, pathOffset, pathReversed, pathAlignment, pathUpright, importedAnimationSpeed
         case counter, outline, spacingAnchor, style, charIDs, nextCharID, charStyles, boxWidth, autoFit, vertical, baselineShift, text3D, text3DGroup
     }
 
@@ -136,6 +138,8 @@ extension TextData {
         onPath = try c.decodeIfPresent(Bool.self, forKey: .onPath)
         pathOffset = try c.decodeIfPresent(Animated<Double>.self, forKey: .pathOffset)
         pathReversed = try c.decodeIfPresent(Bool.self, forKey: .pathReversed)
+        pathAlignment = try c.decodeIfPresent(TextAlignment.self, forKey: .pathAlignment)
+        pathUpright = try c.decodeIfPresent(Bool.self, forKey: .pathUpright)
         counter = try c.decodeIfPresent(TextCounter.self, forKey: .counter)
         outline = try c.decodeIfPresent(Double.self, forKey: .outline)
         spacingAnchor = try c.decodeIfPresent(Int.self, forKey: .spacingAnchor)
