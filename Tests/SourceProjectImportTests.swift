@@ -100,7 +100,8 @@ final class SourceProjectImportTests: XCTestCase {
         let layer = try XCTUnwrap(source.layers.first)
         let original = try XCTUnwrap(layer.effects.first)
         let reference = try XCTUnwrap(ReferenceFragmentCatalog.bySourceID["com.alightcreative.effects.tritone"])
-        XCTAssertEqual(original.typeID, reference.id)
+        XCTAssertEqual(original.typeID, "source.am.v1.com.alightcreative.effects.tritone")
+        XCTAssertEqual(EffectRegistry.definition(original.typeID)?.id, reference.id)
         XCTAssertEqual(layer.effects.dropFirst().map { $0.imported?.support }, [.unavailable, .unavailable])
         let native = EffectRegistry.tritone
         XCTAssertEqual(EffectRegistry.definition(original.typeID)?.name, native.name)
@@ -148,7 +149,7 @@ final class SourceProjectImportTests: XCTestCase {
             value = .color(Animated(RGBA(0, 1, 0)))
         }
         let reopened = try JSONDecoder().decode(Project.self, from: JSONEncoder().encode(editor.project))
-        XCTAssertEqual(reopened.layers.first?.effects.last?.typeID, reference.id)
+        XCTAssertEqual(reopened.layers.first?.effects.last?.typeID, original.typeID)
         XCTAssertEqual(reopened.layers.first?.effects.last?.imported?.properties, original.imported?.properties)
         XCTAssertNotEqual(try frame(reopened), before)
     }
@@ -158,9 +159,9 @@ final class SourceProjectImportTests: XCTestCase {
         let url = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "am_shakes", withExtension: "xml"))
         let source = try AMImporter.load(data: Data(contentsOf: url), fallbackName: "Shake").project
         let sourceLayer = try XCTUnwrap(source.layers.first { layer in
-            layer.effects.contains { $0.typeID == EffectRegistry.importedOscillate.id && !$0.keyframeTimes.isEmpty }
+            layer.effects.contains { $0.typeID == "source.am.v1.com.alightcreative.effects.oscillate3" && !$0.keyframeTimes.isEmpty }
         })
-        let original = try XCTUnwrap(sourceLayer.effects.first { $0.typeID == EffectRegistry.importedOscillate.id && !$0.keyframeTimes.isEmpty })
+        let original = try XCTUnwrap(sourceLayer.effects.first { $0.typeID == "source.am.v1.com.alightcreative.effects.oscillate3" && !$0.keyframeTimes.isEmpty })
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("source-import-\(UUID())", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
         let store = ProjectStore(root: root)

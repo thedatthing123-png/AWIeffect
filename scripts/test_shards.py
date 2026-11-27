@@ -20,6 +20,8 @@ RENDERS = {'ReferenceFragmentAuditTests', 'ReferenceTransitionTests', 'Expansion
 TEXT = {'CraftPresets33Tests', 'TextPresetLibraryTests', 'TextStudioTests',
         'TextStudioEngineTests', 'Text3DTests', 'TextTests'}
 SCOPES = {
+    'source-import': ['AEPImportTests', 'AMImportTests', 'SourceProjectImportTests', 'EffectsPhaseOneTests',
+                      'PrecompMaskImportTests', 'RenderSpeedTests'],
     'reference-controls': ['EffectTests', 'ReviewedReferenceEffectsTests', 'ReferenceFragmentAuditTests'],
     'reference-repairs': ['EffectTests', 'ReviewedReferenceEffectsTests', 'ContainerInteractionTests', 'LayerSelectionResponseTests', 'ContainerInteractionUITests', 'EditorPolishUITests', 'ReviewedReferenceEffectsUITests'],
     'motion-blur': ['EditorPolishUITests', 'MotionBlurTests'],

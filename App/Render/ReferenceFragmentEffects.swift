@@ -298,7 +298,8 @@ enum ReferenceFragmentControls {
     private static let reviewed = Dictionary(uniqueKeysWithValues: ReferenceFragmentCatalog.all.map { ($0.id, $0) })
 
     static func pointParameter(_ typeID: String, _ key: String) -> ReferenceFragmentParameter? {
-        var sourceID=typeID,sourceKey=key
+        var sourceID = ImportedEffectRenderers.alightMotionRendererID(forTypeID: typeID) ?? typeID
+        var sourceKey = key
         if typeID == "awi.am35.fractalRidges" || typeID == "awi.animatedFractalRidges" {
             sourceID="awi.amref.e1fc2d92d8130"
             if key == "parallax" { sourceKey="parr" }
@@ -315,7 +316,7 @@ enum ReferenceFragmentControls {
     /// normalized positions. Do not put a misleading canvas crosshair on them.
     static func canvasPoint(_ typeID: String, _ key: String, _ value: Vec2, inverse: Bool = false) -> Vec2? {
         guard let parameter = pointParameter(typeID, key) else { return value }
-        if typeID == "awi.amref.e7b0d60717ad7", key == "light" {
+        if (ImportedEffectRenderers.alightMotionRendererID(forTypeID: typeID) ?? typeID) == "awi.amref.e7b0d60717ad7", key == "light" {
             return inverse ? Vec2((value.x-0.5)*1000, (0.5-value.y)*1000) : Vec2(0.5+value.x/1000, 0.5-value.y/1000)
         }
         if parameter.pointMinimum == Vec2(0,0), parameter.pointMaximum == Vec2(1,1) { return value }
@@ -323,8 +324,9 @@ enum ReferenceFragmentControls {
     }
 
     static func isVisible(_ parameterID: String, effect: EffectInstance, time: Double = 0) -> Bool {
-        guard let definition = reviewed[effect.typeID] else { return true }
-        if effect.typeID == "awi.amref.ec88108d754e8" {
+        let rendererID = ImportedEffectRenderers.alightMotionRendererID(forTypeID: effect.typeID) ?? effect.typeID
+        guard let definition = reviewed[rendererID] else { return true }
+        if rendererID == "awi.amref.ec88108d754e8" {
             let pattern = effect.choice("preset")
             if ["colorR", "colorG", "colorB"].contains(parameterID) { return effect.choice("colorMode") == 1 }
             if parameterID == "density" { return pattern == 5 }
@@ -333,11 +335,11 @@ enum ReferenceFragmentControls {
             if parameterID == "orientation" { return [0,1,6].contains(pattern) }
             if ["distortion", "animSpeed", "generators"].contains(parameterID) { return pattern != 4 }
         }
-        if effect.typeID == "awi.amref.e4dc1ec616108", parameterID == "sizeVar" { return effect.bool("randomSize") }
-        if effect.typeID == "awi.amref.e9e78f72e74ef", ["color2", "color3"].contains(parameterID) { return effect.choice("typeComet") == 0 }
-        if effect.typeID == "awi.amref.e7b0d60717ad7", parameterID == "fadeType" { return effect.number("fade", time) > 0 }
-        if effect.typeID == "awi.amref.edd3f3773971b", ["inkColor", "paperColor"].contains(parameterID) { return !effect.bool("alphaMode") }
-        if effect.typeID == "awi.amref.e8404b5764d4f", parameterID == "seed" {
+        if rendererID == "awi.amref.e4dc1ec616108", parameterID == "sizeVar" { return effect.bool("randomSize") }
+        if rendererID == "awi.amref.e9e78f72e74ef", ["color2", "color3"].contains(parameterID) { return effect.choice("typeComet") == 0 }
+        if rendererID == "awi.amref.e7b0d60717ad7", parameterID == "fadeType" { return effect.number("fade", time) > 0 }
+        if rendererID == "awi.amref.edd3f3773971b", ["inkColor", "paperColor"].contains(parameterID) { return !effect.bool("alphaMode") }
+        if rendererID == "awi.amref.e8404b5764d4f", parameterID == "seed" {
             return (effect.params["strength"]?.number(at: time) ?? 0) > 0
         }
         for controller in definition.parameters where !controller.choiceTargets.isEmpty {
@@ -347,7 +349,7 @@ enum ReferenceFragmentControls {
             if case .choice(let selected) = value { index = selected } else { index = 0 }
             guard controller.choiceTargets.indices.contains(index), controller.choiceTargets[index].contains(parameterID) else { return false }
         }
-        if effect.typeID == "awi.amref.ea3452b1fb102", ["hueScale", "saturation", "value"].contains(parameterID) {
+        if rendererID == "awi.amref.ea3452b1fb102", ["hueScale", "saturation", "value"].contains(parameterID) {
             return effect.params["colorizeHSV"].map { if case .toggle(let on) = $0 { return on }; return true } ?? true
         }
         return true

@@ -573,7 +573,7 @@ final class Renderer {
             return base.map { ShapeOpsMath.apply(ops, to: $0, time: time) }
         }
         if k == .path { return layer.path?.value(at: time) }
-        guard layer.stroke.enabled || layer.effects.contains(where: { $0.isEnabled && $0.typeID == "awi23.drawProgress" }) else { return nil }
+        guard layer.stroke.enabled || layer.effects.contains(where: { $0.isEnabled && EffectRegistry.definition($0.typeID)?.id == "awi23.drawProgress" }) else { return nil }
         let s = layer.size.value(at: time)
         switch k {
         case .ellipse: return .ellipse(size: s)

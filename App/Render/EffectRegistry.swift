@@ -280,8 +280,9 @@ enum EffectRegistry {
 
     static func definition(_ id: String) -> EffectDefinition? {
         if let definition = byID[id] { return definition }
-        guard let adapter = ImportedEffectRenderers.adapter(forTypeID: id) else { return nil }
-        return byID[adapter.id]
+        let rendererID = ImportedEffectRenderers.alightMotionRendererID(forTypeID: id)
+            ?? ImportedEffectRenderers.adapter(forTypeID: id)?.id
+        return rendererID.flatMap { byID[$0] }
     }
     static func definition(aeMatchName: String) -> EffectDefinition? { byMatchName[aeMatchName] }
 

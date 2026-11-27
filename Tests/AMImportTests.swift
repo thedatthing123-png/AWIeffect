@@ -16,8 +16,8 @@ final class AMImportTests: XCTestCase {
         XCTAssertEqual(r.project.duration, 2.283, accuracy: 0.01)
         XCTAssertEqual(r.project.layers.count, 4)
         let ids = Set(r.project.layers.flatMap { $0.effects.map(\.typeID) })
-        XCTAssertTrue(ids.contains("awi.shake"), "shakes missing: \(ids)")
-        XCTAssertTrue(ids.contains(EffectRegistry.importedOscillate.id))
+        XCTAssertTrue(ids.contains("source.am-adapter.v1.awi.shake|com.alightcreative.effects.shake2"), "shakes missing: \(ids)")
+        XCTAssertTrue(ids.contains("source.am.v1.com.alightcreative.effects.oscillate3"))
         XCTAssertTrue(r.project.layers.contains { $0.motionBlur })
         // Keyframed shake magnitude survives with AM bezier easing.
         let shake = try XCTUnwrap(r.project.layers.flatMap(\.effects).first { e in

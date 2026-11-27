@@ -541,7 +541,7 @@ enum AEPImporter {
         let adapter = ImportedEffectRenderers.afterEffects(match)
         let displayName = adapter?.name ?? PluginSwap.lookup(match)?.plugin ?? match
         var instance = adapter.map { effectInstance($0, from: effect, timebase: timebase, layerStart: layerStart) }
-            ?? EffectInstance(typeID: "source.unavailable", params: [:])
+            ?? EffectInstance(typeID: ImportedEffectRenderers.afterEffectsTypeID(match), params: [:])
         if adapter != nil { instance.typeID = ImportedEffectRenderers.afterEffectsTypeID(match) }
         let support: ImportedEffect.Support = adapter == nil ? .unavailable : (match.hasPrefix("CC ") ? .approximation : .nativeAdapter)
         instance.imported = ImportedEffect(format: .afterEffects, matchName: match, displayName: displayName,

@@ -21,6 +21,25 @@ enum ImportedEffectRenderers {
 
     static let importOnlyByID = Dictionary(uniqueKeysWithValues: importOnlyDefinitions.map { ($0.id, $0) })
 
+    private static let alightMotionPrefix = "source.am.v1."
+    private static let alightMotionAdapterPrefix = "source.am-adapter.v1."
+
+    static func alightMotionTypeID(_ sourceID: String, adapterID: String? = nil) -> String {
+        if let adapterID { return alightMotionAdapterPrefix + adapterID + "|" + sourceID }
+        return alightMotionPrefix + sourceID
+    }
+
+    static func alightMotionRendererID(forTypeID id: String) -> String? {
+        if id.hasPrefix(alightMotionPrefix) {
+            let sourceID = String(id.dropFirst(alightMotionPrefix.count))
+            if sourceID == "com.alightcreative.effects.oscillate3" { return EffectRegistry.importedOscillate.id }
+            return xmlFragments[sourceID]?.id
+        }
+        guard id.hasPrefix(alightMotionAdapterPrefix),
+              let separator = id.firstIndex(of: "|") else { return nil }
+        return String(id[id.index(id.startIndex, offsetBy: alightMotionAdapterPrefix.count)..<separator])
+    }
+
     private static let afterEffectsPrefix = "source.ae.v1."
 
     static func afterEffectsTypeID(_ matchName: String) -> String {

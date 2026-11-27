@@ -190,15 +190,21 @@ final class EffectsPhaseOneTests: XCTestCase {
         <effect id="com.alightcreative.effects.ripplelight"><property name="frequency" value="32"/><property name="lightIntensity" value="0.8"/><property name="centerX" value="0.25"/><property name="blend" value="0.75"/></effect>
         """)
         var effect = try XCTUnwrap(p.layers[0].effects.last)
-        XCTAssertEqual(effect.typeID, "awi23.litRipple"); XCTAssertEqual(effect.number("frequency", 0), 32)
-        XCTAssertEqual(effect.number("light", 0), 0.8); XCTAssertEqual(effect.number("mix", 0), 75)
-        XCTAssertEqual(effect.point("center", 0), Vec2(0.25, 0.5))
+        XCTAssertEqual(effect.typeID, "source.am.v1.com.alightcreative.effects.ripplelight")
+        XCTAssertEqual(EffectRegistry.definition(effect.typeID)?.id, ReferenceFragmentCatalog.bySourceID["com.alightcreative.effects.ripplelight"]?.id)
+        XCTAssertEqual(effect.number("frequency", 0), 32)
+        XCTAssertEqual(effect.number("lightIntensity", 0), 0.8)
+        XCTAssertEqual(effect.number("blend", 0), 0.75)
+        XCTAssertEqual(effect.number("centerX", 0), 0.25)
+        XCTAssertEqual(effect.number("centerY", 0), 0.5)
         try apply("""
         <effect id="com.alightcreative.effects.halftonedots"><property name="amount" value="33"/><property name="strength" value="0.7"/><property name="phase" value="0.25"/></effect>
         """)
         effect = try XCTUnwrap(p.layers[0].effects.last)
-        XCTAssertEqual(effect.typeID, "awi.halftone"); XCTAssertEqual(effect.choice("version"), 2)
-        XCTAssertEqual(effect.number("amount", 0), 33); XCTAssertEqual(effect.number("strength", 0), 70, accuracy: 0.001)
+        XCTAssertEqual(effect.typeID, "source.am.v1.com.alightcreative.effects.halftonedots")
+        XCTAssertEqual(EffectRegistry.definition(effect.typeID)?.id, ReferenceFragmentCatalog.bySourceID["com.alightcreative.effects.halftonedots"]?.id)
+        XCTAssertEqual(effect.number("amount", 0), 33)
+        XCTAssertEqual(effect.number("strength", 0), 0.7, accuracy: 0.001)
         XCTAssertEqual(effect.number("phase", 0), 0.25)
     }
 }

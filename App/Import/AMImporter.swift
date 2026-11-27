@@ -143,7 +143,7 @@ enum AMImporter {
             if layer.effects.count == stackStart {
                 let represented = ["motionblur", "fade", "textprogress", "textspacing", "texttransform", "stretch", "scaleassist"]
                 let support: ImportedEffect.Support = represented.contains(base) && entry?.status != .missing ? .layerSettings : .unavailable
-                var saved = EffectInstance(typeID: "source.unavailable", params: [:])
+                var saved = EffectInstance(typeID: "source.unavailable.am." + full, params: [:])
                 saved.imported = ImportedEffect(format: .alightMotion, matchName: full, displayName: entry?.item ?? full,
                                                 support: support, properties: [original])
                 layer.effects.append(saved)
@@ -151,6 +151,7 @@ enum AMImporter {
                 for i in stackStart..<layer.effects.count {
                     let typeID = layer.effects[i].typeID
                     let dedicated = typeID == EffectRegistry.importedOscillate.id || typeID == reference?.id
+                    layer.effects[i].typeID = ImportedEffectRenderers.alightMotionTypeID(full, adapterID: dedicated ? nil : typeID)
                     layer.effects[i].imported = ImportedEffect(format: .alightMotion, matchName: full,
                         displayName: entry?.item ?? full, support: dedicated ? .nativeAdapter : .approximation,
                         properties: [original], phaseOrigin: dedicated ? inPoint : nil)
