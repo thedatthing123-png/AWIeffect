@@ -4,7 +4,7 @@ import simd
 
 /// Reference-led additions. Existing saved effect IDs and implementations remain intact.
 extension EffectRegistry {
-    static let batchAM35: [EffectDefinition] = [fractalRidgesAM35, psykoBlobsAM35, spectralMapAM35]
+    static let batchAM35: [EffectDefinition] = [fractalRidgesAM35, animatedFractalRidges, psykoBlobsAM35, spectralMapAM35]
 
     static let fractalRidgesAM35 = EffectDefinition(
         id: "awi.am35.fractalRidges", name: "Fractal Ridges", category: .generate, aeMatchNames: [],
@@ -19,26 +19,44 @@ extension EffectRegistry {
                  .color("color1", "Color 1", .black), .color("color2", "Color 2", .white),
                  .number("octaves", "Octaves", 6, 1, 9, step: 1),
                  .number("blend", "Blend", 100, 0, 100, unit: "%")],
+        stage: .pixels { renderFractalRidges($0, evolution: f29($0, "evolution")) })
+
+    private static let ridgeSpeedRange = -5.0...5.0
+    private static let ridgeSpeedDefault = 0.35
+    static let animatedFractalRidges = EffectDefinition(
+        id: "awi.animatedFractalRidges", name: "Fractal Ridges (Animated)", category: .generate, aeMatchNames: [],
+        summary: "Animated turbulent ridges in the opaque parts of the layer. Set Evolution Speed to zero to hold the pattern or animate Evolution by hand.",
+        params: fractalRidgesAM35.params.flatMap { parameter in
+            guard parameter.id == "evolution" else { return [parameter] }
+            return [parameter, .number("evolutionSpeed", "Evolution Speed", ridgeSpeedDefault,
+                                       ridgeSpeedRange.lowerBound, ridgeSpeedRange.upperBound, step: 0.01, unit: " /s")]
+        },
         stage: .pixels { ctx in
-            let output = ctx.temp()
-            var p = EffectParams()
-            func point(_ key: String) -> Vec2 {
-                ctx.effect.params[key] != nil ? ctx.effect.point(key, ctx.time) : Vec2(0, 0)
-            }
-            func pack(_ key: String) -> UInt32 {
-                let c = rgba29(ctx, key)
-                func byte(_ x: Double) -> UInt32 { UInt32((max(0, min(1, x)) * 255).rounded()) }
-                return (byte(c.r) << 24) | (byte(c.g) << 16) | (byte(c.b) << 8) | byte(c.a)
-            }
-            let offset = point("offset"), parallax = point("parallax")
-            p.a = layerRect(ctx)
-            p.b = SIMD4(Float(offset.x), Float(offset.y), Float(parallax.x), Float(parallax.y))
-            p.c = SIMD4(f29(ctx, "scale"), f29(ctx, "stretchX"), f29(ctx, "stretchY"), f29(ctx, "evolution"))
-            p.d = SIMD4(f29(ctx, "intensity"), 0, f29(ctx, "seed"), pc29(ctx, "blend"))
-            p.i = SIMD4(UInt32(max(1, min(9, v29(ctx, "octaves")))), pack("color1"), pack("color2"), 0)
-            ctx.gpu.run("fxFractalRidgesAM35", ctx.cb, textures: [ctx.input, output], params: p, grid: output)
-            return output
+            let phase = EffectRate.phase(ctx.effect, key: "evolutionSpeed", time: ctx.time,
+                                         range: ridgeSpeedRange, fallback: ridgeSpeedDefault)
+            return renderFractalRidges(ctx, evolution: f29(ctx, "evolution") + Float(phase))
         })
+
+    private static func renderFractalRidges(_ ctx: EffectContext, evolution: Float) -> MTLTexture {
+        let blend = pc29(ctx, "blend")
+        guard blend > 0 else { return ctx.input }
+        let output = ctx.temp()
+        var p = EffectParams()
+        func pack(_ key: String) -> UInt32 {
+            let c = rgba29(ctx, key)
+            func byte(_ x: Double) -> UInt32 { UInt32((max(0, min(1, x)) * 255).rounded()) }
+            return (byte(c.r) << 24) | (byte(c.g) << 16) | (byte(c.b) << 8) | byte(c.a)
+        }
+        let offset = ctx.effect.point("offset", ctx.time)
+        let parallax = ctx.effect.point("parallax", ctx.time)
+        p.a = layerRect(ctx)
+        p.b = SIMD4(Float(offset.x), Float(offset.y), Float(parallax.x), Float(parallax.y))
+        p.c = SIMD4(f29(ctx, "scale"), f29(ctx, "stretchX"), f29(ctx, "stretchY"), evolution)
+        p.d = SIMD4(f29(ctx, "intensity"), 0, f29(ctx, "seed"), blend)
+        p.i = SIMD4(UInt32(max(1, min(9, v29(ctx, "octaves")))), pack("color1"), pack("color2"), 0)
+        ctx.gpu.run("fxFractalRidgesAM35", ctx.cb, textures: [ctx.input, output], params: p, grid: output)
+        return output
+    }
     static let psykoBlobsAM35 = EffectDefinition(
         id: "awi.am35.psykoBlobs", name: "PsykoBlobs", category: .color, aeMatchNames: [],
         summary: "Luminance-driven psychedelic color bands with a soft noise field. Preserve dark ink outlines while animating the band phase.",

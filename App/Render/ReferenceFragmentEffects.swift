@@ -299,7 +299,7 @@ enum ReferenceFragmentControls {
 
     static func pointParameter(_ typeID: String, _ key: String) -> ReferenceFragmentParameter? {
         var sourceID=typeID,sourceKey=key
-        if typeID == "awi.am35.fractalRidges" {
+        if typeID == "awi.am35.fractalRidges" || typeID == "awi.animatedFractalRidges" {
             sourceID="awi.amref.e1fc2d92d8130"
             if key == "parallax" { sourceKey="parr" }
             if key == "offset" { sourceKey="offs" }
