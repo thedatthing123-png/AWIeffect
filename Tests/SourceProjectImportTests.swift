@@ -127,6 +127,7 @@ final class SourceProjectImportTests: XCTestCase {
         var art = project.makeLayer(name: "Art", content: .solid, size: Vec2(80, 80))
         art.inPoint = 1
         art.outPoint = 3
+        art.fill = Animated(.white)
         art.effects = [native.makeInstance()]
         art.effects[0].isEnabled = false
         project.layers = [art]
