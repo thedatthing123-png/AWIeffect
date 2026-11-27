@@ -508,8 +508,7 @@ final class TextEngine {
                 let units = Set(layout.glyphs.lazy.filter {
                     !$0.isSpace && (targets?.contains($0.charID) ?? true)
                 }.map { unitIndex($0, stagger.unit) }).sorted()
-                let ordered = stagger.reversed ? Array(units.reversed()) : units
-                staggerRanks = Dictionary(uniqueKeysWithValues: ordered.enumerated().map { ($0.element, $0.offset) })
+                staggerRanks = stagger.ranks(for: units)
             }
             for (gi, g) in layout.glyphs.enumerated() {
                 let amt = selection(a, glyph: g, layout: layout, time: sampleTime, beats: beats)
@@ -941,7 +940,7 @@ extension Renderer {
         let chars = Array(text.string)
         // Path for text-on-path (the layer's first mask), measured once per frame.
         let pathTrack: PathTrack? = (text.onPath ?? false) ? layer.masks.first.map {
-            PathTrack($0.path.value(at: time), offsetPercent: text.pathOffset?.value(at: time) ?? 0)
+            PathTrack($0.path.value(at: time), offsetPercent: text.pathOffset?.value(at: time) ?? 0, reversed: text.pathReversed == true)
         } : nil
         // Letter effects: per animator, how much each glyph belongs to its effected copy.
         let fxAnimators = text.animators.filter { a in a.isEnabled && (a.letterEffects ?? []).contains { $0.isEnabled } }
@@ -1144,7 +1143,7 @@ extension Renderer {
         guard let t = renderTextData(layer, time: time) else { return nil }
         let lay = TextEngine.shared.layout(t, time: time)
         let track: PathTrack? = (t.onPath ?? false) ? layer.masks.first.map {
-            PathTrack($0.path.value(at: time), offsetPercent: t.pathOffset?.value(at: time) ?? 0)
+            PathTrack($0.path.value(at: time), offsetPercent: t.pathOffset?.value(at: time) ?? 0, reversed: t.pathReversed == true)
         } : nil
         return TextEngine.animatedBounds(t, layout: lay, time: time, beats: beats, track: track)
     }
@@ -1158,8 +1157,9 @@ struct PathTrack {
     let offset: Double
     var length: Double { cum.last ?? 0 }
 
-    init(_ path: BezierPath, offsetPercent: Double) {
-        let segs = path.segments(stepsPerCurve: 24)
+    init(_ path: BezierPath, offsetPercent: Double, reversed: Bool = false) {
+        let forward = path.segments(stepsPerCurve: 24)
+        let segs = reversed ? forward.reversed().map { SIMD4($0.z, $0.w, $0.x, $0.y) } : forward
         if let f = segs.first { pts.append(Vec2(Double(f.x), Double(f.y))) }
         for s in segs {
             let p = Vec2(Double(s.z), Double(s.w))

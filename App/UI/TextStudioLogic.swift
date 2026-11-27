@@ -263,6 +263,18 @@ enum TextStudioLogic {
         return ids(t, range: a..<b)
     }
 
+    /// Effective font for a scope. Nil indicates mixed fonts in the selection.
+    static func fontName(_ text: TextData, ids: [UInt32]) -> String? {
+        guard !ids.isEmpty else { return text.fontName }
+        let fonts = Set(ids.map { text.charStyles?[$0]?.fontName ?? text.fontName })
+        return fonts.count == 1 ? fonts.first : nil
+    }
+
+    static func applyFont(_ name: String, to text: inout TextData, ids: [UInt32]) {
+        if ids.isEmpty { text.fontName = name }
+        else { text.setCharStyle(ids: ids) { $0.fontName = name } }
+    }
+
     // MARK: Animators from a letter selection
 
     static func selectionAnimatorIndex(_ t: TextData, ids: [UInt32]) -> Int? {

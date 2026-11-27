@@ -251,3 +251,48 @@ final class RigAuthoringUITests: XCTestCase {
         try? image.pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/awi-ui/rig-authoring-direct-pose.png"))
     }
 }
+
+
+final class TextWorkspaceUITests: XCTestCase {
+    func testScopedFontsAndWorkspaceTabsKeepOneTextLayer() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-letterAuthoring"]
+        app.launch()
+
+        let style = app.buttons["Text Studio Tab Style"]
+        XCTAssertTrue(style.waitForExistence(timeout: 15))
+        style.tap()
+        let word = app.buttons["Word"]
+        XCTAssertTrue(word.isHittable)
+        word.tap()
+        let selectedFont = app.buttons["Selection Font"]
+        XCTAssertTrue(selectedFont.waitForExistence(timeout: 5))
+
+        let expand = app.buttons["Expand Text Studio"]
+        XCTAssertTrue(expand.isHittable)
+        expand.tap()
+        XCTAssertTrue(app.buttons["Shrink Text Studio"].waitForExistence(timeout: 5))
+        XCTAssertTrue(selectedFont.isHittable)
+        try capture("text-studio-typography")
+        selectedFont.tap()
+        XCTAssertTrue(app.navigationBars["Fonts"].waitForExistence(timeout: 5))
+        app.buttons["Done"].firstMatch.tap()
+
+        let layout = app.buttons["Text Studio Tab Layout"]
+        layout.tap()
+        let path = app.buttons["Layout Path"]
+        XCTAssertTrue(path.isHittable)
+        path.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["text-layout-on-path"].firstMatch.exists)
+        try capture("text-studio-path")
+        app.buttons["Text Studio Tab 3D"].tap()
+        XCTAssertTrue(app.switches["Real 3D text"].exists)
+    }
+
+    private func capture(_ name: String) throws {
+        let output = URL(fileURLWithPath: "/tmp/awi-ui")
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent(name + ".png"))
+    }
+}

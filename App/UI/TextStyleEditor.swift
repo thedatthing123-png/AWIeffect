@@ -66,105 +66,128 @@ import SwiftUI
     }
 }
 
-/// Style tab: font, size, spacing, paragraph, the selected letters and the style stack.
+/// Style inspector for the layer or the exact characters selected on the canvas.
 struct TextStyleTab: View {
     @ObservedObject var state: EditorState
     @ObservedObject var session = TextStudioSession.shared
     @State private var fontsFor: FontTarget?
+    @State private var pane: Pane = .type
 
-    enum FontTarget: Identifiable { case text, selection; var id: Int { self == .text ? 0 : 1 } }
+    private enum Pane: String, CaseIterable { case type = "Typography", appearance = "Appearance" }
+    private struct FontTarget: Identifiable {
+        let id = UUID()
+        let layerID: UUID
+        let characterIDs: [UInt32]
+        let font: String
+        let sample: String
+    }
 
     private var rows: TextRows { TextRows(state: state) }
 
     var body: some View {
         if let text = state.selectedLayer?.text {
+            let ids = session.selectedIDs
+            let selection = TextStudioLogic.letters(text, ids: ids)
             VStack(alignment: .leading, spacing: 8) {
-                if session.hasSelection, let r = TextStudioLogic.range(text, ids: session.selectedIDs) { selectionCard(text, r) }
-                fontButton(text)
-                basics(text)
-                styleStack(text)
-                paragraph(text)
-                CounterEditor(state: state, text: text)
+                scopeControls(text, selection: selection)
+                if !selection.isEmpty {
+                    selectionCard(text, ids: ids, sample: selection)
+                } else {
+                    TSSegmented(options: Pane.allCases.map { ($0, $0.rawValue) }, selection: pane, label: "Style") { pane = $0 }
+                    switch pane {
+                    case .type:
+                        fontButton(text, ids: [], sample: text.string)
+                        rows.plain("Size", text.fontSize, 8...600, unit: "px", step: 1, beyond: true) { $0.fontSize = min(4000, max(1, $1)) }
+                        if text.style?.fills.isEmpty ?? true {
+                            rows.color("Fill", text.fill) { td, f in f(&td.fill) }
+                        }
+                    case .appearance:
+                        rows.plain("Outline Only", text.outline ?? 0, 0...40, unit: "px") { $0.outline = $1 > 0.05 ? $1 : nil }
+                        styleStack(text)
+                    }
+                }
             }
             .sheet(item: $fontsFor) { target in
-                FontPicker(current: target == .text ? text.fontName : (selectionFont(text) ?? text.fontName), sample: text.string) { name in
-                    if target == .text { state.editText("Font") { $0.fontName = name } }
-                    else {
-                        let ids = session.selectedIDs
-                        state.editText("Letter Font") { td in
-                            let base = td.fontName
-                            td.setCharStyle(ids: ids) { $0.fontName = name == base ? nil : name }
-                        }
+                FontPicker(current: target.font, sample: target.sample) { name in
+                    guard state.selectedLayerID == target.layerID else { return }
+                    state.editText(target.characterIDs.isEmpty ? "Font" : "Selection Font") {
+                        TextStudioLogic.applyFont(name, to: &$0, ids: target.characterIDs)
                     }
                 }
             }
         }
     }
 
-    private func selectionFont(_ text: TextData) -> String? {
-        session.selectedIDs.first.flatMap { text.charStyles?[$0]?.fontName }
+    private func scopeControls(_ text: TextData, selection: String) -> some View {
+        let index = TextStudioLogic.range(text, ids: session.selectedIDs)?.lowerBound
+        let wholeWord = index.map { TextStudioLogic.wordIDs(text, at: $0) == session.selectedIDs } ?? false
+        let hasLetters = text.string.contains { !$0.isWhitespace }
+        return HStack(spacing: 6) {
+            TSButton(title: "Layer", icon: "text.alignleft", filled: selection.isEmpty) { session.selectedIDs = [] }
+            TSButton(title: "Letter", icon: "character", filled: selection.count == 1) { selectUnit(text, .characters) }
+                .disabled(!hasLetters)
+            TSButton(title: "Word", icon: "text.word.spacing", filled: selection.count > 1 && wholeWord) {
+                selectUnit(text, .words)
+            }
+            .disabled(!hasLetters)
+        }
     }
 
-    // MARK: Font + basics
+    private func selectUnit(_ text: TextData, _ unit: TextUnit) {
+        let ids = session.selectedIDs
+        let index = TextStudioLogic.range(text, ids: ids)?.lowerBound
+            ?? text.string.enumerated().first(where: { !$0.element.isWhitespace })?.offset
+        guard let index else { return }
+        session.selectedIDs = unit == .words ? TextStudioLogic.wordIDs(text, at: index)
+            : TextStudioLogic.ids(text, range: index..<(index + 1))
+    }
 
-    private func fontButton(_ text: TextData) -> some View {
-        Button { fontsFor = .text } label: {
-            HStack(spacing: 8) {
+    private func fontButton(_ text: TextData, ids: [UInt32], sample: String) -> some View {
+        let name = TextStudioLogic.fontName(text, ids: ids)
+        return Button {
+            guard let layerID = state.selectedLayerID else { return }
+            fontsFor = FontTarget(layerID: layerID, characterIDs: ids, font: name ?? text.fontName, sample: sample)
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "textformat").font(.system(size: 16, weight: .semibold)).foregroundStyle(Theme.accentGlow)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("FONT").font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.textDim)
-                    Text(FontLibrary.displayName(text.fontName)).font(.custom(text.fontName, size: 20)).foregroundStyle(Theme.text)
-                        .lineLimit(1).minimumScaleFactor(0.6)
+                    Text(ids.isEmpty ? "Layer Font" : "Selection Font").font(.caption).foregroundStyle(Theme.textDim)
+                    Text(name.map(FontLibrary.displayName) ?? "Mixed Fonts")
+                        .font(name.map { .custom($0, size: 17) } ?? .system(size: 17, weight: .semibold))
+                        .foregroundStyle(Theme.text).lineLimit(1)
                 }
                 Spacer(minLength: 6)
-                Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Theme.textDim)
+                Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold)).foregroundStyle(Theme.textDim)
             }
-            .padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 56)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Theme.surface))
+            .padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 48)
+            .background(RoundedRectangle(cornerRadius: 10).fill(Theme.surface))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Font")
+        .accessibilityLabel(ids.isEmpty ? "Font" : "Selection Font")
+        .accessibilityValue(name.map(FontLibrary.displayName) ?? "Mixed Fonts")
     }
 
-    @ViewBuilder private func basics(_ text: TextData) -> some View {
-        rows.plain("Size", text.fontSize, 8...600, unit: "px", step: 1, beyond: true) { $0.fontSize = min(4000, max(1, $1)) }
-        if text.style?.fills.isEmpty ?? true {
-            rows.color("Fill", text.fill) { td, f in f(&td.fill) }
-        } else {
-            Text("Letters are filled by the Fill layers below.").font(.caption).foregroundStyle(Theme.textDim)
-        }
-        rows.number("Tracking", text.tracking, -50...300, unit: "px", beyond: true) { td, f in f(&td.tracking) }
-        rows.number("Line Height", text.lineSpacing, 0.6...3) { td, f in f(&td.lineSpacing) }
-        rows.number("Baseline Shift", text.baselineShift ?? Animated(0), -300...300, unit: "px", beyond: true) { td, f in
-            var a = td.baselineShift ?? Animated(0); f(&a); td.baselineShift = a
-        }
-        TSSegmented(options: [(TextAlignment.left, "Left"), (.center, "Center"), (.right, "Right")], selection: text.alignment, label: "Align") { a in
-            state.editText("Align") { $0.alignment = a }
-        }
-        TSMenuRow(title: "Spacing grows from", options: [(-1, "Alignment"), (0, "Left"), (1, "Center"), (2, "Right")],
-                  selection: text.spacingAnchor ?? -1) { v in state.editText("Spacing Anchor") { $0.spacingAnchor = v < 0 ? nil : v } }
-    }
-
-    // MARK: Selected letters
-
-    private func selectionCard(_ text: TextData, _ r: Range<Int>) -> some View {
-        let ids = session.selectedIDs
-        let cs = text.charStyle(at: r.lowerBound) ?? TextCharStyle()
-        let letters = TextStudioLogic.letters(text, ids: ids)
-        let shown = letters.count > 20 ? String(letters.prefix(20)) + "…" : letters
-        return TSCard(title: "Selected: “\(shown)”",
-                      subtitle: "Only these letters change. Drag them on the canvas to move them.") {
+    private func selectionCard(_ text: TextData, ids: [UInt32], sample: String) -> some View {
+        let index = TextStudioLogic.range(text, ids: ids)?.lowerBound ?? 0
+        let cs = text.charStyle(at: index) ?? TextCharStyle()
+        return TSCard(title: sample, subtitle: "\(sample.count) selected") {
             TSIconButton(icon: "arrow.uturn.backward", label: "Reset Selected Letters", tint: Theme.danger) {
                 setLetters(ids, "Reset Letters") { $0 = TextCharStyle() }
             }
             TSIconButton(icon: "xmark", label: "Deselect Letters") { session.selectedIDs = [] }
         } content: {
-            TSColorRow(title: "Color", color: cs.fill ?? text.fill.value(at: state.currentTime)) { c in setLetters(ids, "Letter Color") { $0.fill = c } }
+            fontButton(text, ids: ids, sample: sample)
+            if ids.contains(where: { text.charStyles?[$0]?.fontName != nil }) {
+                TSButton(title: "Use Layer Font", icon: "arrow.uturn.backward") {
+                    setLetters(ids, "Use Layer Font") { $0.fontName = nil }
+                }
+            }
+            TSColorRow(title: "Color", color: text.baseColor(forCharacter: index, time: state.currentTime)) { c in setLetters(ids, "Letter Color") { $0.fill = c } }
             letterScrub(ids, "Size", cs.sizePercent ?? 100, 10...400, unit: "%") { s, v in s.sizePercent = abs(v - 100) < 0.5 ? nil : v }
             letterScrub(ids, "Raise", cs.baselineShift ?? 0, -300...300, unit: "px") { s, v in s.baselineShift = abs(v) < 0.01 ? nil : v }
             TSColorRow(title: "Stroke Color", color: cs.strokeColor ?? .black) { c in setLetters(ids, "Letter Stroke") { $0.strokeColor = c } }
             letterScrub(ids, "Stroke Width", cs.strokeWidth ?? 0, 0...60, unit: "px") { s, v in s.strokeWidth = v < 0.01 ? nil : v }
-            TSButton(title: "Font: " + FontLibrary.displayName(cs.fontName ?? text.fontName), icon: "textformat") { fontsFor = .selection }
         }
     }
 
@@ -394,6 +417,44 @@ struct TextStyleTab: View {
         }
     }
 
+}
+
+/// Spacing and paragraph controls share the same editable text model as Style.
+struct TextLayoutTab: View {
+    @ObservedObject var state: EditorState
+    @State private var pane: Pane = .paragraph
+    private enum Pane: String, CaseIterable { case paragraph = "Paragraph", path = "Path" }
+    private var rows: TextRows { TextRows(state: state) }
+
+    var body: some View {
+        if let text = state.selectedLayer?.text {
+            VStack(alignment: .leading, spacing: 8) {
+                TSSegmented(options: Pane.allCases.map { ($0, $0.rawValue) }, selection: pane, label: "Layout") { pane = $0 }
+                switch pane {
+                case .paragraph:
+                    spacing(text)
+                    paragraph(text)
+                case .path: path(text)
+                }
+            }
+        }
+    }
+
+    private func spacing(_ text: TextData) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            TSSegmented(options: [(TextAlignment.left, "Left"), (.center, "Center"), (.right, "Right")], selection: text.alignment, label: "Align") { a in
+                state.editText("Align") { $0.alignment = a }
+            }
+            rows.number("Tracking", text.tracking, -50...300, unit: "px", beyond: true) { td, f in f(&td.tracking) }
+            rows.number("Line Height", text.lineSpacing, 0.6...3) { td, f in f(&td.lineSpacing) }
+            rows.number("Baseline Shift", text.baselineShift ?? Animated(0), -300...300, unit: "px", beyond: true) { td, f in
+                var track = td.baselineShift ?? Animated(0); f(&track); td.baselineShift = track
+            }
+            TSMenuRow(title: "Spacing grows from", options: [(-1, "Alignment"), (0, "Left"), (1, "Center"), (2, "Right")],
+                      selection: text.spacingAnchor ?? -1) { v in state.editText("Spacing Anchor") { $0.spacingAnchor = v < 0 ? nil : v } }
+        }
+    }
+
     // MARK: Paragraph
 
     @ViewBuilder private func paragraph(_ text: TextData) -> some View {
@@ -415,11 +476,19 @@ struct TextStyleTab: View {
         TSToggleRow(title: "Vertical text", detail: "Columns top to bottom, right to left.", isOn: text.vertical ?? false) { b in
             state.editText("Vertical Text") { $0.vertical = b ? true : nil }
         }
-        rows.plain("Outline Only", text.outline ?? 0, 0...40, unit: "px") { $0.outline = $1 > 0.05 ? $1 : nil }
-        TSToggleRow(title: "Text on path", detail: "Letters follow this layer's first mask.", isOn: text.onPath ?? false) { b in
+    }
+
+    @ViewBuilder private func path(_ text: TextData) -> some View {
+        let hasPath = state.selectedLayer?.masks.isEmpty == false
+        TSToggleRow(title: "Text on Path", detail: hasPath ? "Follows the first mask on this layer." : "Add a mask path to this text layer.",
+                    isOn: text.onPath ?? false) { b in
             state.editText("Text on Path") { $0.onPath = b ? true : nil; if b && $0.pathOffset == nil { $0.pathOffset = Animated(0) } }
         }
+        .accessibilityIdentifier("text-layout-on-path")
         if text.onPath == true {
+            TSToggleRow(title: "Reverse Path", isOn: text.pathReversed == true) { reversed in
+                state.editText("Reverse Text Path") { $0.pathReversed = reversed ? true : nil }
+            }
             rows.number("Path Offset", text.pathOffset ?? Animated(0), -100...100, unit: "%", beyond: true) { td, w in
                 var a = td.pathOffset ?? Animated(0); w(&a); td.pathOffset = a
             }
@@ -434,8 +503,7 @@ struct CounterEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            TSSection(title: "Counter / Timer")
-            TSToggleRow(title: "Counter / Timer", detail: "The text shows a number that counts.", isOn: text.counter != nil) { on in
+            TSToggleRow(title: "Enable Counter", isOn: text.counter != nil) { on in
                 let start = state.selectedLayer?.inPoint ?? 0
                 state.editText(on ? "Counter On" : "Counter Off") { td in
                     if on {

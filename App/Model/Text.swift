@@ -64,6 +64,7 @@ struct TextData: Codable, Equatable {
     /// AE text on path: letters follow the text layer's first mask; offset slides them along it (% of length).
     var onPath: Bool? = nil
     var pathOffset: Animated<Double>? = nil
+    var pathReversed: Bool? = nil
     /// Counter / timer mode: the shown text comes from an animated number (keyframe it, shape it with the graph).
     var counter: TextCounter? = nil
     /// Outline the whole text instead of filling it (stroke width px, 0 = solid).
@@ -91,7 +92,7 @@ struct TextData: Codable, Equatable {
     var text3DGroup: String? = nil
 
     enum CodingKeys: String, CodingKey {
-        case string, fontName, fontSize, fill, tracking, lineSpacing, alignment, colorSpans, animators, onPath, pathOffset, importedAnimationSpeed
+        case string, fontName, fontSize, fill, tracking, lineSpacing, alignment, colorSpans, animators, onPath, pathOffset, pathReversed, importedAnimationSpeed
         case counter, outline, spacingAnchor, style, charIDs, nextCharID, charStyles, boxWidth, autoFit, vertical, baselineShift, text3D, text3DGroup
     }
 
@@ -134,6 +135,7 @@ extension TextData {
         importedAnimationSpeed = try c.decodeIfPresent(Double.self, forKey: .importedAnimationSpeed)
         onPath = try c.decodeIfPresent(Bool.self, forKey: .onPath)
         pathOffset = try c.decodeIfPresent(Animated<Double>.self, forKey: .pathOffset)
+        pathReversed = try c.decodeIfPresent(Bool.self, forKey: .pathReversed)
         counter = try c.decodeIfPresent(TextCounter.self, forKey: .counter)
         outline = try c.decodeIfPresent(Double.self, forKey: .outline)
         spacingAnchor = try c.decodeIfPresent(Int.self, forKey: .spacingAnchor)
@@ -287,8 +289,43 @@ struct TextStagger: Codable, Equatable {
     var unit: TextUnit = .charactersExcludingSpaces
     var delay = 0.08
     var reversed = false
+    var order: Order? = nil
+    var seed: Int? = nil
 
+    enum Order: String, Codable, CaseIterable {
+        case forward = "Forward", reverse = "Reverse", centerOut = "Center Out", edgesIn = "Edges In", shuffled = "Shuffle"
+    }
+
+    var resolvedOrder: Order { order ?? (reversed ? .reverse : .forward) }
     var secondsPerUnit: Double { delay.isFinite ? min(2, max(0, delay)) : 0 }
+
+    func ranks(for units: [Int]) -> [Int: Int] {
+        switch resolvedOrder {
+        case .forward:
+            return Dictionary(uniqueKeysWithValues: units.enumerated().map { ($0.element, $0.offset) })
+        case .reverse:
+            return Dictionary(uniqueKeysWithValues: units.reversed().enumerated().map { ($0.element, $0.offset) })
+        case .centerOut, .edgesIn:
+            let last = units.count - 1
+            let centerOut = resolvedOrder == .centerOut
+            return Dictionary(uniqueKeysWithValues: units.enumerated().map { index, unit in
+                let edgeDistance = min(index, last - index)
+                return (unit, centerOut ? last / 2 - edgeDistance : edgeDistance)
+            })
+        case .shuffled:
+            let ordered = units.map { (unit: $0, score: Self.shuffleKey($0, seed: seed ?? 1)) }.sorted {
+                $0.score == $1.score ? $0.unit < $1.unit : $0.score < $1.score
+            }
+            return Dictionary(uniqueKeysWithValues: ordered.enumerated().map { ($0.element.unit, $0.offset) })
+        }
+    }
+
+    private static func shuffleKey(_ unit: Int, seed: Int) -> UInt64 {
+        var value = UInt64(truncatingIfNeeded: unit) &+ UInt64(truncatingIfNeeded: seed) &* 0x9e3779b97f4a7c15
+        value = (value ^ (value >> 30)) &* 0xbf58476d1ce4e5b9
+        value = (value ^ (value >> 27)) &* 0x94d049bb133111eb
+        return value ^ (value >> 31)
+    }
 }
 
 struct TextAnimator: Codable, Equatable, Identifiable {

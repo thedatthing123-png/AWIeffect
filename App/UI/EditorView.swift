@@ -132,9 +132,11 @@ struct EditorView: View {
                 // Typing: the timeline and panels step aside so the canvas (your text) stays above the keyboard.
                 TypeBar(state: state)
             } else if textStudio.expanded, state.panel == .text, state.selectedLayer?.text != nil {
-                // Expanded Text Studio: the canvas stays live on top, the studio takes the rest of the screen.
+                TransportBar(state: state, showHistory: $showHistory, viewZoom: $viewZoom, zoomBase: $zoomBase, viewPan: $viewPan)
+                TimelineView(state: state, compact: true).equatable()
+                    .frame(height: 72)
                 TextPanel(state: state)
-                    .frame(height: UIScreen.main.bounds.height * 0.56)
+                    .frame(height: UIScreen.main.bounds.height * 0.43)
                     .background(Theme.background)
             } else {
                 TransportBar(state: state, showHistory: $showHistory, viewZoom: $viewZoom, zoomBase: $zoomBase, viewPan: $viewPan)

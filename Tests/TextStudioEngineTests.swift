@@ -29,6 +29,68 @@ final class TextStudioEngineTests: XCTestCase {
         XCTAssertEqual(opacities(), [0.5, 0.5, 0.5, 0.5])
     }
 
+    func testScopedFontsPreserveImportedAnimationAndSurviveEdits() throws {
+        let xml = """
+        <scene title="Imported Title" width="320" height="180" fps="30" totalTime="2000">
+          <text label="Title" startTime="0" endTime="2000">
+            <effect id="com.alightcreative.effects.texttransform">
+              <property name="start" type="float"><kf t="0" v="0"/><kf t="1" v="1"/></property>
+              <property name="offset" type="vec2" value="12,8"/>
+            </effect>
+            <content>Night Train</content>
+          </text>
+        </scene>
+        """
+        let project = try AMImporter.load(data: Data(xml.utf8), fallbackName: "Title").project
+        var text = try XCTUnwrap(project.layers.first?.text)
+        let motion = text.animators
+        XCTAssertFalse(motion.isEmpty)
+        let word = TextStudioLogic.wordIDs(text, at: 6)
+        let first = TextStudioLogic.ids(text, range: 0..<1)
+        TextStudioLogic.applyFont("CourierNewPSMT", to: &text, ids: word)
+        TextStudioLogic.applyFont("Georgia", to: &text, ids: first)
+        TextStudioLogic.applyFont("Helvetica", to: &text, ids: [])
+        XCTAssertNil(TextStudioLogic.fontName(text, ids: word + first))
+        text.edit(replacing: 6..<6, with: "Late ")
+        text.importedAnimationSpeed = 0.5
+        let reopened = try JSONDecoder().decode(TextData.self, from: JSONEncoder().encode(text))
+        XCTAssertEqual(reopened.fontName, "Helvetica")
+        XCTAssertEqual(TextStudioLogic.letters(reopened, ids: word), "Train")
+        XCTAssertEqual(TextStudioLogic.fontName(reopened, ids: word), "CourierNewPSMT")
+        XCTAssertEqual(TextStudioLogic.fontName(reopened, ids: first), "Georgia")
+        XCTAssertEqual(reopened.importedAnimationSpeed, 0.5)
+        XCTAssertEqual(reopened.animators, motion)
+    }
+
+    func testStaggerOrdersPairSymmetricUnitsAndShuffleBySeed() throws {
+        let units = [1, 2, 4, 6, 7, 8]
+        let legacy = try JSONDecoder().decode(TextStagger.self, from: Data("""
+        {"unit":"words","delay":0.1,"reversed":true}
+        """.utf8))
+        XCTAssertEqual(legacy.ranks(for: units)[8], 0)
+        var settings = TextStagger(order: .centerOut)
+        XCTAssertEqual(units.map { settings.ranks(for: units)[$0] }, [2, 1, 0, 0, 1, 2])
+        settings.order = .edgesIn
+        XCTAssertEqual(units.map { settings.ranks(for: units)[$0] }, [0, 1, 2, 2, 1, 0])
+        settings.order = .shuffled
+        let ranks = settings.ranks(for: units)
+        XCTAssertEqual(Set(ranks.values), Set(units.indices))
+        XCTAssertEqual(settings.ranks(for: units), ranks)
+        settings.seed = 12
+        XCTAssertNotEqual(settings.ranks(for: units), ranks)
+    }
+
+    func testReversePathMirrorsDistanceAndFlipsTangent() {
+        let path = BezierPath(vertices: [PathVertex(point: Vec2(0, 0)), PathVertex(point: Vec2(100, 0))], closed: false)
+        let forward = PathTrack(path, offsetPercent: 25)
+        let backward = PathTrack(path, offsetPercent: 25, reversed: true)
+        XCTAssertEqual(forward.length, backward.length)
+        XCTAssertEqual(forward.offset, backward.offset)
+        XCTAssertEqual(forward.point(at: forward.offset).0, Vec2(25, 0))
+        XCTAssertEqual(backward.point(at: backward.offset).0, Vec2(75, 0))
+        XCTAssertEqual(abs(backward.point(at: backward.offset).1), .pi, accuracy: 0.0001)
+    }
+
     func testSpanStaysOnItsLettersAfterEdits() {
         var t = TextData(string: "Hello World", fontSize: 40)
         t.colorSpans = [TextColorSpan(start: 6, end: 11, color: green)]

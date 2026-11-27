@@ -88,9 +88,21 @@ enum TextParts {
     }
 }
 
-enum TextStudioTab: String, CaseIterable { case style = "Style", animate = "Animate", presets = "Presets", threeD = "3D" }
+enum TextStudioTab: String, CaseIterable {
+    case style = "Style", layout = "Layout", animate = "Animate", threeD = "3D", presets = "Presets"
 
-/// Text Studio: header (back · expand · type), four tabs (Style / Animate / Presets / 3D) and the live canvas above.
+    var icon: String {
+        switch self {
+        case .style: return "textformat"
+        case .layout: return "text.alignleft"
+        case .animate: return "diamond"
+        case .threeD: return "cube"
+        case .presets: return "square.stack"
+        }
+    }
+}
+
+/// Text Studio stays alongside the live canvas and timeline.
 /// On the canvas: tap a letter to type at that spot, drag across letters to select them, drag selected letters to move
 /// them (writes an animator), pinch to size the selection or the whole text.
 struct TextPanel: View {
@@ -103,13 +115,16 @@ struct TextPanel: View {
     var body: some View {
         VStack(spacing: 0) {
             header
+                .background(Theme.background)
             if state.selectedLayer?.text != nil {
                 tabBar
+                Divider().overlay(Theme.surface)
                 ScrollViewReader { scroll in
                     ScrollView {
                         VStack(alignment: .leading, spacing: 10) {
                             switch tab {
                             case .style: TextStyleTab(state: state)
+                            case .layout: TextLayoutTab(state: state)
                             case .animate:
                                 if let text = state.selectedLayer?.text, text.animators.contains(where: { $0.importedStart != nil }) {
                                     HStack {
@@ -132,7 +147,7 @@ struct TextPanel: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 12).padding(.top, 6).padding(.bottom, 24)
                     }
-                    .id(tabRaw)                       // each tab starts at its top
+                    .id(tabRaw)
                     .transaction { $0.animation = nil }
                 }
             }
@@ -152,8 +167,10 @@ struct TextPanel: View {
             .accessibilityLabel("Panel Back")
             VStack(alignment: .leading, spacing: 0) {
                 Text("Text Studio").font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.text)
-                Text(session.hasSelection ? "\(session.selectedIDs.count) letters selected" : "Drag across letters on the canvas to select")
-                    .font(.system(size: 11)).foregroundStyle(Theme.textDim).lineLimit(1).minimumScaleFactor(0.8)
+                if let layer = state.selectedLayer {
+                    Text(layer.name)
+                        .font(.system(size: 11)).foregroundStyle(Theme.textDim).lineLimit(1)
+                }
             }
             Spacer(minLength: 4)
             TSIconButton(icon: session.expanded ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right",
@@ -172,10 +189,26 @@ struct TextPanel: View {
         .padding(.horizontal, 8)
     }
 
-    /// The four tabs: one navigation control, each segment ≥ 44 pt tall and a quarter of the width.
     private var tabBar: some View {
-        TSSegmented(options: TextStudioTab.allCases.map { ($0, $0.rawValue) }, selection: tab, label: "Text Studio Tab") { tabRaw = $0.rawValue }
-            .padding(.horizontal, 12).padding(.vertical, 4)
+        HStack(spacing: 3) {
+            ForEach(TextStudioTab.allCases, id: \.self) { item in
+                Button { tabRaw = item.rawValue } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: item.icon).font(.system(size: 13, weight: .semibold))
+                        Text(item.rawValue).font(.system(size: 10, weight: .semibold))
+                            .lineLimit(1).minimumScaleFactor(0.75)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .foregroundStyle(tab == item ? Theme.accentGlow : Theme.textDim)
+                    .background(tab == item ? Theme.raised : Color.clear, in: RoundedRectangle(cornerRadius: 8))
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Text Studio Tab " + item.rawValue)
+                .accessibilityAddTraits(tab == item ? .isSelected : [])
+            }
+        }
+        .padding(.horizontal, 10).padding(.bottom, 4)
     }
 }
 
@@ -186,14 +219,28 @@ struct TypeBar: View {
     @ObservedObject private var session = TextStudioSession.shared
     @State private var draft = ""
     @State private var showFonts = false
+    @State private var fontTargetIDs: [UInt32] = []
+    @State private var fontLayerID: UUID?
+
+    private var selectedCharacters: [UInt32] {
+        guard let text = state.selectedLayer?.text, let range = session.caret, !range.isEmpty else { return [] }
+        return TextStudioLogic.ids(text, range: range)
+    }
 
     var body: some View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
-                Button { showFonts = true } label: {
+                Button {
+                    fontLayerID = state.selectedLayerID
+                    fontTargetIDs = selectedCharacters
+                    showFonts = true
+                } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "textformat").font(.system(size: 13, weight: .bold))
-                        Text(FontLibrary.displayName(state.selectedLayer?.text?.fontName ?? "")).lineLimit(1)
+                        if let text = state.selectedLayer?.text {
+                            Text(TextStudioLogic.fontName(text, ids: selectedCharacters).map(FontLibrary.displayName) ?? "Mixed Fonts")
+                                .lineLimit(1)
+                        }
                     }
                     .font(.system(size: 13, weight: .semibold))
                     .padding(.horizontal, 10).frame(minHeight: TS.tap)
@@ -246,7 +293,16 @@ struct TypeBar: View {
             if session.caret == nil { let n = draft.count; session.caret = n..<n }
         }
         .awiSheet(isPresented: $showFonts) {
-            FontPicker(current: state.selectedLayer?.text?.fontName ?? "", sample: draft) { name in state.editText("Font") { $0.fontName = name } }
+            if let text = state.selectedLayer?.text {
+                let font = TextStudioLogic.fontName(text, ids: fontTargetIDs) ?? text.fontName
+                let sample = fontTargetIDs.isEmpty ? draft : TextStudioLogic.letters(text, ids: fontTargetIDs)
+                FontPicker(current: font, sample: sample) { name in
+                    guard state.selectedLayerID == fontLayerID else { return }
+                    state.editText(fontTargetIDs.isEmpty ? "Font" : "Selection Font") {
+                        TextStudioLogic.applyFont(name, to: &$0, ids: fontTargetIDs)
+                    }
+                }
+            }
         }
     }
 }

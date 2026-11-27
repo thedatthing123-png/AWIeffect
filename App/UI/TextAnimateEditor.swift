@@ -8,6 +8,7 @@ struct TextAnimateTab: View {
     var focusAnimator: (UUID) -> Void
     @State private var openID: UUID?
     @State private var splitUnit: TextUnit = .words
+    @State private var showCounter = false
 
     var body: some View {
         if let text = state.selectedLayer?.text {
@@ -27,6 +28,11 @@ struct TextAnimateTab: View {
                     if openID == a.id { AnimatorEditor(state: state, animatorID: a.id) }
                 }
                 split(text)
+                DisclosureGroup("Counter / Timer", isExpanded: $showCounter) {
+                    CounterEditor(state: state, text: text)
+                }
+                .tint(Theme.accentGlow)
+                .padding(.vertical, 6)
             }
             .onChange(of: openID) { _, id in
                 if let id { focusAnimator(id) }
@@ -246,6 +252,9 @@ struct AnimatorEditor: View {
     let animatorID: UUID
     @State private var showEffects = false
     @State private var showAnimatorGraph = false
+    @State private var pane: Pane = .properties
+
+    private enum Pane: String, CaseIterable { case properties = "Properties", timing = "Timing", effects = "Effects" }
 
     private var text: TextData? { state.selectedLayer?.text }
     private var animator: TextAnimator? { text.flatMap { t in TextStudioLogic.index(t, animatorID).map { t.animators[$0] } } }
@@ -255,21 +264,12 @@ struct AnimatorEditor: View {
             VStack(alignment: .leading, spacing: 8) {
                 nameRow(a)
                 timingActions(a)
-                staggerControls(a)
-                TSSection(title: "Selectors")
-                ForEach(Array(a.allSelectors.enumerated()), id: \.offset) { k, s in
-                    SelectorEditor(state: state, animatorID: animatorID, index: k, count: a.allSelectors.count, selector: s, text: text)
+                TSSegmented(options: Pane.allCases.map { ($0, $0.rawValue) }, selection: pane, label: "Animator") { pane = $0 }
+                switch pane {
+                case .properties: propertiesSection(a)
+                case .timing: selectorSection(a, text: text)
+                case .effects: effectsSection(a)
                 }
-                Menu {
-                    Button("Range") { addSelector(.range) }
-                    Button("Wiggly") { addSelector(.wiggly) }
-                    Button("Wave") { addSelector(.wave) }
-                    Button("Random") { addSelector(.random) }
-                    Button("Beat") { addSelector(.beat) }
-                } label: { wideLabel("Add Selector", "plus") }
-                .accessibilityLabel("Add Selector")
-                propertiesSection(a)
-                effectsSection(a)
             }
             .padding(10)
             .background(RoundedRectangle(cornerRadius: 12).stroke(Theme.accent.opacity(0.4), lineWidth: 1))
@@ -283,6 +283,22 @@ struct AnimatorEditor: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder private func selectorSection(_ animator: TextAnimator, text: TextData) -> some View {
+        staggerControls(animator)
+        TSSection(title: "Selectors")
+        ForEach(Array(animator.allSelectors.enumerated()), id: \.offset) { index, selector in
+            SelectorEditor(state: state, animatorID: animatorID, index: index, count: animator.allSelectors.count, selector: selector, text: text)
+        }
+        Menu {
+            Button("Range") { addSelector(.range) }
+            Button("Wiggly") { addSelector(.wiggly) }
+            Button("Wave") { addSelector(.wave) }
+            Button("Random") { addSelector(.random) }
+            Button("Beat") { addSelector(.beat) }
+        } label: { wideLabel("Add Selector", "plus") }
+        .accessibilityLabel("Add Selector")
     }
 
     @ViewBuilder private func timingActions(_ animator: TextAnimator) -> some View {
@@ -332,8 +348,15 @@ struct AnimatorEditor: View {
                                   onChange: { delay in editStagger("Stagger Delay") { $0.delay = delay } },
                                   onEnd: { state.endEdit() })
                 }
-                TSToggleRow(title: "Reverse Order", isOn: timing.reversed) { reversed in
-                    editStagger("Stagger Order") { $0.reversed = reversed }
+                TSMenuRow(title: "Order", options: TextStagger.Order.allCases.map { ($0, $0.rawValue) },
+                          selection: timing.resolvedOrder) { order in
+                    editStagger("Stagger Order") { $0.order = order; $0.reversed = order == .reverse }
+                }
+                if timing.resolvedOrder == .shuffled {
+                    TSNumberRow(title: "Seed", value: Double(timing.seed ?? 1), range: 0...9999, step: 1,
+                                onBegin: { state.beginEdit("Stagger Seed") },
+                                onChange: { value in editStagger("Stagger Seed") { $0.seed = Int(value.rounded()) } },
+                                onEnd: { state.endEdit() })
                 }
             }
         }

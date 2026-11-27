@@ -141,9 +141,23 @@ Finish the edit, then open Video Enhance and choose an AWIeffect export or a vid
 - Judge restoration at the original dimensions against the source and a simple sharpen baseline. Check anime linework, manga screentones, small titles, and live-action texture for meaningful improvement and frame-to-frame stability. For upscale, also compare against a conventional resize at the same output dimensions.
 - Run enhancement as a standalone render with progress and cancellation. Start with a short preview range and measure sustained memory, heat, and processing time on the iPhone 16 Pro Max before selecting the model and execution path.
 
+### Text Studio overhaul
+
+Owner update November 27, 2026. Start this pass after AEP/XML import is validated. Use the same Text Studio for native, After Effects, and Alight Motion text. Follow it with the remaining studio work and build new premades after the authoring tools settle.
+
+Give the studio a compact, persistent tab bar using AWI colors and typography. Keep the live canvas and playhead visible. Pin the current selection and its common actions within reach, and show detailed controls in the tab that owns them. Verify the layout with the keyboard open and on narrower phones.
+
+- **Style** owns wording, fonts, colors, stroke and appearance. Use a clear Layer, Word, Letter, or Selection scope. Apply a font to the whole layer or mix families and weights within a line. Show mixed values when styles differ. Let editors clear an override and restore the layer style. Reuse the existing per-character font data and stable character IDs. Preserve unaffected styles through typing, undo, save, and copy/paste.
+- **Layout** owns alignment, wrapping, kerning, tracking, leading, baseline, and text on a path. Preview path direction, alignment, and travel on the canvas, with a keyframeable path offset. Evaluate paragraph boxes and fitting controls for multi-line titles and captions. [Motion text layout controls](https://support.apple.com/guide/motion/text-layout-controls-motn159c2279/mac)
+- **Animate** owns the animator stack, target selectors, timing and keyframes. Make character, word, line, and custom-range targets easy to see and adjust. Add or improve selector stacking, stagger, order, seeded variation, and easing wherever the current engine falls short. Expose the selected animator's tracks near the playhead. Evaluate variable-font axes on fonts that expose them, with independent keys for the supported axes. [After Effects text animators and selectors](https://helpx.adobe.com/after-effects/desktop/animating-text/text-animation/animating-text.html) · [After Effects variable font axes](https://helpx.adobe.com/after-effects/using/working-with-variable-font-axes.html)
+- **3D** owns extrusion, bevel, front and side materials, depth, and orientation. Keep object pose and per-character motion accessible, including editable X/Y rotation, Z offsets, and grouped pivots where supported. Test mixed-font 3D titles with the scene camera, lighting, and effects.
+- Reuse the same scoped typography controls for imported editable text. Preserve source font names and formatting where the importer can read them, and make unavailable fonts easy to replace. Editing wording, scoped fonts, colors, or playback speed must preserve imported animation timing and effect identity. Use the regular Effects stack for source effects so copying preserves their renderer and settings. Keep a distinct indication for imported animation that needs an unavailable renderer.
+
+Acceptance shot. Style a single letter and a whole word with different fonts inside an imported animated title. Retype adjacent text, edit the animation speed, paste the title and a source effect into another project, and verify the selected formatting and motion in preview and export after reopening. Repeat with native text, multiline text, and a script that uses complex shaping.
+
 ### Puppet overhaul
 
-Rework Puppet after the AEP/XML import pass. Keep the dedicated Puppet workspace for quick local deformation. Study After Effects' Position, Starch, Bend, Advanced, and Overlap pins in actual shots before choosing the mesh and constraints. [Adobe Puppet tools](https://helpx.adobe.com/after-effects/desktop/animate-in-after-effects/animate-with-puppet-tools/animating-puppet-tools.html)
+Rework Puppet after the Text Studio overhaul. Keep the dedicated Puppet workspace for quick local deformation. Study After Effects' Position, Starch, Bend, Advanced, and Overlap pins in actual shots before choosing the mesh and constraints. [Adobe Puppet tools](https://helpx.adobe.com/after-effects/desktop/animate-in-after-effects/animate-with-puppet-tools/animating-puppet-tools.html)
 
 - Use smaller visible pins and a precision placement cursor. Move it with the Rig Studio-style XY pad or type coordinates, then tap Add Pin. Keep direct placement on the artwork and make nearby pins independently selectable. Show scale and rotation handles only while editing a selected pin that supports them.
 - Separate rest placement from posing. Use stationary Position pins to hold points in place and Starch pins to stiffen a region. Provide dedicated Bend and Advanced controls for targeted rotation and scale. Build deformation from the layer silhouette or mask and test overlap handling where limbs cross.
@@ -156,7 +170,8 @@ Rework Puppet after the AEP/XML import pass. Keep the dedicated Puppet workspace
 3. Finish the full Effects category audit and verify an end-to-end edit with timeline snapping, scoped motion, effect stacking, and export. Work on Art Studio friction that interrupts that workflow.
 4. Build Relight Studio around imported, aligned passes and verify the moving reference shot in Lighting Studio.
 5. Build AEP and XML import fidelity and cross-project source effect reuse as a dedicated workstream. Extend the animation and render engines where source behavior requires it.
-6. Overhaul Puppet placement and localized deformation.
-7. Redesign the home screen and build the standalone Video Enhance studio together.
-8. Finish the curated premades. Judge them by what they let editors make and review them in motion.
-9. Finish the trained cutout model. Keep the current auto-cutout available and retain the model and training data during development.
+6. Overhaul Text Studio for both native and imported text, including easy access to mixed fonts and deeper animation controls.
+7. Overhaul Puppet placement and localized deformation.
+8. Redesign the home screen and build the standalone Video Enhance studio together.
+9. Finish the curated premades. Judge them by what they let editors make and review them in motion.
+10. Finish the trained cutout model. Keep the current auto-cutout available and retain the model and training data during development.

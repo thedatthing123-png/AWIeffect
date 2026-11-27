@@ -4,6 +4,11 @@ import SwiftUI
 struct Text3DTab: View {
     @ObservedObject var state: EditorState
     @State private var part: Part = .front
+    @State private var pane: Pane = .shape
+
+    private enum Pane: String, CaseIterable {
+        case shape = "Shape", pose = "Pose", material = "Material", lighting = "Lighting"
+    }
 
     enum Part: Hashable { case front, bevel, side }
 
@@ -23,8 +28,13 @@ struct Text3DTab: View {
                     state.endEdit()
                 }
                 if let o = l.text?.text3D {
-                    poseControls(l)
-                    realControls(o)
+                    TSSegmented(options: Pane.allCases.map { ($0, $0.rawValue) }, selection: pane, label: "3D Text") { pane = $0 }
+                    switch pane {
+                    case .shape: shapeControls(o)
+                    case .pose: poseControls(l)
+                    case .material: materialControls(o)
+                    case .lighting: lightingControls(o)
+                    }
                 } else { legacy(l) }
             }
         }
@@ -80,15 +90,7 @@ struct Text3DTab: View {
                            onEnd: { state.endEdit() })
     }
 
-    @ViewBuilder private func realControls(_ o: Text3DOptions) -> some View {
-        TSSection(title: "Looks")
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
-            ForEach(Array(Text3DMaterial.presets.enumerated()), id: \.offset) { _, p in
-                TSButton(title: p.name) { edit("3D Look \(p.name)") { $0.front = p.material; $0.bevel = p.material; $0.side = p.material } }
-            }
-        }
-        Group {
-        TSSection(title: "Shape")
+    @ViewBuilder private func shapeControls(_ o: Text3DOptions) -> some View {
         number("Extrusion", o.extrusion, 0...400, unit: "px", beyond: true) { o, w in w(&o.extrusion) }
         number("Bevel Size", o.bevelSize, 0...40, unit: "px", beyond: true) { o, w in w(&o.bevelSize) }
         TSNumberRow(title: "Bevel Segments", value: Double(o.bevelSegments), range: 1...12, step: 1, key: nil,
@@ -98,23 +100,26 @@ struct Text3DTab: View {
         TSSegmented(options: [(Text3DBevelProfile.flat, "Flat"), (.round, "Round"), (.angle, "Angle")], selection: o.bevelProfile, label: "Bevel Profile") { p in
             edit("Bevel Profile") { $0.bevelProfile = p }
         }
-        }
-        Group {
-        TSSection(title: "Material")
+    }
+
+    @ViewBuilder private func materialControls(_ o: Text3DOptions) -> some View {
         TSSegmented(options: [(Part.front, "Front"), (.bevel, "Bevel"), (.side, "Sides")], selection: part, label: "Material Part") { part = $0 }
         materialEditor(material(o, part))
         TSButton(title: "Use this material on all parts", icon: "square.stack.3d.up") {
             let m = material(o, part)
             edit("Same Material") { $0.front = m; $0.bevel = m; $0.side = m }
         }
+        TSSection(title: "Full Text Looks")
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3), spacing: 6) {
+            ForEach(Array(Text3DMaterial.presets.enumerated()), id: \.offset) { _, p in
+                TSButton(title: p.name) { edit("3D Look \(p.name)") { $0.front = p.material; $0.bevel = p.material; $0.side = p.material } }
+            }
         }
-        Group {
-        TSSection(title: "Environment")
+    }
+
+    @ViewBuilder private func lightingControls(_ o: Text3DOptions) -> some View {
         number("Reflections", o.environmentIntensity, 0...4) { o, w in w(&o.environmentIntensity) }
         number("Environment Turn", o.environmentRotation, -180...180, unit: "°", beyond: true) { o, w in w(&o.environmentRotation) }
-        Text("Scene lights and the camera light and frame the 3D letters. Effects, masks and depth of field still apply to the layer.")
-            .font(.caption).foregroundStyle(Theme.textDim)
-        }
     }
 
     private func material(_ o: Text3DOptions, _ p: Part) -> Text3DMaterial {
