@@ -301,6 +301,7 @@ final class ProjectStore {
         try save(p)
         let files = try fm.contentsOfDirectory(at: oldMedia, includingPropertiesForKeys: nil)
         for f in files { try fm.copyItem(at: f, to: mediaFolder(for: p.id).appendingPathComponent(f.lastPathComponent)) }
+        try? fm.copyItem(at: thumbURL(for: id), to: thumbURL(for: p.id))   // Home shows the copy's preview right away
         success = true
         return p
     }

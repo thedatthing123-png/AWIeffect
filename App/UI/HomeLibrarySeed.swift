@@ -9,7 +9,13 @@ enum HomeLibrarySeed {
         let args = ProcessInfo.processInfo.arguments
         guard args.contains("-uiTesting-homeLibrary") || args.contains("-uiTesting-homeEmpty") else { return }
         let store = ProjectStore.shared
-        for p in store.list() { store.delete(p.id) }
+        // Earlier seeded runs' leftovers go for good; anything else only moves to Recently Deleted.
+        let seeded = ["Old Draft", "Rooftop Flow Edit", "Opening Titles", "Titles Alt", "Velocity Intro", "Square Loop"]
+        for d in store.deletedProjects() where seeded.contains(where: d.summary.name.hasPrefix) { store.deletePermanently(d.id) }
+        for p in store.list() {
+            store.delete(p.id)
+            if seeded.contains(where: p.name.hasPrefix) { store.deletePermanently(p.id) }
+        }
         guard args.contains("-uiTesting-homeLibrary") else { return }
 
         var trashed = Project.new(name: "Old Draft", width: 1080, height: 1920, fps: 30, duration: 3)
@@ -40,7 +46,8 @@ enum HomeLibrarySeed {
         </scene>
         """
         if var am = try? AMImporter.load(data: Data(xml.utf8), fallbackName: "Velocity Intro").project {
-            if am.layers.isEmpty { am.layers = [shape(&am, .polygon, at: Vec2(540, 675), size: 700, color: RGBA(hex: 0xFF5CA8))] }
+            am.layers.append(shape(&am, .polygon, at: Vec2(540, 560), size: 620, color: RGBA(hex: 0xFF5CA8)))
+            am.layers.append(text(&am, "VELOCITY", at: Vec2(540, 1180), size: 150, color: RGBA(hex: 0xF2EEF8)))
             save(am, age: 86_400)
         }
 

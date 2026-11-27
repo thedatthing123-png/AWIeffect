@@ -36,6 +36,9 @@ struct HomeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+          if showDeleted {
+            RecentlyDeletedView(items: deleted, close: { showDeleted = false; reload() }, changed: reload)
+          } else {
             header
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
@@ -68,6 +71,7 @@ struct HomeView: View {
             }
             .scrollDismissesKeyboard(.immediately)
             if selecting { selectionBar } else { dock }
+          }
         }
         .onAppear(perform: reload)
         .confirmationDialog("Delete \(selection.count) projects?", isPresented: $pendingBulkDelete, titleVisibility: .visible) {
@@ -180,7 +184,6 @@ struct HomeView: View {
                 reload()
             }
         } message: { _ in Text("It moves to Recently Deleted for 30 days, where you can restore it.") }
-        .sheet(isPresented: $showDeleted, onDismiss: reload) { recentlyDeletedSheet }
     }
 
     private var header: some View {
@@ -299,7 +302,11 @@ struct HomeView: View {
                         }
                         .lineLimit(1)
                     }
-                    Text(p.modifiedAt.formatted(date: .abbreviated, time: .shortened)).lineLimit(1)
+                    ViewThatFits(in: .horizontal) {
+                        Text(p.modifiedAt.formatted(date: .abbreviated, time: .shortened))
+                        Text(p.modifiedAt.formatted(date: .abbreviated, time: .omitted))
+                    }
+                    .lineLimit(1)
                 }
                 .font(.system(size: 13)).foregroundStyle(Theme.textDim)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -416,37 +423,6 @@ struct HomeView: View {
     private func reload() {
         projects = ProjectStore.shared.list()
         deleted = ProjectStore.shared.deletedProjects()
-    }
-
-    /// Deleted projects (kept 30 days): restore or remove for good.
-    private var recentlyDeletedSheet: some View {
-        NavigationStack {
-            List {
-                if deleted.isEmpty { Text("Nothing here.").foregroundStyle(Theme.textDim) }
-                ForEach(deleted) { d in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(d.summary.name).font(.system(size: 15, weight: .semibold))
-                            let left = max(0, Int(((ProjectStore.deletedRetention - Date().timeIntervalSince(d.deletedAt)) / 86_400).rounded(.up)))
-                            Text("\(left) day\(left == 1 ? "" : "s") left").font(.caption).foregroundStyle(Theme.textDim)
-                        }
-                        Spacer()
-                        Button("Restore") {
-                            do { try ProjectStore.shared.restoreDeleted(d.id) }
-                            catch { importError = "Couldn't restore: " + error.localizedDescription }
-                            reload()
-                        }
-                        .buttonStyle(.borderless).frame(minHeight: 44)
-                    }
-                    .swipeActions {
-                        Button("Delete Now", role: .destructive) { ProjectStore.shared.deletePermanently(d.id); reload() }
-                    }
-                }
-            }
-            .navigationTitle("Recently Deleted").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { showDeleted = false } } }
-        }
-        .presentationDetents([.medium, .large])
     }
 
     private func runImport(compositionID: UInt32? = nil) {
@@ -726,10 +702,10 @@ struct ProjectThumbnail: View {
                 if Self.forceCrop || image.size.width / max(image.size.height, 1) >= 1.6 {
                     Image(uiImage: image).resizable().scaledToFill()
                 } else {
-                    ZStack {
-                        Image(uiImage: image).resizable().scaledToFill().blur(radius: 14).opacity(0.55)
-                        Image(uiImage: image).resizable().scaledToFit()
-                    }
+                    // The blurred copy is a background so it can't grow the frame the sharp copy fits into.
+                    Image(uiImage: image).resizable().scaledToFit()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background { Image(uiImage: image).resizable().scaledToFill().blur(radius: 14).opacity(0.55) }
                 }
             } else {
                 Image(systemName: "film").font(.system(size: 22)).foregroundStyle(Theme.textDim.opacity(0.6))

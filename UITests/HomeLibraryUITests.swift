@@ -69,6 +69,7 @@ final class HomeLibraryUITests: XCTestCase {
         XCTAssertTrue(first.label.contains("Rooftop"), "Name sort: \(first.label)")
         snap("03-search-awi-name")
         button("Clear search").tap()
+        search.typeText(XCUIKeyboardKey.return.rawValue)   // dismiss the keyboard before the next screenshots
         filter("All", expect: 4)
         button("Sort: Name").tap(); button("Last Edited").tap()
 
@@ -122,13 +123,14 @@ final class HomeLibraryUITests: XCTestCase {
         snap("07-selection")
         button("Done").tap()
 
-        // Recently Deleted holds the seeded draft and restores it.
+        // Recently Deleted holds the seeded draft; one tap restores it.
         app.swipeUp()
         button("Recently Deleted").tap()
-        XCTAssertTrue(app.staticTexts["Old Draft"].waitForExistence(timeout: 5))
+        XCTAssertTrue(button("Restore Old Draft").exists)
         snap("08-recently-deleted")
-        app.buttons["Restore"].firstMatch.tap()
-        app.buttons["Done"].firstMatch.tap()
+        button("Restore Old Draft").tap()
+        XCTAssertTrue(button("Restore Old Draft").waitForNonExistence(timeout: 5))
+        button("Back to Projects").tap()
         filter("AWI", expect: 3)
 
         // Video Enhance stays visibly unavailable.
@@ -141,6 +143,64 @@ final class HomeLibraryUITests: XCTestCase {
         row("Rooftop Flow Edit").tap()
         XCTAssertTrue(app.buttons["Add"].firstMatch.waitForExistence(timeout: 20), "Row tap did not open the editor")
         snap("09-opened-project")
+    }
+
+    private var permanentConfirm: XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label ENDSWITH 'Permanently'")).firstMatch
+    }
+
+    private func trash(_ name: String) {
+        button("Actions for \(name)").tap()
+        button("Delete").tap()
+        button("Delete \(name)").tap()
+        XCTAssertTrue(app.buttons["Actions for \(name)"].waitForNonExistence(timeout: 5), "\(name) still listed")
+    }
+
+    func testRecentlyDeletedPageSelectRestoreAndDelete() {
+        launch()
+        trash("Square Loop")
+        trash("Opening Titles")
+        app.swipeUp()
+        button("Recently Deleted").tap()
+        let deletedRows = app.buttons.matching(identifier: "deleted-row")
+        XCTAssertGreaterThanOrEqual(deletedRows.count, 3)
+        XCTAssertTrue(button("Restore All").exists)
+        XCTAssertTrue(button("Delete All").exists)
+        XCTAssertFalse(app.buttons["Create New Project"].exists, "Recently Deleted is its own page")
+        snap("16-deleted-page")
+
+        // Tapping a row starts selection with it; delete just that one, with confirmation.
+        let before = deletedRows.count
+        app.buttons.matching(NSPredicate(format: "identifier == 'deleted-row' AND label CONTAINS 'Square Loop'")).firstMatch.tap()
+        XCTAssertTrue(button("Delete (1)").exists)
+        XCTAssertTrue(button("Restore (1)").exists)
+        XCTAssertTrue(button("Select All").exists)
+        snap("17-deleted-selecting")
+        button("Delete (1)").tap()
+        XCTAssertTrue(permanentConfirm.waitForExistence(timeout: 5))
+        permanentConfirm.tap()
+        XCTAssertTrue(app.buttons["Restore Square Loop"].waitForNonExistence(timeout: 5))
+        XCTAssertEqual(deletedRows.count, before - 1)
+
+        // Select several and restore them.
+        button("Select").tap()
+        button("Select All").tap()
+        XCTAssertTrue(button("Deselect All").exists)
+        button("Restore (\(before - 1))").tap()
+        XCTAssertTrue(app.staticTexts["Nothing here"].waitForExistence(timeout: 5))
+        snap("18-deleted-empty")
+        button("Back to Projects").tap()
+        XCTAssertTrue(app.buttons["Actions for Opening Titles"].waitForExistence(timeout: 5), "Restored project returns to the library")
+
+        // Delete All empties the page after confirming.
+        trash("Rooftop Flow Edit")
+        app.swipeUp()
+        button("Recently Deleted").tap()
+        button("Delete All").tap()
+        XCTAssertTrue(permanentConfirm.waitForExistence(timeout: 5))
+        snap("19-delete-all-confirm")
+        permanentConfirm.tap()
+        XCTAssertTrue(app.staticTexts["Nothing here"].waitForExistence(timeout: 5))
     }
 
     func testCenterPlusAndImportEntryPoints() {
