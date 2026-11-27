@@ -135,6 +135,7 @@ struct TransformToolBody: View {
     let layer: Layer
     let tool: TransformPanel.Tool
     @State private var rawPadPosition: Vec2?
+    @State private var padDepth: Double?
     @Binding var positionAxisZ: Bool
     @AppStorage("awi.simplifyTolerance") private var simplifyTolerance = 6.0
 
@@ -148,11 +149,20 @@ struct TransformToolBody: View {
                 let p = layer.transform.position.value(at: t)
                 valueRow([("X", p.x, { v in edit("Move") { $0.transform.position.set(Vec2(v, p.y), at: t) } }),
                           ("Y", p.y, { v in edit("Move") { $0.transform.position.set(Vec2(p.x, v), at: t) } }),
-                          ("Z", layer.transform.positionZ.value(at: t), { v in edit("Depth") { $0.transform.positionZ.set(v, at: t) } })])
+                          ("Z", padDepth ?? layer.transform.positionZ.value(at: t), { v in edit("Depth") { $0.transform.positionZ.set(v, at: t) } })])
                 if positionAxisZ {
                     SwipePad(hint: "Swipe to adjust Z position", gain: compW * 2, vertical: true, steady: true) { delta in
-                        state.mutateLayer { l in l.transform.positionZ.set(l.transform.positionZ.value(at: t) + delta.height, at: t) }
-                    } begin: { state.beginPanelGesture("Position Z") } end: { state.endPanelGesture() }
+                        let next = (padDepth ?? layer.transform.positionZ.value(at: t)) + delta.height
+                        padDepth = next
+                        state.mutateLayer { $0.transform.positionZ.set(next, at: t) }
+                    } begin: {
+                        padDepth = layer.transform.positionZ.value(at: t)
+                        state.beginPanelGesture("Position Z")
+                    } end: {
+                        state.endPanelGesture()
+                        padDepth = nil
+                    }
+                    .accessibilityIdentifier("position-z-swipe-pad")
                 } else {
                 SwipePad(hint: "Swipe here to move the layer", gain: compW) { d in
                     let raw = (rawPadPosition ?? layer.transform.position.value(at: t)) + Vec2(d.width, d.height)
@@ -342,7 +352,7 @@ struct TransformToolBody: View {
                             active: tool == .position ? (positionAxisZ == (items[i].0 == "Z")) : nil,
                             onActivate: tool == .position ? { positionAxisZ = items[i].0 == "Z" } : nil,
                             onDragBegin: { state.beginPanelGesture("Edit \(items[i].0)") },
-                            onDragEnd: { state.endPanelGesture() },
+                            onDragEnd: { state.endPanelGesture() }, followsExternalEdits: true,
                             onCommit: items[i].2)
                     .accessibilityIdentifier(tool == .position ? "position-field-\(items[i].0)" : "transform-field-\(items[i].0)")
             }

@@ -35,6 +35,15 @@ final class ContainerInteractionUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Swipe to adjust Z position"].waitForExistence(timeout: 3))
         XCTAssertFalse(app.keyboards.firstMatch.exists)
         save("position-z-mode")
+        let zNumber = app.staticTexts["number-Z"].firstMatch
+        let originalDepth = zNumber.label
+        let pad = app.descendants(matching: .any)["position-z-swipe-pad"].firstMatch
+        let from = pad.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.72))
+        let to = pad.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.30))
+        from.press(forDuration: 0.05, thenDragTo: to)
+        XCTAssertNotEqual(zNumber.label, originalDepth)
+        XCTAssertFalse(app.keyboards.firstMatch.exists)
+        save("position-z-after-swipe")
         let x = app.descendants(matching: .any)["position-field-X"].firstMatch
         x.coordinate(withNormalizedOffset: CGVector(dx: 0.08, dy: 0.5)).tap()
         XCTAssertTrue(app.staticTexts["Swipe here to move the layer"].waitForExistence(timeout: 3))

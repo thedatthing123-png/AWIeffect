@@ -102,6 +102,28 @@ final class SmoothSceneTests: XCTestCase {
     }
 
     @MainActor
+    func testShakeExportsWithSmoothSceneAndExplicitMotionBlur() async throws {
+        guard Renderer.shared != nil else { throw XCTSkip("Metal unavailable") }
+        var project = fixture()
+        project.width = 640
+        project.height = 360
+        project.motionBlurEnabled = true
+        project.layers[2].motionBlur = true
+        var shake = EffectRegistry.shake.makeInstance()
+        shake.params["amplitude"] = .number(Animated(150))
+        project.layers[2].effects = [shake]
+        var settings = ExportSettings(format: .mp4)
+        settings.end = 0.6
+        var progress = 0.0
+        let result = try await Exporter().export(project: project, settings: settings, mediaURL: { URL(fileURLWithPath: $0) }) {
+            progress = $0
+        }
+        defer { try? FileManager.default.removeItem(at: result) }
+        XCTAssertEqual(progress, 1)
+        XCTAssertGreaterThan(try Data(contentsOf: result).count, 100)
+    }
+
+    @MainActor
     func testRendersASinglePoseAndExportsComparison() async throws {
         guard let renderer = Renderer.shared else { throw XCTSkip("Metal unavailable") }
         let project = fixture()

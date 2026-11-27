@@ -52,9 +52,12 @@ import Combine
         _ = s.propertyLaneCache.lanes(l); XCTAssertEqual(s.propertyLaneCache.builds, 1)
         for width: CGFloat in [4,12,27,60,120,300] {
             for start: CGFloat in [-8,0,60,220] where start+width > 0 {
-                let x = TimelineView.expanderOffset(clipX: start,clipWidth: width,trackWidth: 258,editable: false)+22
+                let x = TimelineView.expanderOffset(clipX: start,clipWidth: width,trackWidth: 258)+22
                 XCTAssertGreaterThanOrEqual(x,max(0,start))
                 XCTAssertLessThanOrEqual(x,min(258,start+width))
+                if min(258, start + width) - max(0, start) >= 18 {
+                    XCTAssertEqual(x, max(0, start) + 9, accuracy: 0.001)
+                }
             }
         }
     }

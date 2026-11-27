@@ -890,11 +890,15 @@ final class Renderer {
             let extrude = layer.is3D && layer.content != .model ? max(0, layer.extrude.value(at: time)) : 0
             // Motion blur: placements across the shutter interval (empty when the layer doesn't move).
             var blurMatrices: [simd_double3x3] = []
-            let autoSmooth = project.smoothMotion && layer.effects.contains { $0.isEnabled && (EffectRegistry.definition($0.typeID)?.isTransformEffect ?? false) }
-            if (project.blurs(layer, at: time) || autoSmooth) && extrude <= 0.5 {
+            let explicitBlur = project.blurs(layer, at: time)
+            let autoSmooth = project.smoothMotion && layer.effects.contains {
+                $0.isEnabled && ($0.sceneSmoothing == 0 || project.smoothMotionStore == true)
+                    && (EffectRegistry.definition($0.typeID)?.isTransformEffect ?? false)
+            }
+            if (explicitBlur || autoSmooth) && extrude <= 0.5 {
                 let shutter = project.shutterAngle / 360 / max(project.fps, 1)
                 // Automatic smoothing stays centered; real motion blur follows the shutter phase.
-                let open = project.blurs(layer, at: time) ? project.shutterOpen.start : -shutter / 2
+                let open = explicitBlur ? project.shutterOpen.start : -shutter / 2
                 func corner(_ m: simd_double3x3, _ x: Double, _ y: Double) -> SIMD2<Double> {
                     let p = m * SIMD3(x, y, 1); return SIMD2(p.x, p.y) / max(p.z, 1e-6)
                 }
@@ -909,7 +913,9 @@ final class Renderer {
                 }.max() ?? 0
                 if travel.isFinite, travel > 0.5 {
                     let cap = Renderer.blurSampleCap.map { min($0, project.blurSamples) } ?? project.blurSamples
-                    let n = max(2, min(cap, Int(min(Double(max(2, cap)), (travel / 1.5).rounded(.up))) + 1))
+                    // Legacy automatic shake blur is a preview aid. Keep its work bounded on large exports.
+                    let budget = explicitBlur ? cap : min(cap, max(4, 17_000_000 / max(1, comp.width * comp.height)))
+                    let n = max(2, min(budget, Int(min(Double(max(2, budget)), (travel / 1.5).rounded(.up))) + 1))
                     blurMatrices = (0..<n).map { k in
                         samplePlacement(layer, at: time + open + Double(k) / Double(n - 1) * shutter)
                     }
@@ -1298,8 +1304,7 @@ final class Renderer {
     /// Averages `count` renders: each sample is drawn alone, then added at weight 1/count.
     func shutterAverage(_ count: Int, comp: MTLTexture, pool: TexturePool, cb: MTLCommandBuffer,
                         draw: (Int, MTLTexture) -> Void) -> MTLTexture {
-        var acc = pool.acquire(width: comp.width, height: comp.height)
-        var next = pool.acquire(width: comp.width, height: comp.height)
+        let acc = pool.acquire(width: comp.width, height: comp.height)
         fx.run("fxClear", cb, textures: [acc], grid: acc)
         let sample = pool.acquire(width: comp.width, height: comp.height)
         var p = EffectParams()
@@ -1307,8 +1312,7 @@ final class Renderer {
         for k in 0..<count {
             fx.run("fxClear", cb, textures: [sample], grid: sample)
             draw(k, sample)
-            fx.run("fxAccumulate", cb, textures: [acc, sample, next], params: p, grid: next)
-            swap(&acc, &next)
+            fx.run("fxAccumulate", cb, textures: [acc, sample], params: p, grid: acc)
         }
         return acc
     }

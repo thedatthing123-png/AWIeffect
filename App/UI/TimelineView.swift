@@ -482,7 +482,7 @@ struct TimelineView: View, Equatable {
                         Text(layer.name).font(.system(size: 11, weight: .semibold)).lineLimit(1)
                     }
                     .foregroundStyle(.white)
-                    .padding(.leading, (editable ? 24 : 8) + (canTwirl(layer) && w >= 120 ? 44 : 0))
+                    .padding(.leading, (editable ? 24 : 8) + (canTwirl(layer) ? 20 : 0))
                     .offset(x: max(0, -x0))
                     .allowsHitTesting(false)
                 }
@@ -525,12 +525,12 @@ struct TimelineView: View, Equatable {
                 } label: {
                     Image(systemName: open ? "chevron.down" : "chevron.right").font(.system(size: 12, weight: .bold))
                         .foregroundStyle(.white)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 44, height: 22)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain).zIndex(3)
-                // The icon stays inside the visible clip, even when its duration is very short.
-                .offset(x: Self.expanderOffset(clipX: x0, clipWidth: w, trackWidth: trackWidth, editable: editable), y: 2)
+                // Keep the upper leading control out of the trim handles' lower hit area.
+                .offset(x: Self.expanderOffset(clipX: x0, clipWidth: w, trackWidth: trackWidth), y: 2)
                 .opacity(x0 + w > 0 && x0 < trackWidth ? 1 : 0)
                 .allowsHitTesting(x0 + w > 0 && x0 < trackWidth)
                 .accessibilityLabel(open ? "Close property lanes" : "Open property lanes")
@@ -630,11 +630,10 @@ struct TimelineView: View, Equatable {
             .onEnded { _ in dragOriginal = nil; keyDragTime = nil; state.endEdit() }
     }
 
-    static func expanderOffset(clipX: CGFloat, clipWidth: CGFloat, trackWidth: CGFloat, editable: Bool) -> CGFloat {
-        let start = max(0, clipX), end = min(trackWidth, clipX + clipWidth)
-        let visible = max(0, end - start)
-        if visible < 88 { return start + visible / 2 - 22 }
-        return start + (editable ? 22 : 2)
+    static func expanderOffset(clipX: CGFloat, clipWidth: CGFloat, trackWidth: CGFloat) -> CGFloat {
+        let start = max(0, clipX)
+        let visibleWidth = max(0, min(trackWidth, clipX + clipWidth) - start)
+        return start + min(9, visibleWidth / 2) - 22
     }
 
     /// GestureState resets even when a scroll view or system gesture cancels the drag without onEnded.

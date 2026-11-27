@@ -286,33 +286,39 @@ final class Exporter {
                 // Never sit at a percentage forever: report what stalled instead.
                 if CFAbsoluteTimeGetCurrent() - waitStart > 30 { writer.cancelWriting(); throw ExportError.writer("video encoder stopped responding at frame \(i)") }
             }
-            guard let pool = adaptor.pixelBufferPool else { throw ExportError.writer("no pixel buffer pool") }
-            var pbOut: CVPixelBuffer?
-            CVPixelBufferPoolCreatePixelBuffer(nil, pool, &pbOut)
-            guard let pb = pbOut else { throw ExportError.writer("pixel buffer") }
-            if alpha {
-                CVBufferSetAttachment(pb, kCVImageBufferAlphaChannelModeKey, kCVImageBufferAlphaChannelMode_StraightAlpha, .shouldPropagate)
+            try autoreleasepool {
+                guard let pool = adaptor.pixelBufferPool else { throw ExportError.writer("no pixel buffer pool") }
+                var pbOut: CVPixelBuffer?
+                CVPixelBufferPoolCreatePixelBuffer(nil, pool, &pbOut)
+                guard let pb = pbOut else { throw ExportError.writer("pixel buffer") }
+                if alpha {
+                    CVBufferSetAttachment(pb, kCVImageBufferAlphaChannelModeKey, kCVImageBufferAlphaChannelMode_StraightAlpha, .shouldPropagate)
+                }
+                var cvTex: CVMetalTexture?
+                CVMetalTextureCacheCreateTextureFromImage(nil, cache, pb, nil, .bgra8Unorm, w, h, 0, &cvTex)
+                guard let cvTex, let outTex = CVMetalTextureGetTexture(cvTex), let cb = r.queue.makeCommandBuffer() else {
+                    throw ExportError.writer("metal texture")
+                }
+                let t = start + Double(i) / fps
+                texPool.recycle()
+                r.encode(project: project, time: t, renderScale: renderScale, into: comp, commandBuffer: cb, pool: texPool, mediaURL: mediaURL)
+                r.encodeToBGRA(comp: comp, out: outTex, commandBuffer: cb, dither: true, preserveAlpha: alpha)
+                let gpuDone = DispatchSemaphore(value: 0)
+                cb.addCompletedHandler { _ in gpuDone.signal() }
+                cb.commit()
+                if gpuDone.wait(timeout: .now() + 20) == .timedOut {
+                    writer.cancelWriting()
+                    throw ExportError.writer("frame \(i) took too long to render (try a lower resolution)")
+                }
+                if let e = cb.error { throw ExportError.writer("GPU frame \(i): \(e.localizedDescription)") }
+                let pts = CMTime(value: CMTimeValue((Double(i) / fps * Double(timescale)).rounded()), timescale: timescale)
+                if !adaptor.append(pb, withPresentationTime: pts) {
+                    throw ExportError.writer(writer.error?.localizedDescription ?? "append failed")
+                }
             }
-            var cvTex: CVMetalTexture?
-            CVMetalTextureCacheCreateTextureFromImage(nil, cache, pb, nil, .bgra8Unorm, w, h, 0, &cvTex)
-            guard let cvTex, let outTex = CVMetalTextureGetTexture(cvTex), let cb = r.queue.makeCommandBuffer() else {
-                throw ExportError.writer("metal texture")
-            }
-            let t = start + Double(i) / fps
-            texPool.recycle()
-            r.encode(project: project, time: t, renderScale: renderScale, into: comp, commandBuffer: cb, pool: texPool, mediaURL: mediaURL)
-            r.encodeToBGRA(comp: comp, out: outTex, commandBuffer: cb, dither: true, preserveAlpha: alpha)
-            let gpuDone = DispatchSemaphore(value: 0)
-            cb.addCompletedHandler { _ in gpuDone.signal() }
-            cb.commit()
-            if gpuDone.wait(timeout: .now() + 20) == .timedOut {
-                writer.cancelWriting()
-                throw ExportError.writer("frame \(i) took too long to render (try a lower resolution)")
-            }
-            if let e = cb.error { throw ExportError.writer("GPU frame \(i): \(e.localizedDescription)") }
-            let pts = CMTime(value: CMTimeValue((Double(i) / fps * Double(timescale)).rounded()), timescale: timescale)
-            if !adaptor.append(pb, withPresentationTime: pts) {
-                throw ExportError.writer(writer.error?.localizedDescription ?? "append failed")
+            if i % 16 == 15 {
+                CVMetalTextureCacheFlush(cache, 0)
+                await Task.yield()
             }
             progress(0.9 * Double(i + 1) / Double(frames))
         }

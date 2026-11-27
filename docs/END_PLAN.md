@@ -139,6 +139,14 @@ Give Video Enhance a direct entry on the AWIeffect home screen alongside Project
 - Judge restoration at the original dimensions against the source and a simple sharpen baseline. Check anime linework, manga screentones, small titles, and live-action texture for meaningful improvement and frame-to-frame stability. For upscale, also compare against a conventional resize at the same output dimensions.
 - Run enhancement as a standalone render with progress and cancellation. Start with a short preview range and measure sustained memory, heat, and processing time on the iPhone 16 Pro Max before selecting the model and execution path.
 
+### Puppet overhaul
+
+Rework Puppet after the AEP/XML import pass. Keep the dedicated Puppet workspace for quick local deformation. Study After Effects' Position, Starch, Bend, Advanced, and Overlap pins in actual shots before choosing the mesh and constraints. [Adobe Puppet tools](https://helpx.adobe.com/after-effects/desktop/animate-in-after-effects/animate-with-puppet-tools/animating-puppet-tools.html)
+
+- Use smaller visible pins and a precision placement cursor. Move it with the Rig Studio-style XY pad or type coordinates, then tap Add Pin. Keep direct placement on the artwork and make nearby pins independently selectable. Show scale and rotation handles only while editing a selected pin that supports them.
+- Separate rest placement from posing. Use stationary Position pins to hold points in place and Starch pins to stiffen a region. Provide dedicated Bend and Advanced controls for targeted rotation and scale. Build deformation from the layer silhouette or mask and test overlap handling where limbs cross.
+- Verify a wrist or hair tip can move while the shoulder, torso, and nearby hair roots stay fixed. Check closely spaced pins, transformed layers, zoom and pan, fast motion, undo, save and reopen, and preview versus export. Preserve how earlier Puppet projects render.
+
 ### Updated delivery order
 
 1. Organize Effects, CC Studio, LUTs, and Puppet. Apply the compact layout standard and fix timeline alignment during the editor UI overhaul.
@@ -146,5 +154,6 @@ Give Video Enhance a direct entry on the AWIeffect home screen alongside Project
 3. Finish the full Effects category audit and verify an end-to-end edit with timeline snapping, scoped motion, effect stacking, and export. Work on Art Studio friction that interrupts that workflow.
 4. Build Relight Studio around imported, aligned passes and verify the moving reference shot in Lighting Studio.
 5. Build AEP and XML import fidelity and cross-project source effect reuse as a dedicated workstream. Extend the animation and render engines where source behavior requires it.
-6. Finish the curated premades and the cutout model after the editing systems they depend on are stable. Judge premades by what they let editors make. Keep the current auto-cutout available and retain the model and training data for the final cutout phase.
-7. Build the standalone Video Enhance home studio after the editing and import workstreams.
+6. Overhaul Puppet placement and localized deformation.
+7. Finish the curated premades and the cutout model after the editing systems they depend on are stable. Judge premades by what they let editors make. Keep the current auto-cutout available and retain the model and training data for the final cutout phase.
+8. Build the standalone Video Enhance home studio after the editing and import workstreams.

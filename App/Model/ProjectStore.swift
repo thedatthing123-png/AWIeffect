@@ -10,6 +10,7 @@ struct ProjectSummary: Identifiable, Equatable {
     var duration: Double
     var modifiedAt: Date
     var thumbnail: UIImage?
+    var importedFormat: ImportedProjectFormat? = nil
 }
 
 /// Lightweight card data written next to project.json on every save, so the project list never decodes whole
@@ -22,8 +23,9 @@ struct ProjectMeta: Codable, Equatable {
     var fps: Double
     var duration: Double
     var modifiedAt: Date
+    var importedFormat: ImportedProjectFormat?
     init(_ p: Project) {
-        id = p.id; name = p.name; width = p.width; height = p.height; fps = p.fps; duration = p.duration; modifiedAt = p.modifiedAt
+        id = p.id; name = p.name; width = p.width; height = p.height; fps = p.fps; duration = p.duration; modifiedAt = p.modifiedAt; importedFormat = p.importedFormat
     }
 }
 
@@ -221,7 +223,7 @@ final class ProjectStore {
 
     private func summary(_ m: ProjectMeta, thumb: URL) -> ProjectSummary {
         ProjectSummary(id: m.id, name: m.name, width: m.width, height: m.height, fps: m.fps,
-                       duration: m.duration, modifiedAt: m.modifiedAt, thumbnail: UIImage(contentsOfFile: thumb.path))
+                       duration: m.duration, modifiedAt: m.modifiedAt, thumbnail: UIImage(contentsOfFile: thumb.path), importedFormat: m.importedFormat)
     }
 
     /// Moves a project to Recently Deleted (kept `deletedRetention`, restorable from the home screen).

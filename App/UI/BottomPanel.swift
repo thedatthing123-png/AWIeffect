@@ -276,6 +276,7 @@ struct NumberField: View {
     /// Called when a drag starts / ends (one undo step and live edits for the whole drag).
     var onDragBegin: (() -> Void)? = nil
     var onDragEnd: (() -> Void)? = nil
+    var followsExternalEdits = false
     let onCommit: (Double) -> Void
     @State private var editing = false
     @State private var text = ""
@@ -324,6 +325,9 @@ struct NumberField: View {
         .overlay(RoundedRectangle(cornerRadius: 9).stroke(active == true ? Theme.accent.opacity(0.7) : .clear, lineWidth: 1).allowsHitTesting(false))
         .contentShape(Rectangle())
         .simultaneousGesture(TapGesture().onEnded { onActivate?() })
+        .onChange(of: value) { _, _ in
+            if followsExternalEdits && editing { text = formattedValue }
+        }
     }
     private var formattedValue: String { String(format: "%.*f", max(0, min(6, precision)), dragValue ?? value) }
 
