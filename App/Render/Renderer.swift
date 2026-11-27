@@ -790,7 +790,8 @@ final class Renderer {
                                                               pool: pool, placement: placement, mediaURL: mediaURL) {
                     for e in layer.effects where e.isEnabled {
                         guard let d = EffectRegistry.definition(e.typeID), !d.isTransformEffect, case .pixels(let run) = d.stage else { continue }
-                        picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: renderScale, pool: pool))
+                        picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: renderScale,
+                                                    pool: pool, backgroundFollowsArtwork: true))
                     }
                     // Masks cut the model like any layer: they live in the layer's own plane.
                     let modelMasks = layer.masks.filter { $0.mode != .none && !$0.effectsOnly }
@@ -808,7 +809,8 @@ final class Renderer {
                     let dofModel = Self.dofSigma(layer, camera: camera, time: time) * renderScale
                     if dofModel > 0.5, let blur = EffectRegistry.definition("ae.gaussianBlur"), case .pixels(let run) = blur.stage {
                         let e = EffectInstance(typeID: "ae.gaussianBlur", params: ["blurriness": .number(Animated(dofModel))])
-                        picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: 1, pool: pool))
+                        picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: 1,
+                                                    pool: pool, backgroundFollowsArtwork: true))
                     }
                     let whole = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(comp.width) / 2, Double(comp.height) / 2, 1)))
                     drawQuad(cb: cb, target: comp, matrix: whole, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 1, opacity: opacity,
@@ -847,12 +849,14 @@ final class Renderer {
                                                          time: time, placement: placement, size: shotSize, pool: pool) {
                     for e in layer.effects where e.isEnabled {
                         guard let d = EffectRegistry.definition(e.typeID), !d.isTransformEffect, case .pixels(let run) = d.stage else { continue }
-                        picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: renderScale, pool: pool))
+                        picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: renderScale,
+                                                    pool: pool, backgroundFollowsArtwork: true))
                     }
                     let dof3D = Self.dofSigma(layer, camera: camera, time: time) * renderScale
                     if dof3D > 0.5, let blur = EffectRegistry.definition("ae.gaussianBlur"), case .pixels(let run) = blur.stage {
                         let e = EffectInstance(typeID: "ae.gaussianBlur", params: ["blurriness": .number(Animated(dof3D))])
-                        picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: 1, pool: pool))
+                        picture = run(EffectContext(gpu: fx, cb: cb, input: picture, effect: e, time: time, unit: 1,
+                                                    pool: pool, backgroundFollowsArtwork: true))
                     }
                     let whole = simd_double3x3(columns: (SIMD3(1, 0, 0), SIMD3(0, 1, 0), SIMD3(Double(comp.width) / 2, Double(comp.height) / 2, 1)))
                     drawQuad(cb: cb, target: comp, matrix: whole, halfSize: Vec2(Double(comp.width) / 2, Double(comp.height) / 2), aa: 1, opacity: opacity,
@@ -1016,12 +1020,20 @@ final class Renderer {
                 if BoneMeshGPU.encode(mesh,matrices: matrices,input: current,output: warped,unit: density,commandBuffer: cb,device: device) { current = warped }
             }
             let beforeEffects = current
+            let backgroundFollowsArtwork: Bool
+            switch layer.content {
+            case .image, .video, .shape, .text, .precomp:
+                backgroundFollowsArtwork = true
+            default:
+                backgroundFollowsArtwork = layer.isGroup || !masks.isEmpty || layer.cutout != nil
+            }
             for e in pixelFX {
                 guard let def = EffectRegistry.definition(e.typeID), case .pixels(let run) = def.stage else { continue }
                 var ctx = EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: time, unit: density, pool: pool)
                 ctx.layerPixels = SIMD2(hs.x * 2 * density, hs.y * 2 * density)
                 ctx.layerPixelOrigin = SIMD2((ext.x - hs.x) * density, (ext.y - hs.y) * density)
                 ctx.compositionPixels = SIMD2(Double(project.width) * density, Double(project.height) * density)
+                ctx.backgroundFollowsArtwork = backgroundFollowsArtwork
                 if EffectRegistry.layerRefIDs.contains(e.typeID), let rid = e.text?["layer"].flatMap(UUID.init(uuidString:)),
                    let refLayer = project.layers.first(where: { $0.id == rid }), rid != layer.id {
                     ctx.reference = layerInBuffer(refLayer, project: project, time: time, renderScale: renderScale, comp: comp,

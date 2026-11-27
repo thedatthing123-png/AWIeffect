@@ -27,6 +27,8 @@ struct EffectContext {
     /// Origin of the unpadded layer in the current texture, before rounding the texture dimensions.
     var layerPixelOrigin: SIMD2<Double>? = nil
     var compositionPixels: SIMD2<Double>? = nil
+    /// Full-frame backgrounds use the canvas. Artwork uses its existing alpha in Auto coverage.
+    var backgroundFollowsArtwork = false
 
     var width: Int { input.width }
     var height: Int { input.height }

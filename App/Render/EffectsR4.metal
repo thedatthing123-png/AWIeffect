@@ -98,7 +98,11 @@ kernel void fxMixR4(texture2d<half, access::read> before [[texture(0)]],
                     constant EffectParams& p [[buffer(0)]],
                     uint2 gid [[thread_position_in_grid]]) {
     if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
-    dst.write(half4(mix(float4(before.read(gid)), float4(after.read(gid)), clamp(p.a.x, 0.0, 1.0))), gid);
+    float4 source = float4(before.read(gid));
+    float4 result = float4(after.read(gid));
+    // Cap premultiplied coverage once, including fractional antialiasing at the silhouette.
+    if (p.i.x != 0 && result.a > source.a) result *= source.a / result.a;
+    dst.write(half4(mix(source, result, clamp(p.a.x, 0.0, 1.0))), gid);
 }
 
 // Gradient fill / overlay inside the layer's alpha.

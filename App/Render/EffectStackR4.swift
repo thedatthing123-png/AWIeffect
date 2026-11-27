@@ -95,6 +95,10 @@ enum EffectStackR4 {
     // MARK: Wrapping
 
     static func wrap(_ d: EffectDefinition) -> EffectDefinition {
+        // These generators already keep the original alpha, and need no additional coverage control.
+        let preservesAlpha = ["awiR4.gradient", "awi.am35.fractalRidges", "awi.animatedFractalRidges"].contains(d.id)
+        let background = d.category == .generate && !preservesAlpha && EffectSection.of(d) == .backgrounds
+        let coverage = ParamDef.choice("backgroundCoverage", "Coverage", ["Auto", "Layer Shape", "Full Frame"], 0)
         let stage: EffectStage
         switch d.stage {
         case .pixels(let run):
@@ -103,14 +107,19 @@ enum EffectStackR4 {
                 var c = ctx
                 if let r = resolved(ctx.effect, at: ctx.time) {
                     c = EffectContext(gpu: ctx.gpu, cb: ctx.cb, input: ctx.input, effect: r, time: ctx.time, unit: ctx.unit, pool: ctx.pool,
-                                      reference: ctx.reference, layerPixels: ctx.layerPixels, compositionPixels: ctx.compositionPixels)
+                                      reference: ctx.reference, layerPixels: ctx.layerPixels, layerPixelOrigin: ctx.layerPixelOrigin,
+                                      compositionPixels: ctx.compositionPixels, backgroundFollowsArtwork: ctx.backgroundFollowsArtwork)
                 }
                 let out = run(c)
                 let m = mix(ctx.effect, ctx.time)
-                guard m < 99.999, out !== ctx.input, out.width == ctx.input.width, out.height == ctx.input.height else { return out }
+                let mode = c.effect.choice(coverage.id)
+                let legacyClip = d.id == "ae.gradientRamp" && c.effect.bool("keepShape")
+                let clip = background && (mode == 1 || (mode == 0 && (legacyClip || (ctx.backgroundFollowsArtwork && ctx.effect.imported == nil))))
+                guard (clip || m < 99.999), out !== ctx.input, out.width == ctx.input.width, out.height == ctx.input.height else { return out }
                 let dst = ctx.temp()
                 var p = EffectParams()
                 p.a = SIMD4(Float(m / 100), 0, 0, 0)
+                p.i.x = clip ? 1 : 0
                 ctx.gpu.run("fxMixR4", ctx.cb, textures: [ctx.input, out, dst], params: p, grid: dst)
                 return dst
             }
@@ -124,7 +133,8 @@ enum EffectStackR4 {
             }
         }
         return EffectDefinition(id: d.id, name: d.name, category: d.category, aeMatchNames: d.aeMatchNames, summary: d.summary,
-                                params: d.params, margin: d.margin, expandedMargin: d.expandedMargin, stage: stage)
+                                params: background ? d.params + [coverage] : d.params,
+                                margin: d.margin, expandedMargin: d.expandedMargin, stage: stage)
     }
 }
 
