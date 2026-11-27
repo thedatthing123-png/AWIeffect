@@ -98,6 +98,10 @@ struct BottomPanel: View {
                         RigPanel(state: state)
                     }
                 case .boneWeight: BoneWeightPanel(state: state)
+                case .relight:
+                    if let layer = state.selectedLayer, layer.supportsRelight {
+                        RelightStudio(state: state, layer: layer).id(layer.id)
+                    }
                 case .layerHome: LayerHomePanel(state: state)
                 case .graph: FlowGraphPanel(state: state)
                 case .none: EmptyView()

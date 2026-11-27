@@ -25,6 +25,7 @@ extension EditorState {
         guard let content else { return }
         let old = project.layers[i].size.staticValue
         mutate("Replace Media") { p in
+            p.layers[i].relight = nil
             p.layers[i].content = content
             // Keep the on-screen size the placeholder had (like AE's Replace Footage).
             let k = min(old.x / max(size.x, 1), old.y / max(size.y, 1))

@@ -116,19 +116,33 @@ Keep imported AE text editable where the project exposes the underlying text and
 
 For a transform-based shake, compare the imported position, rotation, scale, easing, and shutter against a source render. For a plugin-based shake, verify matching output with a compatible implementation before calling it equivalent. Keep AWI's native effects useful independently of import coverage. Use publicly released fixtures, including [HOUDINI](https://github.com/ShubhamAdelkar/free-adobe-presets/blob/main/HOUDINI.aep) for real transform data and the existing effect fixtures for automated checks. Test a whole imported shot and a single copied effect through save, reopen, and export.
 
-### Future studio — relight footage and artwork
+### Relight Studio for footage and artwork
 
 Use the supplied Beeble-to-Blender elevator clip as the reference. The creator isolates the moving hand with alpha, generates aligned normal, depth, and base-color passes, then uses depth to displace the surface in Blender and lights it inside the elevator scene.
 
 Build a layer-level workspace that prepares an image, drawing, or clip for relighting and sends the resulting surface into the existing 3D Scene and Lighting Studio. It should support importing matching passes and, once quality is verified, generating them in AWI. Start with alpha, normals, depth, and base color. Keep the source timing, trim, and transparency aligned with the passes. Provide a live preview and direct controls for depth amount and normal strength. Add roughness and specular controls where reflective footage benefits from them.
 
+Relight Studio opens on an image or video layer. Import still maps or synchronized video passes. The scene lights shade the imported normals and depth, including optional relief shadows within the cutout. Camera projection still uses the layer plane. Depth changes lighting and relief shadows while preserving the imported silhouette. Generating passes and moving the camera around reconstructed geometry are separate work.
+
 Prove the renderer with supplied passes before committing to automatic generation. Use the elevator hand as the acceptance shot. Animate a blue light over the moving fingers, preserve the linework and clean edges, and check depth, occlusion, and frame-to-frame stability in a moving export. Treat depth as relief from the visible view. A wide camera orbit needs additional geometry or views.
 
-This is a later addition. Keep the current UI build on its existing scope and schedule the new workspace after the editor overhaul. [Beeble's relighting workflow](https://beeble.space/features/3d-relight)
+Build Relight after the editing-readiness pass and before the AEP/XML import overhaul. [Beeble's relighting workflow](https://beeble.space/features/3d-relight)
+
+### Future home studio — Video Enhance
+
+Give Video Enhance a direct entry on the AWIeffect home screen alongside Projects. Finish the edit, then open Video Enhance and choose an AWIeffect export or a video from Photos or Files. Work on the rendered video in a standalone preview and save a new video.
+
+- **Keep Resolution** is a full restoration mode. Improve visible compression damage, noise, ringing, aliasing, and fine detail at the exact input dimensions. **Upscale** uses the same restoration workflow with an explicit output resolution. Preserve aspect ratio, FPS, timing, and audio sync in both modes.
+- Offer Auto as a starting point and expose manual restoration controls directly, including detail recovery, compression cleanup, denoise, sharpening, halo removal, and original texture. Let the editor adjust each independently. Compare the same moving range before and after at the same zoom. [Topaz Video Enhancement controls](https://docs.topazlabs.com/topaz-video/filters/enhancement)
+- Judge restoration at the original dimensions against the source and a simple sharpen baseline. Check anime linework, manga screentones, small titles, and live-action texture for meaningful improvement and frame-to-frame stability. For upscale, also compare against a conventional resize at the same output dimensions.
+- Run enhancement as a standalone render with progress and cancellation. Start with a short preview range and measure sustained memory, heat, and processing time on the iPhone 16 Pro Max before selecting the model and execution path.
 
 ### Updated delivery order
 
 1. Organize Effects, CC Studio, LUTs, and Puppet. Apply the compact layout standard and fix timeline alignment during the editor UI overhaul.
 2. Polish the motion of existing effects, validate Smooth Scene on both scopes, and review full edits in motion. Continue the remaining studio work, including Art Studio, with the same UI and performance standards.
-3. Validate AEP and XML import fidelity and cross-project effect reuse as a dedicated workstream.
-4. Finish the curated premades and the cutout model after the editing systems they depend on are stable. Judge premades by what they let editors make. Keep the current auto-cutout available and retain the model and training data for the final cutout phase.
+3. Finish the full Effects category audit and verify an end-to-end edit with timeline snapping, scoped motion, effect stacking, and export. Work on Art Studio friction that interrupts that workflow.
+4. Build Relight Studio around imported, aligned passes and verify the moving reference shot in Lighting Studio.
+5. Build AEP and XML import fidelity and cross-project source effect reuse as a dedicated workstream. Extend the animation and render engines where source behavior requires it.
+6. Finish the curated premades and the cutout model after the editing systems they depend on are stable. Judge premades by what they let editors make. Keep the current auto-cutout available and retain the model and training data for the final cutout phase.
+7. Build the standalone Video Enhance home studio after the editing and import workstreams.

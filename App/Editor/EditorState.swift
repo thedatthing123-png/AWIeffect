@@ -52,6 +52,7 @@ enum ToolPanel: Equatable {
     case ccStudio
     case rig
     case boneWeight
+    case relight
     /// Tile grid for the selected layer (opened by tapping its clip).
     case layerHome
     /// Flow-style easing / graph editor for the selected layer's keyframes.

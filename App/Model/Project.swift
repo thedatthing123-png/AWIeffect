@@ -356,6 +356,7 @@ struct Layer: Codable, Equatable, Identifiable {
     var castsShadows = false
     var acceptsShadows = true
     // Nil preserves the original lighting behavior of saved projects.
+    var relight: RelightSurface? = nil
     var receivesLightOverride: Bool?
     var receivesLight: Bool { receivesLightOverride ?? (is3D || content == .model || text?.text3D != nil) }
     /// Named, colored layer markers (times relative to the layer's in point, so they travel with the clip).
@@ -432,6 +433,7 @@ struct Layer: Codable, Equatable, Identifiable {
         isCollider = try c.decodeIfPresent(Bool.self, forKey: .isCollider) ?? false
         castsShadows = try c.decodeIfPresent(Bool.self, forKey: .castsShadows) ?? false
         acceptsShadows = try c.decodeIfPresent(Bool.self, forKey: .acceptsShadows) ?? true
+        relight = try c.decodeIfPresent(RelightSurface.self, forKey: .relight)
         receivesLightOverride = try c.decodeIfPresent(Bool.self, forKey: .receivesLightOverride)
         layerMarkers = try c.decodeIfPresent([TimelineMarker].self, forKey: .layerMarkers)
         audioFX = try c.decodeIfPresent(LayerAudioFX.self, forKey: .audioFX)

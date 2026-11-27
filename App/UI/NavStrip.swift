@@ -70,6 +70,7 @@ struct NavStrip: View {
         if visual { out.append(Item(id: "Effects", icon: "sparkles", panel: .effects)) }
         if visual, c != .text { out.append(Item(id: "Puppet", icon: "hand.point.up.braille", panel: .puppet)) }
         if visual || c == .adjustment { out.append(Item(id: "CC Studio", icon: "camera.filters", panel: .ccStudio)) }
+        if l.supportsRelight { out.append(Item(id: "Relight", icon: "lightbulb.led.wide", panel: .relight)) }
         if visual { out.append(Item(id: "Rig", icon: "figure.arms.open", panel: .rig)) }
         if visual, !l.isGroup, !l.isAudioOnly { out.append(Item(id: "Bone / Weight", icon: "point.3.connected.trianglepath.dotted", panel: .boneWeight)) }
         if visual { out.append(Item(id: "Presets", icon: "wand.and.rays", panel: .presets)) }

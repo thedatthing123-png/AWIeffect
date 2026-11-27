@@ -93,6 +93,7 @@ struct LayerHomePanel: View {
         if l.drawingID != nil || (l.mediaFile != nil && !l.isAudioOnly) {
             look.append(Tile(id: l.drawingID != nil ? "Drawing" : "Redraw", icon: "paintbrush.pointed.fill") { drawLauncher.open(state.selectedLayerID) })
         }
+        if l.supportsRelight { fx.append(Tile(id: "Relight Studio", icon: "lightbulb.led.wide", panel: .relight)) }
         if visual { fx.append(Tile(id: "Effects", icon: "sparkles", panel: .effects)) }
         if visual || c == .adjustment { fx.append(Tile(id: "CC Studio", icon: "camera.filters", panel: .ccStudio)) }
         if visual { fx.append(Tile(id: "Presets", icon: "wand.and.rays", panel: .presets)) }

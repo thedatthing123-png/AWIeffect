@@ -310,6 +310,7 @@ final class Renderer {
     struct LightPass {
         var w0: SIMD4<Float>; var w1: SIMD4<Float>; var w2: SIMD4<Float>; var normal: SIMD4<Float>
         var camPos: SIMD4<Float>; var tex: SIMD4<Float>; var count: SIMD4<UInt32>
+        var surface: SIMD4<Float>; var surfaceFlags: SIMD4<UInt32>
     }
 
     /// Active lights in world space for this frame.
@@ -389,10 +390,10 @@ final class Renderer {
     }
 
     private func encodeLights(cb: MTLCommandBuffer, src: MTLTexture, dst: MTLTexture, layer: Layer, time: Double, camera: CameraState,
-                              lights: [LightGPU], density: Double, ext: Vec2) {
+                              lights: [LightGPU], density: Double, ext: Vec2, halfSize: Vec2, mediaURL: (String) -> URL) {
         var surface = layer
         if !surface.is3D {
-            surface.transform.positionZ = Animated(0)
+            if layer.activeRelight == nil { surface.transform.positionZ = Animated(0) }
             surface.transform.rotationX = Animated(0)
             surface.transform.rotationY = Animated(0)
         }
@@ -403,8 +404,21 @@ final class Renderer {
         n /= len
         func f4(_ v: SIMD4<Double>) -> SIMD4<Float> { SIMD4(Float(v.x), Float(v.y), Float(v.z), Float(v.w)) }
         var pass = LightPass(w0: f4(W.columns.0), w1: f4(W.columns.1), w2: f4(W.columns.3), normal: f4(n), camPos: f4(camPos),
-                             tex: SIMD4(Float(1 / density), 0, Float(-ext.x + 0.5 / density), Float(-ext.y + 0.5 / density)),
-                             count: SIMD4(UInt32(min(lights.count, 8)), 0, 0, 0))
+                             tex: SIMD4(Float(1 / density), Float(max(0.5, halfSize.x)), Float(-ext.x + 0.5 / density), Float(-ext.y + 0.5 / density)),
+                             count: SIMD4(UInt32(min(lights.count, 8)), 0, 0, 0),
+                             surface: .zero, surfaceFlags: .zero)
+        var normal: MTLTexture?
+        var depth: MTLTexture?
+        if let material = layer.activeRelight {
+            let t = layer.sourceTime(at: time)
+            normal = relightTexture(material.maps[.normal], sourceTime: t, layerID: layer.id, pass: .normal, mediaURL: mediaURL)
+            depth = relightTexture(material.maps[.depth], sourceTime: t, layerID: layer.id, pass: .depth, mediaURL: mediaURL)
+            pass.surface = SIMD4(Float(min(500, max(0, material.depth))), Float(min(2, max(0, material.normalStrength / 100))),
+                                 Float(min(1, max(0.04, material.roughness / 100))), Float(min(1, max(0, material.specular / 100))))
+            pass.surfaceFlags = SIMD4(normal == nil ? 0 : 1, depth == nil ? 0 : 1,
+                                      (material.invertDepth ? 1 : 0) | (material.flipNormalY ? 2 : 0) | (material.reliefShadows ? 4 : 0), 1)
+            pass.count.w = Float(max(0.5, halfSize.y)).bitPattern
+        }
         var ls = Array(lights.prefix(8))
         // Shadow casters (not the layer itself).
         let casters = shadowCasters.filter { $0.id != layer.id }.prefix(4)
@@ -417,6 +431,8 @@ final class Renderer {
         enc.setTexture(src, index: 0)
         enc.setTexture(dst, index: 1)
         for k in 0..<4 { enc.setTexture(k < casters.count ? casters[casters.startIndex + k].tex : whiteTexture, index: 2 + k) }
+        enc.setTexture(normal ?? whiteTexture, index: 6)
+        enc.setTexture(depth ?? whiteTexture, index: 7)
         enc.setBytes(&pass, length: MemoryLayout<LightPass>.stride, index: 0)
         enc.setBytes(&ls, length: MemoryLayout<LightGPU>.stride * max(ls.count, 1), index: 1)
         enc.setBytes(&cs, length: MemoryLayout<ShadowCasterGPU>.stride * cs.count, index: 2)
@@ -899,7 +915,8 @@ final class Renderer {
                     }
                 }
             }
-            let lit = layer.receivesLight && !lights.isEmpty && layer.content != .model && layer.text?.text3D == nil
+            let useRelight = layer.activeRelight != nil
+            let lit = (useRelight || layer.receivesLight) && !lights.isEmpty && layer.content != .model && layer.text?.text3D == nil
             let needsLocal = layer.boneMesh != nil || !pixelFX.isEmpty || !masks.isEmpty || layer.cutout != nil || dof > 0.5 || extrude > 0.5 || !blurMatrices.isEmpty || lit
             if !needsLocal, let path = Self.shapePath(layer, time: time) {
                 drawShapePath(cb: cb, target: comp, matrix: M, layer: layer, path: path, time: time,
@@ -978,9 +995,16 @@ final class Renderer {
                             matrix: toLocal.inverse, halfSize: hs, mediaURL: mediaURL)
             }
             var current = local
+            // Shade the source before stylization and warps so the surface maps stay aligned.
+            if useRelight && lit {
+                let shaded = pool.acquire(width: local.width, height: local.height)
+                encodeLights(cb: cb, src: local, dst: shaded, layer: layer, time: time, camera: camera, lights: lights,
+                             density: density, ext: ext, halfSize: hs, mediaURL: mediaURL)
+                current = shaded
+            }
             if let mesh = layer.boneMesh,let matrices = mesh.frameMatrices {
                 let warped = pool.acquire(width: local.width,height: local.height)
-                if BoneMeshGPU.encode(mesh,matrices: matrices,input: local,output: warped,unit: density,commandBuffer: cb,device: device) { current = warped }
+                if BoneMeshGPU.encode(mesh,matrices: matrices,input: current,output: warped,unit: density,commandBuffer: cb,device: device) { current = warped }
             }
             let beforeEffects = current
             for e in pixelFX {
@@ -1016,10 +1040,10 @@ final class Renderer {
                 current = mixed
             }
             // 3D lights shade the layer per pixel (AE: 3D layers accept lights once the comp has any).
-            if lit {
+            if lit && !useRelight {
                 let litTex = pool.acquire(width: current.width, height: current.height)
                 encodeLights(cb: cb, src: current, dst: litTex, layer: layer, time: time, camera: camera, lights: lights,
-                             density: density, ext: ext)
+                             density: density, ext: ext, halfSize: hs, mediaURL: mediaURL)
                 current = litTex
             }
             // Depth of field (3D layers through a camera with DOF on).
@@ -1154,7 +1178,9 @@ final class Renderer {
         switch layer.content {
         case .shape: return .shape
         case .solid: return .solid
-        case .image(let file, _, _): return imageTexture(url: mediaURL(file)).map { .image($0) }
+        case .image(let file, _, _):
+            guard let original = imageTexture(url: mediaURL(file)) else { return nil }
+            return .image(prepareRelightSource(original, layer: layer, sourceTime: sourceTime, density: density, cb: cb, mediaURL: mediaURL))
         case .video(let file, _, _, _):
             let url = mediaURL(file)
             var blendedFrame: MTLTexture?
@@ -1186,10 +1212,10 @@ final class Renderer {
                     var q = EffectParams()
                     q.a = SIMD4(Float(amt / 100), Float(layer.timeFX?.pixelBlurLimit ?? 0.15), Float(layer.timeFX?.pixelBlurSamples ?? 12), 1)
                     fx.run("flowBlur", cb, textures: [frame, out, flow], params: q, grid: out)
-                    return .image(out)
+                    return .image(prepareRelightSource(out, layer: layer, sourceTime: sourceTime, density: density, cb: cb, mediaURL: mediaURL))
                 }
             }
-            return .image(frame)
+            return .image(prepareRelightSource(frame, layer: layer, sourceTime: sourceTime, density: density, cb: cb, mediaURL: mediaURL))
         case .model:
             guard let o = layer.model3D else { return nil }
             let size = layer.size.value(at: time)

@@ -94,6 +94,27 @@ final class EditorPolishUITests: XCTestCase {
         try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("lighting-shadow-spread.png"))
     }
 
+    func testRelightStudioFitsPassesAndSurfaceControls() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTesting", "-uiTesting-relight"]
+        app.launch()
+        let depth = app.buttons["Replace Depth"].firstMatch
+        XCTAssertTrue(depth.waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["Import Alpha"].firstMatch.isHittable)
+        XCTAssertTrue(app.buttons["Replace Normals"].firstMatch.isHittable)
+        XCTAssertGreaterThanOrEqual(depth.frame.height, 44)
+        let output = URL(fileURLWithPath: "/tmp/awi-ui", isDirectory: true)
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("relight-passes.png"))
+        app.segmentedControls.buttons["Surface"].firstMatch.tap()
+        let enabled = app.switches["Relight Surface"].firstMatch
+        XCTAssertTrue(enabled.isHittable)
+        XCTAssertEqual(enabled.value as? String, "1")
+        enabled.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+        XCTAssertEqual(enabled.value as? String, "0")
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: output.appendingPathComponent("relight-surface.png"))
+    }
+
     func testSmoothSceneIsDirectlyOnAdjustmentAndCamera() throws {
         let output = URL(fileURLWithPath: "/tmp/awi-ui", isDirectory: true)
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)

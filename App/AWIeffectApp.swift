@@ -96,6 +96,17 @@ struct RootView: View {
             p.layers = [light, artwork]
             _openProject = State(initialValue: p)
         }
+        if ProcessInfo.processInfo.arguments.contains("-uiTesting-relight") {
+            var project = Project.new(name: "Relight UI", width: 320, height: 240, fps: 30, duration: 2)
+            var artwork = project.makeLayer(name: "Artwork", content: .image(fileName: "relight-test.png", pixelWidth: 720, pixelHeight: 720),
+                                            size: Vec2(210, 210))
+            var material = RelightSurface()
+            material.maps[.depth] = RelightMedia(file: "relight-test.png", name: "depth.png", isVideo: false)
+            material.maps[.normal] = RelightMedia(file: "relight-test.png", name: "normals.png", isVideo: false)
+            artwork.relight = material
+            project.layers = [artwork]
+            _openProject = State(initialValue: project)
+        }
         if ProcessInfo.processInfo.arguments.contains("-uiTesting-smoothScene") {
             var project = Project.new(name: "Smooth Scene", width: 160, height: 120, fps: 30, duration: 2)
             var camera = project.makeLayer(name: "Camera", content: .camera, size: Vec2(160, 120))

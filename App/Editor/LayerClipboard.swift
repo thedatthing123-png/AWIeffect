@@ -23,6 +23,7 @@ enum LayerClipboardFiles {
         var names = Set<String>()
         for layer in layers {
             if let file = layer.mediaFile { names.insert(file) }
+            if let relight = layer.relight { names.formUnion(relight.maps.values.map(\.file)) }
             if let file = layer.model3D?.fileName { names.insert(file) }
             if let file = layer.model3D?.imageFile { names.insert(file) }
             for effect in layer.effects { if let file = effect.text?["file"], !file.isEmpty { names.insert(file) } }
@@ -82,6 +83,15 @@ enum LayerClipboardFiles {
                 case .audio(let f, let d): l.content = .audio(fileName: mapping[f]!, duration: d)
                 case .precomp(let id): if let new = compIDs[id] { l.content = .precomp(id: new) }
                 default: break
+                }
+                if var surface = l.relight {
+                    for (pass, var media) in surface.maps {
+                        if let file = mapping[media.file] {
+                            media.file = file
+                            surface.maps[pass] = media
+                        }
+                    }
+                    l.relight = surface
                 }
                 if let f = l.model3D?.fileName { l.model3D?.fileName = mapping[f] }
                 if let f = l.model3D?.imageFile { l.model3D?.imageFile = mapping[f] }
