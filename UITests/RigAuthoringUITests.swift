@@ -287,7 +287,9 @@ final class TextWorkspaceUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["text-layout-on-path"].firstMatch.exists)
         try capture("text-studio-path")
         app.buttons["Text Studio Tab 3D"].tap()
-        XCTAssertTrue(app.switches["Real 3D text"].exists)
+        let extrusion = app.descendants(matching: .any)["text-studio-enable-extrusion"].firstMatch
+        XCTAssertTrue(extrusion.waitForExistence(timeout: 5))
+        try capture("text-studio-3d")
     }
 
     private func capture(_ name: String) throws {

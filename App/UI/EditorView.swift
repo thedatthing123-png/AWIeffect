@@ -134,7 +134,7 @@ struct EditorView: View {
             } else if textStudio.expanded, state.panel == .text, state.selectedLayer?.text != nil {
                 TransportBar(state: state, showHistory: $showHistory, viewZoom: $viewZoom, zoomBase: $zoomBase, viewPan: $viewPan)
                 TimelineView(state: state, compact: true).equatable()
-                    .frame(height: 72)
+                    .frame(height: 88)
                 TextPanel(state: state)
                     .frame(height: UIScreen.main.bounds.height * 0.43)
                     .background(Theme.background)

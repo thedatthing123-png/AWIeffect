@@ -27,6 +27,7 @@ struct Text3DTab: View {
                     }
                     state.endEdit()
                 }
+                .accessibilityIdentifier("text-studio-enable-extrusion")
                 if let o = l.text?.text3D {
                     TSSegmented(options: Pane.allCases.map { ($0, $0.rawValue) }, selection: pane, label: "3D Text") { pane = $0 }
                     switch pane {
