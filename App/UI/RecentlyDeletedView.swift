@@ -73,53 +73,57 @@ struct RecentlyDeletedView: View {
     private func row(_ d: DeletedProject) -> some View {
         let p = d.summary
         let left = max(0, Int(((ProjectStore.deletedRetention - Date().timeIntervalSince(d.deletedAt)) / 86_400).rounded(.up)))
-        return Button {
-            // A row tap starts selection with that row, so picking several never needs a separate first step.
-            selecting = true
-            if selection.contains(p.id) { selection.remove(p.id) } else { selection.insert(p.id) }
-        } label: {
-            HStack(spacing: 12) {
-                if selecting {
-                    Image(systemName: selection.contains(p.id) ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 22)).foregroundStyle(selection.contains(p.id) ? Theme.accent : Theme.textDim)
-                }
-                ProjectThumbnail(image: p.thumbnail)
-                    .frame(width: 120, height: 68)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.stroke))
-                    .opacity(0.8)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(p.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.text).lineLimit(2)
-                    HStack(spacing: 6) {
-                        SourceBadge(source: ProjectSource(p.importedFormat))
-                        Text("\(left) day\(left == 1 ? "" : "s") left")
-                            .foregroundStyle(left <= 3 ? Theme.warning : Theme.textDim).lineLimit(1)
+        return HStack(spacing: 4) {
+            // Restore / Delete are siblings of the row button so each stays its own one-tap (and VoiceOver) target.
+            Button {
+                // A row tap starts selection with that row, so picking several never needs a separate first step.
+                selecting = true
+                if selection.contains(p.id) { selection.remove(p.id) } else { selection.insert(p.id) }
+            } label: {
+                HStack(spacing: 12) {
+                    if selecting {
+                        Image(systemName: selection.contains(p.id) ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 22)).foregroundStyle(selection.contains(p.id) ? Theme.accent : Theme.textDim)
                     }
-                }
-                .font(.system(size: 13))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                if !selecting {
-                    Button { restore([p.id]) } label: {
-                        Image(systemName: "arrow.uturn.backward").font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(Theme.accentGlow).frame(width: 40, height: 44).contentShape(Rectangle())
+                    ProjectThumbnail(image: p.thumbnail)
+                        .frame(width: 120, height: 68)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.stroke))
+                        .opacity(0.8)
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(p.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.text).lineLimit(2)
+                        HStack(spacing: 6) {
+                            SourceBadge(source: ProjectSource(p.importedFormat))
+                            Text("\(left) day\(left == 1 ? "" : "s") left")
+                                .foregroundStyle(left <= 3 ? Theme.warning : Theme.textDim).lineLimit(1)
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Restore \(p.name)")
-                    Button { pendingDelete = [p.id] } label: {
-                        Image(systemName: "trash").font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(Theme.danger).frame(width: 40, height: 44).contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Delete \(p.name) permanently")
+                    .font(.system(size: 13))
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .padding(.vertical, 10)
+                .contentShape(Rectangle())
             }
-            .padding(.vertical, 10)
-            .contentShape(Rectangle())
-            .overlay(alignment: .bottom) { Rectangle().fill(Theme.stroke).frame(height: 1) }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("deleted-row")
+            .accessibilityAddTraits(selection.contains(p.id) ? .isSelected : [])
+            if !selecting {
+                Button { restore([p.id]) } label: {
+                    Image(systemName: "arrow.uturn.backward").font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Theme.accentGlow).frame(width: 40, height: 44).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Restore \(p.name)")
+                Button { pendingDelete = [p.id] } label: {
+                    Image(systemName: "trash").font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Theme.danger).frame(width: 40, height: 44).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Delete \(p.name) permanently")
+            }
         }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("deleted-row")
+        .overlay(alignment: .bottom) { Rectangle().fill(Theme.stroke).frame(height: 1) }
     }
 
     /// Restore All / Delete All, or the same two actions for the selection.
@@ -139,6 +143,7 @@ struct RecentlyDeletedView: View {
                     .foregroundStyle(.white)
             }
             .buttonStyle(.plain)
+            .disabled(ids.isEmpty)
             Button { pendingDelete = ids } label: {
                 Label(selecting ? "Delete (\(ids.count))" : "Delete All", systemImage: "trash")
                     .frame(maxWidth: .infinity, minHeight: 44)
@@ -146,8 +151,8 @@ struct RecentlyDeletedView: View {
                     .foregroundStyle(Theme.danger.opacity(ids.isEmpty ? 0.4 : 1))
             }
             .buttonStyle(.plain)
+            .disabled(ids.isEmpty)
         }
-        .disabled(selecting && selection.isEmpty)
         .font(.system(size: 14, weight: .semibold))
         .lineLimit(1).minimumScaleFactor(0.85)
         .padding(.horizontal, 16).padding(.vertical, 8)

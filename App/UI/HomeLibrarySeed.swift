@@ -46,8 +46,9 @@ enum HomeLibrarySeed {
         </scene>
         """
         if var am = try? AMImporter.load(data: Data(xml.utf8), fallbackName: "Velocity Intro").project {
-            am.layers.append(shape(&am, .polygon, at: Vec2(540, 560), size: 620, color: RGBA(hex: 0xFF5CA8)))
-            am.layers.append(text(&am, "VELOCITY", at: Vec2(540, 1180), size: 150, color: RGBA(hex: 0xF2EEF8)))
+            // Index 0 draws on top of the imported layer.
+            am.layers.insert(shape(&am, .polygon, at: Vec2(540, 560), size: 620, color: RGBA(hex: 0xFF5CA8)), at: 0)
+            am.layers.insert(text(&am, "VELOCITY", at: Vec2(540, 1180), size: 150, color: RGBA(hex: 0xF2EEF8)), at: 0)
             save(am, age: 86_400)
         }
 
