@@ -156,6 +156,51 @@ kernel void fxPuppet(texture2d<half, access::sample> src [[texture(0)]],
     dst.write(src.sample(sm18, size * 0.5 + f * unit), gid);
 }
 
+// Compact pin influences leave the rest of the layer untouched. Evaluate the pin map
+// backwards so the output stays sampled from the artwork, including its original alpha.
+kernel void fxPuppetLocal(texture2d<half, access::sample> src [[texture(0)]],
+                          texture2d<half, access::write> dst [[texture(1)]],
+                          constant EffectParams& p [[buffer(0)]],
+                          constant float4* pins [[buffer(1)]],
+                          uint2 gid [[thread_position_in_grid]]) {
+    if (gid.x >= dst.get_width() || gid.y >= dst.get_height()) return;
+    float unit = max(p.a.y, 1e-4);
+    float2 v = (float2(gid) + 0.5 - p.a.zw) / unit;
+    float2 displacement = 0.0;
+    float total = 0.0;
+    float hold = 0.0;
+    for (uint i = 0; i < min(p.i.y, 32u); ++i) {
+        float4 pin = pins[2 * i];
+        float4 info = pins[2 * i + 1];
+        uint kind = uint(info.y);
+        float2 offset = v - pin.zw;
+        float2 segment = pin.xy - pin.zw;
+        float along = clamp(dot(offset, segment) / max(dot(segment, segment), 1e-6), 0.0, 1.0);
+        float dist = length(offset - segment * along);
+        float radius = info.x * (kind >= 2 ? max(1.0, info.w) : 1.0);
+        if (dist >= radius) continue;
+        float weight = pow(1.0 - smoothstep(0.0, radius, dist), max(p.a.x, 0.5));
+        if (kind == 1) {
+            // Starch suppresses nearby deformation while a Position pin can anchor a specific point.
+            total += weight * 8.0;
+            continue;
+        }
+        if ((kind == 0 || kind == 3) && all(abs(segment) < 1e-4)
+            && (kind != 3 || (abs(info.z) < 1e-5 && abs(info.w - 1.0) < 1e-5))) {
+            hold = max(hold, 1.0 - smoothstep(0.0, radius * 0.55, dist));
+        }
+        float2 delta = kind == 2 ? float2(0.0) : segment;
+        if (kind >= 2 && length(offset) < radius) {
+            float c = cos(info.z), s = sin(info.z);
+            float2 unturned = float2(c * offset.x + s * offset.y, -s * offset.x + c * offset.y) / info.w;
+            delta += (unturned - offset) * (1.0 - smoothstep(radius * 0.5, radius, length(offset)));
+        }
+        displacement += weight * delta;
+        total += weight;
+    }
+    dst.write(src.sample(sm18, p.a.zw + (v + displacement * ((1.0 - hold) / max(1.0, total))) * unit), gid);
+}
+
 // CC Studio Grade. a = (exposure EV, contrast, highlights, shadows), b = (temp, tint, vibrance, saturation),
 // c = (hsl hue 0-1, hsl range 0-1, hsl shift 0-1, split 0-1), d = (hsl sat, hsl light, lut strength, -), i.x = lut on.
 // wheels[0..2] = lift / gamma / gain rgb (-1..1). curve: 256x1 (r,g,b). lut: 3D.

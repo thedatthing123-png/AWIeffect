@@ -56,6 +56,26 @@ final class PriorityEditingTests: XCTestCase {
         XCTAssertEqual(state.puppetPins[0].current, Vec2(20,10))
     }
 
+    @MainActor func testPuppetPlacementIsOneUndoAndKeepsPinControlsWhenRemovingAnEarlierPin() throws {
+        let state = editor(scene())
+        state.selectedLayerID = state.project.layers[0].id
+        let point = try XCTUnwrap(state.compPoint(fromLocal: .zero))
+        state.addPuppetPin(atComp: point)
+        XCTAssertEqual(state.puppetPins.count, 1)
+        XCTAssertTrue(state.puppetUsesLocalDeformation)
+        state.undo()
+        XCTAssertNil(state.puppetEffect)
+        state.addPuppetPin(atComp: point)
+        state.addPuppetPin(atComp: point + Vec2(20, 10), kind: .advanced)
+        state.beginEdit("Rotate Pin")
+        state.setPuppetNumber("pinA1", 25)
+        state.endEdit()
+        state.removePuppetPin(0)
+        XCTAssertEqual(state.puppetKind(0), .advanced)
+        XCTAssertEqual(state.puppetEffect?.params["pinA0"]?.number(at: state.currentTime), 25)
+        XCTAssertNil(state.puppetEffect?.params["pinA1"])
+    }
+
     @MainActor func testMoveToPlayheadPreservesLengthAndMovesAnimation() {
         var project = scene(); project.layers[0].inPoint = 1; project.layers[0].outPoint = 3
         project.layers[0].transform.position.insertKeyframe(Keyframe(time: 2, value: Vec2(60,64), interpolation: .linear))

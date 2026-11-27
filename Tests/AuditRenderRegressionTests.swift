@@ -157,6 +157,39 @@ final class AuditRenderRegressionTests: XCTestCase {
         }
     }
 
+    func testLocalPuppetMovesOnePartAndPreservesDistantArtworkAndLegacyWarp() throws {
+        let r = try renderer()
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 128, height: 96), format: format).image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(x: 13, y: 43, width: 10, height: 10))
+            context.fill(CGRect(x: 77, y: 43, width: 10, height: 10))
+        }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".png")
+        defer { try? FileManager.default.removeItem(at: url) }
+        try XCTUnwrap(image.pngData()).write(to: url)
+        var p = Project.new(name: "Local Puppet", width: 128, height: 96, fps: 30, duration: 1,
+                            background: RGBA(0, 0, 0, 0))
+        var art = p.makeLayer(name: "Artwork", content: .image(fileName: "puppet.png", pixelWidth: 128, pixelHeight: 96),
+                              size: Vec2(128, 96))
+        var effect = EffectRegistry.puppet18.makeInstance()
+        effect.params["pinR0"] = .point(Animated(Vec2(18, 0)))
+        effect.params["pinD0"] = .point(Animated(Vec2(38, 0)))
+        effect.params["pinF0"] = .number(Animated(24))
+        art.effects = [effect]
+        p.layers = [art]
+        func alpha(_ x: Int) throws -> UInt8 {
+            let pixels = try XCTUnwrap(r.renderPixels(project: p, time: 0, preserveAlpha: true, mediaURL: { _ in url })).rgba
+            return pixels[(48 * 128 + x) * 4 + 3]
+        }
+        XCTAssertGreaterThan(try alpha(38), 240, "Legacy single pin still moves the whole layer")
+        p.layers[0].effects[0].params["localDeform"] = .toggle(true)
+        XCTAssertGreaterThan(try alpha(18), 240, "Distant artwork stays exactly where it was")
+        XCTAssertGreaterThan(try alpha(102), 240, "The selected part follows its pin")
+        XCTAssertLessThan(try alpha(82), 8, "The old pin location should no longer show the moved part")
+    }
+
     func testMotionTileCoversFractionalEdgesAndShakeShutterPoses() throws {
         let r = try renderer()
         var p = Project.new(name: "Opaque shake tiles", width: 128, height: 96, fps: 30, duration: 1,

@@ -91,6 +91,8 @@ final class EditorState: ObservableObject {
     @Published var puppetPlace = true
     /// Selected pin for the indirect X/Y position pad. UI-only; never serialized.
     @Published var selectedPuppetPin: Int? = nil
+    @Published var puppetCursor: Vec2?
+    @Published var puppetPlacementKind: EffectRegistry.PuppetPinKind = .position
     /// Motion Sketch: moving the layer records position keyframes in real time.
     @Published var motionSketch = false
     /// Show the selected layer's motion path on the canvas.
@@ -251,6 +253,7 @@ final class EditorState: ObservableObject {
     @Published var panel: ToolPanel = .none {
         didSet {
             if panel != oldValue { CrashReporter.note("Opened \(panel)"); endScrub() }
+            if oldValue == .puppet, panel != .puppet, liveGesture { endPanelGesture() }
             if (oldValue == .rig || oldValue == .boneWeight),panel != .rig,panel != .boneWeight {
                 if liveGesture { endPanelGesture() }
                 if boneRestEditing { finishBoneRestEditing(); boneRestEditing = false }

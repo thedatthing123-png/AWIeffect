@@ -35,13 +35,24 @@ final class ContainerInteractionUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Swipe to adjust Z position"].waitForExistence(timeout: 3))
         XCTAssertFalse(app.keyboards.firstMatch.exists)
         save("position-z-mode")
-        let zNumber = app.staticTexts["number-Z"].firstMatch
-        let originalDepth = zNumber.label
+        func depthReadout() -> String? {
+            let frame = z.frame
+            return app.staticTexts.allElementsBoundByIndex.first { text in
+                let center = CGPoint(x: text.frame.midX, y: text.frame.midY)
+                return frame.contains(center) && Double(text.label) != nil
+            }?.label
+        }
+        guard let originalDepth = depthReadout() else {
+            XCTFail("Z field must expose its numeric readout")
+            return
+        }
         let pad = app.descendants(matching: .any)["position-z-swipe-pad"].firstMatch
         let from = pad.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.72))
         let to = pad.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.30))
         from.press(forDuration: 0.05, thenDragTo: to)
-        XCTAssertNotEqual(zNumber.label, originalDepth)
+        let movedDepth = depthReadout()
+        XCTAssertNotNil(movedDepth)
+        XCTAssertNotEqual(movedDepth, originalDepth)
         XCTAssertFalse(app.keyboards.firstMatch.exists)
         save("position-z-after-swipe")
         let x = app.descendants(matching: .any)["position-field-X"].firstMatch

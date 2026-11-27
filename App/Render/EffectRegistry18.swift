@@ -201,6 +201,26 @@ extension EffectRegistry {
             p.a = SIMD4(Float(ctx.num("length") * ctx.unit), Float(ctx.num("angle") * .pi / 180), Float(ctx.num("spread") / 100), 0)
         } })
 
+    enum PuppetPinKind: Int, CaseIterable {
+        case position, starch, bend, advanced
+        var title: String {
+            switch self {
+            case .position: "Position"
+            case .starch: "Starch"
+            case .bend: "Bend"
+            case .advanced: "Advanced"
+            }
+        }
+        var moves: Bool { self == .position || self == .advanced }
+        var turns: Bool { self == .bend || self == .advanced }
+    }
+
+    static func puppetKind(_ effect: EffectInstance, _ index: Int, _ time: Double) -> PuppetPinKind {
+        if let kind = effect.params["pinK\(index)"]?.number(at: time),
+           let value = PuppetPinKind.allCases.first(where: { Double($0.rawValue) == kind }) { return value }
+        return (effect.params["pinS\(index)"]?.number(at: time) ?? 0) > 0.5 ? .starch : .position
+    }
+
     /// Pins stored in the instance: "pinR<i>" rest point and "pinD<i>" (animatable) dragged point, layer px.
     static func puppetPins(_ e: EffectInstance, _ t: Double) -> [SIMD4<Float>] {
         var out: [SIMD4<Float>] = []
@@ -213,6 +233,36 @@ extension EffectRegistry {
         return out
     }
 
+    static func localPuppetData(_ effect: EffectInstance, _ time: Double, _ pins: [SIMD4<Float>]) -> [SIMD4<Float>] {
+        let kinds = pins.indices.map { puppetKind(effect, $0, time) }
+        let radii = pins.indices.map { Float(min(20_000, max(1, effect.params["pinF\($0)"]?.number(at: time) ?? 80))) }
+        let anchors = pins.indices.filter { kinds[$0].moves }
+        return pins.indices.flatMap { i -> [SIMD4<Float>] in
+            var pin = pins[i]
+            let kind = kinds[i]
+            if kind == .bend {
+                var delta = SIMD2<Float>.zero
+                var total: Float = 0
+                for j in anchors {
+                    let q = pins[j]
+                    let distance = hypot(pin.x - q.x, pin.y - q.y) / radii[j]
+                    let f = max(0, 1 - distance)
+                    let w = f * f * (3 - 2 * f)
+                    total += w
+                    delta += SIMD2(q.z - q.x, q.w - q.y) * w
+                }
+                pin.z = pin.x + delta.x / max(1, total)
+                pin.w = pin.y + delta.y / max(1, total)
+            } else if !kind.moves {
+                pin.z = pin.x
+                pin.w = pin.y
+            }
+            let angle = Float((effect.params["pinA\(i)"]?.number(at: time) ?? 0) * .pi / 180)
+            let scale = Float(min(4, max(0.25, (effect.params["pinZ\(i)"]?.number(at: time) ?? 100) / 100)))
+            return [pin, SIMD4(radii[i], Float(kind.rawValue), angle, scale)]
+        }
+    }
+
     static let puppet18 = EffectDefinition(
         id: "awi18.puppet", name: "Puppet Pins", category: .distort,
         aeMatchNames: [],
@@ -222,15 +272,42 @@ extension EffectRegistry {
         ],
         margin: { e, t in
             let pins = puppetPins(e, t)
+            if e.bool("localDeform") {
+                var reach = 0.0
+                for i in pins.indices {
+                    let pin = pins[i]
+                    let movement = Double(max(abs(pin.z - pin.x), abs(pin.w - pin.y)))
+                    let scale = min(4, max(0.25, (e.params["pinZ\(i)"]?.number(at: t) ?? 100) / 100))
+                    let radius = min(20_000, max(1, e.params["pinF\(i)"]?.number(at: t) ?? 80))
+                    let turnReach = puppetKind(e, i, t).turns ? radius * max(0, scale - 1) : 0
+                    reach = max(reach, movement + turnReach)
+                }
+                return reach
+            }
             return Double(pins.map { max(abs($0.z - $0.x), abs($0.w - $0.y)) }.max() ?? 0)
         },
         stage: .pixels { ctx in
             let pins = puppetPins(ctx.effect, ctx.time)
             guard !pins.isEmpty else { return ctx.input }
-            let out = ctx.temp()
             var p = EffectParams()
             p.a = SIMD4(Float(ctx.num("stiffness")), Float(ctx.unit), 0, 0)
             p.i.y = UInt32(pins.count)
+            if ctx.effect.bool("localDeform") {
+                let data = localPuppetData(ctx.effect, ctx.time, pins)
+                guard pins.indices.contains(where: { i in
+                    let pin = data[i * 2], info = data[i * 2 + 1]
+                    return pin.x != pin.z || pin.y != pin.w || (info.y >= 2 && (info.z != 0 || info.w != 1))
+                }) else { return ctx.input }
+                let out = ctx.temp()
+                let center = ctx.layerPixelOrigin.map {
+                    $0 + (ctx.layerPixels ?? .zero) * 0.5
+                } ?? SIMD2(Double(ctx.width) / 2, Double(ctx.height) / 2)
+                p.a.z = Float(center.x); p.a.w = Float(center.y)
+                ctx.gpu.run("fxPuppetLocal", ctx.cb, textures: [ctx.input, out], params: p,
+                            extra: data, grid: out)
+                return out
+            }
+            let out = ctx.temp()
             // Starch pins (bit k): weigh much more, so the area around them stays rigid like AE's Starch pin.
             var starch: UInt32 = 0
             for k in 0..<min(32, pins.count) where ctx.effect.params["pinS\(k)"]?.number(at: ctx.time) ?? 0 > 0.5 { starch |= 1 << UInt32(k) }

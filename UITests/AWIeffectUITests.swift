@@ -143,12 +143,17 @@ final class AWIeffectUITests: XCTestCase {
 
         // Puppet: open, drop two pins on the canvas.
         tap("Puppet")
-        sleep(1)
+        XCTAssertTrue(app.staticTexts["Puppet Studio"].firstMatch.waitForExistence(timeout: 5))
+        let placePin = app.buttons["Add Pin"].firstMatch
+        XCTAssertTrue(placePin.isHittable)
+        placePin.tap()
         let canvas = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
         canvas.tap()
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.17)).tap()
-        sleep(1)
         snap("new-puppet")
+        app.segmentedControls.buttons["Pose"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Swipe to move the selected pin"].firstMatch.waitForExistence(timeout: 5))
+        snap("puppet-pose")
 
         // CC Studio: add a grade, visit every tab.
         tap("CC Studio")

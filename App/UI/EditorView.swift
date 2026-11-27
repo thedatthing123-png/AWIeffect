@@ -584,7 +584,9 @@ struct EditorView: View {
                 }
                 if let r = marqueeRect { MarqueeOverlay(rect: r) }
                 if state.panel == .puppet, state.canvasMode == .comp {
-                    ClockReader(clock: state.clock) { _ in PuppetOverlay(state: state, fit: fit) }
+                    ClockReader(clock: state.clock) { _ in
+                        LiveReader(live: state.live) { _ in PuppetOverlay(state: state, fit: fit) }
+                    }
                 }
                 if state.textTyping, let id = state.selectedLayerID {
                     LiveReader(live: state.live) { lp in
@@ -657,6 +659,7 @@ struct EditorView: View {
             .clipped()
             .contentShape(Rectangle())
             .gesture(canvasDrag(fit: fit), including: pen == nil && !canvasToolActive && state.canvasMode == .comp && state.panel != .rig && state.panel != .boneWeight ? .all : .subviews)
+            .onChange(of: puppetTouchActive) { _, active in if !active { finishPuppetDrag() } }
             // Two fingers, like Alight Motion: with a layer selected, pinch scales it and twisting rotates it (both at
             // once); with nothing selected the pinch zooms the canvas view.
             .simultaneousGesture(MagnificationGesture()
@@ -698,11 +701,11 @@ struct EditorView: View {
                 // Puppet panel open: taps drop pins instead of selecting layers.
                 if state.panel == .puppet, state.selectedLayerID != nil {
                     // Place on: a tap drops a pin (unless it lands on one). Place off: taps never add pins.
-                    let reach = 30 * Double(state.project.width) / Double(max(fit.width, 1))
+                    let reach = 16 * Double(state.project.width) / Double(max(fit.width, 1))
                     if let selected = state.puppetPin(nearComp: toComp(v.location, fit: fit), reach: reach) {
                         state.selectedPuppetPin = selected
                     } else if state.puppetPlace {
-                        state.addPuppetPin(atComp: toComp(v.location, fit: fit))
+                        state.addPuppetPin(atComp: toComp(v.location, fit: fit), kind: state.puppetPlacementKind)
                     }
                     return
                 }
@@ -778,6 +781,7 @@ struct EditorView: View {
         state.orbit.pan = Vec2(p.x - Double(t.x) * k * cos(yaw), p.y - Double(t.y) * k)
     }
     @State private var puppetDragPin: Int?
+    @GestureState private var puppetTouchActive = false
     @State private var maskDrag: MaskDragSession?
     @State private var marqueeStart: CGPoint?
     @State private var marqueeEnd: CGPoint?
@@ -831,6 +835,7 @@ struct EditorView: View {
 
     private func canvasDrag(fit: CGRect) -> some Gesture {
         DragGesture(minimumDistance: 4)
+            .updating($puppetTouchActive) { _, active, _ in active = state.panel == .puppet }
             .onChanged { v in
                 guard !canvasToolActive else { return }
                 // Puppet: drag the nearest pin.
@@ -851,16 +856,20 @@ struct EditorView: View {
                 }
                 if state.panel == .puppet, canvasDragState == nil, panBase == nil {
                     if puppetDragPin == nil {
-                        let reach = 30 * Double(state.project.width) / Double(max(fit.width, 1))
-                        puppetDragPin = state.puppetPin(nearComp: toComp(v.startLocation, fit: fit), reach: reach) ?? -1
-                        if puppetDragPin! >= 0 {
-                            state.selectedPuppetPin = puppetDragPin!
-                            state.beginEdit("Move Pin")
+                        let reach = 16 * Double(state.project.width) / Double(max(fit.width, 1))
+                        let point = toComp(v.startLocation, fit: fit)
+                        if let k = state.puppetPin(nearComp: point, reach: reach) {
+                            state.selectedPuppetPin = k
+                            if !state.puppetPlace, state.selectedLayer?.isLocked == false,
+                               !state.puppetUsesLocalDeformation || state.puppetKind(k).moves {
+                                puppetDragPin = k
+                                state.beginPanelGesture("Move Pin")
+                            }
                         }
+                        if puppetDragPin == nil { puppetDragPin = -1 }
                     }
                     if let k = puppetDragPin, k >= 0 { state.movePuppetPin(k, toComp: toComp(v.location, fit: fit)); return }
-                    // Like AE's Puppet tool: dragging off a pin never moves the layer by accident.
-                    if state.selectedLayer?.effects.contains(where: { $0.typeID == EffectRegistry.puppet18.id }) == true { return }
+                    return
                 }
                 if canvasDragState == nil && panBase == nil && cameraStart == nil,
                    state.selectedLayer?.content == .camera, state.activeCameraLayer != nil, let c = state.beginCameraGesture() {
@@ -895,13 +904,18 @@ struct EditorView: View {
             .onEnded { _ in
                 dragFrozen = false
                 if cameraStart != nil { if pinchOnLayer == nil { state.endCameraGesture() }; cameraStart = nil }
-                if let k = puppetDragPin { if k >= 0 { state.endEdit() }; puppetDragPin = nil }
+                finishPuppetDrag()
                 if let m = maskDrag { state.endMaskDrag(m); maskDrag = nil }
                 if canvasDragState != nil { state.endCanvasDrag() }
                 if marqueeStart != nil { finishMarquee(fit: fit) }
                 canvasDragState = nil
                 panBase = nil
             }
+    }
+
+    private func finishPuppetDrag() {
+        if let k = puppetDragPin, k >= 0, state.isLiveGesture { state.endPanelGesture() }
+        puppetDragPin = nil
     }
 
     /// Top-most layer under a point (other than the selected one).
