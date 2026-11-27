@@ -157,6 +157,37 @@ final class AuditRenderRegressionTests: XCTestCase {
         }
     }
 
+    func testMotionTileCoversFractionalEdgesAndShakeShutterPoses() throws {
+        let r = try renderer()
+        var p = Project.new(name: "Opaque shake tiles", width: 128, height: 96, fps: 30, duration: 1,
+                            background: RGBA(0, 0, 0, 0))
+        var layer = p.makeLayer(name: "Source", content: .solid, size: Vec2(45.3, 35.7))
+        layer.fill = Animated(.white)
+        layer.transform.scale = Animated(Vec2(82.4, 93.3))
+        layer.transform.rotation = Animated(8.2)
+        var shake = EffectRegistry.shake.makeInstance()
+        shake.params["amplitude"] = .number(Animated(145))
+        shake.params["rotation"] = .number(Animated(30))
+        p.shutterAngle = 360
+        for blur in [false, true] {
+            p.motionBlurEnabled = blur
+            p.smoothMotion = false
+            layer.motionBlur = blur
+            for mirror in [false, true] {
+                var tile = EffectRegistry.motionTile.makeInstance()
+                tile.params["mirror"] = .toggle(mirror)
+                layer.effects = [tile, shake]
+                p.layers = [layer]
+                for time in [0.13, 0.29, 0.47, 0.63] {
+                    let rendered = try XCTUnwrap(r.renderPixels(project: p, time: time, preserveAlpha: true,
+                                                                mediaURL: { URL(fileURLWithPath: $0) }))
+                    let minimumAlpha = stride(from: 3, to: rendered.rgba.count, by: 4).map { rendered.rgba[$0] }.min()
+                    XCTAssertGreaterThan(try XCTUnwrap(minimumAlpha), 245, "Gap at \(time), blur \(blur), mirror \(mirror)")
+                }
+            }
+        }
+    }
+
     func testAdjustmentMotionTileContinuesBeyondLaterTransformEdges() throws {
         let r = try renderer()
         var p = Project.new(name: "tiled adjustment", width: 64, height: 64, fps: 30, duration: 1,

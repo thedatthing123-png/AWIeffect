@@ -24,6 +24,8 @@ struct EffectContext {
     var reference: MTLTexture? = nil
     /// The layer's own size in buffer pixels (the buffer can be bigger when effects grow it), centered.
     var layerPixels: SIMD2<Double>? = nil
+    /// Origin of the unpadded layer in the current texture, before rounding the texture dimensions.
+    var layerPixelOrigin: SIMD2<Double>? = nil
     var compositionPixels: SIMD2<Double>? = nil
 
     var width: Int { input.width }

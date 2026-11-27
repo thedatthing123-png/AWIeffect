@@ -948,14 +948,17 @@ final class Renderer {
             }
                 + (dof > 0.5 ? dof * 3 / max(pxPerLocal, 1e-4) : 0)
             if pixelFX.contains(where: { $0.typeID == "ae.motionTile" && !$0.bool("manualOutput") }) {
-                let inverse = M.inverse
                 let width = Double(project.width) * renderScale, height = Double(project.height) * renderScale
                 let corners = [SIMD3(0.0, 0, 1), SIMD3(width, 0, 1), SIMD3(0.0, height, 1), SIMD3(width, height, 1)]
-                for corner in corners {
-                    let local = inverse * corner
-                    if abs(local.z) > 1e-8 {
+                let padding = max(2, 2 / max(0.05, pxPerLocal))
+                // Every shutter pose needs coverage, especially where shake moves away from the center frame.
+                for placement in [M] + blurMatrices {
+                    let inverse = placement.inverse
+                    for corner in corners {
+                        let local = inverse * corner
+                        guard abs(local.z) > 1e-8 else { continue }
                         let x = abs(local.x / local.z), y = abs(local.y / local.z)
-                        if x.isFinite && y.isFinite { rawMargin = max(rawMargin, x - hs.x + 2, y - hs.y + 2) }
+                        if x.isFinite && y.isFinite { rawMargin = max(rawMargin, x - hs.x + padding, y - hs.y + padding) }
                     }
                 }
             }
@@ -1017,6 +1020,7 @@ final class Renderer {
                 guard let def = EffectRegistry.definition(e.typeID), case .pixels(let run) = def.stage else { continue }
                 var ctx = EffectContext(gpu: fx, cb: cb, input: current, effect: e, time: time, unit: density, pool: pool)
                 ctx.layerPixels = SIMD2(hs.x * 2 * density, hs.y * 2 * density)
+                ctx.layerPixelOrigin = SIMD2((ext.x - hs.x) * density, (ext.y - hs.y) * density)
                 ctx.compositionPixels = SIMD2(Double(project.width) * density, Double(project.height) * density)
                 if EffectRegistry.layerRefIDs.contains(e.typeID), let rid = e.text?["layer"].flatMap(UUID.init(uuidString:)),
                    let refLayer = project.layers.first(where: { $0.id == rid }), rid != layer.id {

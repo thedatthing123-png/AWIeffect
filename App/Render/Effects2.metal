@@ -140,9 +140,13 @@ kernel void fxWarp(texture2d<half, access::sample> src [[texture(0)]],
             else r.x += fmod(floor(r.y), 2.0) != 0.0 ? p.c.x : 0.0;
             float2 f = fract(r);
             if (p.i.y != 0) { float2 cell = floor(r); f = select(f, 1.0 - f, fmod(abs(cell), 2.0) > 0.5); }
-            // Stay half a pixel inside the layer: sampling on its edge blended in the empty margin around it,
-            // which drew a dark line at every tile seam. Seams now repeat (or mirror) the picture itself.
-            q = clamp(p.d.xy + f * p.d.zw, p.d.xy + 0.5, p.d.xy + p.d.zw - 0.5);
+            // Use actual texel centers fully inside the source rect. Fractional rect edges can
+            // leave an antialiased texel inside a half-pixel inset, which repeats as a dark seam.
+            float2 first = ceil(p.d.xy) + 0.5;
+            float2 last = floor(p.d.xy + p.d.zw) - 0.5;
+            float2 middle = p.d.xy + p.d.zw * 0.5;
+            bool2 hasInterior = first <= last;
+            q = select(middle, clamp(p.d.xy + f * p.d.zw, first, max(first, last)), hasInterior);
             edge = true;
             break;
         }

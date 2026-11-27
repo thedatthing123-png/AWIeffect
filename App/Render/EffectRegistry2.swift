@@ -153,7 +153,7 @@ extension EffectRegistry {
         stage: .pixels { ctx in run("fxWarp", ctx) { p in
             let c = ctx.effect.point("center", ctx.time)
             let lp = ctx.layerPixels ?? SIMD2(Double(ctx.width), Double(ctx.height))
-            let off = SIMD2((Double(ctx.width) - lp.x) / 2, (Double(ctx.height) - lp.y) / 2)
+            let off = ctx.layerPixelOrigin ?? SIMD2((Double(ctx.width) - lp.x) / 2, (Double(ctx.height) - lp.y) / 2)
             // Tile center / size are measured on the layer itself, not the grown buffer.
             p.a = SIMD4(f(off.x + c.x * lp.x), f(off.y + c.y * lp.y), f(ctx.num("tileW") / 100 * lp.x), f(ctx.num("tileH") / 100 * lp.y))
             let ow = ctx.num("outW") / 100 * lp.x, oh = ctx.num("outH") / 100 * lp.y
