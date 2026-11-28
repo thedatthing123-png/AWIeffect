@@ -481,6 +481,9 @@ struct EffectsPanel: View {
                     guard def.id != EffectRegistry.grade.id else { return false }
                     let shown = EffectStackR4.resolved(e, at: state.currentTime) ?? e
                     guard ReferenceFragmentControls.isVisible(pd.id, effect: shown, time: state.currentTime) else { return false }
+                    if def.id == MotionTrail.id && (pd.id == "middleColor" || pd.id == "middlePosition") {
+                        return shown.bool("middleEnabled")
+                    }
                     guard def.id == "awi.halftone" else { return true }
                     let version = e.choice("version")
                     if version == 0 { return ["size", "angle", "color", "version"].contains(pd.id) }

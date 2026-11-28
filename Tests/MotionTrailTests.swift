@@ -25,6 +25,22 @@ final class MotionTrailTests: XCTestCase {
         XCTAssertLessThan(red(40, 58), 10)
         XCTAssertLessThan(red(192, 50), 10)
 
+        project.layers[0].effects[0].params["middleEnabled"] = .toggle(true)
+        project.layers[0].effects[0].params["middleColor"] = .color(Animated(RGBA(0, 1, 0)))
+        project.layers[0].effects[0].params["middlePosition"] = .number(Animated(25))
+        let gradient = try XCTUnwrap(render(project)).rgba
+        let stop = (50 * 200 + 139) * 4
+        XCTAssertGreaterThan(gradient[stop + 1], 130)
+        XCTAssertLessThan(gradient[stop], 20)
+
+        project.layers[0].effects[0].params["fadeCurve"] = .number(Animated(5))
+        let slowFade = try XCTUnwrap(render(project)).rgba
+        XCTAssertGreaterThan(slowFade[stop + 1], gradient[stop + 1])
+        project.layers[0].effects[0].params["edgeSoftness"] = .number(Animated(100))
+        let softened = try XCTUnwrap(render(project)).rgba
+        let edge = (58 * 200 + 139) * 4 + 1
+        XCTAssertLessThan(softened[edge], slowFade[edge])
+
         project.layers[0].transform.position = Animated(Vec2(180, 50))
         let still = try XCTUnwrap(render(project)).rgba
         project.layers[0].effects[0].isEnabled = false

@@ -14,8 +14,13 @@ extension EffectRegistry {
             .number("taper", "Taper Curve", 1, 0.15, 5, step: 0.05),
             .color("headColor", "Head Color", RGBA(0.83, 0.69, 1)),
             .color("tailColor", "Tail Color", RGBA(0.47, 0.20, 0.94)),
+            .toggle("middleEnabled", "Middle Color Stop", false),
+            .color("middleColor", "Middle Color", RGBA(0.98, 0.36, 0.82)),
+            .number("middlePosition", "Middle Position", 50, 1, 99, unit: "%"),
             .number("headAlpha", "Head Opacity", 90, 0, 100, unit: "%"),
             .number("tailAlpha", "Tail Opacity", 0, 0, 100, unit: "%"),
+            .number("fadeCurve", "Fade Curve", 1, 0.15, 5, step: 0.05),
+            .number("edgeSoftness", "Edge Softness", 0, 0, 100, unit: "%"),
             .number("offsetX", "Attachment X", 0, -2048, 2048, unit: " px"),
             .number("offsetY", "Attachment Y", 0, -2048, 2048, unit: " px")
         ], stage: .motionTrail)
@@ -28,10 +33,13 @@ enum MotionTrail {
         effect.typeID == id && effect.isEnabled && !EffectStackR4.isMuted(effect)
     }
 
-    // Match the Metal vertex layout. Side interpolates across the ribbon for edge antialiasing.
-    private struct Vertex {
-        var positionAndSide: SIMD4<Float>
-        var color: SIMD4<Float>
+    // Match the Metal uniforms. Color and opacity are evaluated per pixel along the ribbon's age.
+    private struct Style {
+        var head: SIMD4<Float>
+        var middle: SIMD4<Float>
+        var tail: SIMD4<Float>
+        var profile: SIMD4<Float>
+        var opacity: SIMD4<Float>
     }
 
     private struct Sample {
@@ -56,8 +64,9 @@ enum MotionTrail {
     static func encode(_ effect: EffectInstance, layer: Layer, project: Project, camera: CameraState,
                        time: Double, scale: Double, opacity: Double, target: MTLTexture,
                        buffer: MTLCommandBuffer, pipeline: MTLRenderPipelineState) {
-        func number(_ id: String, _ limits: ClosedRange<Double>) -> Double {
-            let value = effect.number(id, time)
+        let effect = EffectStackR4.resolved(effect, at: time) ?? effect
+        func number(_ id: String, _ limits: ClosedRange<Double>, fallback: Double = 0) -> Double {
+            let value = effect.params[id]?.number(at: time) ?? fallback
             return value.isFinite ? min(limits.upperBound, max(limits.lowerBound, value)) : limits.lowerBound
         }
         let lifetime = number("lifetime", 0.02...3)
@@ -113,10 +122,18 @@ enum MotionTrail {
         let tailWidth = number("tailWidth", 0...1000) * scale / 2
         let tailAge = reachedLengthLimit ? max(0.01, path[path.count - 1].age) : 1
         let taper = number("taper", 0.15...5)
-        let head = effect.color("headColor", time).simd, tail = effect.color("tailColor", time).simd
-        let headAlpha = number("headAlpha", 0...100) / 100
-        let tailAlpha = number("tailAlpha", 0...100) / 100
-        var vertices: [Vertex] = []
+        var style = Style(
+            head: effect.color("headColor", time).simd,
+            middle: effect.color("middleColor", time).simd,
+            tail: effect.color("tailColor", time).simd,
+            profile: SIMD4(Float(number("middlePosition", 1...99, fallback: 50) / 100),
+                           Float(number("fadeCurve", 0.15...5, fallback: 1)),
+                           Float(number("edgeSoftness", 0...100) / 100),
+                           effect.bool("middleEnabled") ? 1 : 0),
+            opacity: SIMD4(Float(number("headAlpha", 0...100) / 100),
+                           Float(number("tailAlpha", 0...100) / 100), Float(mix), 0)
+        )
+        var vertices: [SIMD4<Float>] = []
         for index in path.indices {
             let sample = path[index]
             let incoming = sample.position - path[max(0, index - 1)].position
@@ -129,12 +146,9 @@ enum MotionTrail {
             let age = min(1, sample.age / tailAge)
             let radius = headWidth + (tailWidth - headWidth) * pow(age, taper)
             let edge = bisector * (radius / max(0.5, simd_dot(normal, bisector)))
-            var color = head + (tail - head) * Float(age)
-            color.w *= Float(mix * (headAlpha + (tailAlpha - headAlpha) * age))
             for side in [-1.0, 1.0] {
                 let point = (sample.position + edge * side) / bounds
-                vertices.append(Vertex(positionAndSide: SIMD4(Float(point.x * 2 - 1), Float(1 - point.y * 2), Float(side), 0),
-                                       color: color))
+                vertices.append(SIMD4(Float(point.x * 2 - 1), Float(1 - point.y * 2), Float(side), Float(age)))
             }
         }
 
@@ -146,9 +160,10 @@ enum MotionTrail {
         encoder.setRenderPipelineState(pipeline)
         vertices.withUnsafeBufferPointer { data in
             if let first = data.baseAddress {
-                encoder.setVertexBytes(first, length: data.count * MemoryLayout<Vertex>.stride, index: 0)
+                encoder.setVertexBytes(first, length: data.count * MemoryLayout<SIMD4<Float>>.stride, index: 0)
             }
         }
+        encoder.setFragmentBytes(&style, length: MemoryLayout<Style>.stride, index: 0)
         encoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: vertices.count)
         encoder.endEncoding()
     }
