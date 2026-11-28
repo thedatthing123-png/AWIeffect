@@ -271,7 +271,10 @@ enum EffectRegistry {
     ] + [letterSpacing] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22 + batch23 + batchR4 + batchAM35 + referenceTransitions + reviewedReferenceEffects + ghostEffects + motionFinishEffects + remadeEffects
 
     private static let byID: [String: EffectDefinition] = Dictionary(uniqueKeysWithValues:
-        (all + [importedOscillate] + ImportedEffectRenderers.importOnlyDefinitions).map { ($0.id, EffectStackR4.wrap($0)) })
+        (all + [importedOscillate]).map { ($0.id, EffectStackR4.wrap($0)) })
+
+    // Native lookup does not construct the import-only shader catalog.
+    private static let byImportedFragmentID = ImportedEffectRenderers.importOnlyByID.mapValues { EffectStackR4.wrap($0) }
     private static let byMatchName: [String: EffectDefinition] = {
         var m: [String: EffectDefinition] = [:]
         for d in all { for n in d.aeMatchNames { m[n] = d } }
@@ -281,8 +284,10 @@ enum EffectRegistry {
     static func definition(_ id: String) -> EffectDefinition? {
         if let definition = byID[id] { return definition }
         let rendererID = ImportedEffectRenderers.alightMotionRendererID(forTypeID: id)
-            ?? ImportedEffectRenderers.adapter(forTypeID: id)?.id
-        return rendererID.flatMap { byID[$0] }
+            ?? ImportedEffectRenderers.adapter(forTypeID: id)?.id ?? id
+        if rendererID != id, let definition = byID[rendererID] { return definition }
+        guard rendererID.hasPrefix("awi.amref.") else { return nil }
+        return byImportedFragmentID[rendererID]
     }
     static func definition(aeMatchName: String) -> EffectDefinition? { byMatchName[aeMatchName] }
 

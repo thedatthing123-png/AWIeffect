@@ -309,6 +309,7 @@ final class EditorState: ObservableObject {
     private var savedUndo: [(undo: [(label: String, project: Project)], redo: [(label: String, project: Project)])] = []
 
     init(project: Project, store: ProjectStore = .shared) {
+        CrashReporter.editorStage("EditorState init started", projectID: project.id)
         var initial = project
         initial.distinguishContainerTags()
         self.project = initial
@@ -316,6 +317,7 @@ final class EditorState: ObservableObject {
         if store.recoveredVersions[project.id] != nil {
             recoveryNotice = "Opened the latest readable saved version. The damaged project file has been kept in its project folder."
         }
+        CrashReporter.editorStage("EditorState init finished", projectID: project.id)
     }
 
     // MARK: Selection

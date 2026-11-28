@@ -27,12 +27,66 @@ enum CrashReporter {
     private static var recent: [String] = []
 
     static let openProjectKey = "awi.crash.openProject"
+    private static var openingURL: URL { dir.appendingPathComponent("editor-opening.json") }
+
+    private struct EditorOpening: Codable {
+        var projectID: UUID
+        var started = Date()
+        var stages: [String] = []
+    }
+
+    private static var opening: EditorOpening?
+    private static var openingCleanup: DispatchWorkItem?
+    private(set) static var previousProjectID: UUID?
+
+    /// Called on the main thread. Atomic replacement keeps the last complete
+    /// checkpoint readable even if iOS kills the process without a signal handler.
+    static func beginEditorOpening(_ id: UUID) {
+        endEditorOpening()
+        UserDefaults.standard.set(id.uuidString, forKey: openProjectKey)
+        opening = EditorOpening(projectID: id)
+        editorStage("Open requested", projectID: id)
+    }
+
+    static func editorStage(_ stage: String, projectID: UUID) {
+        guard var entry = opening, entry.projectID == projectID, !entry.stages.contains(stage),
+              entry.stages.count < 16 else { return }
+        entry.stages.append(stage)
+        opening = entry
+        if let data = try? JSONEncoder().encode(entry) { try? data.write(to: openingURL, options: .atomic) }
+    }
+
+    static func editorFirstFrame(projectID: UUID) {
+        guard opening?.projectID == projectID, openingCleanup == nil else { return }
+        editorStage("First preview frame completed on GPU", projectID: projectID)
+        let complete = DispatchWorkItem { endEditorOpening() }
+        openingCleanup = complete
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: complete)
+    }
+
+    static func endEditorOpening() {
+        openingCleanup?.cancel()
+        openingCleanup = nil
+        guard opening != nil else { return }
+        opening = nil
+        try? FileManager.default.removeItem(at: openingURL)
+    }
 
     static func install() {
         let fm = FileManager.default
         let crash = (try? String(contentsOf: crashURL, encoding: .utf8)) ?? ""
-        if !crash.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            var report = crash
+        let savedOpening = (try? Data(contentsOf: openingURL)).flatMap { try? JSONDecoder().decode(EditorOpening.self, from: $0) }
+        // Consume once. A normal close, completed startup or background exit clears this file.
+        try? fm.removeItem(at: openingURL)
+        let hasSignal = !crash.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        if hasSignal || savedOpening != nil {
+            previousProjectID = savedOpening?.projectID
+                ?? UserDefaults.standard.string(forKey: openProjectKey).flatMap(UUID.init(uuidString:))
+            var report = hasSignal ? crash : "Previous session ended while the editor was opening. No crash signal was recorded."
+            if let savedOpening {
+                let stages = savedOpening.stages.map { "  • " + $0 }.joined(separator: "\n")
+                report += "\n\nEditor startup (\(savedOpening.started.ISO8601Format())):\n" + stages
+            }
             if let err = try? String(contentsOf: stderrURL, encoding: .utf8) {
                 let fatal = err.split(separator: "\n").filter { $0.contains("Fatal error") || $0.contains("fatal") || $0.contains("Terminating") || $0.contains("assert") }
                 if !fatal.isEmpty { report = "Swift says:\n" + fatal.suffix(5).joined(separator: "\n") + "\n\n" + report }
@@ -114,10 +168,10 @@ struct CrashReportSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.warning)
-                Text("AWIeffect crashed last time").font(.headline).foregroundStyle(Theme.text)
+                Text("Previous session interrupted").font(.headline).foregroundStyle(Theme.text)
                 Spacer()
             }
-            Text("Your project was autosaved. Send this report so the cause can be fixed.")
+            Text("Copy or share this report to help diagnose the interruption.")
                 .font(.subheadline).foregroundStyle(Theme.textDim)
             ScrollView {
                 Text(report).font(.system(size: 11, design: .monospaced)).foregroundStyle(Theme.text)

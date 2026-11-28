@@ -33,10 +33,13 @@ struct MetalPreview: UIViewRepresentable {
     /// Frames rendered at full quality are remembered (RAM preview) until the project changes.
     var cacheEnabled = true
     var suspended = false
+    var startupProjectID: UUID? = nil
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeUIView(context: Context) -> MTKView {
+        context.coordinator.startupProjectID = startupProjectID
+        if let startupProjectID { CrashReporter.editorStage("Metal preview view creation", projectID: startupProjectID) }
         let v = MTKView(frame: .zero, device: Renderer.shared?.device)
         v.colorPixelFormat = .bgra8Unorm
         v.framebufferOnly = true
@@ -66,6 +69,7 @@ struct MetalPreview: UIViewRepresentable {
     }
 
     final class Coordinator: NSObject, MTKViewDelegate {
+        var startupProjectID: UUID?
         private(set) var project: Project?
         private(set) var renderRevision = 0
         private var lastRedrawToken: Int?
@@ -191,7 +195,7 @@ struct MetalPreview: UIViewRepresentable {
             prerenderWork?.cancel()
             guard cacheEnabled, !isPlaying, ProcessInfo.processInfo.systemUptime >= suppressFullUntil, let project else { return }
             // Complex camera/3D work gets the current frame first, without filling a second GPU workload.
-            guard project.layers.count <= 12, !project.layers.contains(where: {
+            guard !project.layers.isEmpty, project.layers.count <= 12, !project.layers.contains(where: {
                 $0.is3D || $0.content == .model || $0.content == .light || $0.activeRelight != nil
             }) else { return }
             let token = cacheToken
@@ -241,6 +245,8 @@ struct MetalPreview: UIViewRepresentable {
             guard !suspended, let r = Renderer.shared, let project, let mediaURL else { return }
             let ds = view.drawableSize
             guard project.width > 0, project.height > 0, ds.width > 0, ds.height > 0 else { return }
+            let openingID = startupProjectID
+            if let openingID { CrashReporter.editorStage("Preview draw started", projectID: openingID) }
             let base = fitRect(compWidth: project.width, compHeight: project.height, in: ds)
             let fit = CGRect(x: base.midX - base.width * viewZoom / 2 + viewPan.width, y: base.midY - base.height * viewZoom / 2 + viewPan.height,
                              width: base.width * viewZoom, height: base.height * viewZoom)
@@ -266,6 +272,7 @@ struct MetalPreview: UIViewRepresentable {
             // Acquiring a drawable can wait for the display. Check capacity first.
             guard let drawable=view.currentDrawable,let rpd=view.currentRenderPassDescriptor,
                   let cb=r.queue.makeCommandBuffer() else { sem.signal();return }
+            if let openingID { CrashReporter.editorStage("Drawable acquired", projectID: openingID) }
             // While playing at reduced quality (heavy effects), don't mix in sharp cached frames: alternating sharp / soft
             // frames looked like a twitch. Every frame of the playback stays the same sharpness.
             let playing = isPlaying
@@ -310,6 +317,7 @@ struct MetalPreview: UIViewRepresentable {
                 pool.recycle()
                 // Preview: lighter motion blur while playing, finer when paused (export always renders the full count).
                 Renderer.blurSampleCap = isPlaying ? 4 : (renderedFull ? 12 : 6)
+                if let openingID { CrashReporter.editorStage("Encoding first preview composition", projectID: openingID) }
                 r.encode(project: project, time: frameTime, renderScale: scale, into: target, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
                 if renderedFull && cacheEnabled { cacheCandidate = target }
                 shown = target
@@ -363,6 +371,21 @@ struct MetalPreview: UIViewRepresentable {
             enc.setFragmentTexture(tex, index: 0)
             enc.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
             enc.endEncoding()
+            if let openingID {
+                CrashReporter.editorStage("Submitting first preview frame", projectID: openingID)
+                cb.addCompletedHandler { [weak self] buffer in
+                    let completed = buffer.status == .completed
+                    let error = buffer.error.map { String(String(describing: $0).prefix(240)) }
+                    DispatchQueue.main.async {
+                        if completed {
+                            CrashReporter.editorFirstFrame(projectID: openingID)
+                            self?.startupProjectID = nil
+                        } else {
+                            CrashReporter.editorStage("Preview GPU error: \(error ?? "unknown")", projectID: openingID)
+                        }
+                    }
+                }
+            }
             cb.present(drawable)
             cb.commit()
         }

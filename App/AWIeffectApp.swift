@@ -51,9 +51,8 @@ private let homeTestWidth: CGFloat? = nil
 enum AutoSelectField { static let tag = 7_331 }
 
 struct RootView: View {
-    @State private var openProject: Project? {
-        didSet { UserDefaults.standard.set(openProject?.id.uuidString, forKey: CrashReporter.openProjectKey) }
-    }
+    @State private var openProject: Project?
+    @Environment(\.scenePhase) private var scenePhase
     @State private var crashReport = CrashReporter.previousReport
 
     init() {
@@ -251,28 +250,42 @@ struct RootView: View {
                     Text("Metal is unavailable on this device.").foregroundStyle(Theme.text)
                 }
             } else if let p = openProject {
-                EditorView(state: EditorState(project: p)) { openProject = nil }
+                EditorView(state: EditorState(project: p), close: closeEditor)
                     .id(p.id)
                     .transition(.move(edge: .trailing))
             } else {
-                HomeView { openProject = $0 }
+                HomeView(open: openEditor)
                     .frame(maxWidth: homeTestWidth)
                     .transition(.move(edge: .leading))
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: openProject?.id)
         // AI Link can create / open projects.
-        .onAppear { AILink.openProject = { p in openProject = p } }
+        .onAppear { AILink.openProject = openEditor }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background { CrashReporter.endEditorOpening() }
+        }
         .sheet(isPresented: Binding(get: { crashReport != nil }, set: { if !$0 { crashReport = nil; CrashReporter.clear() } })) {
-            CrashReportSheet(report: crashReport ?? "", reopen: lastProject.map { p in { crashReport = nil; openProject = p } }) {
+            CrashReportSheet(report: crashReport ?? "", reopen: lastProject.map { p in { crashReport = nil; openEditor(p) } }) {
                 crashReport = nil
             }
         }
     }
 
-    /// The project that was open when the app crashed.
+    private func openEditor(_ project: Project) {
+        CrashReporter.beginEditorOpening(project.id)
+        openProject = project
+    }
+
+    private func closeEditor() {
+        CrashReporter.endEditorOpening()
+        UserDefaults.standard.removeObject(forKey: CrashReporter.openProjectKey)
+        openProject = nil
+    }
+
+    /// The project that was open when the previous session ended.
     private var lastProject: Project? {
-        guard let s = UserDefaults.standard.string(forKey: CrashReporter.openProjectKey), let id = UUID(uuidString: s) else { return nil }
+        guard crashReport != nil, let id = CrashReporter.previousProjectID else { return nil }
         return try? ProjectStore.shared.load(id)
     }
 }
