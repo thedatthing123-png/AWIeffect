@@ -47,7 +47,19 @@ extension Renderer {
         let t = cam.transform
         let pos = t.position.value(at: time)
         let opts = cam.camera ?? CameraOptions()
-        let world = CameraState.translation(SIMD3(pos.x, pos.y, t.positionZ.value(at: time)))
+        let origin = SIMD3(pos.x, pos.y, t.positionZ.value(at: time))
+        var aim = matrix_identity_double4x4
+        if let target = opts.pointOfInterest?.value(at: time) {
+            let vector = SIMD3(target.x, target.y, opts.pointOfInterestZ?.value(at: time) ?? 0) - origin
+            if simd_length_squared(vector) > 1e-10 {
+                let forward = simd_normalize(vector)
+                let up = abs(forward.y) > 0.999 ? SIMD3<Double>(0, 0, -1) : SIMD3<Double>(0, 1, 0)
+                let right = simd_normalize(simd_cross(up, forward))
+                let down = simd_cross(forward, right)
+                aim = simd_double4x4(columns: (SIMD4(right, 0), SIMD4(down, 0), SIMD4(forward, 0), SIMD4(0, 0, 0, 1)))
+            }
+        }
+        let world = CameraState.translation(origin) * aim
             * CameraState.rotation(x: t.rotationX.value(at: time), y: t.rotationY.value(at: time), z: t.rotation.value(at: time))
         var state = CameraState(world: world, zoom: opts.zoom.value(at: time),
                                 center: SIMD2(Double(p.width) / 2, Double(p.height) / 2), options: opts)

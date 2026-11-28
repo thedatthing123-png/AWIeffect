@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 /// Imports Alight Motion project exports (.xml): scene settings, layers with timing, transforms, keyframes with
 /// AM bezier easing, and AM effects mapped onto this app's equivalents (shake, oscillate, swing, pulsate, spin,
@@ -137,26 +138,34 @@ enum AMImporter {
         let legacyID = legacyEffectIDs[full] ?? ""
         let base = legacyID.trimmingCharacters(in: .decimalDigits)
         let reference = ImportedEffectRenderers.xmlFragments[full]
+        let enabled = fx["hidden"] != "true" && fx["enabled"] != "false"
+        let layerSettings = ["motionblur", "fade", "textprogress", "textspacing", "texttransform", "stretch", "scaleassist"]
         defer {
             // Layer flags and text animators render through their existing editor controls.
             let entry = report.entries.count > reportStart ? report.entries.last : nil
             if layer.effects.count == stackStart {
-                let represented = ["motionblur", "fade", "textprogress", "textspacing", "texttransform", "stretch", "scaleassist"]
-                let support: ImportedEffect.Support = represented.contains(base) && entry?.status != .missing ? .layerSettings : .unavailable
+                let support: ImportedEffect.Support = layerSettings.contains(base) && entry?.status != .missing ? .layerSettings : .unavailable
                 var saved = EffectInstance(typeID: "source.unavailable.am." + full, params: [:])
+                saved.isEnabled = enabled
                 saved.imported = ImportedEffect(format: .alightMotion, matchName: full, displayName: entry?.item ?? full,
                                                 support: support, properties: [original])
                 layer.effects.append(saved)
             } else {
                 for i in stackStart..<layer.effects.count {
                     let typeID = layer.effects[i].typeID
-                    let dedicated = typeID == EffectRegistry.importedOscillate.id || typeID == reference?.id
+                    let verified = typeID == EffectRegistry.importedOscillate.id || typeID == reference?.id
+                    let dedicated = verified || typeID == EffectRegistry.importedRandomDisplacement.id
                     layer.effects[i].typeID = ImportedEffectRenderers.alightMotionTypeID(full, adapterID: dedicated ? nil : typeID)
+                    layer.effects[i].isEnabled = enabled
                     layer.effects[i].imported = ImportedEffect(format: .alightMotion, matchName: full,
-                        displayName: entry?.item ?? full, support: dedicated ? .nativeAdapter : .approximation,
+                        displayName: entry?.item ?? full, support: verified ? .nativeAdapter : .approximation,
                         properties: [original], phaseOrigin: dedicated ? inPoint : nil)
                 }
             }
+        }
+        if !enabled && (layerSettings.contains(base) || base == "swing") {
+            report.add(layer.name, full, .approximate, "Disabled in the source. Settings retained without changing the layer.")
+            return
         }
         var props: [String: Node] = [:]
         for p in fx.all("property") { if let n = p["name"] { props[n] = p } }
@@ -267,7 +276,10 @@ enum AMImporter {
         case "spin":
             make(EffectRegistry.spin, ["speed": num("rpm", scale: 6)])
             report.add(name, "Spin", .native)
-        case "jitter", "randomdisplace":
+        case "randomdisplace":
+            make(EffectRegistry.importedRandomDisplacement, ["evolution": num("evolution"), "magnitude": num("mag"), "scatter": num("scatter")])
+            report.add(name, "Random Displacement", .approximate, "Uses source evolution, magnitude and scatter with an independent smooth displacement renderer.")
+        case "jitter":
             make(EffectRegistry.jitter, ["amount": num("mag"), "rate": num("freq")])
             report.add(name, base == "jitter" ? "Jitter" : "Random Displace", .approximate, "Mapped to Random Jitter.")
         case "tile":
@@ -477,13 +489,13 @@ enum AMImporter {
         var n = 0
         for node in scene.children where ["shape", "text", "image", "video", "embedScene", "audio", "nullobj", "drawing", "camera"].contains(node.name) {
             n += 1
-            if node["hidden"] == "true" { continue }
             let start = (Double(node["startTime"] ?? "") ?? 0) / 1000
             let end = (Double(node["endTime"] ?? "") ?? project.duration * 1000) / 1000
             let length = max(end - start, 1 / fps)
             let tr = node.child("transform")
             let label = node["label"] ?? "\(node.name.capitalized) \(n)"
             var l = project.makeLayer(name: label, content: .solid, size: Vec2(w, h))
+            l.isVisible = node["hidden"] != "true"
             l.inPoint = start; l.outPoint = end
             if let loc = animated(tr?.child("location"), inPoint: start, length: length, { v in v.count >= 2 ? Vec2(v[0], v[1]) : nil }) { l.transform.position = loc }
             if let z = animated(tr?.child("location"), inPoint: start, length: length, { v in v.count >= 3 ? v[2] : nil }), (z.isAnimated || z.staticValue != 0) {
@@ -512,9 +524,17 @@ enum AMImporter {
             switch node.name {
             case "camera":
                 l.content = .camera
-                let fov = Double(node.child("fov")?["value"] ?? "") ?? 60
-                let zoom = Double(project.height) / 2 / tan(fov / 2 * .pi / 180)
-                l.camera = CameraOptions(zoom: Animated(zoom), focusDistance: Animated(zoom))
+                l.is3D = true
+                let zoom = animated(node.child("fov"), inPoint: start, length: length) { values in
+                    values.first.flatMap { $0.isFinite ? w / 2 / tan(min(179, max(1, $0)) * .pi / 360) : nil }
+                } ?? Animated(w / 2 / tan(.pi / 6))
+                var camera = CameraOptions(zoom: zoom, focusDistance: zoom)
+                camera.affects2D = true
+                if let focus = node.child("focus-blur") {
+                    camera.depthOfField = focus["enabled"] == "true"
+                    if let distance = double(focus.child("distance"), start, length) { camera.focusDistance = distance }
+                }
+                l.camera = camera
                 report.add(label, "Camera", .native)
             case "nullobj":
                 l.isNull = true
@@ -523,18 +543,38 @@ enum AMImporter {
                 report.add(label, "Null", .native)
             case "text":
                 l.content = .text
-                let str = node.child("content")?.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                var t = TextData(string: (str?.isEmpty == false ? str : nil) ?? label)
+                if node.child("fillColor") == nil { l.fill = Animated(.white) }
+                var t = TextData(string: node.child("content")?.text ?? label)
                 // AM text "size" is in points before the layer's scale; ×10 matches its on-screen size.
                 t.fontSize = (Double(node["size"] ?? "") ?? 12) * 10
+                if let width = Double(node["wrapWidth"] ?? ""), width.isFinite, width > 0 { t.boxWidth = width }
                 t.fill = l.fill
                 t.alignment = node["align"] == "left" ? .left : (node["align"] == "right" ? .right : .center)
-                l.text = t
-                if node.child("shadow") != nil { l.effects.append(EffectRegistry.dropShadow.makeInstance()) }
                 let sourceFont = node["font"] ?? ""
-                let fontName = URLComponents(string: sourceFont)?.queryItems?.first(where: { $0.name == "name" })?.value
-                    ?? (sourceFont.isEmpty ? "default" : sourceFont)
-                report.add(label, "Text", .approximate, "Source font: \(fontName). Choose the matching font in Text Studio.")
+                if !sourceFont.isEmpty {
+                    t.importedFontReference = sourceFont
+                    let query = URLComponents(string: sourceFont)?.queryItems
+                    let fontName = query?.first(where: { $0.name == "name" })?.value ?? sourceFont
+                    let weight = query?.first(where: { $0.name == "weight" })?.value
+                    let stem = (fontName as NSString).deletingPathExtension
+                    let weighted = weight.flatMap { Int($0) }.map {
+                        stem.replacingOccurrences(of: " ", with: "") + ($0 >= 700 ? "-Bold" : ($0 >= 500 ? "-Medium" : "-Regular"))
+                    }
+                    let candidates = [weighted, stem, UIFont.fontNames(forFamilyName: fontName).first].compactMap { $0 }
+                    if let face = candidates.lazy.compactMap({ UIFont(name: $0, size: 12)?.fontName }).first {
+                        t.fontName = face
+                        report.add(label, "Text", .native, "Using installed source font \(face).")
+                    } else {
+                        t.fontName = "Helvetica"
+                        report.add(label, "Text", .approximate, "Source font \(fontName) is unavailable. Install it and select it in Text Studio.")
+                    }
+                } else {
+                    report.add(label, "Text", .native)
+                }
+                l.text = t
+                if let shadow = node.child("shadow"), shadow["enabled"] != "false" {
+                    l.effects.append(EffectRegistry.dropShadow.makeInstance())
+                }
             case "drawing":
                 // Each pen stroke becomes an open path with a stroke.
                 var strokes: [Layer] = []

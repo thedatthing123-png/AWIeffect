@@ -90,6 +90,8 @@ extension Layer {
             visit.apply(&camera!.focusDistance)
             visit.apply(&camera!.aperture)
             visit.apply(&camera!.blurLevel)
+            visit.apply(&camera!.pointOfInterest)
+            visit.apply(&camera!.pointOfInterestZ)
         }
         if light != nil {
             visit.apply(&light!.color)

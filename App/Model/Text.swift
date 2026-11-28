@@ -61,6 +61,7 @@ struct TextData: Codable, Equatable {
     var colorSpans: [TextColorSpan] = []
     var animators: [TextAnimator] = []
     var importedAnimationSpeed: Double? = nil
+    var importedFontReference: String? = nil
     /// AE text on path: letters follow the text layer's first mask; offset slides them along it (% of length).
     var onPath: Bool? = nil
     var pathOffset: Animated<Double>? = nil
@@ -94,7 +95,7 @@ struct TextData: Codable, Equatable {
     var text3DGroup: String? = nil
 
     enum CodingKeys: String, CodingKey {
-        case string, fontName, fontSize, fill, tracking, lineSpacing, alignment, colorSpans, animators, onPath, pathOffset, pathReversed, pathAlignment, pathUpright, importedAnimationSpeed
+        case string, fontName, fontSize, fill, tracking, lineSpacing, alignment, colorSpans, animators, onPath, pathOffset, pathReversed, pathAlignment, pathUpright, importedAnimationSpeed, importedFontReference
         case counter, outline, spacingAnchor, style, charIDs, nextCharID, charStyles, boxWidth, autoFit, vertical, baselineShift, text3D, text3DGroup
     }
 

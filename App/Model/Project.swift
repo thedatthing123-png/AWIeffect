@@ -247,6 +247,8 @@ struct CameraOptions: Codable, Equatable {
     var focusDistance = Animated(1000.0)
     var aperture = Animated(25.0)       // px
     var blurLevel = Animated(100.0)     // %
+    var pointOfInterest: Animated<Vec2>? = nil
+    var pointOfInterestZ: Animated<Double>? = nil
     /// Alight Motion-style 2D camera: the camera's position / scale / rotation (and shakes on it) move every
     /// 2D layer, like filming the whole scene. 3D layers always follow the 3D camera.
     var affects2DStore: Bool? = nil

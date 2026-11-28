@@ -33,6 +33,7 @@ enum ImportedEffectRenderers {
         if id.hasPrefix(alightMotionPrefix) {
             let sourceID = String(id.dropFirst(alightMotionPrefix.count))
             if sourceID == "com.alightcreative.effects.oscillate3" { return EffectRegistry.importedOscillate.id }
+            if sourceID == "com.alightcreative.effects.randomdisplace" { return EffectRegistry.importedRandomDisplacement.id }
             return xmlFragments[sourceID]?.id
         }
         guard id.hasPrefix(alightMotionAdapterPrefix),
@@ -60,6 +61,33 @@ enum ImportedEffectRenderers {
 }
 
 extension EffectRegistry {
+    static let importedRandomDisplacement = EffectDefinition(
+        id: "source.am.random-displacement.v1", name: "Random Displacement", category: .motion, aeMatchNames: [],
+        summary: "Smooth displacement sampled at the animated source Evolution value.",
+        params: [
+            .number("evolution", "Evolution", 0, -1000, 1000),
+            .number("magnitude", "Magnitude", 30, 0, 4000, unit: " px"),
+            .number("scatter", "Scatter", 0.5, 0, 1)
+        ],
+        stage: .transform { effect, time in
+            let phase = effect.number("evolution", time)
+            guard phase.isFinite else { return (0, 0, 0, 1) }
+            let base = phase.rounded(.down)
+            let fraction = phase - base
+            let ease = fraction * fraction * (3 - 2 * fraction)
+            func sample(_ i: Double, salt: Double) -> Double {
+                let hash = sin(i * 127.1 + salt) * 43758.5453
+                return 2 * (hash - hash.rounded(.down)) - 1
+            }
+            func axis(_ salt: Double) -> Double {
+                let a = sample(base, salt: salt)
+                return a + (sample(base + 1, salt: salt) - a) * ease
+            }
+            let strength = effect.number("magnitude", time)
+            let scatter = effect.number("scatter", time)
+            return (axis(78.233) * strength, axis(39.346) * strength * scatter, 0, 1)
+        })
+
     /// Documented Alight Motion Oscillate (v3). The layer clock starts at the
     /// source in-point and advances through the integrated frequency track.
     static let importedOscillate = EffectDefinition(

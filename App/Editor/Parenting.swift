@@ -106,6 +106,12 @@ extension Renderer {
             // Depth adds up the chain too (a null's Z carries everything linked to it).
             t.positionZ = Animated(t.positionZ.value(at: time) + a.z)
             q.layers[i].transform = t
+            if let target = q.layers[i].camera?.pointOfInterest?.value(at: time) {
+                let worldTarget = a.m * SIMD3(target.x, target.y, 1)
+                q.layers[i].camera?.pointOfInterest = Animated(Vec2(worldTarget.x, worldTarget.y))
+                let z = q.layers[i].camera?.pointOfInterestZ?.value(at: time) ?? 0
+                q.layers[i].camera?.pointOfInterestZ = Animated(z + a.z)
+            }
             q.layers[i].parentID = nil
         }
         return q

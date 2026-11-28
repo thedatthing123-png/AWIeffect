@@ -120,6 +120,19 @@ final class AEPImportTests: XCTestCase {
         XCTAssertNotEqual(s, "ArialMT", "imported the font name instead of the text")
     }
 
+    func testCameraRigsImportAsCameraLayers() throws {
+        let data = try Data(contentsOf: fixture("camera_rigs"))
+        let report = try AEPImporter.importData(data).report
+        let cameras = try report.compositions.flatMap { comp in
+            try AEPImporter.importData(data, compositionID: comp.id).project.layers.filter { $0.content == .camera }
+        }
+        XCTAssertTrue(cameras.contains { $0.name == "cam1" })
+        XCTAssertTrue(cameras.allSatisfy { $0.is3D && ($0.camera?.zoom.staticValue ?? 0) > 0 })
+        let twoNode = try XCTUnwrap(cameras.first { $0.name == "cam2" })
+        XCTAssertEqual(twoNode.camera?.pointOfInterest?.staticValue, Vec2(700, 450))
+        XCTAssertEqual(twoNode.camera?.pointOfInterestZ?.staticValue, 100)
+    }
+
     func testRejectsNonAEP() {
         XCTAssertThrowsError(try AEPImporter.importData(Data("hello world, not a project".utf8)))
     }

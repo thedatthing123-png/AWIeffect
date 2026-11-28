@@ -2,6 +2,45 @@ import XCTest
 @testable import AWIeffect
 
 final class SourceProjectImportTests: XCTestCase {
+    func testXMLPreservesTextBoxDisabledEffectsAndCameraParent() throws {
+        let xml = """
+        <scene width="1440" height="1080" totalTime="2000" fps="60">
+          <nullobj id="1" label="Rig" hidden="true"><transform><location value="720,540,0"/></transform></nullobj>
+          <camera id="2" label="Lens" parent="1" type="perspective">
+            <transform><location value="0,0,-1247.076581"/></transform><fov value="60"/>
+          </camera>
+          <text id="3" label="Title" size="18" align="left" wrapWidth="295" font="imported?name=ArialMT.ttf">
+            <content>  Title  </content>
+            <effect id="com.alightcreative.effects.texttransform" hidden="true">
+               <property name="offset" type="vec2" value="12,8"/>
+            </effect>
+            <effect id="com.alightcreative.effects.randomdisplace">
+               <property name="evolution" type="float"><kf t="0" v="0"/><kf t="1" v="3.5"/></property>
+               <property name="mag" type="float" value="20"/>
+            </effect>
+          </text>
+        </scene>
+        """
+        let project = try AMImporter.load(data: Data(xml.utf8), fallbackName: "Test").project
+        let rig = try XCTUnwrap(project.layers.first { $0.isNull })
+        let camera = try XCTUnwrap(project.layers.first { $0.content == .camera })
+        XCTAssertFalse(rig.isVisible)
+        XCTAssertEqual(camera.parentID, rig.id)
+        XCTAssertEqual(try XCTUnwrap(camera.camera).zoom.staticValue, 1247.076581, accuracy: 0.001)
+        XCTAssertEqual(camera.camera?.affects2D, true)
+        let title = try XCTUnwrap(project.layers.first { $0.content == .text })
+        XCTAssertEqual(title.text?.string, "  Title  ")
+        XCTAssertEqual(title.text?.boxWidth, 295)
+        XCTAssertEqual(title.text?.importedFontReference, "imported?name=ArialMT.ttf")
+        XCTAssertEqual(title.text?.animators.count, 0)
+        XCTAssertEqual(title.effects.first?.isEnabled, false)
+        let displacement = try XCTUnwrap(title.effects.last)
+        XCTAssertEqual(displacement.typeID, "source.am.v1.com.alightcreative.effects.randomdisplace")
+        XCTAssertNotNil(EffectRegistry.definition(displacement.typeID))
+        XCTAssertEqual(displacement.number("evolution", 2), 3.5)
+        XCTAssertNotEqual(Renderer.transformOffsets(title, time: 0).dx, Renderer.transformOffsets(title, time: 1).dx)
+    }
+
     func testAEAttachmentsKeepOriginalMatchNamesAndUnresolvedPluginSlots() throws {
         var report = ImportReport()
         let unknown = AEProp(matchName: "PEDG2", kind: .effect(

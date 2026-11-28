@@ -144,9 +144,43 @@ enum AEPImporter {
     private static func buildLayers(_ comp: Comp, footage: [UInt32: Footage], comps: [UInt32: Comp], report: inout ImportReport,
                                     cache: inout [UInt32: Project], depth: Int) -> [Layer] {
         var layers: [Layer] = []
+        var idMap: [UInt32: Int] = [:]
+        var parentIDs: [UInt32] = []
         for lc in comp.chunk.children("Layr") {
-            if let l = importLayer(lc, comp: comp, footage: footage, comps: comps, report: &report, cache: &cache, depth: depth) {
+            if let data = lc.child("ldta"),
+               let l = importLayer(lc, comp: comp, footage: footage, comps: comps, report: &report, cache: &cache, depth: depth) {
+                let sourceID = data.u32(0)
+                if sourceID != 0 { idMap[sourceID] = layers.count }
+                parentIDs.append(data.u32(0x84))
                 layers.append(l)
+            }
+        }
+        for (index, sourceParent) in parentIDs.enumerated() {
+            guard let parentIndex = idMap[sourceParent], parentIndex != index else { continue }
+            let parent = layers[parentIndex]
+            layers[index].parentID = parent.id
+            // AE stores a child relative to its parent's layer origin. The editor stores it
+            // relative to the parent's anchor. 3D cameras/lights have no layer-sized origin.
+            guard parent.content != .camera, parent.content != .light else { continue }
+            let size = parent.size.staticValue * 0.5
+            let anchor = parent.transform.anchor
+            func relativeToAnchor(_ source: Animated<Vec2>) -> Animated<Vec2> {
+                let origin = anchor.staticValue + size
+                var position = source
+                position.staticValue = source.staticValue - origin
+                if anchor.isAnimated {
+                    position.keyframes.removeAll()
+                    for time in Set(source.keyframeTimes + anchor.keyframeTimes).sorted() {
+                        position.insertKeyframe(Keyframe(time: time, value: source.value(at: time) - (anchor.value(at: time) + size)))
+                    }
+                } else {
+                    for key in position.keyframes.indices { position.keyframes[key].value = position.keyframes[key].value - origin }
+                }
+                return position
+            }
+            layers[index].transform.position = relativeToAnchor(layers[index].transform.position)
+            if let target = layers[index].camera?.pointOfInterest {
+                layers[index].camera?.pointOfInterest = relativeToAnchor(target)
             }
         }
         return layers
@@ -369,7 +403,7 @@ enum AEPImporter {
             let extracted = extractText(tree)
             textString = extracted.text ?? name
             textFont = extracted.font
-            report.add(name, "Text layer", .approximate, "Text, font size and fill imported; per-character styling and text animators are approximated.")
+            report.add(name, "Text layer", .approximate, "Text, font reference and supported animator tracks retained. Source document styling is partial.")
         case 4:
             if let shape = importShape(tree) {
                 content = .shape(shape.kind)
@@ -389,15 +423,23 @@ enum AEPImporter {
                 content = .shape(.rectangle)
                 report.add(name, "Shape layer", .missing, "Custom paths are not supported yet; placeholder shape created.")
             }
-        case 1, 2:
-            report.add(name, layerType == 2 ? "Camera" : "Light", .missing, "3D camera/lights arrive in stage 7.")
-            return nil
+        case 1:
+            guard ldta.u8(0x8B) <= 3 else {
+                report.add(name, "Environment light", .missing, "This light type has no compatible renderer.")
+                return nil
+            }
+            content = .light
+            report.add(name, "Light", .approximate, "Light type, position and rotation are preserved.")
+        case 2:
+            content = .camera
+            report.add(name, "Camera", .approximate, "Camera position, rotation and lens tracks are editable.")
         default:
             if isAdjustment {
                 content = .adjustment
                 report.add(name, "Adjustment layer", .native)
             } else if isNull {
-                report.add(name, "Null", .approximate, "Imported as a hidden solid; parenting arrives later.")
+                size = footage[sourceID].map { Vec2(Double(max(1, $0.width)), Double(max(1, $0.height))) } ?? Vec2(100, 100)
+                report.add(name, "Null", .native)
                 fill = RGBA(0, 0, 0, 0)
             } else if let f = footage[sourceID] {
                 size = Vec2(Double(max(1, f.width)), Double(max(1, f.height)))
@@ -449,7 +491,27 @@ enum AEPImporter {
             layer.stroke.width = Animated(st.1)
         }
         if importedPath != nil, importedStroke != nil, fill.a == 0 { layer.fill = Animated(RGBA(0, 0, 0, 0)) }
-        layer.isVisible = visible && !isNull
+        layer.isVisible = visible
+        layer.isNull = isNull
+        layer.is3D = flags1 & 0x04 != 0 || content == .camera || content == .light
+        if content == .camera {
+            let group = tree.first { $0.matchName == "ADBE Camera Options Group" }
+            func cameraTrack(_ property: String, fallback: Double) -> Animated<Double> {
+                guard case .value(let c)? = group?.find("ADBE Camera " + property)?.kind else { return Animated(fallback) }
+                return animated(readValue(c, timebase: comp.timebase, layerStart: start), fallback: fallback)
+            }
+            let zoom = cameraTrack("Zoom", fallback: Double(comp.width) / 0.72)
+            layer.camera = CameraOptions(zoom: zoom, depthOfField: cameraTrack("Depth of Field", fallback: 0).staticValue > 0.5,
+                                         focusDistance: cameraTrack("Focus Distance", fallback: zoom.staticValue),
+                                         aperture: cameraTrack("Aperture", fallback: 25),
+                                         blurLevel: cameraTrack("Blur Level", fallback: 100))
+            layer.transform.positionZ = Animated(-zoom.value(at: start))
+        }
+        if content == .light {
+            var options = LightOptions()
+            options.type = [LightType.parallel, .spot, .point, .ambient][Int(ldta.u8(0x8B))]
+            layer.light = options
+        }
         layer.fill = Animated(fill)
         let bm = blendMode(ldta.u8(99))
         layer.blendMode = bm.0
@@ -457,7 +519,10 @@ enum AEPImporter {
         if content == .text {
             var t = TextData(string: textString ?? name, fontSize: 100)
             // Use the project's font when iOS has it (Arial, Helvetica, Futura...), else keep the default.
-            if let f = textFont, UIFont(name: f, size: 12) != nil { t.fontName = f }
+            if let f = textFont {
+                t.importedFontReference = f
+                t.fontName = UIFont(name: f, size: 12)?.fontName ?? "Helvetica"
+            }
             t.fill = Animated(.white)
             t.animators = TextAnimatorImport.animators(in: tree, timebase: comp.timebase, layerStart: start).map {
                 var animator = $0
@@ -475,11 +540,18 @@ enum AEPImporter {
                 return nil
             }
             let half = Vec2(size.x / 2, size.y / 2)
-            if let v = val("ADBE Anchor Point") {
+            if let v = val("ADBE Anchor Point"), content != .camera, content != .light {
                 layer.transform.anchor = animated(v, fallback: .zero) { c in [c[safe: 0].map { $0 - half.x } ?? 0, c[safe: 1].map { $0 - half.y } ?? 0] }
+            } else if let v = val("ADBE Anchor Point"), content == .camera, flags1 & 0x40 != 0,
+                      v.staticValue.count >= 3 || v.keys.contains(where: { $0.value.count >= 3 }) {
+                layer.camera?.pointOfInterest = animated(v, fallback: Vec2(Double(comp.width) / 2, Double(comp.height) / 2))
+                layer.camera?.pointOfInterestZ = animated(v, fallback: 0) { Array($0.dropFirst(2).prefix(1)) }
             }
             if let v = val("ADBE Position") {
-                layer.transform.position = animated(v, fallback: Vec2(Double(comp.width) / 2, Double(comp.height) / 2))
+                layer.transform.position = animated(v, fallback: Vec2(Double(comp.width) / 2, Double(comp.height) / 2)) { Array($0.prefix(2)) }
+                if layer.is3D {
+                    layer.transform.positionZ = animated(v, fallback: layer.transform.positionZ.staticValue) { Array($0.dropFirst(2).prefix(1)) }
+                }
             } else if let x = val("ADBE Position_0"), let y = val("ADBE Position_1") {
                 // Separated dimensions: combine static values (keyframes from X/Y merged by time).
                 var a = Animated(Vec2(x.staticValue.first ?? 0, y.staticValue.first ?? 0))
@@ -488,9 +560,14 @@ enum AEPImporter {
                     a.insertKeyframe(Keyframe(time: t, value: Vec2(ax.value(at: t), ay.value(at: t)), interpolation: .bezier))
                 }
                 layer.transform.position = a
+                if layer.is3D, let z = val("ADBE Position_2") {
+                    layer.transform.positionZ = animated(z, fallback: layer.transform.positionZ.staticValue)
+                }
             }
             // Scale and opacity are stored as 0-1 fractions (py-aep `_PERCENT_MATCH_NAMES`).
-            if let v = val("ADBE Scale") { layer.transform.scale = animated(v, fallback: Vec2(100, 100)) { $0.map { $0 * 100 } } }
+            if let v = val("ADBE Scale") { layer.transform.scale = animated(v, fallback: Vec2(100, 100)) { $0.prefix(2).map { $0 * 100 } } }
+            if let v = val("ADBE Rotate X") { layer.transform.rotationX = animated(v, fallback: 0) }
+            if let v = val("ADBE Rotate Y") { layer.transform.rotationY = animated(v, fallback: 0) }
             if let v = val("ADBE Rotate Z") { layer.transform.rotation = animated(v, fallback: 0) }
             if let v = val("ADBE Opacity") { layer.transform.opacity = animated(v, fallback: 100) { $0.map { $0 * 100 } } }
             for p in [layer.transform.position.expression, layer.transform.scale.expression, layer.transform.rotation.expression,
@@ -502,7 +579,9 @@ enum AEPImporter {
         // Effects.
         if let parade = tree.first(where: { $0.matchName == "ADBE Effect Parade" }) {
             for e in parade.children {
-                layer.effects.append(importEffect(e, timebase: comp.timebase, layerStart: start, layer: name, report: &report))
+                var instance = importEffect(e, timebase: comp.timebase, layerStart: start, layer: name, report: &report)
+                instance.isEnabled = flags2 & 0x04 != 0
+                layer.effects.append(instance)
             }
         }
         // Masks (AE "ADBE Mask Parade"): path, mode, inverted, feather, opacity, expansion.
@@ -583,14 +662,29 @@ enum AEPImporter {
                 // Effect points are stored as 0-1 fractions of the layer, same as AWIeffect.
                 inst.params[pd.id] = .point(animated(v, fallback: Vec2(0.5, 0.5)))
             case .toggle:
-                inst.params[pd.id] = .toggle((v.staticValue.first ?? 0) != 0)
+                if let value = v.staticValue.first { inst.params[pd.id] = .toggle(value != 0) }
+                applyDiscreteKeys(v, key: pd.id, to: &inst) { $0 == 0 ? 0 : 1 }
             case .choice(let opts):
                 // AE popups are 1-based.
-                let i = Int((v.staticValue.first ?? 1).rounded()) - 1
-                inst.params[pd.id] = .choice(min(max(i, 0), opts.count - 1))
+                guard !opts.isEmpty else { continue }
+                func index(_ value: Double) -> Int { Int(min(Double(opts.count - 1), max(0, value.rounded() - 1))) }
+                if let value = v.staticValue.first, value.isFinite { inst.params[pd.id] = .choice(index(value)) }
+                applyDiscreteKeys(v, key: pd.id, to: &inst, decode: index)
             }
         }
         return inst
+    }
+
+    private static func applyDiscreteKeys(_ value: AEValue, key: String, to effect: inout EffectInstance,
+                                          decode: (Double) -> Int) {
+        let keys: [EffectStackR4.HoldKey] = value.keys.compactMap { key in
+            guard let raw = key.value.first, raw.isFinite else { return nil }
+            return .init(time: key.time, value: decode(raw))
+        }
+        guard let encoded = EffectStackR4.encode(keys) else { return }
+        var text = effect.text ?? [:]
+        text[EffectStackR4.holdPrefix + key] = encoded
+        effect.text = text
     }
 
     // MARK: Text & shapes (best effort)

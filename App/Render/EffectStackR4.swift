@@ -143,6 +143,7 @@ extension EffectRegistry {
     static func rawDefinition(_ id: String) -> EffectDefinition? {
         let rendererID = ImportedEffectRenderers.alightMotionRendererID(forTypeID: id) ?? id
         if rendererID == importedOscillate.id { return importedOscillate }
+        if rendererID == importedRandomDisplacement.id { return importedRandomDisplacement }
         if let adapter = ImportedEffectRenderers.adapter(forTypeID: id) { return adapter }
         return all.first { $0.id == rendererID } ?? ImportedEffectRenderers.importOnlyByID[rendererID]
     }

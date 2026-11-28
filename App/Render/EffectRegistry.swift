@@ -271,7 +271,7 @@ enum EffectRegistry {
     ] + [letterSpacing] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22 + batch23 + batchR4 + batchAM35 + referenceTransitions + reviewedReferenceEffects + ghostEffects + motionFinishEffects + remadeEffects
 
     private static let byID: [String: EffectDefinition] = Dictionary(uniqueKeysWithValues:
-        (all + [importedOscillate]).map { ($0.id, EffectStackR4.wrap($0)) })
+        (all + [importedOscillate, importedRandomDisplacement]).map { ($0.id, EffectStackR4.wrap($0)) })
 
     // Native lookup does not construct the import-only shader catalog.
     private static let byImportedFragmentID = ImportedEffectRenderers.importOnlyByID.mapValues { EffectStackR4.wrap($0) }
