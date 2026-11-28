@@ -123,6 +123,21 @@ struct EditorView: View {
     }
 
     var body: some View {
+        let projectID = state.project.id
+        CrashReporter.editorStage("Building editor workspace", projectID: projectID)
+        let workspace = AnyView(workspaceContent)
+        CrashReporter.editorStage("Workspace constructed", projectID: projectID)
+        let services = editorServices(workspace)
+        CrashReporter.editorStage("Editor services configured", projectID: projectID)
+        let presentations = projectPresentations(services)
+        let media = mediaImportControls(presentations)
+        CrashReporter.editorStage("Media presentations configured", projectID: projectID)
+        let editor = studioPresentations(media)
+        CrashReporter.editorStage("Editor view constructed", projectID: projectID)
+        return editor
+    }
+
+    private var workspaceContent: some View {
         VStack(spacing: 0) {
             topBar
             preview
@@ -161,6 +176,12 @@ struct EditorView: View {
             }
         }
         .background(Theme.background.ignoresSafeArea())
+    }
+
+    // Bound the size of each SwiftUI value during construction. The presentation
+    // chains otherwise nest every previous modifier inside the next generic view.
+    private func editorServices(_ content: AnyView) -> AnyView {
+        AnyView(content
         .onAppear {
             containerTapMonitor.attach(resolve: { point in
                 state.timelineContainerFrames.first(where: { $0.value.contains(point) })?.key
@@ -204,7 +225,11 @@ struct EditorView: View {
                 }.foregroundStyle(.white).padding(10).background(Color.red.opacity(0.85))
                     .accessibilityIdentifier("save-error")
             }
-        }
+        })
+    }
+
+    private func projectPresentations(_ content: AnyView) -> AnyView {
+        AnyView(content
         .awiSheet(isPresented: $showKeyframeMover) { KeyframeMoverSheet(state: state).presentationDetents([.medium, .large]) }
         .awiSheet(isPresented: $showPasteStyle) { PasteLayerStyleSheet(state: state).presentationDetents([.medium, .large]) }
         .awiSheet(isPresented: $state.showLightBrowser) { LightBrowser(state: state).presentationDetents([.large]) }
@@ -219,7 +244,11 @@ struct EditorView: View {
                 }
                 videoItem = nil
             }
-        }
+        })
+    }
+
+    private func mediaImportControls(_ content: AnyView) -> AnyView {
+        let relinkControls = AnyView(content
         .photosPicker(isPresented: Binding(get: { mediaLauncher.replaceTarget != nil },
                                            set: { if !$0 && replaceItem == nil { mediaLauncher.replaceTarget = nil } }),
                       selection: $replaceItem, matching: .any(of: [.images, .videos]))
@@ -254,8 +283,9 @@ struct EditorView: View {
             if state.project.layers.first(where: { $0.id == target })?.importedFootage != nil {
                 state.recoveryNotice = "Couldn’t relink this file. Choose the source image or video."
             }
-        })
+        }))
         // Each file importer sits on its own view: SwiftUI only honours one .fileImporter per view.
+        return AnyView(relinkControls
         .background(Color.clear.fileImporter(isPresented: $mediaLauncher.pickAudioFile, allowedContentTypes: [.audio, .movie]) { r in
             guard case .success(let url) = r else { return }
             if UTType(filenameExtension: url.pathExtension)?.conforms(to: .movie) == true { state.addAudioFromVideo(url) }
@@ -278,7 +308,11 @@ struct EditorView: View {
                 }
                 await MainActor.run { audioVideoItem = nil }
             }
-        }
+        })
+    }
+
+    private func studioPresentations(_ content: AnyView) -> AnyView {
+        AnyView(content
         .fullScreenCover(item: $drawLauncher.session) { s in
             DrawStudioView(engine: s.engine, onDone: { engine in
                 state.finishDrawing(engine, editing: s.layerID)
@@ -311,7 +345,7 @@ struct EditorView: View {
                 photoItem = nil
             }
         }
-        .onDisappear { state.pause(); state.saveNow(thumbnail: true) }
+        .onDisappear { state.pause(); state.saveNow(thumbnail: true) })
     }
 
     /// Timeline grows with layer count, capped so the preview keeps most of the screen.
@@ -491,12 +525,14 @@ struct EditorView: View {
 
     private var preview: some View {
         GeometryReader { geo in
+            let _ = CrashReporter.editorStage("Canvas layout started", projectID: state.project.id)
             let base = fitRect(compWidth: state.project.width, compHeight: state.project.height, in: geo.size)
             let fit = CGRect(x: base.midX - base.width * viewZoom / 2 + viewPan.width, y: base.midY - base.height * viewZoom / 2 + viewPan.height,
                              width: base.width * viewZoom, height: base.height * viewZoom)
             ZStack(alignment: .topLeading) {
                 LiveReader(live: state.live) { lp in
                 ClockReader(clock: state.clock) { t in
+                    let _ = CrashReporter.editorStage("Preparing canvas preview", projectID: state.project.id)
                     let cutProject = state.cutoutDisplayProject(state.boneMeshDisplayProject(lp ?? state.project))
                     MetalPreview(project: state.viewMode == .orbit && !state.looksThroughCamera ? OrbitView.scene(cutProject, orbit: state.orbit, time: t)
                                     : (state.cameraView ? cutProject : state.freeViewProject(cutProject)),

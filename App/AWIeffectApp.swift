@@ -250,7 +250,7 @@ struct RootView: View {
                     Text("Metal is unavailable on this device.").foregroundStyle(Theme.text)
                 }
             } else if let p = openProject {
-                EditorView(state: EditorState(project: p), close: closeEditor)
+                projectEditor(p)
                     .id(p.id)
                     .transition(.move(edge: .trailing))
             } else {
@@ -270,6 +270,14 @@ struct RootView: View {
                 crashReport = nil
             }
         }
+    }
+
+    private func projectEditor(_ project: Project) -> EditorView {
+        let state = EditorState(project: project)
+        CrashReporter.editorStage("Constructing editor view", projectID: project.id)
+        let editor = EditorView(state: state, close: closeEditor)
+        CrashReporter.editorStage("Editor view initialized", projectID: project.id)
+        return editor
     }
 
     private func openEditor(_ project: Project) {

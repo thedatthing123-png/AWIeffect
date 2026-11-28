@@ -51,7 +51,7 @@ enum CrashReporter {
 
     static func editorStage(_ stage: String, projectID: UUID) {
         guard var entry = opening, entry.projectID == projectID, !entry.stages.contains(stage),
-              entry.stages.count < 16 else { return }
+              entry.stages.count < 32 else { return }
         entry.stages.append(stage)
         opening = entry
         if let data = try? JSONEncoder().encode(entry) { try? data.write(to: openingURL, options: .atomic) }
