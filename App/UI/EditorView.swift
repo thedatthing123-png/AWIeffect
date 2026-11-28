@@ -375,11 +375,13 @@ struct EditorView: View {
     }
 
     /// Alight Motion-style: with a layer selected the top bar becomes that layer's bar (name, duplicate, delete, ⋯).
-    @ViewBuilder private var topBar: some View {
+    // Resolve only the visible toolbar's type. Combining both toolbar types
+    // recursively resolves the layer menu even when opening an empty project.
+    private var topBar: AnyView {
         if let l = state.selectedLayer, !state.isMultiSelecting {
-            layerBar(l)
+            return AnyView(layerBar(l))
         } else {
-            projectBar
+            return AnyView(projectBar)
         }
     }
 
@@ -408,10 +410,24 @@ struct EditorView: View {
             Button { layerOptionsOpen = true } label: {
                 Image(systemName: "ellipsis.circle").font(.system(size: 22, weight: .regular)).frame(width: 40, height: 40)
             }.accessibilityLabel("Layer Options")
-            .popover(isPresented: $layerOptionsOpen) {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 2) {
+            .popover(isPresented: $layerOptionsOpen) { layerOptions(l) }
+        }
+        .foregroundStyle(Theme.text)
+        .padding(.horizontal, 10)
+        .frame(height: 44)
+        .alert("Rename Layer", isPresented: $showLayerRename) {
+            TextField("Name", text: $renameText)
+            Button("Rename") {
+                let n = renameText.trimmingCharacters(in: .whitespaces)
+                if !n.isEmpty { state.mutate("Rename Layer") { p in if let i = state.selectedIndex { p.layers[i].name = n } } }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
 
+    private func layerOptions(_ l: Layer) -> AnyView {
+        AnyView(ScrollView {
+            VStack(alignment: .leading, spacing: 2) {
                 Button { renameText = l.name; showLayerRename = true } label: { Label("Rename", systemImage: "character.cursor.ibeam") }
                 Button { state.sizeToComposition(.fit) } label: {
                     Label("Fit to Composition", systemImage: "arrow.down.right.and.arrow.up.left")
@@ -460,22 +476,9 @@ struct EditorView: View {
                 Button { state.beginMultiSelect(l.id) } label: { Label("Select Multiple", systemImage: "checklist") }
                 Button(role: .destructive) { state.deleteSelected() } label: { Label("Delete", systemImage: "trash") }
 
-                    }.buttonStyle(OpaqueMenuActionStyle { layerOptionsOpen = false })
-                }.padding(12).frame(width: 290, height: 440).foregroundStyle(Theme.text).background(Theme.background)
-                    .presentationBackground(Theme.background).presentationCompactAdaptation(.popover)
-            }
-        }
-        .foregroundStyle(Theme.text)
-        .padding(.horizontal, 10)
-        .frame(height: 44)
-        .alert("Rename Layer", isPresented: $showLayerRename) {
-            TextField("Name", text: $renameText)
-            Button("Rename") {
-                let n = renameText.trimmingCharacters(in: .whitespaces)
-                if !n.isEmpty { state.mutate("Rename Layer") { p in if let i = state.selectedIndex { p.layers[i].name = n } } }
-            }
-            Button("Cancel", role: .cancel) {}
-        }
+            }.buttonStyle(OpaqueMenuActionStyle { layerOptionsOpen = false })
+        }.padding(12).frame(width: 290, height: 440).foregroundStyle(Theme.text).background(Theme.background)
+            .presentationBackground(Theme.background).presentationCompactAdaptation(.popover))
     }
 
     private var projectBar: some View {
