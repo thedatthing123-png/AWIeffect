@@ -34,6 +34,7 @@ final class Renderer {
     private let lightPSO: MTLComputePipelineState
     private let toBGRAPSO: MTLComputePipelineState
     let displayPSO: MTLRenderPipelineState
+    let motionTrailPSO: MTLRenderPipelineState
     private let loader: MTKTextureLoader
     let dummy: MTLTexture
     private var imageCache: [String: MTLTexture] = [:]
@@ -42,6 +43,7 @@ final class Renderer {
     private static let imageCacheBudget = 128 * 1024 * 1024
     private let cacheLock = NSLock()
     private let encodeLock = NSRecursiveLock()
+    private static let previewStack = RenderStackExecutor(name: "AWIeffect Preview Renderer")
 
     static let compFormat: MTLPixelFormat = .rgba16Float
     /// Nested comps available while encoding (root project's library), the pool and nesting depth in use.
@@ -128,6 +130,7 @@ final class Renderer {
         let savedParts = groupParts, savedCameras = groupCameras
         var sub = project, one = layer
         one.trackMatte = .none; one.clipToBelow = false; one.isSolo = false; one.isVisible = true; one.groupID = nil
+        one.effects.removeAll { $0.typeID == MotionTrail.id }
         let descendants = layer.isGroup ? EditorState.descendantIDs(of: layer.id, in: project) : []
         sub.layers = project.layers.filter { $0.content == .camera } + [one] + project.layers.filter { descendants.contains($0.id) }
         sub.parentContext = project.layers + (project.parentContext ?? [])
@@ -467,6 +470,7 @@ final class Renderer {
         rp.fragmentFunction = lib.makeFunction(name: "displayFragment")
         rp.colorAttachments[0].pixelFormat = .bgra8Unorm
         displayPSO = try device.makeRenderPipelineState(descriptor: rp)
+        motionTrailPSO = try MotionTrail.pipeline(device: device, library: lib)
         loader = MTKTextureLoader(device: device)
         let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: 1, height: 1, mipmapped: false)
         d.usage = [.shaderRead]
@@ -482,7 +486,7 @@ final class Renderer {
 
     func makeCompTexture(width: Int, height: Int, shared: Bool = false) -> MTLTexture? {
         let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: Self.compFormat, width: max(1, width), height: max(1, height), mipmapped: false)
-        d.usage = [.shaderRead, .shaderWrite]
+        d.usage = [.shaderRead, .shaderWrite, .renderTarget]
         d.storageMode = shared ? .shared : .private
         return device.makeTexture(descriptor: d)
     }
@@ -619,6 +623,23 @@ final class Renderer {
 
     // MARK: Compositing
 
+    func encodePreview(project: Project, time: Double, renderScale: Double, into comp: MTLTexture,
+                       commandBuffer: MTLCommandBuffer, pool: TexturePool, mediaURL: @escaping (String) -> URL) {
+        let encode = {
+            self.encode(project: project, time: time, renderScale: renderScale, into: comp,
+                        commandBuffer: commandBuffer, pool: pool, mediaURL: mediaURL)
+        }
+        if project.layers.contains(where: { layer in
+            if case .precomp = layer.content { return true }
+            return layer.isGroup || layer.trackMatte != .none || layer.clipToBelow || layer.boneMesh != nil
+                || layer.effects.contains { $0.isEnabled && $0.text?["layer"] != nil }
+        }) {
+            Self.previewStack.run(encode)
+        } else {
+            encode()
+        }
+    }
+
     /// Encodes the full composition at `time` into `comp` (size = project size * renderScale).
     /// `pool` supplies scratch textures; the caller recycles it once the command buffer has finished
     /// (or rotates pools for in-flight frames).
@@ -731,6 +752,15 @@ final class Renderer {
             if !layer.is3D && camera.projects2DDepth && layer.transform.positionZ.value(at: time) - camera.world.columns.3.z <= max(1, abs(camera.zoom) * 0.01) { continue }
             let opacity = layer.transform.opacity.value(at: time) / 100
             if opacity <= 0 { continue }
+            if layer.content != .adjustment,
+               layer.effects.contains(where: MotionTrail.isVisible),
+               let original = scoped.layers.first(where: { $0.id == layer.id }) {
+                for effect in layer.effects where MotionTrail.isVisible(effect) {
+                    MotionTrail.encode(effect, layer: original, project: scoped, camera: camera,
+                                       time: globalTime, scale: renderScale, opacity: opacity,
+                                       target: comp, buffer: cb, pipeline: motionTrailPSO)
+                }
+            }
             if layer.boneMesh != nil,project.blurs(layer, at: time),
                encodeSkinnedShutter(layer,project: project,time: time,renderScale: renderScale,comp: comp,cb: cb,pool: pool,mediaURL: mediaURL) { continue }
             if layer.effects.contains(where: { $0.isEnabled && $0.typeID == "awi18.displacementMap" && $0.choice("target") == 1 }) {
@@ -750,7 +780,7 @@ final class Renderer {
             }
             let pixelFX = layer.effects.filter { e in
                 guard e.isEnabled, let d = EffectRegistry.definition(e.typeID) else { return false }
-                return !d.isTransformEffect
+                return d.isPixelEffect
             }
 
             if case .adjustment = layer.content {
@@ -1131,7 +1161,7 @@ final class Renderer {
         if let cam = project.layers.first(where: { $0.content == .camera && $0.isActive(at: globalTime) }) {
             let camFX = cam.effects.filter { e in
                 guard e.isEnabled, let d = EffectRegistry.definition(e.typeID) else { return false }
-                return !d.isTransformEffect
+                return d.isPixelEffect
             }
             if !camFX.isEmpty {
                 let copy = pool.acquire(width: comp.width, height: comp.height)
@@ -1398,7 +1428,7 @@ final class Renderer {
             switch def.stage {
             case .pixels(let run):
                 if def.id == "ae.motionTile", !e.bool("manualOutput"), current.width == comp.width, current.height == comp.height,
-                   effects.dropFirst(effectIndex + 1).contains(where: { EffectRegistry.definition($0.typeID)?.isTransformEffect == false }) {
+                   effects.dropFirst(effectIndex + 1).contains(where: { EffectRegistry.definition($0.typeID)?.isPixelEffect == true }) {
                     let size = Vec2(Double(comp.width) / max(renderScale, 1e-6), Double(comp.height) / max(renderScale, 1e-6))
                     let margin = effects.dropFirst(effectIndex + 1).reduce(0.0) { total, effect in
                         guard let definition = EffectRegistry.definition(effect.typeID) else { return total }
@@ -1444,6 +1474,8 @@ final class Renderer {
                              opacity: 1, layer: carrier, time: evaluationTime, source: .image(current), premultipliedImage: true, blendOverride: .normal)
                 }
                 current = transformed
+            case .motionTrail:
+                continue
             }
 
         }

@@ -217,7 +217,7 @@ struct MetalPreview: UIViewRepresentable {
                 self.prerenderInFlight = true
                 pool.recycle()
                 Renderer.blurSampleCap = 12
-                r.encode(project: p, time: Double(next) / max(p.fps, 1), renderScale: scale, into: tex, commandBuffer: cb, pool: pool, mediaURL: media)
+                r.encodePreview(project: p, time: Double(next) / max(p.fps, 1), renderScale: scale, into: tex, commandBuffer: cb, pool: pool, mediaURL: media)
                 let idx = next
                 cb.addCompletedHandler { [weak self] buffer in
                     let completed = buffer.status == .completed
@@ -318,7 +318,7 @@ struct MetalPreview: UIViewRepresentable {
                 // Preview: lighter motion blur while playing, finer when paused (export always renders the full count).
                 Renderer.blurSampleCap = isPlaying ? 4 : (renderedFull ? 12 : 6)
                 if let openingID { CrashReporter.editorStage("Encoding first preview composition", projectID: openingID) }
-                r.encode(project: project, time: frameTime, renderScale: scale, into: target, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
+                r.encodePreview(project: project, time: frameTime, renderScale: scale, into: target, commandBuffer: cb, pool: pool, mediaURL: mediaURL)
                 if renderedFull && cacheEnabled { cacheCandidate = target }
                 shown = target
                 rendered = true

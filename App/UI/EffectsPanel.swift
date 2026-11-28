@@ -145,6 +145,17 @@ final class EffectThumbnails {
             l.transform.scale = Animated(Vec2(100, 100))
             l.fill = Animated(RGBA(0.24, 0.19, 0.40))
         }
+        if effect?.typeID == MotionTrail.id {
+            l.content = .shape(.ellipse)
+            l.size = Animated(Vec2(36, 36))
+            l.transform.scale = Animated(Vec2(100, 100))
+            l.fill = Animated(RGBA(0.9, 0.78, 1))
+            for index in 0...24 {
+                let angle = Double(index) / 24 * 2 * .pi
+                let position = Vec2(180 - 113 * cos(angle), 180 - 88 * sin(angle))
+                l.transform.position.insertKeyframe(Keyframe(time: Double(index) / 12, value: position, interpolation: .linear))
+            }
+        }
         if effect.flatMap({ EffectRegistry.definition($0.typeID)?.id }) == "awi23.drawProgress" {
             l.content = .shape(.path); l.size = Animated(Vec2(300, 250)); l.transform.scale = Animated(Vec2(100, 100))
             l.path = Animated(BezierPath.smoothed([Vec2(-130, 80), Vec2(-80, -90), Vec2(0, 60), Vec2(80, -90), Vec2(130, 80)], closed: false, tolerance: 1))

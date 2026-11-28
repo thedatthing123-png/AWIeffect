@@ -47,6 +47,8 @@ enum EffectStage {
     case pixels((EffectContext) -> MTLTexture)
     /// Modifies the layer transform (shake/wiggle). Returns (dx, dy, dRotation, scaleMul).
     case transform((EffectInstance, Double) -> (Double, Double, Double, Double))
+    /// Draws a ribbon in composition space from the layer's recent motion.
+    case motionTrail
 }
 
 struct EffectDefinition: Identifiable {
@@ -67,6 +69,7 @@ struct EffectDefinition: Identifiable {
     }
 
     var isTransformEffect: Bool { if case .transform = stage { return true }; return false }
+    var isPixelEffect: Bool { if case .pixels = stage { return true }; return false }
 }
 
 /// Reusable textures, recycled per frame (triple-buffered so in-flight frames are never overwritten).
@@ -267,7 +270,7 @@ enum EffectRegistry {
     static let all: [EffectDefinition] = [
         gaussianBlur, directionalBlur, radialBlur,
         exposure, brightnessContrast, hueSaturation, tint, levels, invert, fill, vignette,
-        glow, rgbSplit, fractalNoise, chromaKey, shake,
+        glow, rgbSplit, fractalNoise, chromaKey, shake, motionTrail,
     ] + [letterSpacing] + batch2 + batch3 + batch4 + batch5 + batch6 + batch7 + batch8 + batch9 + batch10 + batch11 + batch12 + batch13 + batch14 + batch15 + batch16 + batch17 + batch18 + batch19 + batch20 + batch21 + batch22 + batch23 + batchR4 + batchAM35 + referenceTransitions + reviewedReferenceEffects + ghostEffects + motionFinishEffects + remadeEffects
 
     private static let byID: [String: EffectDefinition] = Dictionary(uniqueKeysWithValues:

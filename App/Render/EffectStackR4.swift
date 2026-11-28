@@ -131,6 +131,8 @@ enum EffectStackR4 {
                 guard m < 0.99999 else { return r }
                 return (r.0 * m, r.1 * m, r.2 * m, 1 + (r.3 - 1) * m)
             }
+        case .motionTrail:
+            stage = .motionTrail
         }
         return EffectDefinition(id: d.id, name: d.name, category: d.category, aeMatchNames: d.aeMatchNames, summary: d.summary,
                                 params: background ? d.params + [coverage] : d.params,

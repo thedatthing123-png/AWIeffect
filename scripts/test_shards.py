@@ -24,7 +24,7 @@ SCOPES = {
                     'Text3DTests', 'TextPresetLibraryTests', 'TextWorkspaceUITests', 'RenewCanvasTests'],
     'home': ['RenewMediaTests', 'HomeLibraryUITests', 'SourceProjectImportTests'],
     'source-import': ['AEPImportTests', 'AMImportTests', 'SourceProjectImportTests', 'EffectsPhaseOneTests',
-                      'PrecompMaskImportTests', 'RenderSpeedTests', 'ExportTests'],
+                      'PrecompMaskImportTests', 'RenderSpeedTests', 'ExportTests', 'MotionTrailTests'],
     'reference-controls': ['EffectTests', 'ReviewedReferenceEffectsTests', 'ReferenceFragmentAuditTests'],
     'reference-repairs': ['EffectTests', 'ReviewedReferenceEffectsTests', 'ContainerInteractionTests', 'LayerSelectionResponseTests', 'ContainerInteractionUITests', 'EditorPolishUITests', 'ReviewedReferenceEffectsUITests'],
     'motion-blur': ['EditorPolishUITests', 'MotionBlurTests'],

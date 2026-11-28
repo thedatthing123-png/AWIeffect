@@ -1,5 +1,6 @@
 import XCTest
 import AVFoundation
+import Metal
 @testable import AWIeffect
 
 /// Full export pipeline (render → H.264 → audio mix → mux) must finish, with both tracks present.
@@ -62,6 +63,7 @@ final class ExportTests: XCTestCase {
     }
 
     func testExportGroupWithMattedPrecompFinishes() async throws {
+        guard let renderer = Renderer.shared else { throw XCTSkip("SKIP-GPU") }
         let size = Vec2(128, 128)
         var nested = Project.new(name: "Matte", width: 128, height: 128, fps: 24, duration: 0.25, background: RGBA(0, 0, 0, 0))
         let matte = nested.makeLayer(name: "Matte", content: .shape(.ellipse), size: Vec2(64, 64))
@@ -78,6 +80,17 @@ final class ExportTests: XCTestCase {
         precomp.groupID = group.id
         project.layers = [group, precomp]
         project.precomps = [nested]
+
+        let target = try XCTUnwrap(renderer.makeCompTexture(width: 128, height: 128))
+        let buffer = try XCTUnwrap(renderer.queue.makeCommandBuffer())
+        let pool = renderer.makePool()
+        await MainActor.run {
+            renderer.encodePreview(project: project, time: 0.1, renderScale: 1, into: target,
+                                   commandBuffer: buffer, pool: pool, mediaURL: { URL(fileURLWithPath: $0) })
+        }
+        buffer.commit()
+        buffer.waitUntilCompleted()
+        XCTAssertEqual(buffer.status, .completed)
 
         let url = try await export(project, { URL(fileURLWithPath: $0) }, ExportSettings())
         defer { try? FileManager.default.removeItem(at: url) }

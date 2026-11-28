@@ -189,7 +189,7 @@ final class Exporter {
                 progress: @escaping (Double) -> Void) async throws -> URL {
         // A single frame can synchronously recurse through groups, precomps and mattes.
         // Keep that call stack on a dedicated worker, even after the encoder suspends.
-        let executor = ExportRenderExecutor()
+        let executor = RenderStackExecutor(name: "AWIeffect Export Renderer")
         return try await withTaskExecutorPreference(executor) {
             try await exportOnWorker(project: project, settings: settings, mediaURL: mediaURL, progress: progress)
         }
@@ -538,7 +538,7 @@ final class Exporter {
     }
 }
 
-private final class ExportRenderExecutor: TaskExecutor, @unchecked Sendable {
+final class RenderStackExecutor: TaskExecutor, @unchecked Sendable {
     // The thread retains only its queue so the executor can shut it down on release.
     private final class WorkQueue: @unchecked Sendable {
         private let ready = NSCondition()
@@ -569,19 +569,28 @@ private final class ExportRenderExecutor: TaskExecutor, @unchecked Sendable {
 
     private let work = WorkQueue()
 
-    init() {
+    init(name: String) {
         let thread = Thread { [work] in
             while let job = work.next() {
                 autoreleasepool { job() }
             }
         }
-        thread.name = "AWIeffect Export Renderer"
+        thread.name = name
         thread.qualityOfService = .userInitiated
         thread.stackSize = 8 * 1024 * 1024
         thread.start()
     }
 
     deinit { work.close() }
+
+    func run(_ operation: @escaping () -> Void) {
+        let done = DispatchSemaphore(value: 0)
+        work.submit {
+            operation()
+            done.signal()
+        }
+        done.wait()
+    }
 
     func enqueue(_ job: consuming ExecutorJob) {
         let pending = UnownedJob(job)

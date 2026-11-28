@@ -1,6 +1,50 @@
 import SwiftUI
 import simd
 
+/// Clip before Core Graphics expands a stroke into dashes or builds a stroke outline.
+enum ViewportStroke {
+    static func path(_ points: [CGPoint?], in size: CGSize) -> Path {
+        let bounds = CGRect(origin: .zero, size: size).insetBy(dx: -4, dy: -4)
+        guard bounds.width.isFinite, bounds.height.isFinite, !bounds.isEmpty else { return Path() }
+        var result = Path()
+        var previous: CGPoint?
+        var lastEnd: CGPoint?
+        for next in points {
+            if let previous, let next, let (start, end) = clipped(previous, next, to: bounds) {
+                if lastEnd != start { result.move(to: start) }
+                result.addLine(to: end)
+                lastEnd = end
+            } else {
+                lastEnd = nil
+            }
+            previous = next
+        }
+        return result
+    }
+
+    private static func clipped(_ a: CGPoint, _ b: CGPoint, to bounds: CGRect) -> (CGPoint, CGPoint)? {
+        let dx = b.x - a.x, dy = b.y - a.y
+        guard a.x.isFinite, a.y.isFinite, dx.isFinite, dy.isFinite else { return nil }
+        var low: CGFloat = 0, high: CGFloat = 1
+        for (direction, distance) in [(-dx, a.x - bounds.minX), (dx, bounds.maxX - a.x),
+                                      (-dy, a.y - bounds.minY), (dy, bounds.maxY - a.y)] {
+            if direction == 0 {
+                if distance < 0 { return nil }
+            } else if direction < 0 {
+                low = max(low, distance / direction)
+            } else {
+                high = min(high, distance / direction)
+            }
+            if low > high { return nil }
+        }
+        func point(_ t: CGFloat) -> CGPoint {
+            CGPoint(x: min(bounds.maxX, max(bounds.minX, a.x + dx * t)),
+                    y: min(bounds.maxY, max(bounds.minY, a.y + dy * t)))
+        }
+        return (point(low), point(high))
+    }
+}
+
 /// Projects scene points through the 3D view's camera onto the screen.
 struct OrbitProjector {
     let camera: CameraState
@@ -16,8 +60,10 @@ struct OrbitProjector {
     func point(_ w: SIMD3<Double>) -> CGPoint? {
         let c = camera.view * SIMD4(w.x, w.y, w.z, 1)
         guard c.z > 1 else { return nil }
-        return CGPoint(x: fit.minX + (camera.zoom * c.x / c.z + camera.center.x) * scale,
-                       y: fit.minY + (camera.zoom * c.y / c.z + camera.center.y) * scale)
+        let x = fit.minX + (camera.zoom * c.x / c.z + camera.center.x) * scale
+        let y = fit.minY + (camera.zoom * c.y / c.z + camera.center.y) * scale
+        guard x.isFinite, y.isFinite else { return nil }
+        return CGPoint(x: x, y: y)
     }
 
     func depth(_ w: SIMD3<Double>) -> Double { (camera.view * SIMD4(w.x, w.y, w.z, 1)).z }
@@ -151,14 +197,17 @@ struct OrbitGizmo: View {
         let t = l.transform
         if t.position.isAnimated || t.positionZ.isAnimated {
             let span = max(1e-3, l.outPoint - l.inPoint)
-            let points = (0...120).compactMap { k -> CGPoint? in
+            let points = (0...120).map { k -> CGPoint? in
                 projector.point(EditorState.scenePivot(l, time: l.inPoint + span * Double(k) / 120))
             }
             let keys = Set(t.position.keyframeTimes + t.positionZ.keyframeTimes).sorted().compactMap { k in
                 projector.point(EditorState.scenePivot(l, time: k))
             }
-            Path { p in if let f = points.first { p.move(to: f); points.dropFirst().forEach { p.addLine(to: $0) } } }
-                .stroke(Theme.accentGlow.opacity(0.8), style: StrokeStyle(lineWidth: 2, dash: [5, 4])).allowsHitTesting(false)
+            Canvas { context, size in
+                context.stroke(ViewportStroke.path(points, in: size), with: .color(Theme.accentGlow.opacity(0.8)),
+                               style: StrokeStyle(lineWidth: 2, dash: [5, 4]))
+            }
+            .allowsHitTesting(false)
             ForEach(keys.indices, id: \.self) { i in
                 Rectangle().fill(Theme.keyframe).frame(width: 9, height: 9).rotationEffect(.degrees(45)).position(keys[i]).allowsHitTesting(false)
             }

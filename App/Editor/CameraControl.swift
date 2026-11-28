@@ -125,7 +125,7 @@ struct CameraFrameOverlay: View {
     let fit: CGRect
 
     var body: some View {
-        Canvas { ctx, _ in
+        Canvas { ctx, size in
             guard let cam = project.layers.first(where: { $0.content == .camera && $0.isActive(at: time) }) else { return }
             let w = Double(project.width), h = Double(project.height)
             let s = Double(fit.width) / max(w, 1)
@@ -151,10 +151,8 @@ struct CameraFrameOverlay: View {
                 }
             }
             guard pts.count == 4, pts.allSatisfy({ $0.x.isFinite && $0.y.isFinite }) else { return }
-            var frame = Path(); frame.addLines(pts); frame.closeSubpath()
-            var cross = Path()
-            cross.move(to: pts[0]); cross.addLine(to: pts[2])
-            cross.move(to: pts[1]); cross.addLine(to: pts[3])
+            let frame = ViewportStroke.path((pts + [pts[0]]).map(Optional.some), in: size)
+            let cross = ViewportStroke.path([pts[0], pts[2], nil, pts[1], pts[3]], in: size)
             ctx.stroke(cross, with: .color(.white.opacity(0.35)), lineWidth: 1)
             ctx.stroke(frame, with: .color(.white), lineWidth: 2)
         }

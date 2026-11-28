@@ -120,26 +120,25 @@ struct MotionPathOverlay: View {
             let t0 = max(l.inPoint, ks.first!.time), t1 = min(l.outPoint, ks.last!.time)
             let fps = max(1, state.project.fps)
             ZStack {
-                Canvas { ctx, _ in
+                Canvas { ctx, size in
                     guard t1 > t0 else { return }
                     func drawn(_ t: Double) -> CGPoint? {
                         MotionPathMath.screenPoint(l, value: l.transform.position.value(at: t), project: view, time: t).map(screen)
                     }
-                    var path = Path()
                     // Parenting/camera evaluation per sample is not free: cap the sample count.
-                    let n = min(360, max(2, Int((t1 - t0) * 60)))
-                    var started = false
-                    for k in 0...n {
+                    let n = Int(max(2, min(360, (t1 - t0) * 60)))
+                    let points = (0...n).map { k in
                         let t = t0 + (t1 - t0) * Double(k) / Double(n)
-                        guard let p = drawn(t) else { started = false; continue }
-                        if !started { path.move(to: p); started = true } else { path.addLine(to: p) }
+                        return drawn(t)
                     }
+                    let path = ViewportStroke.path(points, in: size)
                     ctx.stroke(path, with: .color(.white.opacity(0.85)), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
                     // Ticks every frame show speed (close together = slow).
                     let step = max(1 / fps, (t1 - t0) / 360)
                     var t = t0
+                    let bounds = CGRect(origin: .zero, size: size)
                     while t <= t1 {
-                        if let p = drawn(t) {
+                        if let p = drawn(t), bounds.contains(p) {
                             ctx.fill(Path(ellipseIn: CGRect(x: p.x - 1, y: p.y - 1, width: 2, height: 2)), with: .color(.white.opacity(0.6)))
                         }
                         t += step
