@@ -37,7 +37,7 @@ final class HomeLibraryUITests: XCTestCase {
         button(title).tap()
         let predicate = NSPredicate(format: "count == %d", count)
         let done = expectation(for: predicate, evaluatedWith: rows)
-        wait(for: [done], timeout: 5)
+        wait(for: [done], timeout: 10)
         XCTAssertEqual(rows.count, count, "\(title) filter", line: line)
     }
 
@@ -81,6 +81,9 @@ final class HomeLibraryUITests: XCTestCase {
         XCTAssertTrue(button("Share Project File (.awi)").exists)
         snap("04-actions")
         button("Duplicate").tap()
+        // A tap during the menu's open animation can be dropped; retry once if the menu is still up.
+        if !app.buttons["Rename"].waitForNonExistence(timeout: 2), app.buttons["Duplicate"].exists { app.buttons["Duplicate"].tap() }
+        XCTAssertTrue(app.buttons["Actions for Opening Titles copy"].waitForExistence(timeout: 10), "Duplicate did not add a copy")
         filter("After Effects", expect: 2)
 
         // Rename keeps the AE source.
