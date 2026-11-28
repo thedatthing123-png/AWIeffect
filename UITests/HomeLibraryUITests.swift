@@ -129,7 +129,7 @@ final class HomeLibraryUITests: XCTestCase {
         XCTAssertTrue(button("Restore Old Draft").exists)
         snap("08-recently-deleted")
         button("Restore Old Draft").tap()
-        XCTAssertTrue(button("Restore Old Draft").waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Restore Old Draft"].waitForNonExistence(timeout: 5))
         button("Back to Projects").tap()
         filter("AWI", expect: 3)
 
