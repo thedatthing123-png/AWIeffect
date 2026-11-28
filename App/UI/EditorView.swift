@@ -176,7 +176,7 @@ struct EditorView: View {
         // Every slider in the editor keeps its edits live while dragging (smooth, no full-editor rebuilds).
         .environment(\.scrubSession, ScrubSession(begin: { [weak state] in state?.beginScrub() }, end: { [weak state] in state?.endScrub() }))
         .onAppear {
-            CrashReporter.editorStage("Editor appeared", projectID: state.rootProject.id)
+            CrashReporter.editorStage("Editor appeared", projectID: state.project.id)
             canvasPicker.available = true
             AILink.shared.editor = state
             EffectRegistry.softMeshURL = { [weak state] f in state?.mediaURL(f) ?? URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(f) }
@@ -185,7 +185,7 @@ struct EditorView: View {
                 guard let state else { return nil }
                 return Renderer.shared?.renderImage(project: state.project, time: state.currentTime, maxDimension: 1600, mediaURL: { state.mediaURL($0) })
             }
-            CrashReporter.editorStage("Editor services attached", projectID: state.rootProject.id)
+            CrashReporter.editorStage("Editor services attached", projectID: state.project.id)
         }
         .onChange(of: canvasPicker.active) { _, active in if active { state.pause() } }
         .onDisappear { cutoutSession.close(); canvasPicker.available = false; canvasPicker.finish(nil); if AILink.shared.editor === state { AILink.shared.editor = nil } }
@@ -508,7 +508,7 @@ struct EditorView: View {
                                  qualityCap: state.previewQuality.rawValue, isPlaying: state.isPlaying,
                                  // No RAM-cache writes mid-gesture: every frame changes, caching only churned memory.
                                  cacheEnabled: state.canvasMode == .comp && lp == nil && state.cutoutPreview == nil && state.cutoutPeekOriginal == nil && state.boneWeightArtworkID == nil,
-                                 suspended: showExport, startupProjectID: state.rootProject.id)
+                                 suspended: showExport, startupProjectID: state.project.id)
                 }
                 }
                 if state.viewMode == .orbit && !state.looksThroughCamera {

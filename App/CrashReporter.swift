@@ -44,6 +44,7 @@ enum CrashReporter {
     static func beginEditorOpening(_ id: UUID) {
         endEditorOpening()
         UserDefaults.standard.set(id.uuidString, forKey: openProjectKey)
+        guard !isUITesting else { return } // XCTest deliberately ends and relaunches the process.
         opening = EditorOpening(projectID: id)
         editorStage("Open requested", projectID: id)
     }
