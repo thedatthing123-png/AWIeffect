@@ -187,6 +187,16 @@ final class Exporter {
 
     func export(project: Project, settings: ExportSettings, mediaURL: @escaping (String) -> URL,
                 progress: @escaping (Double) -> Void) async throws -> URL {
+        // A single frame can synchronously recurse through groups, precomps and mattes.
+        // Keep that call stack on a dedicated worker, even after the encoder suspends.
+        let executor = ExportRenderExecutor()
+        return try await withTaskExecutorPreference(executor) {
+            try await exportOnWorker(project: project, settings: settings, mediaURL: mediaURL, progress: progress)
+        }
+    }
+
+    private func exportOnWorker(project: Project, settings: ExportSettings, mediaURL: @escaping (String) -> URL,
+                                progress: @escaping (Double) -> Void) async throws -> URL {
         guard let r = Renderer.shared else { throw ExportError.noRenderer }
         // Full-resolution footage for the final render (editing uses lighter proxies); restored when done.
         VideoSources.shared.setFullQuality(true)
@@ -525,5 +535,59 @@ final class Exporter {
         guard CGImageDestinationFinalize(dest) else { throw ExportError.writer("gif finalize") }
         progress(1)
         return url
+    }
+}
+
+private final class ExportRenderExecutor: TaskExecutor, @unchecked Sendable {
+    // The thread retains only its queue so the executor can shut it down on release.
+    private final class WorkQueue: @unchecked Sendable {
+        private let ready = NSCondition()
+        private var pending: [() -> Void] = []
+        private var closed = false
+
+        func submit(_ work: @escaping () -> Void) {
+            ready.lock()
+            pending.append(work)
+            ready.signal()
+            ready.unlock()
+        }
+
+        func next() -> (() -> Void)? {
+            ready.lock()
+            defer { ready.unlock() }
+            while pending.isEmpty && !closed { ready.wait() }
+            return pending.isEmpty ? nil : pending.removeFirst()
+        }
+
+        func close() {
+            ready.lock()
+            closed = true
+            ready.signal()
+            ready.unlock()
+        }
+    }
+
+    private let work = WorkQueue()
+
+    init() {
+        let thread = Thread { [work] in
+            while let job = work.next() {
+                autoreleasepool { job() }
+            }
+        }
+        thread.name = "AWIeffect Export Renderer"
+        thread.qualityOfService = .userInitiated
+        thread.stackSize = 8 * 1024 * 1024
+        thread.start()
+    }
+
+    deinit { work.close() }
+
+    func enqueue(_ job: consuming ExecutorJob) {
+        let pending = UnownedJob(job)
+        let executor = asUnownedTaskExecutor()
+        work.submit { [self] in
+            withExtendedLifetime(self) { pending.runSynchronously(on: executor) }
+        }
     }
 }

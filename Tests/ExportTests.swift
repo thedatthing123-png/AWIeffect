@@ -61,6 +61,33 @@ final class ExportTests: XCTestCase {
         XCTAssertEqual(tracks.count, 1)
     }
 
+    func testExportGroupWithMattedPrecompFinishes() async throws {
+        let size = Vec2(128, 128)
+        var nested = Project.new(name: "Matte", width: 128, height: 128, fps: 24, duration: 0.25, background: RGBA(0, 0, 0, 0))
+        let matte = nested.makeLayer(name: "Matte", content: .shape(.ellipse), size: Vec2(64, 64))
+        var artwork = nested.makeLayer(name: "Artwork", content: .solid, size: size)
+        artwork.trackMatte = .alpha
+        artwork.effects = [EffectRegistry.glow.makeInstance()]
+        nested.layers = [matte, artwork]
+
+        var project = Project.new(name: "Nested export", width: 128, height: 128, fps: 24, duration: 0.25, background: .black)
+        var group = project.makeLayer(name: "Group", content: .solid, size: size)
+        group.isGroup = true
+        group.fill = Animated(RGBA(0, 0, 0, 0))
+        var precomp = project.makeLayer(name: "Precomp", content: .precomp(id: nested.id), size: size)
+        precomp.groupID = group.id
+        project.layers = [group, precomp]
+        project.precomps = [nested]
+
+        let url = try await export(project, { URL(fileURLWithPath: $0) }, ExportSettings())
+        defer { try? FileManager.default.removeItem(at: url) }
+        let asset = AVURLAsset(url: url)
+        let tracks = try await asset.loadTracks(withMediaType: .video)
+        let duration = try await asset.load(.duration)
+        XCTAssertEqual(tracks.count, 1)
+        XCTAssertEqual(CMTimeGetSeconds(duration), 0.25, accuracy: 0.05)
+    }
+
     func testGIFExport() async throws {
         let (p, media) = try project(withAudio: false)
         var s = ExportSettings(); s.format = .gif

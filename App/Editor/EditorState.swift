@@ -994,8 +994,10 @@ final class EditorState: ObservableObject {
                     guard let image = Renderer.shared?.renderImage(project: project, time: time, maxDimension: 360,
                             mediaURL: { store.mediaURL($0, projectID: project.id) }) else { return }
                     DispatchQueue.main.async { [weak self] in
-                        guard let self else { return }
-                        guard self.saveGeneration == generation else { self.lastThumbnailSave = .distantPast; return }
+                        if let self, self.saveGeneration != generation {
+                            self.lastThumbnailSave = .distantPast
+                            return
+                        }
                         Self.saveQueue.async { store.saveThumbnail(image, for: project.id) }
                     }
                 }
@@ -1017,17 +1019,6 @@ final class EditorState: ObservableObject {
     nonisolated static func thumbnailTime(current: Double, project: Project) -> Double {
         let last = max(0, project.duration - project.frameDuration)
         return min(max(0, current), last)
-    }
-
-    /// Renders the root comp at the playhead's root time into thumb.jpg.
-    func saveThumbnail(_ project: Project) {
-        guard let r = Renderer.shared else { return }
-        lastThumbnailSave = Date()
-        let pid = project.id, st = store
-        let t = Self.thumbnailTime(current: rootTime(currentTime), project: project)
-        if let img = r.renderImage(project: project, time: t, maxDimension: 360, mediaURL: { st.mediaURL($0, projectID: pid) }) {
-            store.saveThumbnail(img, for: project.id)
-        }
     }
 
     /// Undo history belongs to one comp; switching comps starts a fresh history.
@@ -1087,11 +1078,11 @@ final class EditorState: ObservableObject {
             try Self.saveQueue.sync { try store.save(project, snapshotVersion: snapshot) }
             if snapshot { lastVersionSnapshot = Date() }
             saveError = nil
+            if thumbnail { scheduleThumbnail(project, generation: saveGeneration) }
         } catch {
             saveError = "Changes could not be saved: " + error.localizedDescription
             NSLog("AWIeffect autosave failed: \(error)")
         }
-        if thumbnail { saveThumbnail(project) }
     }
 
     func mediaURL(_ name: String) -> URL { store.mediaURL(name, projectID: rootProject.id) }
